@@ -1001,7 +1001,7 @@ public class Roster implements Cacheable {
                     // Do not delete the item if deletedUser belongs to a public group since the
                     // subcription status will change
                     !(deletedGroup.isUser(deletedUser) &&
-                    RosterManager.isPulicSharedGroup(deletedGroup))) {
+                    RosterManager.isPublicSharedGroup(deletedGroup))) {
                 // Delete the roster item from the roster since it exists only because of this
                 // group which is being removed
                 deleteRosterItem(deletedUser, false);
@@ -1010,7 +1010,7 @@ public class Roster implements Cacheable {
                 // Remove the shared group from the item if deletedUser does not belong to a
                 // public group
                 if (!(deletedGroup.isUser(deletedUser) &&
-                        RosterManager.isPulicSharedGroup(deletedGroup))) {
+                        RosterManager.isPublicSharedGroup(deletedGroup))) {
                     item.removeSharedGroup(deletedGroup);
                 }
                 // Get the groups of the deleted user

@@ -376,7 +376,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @param group the group to check if it may be seen by all users in the system.
      * @return true if the specified Group may be seen by all users in the system.
      */
-    public static boolean isPulicSharedGroup(Group group) {
+    public static boolean isPublicSharedGroup(Group group) {
         String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
         if ("everybody".equals(showInRoster)) {
             return true;

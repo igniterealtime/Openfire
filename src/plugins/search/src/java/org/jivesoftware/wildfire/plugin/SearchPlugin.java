@@ -63,7 +63,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     private static String serverName;
 
     private static String instructions = "The following fields are available for search. "
-        + "Wildcard (*) characters are allowed as part the of query.";
+        + "Wildcard (*) characters are allowed as part of the query.";
     
     private static Element probeResult;
 

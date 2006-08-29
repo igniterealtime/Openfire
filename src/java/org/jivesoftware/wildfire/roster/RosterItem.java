@@ -131,6 +131,10 @@ public class RosterItem implements Cacheable {
     protected Set<String> invisibleSharedGroups = new HashSet<String>();
     protected SubType subStatus;
     protected AskType askStatus;
+    /**
+     * Holds the ID that uniquely identifies the roster in the backend store. A value of
+     * zero means that the roster item is not persistent.
+     */
     private long rosterID;
 
     public RosterItem(long id,
@@ -474,9 +478,10 @@ public class RosterItem implements Cacheable {
     }
 
     /**
-     * <p>Obtain the roster ID associated with this particular roster item.</p>
-     * <p/>
-     * <p>Databases can use the roster ID as the key in locating roster items.</p>
+     * Returns the roster ID associated with this particular roster item. A value of zero
+     * means that the roster item is not being persisted in the backend store.<p>
+     *
+     * Databases can use the roster ID as the key in locating roster items.
      *
      * @return The roster ID
      */
@@ -484,6 +489,14 @@ public class RosterItem implements Cacheable {
         return rosterID;
     }
 
+    /**
+     * Sets the roster ID associated with this particular roster item. A value of zero
+     * means that the roster item is not being persisted in the backend store.<p>
+     *
+     * Databases can use the roster ID as the key in locating roster items.
+     *
+     * @param rosterID The roster ID.
+     */
     public void setID(long rosterID) {
         this.rosterID = rosterID;
     }

@@ -95,7 +95,7 @@ public class GatewayPlugin implements Plugin {
     private void maybeStartService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
         trInstance.startInstance();
-        Log.debug("Starting transport service: "+serviceName);
+        Log.info("Starting transport service: "+serviceName);
     }
 
     /**
@@ -104,7 +104,7 @@ public class GatewayPlugin implements Plugin {
     public void enableService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
         trInstance.enable();
-        Log.debug("Enabling transport service: "+serviceName);
+        Log.info("Enabling transport service: "+serviceName);
     }
 
     /**
@@ -113,7 +113,7 @@ public class GatewayPlugin implements Plugin {
     public void disableService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
         trInstance.disable();
-        Log.debug("Disabling transport service: "+serviceName);
+        Log.info("Disabling transport service: "+serviceName);
     }
 
     /**

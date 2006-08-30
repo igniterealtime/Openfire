@@ -9,23 +9,22 @@
 --%>
 
 <%@ page import="org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.PresenceManager,
                  org.jivesoftware.wildfire.group.Group,
                  org.jivesoftware.wildfire.group.GroupManager"
 %>
+<%@ page import="org.jivesoftware.wildfire.user.User"%>
 <%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
 <%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
 <%@ page import="java.net.URLDecoder"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.*"%>
-<%@ page import="org.xmpp.packet.Presence"%>
-<%@ page import="org.jivesoftware.wildfire.PresenceManager"%>
-<%@ page import="org.jivesoftware.wildfire.user.User"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -421,7 +420,13 @@
                             <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
                              multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
 
-                            <%  for (Group g : webManager.getGroupManager().getGroups()) { %>
+                            <%  for (Group g : webManager.getGroupManager().getGroups()) {
+                                // Do not offer the edited group in the list of groups
+                                // Members of the editing group can always see each other
+                                if (g.equals(group)) {
+                                    continue;
+                                }
+                            %>
 
                                 <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
                                  <%= (contains(groupNames, g.getName()) ? "selected" : "") %>

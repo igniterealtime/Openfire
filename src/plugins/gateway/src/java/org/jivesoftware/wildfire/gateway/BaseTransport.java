@@ -20,6 +20,7 @@ import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.roster.RosterEventListener;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
@@ -42,7 +43,7 @@ import java.util.*;
  *
  * @author Daniel Henninger
  */
-public abstract class BaseTransport implements Component {
+public abstract class BaseTransport implements Component, RosterEventListener {
 
     /**
      * Create a new BaseTransport instance.
@@ -204,6 +205,9 @@ public abstract class BaseTransport implements Component {
                         if (session.hasResource(from.getResource())) {
                             Log.debug("An existing resource has changed status: " + from);
 
+                            if (session.getPriority(from.getResource()) != packet.getPriority()) {
+                                session.updatePriority(from.getResource(), packet.getPriority());
+                            }
                             if (session.isHighestPriority(from.getResource())) {
                                 // Well, this could represent a status change.
                                 session.updateStatus(getPresenceType(packet), packet.getStatus());
@@ -223,14 +227,6 @@ public abstract class BaseTransport implements Component {
                         }
                     }
                     catch (NotFoundException e) {
-                        // TODO: TEMPORARY: Since we are using shared groups now, we will clean up our testers rosters for them.
-                        try {
-                            cleanUpRoster(from, true);
-                        }
-                        catch (UserNotFoundException ee) {
-                            throw new UserNotFoundException("Unable to find roster.");
-                        }
-
                         Log.debug("A new session has come online: " + from);
 
                         session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
@@ -1114,6 +1110,57 @@ public abstract class BaseTransport implements Component {
         catch (ComponentException e) {
             Log.error("Failed to deliver packet: " + packet.toString());
         }
+    }
+
+    /**
+     * Intercepts roster additions related to the gateway and flags them as non-persistent.
+     *
+     * @see org.jivesoftware.wildfire.roster.RosterEventListener#addingContact(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem, boolean)
+     */
+    public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
+        if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
+            return false;
+        }
+        return persistent;
+    }
+
+    /**
+     * Handles updates to a roster item that are not normally forwarded to the transport.
+     *
+     * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactUpdated(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void contactUpdated(Roster roster, RosterItem item) {
+        // TODO: do nothing for now
+    }
+
+    /**
+     * Handles additions to a roster.  We don't really care because we hear about these via subscribes.
+     *
+     * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactAdded(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void contactAdded(Roster roster, RosterItem item) {
+        // Don't care
+        // TODO: Evaluate how we -could- use this.. like what if roster is edited not via xmpp client?
+    }
+
+    /**
+     * Handles deletions from a roster.  We don't really care because we hear about these via unsubscribes.
+     *
+     * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void contactDeleted(Roster roster, RosterItem item) {
+        // Don't care
+        // TODO: Evaluate how we -could- use this.. like what if roster is edited not via xmpp client?
+    }
+
+    /**
+     * Handles notifications of a roster being loaded.  Not sure we care.
+     *
+     * @see org.jivesoftware.wildfire.roster.RosterEventListener#rosterLoaded(org.jivesoftware.wildfire.roster.Roster)
+     */
+    public void rosterLoaded(Roster roster) {
+        // Don't care
+        // TODO: Evaluate if we could use this.
     }
 
     /**

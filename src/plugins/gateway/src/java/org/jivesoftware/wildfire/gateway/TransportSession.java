@@ -153,6 +153,32 @@ public abstract class TransportSession implements Runnable {
     }
 
     /**
+     * Change the priority of a given resource.
+     *
+     * @param resource Resource to be changed.
+     * @param priority New priority of resource
+     */
+    public void updatePriority(String resource, Integer priority) {
+        removeResource(resource);
+        addResource(resource, priority);
+    }
+
+    /**
+     * Retrieves the priority of a given resource.
+     *
+     * @param resource Resource to be checked.
+     * @return Priority of the resource, or null if not found.
+     */
+    public Integer getPriority(String resource) {
+        for (Integer i : resources.keySet()) {
+            if (resources.get(i).equals(resource)) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Given a resource, returns whether the resource is currently associated with this session.
      *
      * @param resource Resource to be checked.

@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.gateway;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.PropertyEventDispatcher;
 import org.xmpp.component.ComponentManager;
 
 import java.util.Map;
@@ -47,7 +48,7 @@ public class TransportInstance implements PropertyEventListener {
         this.type = type;
         this.nameOfClass = classname;
         this.componentManager = componentManager;
-        enabled = JiveGlobals.getBooleanProperty("plugin.gateway."+this.type.toString()+"Enabled", false);
+        enabled = JiveGlobals.getBooleanProperty("plugin.gateway."+this.type.toString()+".enabled", false);
     }
 
     /**
@@ -82,7 +83,7 @@ public class TransportInstance implements PropertyEventListener {
      */
     public void enable() {
         enabled = true;
-        JiveGlobals.setProperty("plugin.gateway."+this.type.toString()+"Enabled", "true");
+        JiveGlobals.setProperty("plugin.gateway."+this.type.toString()+".enabled", "true");
         if (!running) {
             startInstance();
         }
@@ -93,7 +94,7 @@ public class TransportInstance implements PropertyEventListener {
      */
     public void disable() {
         enabled = false;
-        JiveGlobals.setProperty("plugin.gateway."+this.type.toString()+"Enabled", "false");
+        JiveGlobals.setProperty("plugin.gateway."+this.type.toString()+".enabled", "false");
         if (running) {
             stopInstance();
         }
@@ -109,7 +110,7 @@ public class TransportInstance implements PropertyEventListener {
 
         transport = null;
 
-        Log.debug("Loading class "+nameOfClass);
+        //Log.debug("Loading class "+nameOfClass);
 
         try {
             transport = (BaseTransport)Class.forName(nameOfClass).newInstance();
@@ -127,7 +128,7 @@ public class TransportInstance implements PropertyEventListener {
 
         try {
             componentManager.addComponent(this.type.toString(), transport);
-            //PropertyEventDispatcher.addListener(transport);
+            PropertyEventDispatcher.addListener(this);
             running = true;
         }
         catch (Exception e) {
@@ -143,7 +144,7 @@ public class TransportInstance implements PropertyEventListener {
             return;
         }
 
-        //PropertyEventDispatcher.removeListener(transport);
+        PropertyEventDispatcher.removeListener(this);
         try {
             componentManager.removeComponent(this.type.toString());
         }
@@ -162,7 +163,7 @@ public class TransportInstance implements PropertyEventListener {
     }
 
     public void propertySet(String property, Map params) {
-        if (property.equals("plugin.gateway."+this.type.toString()+"Enabled")) {
+        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
             enabled = Boolean.parseBoolean((String)params.get("value"));
             if (enabled) {
                 if (!running) {
@@ -178,7 +179,7 @@ public class TransportInstance implements PropertyEventListener {
     }
 
     public void propertyDeleted(String property, Map params) {
-        if (property.equals("plugin.gateway."+this.type.toString()+"Enabled")) {
+        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
             if (running) {
                 stopInstance();
             }
@@ -186,11 +187,27 @@ public class TransportInstance implements PropertyEventListener {
     }
 
     public void xmlPropertySet(String property, Map params) {
-        // Ignore
+        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
+            enabled = Boolean.parseBoolean((String)params.get("value"));
+            if (enabled) {
+                if (!running) {
+                    startInstance();
+                }
+            }
+            else {
+                if (running) {
+                    stopInstance();
+                }
+            }
+        }
     }
 
     public void xmlPropertyDeleted(String property, Map params) {
-        // Ignore
+        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
+            if (running) {
+                stopInstance();
+            }
+        }
     }
 
 }

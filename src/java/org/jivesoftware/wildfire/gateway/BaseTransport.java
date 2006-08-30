@@ -16,11 +16,10 @@ import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.wildfire.roster.*;
 import org.jivesoftware.wildfire.roster.Roster;
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.roster.RosterEventListener;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
@@ -684,7 +683,16 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * Handles startup of the transport.
      */
     public void start() {
-        // Do nothing.
+        RosterEventDispatcher.addListener(this);
+        // Probe all registered users [if they are logged in] to auto-log them in
+        for (Registration registration : registrationManager.getRegistrations()) {
+            if (SessionManager.getInstance().getSessionCount(registration.getJID().getNode()) > 0) {
+                Presence p = new Presence(Presence.Type.probe);
+                p.setFrom(this.getJID());
+                p.setTo(registration.getJID());
+                sendPacket(p);
+            }
+        }
     }
 
     /**
@@ -693,7 +701,11 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * Cleans up all active sessions.
      */
     public void shutdown() {
-        // TODO: actually make this function
+        RosterEventDispatcher.removeListener(this);
+        // Disconnect everyone's session
+        for (TransportSession session : sessionManager.getSessions()) {
+            registrationLoggedOut(session);
+        }
     }
 
     /**

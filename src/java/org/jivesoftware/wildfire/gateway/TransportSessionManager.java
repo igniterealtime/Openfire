@@ -10,8 +10,8 @@
 
 package org.jivesoftware.wildfire.gateway;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.jivesoftware.util.NotFoundException;
 import org.xmpp.packet.JID;
 
@@ -70,6 +70,15 @@ public class TransportSessionManager {
      */
     public void removeSession(JID jid) {
         activeSessions.remove(new JID(jid.toBareJID()));
+    }
+
+    /**
+     * Retrieves a collection of all active sessions.
+     *
+     * @return List of active sessions.
+     */
+    public Collection<TransportSession> getSessions() {
+        return activeSessions.values();
     }
 
 }

@@ -98,12 +98,16 @@ public class OSCARSession extends TransportSession {
     }
     
     public synchronized void logOut() {
-        bosConn.disconnect();
-        loggedIn = false;
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getJID());
-        p.setFrom(getTransport().getJID());
-        getTransport().sendPacket(p);
+        if (isLoggedIn()) {
+            if (bosConn != null) {
+                bosConn.disconnect();
+            }
+            loggedIn = false;
+            Presence p = new Presence(Presence.Type.unavailable);
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
+        }
     }
 
     /**

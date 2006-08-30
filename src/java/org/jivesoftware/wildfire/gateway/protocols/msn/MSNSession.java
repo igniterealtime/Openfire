@@ -199,7 +199,10 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
-        msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+        if (isLoggedIn()) {
+            msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+        }
+        // TODO: Should I consider logging them in?
     }
 
     /**

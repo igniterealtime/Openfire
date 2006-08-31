@@ -163,6 +163,56 @@ hr {
 
 
 
+<h2>3.1.0 Beta -- <span style="font-weight: normal;">August 31, 2006</span></h2>
+
+<h3>Wildfire New Features</h3>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-797'>JM-797</a>] - Added database statistics monitoring.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-807'>JM-807</a>] - Added support for roster event listeners.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-804'>JM-804</a>] - Added support for component event listeners.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-816'>JM-816</a>] - Created ad-hoc commands for managing groups.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-808'>JM-808</a>] - Enhanced roster to be able to hold non-persistent roster items.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-782'>JM-782</a>] - Implemented Blocking NIO in File Transfer Proxy.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-771'>JM-771</a>] - Added search method to GroupProvider.</li>
+</ul>
+
+<h3>Wildfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-817'>JM-817</a>] - Fixed security hole in email settings page.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-781'>JM-781</a>] - Stream compression is now optional by default for client-2-server connections.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-792'>JM-792</a>] - Improved syntax of ldap searchFilter and groupSearchFilter.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-809'>JM-809</a>] - In band registration was accepting new users with no password.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-810'>JM-810</a>] - Presence subscription packets sent to the server were broadcasted to all connected users.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-701'>JM-701</a>] - Fixed bug with roster modification when deleting shared group.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-801'>JM-801</a>] - Removing user from shared group could generate roster item in the database.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-811'>JM-811</a>] - Fixed case-sensitive error while authenticating user.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-784'>JM-784</a>] - Success data included after a SASL successful operation was not being encoded.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-794'>JM-794</a>] - SASL mechanisms were being offered to remote servers even before securing the socket.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-796'>JM-796</a>] - Fixed "null cert chain" error when trying to secure s2s connection.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-789'>JM-789</a>] - CN field in certificates was not being correctly parsed.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-785'>JM-785</a>] - Retrieving a privacy list was including 2 list elements in the answer.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-780'>JM-780</a>] - Plugin check is now based on original JAR date, not on unzip date.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-786'>JM-786</a>] - JDBCAuthProvider and JDBCUserProvider were using wrong property names.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-812'>JM-812</a>] - It was not possible to retrieve offline messages with invalid XML characters.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-793'>JM-793</a>] - Counter of client sessions was wrong.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-783'>JM-783</a>] - Admin console now displays actual bound IP address.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-790'>JM-790</a>] - Removed db scripts from the wildfire JAR.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-815'>JM-815</a>] - Changed &lt;entity/&gt; element to &lt;subscription/&gt; element in response to subscription request.</li>
+<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-805'>JM-805</a>] - Updated JVM to 1.5.0_08.</li>
+</ul>
+
+<h3>Wildfire Enterprise</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
+<h3>Wildfire Connection Manager Module</h3>
+<ul>
+    <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-795'>JM-795</a>] - DNS SRV lookup was overriding port to use to connect Connection Manager to server.</li>
+    <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-788'>JM-788</a>] - manager.xml was not using the correct property for setting the client port.</li>
+    <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-814'>JM-814</a>] - Connections between Connection Managers and Wildfire are not encrypted by default.</li>
+</ul>
+
 <h2>3.0.1 -- <span style="font-weight: normal;">July 13, 2006</span></h2>
 
 <h3>Wildfire New Features</h3>

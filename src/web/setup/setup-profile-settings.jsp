@@ -75,10 +75,10 @@
 </tr>
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="ldap" id="rb02">
+        <input type="radio" name="mode" value="ldap" id="rb02" disabled>
     </td>
     <td>
-        <label for="rb02"><b>Directory Server (LDAP)</b></label><br>
+        <label for="rb02"><b>Directory Server (LDAP) - Coming soon!</b></label><br>
 	    Integrate with a directory server such as Active Directory or OpenLDAP using the
         LDAP protocol. Users and groups are stored in the directory and treated as read-only.
     </td>

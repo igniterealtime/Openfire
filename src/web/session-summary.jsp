@@ -208,6 +208,7 @@
         <th nowrap><fmt:message key="session.details.resource" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
+        <th nowrap><fmt:message key="session.details.priority" /></th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>

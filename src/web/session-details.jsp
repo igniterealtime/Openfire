@@ -218,6 +218,14 @@
     </tr>
     <tr>
         <td class="c1">
+            <fmt:message key="session.details.priority" />
+        </td>
+        <td>
+            <%= currentSess.getPresence().getPriority() %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
             <fmt:message key="session.details.session_created" />
         </td>
         <td>
@@ -268,8 +276,9 @@
         <th>&nbsp;</th>
         <th><fmt:message key="session.details.name" /></th>
         <th><fmt:message key="session.details.resource" /></th>
-        <th><fmt:message key="session.details.status" /></th>
+        <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.if_presence" /></th>
+        <th><fmt:message key="session.details.priority" /></th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>

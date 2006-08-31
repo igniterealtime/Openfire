@@ -49,7 +49,19 @@
             service.setPort(25);
         }
         service.setUsername(username);
-        service.setPassword(password);
+        // Get hash values of existing password and new one
+        String existingHashPassword = "";
+        String newHashPassword = "";
+        if (service.getPassword() != null) {
+            existingHashPassword = StringUtils.hash(service.getPassword());
+        }
+        if (password != null) {
+            newHashPassword = StringUtils.hash(password);
+        }
+        // Change password if hash values are different
+        if (!existingHashPassword.equals(newHashPassword)) {
+            service.setPassword(password);
+        }
         service.setDebugEnabled(debug);
         service.setSSLEnabled(ssl);
 
@@ -176,7 +188,7 @@
         	<fmt:message key="system.email.server_password" />:            
         </td>
         <td width="1%" nowrap>
-            <input type="password" name="server_password" value="<%= (password != null) ? password : "" %>" size="40" maxlength="150">
+            <input type="password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
         </td>
     </tr>
 

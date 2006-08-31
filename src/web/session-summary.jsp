@@ -218,7 +218,7 @@
         if (sessions.isEmpty()) {
     %>
         <tr>
-            <td colspan="9">
+            <td colspan="10">
 
                 <fmt:message key="session.summary.not_session" />
 

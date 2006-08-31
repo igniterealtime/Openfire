@@ -74,7 +74,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * Manages all active sessions.
      * @see org.jivesoftware.wildfire.gateway.TransportSessionManager
      */
-    public final TransportSessionManager sessionManager = new TransportSessionManager();
+    public final TransportSessionManager sessionManager = new TransportSessionManager(this);
 
     /**
      * Manages registration information.
@@ -706,6 +706,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         for (TransportSession session : sessionManager.getSessions()) {
             registrationLoggedOut(session);
         }
+        sessionManager.shutdown();
     }
 
     /**

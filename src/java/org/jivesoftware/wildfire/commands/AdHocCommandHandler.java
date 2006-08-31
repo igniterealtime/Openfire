@@ -16,6 +16,7 @@ import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.commands.admin.*;
+import org.jivesoftware.wildfire.commands.admin.group.*;
 import org.jivesoftware.wildfire.disco.*;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.handler.IQHandler;
@@ -185,6 +186,13 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new GetNumberUserSessions());
         addCommand(new GetListActiveUsers());
         addCommand(new GetUsersPresence());
+        addCommand(new GetListGroups());
+        addCommand(new GetListGroupUsers());
+        addCommand(new AddGroupUsers());
+        addCommand(new DeleteGroupUsers());
+        addCommand(new AddGroup());
+        addCommand(new UpdateGroup());
+        addCommand(new DeleteGroup());
     }
 
     private void startCommand(AdHocCommand command) {

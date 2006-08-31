@@ -763,7 +763,7 @@ public class NodeSubscription {
     void sendSubscriptionState(IQ originalRequest) {
         IQ result = IQ.createResultIQ(originalRequest);
         Element child = result.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
-        Element entity = child.addElement("entity");
+        Element entity = child.addElement("subscription");
         if (!node.isRootCollectionNode()) {
             entity.addAttribute("node", node.getNodeID());
         }

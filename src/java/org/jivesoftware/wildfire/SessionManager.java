@@ -1401,7 +1401,12 @@ public class SessionManager extends BasicModule {
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
-        return auth_removed || preauth_removed;
+        if (auth_removed || preauth_removed) {
+            // Decrement the counter of user sessions
+            usersSessionsCounter.decrementAndGet();
+            return true;
+        }
+        return false;
     }
 
     public void addAnonymousSession(ClientSession session) {
@@ -1455,10 +1460,7 @@ public class SessionManager extends BasicModule {
                 }
                 finally {
                     // Remove the session
-                    if (removeSession(session)) {
-                        // Decrement the counter of user sessions
-                        usersSessionsCounter.decrementAndGet();
-                    }
+                    removeSession(session);
                 }
             }
             catch (Exception e) {

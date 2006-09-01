@@ -165,7 +165,7 @@ class ServerDialback {
 
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever
             int soTimeout = socket.getSoTimeout();
-            socket.setSoTimeout(5000);
+            socket.setSoTimeout(RemoteServerManager.getSocketTimeout());
 
             XMPPPacketReader reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);

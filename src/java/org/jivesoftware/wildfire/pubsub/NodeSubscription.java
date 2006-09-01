@@ -768,8 +768,6 @@ public class NodeSubscription {
             entity.addAttribute("node", node.getNodeID());
         }
         entity.addAttribute("jid", getJID().toString());
-        NodeAffiliate nodeAffiliate = getAffiliate();
-        entity.addAttribute("affiliation", nodeAffiliate.getAffiliation().name());
         if (node.isMultipleSubscriptionsEnabled()) {
             entity.addAttribute("subid", getID());
         }

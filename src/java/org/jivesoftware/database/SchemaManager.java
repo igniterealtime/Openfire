@@ -139,16 +139,18 @@ public class SchemaManager {
     {
         int currentVersion = -1;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             pstmt = con.prepareStatement(CHECK_VERSION);
             pstmt.setString(1, schemaKey);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 currentVersion = rs.getInt(1);
             }
-            rs.close();
         }
         catch (SQLException sqle) {
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeStatement(pstmt);
             // Releases of Wildfire before 2.6.0 stored a major and minor version
             // number so the normal check for version can fail. Check for the
             // version using the old format in that case.
@@ -158,11 +160,10 @@ public class SchemaManager {
                         pstmt.close();
                     }
                     pstmt = con.prepareStatement(CHECK_VERSION_OLD);
-                    ResultSet rs = pstmt.executeQuery();
+                    rs = pstmt.executeQuery();
                     if (rs.next()) {
                         currentVersion = rs.getInt(1);
                     }
-                    rs.close();
                 }
                 catch (SQLException sqle2) {
                     // The database schema must not be installed.
@@ -171,14 +172,8 @@ public class SchemaManager {
             }
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeStatement(pstmt);
         }
         // If already up to date, return.
         if (currentVersion == requiredVersion) {
@@ -237,7 +232,7 @@ public class SchemaManager {
             }
 
             // Run all upgrade scripts until we're up to the latest schema.
-            for (int i = currentVersion + 1; i <= DATABASE_VERSION; i++) {
+            for (int i = currentVersion + 1; i <= requiredVersion; i++) {
                 InputStream resource = getUpgradeResource(resourceLoader, i, schemaKey);
                 if(resource == null) {
                     continue;

@@ -238,17 +238,8 @@ public class SchemaManager {
 
             // Run all upgrade scripts until we're up to the latest schema.
             for (int i = currentVersion + 1; i <= DATABASE_VERSION; i++) {
-                // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
-                InputStream resource;
-                String path = JiveGlobals.getHomeDirectory() + File.separator + "resources" +
-                        File.separator + "database" + File.separator + "upgrade" + File.separator +
-                        i;
-                String filename = schemaKey + "_" + DbConnectionManager.getDatabaseType() + ".sql";
-                File file = new File(path, filename);
-                try {
-                    resource = new FileInputStream(file);
-                } catch (FileNotFoundException e) {
-                    // If the resource is null, the specific upgrade number is not available.
+                InputStream resource = getUpgradeResource(resourceLoader, i, schemaKey);
+                if(resource == null) {
                     continue;
                 }
                 try {
@@ -271,6 +262,32 @@ public class SchemaManager {
             System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
             return true;
         }
+    }
+
+    private InputStream getUpgradeResource(ResourceLoader resourceLoader, int upgradeVersion,
+                                           String schemaKey)
+    {
+        InputStream resource = null;
+        if ("wildfire".equals(schemaKey)) {
+            // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
+            String path = JiveGlobals.getHomeDirectory() + File.separator + "resources" +
+                    File.separator + "database" + File.separator + "upgrade" + File.separator +
+                    upgradeVersion;
+            String filename = schemaKey + "_" + DbConnectionManager.getDatabaseType() + ".sql";
+            File file = new File(path, filename);
+            try {
+                resource = new FileInputStream(file);
+            }
+            catch (FileNotFoundException e) {
+                // If the resource is null, the specific upgrade number is not available.
+            }
+        }
+        else {
+            String resourceName = "database/upgrade/" + upgradeVersion + "/" + schemaKey + "_" +
+                    DbConnectionManager.getDatabaseType() + ".sql";
+            resource = resourceLoader.loadResource(resourceName);
+        }
+        return resource;
     }
 
     /**

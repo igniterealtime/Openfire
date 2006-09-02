@@ -34,6 +34,7 @@ public class TransportInstance implements PropertyEventListener {
     private TransportType type = null;
     private Boolean enabled = false;
     private Boolean running = false;
+    private String subDomain;
 
     /**
      *  Creates a new transport instance.
@@ -49,6 +50,7 @@ public class TransportInstance implements PropertyEventListener {
         this.nameOfClass = classname;
         this.componentManager = componentManager;
         enabled = JiveGlobals.getBooleanProperty("plugin.gateway."+this.type.toString()+".enabled", false);
+        subDomain = JiveGlobals.getProperty("plugin.gateway."+this.type.toString()+".subdomain", this.type.toString());
     }
 
     /**
@@ -127,7 +129,7 @@ public class TransportInstance implements PropertyEventListener {
         }
 
         try {
-            componentManager.addComponent(this.type.toString(), transport);
+            componentManager.addComponent(this.subDomain, transport);
             PropertyEventDispatcher.addListener(this);
             running = true;
         }
@@ -146,7 +148,7 @@ public class TransportInstance implements PropertyEventListener {
 
         PropertyEventDispatcher.removeListener(this);
         try {
-            componentManager.removeComponent(this.type.toString());
+            componentManager.removeComponent(this.subDomain);
         }
         catch (Exception e) {
             componentManager.getLog().error(e);
@@ -163,51 +165,59 @@ public class TransportInstance implements PropertyEventListener {
     }
 
     public void propertySet(String property, Map params) {
-        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
-            enabled = Boolean.parseBoolean((String)params.get("value"));
-            if (enabled) {
-                if (!running) {
-                    startInstance();
+        if (property.startsWith("plugin.gateway.")) {
+            if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
+                enabled = Boolean.parseBoolean((String)params.get("value"));
+                if (enabled) {
+                    if (!running) {
+                        startInstance();
+                    }
+                }
+                else {
+                    if (running) {
+                        stopInstance();
+                    }
                 }
             }
-            else {
-                if (running) {
-                    stopInstance();
+            else if (property.equals("plugin.gateway."+this.type.toString()+".subdomain")) {
+                String newSubDomain = (String)params.get("value");
+                if (!newSubDomain.equals(this.subDomain)) {
+                    if (running) {
+                        stopInstance();
+                        this.subDomain = newSubDomain;
+                        startInstance();
+                    }
                 }
             }
         }
     }
 
     public void propertyDeleted(String property, Map params) {
-        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
-            if (running) {
-                stopInstance();
+        if (property.startsWith("plugin.gateway.")) {
+            if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
+                if (running) {
+                    stopInstance();
+                }
+            }
+            else if (property.equals("plugin.gateway."+this.type.toString()+".subdomain")) {
+                String newSubDomain = this.type.toString();
+                if (!newSubDomain.equals(this.subDomain)) {
+                    if (running) {
+                        stopInstance();
+                        this.subDomain = newSubDomain;
+                        startInstance();
+                    }
+                }
             }
         }
     }
 
     public void xmlPropertySet(String property, Map params) {
-        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
-            enabled = Boolean.parseBoolean((String)params.get("value"));
-            if (enabled) {
-                if (!running) {
-                    startInstance();
-                }
-            }
-            else {
-                if (running) {
-                    stopInstance();
-                }
-            }
-        }
+        propertySet(property, params);
     }
 
     public void xmlPropertyDeleted(String property, Map params) {
-        if (property.equals("plugin.gateway."+this.type.toString()+".enabled")) {
-            if (running) {
-                stopInstance();
-            }
-        }
+        propertyDeleted(property, params);
     }
 
 }

@@ -21,6 +21,7 @@ import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
+import org.jivesoftware.wildfire.user.PresenceEventDispatcher;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -655,16 +656,26 @@ public class ClientSession extends Session {
             // an available presence again the session will be initialized again thus receiving
             // offline messages and offline presence subscription requests
             setInitialized(false);
+            // Notify listeners that the session is no longer available
+            PresenceEventDispatcher.unavailableSession(this, presence);
         }
         else if (!oldPresence.isAvailable() && this.presence.isAvailable()) {
             // The client is available
             sessionManager.sessionAvailable(this);
             wasAvailable = true;
+            // Notify listeners that the session is now available
+            PresenceEventDispatcher.availableSession(this, presence);
         } else
         if (this.presence.isAvailable() && oldPresence.getPriority() != this.presence.getPriority())
         {
             // The client has changed the priority of his presence
             sessionManager.changePriority(getAddress(), this.presence.getPriority());
+            // Notify listeners that the priority of the session/resource has changed
+            PresenceEventDispatcher.presencePriorityChanged(this, presence);
+        }
+        else if (this.presence.isAvailable()) {
+            // Notify listeners that the show or status value of the presence has changed
+            PresenceEventDispatcher.presenceChanged(this, presence);
         }
         return oldPresence;
     }

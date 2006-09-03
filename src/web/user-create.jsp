@@ -104,6 +104,12 @@
     </head>
     <body>
 
+<% if (UserManager.getUserProvider().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="user.read_only"/>
+</div>
+<% } %>
+
 <p><fmt:message key="user.create.info" /></p>
 
 <%--<c:set var="submit" value="${param.create}"/>--%>
@@ -226,6 +232,20 @@
 <script language="JavaScript" type="text/javascript">
 document.f.username.focus();
 </script>
+
+<%  // Disable the form if a read-only user provider.
+if (UserManager.getUserProvider().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+    var limit = document.forms[0].elements.length;
+    for (i=0;i<limit;i++) {
+      document.forms[0].elements[i].disabled = true;
+    }
+  }
+  disable();
+</script>
+    <% } %>
 
     </body>
 </html>

@@ -92,7 +92,8 @@
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
 
-    <% if (UserManager.getUserProvider().isReadOnly()) { %>
+<%  // Disable the form if a read-only user provider.
+    if (UserManager.getUserProvider().isReadOnly()) { %>
 
 <script language="Javascript" type="text/javascript">
   function disable() {

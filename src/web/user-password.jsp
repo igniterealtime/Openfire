@@ -60,6 +60,12 @@
     </head>
     <body>
 
+<% if (UserManager.getUserProvider().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="user.read_only"/>
+</div>
+<% } %>
+
 <%  if (errors) { %>
 
     <div class="jive-error">
@@ -138,6 +144,20 @@
 <script lang="JavaScript" type="text/javascript">
 document.passform.password.focus();
 </script>
+
+    <%  // Disable the form if a read-only user provider.
+    if (UserManager.getUserProvider().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+    var limit = document.forms[0].elements.length;
+    for (i=0;i<limit;i++) {
+      document.forms[0].elements[i].disabled = true;
+    }
+  }
+  disable();
+</script>
+    <% } %>
 
     </body>
 </html>

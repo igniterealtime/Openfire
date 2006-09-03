@@ -20,6 +20,7 @@
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.Collection"%>
 <%@ page import="java.util.Iterator"%>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -226,10 +227,14 @@
 
 <br><br>
 
+<% if (!UserManager.getUserProvider().isReadOnly()) { %>
+
 <form action="user-edit-form.jsp">
 <input type="hidden" name="username" value="<%= user.getUsername() %>">
 <input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
+
+<% } %>
 
 </body>
 </html>

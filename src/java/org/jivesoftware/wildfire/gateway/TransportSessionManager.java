@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 /**
@@ -108,6 +109,13 @@ public class TransportSessionManager {
      */
     public void removeSession(JID jid) {
         activeSessions.remove(new JID(jid.toBareJID()));
+        try {
+            getTransport().notifyRosterOffline(jid);
+        }
+        catch (UserNotFoundException e) {
+            // Don't care
+        }
+
     }
 
     /**
@@ -143,4 +151,12 @@ public class TransportSessionManager {
         }
     }
 
+    /**
+     * Retrieves the transport this session manager is associated with.
+     *
+     * @return transport associated with this session manager.
+     */
+    public BaseTransport getTransport() {
+        return this.transport;
+    }
 }

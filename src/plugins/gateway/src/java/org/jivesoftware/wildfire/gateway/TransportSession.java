@@ -11,6 +11,8 @@
 package org.jivesoftware.wildfire.gateway;
 
 import org.xmpp.packet.JID;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+
 import java.util.TreeMap;
 
 /**
@@ -92,8 +94,23 @@ public abstract class TransportSession implements Runnable {
         for (Integer i : resources.keySet()) {
             if (resources.get(i).equals(resource)) {
                 resources.remove(i);
+                try {
+                    getTransport().notifyRosterOffline(new JID(getJID().getNode(),getJID().getDomain(),resource));
+                }
+                catch (UserNotFoundException e) {
+                    // Don't care
+                }
                 break;
             }
+        }
+    }
+
+    /**
+     * Removes all resources associated with a session.
+     */
+    public void removeAllResources() {
+        for (String resource : resources.values()) {
+            removeResource(resource); 
         }
     }
 

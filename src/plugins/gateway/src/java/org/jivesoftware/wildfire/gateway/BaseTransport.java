@@ -705,6 +705,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         // Disconnect everyone's session
         for (TransportSession session : sessionManager.getSessions()) {
             registrationLoggedOut(session);
+            session.removeAllResources();
         }
         sessionManager.shutdown();
     }
@@ -889,7 +890,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @param contactjid JID to be removed from roster.
      * @throws UserNotFoundException if userjid not found.
      */
-    void removeFromRoster(JID userjid, JID contactjid) throws UserNotFoundException {
+    public void removeFromRoster(JID userjid, JID contactjid) throws UserNotFoundException {
         // Clean up the user's contact list.
         try {
             Roster roster = rosterManager.getRoster(userjid.getNode());
@@ -1075,7 +1076,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
-     * Cleans a roster of entries related to this transport.
+     * Cleans a roster of entries related to this transport that are not shared.
      *
      * This function will run through the roster of the specified user and clean up any
      * entries that share the domain of this transport.  This is primarily used during registration
@@ -1103,6 +1104,34 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     catch (Exception e) {
                         Log.error("Error removing roster item: " + ri.toString());
                     }
+                }
+            }
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Unable to find roster.");
+        }
+    }
+
+    /**
+     * Sends offline packets for an entire roster to the target user.
+     *
+     * This function will run through the roster of the specified user and send offline
+     * presence packets for each roster item.   This is typically used when a user logs
+     * off so that all of the associated roster items appear offline.  This also sends
+     * the unavailable presence for the transport itself.
+     *
+     * @param jid JID of user whose roster we want to clean up.
+     * @throws UserNotFoundException if the user is not found.
+     */
+    public void notifyRosterOffline(JID jid) throws UserNotFoundException {
+        try {
+            Roster roster = rosterManager.getRoster(jid.getNode());
+            for (RosterItem ri : roster.getRosterItems()) {
+                if (ri.getJid().getDomain().equals(this.jid.getDomain())) {
+                    Presence p = new Presence(Presence.Type.unavailable);
+                    p.setTo(jid);
+                    p.setFrom(ri.getJid());
+                    sendPacket(p);
                 }
             }
         }

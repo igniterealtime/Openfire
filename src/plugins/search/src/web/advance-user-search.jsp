@@ -105,8 +105,11 @@ Users Found: <%=users.size() %>
         <th nowrap><fmt:message key="user.create.username" /></th>
         <th nowrap><fmt:message key="user.create.name" /></th>
         <th nowrap><fmt:message key="user.summary.created" /></th>
+        <%  // Don't allow editing or deleting if users are read-only.
+            if (!UserManager.getUserProvider().isReadOnly()) { %>
         <th nowrap><fmt:message key="user.summary.edit" /></th>
         <th nowrap><fmt:message key="global.delete" /></th>
+        <% } %>
     </tr>
 </thead>
 <tbody>
@@ -165,6 +168,8 @@ Users Found: <%=users.size() %>
        <td width="35%">
            <%= user.getEmail() %> &nbsp;
        </td>
+        <%  // Don't allow editing or deleting if users are read-only.
+            if (!UserManager.getUserProvider().isReadOnly()) { %>
        <td width="1%" align="center">
            <a href="../../user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
               title="<fmt:message key="global.click_edit" />"
@@ -175,6 +180,7 @@ Users Found: <%=users.size() %>
               title="<fmt:message key="global.click_delete" />"
               ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
        </td>
+       <% } %>
    </tr>
 <%
         }

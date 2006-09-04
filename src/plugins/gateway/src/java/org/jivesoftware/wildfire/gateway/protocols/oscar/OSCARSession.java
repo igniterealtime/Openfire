@@ -112,43 +112,93 @@ public class OSCARSession extends TransportSession {
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
+     * Finds the id number of a group specified or creates a new one and returns that id.
+     *
+     * @param groupName Name of the group we are looking for.
+     * @return Id number of the group.
      */
-    public void addContact(RosterItem item) {
-        Integer groupId = -1;
-
+    public Integer getGroupIdOrCreateNew(String groupName) {
         for (GroupItem g : groups.values()) {
-            if ("Transport Buddies".equals(g.getGroupName())) {
-                groupId = g.getId();
+            if (groupName.equals(g.getGroupName())) {
+                return g.getId();
             }
         }
 
-        if (groupId == -1) {
-            Integer newGroupId = highestGroupId + 1;
-            GroupItem newGroup = new GroupItem("Transport Buddies", newGroupId);
-            request(new CreateItemsCmd(new SsiItem[] { newGroup.toSsiItem() }));
-            highestGroupId = newGroupId;
-            groupId = newGroupId;
-            groups.put(groupId, newGroup);
+        // Group doesn't exist, lets create a new one.
+        Integer newGroupId = highestGroupId + 1;
+        GroupItem newGroup = new GroupItem(groupName, newGroupId);
+        request(new CreateItemsCmd(new SsiItem[] { newGroup.toSsiItem() }));
+        highestGroupId = newGroupId;
+        groups.put(newGroupId, newGroup);
+
+        return newGroupId;
+    }
+
+    /**
+     * Synchronizes the list of groups a contact is a member of, updating nicknames in
+     * the process.
+     *
+     * @param contact Screen name/UIN of the contact.
+     * @param nickname Nickname of the contact (should not be null)
+     * @param grouplist List of groups the contact should be a member of.
+     */
+    public void syncContactGroupsAndNickname(String contact, String nickname, List<String> grouplist) {
+        if (grouplist.isEmpty()) {
+            grouplist.add("Transport Buddies");
+        }
+        // First, lets take the known good list of groups and sync things up server side.
+        for (String group : grouplist) {
+            Integer groupId = getGroupIdOrCreateNew(group);
+
+            Integer newBuddyId = 1;
+            if (highestBuddyIdPerGroup.containsKey(groupId)) {
+                newBuddyId = highestBuddyIdPerGroup.get(groupId) + 1;
+            }
+            highestBuddyIdPerGroup.put(groupId, newBuddyId);
+
+            BuddyItem newBuddy = new BuddyItem(contact, newBuddyId, groupId);
+            newBuddy.setAlias(nickname);
+            request(new CreateItemsCmd(new SsiItem[] { newBuddy.toSsiItem() }));
+            buddies.put(groupId+"."+newBuddyId, newBuddy);
+        }
+        // Now, lets clean up any groups this contact should no longer be a member of.
+        for (BuddyItem buddy : buddies.values()) {
+            if (buddy.getScreenname().equals(contact)) {
+                if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
+                    request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    buddies.remove(buddy.getGroupId()+"."+buddy.getId());
+                }
+                else {
+                    if (!buddy.getAlias().equals(nickname)) {
+                        buddy.setAlias(nickname);
+                        request(new ModifyItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void addContact(RosterItem item) {
+        String legacyId = getTransport().convertJIDToID(item.getJid());
+        String nickname = item.getNickname();
+        if (nickname == null || nickname.equals("")) {
+            nickname = legacyId;
         }
 
-        Integer newBuddyId = 1;
-        if (highestBuddyIdPerGroup.containsKey(groupId)) {
-            newBuddyId = highestBuddyIdPerGroup.get(groupId) + 1;
-        }
-        highestBuddyIdPerGroup.put(groupId, newBuddyId);
-
-        BuddyItem newBuddy = new BuddyItem(getTransport().convertJIDToID(item.getJid()), newBuddyId, groupId);
-        request(new CreateItemsCmd(new SsiItem[] { newBuddy.toSsiItem() }));
-        buddies.put(groupId+"."+newBuddyId, newBuddy);
+        // Syncing takes care of all the dirty work.
+        syncContactGroupsAndNickname(legacyId, nickname, item.getGroups());
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
+        String legacyId = getTransport().convertJIDToID(item.getJid());
         for (BuddyItem i : buddies.values()) {
-            if (i.getScreenname().equals(getTransport().convertJIDToID(item.getJid()))) {
+            if (i.getScreenname().equals(legacyId)) {
                 request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
                 buddies.remove(i.getGroupId()+"."+i.getId());
             }
@@ -159,7 +209,14 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-        // TODO: Implement this
+        String legacyId = getTransport().convertJIDToID(item.getJid());
+        String nickname = item.getNickname();
+        if (nickname == null || nickname.equals("")) {
+            nickname = legacyId;
+        }
+
+        // Syncing takes care of all of the dirty work.
+        syncContactGroupsAndNickname(legacyId, nickname, item.getGroups());
     }
 
     /**
@@ -169,11 +226,23 @@ public class OSCARSession extends TransportSession {
         request(new SendImIcbm(getTransport().convertJIDToID(jid), message));
     }
 
+    /**
+     * Opens/creates a new BOS connection to a specific server and port, given a cookie.
+     *
+     * @param server Server to connect to.
+     * @param port Port to connect to.
+     * @param cookie Auth cookie.
+     */
     void startBosConn(String server, int port, ByteBlock cookie) {
         bosConn = new BOSConnection(server, port, this, cookie);
         bosConn.connect();
     }
 
+    /**
+     * Registers the set of SNAC families that the given connection supports.
+     *
+     * @param conn FLAP connection to be registered.
+     */
     void registerSnacFamilies(BasicFlapConnection conn) {
         snacMgr.register(conn);
     }

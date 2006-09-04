@@ -720,6 +720,13 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
+     * Returns the roster manager for the transport.
+     */
+    public RosterManager getRosterManager() {
+        return this.rosterManager;
+    }
+
+    /**
      * Returns the name (type) of the transport.
      */
     public String getName() {

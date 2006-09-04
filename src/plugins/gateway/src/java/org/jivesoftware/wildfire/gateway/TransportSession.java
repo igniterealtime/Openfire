@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.gateway;
 import org.xmpp.packet.JID;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.Roster;
 
 import java.util.TreeMap;
 
@@ -134,12 +135,26 @@ public abstract class TransportSession implements Runnable {
     }
 
     /**
-     * Retrieves the transport associated wtih the session.
+     * Retrieves the transport associated with the session.
      *
      * @return Transport associated with the session.
      */
     public BaseTransport getTransport() {
         return transport;
+    }
+
+    /**
+     * Retrieves the roster associated with the session.
+     *
+     * @return Roster associated with the session, or null if none.
+     */
+    public Roster getRoster() {
+        try {
+            return getTransport().getRosterManager().getRoster(getJID().getNode());
+        }
+        catch (UserNotFoundException e) {
+            return null;
+        }
     }
 
     /**

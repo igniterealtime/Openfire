@@ -11,10 +11,8 @@
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
+
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
@@ -195,33 +193,89 @@ public class YahooSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
-        // @todo check jabber group and use it
-        try {
-            yahooSession.addFriend(item.getJid().getNode(), "Yahoo Transport");
-        }
-        catch (IOException e) {
-            Log.error("Failed to add yahoo user.");
-        }
+        // TODO: Sync nickname (local storage)
+        // Syncing will take are of add.
+        String contact = getTransport().convertJIDToID(item.getJid());
+        syncContactGroups(contact, item.getGroups());
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-        // @todo check jabber group and use it
-        try {
-            yahooSession.removeFriend(item.getJid().getNode(), "Yahoo Transport");
-        }
-        catch (IOException e) {
-            Log.error("Failed to remove yahoo user.");
+        // TODO: Clear local stored nickname.
+        String contact = getTransport().convertJIDToID(item.getJid());
+        for (YahooGroup yahooGroup : yahooSession.getGroups()) {
+            if (yahooGroup.getIndexOfFriend(contact) != -1) {
+                try {
+                    yahooSession.removeFriend(contact, yahooGroup.getName());
+                }
+                catch (IOException e) {
+                    Log.error("Failed to remove yahoo user.");
+                }
+            }
         }
     }
 
-       /**
+    /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-        // TODO: Do something here.
+        // TODO: Sync nickname (local storage)
+           String contact = getTransport().convertJIDToID(item.getJid());
+           syncContactGroups(contact, item.getGroups());
+    }
+
+    /**
+     * Given a legacy contact and a list of groups, makes sure that the list is in sync with
+     * the actual group list.
+     *
+     * @param contact Email address of contact.
+     * @param groups List of groups contact should be in.
+     */
+    public void syncContactGroups(String contact, List<String> groups) {
+        if (groups.isEmpty()) {
+            groups.add("Transport Buddies");
+        }
+        HashMap<String,YahooGroup> yahooGroups = new HashMap<String,YahooGroup>();
+        // Lets create a hash of these for easier reference.
+        for (YahooGroup yahooGroup : yahooSession.getGroups()) {
+            yahooGroups.put(yahooGroup.getName(), yahooGroup);
+        }
+        // Create groups(add user to them) that do not currently exist.
+        for (String group : groups) {
+            if (!yahooGroups.containsKey(group)) {
+                try {
+                    yahooSession.addFriend(contact, group);
+                }
+                catch (IOException e) {
+                    Log.error("Error while syncing Yahoo groups.");
+                }
+            }
+        }
+        // Now we handle adds and removes, syncing the two lists.
+        for (YahooGroup yahooGroup : yahooSession.getGroups()) {
+            if (groups.contains(yahooGroup.getName())) {
+                if (yahooGroup.getIndexOfFriend(contact) == -1) {
+                    try {
+                        yahooSession.addFriend(contact, yahooGroup.getName());
+                    }
+                    catch (IOException e) {
+                        Log.error("Error while syncing Yahoo groups.");
+                    }
+                }
+            }
+            else {
+                if (yahooGroup.getIndexOfFriend(contact) != -1) {
+                    try {
+                        yahooSession.removeFriend(contact, yahooGroup.getName());
+                    }
+                    catch (IOException e) {
+                        Log.error("Error while syncing Yahoo groups.");
+                    }
+                }
+            }
+        }
     }
 
     /**

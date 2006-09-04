@@ -62,6 +62,11 @@ public class MSNSession extends TransportSession {
     private HashMap<String,MsnContact> msnContacts = new HashMap<String,MsnContact>();
 
     /**
+     * MSN groups.
+     */
+    private HashMap<String,MsnGroup> msnGroups = new HashMap<String,MsnGroup>();
+
+    /**
      * Login status
      */
     private boolean loginStatus = false;
@@ -75,8 +80,8 @@ public class MSNSession extends TransportSession {
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
             msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
-            msnMessenger.setLogIncoming(true);
-            msnMessenger.setLogOutgoing(true);
+            msnMessenger.setLogIncoming(false);
+            msnMessenger.setLogOutgoing(false);
             msnMessenger.addListener(new MSNListener(this));
             msnMessenger.login();
         }
@@ -125,6 +130,13 @@ public class MSNSession extends TransportSession {
     }
 
     /**
+     * Records information about a group on the user's contact list.
+     */
+    public void storeGroup(MsnGroup msnGroup) {
+        msnGroups.put(msnGroup.getGroupName(), msnGroup);
+    }
+
+    /**
      * Syncs up the MSN roster with the jabber roster.
      */
     public void syncUsers() {
@@ -162,23 +174,77 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
-        // @todo check jabber group and use it
-        msnMessenger.addFriend(Email.parseStr(getTransport().convertJIDToID(item.getJid())), getTransport().convertJIDToID(item.getJid()));
+        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        String nickname = getTransport().convertJIDToID(item.getJid());
+        if (item.getNickname() != null && !item.getNickname().equals("")) {
+            nickname = item.getNickname();
+        }
+        msnMessenger.addFriend(contact, nickname);
+        syncContactGroups(contact, item.getGroups());
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-        // @todo check jabber group and use it
-        msnMessenger.removeFriend(Email.parseStr(getTransport().convertJIDToID(item.getJid())), false);
+        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        // TODO: JML doesn't actually -do- removal yet.  Dammit.
+        // Well lets at least run through the motions...
+        MsnContact msnContact = msnContacts.get(contact.toString());
+        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
+            msnMessenger.removeFriend(contact, msnGroup.getGroupId());
+        }
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-        // TODO: Implement this
+        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        String nickname = getTransport().convertJIDToID(item.getJid());
+        if (item.getNickname() != null && !item.getNickname().equals("")) {
+            nickname = item.getNickname();
+        }
+        msnMessenger.renameFriend(contact, nickname);
+        syncContactGroups(contact, item.getGroups());
+    }
+
+    /**
+     * Given a legacy contact and a list of groups, makes sure that the list is in sync with
+     * the actual group list.
+     *
+     * @param contact Email address of contact.
+     * @param groups List of groups contact should be in.
+     */
+    public void syncContactGroups(Email contact, List<String> groups) {
+        if (groups.isEmpty()) {
+            groups.add("Transport Buddies");
+        }
+        MsnContact msnContact = msnContacts.get(contact.toString());
+        // Create groups that do not currently exist.
+        for (String group : groups) {
+            if (!msnGroups.containsKey(group)) {
+                msnMessenger.addGroup(group);
+            }
+        }
+        // Lets update our list of groups.
+        for (MsnGroup msnGroup : msnMessenger.getContactList().getGroups()) {
+            storeGroup(msnGroup);
+        }
+        // Make sure contact belongs to groups that we want.
+        for (String group : groups) {
+            MsnGroup msnGroup = msnGroups.get(group);
+            if (!msnContact.belongGroup(msnGroup)) {
+                msnMessenger.copyFriend(contact, group);
+            }
+        }
+        // Now we will clean up groups that we should no longer belong to.
+        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
+            if (!groups.contains(msnGroup.getGroupName())) {
+                // TODO: This is not going to work.  removeFriend is ignored.
+                msnMessenger.removeFriend(contact, msnGroup.getGroupId());
+            }
+        }
     }
 
     /**
@@ -210,7 +276,10 @@ public class MSNSession extends TransportSession {
         if (isLoggedIn()) {
             msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
         }
-        // TODO: Should I consider logging them in?
+        else {
+            // Hrm, not logged in?  Lets fix that.
+            msnMessenger.login();
+        }
     }
 
     /**

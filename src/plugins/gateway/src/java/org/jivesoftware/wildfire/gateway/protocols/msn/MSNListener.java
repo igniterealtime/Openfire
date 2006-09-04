@@ -17,6 +17,7 @@ import net.sf.jml.event.MsnAdapter;
 import net.sf.jml.MsnSwitchboard;
 import net.sf.jml.MsnContact;
 import net.sf.jml.MsnMessenger;
+import net.sf.jml.MsnGroup;
 import net.sf.jml.message.MsnInstantMessage;
 import net.sf.jml.message.MsnControlMessage;
 import net.sf.jml.message.MsnDatacastMessage;
@@ -120,6 +121,9 @@ public class MSNListener extends MsnAdapter {
         for (MsnContact msnContact : messenger.getContactList().getContacts()) {
             Log.debug("Got contact "+msnContact);
             msnSession.storeFriend(msnContact);
+        }
+        for (MsnGroup msnGroup : messenger.getContactList().getGroups()) {
+            msnSession.storeGroup(msnGroup);
         }
         msnSession.syncUsers();
     }

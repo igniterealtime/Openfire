@@ -23,6 +23,7 @@ import javax.naming.ldap.Control;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.SortControl;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -32,6 +33,9 @@ import java.util.*;
  * @author Matt Tucker
  */
 public class LdapUserProvider implements UserProvider {
+
+    // LDAP date format parser.
+    private static SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
     private LdapManager manager;
     private Map<String, String> searchFields;
@@ -70,23 +74,33 @@ public class LdapUserProvider implements UserProvider {
             // Load record.
             String[] attributes = new String[]{
                 manager.getUsernameField(), manager.getNameField(),
-                manager.getEmailField()
+                manager.getEmailField(), "createTimestamp", "modifyTimestamp"
             };
             ctx = manager.getContext();
             Attributes attrs = ctx.getAttributes(userDN, attributes);
             String name = null;
-            String email = null;
             Attribute nameField = attrs.get(manager.getNameField());
             if (nameField != null) {
                 name = (String)nameField.get();
             }
+            String email = null;
             Attribute emailField = attrs.get(manager.getEmailField());
             if (emailField != null) {
                 email = (String)emailField.get();
             }
+            Date creationDate = new Date();
+            Attribute creationDateField = attrs.get("createTimestamp");
+            if (creationDateField != null) {
+                creationDate = parseLDAPDate((String)creationDateField.get());
+            }
+            Date modificationDate = new Date();
+            Attribute modificationDateField = attrs.get("modifyTimestamp");
+            if (modificationDateField != null) {
+                modificationDate = parseLDAPDate((String)modificationDateField.get());
+            }
             // Escape the username so that it can be used as a JID.
             username = JID.escapeNode(username);
-            return new User(username, name, email, new Date(), new Date());
+            return new User(username, name, email, creationDate, modificationDate);
         }
         catch (Exception e) {
             throw new UserNotFoundException(e);
@@ -480,5 +494,41 @@ public class LdapUserProvider implements UserProvider {
 
     public boolean isReadOnly() {
         return true;
+    }
+
+    /**
+     * Parses dates/time stamps stored in LDAP. Some possible values:
+     *
+     * <ul>
+     *      <li>20020228150820</li>
+     *      <li>20030228150820Z</li>
+     *      <li>20050228150820.12</li>
+     *      <li>20060711011740.0Z</li>
+     * </ul>
+     *
+     * @param dateText the date string.
+     * @return the Date.
+     */
+    private static Date parseLDAPDate(String dateText) {
+        // If the date ends with a "Z", that means that it's in the UTC time zone. Otherwise,
+        // Use the default time zone.
+        boolean useUTC = false;
+        if (dateText.endsWith("Z")) {
+            useUTC = true;
+        }
+        Date date = new Date();
+        try {
+            if (useUTC) {
+                ldapDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            }
+            else {
+                ldapDateFormat.setTimeZone(TimeZone.getDefault());
+            }
+            date = ldapDateFormat.parse(dateText);
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        return date;
     }
 }

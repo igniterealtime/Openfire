@@ -17,6 +17,7 @@ import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -158,19 +159,26 @@ public class MSNSession extends TransportSession {
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
-    public void addContact(JID jid) {
+    public void addContact(RosterItem item) {
         // @todo check jabber group and use it
-        msnMessenger.addFriend(Email.parseStr(getTransport().convertJIDToID(jid)), getTransport().convertJIDToID(jid));
+        msnMessenger.addFriend(Email.parseStr(getTransport().convertJIDToID(item.getJid())), getTransport().convertJIDToID(item.getJid()));
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.xmpp.packet.JID)
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
-    public void removeContact(JID jid) {
+    public void removeContact(RosterItem item) {
         // @todo check jabber group and use it
-        msnMessenger.removeFriend(Email.parseStr(getTransport().convertJIDToID(jid)), false);
+        msnMessenger.removeFriend(Email.parseStr(getTransport().convertJIDToID(item.getJid())), false);
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void updateContact(RosterItem item) {
+        // TODO: Implement this
     }
 
     /**

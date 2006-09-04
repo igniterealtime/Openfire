@@ -21,6 +21,7 @@ import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.roster.RosterItem;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import ymsg.network.LoginRefusedException;
@@ -191,29 +192,36 @@ public class YahooSession extends TransportSession {
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
-    public void addContact(JID jid) {
+    public void addContact(RosterItem item) {
         // @todo check jabber group and use it
         try {
-            yahooSession.addFriend(jid.getNode(), "Yahoo Transport");
+            yahooSession.addFriend(item.getJid().getNode(), "Yahoo Transport");
         }
         catch (IOException e) {
-            Log.error("Failed to send message to yahoo user.");
+            Log.error("Failed to add yahoo user.");
         }
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.xmpp.packet.JID)
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
-    public void removeContact(JID jid) {
+    public void removeContact(RosterItem item) {
         // @todo check jabber group and use it
         try {
-            yahooSession.removeFriend(jid.getNode(), "Yahoo Transport");
+            yahooSession.removeFriend(item.getJid().getNode(), "Yahoo Transport");
         }
         catch (IOException e) {
-            Log.error("Failed to send message to yahoo user.");
+            Log.error("Failed to remove yahoo user.");
         }
+    }
+
+       /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void updateContact(RosterItem item) {
+        // TODO: Do something here.
     }
 
     /**

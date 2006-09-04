@@ -32,6 +32,7 @@ import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportBuddy;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.roster.RosterItem;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -111,9 +112,9 @@ public class OSCARSession extends TransportSession {
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.xmpp.packet.JID)
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
-    public void addContact(JID jid) {
+    public void addContact(RosterItem item) {
         Integer groupId = -1;
 
         for (GroupItem g : groups.values()) {
@@ -137,21 +138,28 @@ public class OSCARSession extends TransportSession {
         }
         highestBuddyIdPerGroup.put(groupId, newBuddyId);
 
-        BuddyItem newBuddy = new BuddyItem(getTransport().convertJIDToID(jid), newBuddyId, groupId);
+        BuddyItem newBuddy = new BuddyItem(getTransport().convertJIDToID(item.getJid()), newBuddyId, groupId);
         request(new CreateItemsCmd(new SsiItem[] { newBuddy.toSsiItem() }));
         buddies.put(groupId+"."+newBuddyId, newBuddy);
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.xmpp.packet.JID)
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
-    public void removeContact(JID jid) {
+    public void removeContact(RosterItem item) {
         for (BuddyItem i : buddies.values()) {
-            if (i.getScreenname().equals(getTransport().convertJIDToID(jid))) {
+            if (i.getScreenname().equals(getTransport().convertJIDToID(item.getJid()))) {
                 request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
                 buddies.remove(i.getGroupId()+"."+i.getId());
             }
         }
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
+     */
+    public void updateContact(RosterItem item) {
+        // TODO: Implement this
     }
 
     /**

@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
@@ -80,6 +81,21 @@ public class TransportSessionManager {
      */
     public TransportSession getSession(JID jid) throws NotFoundException {
         TransportSession session = activeSessions.get(new JID(jid.toBareJID()));
+        if (session == null) {
+            throw new NotFoundException("Could not find session requested.");
+        }
+        return session;
+    }
+
+    /**
+     * retrieves the session instance for a given user.
+     *
+     * @param username Username of the instance to be retrieved.
+     * @throws NotFoundException if the given username is not found.
+     * @return TransportSession instance requested.
+     */
+    public TransportSession getSession(String username) throws NotFoundException {
+        TransportSession session = activeSessions.get(XMPPServer.getInstance().createJID(username, null));
         if (session == null) {
             throw new NotFoundException("Could not find session requested.");
         }

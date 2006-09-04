@@ -308,11 +308,13 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     }
                     else if (packet.getType() == Presence.Type.subscribe) {
                         // User wants to add someone to their legacy roster.
-                        session.addContact(packet.getTo());
+                        // TODO: experimenting with doing this a different way
+                        //session.addContact(packet.getTo());
                     }
                     else if (packet.getType() == Presence.Type.unsubscribe) {
                         // User wants to remove someone from their legacy roster.
-                        session.removeContact(packet.getTo());
+                        // TODO: experimenting with doing this a different way
+                        //session.removeContact(packet.getTo());
                     }
                     else {
                         // Anything else we will ignore for now.
@@ -1172,7 +1174,17 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactUpdated(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactUpdated(Roster roster, RosterItem item) {
-        // TODO: do nothing for now
+        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
+            // Not ours, not our problem.
+            return;
+        }
+        try {
+            TransportSession session = sessionManager.getSession(roster.getUsername());
+            session.updateContact(item);
+        }
+        catch (NotFoundException e) {
+            // Well we just don't care then.
+        }
     }
 
     /**
@@ -1181,8 +1193,17 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactAdded(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactAdded(Roster roster, RosterItem item) {
-        // Don't care
-        // TODO: Evaluate how we -could- use this.. like what if roster is edited not via xmpp client?
+        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
+            // Not ours, not our problem.
+            return;
+        }
+        try {
+            TransportSession session = sessionManager.getSession(roster.getUsername());
+            session.addContact(item);
+        }
+        catch (NotFoundException e) {
+            // Well we just don't care then.
+        }
     }
 
     /**
@@ -1191,8 +1212,17 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactDeleted(Roster roster, RosterItem item) {
-        // Don't care
-        // TODO: Evaluate how we -could- use this.. like what if roster is edited not via xmpp client?
+        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
+            // Not ours, not our problem.
+            return;
+        }
+        try {
+            TransportSession session = sessionManager.getSession(roster.getUsername());
+            session.removeContact(item);
+        }
+        catch (NotFoundException e) {
+            //
+        }
     }
 
     /**

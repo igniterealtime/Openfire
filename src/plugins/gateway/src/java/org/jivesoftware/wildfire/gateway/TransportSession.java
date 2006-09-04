@@ -12,6 +12,7 @@ package org.jivesoftware.wildfire.gateway;
 
 import org.xmpp.packet.JID;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.roster.RosterItem;
 
 import java.util.TreeMap;
 
@@ -237,16 +238,23 @@ public abstract class TransportSession implements Runnable {
     /**
      * Adds a legacy contact to the legacy service.
      *
-     * @param jid JID associated with the legacy contact.
+     * @param item Roster item associated with the legacy contact.
      */
-    public abstract void addContact(JID jid);
+    public abstract void addContact(RosterItem item);
 
     /**
      * Removes a legacy contact from the legacy service.
      *
-     * @param jid JID associated with the legacy contact.
+     * @param item Roster item associated with the legacy contact.
      */
-    public abstract void removeContact(JID jid);
+    public abstract void removeContact(RosterItem item);
+
+    /**
+     * Updates a legacy contact on the legacy service.
+     *
+     * @param item Roster item associated with the legacy contact.
+     */
+    public abstract void updateContact(RosterItem item);
 
     /**
      * Sends an outgoing message through the legacy serivce.

@@ -671,7 +671,7 @@ public class LdapManager {
      * Returns the LDAP field name that the user's name is stored in. By default
      * this is "cn". Another common value is "displayName".
      *
-     * @return the LDAP field that that correspond's to the user's name.
+     * @return the LDAP field that that corresponds to the user's name.
      */
     public String getNameField() {
         return nameField;
@@ -681,7 +681,7 @@ public class LdapManager {
      * Sets the LDAP field name that the user's name is stored in. By default
      * this is "cn". Another common value is "displayName".
      *
-     * @param nameField the LDAP field that that correspond's to the user's name.
+     * @param nameField the LDAP field that that corresponds to the user's name.
      */
     public void setNameField(String nameField) {
         this.nameField = nameField;
@@ -697,7 +697,7 @@ public class LdapManager {
      * Returns the LDAP field name that the user's email address is stored in.
      * By default this is "mail".
      *
-     * @return the LDAP field that that correspond's to the user's email
+     * @return the LDAP field that that corresponds to the user's email
      *      address.
      */
     public String getEmailField() {
@@ -708,7 +708,7 @@ public class LdapManager {
      * Sets the LDAP field name that the user's email address is stored in.
      * By default this is "mail".
      *
-     * @param emailField the LDAP field that that correspond's to the user's
+     * @param emailField the LDAP field that that corresponds to the user's
      *      email address.
      */
     public void setEmailField(String emailField) {

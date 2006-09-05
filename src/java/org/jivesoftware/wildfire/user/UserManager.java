@@ -162,6 +162,9 @@ public class UserManager implements IQResultListener {
      * @throws UserNotFoundException if the user does not exist.
      */
     public User getUser(String username) throws UserNotFoundException {
+        if (username == null) {
+            throw new UserNotFoundException("Username cannot be null");
+        }
         // Make sure that the username is valid.
         username = username.trim().toLowerCase();
         User user = userCache.get(username);

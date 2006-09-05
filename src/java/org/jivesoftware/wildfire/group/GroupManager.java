@@ -16,6 +16,8 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.event.GroupEventDispatcher;
 import org.jivesoftware.wildfire.event.GroupEventListener;
 import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -55,7 +57,7 @@ public class GroupManager {
         // A cache for meta-data around groups: count, group names, groups associated with
         // a particular user
         groupMetaCache = CacheManager.initializeCache("Group Metadata Cache", "groupMeta",
-                512 * 1024, JiveConstants.MINUTE*10);
+                512 * 1024, JiveConstants.MINUTE*15);
 
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",
@@ -105,7 +107,21 @@ public class GroupManager {
         // TODO: use a task engine instead of creating a thread directly.
         Runnable task = new Runnable() {
             public void run() {
-                getSharedGroups();
+                Collection<Group> groups = getSharedGroups();
+                // Load each group into cache.
+                for (Group group : groups) {
+                    // Load each user in the group into cache.
+                    for (JID jid : group.getMembers()) {
+                        try {
+                            if (XMPPServer.getInstance().isLocal(jid)) {
+                                UserManager.getInstance().getUser(jid.getNode());
+                            }
+                        }
+                        catch (UserNotFoundException unfe) {
+                            // Ignore.
+                        }
+                    }
+                }
             }
         };
         Thread thread = new Thread(task);

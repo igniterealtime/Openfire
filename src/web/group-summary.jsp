@@ -81,7 +81,7 @@
 <fmt:message key="group.summary.total_group" /> <b><%= groupCount %></b>
 <%  if (numPages > 1) { %>
 
-    , <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
+    , <fmt:message key="global.showing" /> <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > groupCount ? groupCount:start+range) %>
 
 <%  } %>
         </td>

@@ -80,12 +80,12 @@
 
 <p>
 <fmt:message key="user.summary.total_user" />:
-<b><%= LocaleUtils.getLocalizedNumber(webManager.getUserManager().getUserCount()) %></b> --
+<b><%= LocaleUtils.getLocalizedNumber(userCount) %></b> --
 
 <%  if (numPages > 1) { %>
 
     <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range) %>,
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > userCount ? userCount:start+range) %>,
 
 <%  } %>
 <fmt:message key="user.summary.sorted" />
@@ -223,12 +223,12 @@
         <td width="1%" align="center">
             <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
+             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
         </td>
         <% } %>
     </tr>

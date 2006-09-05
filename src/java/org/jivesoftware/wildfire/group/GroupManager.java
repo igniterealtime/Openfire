@@ -30,10 +30,6 @@ public class GroupManager {
 
     Cache<String, Group> groupCache;
     Cache<String, Collection<Group>> userGroupCache;
-    // Holds the cache key for the global group in the users groups cache
-    private final String globalGroupKey = "ALL GROUPS";
-    // Holds the cache key for the shared groups in the users groups cache
-    private final String sharedGroupsKey = "SHARED GROUPS";
     private GroupProvider provider;
 
     private static GroupManager instance = new GroupManager();
@@ -140,7 +136,7 @@ public class GroupManager {
         if (group == null) {
             synchronized (name.intern()) {
                 group = groupCache.get(name);
-                // If ID wan't found in cache, load it up and put it there.
+                // If group wan't found in cache, load it up and put it there.
                 if (group == null) {
                     group = provider.getGroup(name);
                     groupCache.put(name, group);
@@ -179,13 +175,18 @@ public class GroupManager {
         JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
         for (Group group : getGroups(userJID)) {
             if (group.getAdmins().contains(userJID)) {
-                group.getAdmins().remove(userJID);
+                if (group.getAdmins().remove(userJID)) {
+                    // Remove the group from cache.
+                    groupCache.remove(group.getName());
+                }
             }
             else {
-                group.getMembers().remove(userJID);
+                if (group.getMembers().remove(userJID)) {
+                    // Remove the group from cache.
+                    groupCache.remove(group.getName());
+                }
             }
         }
-        userGroupCache.clear();
     }
 
     /**
@@ -194,11 +195,8 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
-        Collection<Group> groups = userGroupCache.get(globalGroupKey);
-        if(groups == null) {
-            return provider.getGroupCount();
-        }
-        return groups.size();
+        // TODO: add caching.
+        return provider.getGroupCount();
     }
 
     /**
@@ -207,16 +205,9 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        synchronized (globalGroupKey) {
-            Collection<Group> groups = userGroupCache.get(globalGroupKey);
-            if (groups == null) {
-                groups = provider.getGroups();
-                // Add to cache and ensure correct identity
-                groups = cacheAndEnsureIdentity(groups);
-                userGroupCache.put(globalGroupKey, groups);
-            }
-            return groups;
-        }
+        // TODO: add caching.
+        Collection<String> groupNames = provider.getGroupNames();
+        return new GroupCollection(groupNames);
     }
 
     /**
@@ -225,38 +216,25 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> getSharedGroups() {
-        synchronized (sharedGroupsKey) {
-            Collection<Group> groups = userGroupCache.get(sharedGroupsKey);
-            if (groups == null) {
-                Set<String> groupsNames = Group.getSharedGroupsNames();
-                groups = provider.getGroups(groupsNames);
-                // Add to cache and ensure correct identity
-                groups = cacheAndEnsureIdentity(groups);
-                userGroupCache.put(sharedGroupsKey, groups);
-            }
-            return groups;
-        }
+        Collection<String> groupNames = Group.getSharedGroupsNames();
+        return new GroupCollection(groupNames);
     }
 
     /**
-     * Returns an iterator for all groups according to a filter.
-     * <p/>
-     * This is useful to support
-     * pagination in a GUI where you may only want to display a certain
-     * number of results per page. It is possible that the
-     * number of results returned will be less than that specified by
-     * numResults if numResults is greater than the number of records left in
-     * the system to display.
+     * Returns all groups given a start index and desired number of results. This is
+     * useful to support pagination in a GUI where you may only want to display a certain
+     * number of results per page. It is possible that the number of results returned will
+     * be less than that specified by numResults if numResults is greater than the number
+     * of records left in the system to display.
      *
      * @param startIndex start index in results.
      * @param numResults number of results to return.
      * @return an Iterator for all groups in the specified range.
      */
     public Collection<Group> getGroups(int startIndex, int numResults) {
-        Collection<Group> groups = provider.getGroups(startIndex, numResults);
-        // Add to cache and ensure correct identity
-        groups = cacheAndEnsureIdentity(groups);
-        return groups;
+        // TODO: add caching
+        Collection<String> groupNames = provider.getGroupNames(startIndex, numResults);
+        return new GroupCollection(groupNames);
     }
 
     /**
@@ -276,17 +254,9 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        String userID = user.toString();
-        synchronized (userID.intern()) {
-            Collection<Group> groups = userGroupCache.get(userID);
-            if (groups == null) {
-                groups = provider.getGroups(user);
-                // Add to cache and ensure correct identity
-                groups = cacheAndEnsureIdentity(groups);
-                userGroupCache.put(userID, groups);
-            }
-            return groups;
-        }
+        // TODO: add caching
+        Collection<String> groupNames = provider.getGroupNames(user);
+        return new GroupCollection(groupNames);
     }
 
     /**
@@ -320,7 +290,8 @@ public class GroupManager {
      * @return all groups that match the search.
      */
     public Collection<Group> search(String query) {
-        return provider.search(query);
+        Collection<String> groupNames = provider.search(query);
+        return new GroupCollection(groupNames);
     }
 
     /**
@@ -337,7 +308,8 @@ public class GroupManager {
      * @return all groups that match the search.
      */
     public Collection<Group> search(String query, int startIndex, int numResults) {
-        return provider.search(query, startIndex, numResults);
+        Collection<String> groupNames = provider.search(query, startIndex, numResults);
+        return new GroupCollection(groupNames);
     }
 
     /**
@@ -346,33 +318,7 @@ public class GroupManager {
      *
      * @return the group provider.
      */
-    GroupProvider getProvider() {
+    public GroupProvider getProvider() {
         return provider;
-    }
-
-    /**
-     * Caches groups present in the specified collection that are not already cached and
-     * ensures correct identity of already cached groups.
-     *
-     * @param groups loaded groups from the backend store.
-     * @return a list containing the correct and valid groups (i.e. ensuring identity).
-     */
-    private Collection<Group> cacheAndEnsureIdentity(Collection<Group> groups) {
-        Collection<Group> answer = new ArrayList<Group>(groups.size());
-        for (Group group : groups) {
-            synchronized (group.getName().intern()) {
-                Group existingGroup = groupCache.get(group.getName());
-                if (existingGroup == null) {
-                    // Add loaded group to the cache
-                    groupCache.put(group.getName(), group);
-                    answer.add(group);
-                }
-                else {
-                    // Replace loaded group with the cached one to ensure correct identity
-                    answer.add(existingGroup);
-                }
-            }
-        }
-        return answer;
     }
 }

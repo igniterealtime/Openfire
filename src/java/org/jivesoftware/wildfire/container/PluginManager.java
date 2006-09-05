@@ -80,7 +80,7 @@ public class PluginManager {
     public void start() {
         executor = new ScheduledThreadPoolExecutor(1);
         // See if we're in development mode. If so, check for new plugins once every 5 seconds.
-        // Otherwise, default to every 30 seconds.
+        // Otherwise, default to every 20 seconds.
         if (Boolean.getBoolean("developmentMode")) {
             executor.scheduleWithFixedDelay(pluginMonitor, 1, 5, TimeUnit.SECONDS);
         }
@@ -817,8 +817,10 @@ public class PluginManager {
                             // Ask the system to clean up references.
                             System.gc();
                         }
-                        // Now unzip the plugin.
-                        unzipPlugin(pluginName, jarFile, dir);
+                        // If the delete operation was a success, unzip the plugin.
+                        if (count != 5) {
+                            unzipPlugin(pluginName, jarFile, dir);
+                        }
                     }
                 }
 
@@ -969,6 +971,7 @@ public class PluginManager {
                 for (String file : children) {
                     boolean success = deleteDir(new File(dir, file));
                     if (!success) {
+                        System.out.println("could not delete: " + new File(dir, file));
                         return false;
                     }
                 }

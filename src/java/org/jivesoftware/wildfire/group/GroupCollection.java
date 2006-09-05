@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.group;
 import java.util.AbstractCollection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Collection;
 
 /**
  * Provides a view of an array of group names as a Collection of Group objects. If
@@ -24,6 +25,13 @@ import java.util.NoSuchElementException;
 public class GroupCollection extends AbstractCollection {
 
     private String[] elements;
+
+    /**
+     * Constructs a new GroupCollection.
+     */
+    public GroupCollection(Collection<String> collection) {
+        this.elements = collection.toArray(new String[collection.size()]);
+    }
 
     /**
      * Constructs a new GroupCollection.

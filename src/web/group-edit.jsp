@@ -31,9 +31,6 @@
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%  webManager.init(pageContext); %>
-<jsp:useBean id="errors" class="java.util.HashMap"/>
-
-
 
 <%  // Get parameters
     boolean add = request.getParameter("add") != null;
@@ -49,6 +46,8 @@
     String newName = ParamUtils.getParameter(request, "newName");
     String newDescription = ParamUtils.getParameter(request, "newDescription");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
+
+    Map<String,String> errors = new HashMap<String,String>();
 
     // Get the presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();
@@ -98,7 +97,6 @@
                 }
 
             groupName = newName;
-            groupInfoChanged = true;
              // Get admin list and compare it the admin posted list.
             response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
             return;
@@ -113,8 +111,8 @@
 
     if (update) {
         Set<JID> adminIDSet = new HashSet<JID>();
-        for (int i = 0; i < adminIDs.length; i++) {
-            JID newAdmin = new JID(adminIDs[i]);
+        for (String adminID : adminIDs) {
+            JID newAdmin = new JID(adminID);
             adminIDSet.add(newAdmin);
             boolean isAlreadyAdmin = group.getAdmins().contains(newAdmin);
             if (!isAlreadyAdmin) {
@@ -122,18 +120,15 @@
                 group.getAdmins().add(newAdmin);
             }
         }
-        Iterator<JID> groupIter = Collections.unmodifiableCollection(group.getAdmins()).iterator();
+        Collection<JID> admins = Collections.unmodifiableCollection(group.getAdmins());
         Set<JID> removeList = new HashSet<JID>();
-        while (groupIter.hasNext()) {
-            JID m = (JID) groupIter.next();
-            if (!adminIDSet.contains(m)) {
-                removeList.add(m);
+        for (JID admin : admins) {
+            if (!adminIDSet.contains(admin)) {
+                removeList.add(admin);
             }
         }
-        Iterator<JID> i = removeList.iterator();
-        while (i.hasNext()) {
-            JID m = (JID) i.next();
-            group.getMembers().add(m);
+        for (JID member : removeList) {
+            group.getMembers().add(member);
         }
         // Get admin list and compare it the admin posted list.
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
@@ -191,8 +186,8 @@
         add = false;
     }
     else if (delete) {
-        for (int i = 0; i < deleteMembers.length; i++) {
-            JID member = new JID(deleteMembers[i]);
+        for (String deleteMember : deleteMembers) {
+            JID member = new JID(deleteMember);
             group.getMembers().remove(member);
             group.getAdmins().remove(member);
         }
@@ -586,7 +581,7 @@
             }
 %>
         </table>
-        </div>
+
     </form>
 
     <script type="text/javascript">

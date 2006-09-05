@@ -18,7 +18,6 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.group.GroupProvider;
-import org.jivesoftware.wildfire.group.GroupCollection;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
@@ -34,13 +33,12 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.IOException;
 
 /**
- * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as read-only so any set
- * operations will result in an exception.
+ * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
+ * read-only so any set operations will result in an exception.
  *
- * @author Greg Ferguson and Cameron Moore
+ * @author Matt Tucker, Greg Ferguson and Cameron Moore
  */
 public class LdapGroupProvider implements GroupProvider {
 
@@ -51,7 +49,7 @@ public class LdapGroupProvider implements GroupProvider {
     private String[] standardAttributes;
 
     /**
-     * Constructor of the LdapGroupProvider class. Gets an LdapManager instance from the LdapManager class.
+     * Constructs a new LDAP group provider.
      */
     public LdapGroupProvider() {
         manager = LdapManager.getInstance();
@@ -84,27 +82,50 @@ public class LdapGroupProvider implements GroupProvider {
         throw new UnsupportedOperationException();
     }
 
-    public Group getGroup(String group) throws GroupNotFoundException {
-        String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-        String searchFilter = "(&" + filter + "(" +
-                manager.getGroupNameField() + "=" + group + "))";
-        Collection<Group> groups;
+    public Group getGroup(String groupName) throws GroupNotFoundException {
+        LdapContext ctx = null;
         try {
-            groups = populateGroups(searchForGroups(searchFilter, standardAttributes));
+            ctx = manager.getContext();
+
+            // Search for the dn based on the group name.
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(standardAttributes);
+            String filter = MessageFormat.format(manager.getGroupSearchFilter(), groupName);
+            NamingEnumeration<SearchResult> answer = ctx.search("", filter, searchControls);
+
+            Collection<Group> groups = populateGroups(answer);
+            if (groups.size() > 1) {
+                // If multiple groups found, throw exception.
+                throw new GroupNotFoundException("Too many groups with name " + groupName + " were found.");
+            }
+            else if (groups.isEmpty()) {
+                throw new GroupNotFoundException("Group with name " + groupName + " not found.");
+            }
+            else {
+                return groups.iterator().next();
+            }
         }
         catch (Exception e) {
-            Log.error("Error populating groups from LDAP", e);
-            throw new GroupNotFoundException("Error populating groups from LDAP", e);
+            Log.error(e);
+            throw new GroupNotFoundException(e);
         }
-        if (groups.size() > 1) {
-            // If multiple groups found, throw exception.
-            throw new GroupNotFoundException("Too many groups with name " + group + " were found.");
-        }
-        else if (groups.isEmpty()) {
-            throw new GroupNotFoundException("Group with name " + group + " not found.");
-        }
-        else {
-            return groups.iterator().next();
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
     }
 
@@ -127,7 +148,8 @@ public class LdapGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException when called.
      */
     public void setDescription(String name, String description)
-            throws UnsupportedOperationException {
+            throws UnsupportedOperationException
+    {
         throw new UnsupportedOperationException();
     }
 
@@ -136,130 +158,173 @@ public class LdapGroupProvider implements GroupProvider {
         if (groupCount != -1 && System.currentTimeMillis() < expiresStamp) {
             return groupCount;
         }
-        int count = 0;
-
         if (manager.isDebugEnabled()) {
             Log.debug("Trying to get the number of groups in the system.");
         }
 
-        String searchFilter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-        String returningAttributes[] = {manager.getGroupNameField()};
+        int count = 0;
+        LdapContext ctx = null;
         try {
-            NamingEnumeration<SearchResult> answer = searchForGroups(searchFilter, returningAttributes);
-            for (; answer.hasMoreElements(); count++) {
-                try {
-                    answer.next();
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
-            }
+            ctx = manager.getContext();
 
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
+            String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
+            NamingEnumeration answer = ctx.search("", filter, searchControls);
+            while (answer.hasMoreElements()) {
+                answer.next();
+                count++;
+            }
+            // Cache the group count.
             this.groupCount = count;
             this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE * 5;
         }
-        catch (Exception ex) {
-            Log.error("Error searching for groups in LDAP", ex);
-        }
-        return count;
-    }
-
-    public Collection<Group> getGroups() {
-        String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-        try {
-            return populateGroups(searchForGroups(filter, standardAttributes));
-        }
-        catch (Exception ex) {
-            return Collections.emptyList();
-        }
-    }
-
-    public Collection<Group> getGroups(Set<String> groupNames) {
-        if (groupNames.isEmpty()) {
-            return Collections.emptyList();
-        }
-        Collection<Group> groups = new ArrayList<Group>(groupNames.size());
-
-        String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-        // Instead of loading all groups at once which may not work for super big collections
-        // of group names, we are going to make many queries and load by 10 groups at onces
-        Collection<String> searchFilters = new ArrayList<String>(groupNames.size());
-        List<String> names = new ArrayList<String>(groupNames);
-        int i = 0;
-        int range = 10;
-        do {
-            List<String> subset = names.subList(i, Math.min(i + range, groupNames.size()));
-
-            if (subset.size() == 1) {
-                String searchFilter = "(&" + filter + "(" +
-                        manager.getGroupNameField() + "=" + subset.get(0) + "))";
-                searchFilters.add(searchFilter);
-            }
-            else {
-                StringBuilder sb = new StringBuilder(300);
-                sb.append("(&").append(filter).append("(|");
-                for (String groupName : subset) {
-                    sb.append("(").append(manager.getGroupNameField()).append("=");
-                    sb.append(groupName).append(")");
-                }
-                sb.append("))");
-                searchFilters.add(sb.toString());
-            }
-            // Increment counter to get next range
-            i = i + range;
-        }
-        while (groupNames.size() > i);
-
-        // Perform all required queries to load all requested groups
-        for (String searchFilter : searchFilters) {
-            try {
-                groups.addAll(populateGroups(searchForGroups(searchFilter, standardAttributes)));
-            }
-            catch (Exception e) {
-                Log.error("Error populating groups from LDAP", e);
-                return Collections.emptyList();
-            }
-        }
-        return new ArrayList<Group>(groups);
-    }
-
-    public Collection<Group> getGroups(int startIndex, int numResults) {
-        // Get an enumeration of all groups in the system
-        String searchFilter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-        NamingEnumeration<SearchResult> answer;
-        try {
-            answer = searchForGroups(searchFilter, standardAttributes);
-        }
         catch (Exception e) {
-            Log.error("Error searching for groups in LDAP", e);
-            return Collections.emptyList();
+            Log.error(e);
         }
-
-        // Place all groups that are wanted into an enumeration
-        Vector<SearchResult> v = new Vector<SearchResult>();
-        for (int i = 1; answer.hasMoreElements() && i <= (startIndex + numResults); i++) {
+        finally {
             try {
-                SearchResult sr = answer.next();
-                if (i >= startIndex) {
-                    v.add(sr);
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
                 }
             }
-            catch (Exception e) {
+            catch (Exception ignored) {
                 // Ignore.
             }
         }
 
-        try {
-            return populateGroups(v.elements());
-        }
-        catch (NamingException e) {
-            Log.error("Error populating groups recieved from LDAP", e);
-            return Collections.emptyList();
-        }
+        return count;
     }
 
-    public Collection<Group> getGroups(JID user) {
-        XMPPServer server = XMPPServer.getInstance();
+    public Collection<String> getGroupNames() {
+        List<String> groupNames = new ArrayList<String>();
+        LdapContext ctx = null;
+        try {
+            ctx = manager.getContext();
+            // Sort on group name field.
+            Control[] searchControl = new Control[]{
+                new SortControl(new String[]{manager.getGroupNameField()}, Control.NONCRITICAL)
+            };
+            ctx.setRequestControls(searchControl);
+
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
+            String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
+            NamingEnumeration answer = ctx.search("", filter, searchControls);
+            while (answer.hasMoreElements()) {
+                // Get the next group.
+                String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
+                        manager.getGroupNameField()).get();
+                // Escape group name and add to results.
+                groupNames.add(JID.escapeNode(groupName));
+            }
+            // If client-side sorting is enabled, sort.
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
+                Collections.sort(groupNames);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+        return groupNames;
+    }
+
+    public Collection<String> getGroupNames(int startIndex, int numResults) {
+        List<String> groupNames = new ArrayList<String>();
+        LdapContext ctx = null;
+        try {
+            ctx = manager.getContext();
+            // Sort on group name field.
+            Control[] searchControl = new Control[]{
+                new SortControl(new String[]{manager.getGroupNameField()}, Control.NONCRITICAL)
+            };
+            ctx.setRequestControls(searchControl);
+
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
+            String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
+
+            // TODO: used paged results is supported by LDAP server.
+            NamingEnumeration answer = ctx.search("", filter, searchControls);
+            for (int i=0; i < startIndex; i++) {
+                if (answer.hasMoreElements()) {
+                    answer.next();
+                }
+                else {
+                    return Collections.emptyList();
+                }
+            }
+            // Now read in desired number of results (or stop if we run out of results).
+            for (int i = 0; i < numResults; i++) {
+                if (answer.hasMoreElements()) {
+                    // Get the next group.
+                    String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
+                            manager.getGroupNameField()).get();
+                    // Escape group name and add to results.
+                    groupNames.add(JID.escapeNode(groupName));
+                }
+                else {
+                    break;
+                }
+            }
+            // If client-side sorting is enabled, sort.
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
+                Collections.sort(groupNames);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+        return groupNames;
+    }
+
+    public Collection<String> getGroupNames(JID user) {
+        return Collections.emptyList();
+        /* XMPPServer server = XMPPServer.getInstance();
         String username;
         if (!manager.isPosixMode()) {
             // Check if the user exists (only if user is a local user)
@@ -278,15 +343,17 @@ public class LdapGroupProvider implements GroupProvider {
         else {
             username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
         }
+        System.out.println("Username for search: " + username);
 
-        String filter = MessageFormat.format(manager.getGroupSearchFilter(), username);
+        String filter = MessageFormat.format(manager.getSearchFilter(), username);
+        System.out.println("Filter: " + filter);
         try {
             return populateGroups(searchForGroups(filter, standardAttributes));
         }
         catch (Exception e) {
             Log.error("Error populating groups recieved from LDAP", e);
             return Collections.emptyList();
-        }
+        }*/
     }
 
     /**
@@ -298,7 +365,8 @@ public class LdapGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException when called.
      */
     public void addMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException {
+            throws UnsupportedOperationException
+    {
         throw new UnsupportedOperationException();
     }
 
@@ -335,7 +403,7 @@ public class LdapGroupProvider implements GroupProvider {
         return true;
     }
 
-    public Collection<Group> search(String query) {
+    public Collection<String> search(String query) {
         if (query == null || "".equals(query)) {
             return Collections.emptyList();
         }
@@ -393,10 +461,10 @@ public class LdapGroupProvider implements GroupProvider {
                 // Ignore.
             }
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
-    public Collection<Group> search(String query, int startIndex, int numResults) {
+    public Collection<String> search(String query, int startIndex, int numResults) {
         if (query == null || "".equals(query)) {
             return Collections.emptyList();
         }
@@ -470,65 +538,11 @@ public class LdapGroupProvider implements GroupProvider {
                 // Ignore.
             }
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
     public boolean isSearchSupported() {
         return true;
-    }
-
-    /**
-     * An auxilary method used to perform LDAP queries based on a provided LDAP search filter.
-     *
-     * @param searchFilter LDAP search filter used to query.
-     * @return an enumeration of SearchResult.
-     */
-    private NamingEnumeration<SearchResult> searchForGroups(String searchFilter,
-            String[] returningAttributes) throws NamingException, IOException
-    {
-        if (manager.isDebugEnabled()) {
-            Log.debug("Trying to find all groups in the system.");
-        }
-        LdapContext ctx = null;
-        NamingEnumeration<SearchResult> answer;
-        try {
-            ctx = manager.getContext();
-            // Sort on username field.
-            Control[] searchControl = new Control[]{
-                new SortControl(new String[]{manager.getGroupNameField()}, Control.NONCRITICAL)
-            };
-            ctx.setRequestControls(searchControl);
-            if (manager.isDebugEnabled()) {
-                Log.debug("Starting LDAP search...");
-                Log.debug("Using groupSearchFilter: " + searchFilter);
-            }
-
-            // Search for the dn based on the groupname.
-            SearchControls searchControls = new SearchControls();
-            searchControls.setReturningAttributes(returningAttributes);
-            // See if recursive searching is enabled. Otherwise, only search one level.
-            if (manager.isSubTreeSearch()) {
-                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            }
-            else {
-                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            }
-            answer = ctx.search("", searchFilter, searchControls);
-
-            if (manager.isDebugEnabled()) {
-                Log.debug("... search finished");
-            }
-
-            return answer;
-        }
-        finally {
-            if (ctx != null) {
-                try {
-                    ctx.close();
-                }
-                catch (Exception ex) { /* do nothing */ }
-            }
-        }
     }
 
     /**

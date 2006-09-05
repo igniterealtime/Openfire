@@ -67,6 +67,7 @@ public class Group implements Cacheable {
      * @return the name of the groups that are shared groups.
      */
     static Set<String> getSharedGroupsNames() {
+        // TODO: add caching
         Set<String> groupNames = new HashSet<String>();
         Connection con = null;
         PreparedStatement pstmt = null;

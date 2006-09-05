@@ -261,7 +261,7 @@ public class DefaultGroupProvider implements GroupProvider {
         return count;
     }
 
-    public Collection<Group> getGroups() {
+    public Collection<String> getGroupNames() {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -289,14 +289,10 @@ public class DefaultGroupProvider implements GroupProvider {
                 } }
             catch (Exception e) { Log.error(e); }
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
-    public Collection<Group> getGroups(Set<String> groupNames) {
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
-    }
-
-    public Collection<Group> getGroups(int startIndex, int numResults) {
+    public Collection<String> getGroupNames(int startIndex, int numResults) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -327,10 +323,10 @@ public class DefaultGroupProvider implements GroupProvider {
                 } }
             catch (Exception e) { Log.error(e); }
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
-    public Collection<Group> getGroups(JID user) {
+    public Collection<String> getGroupNames(JID user) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -351,15 +347,17 @@ public class DefaultGroupProvider implements GroupProvider {
             try {
                 if (pstmt != null) {
                     pstmt.close();
-                } }
+                }
+            }
             catch (Exception e) { Log.error(e); }
             try {
                 if (con != null) {
                     con.close();
-                } }
+                }
+            }
             catch (Exception e) { Log.error(e); }
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
     public void addMember(String groupName, JID user, boolean administrator) {
@@ -449,7 +447,7 @@ public class DefaultGroupProvider implements GroupProvider {
         return false;
     }
 
-    public Collection<Group> search(String query) {
+    public Collection<String> search(String query) {
         if (query == null || "".equals(query)) {
             return Collections.emptyList();
         }
@@ -483,10 +481,10 @@ public class DefaultGroupProvider implements GroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, stmt, con);
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
-    public Collection<Group> search(String query, int startIndex, int numResults) {
+    public Collection<String> search(String query, int startIndex, int numResults) {
         if (query == null || "".equals(query)) {
             return Collections.emptyList();
         }
@@ -524,7 +522,7 @@ public class DefaultGroupProvider implements GroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, stmt, con);
         }
-        return new GroupCollection(groupNames.toArray(new String[groupNames.size()]));
+        return groupNames;
     }
 
     public boolean isSearchSupported() {

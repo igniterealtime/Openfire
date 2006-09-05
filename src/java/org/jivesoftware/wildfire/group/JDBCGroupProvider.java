@@ -227,7 +227,7 @@ public class JDBCGroupProvider implements GroupProvider {
         return count;
     }
 
-    public Collection<Group> getGroups() {
+    public Collection<String> getGroupNames() {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -246,32 +246,10 @@ public class JDBCGroupProvider implements GroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        for (String groupName : groupNames) {
-            try {
-                groups.add(getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
+        return groupNames;
     }
 
-    public Collection<Group> getGroups(Set<String> groupNames) {
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        for (String groupName : groupNames) {
-            try {
-                groups.add(getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
-    }
-
-    public Collection<Group> getGroups(int start, int num) {
+    public Collection<String> getGroupNames(int start, int num) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -293,19 +271,10 @@ public class JDBCGroupProvider implements GroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        for (String groupName : groupNames) {
-            try {
-                groups.add(getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
+        return groupNames;
     }
 
-    public Collection<Group> getGroups(JID user) {
+    public Collection<String> getGroupNames(JID user) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -325,16 +294,7 @@ public class JDBCGroupProvider implements GroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        List<Group> groups = new ArrayList<Group>(groupNames.size());
-        for (String groupName : groupNames) {
-            try {
-                groups.add(getGroup(groupName));
-            }
-            catch (GroupNotFoundException e) {
-                Log.error(e);
-            }
-        }
-        return groups;
+        return groupNames;
     }
 
     /**
@@ -360,7 +320,8 @@ public class JDBCGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException when called.
      */
     public void updateMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException {
+            throws UnsupportedOperationException
+    {
         throw new UnsupportedOperationException();
     }
 
@@ -372,7 +333,8 @@ public class JDBCGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException when called.
      */
     public void deleteMember(String groupName, JID user)
-            throws UnsupportedOperationException {
+            throws UnsupportedOperationException
+    {
         throw new UnsupportedOperationException();
     }
 
@@ -385,11 +347,11 @@ public class JDBCGroupProvider implements GroupProvider {
         return true;
     }
 
-    public Collection<Group> search(String query) {
+    public Collection<String> search(String query) {
         return Collections.emptyList();
     }
 
-    public Collection<Group> search(String query, int startIndex, int numResults) {
+    public Collection<String> search(String query, int startIndex, int numResults) {
         return Collections.emptyList();
     }
 

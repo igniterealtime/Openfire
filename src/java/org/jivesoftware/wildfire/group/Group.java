@@ -67,27 +67,23 @@ public class Group implements Cacheable {
      * @return the name of the groups that are shared groups.
      */
     static Set<String> getSharedGroupsNames() {
-        // TODO: add caching
         Set<String> groupNames = new HashSet<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return groupNames;
     }
@@ -519,11 +515,12 @@ public class Group implements Cacheable {
     private void loadProperties() {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTIES);
             pstmt.setString(1, name);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String key = rs.getString(1);
                 String value = rs.getString(2);
@@ -538,16 +535,12 @@ public class Group implements Cacheable {
                     Log.warn("There is a group property whose key is null of Group: " + name);
                 }
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -566,10 +559,7 @@ public class Group implements Cacheable {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -588,10 +578,7 @@ public class Group implements Cacheable {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -609,10 +596,7 @@ public class Group implements Cacheable {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 }

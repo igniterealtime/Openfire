@@ -11,7 +11,6 @@
 
 package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -44,8 +43,6 @@ public class LdapGroupProvider implements GroupProvider {
 
     private LdapManager manager;
     private UserManager userManager;
-    private int groupCount;
-    private long expiresStamp;
     private String[] standardAttributes;
 
     /**
@@ -54,8 +51,6 @@ public class LdapGroupProvider implements GroupProvider {
     public LdapGroupProvider() {
         manager = LdapManager.getInstance();
         userManager = UserManager.getInstance();
-        groupCount = -1;
-        expiresStamp = System.currentTimeMillis();
         standardAttributes = new String[3];
         standardAttributes[0] = manager.getGroupNameField();
         standardAttributes[1] = manager.getGroupDescriptionField();
@@ -154,10 +149,6 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     public int getGroupCount() {
-        // Cache group count for 5 minutes.
-        if (groupCount != -1 && System.currentTimeMillis() < expiresStamp) {
-            return groupCount;
-        }
         if (manager.isDebugEnabled()) {
             Log.debug("Trying to get the number of groups in the system.");
         }
@@ -182,9 +173,6 @@ public class LdapGroupProvider implements GroupProvider {
                 answer.next();
                 count++;
             }
-            // Cache the group count.
-            this.groupCount = count;
-            this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE * 5;
         }
         catch (Exception e) {
             Log.error(e);
@@ -562,7 +550,7 @@ public class LdapGroupProvider implements GroupProvider {
             ctx = manager.getContext();
 
             SearchControls searchControls = new SearchControls();
-            searchControls.setReturningAttributes(new String[]{manager.getUsernameField()});
+            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             // See if recursive searching is enabled. Otherwise, only search one level.
             if (manager.isSubTreeSearch()) {
                 searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -571,7 +559,6 @@ public class LdapGroupProvider implements GroupProvider {
                 searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
             }
 
-            String userSearchFilter = MessageFormat.format(manager.getSearchFilter(), "*");
             XMPPServer server = XMPPServer.getInstance();
             String serverName = server.getServerInfo().getName();
             // Build 3 groups.
@@ -594,76 +581,78 @@ public class LdapGroupProvider implements GroupProvider {
                     catch (Exception e) {
                         description = "";
                     }
-                    TreeSet<JID> members = new TreeSet<JID>();
-                    Attribute member = a.get(manager.getGroupMemberField());
-                    NamingEnumeration ne = member.getAll();
-                    while (ne.hasMore()) {
-                        String username = (String) ne.next();
-                        if (!manager.isPosixMode()) {   //userName is full dn if not posix
+                    Set<JID> members = new TreeSet<JID>();
+                    Attribute memberField = a.get(manager.getGroupMemberField());
+                    if (memberField != null) {
+                        NamingEnumeration ne = memberField.getAll();
+                        while (ne.hasMore()) {
+                            String username = (String) ne.next();
+                            // If not posix mode, each group member is stored as a full DN.
+                            if (!manager.isPosixMode()) {
+                                try {
+                                    // Try to find the username with a regex pattern match.
+                                    Matcher matcher = pattern.matcher(username);
+                                    if (matcher.matches() && matcher.groupCount() == 3) {
+                                        // The username is in the DN, no additional search needed
+                                        username = matcher.group(2);
+                                    }
+                                    // The regex pattern match failed. This will happen if the
+                                    // the member DN's don't use the standard username field. For
+                                    // example, Active Directory has a username field of
+                                    // sAMAccountName, but stores group members as "CN=...".
+                                    else {
+                                        // Create an LDAP name with the full DN.
+                                        LdapName ldapName = new LdapName(username);
+                                        // Turn the LDAP name into something we can use in a
+                                        // search by stripping off the comma.
+                                        String userDNPart = ldapName.get(ldapName.size() - 1);
+                                        NamingEnumeration usrAnswer = ctx.search("",
+                                                userDNPart, searchControls);
+                                        if (usrAnswer.hasMoreElements()) {
+                                            username = (String) ((SearchResult) usrAnswer.next())
+                                                    .getAttributes().get(
+                                                    manager.getUsernameField()).get();
+                                        }
+                                    }
+                                }
+                                catch (Exception e) {
+                                    Log.error(e);
+                                }
+                            }
+                            // A search filter may have been defined in the LdapUserProvider.
+                            // Therefore, we have to try to load each user we found to see if
+                            // it passes the filter.
                             try {
-                                // LdapName will not generate spaces around an '='
-                                // (according to the docs)
-                                Matcher matcher = pattern.matcher(username);
-                                if (matcher.matches() && matcher.groupCount() == 3) {
-                                    // The username is in the DN, no additional search needed
-                                    username = matcher.group(2);
+                                JID userJID;
+                                int position = username.indexOf("@" + serverName);
+                                // Create JID of local user if JID does not match a component's JID
+                                if (position == -1) {
+                                    // In order to lookup a username from the manager, the username
+                                    // must be a properly escaped JID node.
+                                    String escapedUsername = JID.escapeNode(username);
+                                    if (!escapedUsername.equals(username)) {
+                                        // Check if escaped username is valid
+                                        userManager.getUser(escapedUsername);
+                                    }
+                                    // No exception, so the user must exist. Add the user as a group
+                                    // member using the escaped username.
+                                    userJID = server.createJID(escapedUsername, null);
                                 }
                                 else {
-                                    // We have to do a new search to find the username field
-
-                                    // Get the CN using LDAP
-                                    LdapName ldapname = new LdapName(username);
-                                    String ldapcn = ldapname.get(ldapname.size() - 1);
-                                    String combinedFilter =
-                                            "(&(" + ldapcn + ")" + userSearchFilter + ")";
-                                    NamingEnumeration usrAnswer =
-                                            ctx.search("", combinedFilter, searchControls);
-                                    if (usrAnswer.hasMoreElements()) {
-                                        username = (String) ((SearchResult) usrAnswer.next())
-                                                .getAttributes().get(
-                                                manager.getUsernameField()).get();
-                                    }
-                                    else {
-                                        throw new UserNotFoundException();
-                                    }
+                                    // This is a JID of a component or node of a server's component
+                                    String node = username.substring(0, position);
+                                    String escapedUsername = JID.escapeNode(node);
+                                    userJID = new JID(escapedUsername + "@" + serverName);
                                 }
+                                members.add(userJID);
                             }
-                            catch (Exception e) {
+                            catch (UserNotFoundException e) {
+                                // We can safely ignore this error. It likely means that
+                                // the user didn't pass the search filter that's defined.
+                                // So, we want to simply ignore the user as a group member.
                                 if (manager.isDebugEnabled()) {
-                                    Log.debug("Error populating user with DN: " + username, e);
+                                    Log.debug("User not found: " + username);
                                 }
-                            }
-                        }
-                        // A search filter may have been defined in the LdapUserProvider.
-                        // Therefore, we have to try to load each user we found to see if
-                        // it passes the filter.
-                        try {
-                            JID userJID;
-                            int position = username.indexOf("@" + serverName);
-                            // Create JID of local user if JID does not match a component's JID
-                            if (position == -1) {
-                                // In order to lookup a username from the manager, the username
-                                // must be a properly escaped JID node.
-                                String escapedUsername = JID.escapeNode(username);
-                                if (!escapedUsername.equals(username)) {
-                                    // Check if escaped username is valid
-                                    userManager.getUser(escapedUsername);
-                                }
-                                // No exception, so the user must exist. Add the user as a group
-                                // member using the escaped username.
-                                userJID = server.createJID(escapedUsername, null);
-                            }
-                            else {
-                                // This is a JID of a component or node of a server's component
-                                String node = username.substring(0, position);
-                                String escapedUsername = JID.escapeNode(node);
-                                userJID = new JID(escapedUsername + "@" + serverName);
-                            }
-                            members.add(userJID);
-                        }
-                        catch (UserNotFoundException e) {
-                            if (manager.isDebugEnabled()) {
-                                Log.debug("User not found: " + username);
                             }
                         }
                     }
@@ -671,10 +660,12 @@ public class LdapGroupProvider implements GroupProvider {
                         Log.debug("Adding group \"" + name + "\" with " + members.size() +
                                 " members.");
                     }
-                    Group g = new Group(name, description, members, new ArrayList<JID>());
-                    groups.put(name, g);
+                    Collection<JID> admins = Collections.emptyList();
+                    Group group = new Group(name, description, members, admins);
+                    groups.put(name, group);
                 }
                 catch (Exception e) {
+                    e.printStackTrace();
                     if (manager.isDebugEnabled()) {
                         Log.debug("Error while populating group, " + name + ".", e);
                     }

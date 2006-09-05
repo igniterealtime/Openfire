@@ -39,7 +39,7 @@
     if (doClear) {
         ProfiledConnection.resetStatistics();
         // Reload the page without params.
-        response.sendRedirect("system-db-stats.jsp");
+        response.sendRedirect("server-db-stats.jsp");
     }
 
     // Enable/disable stats

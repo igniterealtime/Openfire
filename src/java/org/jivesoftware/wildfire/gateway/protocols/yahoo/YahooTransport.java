@@ -30,6 +30,27 @@ import ymsg.network.StatusConstants;
 public class YahooTransport extends BaseTransport {
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyUsername()
+     */
+    public String getTerminologyUsername() {
+        return "Yahoo! ID";
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyPassword()
+     */
+    public String getTerminologyPassword() {
+        return "Password";
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyRegistration()
+     */
+    public String getTerminologyRegistration() {
+        return "Please enter your Yahoo! ID and password.";
+    }
+
+    /**
      * Handles creating a Yahoo session and triggering a login.
      *
      * @param registration Registration information to be used to log in.

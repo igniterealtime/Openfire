@@ -30,6 +30,27 @@ import net.sf.jml.MsnUserStatus;
 public class MSNTransport extends BaseTransport {
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyUsername()
+     */
+    public String getTerminologyUsername() {
+        return "E-mail Address";
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyPassword()
+     */
+    public String getTerminologyPassword() {
+        return "Password";
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyRegistration()
+     */
+    public String getTerminologyRegistration() {
+        return "Please enter your MSN Passport e-mail address and password.";
+    }
+
+    /**
      * Handles creating a MSN session and triggering a login.
      *
      * @param registration Registration information to be used to log in.

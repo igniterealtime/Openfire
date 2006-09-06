@@ -93,12 +93,12 @@ public class MSNSession extends TransportSession {
     public void logOut() {
         if (this.isLoggedIn()) {
             msnMessenger.logout();
-            Presence p = new Presence(Presence.Type.unavailable);
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-            loginStatus = false;
         }
+        Presence p = new Presence(Presence.Type.unavailable);
+        p.setTo(getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
+        loginStatus = false;        
     }
 
     /**

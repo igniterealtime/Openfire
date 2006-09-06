@@ -14,6 +14,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import ymsg.network.YahooUser;
+import ymsg.network.StatusConstants;
 import ymsg.network.event.SessionChatEvent;
 import ymsg.network.event.SessionConferenceEvent;
 import ymsg.network.event.SessionErrorEvent;
@@ -154,29 +155,47 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#listReceived(ymsg.network.event.SessionEvent)
      */
     public void listReceived(SessionEvent event) {
-        Log.debug(event.toString());
+        // We just got the entire contact list.  Lets sync up.
+        yahooSession.syncUsers();
     }
 
     /**
      * @see ymsg.network.event.SessionListener#buzzReceived(ymsg.network.event.SessionEvent)
      */
     public void buzzReceived(SessionEvent event) {
-        Log.debug(event.toString());
+        Message m = new Message();
+        m.setType(Message.Type.chat);
+        m.setTo(yahooSession.getJIDWithHighestPriority());
+        m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        m.setBody(messageDecoder.decodeToText(event.getMessage()));
+        yahooSession.getTransport().sendPacket(m);
     }
 
     /**
      * @see ymsg.network.event.SessionListener#errorPacketReceived(ymsg.network.event.SessionErrorEvent)
      */
     public void errorPacketReceived(SessionErrorEvent event) {
-        Log.error(event.toString());
+        //Log.error(event.toString());
+        Message m = new Message();
+        m.setType(Message.Type.error);
+        m.setTo(yahooSession.getJIDWithHighestPriority());
+        m.setFrom(yahooSession.getTransport().getJID());
+        m.setBody("Error from yahoo: "+event.getMessage());
+        yahooSession.getTransport().sendPacket(m);
     }
 
     /**
      * @see ymsg.network.event.SessionListener#inputExceptionThrown(ymsg.network.event.SessionExceptionEvent)
      */
     public void inputExceptionThrown(SessionExceptionEvent event) {
-        event.getException().printStackTrace();
-        Log.error(event.toString());
+        //event.getException().printStackTrace();
+        //Log.error(event.toString());
+        Message m = new Message();
+        m.setType(Message.Type.error);
+        m.setTo(yahooSession.getJIDWithHighestPriority());
+        m.setFrom(yahooSession.getTransport().getJID());
+        m.setBody("Input error from yahoo: "+event.getMessage());
+        yahooSession.getTransport().sendPacket(m);
     }
 
     /**
@@ -184,20 +203,31 @@ public class YahooSessionListener implements SessionListener {
      */
     public void notifyReceived(SessionNotifyEvent event) {
         Log.debug(event.toString());
+        if (event.getType().equals(StatusConstants.NOTIFY_TYPING)) {
+            // Ooh, a typing notification.  We'll use this in the future.
+        }
     }
 
     /**
      * @see ymsg.network.event.SessionListener#contactRequestReceived(ymsg.network.event.SessionEvent)
      */
     public void contactRequestReceived(SessionEvent event) {
-        Log.debug(event.toString());
+        Presence p = new Presence(Presence.Type.subscribe);
+        p.setTo(yahooSession.getJID());
+        p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        yahooSession.getTransport().sendPacket(p);
     }
 
     /**
      * @see ymsg.network.event.SessionListener#contactRejectionReceived(ymsg.network.event.SessionEvent)
      */
     public void contactRejectionReceived(SessionEvent event) {
+        // TODO: Is this correct?  unsubscribed for a rejection?
         Log.debug(event.toString());
+        Presence p = new Presence(Presence.Type.unsubscribed);
+        p.setTo(yahooSession.getJID());
+        p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
+        yahooSession.getTransport().sendPacket(p);
     }
 
     /**

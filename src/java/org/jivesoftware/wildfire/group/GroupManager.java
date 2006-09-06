@@ -81,8 +81,17 @@ public class GroupManager {
             }
 
             public void groupModified(Group group, Map params) {
-                /* Ignore */
-                // TODO: expire cache when a property operation on shared groups.
+                String type = (String)params.get("type");
+                // If shared group settings changed, expire the cache.
+                if (type != null && (type.equals("propertyModified") ||
+                        type.equals("propertyDeleted") || type.equals("propertyAdded")))
+                {
+                    if (params.get("propertyKey") != null &&
+                            params.get("propertyKey").equals("sharedRoster.showInRoster"))
+                    {
+                        groupMetaCache.clear();
+                    }
+                }
             }
 
             public void memberAdded(Group group, Map params) {

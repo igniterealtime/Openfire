@@ -971,7 +971,7 @@ public class PluginManager {
                 for (String file : children) {
                     boolean success = deleteDir(new File(dir, file));
                     if (!success) {
-                        System.out.println("could not delete: " + new File(dir, file));
+                        Log.debug("Plugin removal: could not delete: " + new File(dir, file));
                         return false;
                     }
                 }

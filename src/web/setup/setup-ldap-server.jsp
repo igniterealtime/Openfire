@@ -1,12 +1,4 @@
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 java.util.Date,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager,
-                 org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -40,8 +32,6 @@
 
 	<h1>Profile Settings <span>- LDAP Connection Settings</span></h1>
 
-	<p>Configure the directory server connection settings here.</p>
-
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
 		<span class="jive-stepbar_step"><strong>1. Connection Settings</strong></span>
@@ -54,7 +44,8 @@
 	<div class="jive-contentBox jive-contentBox_for-stepbar">
 
 	<h2>Step 1 of 3: <span>Connection Settings</span></h2>
-	<p>A sentance detailing the setup options below. Also, noting that all fields are required. Lorem ipsum dolor siet amet. Also mention the help tooltip rollovers.</p>
+	<p>Configure connection settings for your LDAP directory below. All fields are required; if you
+    need additional information about a field, hover your mouse over the corresponsing help icon.</p>
 
 	<form action="" method="get">
 		<!-- BEGIN jive-contentBox_bluebox -->
@@ -70,24 +61,25 @@
 				<option value="2">Active Directory</option>
 				<option value="3">OpenLDAP</option>
                 <option value="4">Other or Unknown</option>
-                </select><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'Lorem ipsum dolor something about this form option blah blah', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+                </select><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The type of directory server you are connecting to.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			<tr>
 			<td align="right">Host:</td>
-			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server host name; e.g. localhost or ldap.example.com, etc.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server host name; e.g. ldap.example.com, etc.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			<td align="right">&nbsp;Port:</td>
 			<td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="389"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server port number. The default value is 389.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			<tr>
 			<td align="right">Base DN:</td>
-			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'This is the starting DN that searches for users will performed with. The entire subtree under the base DN will be searched for user accounts.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The starting DN that contains all user accounts. The entire subtree under the base DN will be searched for user accounts (unless subtree searching is disabled).', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></a></span></td>
 			</tr>
-			<tr>
+            <tr><td colspan="4">&nbsp;</td></tr>
+            <tr>
 			<td colspan="4"><strong>Authentication:</strong></td>
 			</tr>
 			<tr>
 			<td align="right">Administrator DN:</td>
-			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'A directory administrator\'s DN. All directory operations will be performed with this account. The admin must be able to perform searches and load user records. The user does not need to be able to make changes to the directory, as Wildfire treats the directory as read-only. If this property is not set, an anonymous login to the server will be attempted.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'A directory administrator\'s DN. All directory operations will be performed with this account. The admin must be able to perform searches and load user records. The user does not need to be able to make changes to the directory, as Wildfire treats the directory as read-only. If this property is not set, an anonymous login to the server will be attempted.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 			</tr>
 			<tr>
 			<td align="right">Password:</td>

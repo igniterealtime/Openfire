@@ -573,19 +573,21 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 IQ result = IQ.createResultIQ(packet);
 
                 DataForm form = new DataForm(DataForm.Type.form);
-                form.addInstruction("Please enter your " + this.getName() + " username and password.");
+                form.addInstruction(getTerminologyRegistration());
 
                 FormField usernameField = form.addField();
-                usernameField.setLabel("Username");
+                usernameField.setLabel(getTerminologyUsername());
                 usernameField.setVariable("username");
                 usernameField.setType(FormField.Type.text_single);
 
                 FormField passwordField = form.addField();
-                passwordField.setLabel("Password");
+                passwordField.setLabel(getTerminologyPassword());
                 passwordField.setVariable("password");
                 passwordField.setType(FormField.Type.text_private);
 
-                response.addElement("instructions").addText("Please enter your " + this.getName() + " username and password.");
+                response.add(form.getElement());
+
+                response.addElement("instructions").addText(getTerminologyRegistration());
                 Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
                 if (registrations.iterator().hasNext()) {
                     Registration registration = registrations.iterator().next();
@@ -734,6 +736,13 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
+     * Returns the type of the transport.
+     */
+    public TransportType getType() {
+        return transportType;
+    }
+
+    /**
      * Returns the description of the transport.
      */
     public String getDescription() {
@@ -843,7 +852,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     // TODO: Should we throw exception or something?
                 }
                 catch (Exception ee) {
-                    Log.error("createRosterItem caused exception: " + ee.getMessage());
+                    Log.error("createRosterItem caused exception: " + ee.toString());
                     // TODO: Should we throw exception or something?
                 }
             }
@@ -1259,5 +1268,28 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @param session TransportSession to be logged out.
      */
     public abstract void registrationLoggedOut(TransportSession session);
+
+    /**
+     * Returns the terminology used for a username on the legacy service.
+     *
+     * @return String term for username.
+     */
+    public abstract String getTerminologyUsername();
+
+    /**
+     * Returns the terminology used for a password on the legacy service.
+     *
+     * @return String term for password.
+     */
+    public abstract String getTerminologyPassword();
+
+    /**
+     * Returns instructions for registration in legacy complient terminology.
+     *
+     * You would write this out as if the entry textfields for the username and password
+     * are after it/on the same page.  So something along these lines would be good:
+     * Please enter your legacy username and password.
+     */
+    public abstract String getTerminologyRegistration();
 
 }

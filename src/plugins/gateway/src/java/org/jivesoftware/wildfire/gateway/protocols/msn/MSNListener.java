@@ -86,14 +86,14 @@ public class MSNListener extends MsnAdapter {
      * Handles incoming datacast messages from MSN.
      */
     public void datacastMessageReceived(MsnSwitchboard switchboard, MsnDatacastMessage message, MsnContact friend) {
-        Log.debug("MSN: Received database msn to " + switchboard + " from " + friend + ": " + message);
+        Log.debug("MSN: Received datacast message to " + switchboard + " from " + friend + ": " + message);
     }
 
     /**
      * Handles incoming unknown messages from MSN.
      */
     public void unknownMessageReceived(MsnSwitchboard switchboard, MsnUnknownMessage message, MsnContact friend) {
-        Log.debug("MSN: Received database msn to " + switchboard + " from " + friend + ": " + message);
+        Log.debug("MSN: Received unknown message to " + switchboard + " from " + friend + ": " + message);
     }
 
     /**
@@ -101,7 +101,6 @@ public class MSNListener extends MsnAdapter {
      */
     public void loginCompleted(MsnMessenger messenger) {
         Log.debug("MSN login completed");
-
         msnSession.getRegistration().setLastLogin(new Date());
         msnSession.setLoginStatus(true);
     }
@@ -158,6 +157,55 @@ public class MSNListener extends MsnAdapter {
      */
     public void exceptionCaught(MsnMessenger messenger, Throwable throwable) {
         Log.debug("Caught MSN exception: "+messenger+":"+throwable.toString());
+        if (throwable.getClass().getName().equals("IncorrectPasswordException")) {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(msnSession.getJIDWithHighestPriority());
+            m.setFrom(msnSession.getTransport().getJID());
+            m.setBody("The password you registered with is incorrect.  Please re-register with the correct password.");
+            msnSession.getTransport().sendPacket(m);
+            msnSession.logOut();
+        }
+        else if (throwable.getClass().getName().equals("MsnProtocolException")) {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(msnSession.getJIDWithHighestPriority());
+            m.setFrom(msnSession.getTransport().getJID());
+            m.setBody("MSN error: "+throwable.toString());
+            msnSession.getTransport().sendPacket(m);
+        }
+        else if (throwable.getClass().getName().equals("MsgNotSendException")) {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(msnSession.getJIDWithHighestPriority());
+            m.setFrom(msnSession.getTransport().getJID());
+            m.setBody("Unable to send MSN message.  Reason: "+throwable.toString());
+            msnSession.getTransport().sendPacket(m);
+        }
+        else if (throwable.getClass().getName().equals("UnknownMessageException")) {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(msnSession.getJIDWithHighestPriority());
+            m.setFrom(msnSession.getTransport().getJID());
+            m.setBody("Unknown message from MSN: "+throwable.toString());
+            msnSession.getTransport().sendPacket(m);
+        }
+        else if (throwable.getClass().getName().equals("UnsupportedProtocolException")) {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(msnSession.getJIDWithHighestPriority());
+            m.setFrom(msnSession.getTransport().getJID());
+            m.setBody("MSN protocol error: "+throwable.toString());
+            msnSession.getTransport().sendPacket(m);
+        }
+        else {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(msnSession.getJIDWithHighestPriority());
+            m.setFrom(msnSession.getTransport().getJID());
+            m.setBody("Unknown error from MSN: "+throwable.toString());
+            msnSession.getTransport().sendPacket(m);
+        }
     }
 
 }

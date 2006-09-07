@@ -53,7 +53,6 @@ public class MSNListener extends MsnAdapter {
      * Handles incoming messages from MSN users.
      */
     public void instantMessageReceived(MsnSwitchboard switchboard, MsnInstantMessage message, MsnContact friend) {
-        Log.debug("MSN: Received im to " + switchboard + " from " + friend + ": " + message.getContent());
         Message m = new Message();
         m.setType(Message.Type.chat);
         m.setTo(msnSession.getJIDWithHighestPriority());
@@ -66,7 +65,6 @@ public class MSNListener extends MsnAdapter {
      * Handles incoming system messages from MSN.
      */
     public void systemMessageReceived(MsnSwitchboard switchboard, MsnInstantMessage message) {
-        Log.debug("MSN: Received system msg to " + switchboard + " from MSN: " + message.getContent());
         Message m = new Message();
         m.setType(Message.Type.chat);
         m.setTo(msnSession.getJIDWithHighestPriority());
@@ -100,7 +98,6 @@ public class MSNListener extends MsnAdapter {
      * The user's login has completed and was accepted.
      */
     public void loginCompleted(MsnMessenger messenger) {
-        Log.debug("MSN login completed");
         msnSession.getRegistration().setLastLogin(new Date());
         msnSession.setLoginStatus(true);
     }
@@ -109,14 +106,12 @@ public class MSNListener extends MsnAdapter {
      * Contact list initialization has completed.
      */
     public void contactListInitCompleted(MsnMessenger messenger) {
-        Log.debug("Contact list init completed.");
     }
 
     /**
      * Contact list has been synced.
      */
     public void contactListSyncCompleted(MsnMessenger messenger) {
-        Log.debug("Contact list sync completed.");
         for (MsnContact msnContact : messenger.getContactList().getContacts()) {
             Log.debug("Got contact "+msnContact);
             msnSession.storeFriend(msnContact);
@@ -131,7 +126,6 @@ public class MSNListener extends MsnAdapter {
      * A friend for this user has changed status.
      */
     public void contactStatusChanged(MsnMessenger messenger, MsnContact friend) {
-        Log.debug("Got MSN status "+friend);
         Presence p = new Presence();
         p.setTo(msnSession.getJID());
         p.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));
@@ -144,7 +138,6 @@ public class MSNListener extends MsnAdapter {
      * Owner status has changed.
      */
     public void ownerStatusChanged(MsnMessenger messenger) {
-        Log.debug("Owner status has changed: " + messenger);
         Presence p = new Presence();
         p.setTo(msnSession.getJID());
         p.setFrom(msnSession.getTransport().getJID());
@@ -156,7 +149,6 @@ public class MSNListener extends MsnAdapter {
      * Catches MSN exceptions.
      */
     public void exceptionCaught(MsnMessenger messenger, Throwable throwable) {
-        Log.debug("Caught MSN exception: "+messenger+":"+throwable.toString());
         if (throwable.getClass().getName().equals("IncorrectPasswordException")) {
             Message m = new Message();
             m.setType(Message.Type.error);

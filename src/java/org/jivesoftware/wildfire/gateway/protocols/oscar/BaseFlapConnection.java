@@ -71,8 +71,6 @@ public abstract class BaseFlapConnection extends ClientFlapConn {
             public void handleException(FlapExceptionEvent event) {
                 Log.error(event.getType() + " FLAP ERROR: "
                         + event.getException().getMessage());
-                // How do do this right?
-                //Log.error(event.getException().printStackTrace());
             }
         });
         sp.addPacketListener(new SnacPacketListener() {

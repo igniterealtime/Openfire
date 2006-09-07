@@ -22,9 +22,9 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a MSN session.
@@ -59,12 +59,12 @@ public class MSNSession extends TransportSession {
     /**
      * MSN contacts/friends.
      */
-    private HashMap<String,MsnContact> msnContacts = new HashMap<String,MsnContact>();
+    private ConcurrentHashMap<String,MsnContact> msnContacts = new ConcurrentHashMap<String,MsnContact>();
 
     /**
      * MSN groups.
      */
-    private HashMap<String,MsnGroup> msnGroups = new HashMap<String,MsnGroup>();
+    private ConcurrentHashMap<String,MsnGroup> msnGroups = new ConcurrentHashMap<String,MsnGroup>();
 
     /**
      * Login status
@@ -98,7 +98,7 @@ public class MSNSession extends TransportSession {
         p.setTo(getJID());
         p.setFrom(getTransport().getJID());
         getTransport().sendPacket(p);
-        loginStatus = false;        
+        loginStatus = false;
     }
 
     /**
@@ -142,10 +142,8 @@ public class MSNSession extends TransportSession {
     public void syncUsers() {
         List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
         for (MsnContact friend : msnContacts.values()) {
-            Log.debug("Syncing contact " + friend);
             ArrayList<String> friendGroups = new ArrayList<String>();
             for (MsnGroup group : friend.getBelongGroups()) {
-                Log.debug("   Found group " + group);
                 friendGroups.add(group.getGroupName());
             }
             if (friendGroups.size() < 1) {

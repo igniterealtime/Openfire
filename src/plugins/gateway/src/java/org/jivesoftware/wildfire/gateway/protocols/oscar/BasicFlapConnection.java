@@ -16,7 +16,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.text.DateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import net.kano.joscar.*;
@@ -53,8 +52,6 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected RvProcessor rvProcessor = new RvProcessor(sp);
     protected RvProcessorListener rvListener = new RvProcessorListener() {
         public void handleNewSession(NewRvSessionEvent event) {
-            //Log.debug("new RV session: " + event.getSession());
-
             event.getSession().addListener(rvSessionListener);
         }
     };
@@ -146,28 +143,34 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             InstantMessage message = icbm.getMessage();
             String msg = OscarTools.stripHtml(message.getMessage());
 
-            Message jmessage = new Message();
-            jmessage.setTo(oscarSession.getJIDWithHighestPriority());
-            jmessage.setBody(msg);
-            jmessage.setType(Message.Type.chat);
-            jmessage.setFrom(this.oscarSession.getTransport().convertIDToJID(sn));
-            oscarSession.getTransport().sendPacket(jmessage);
-
-            String str = dateFormat.format(new Date()) + " IM from "
-                    + sn + ": " + msg;
-            Log.debug(str);
-
+            Message m = new Message();
+            m.setTo(oscarSession.getJIDWithHighestPriority());
+            m.setBody(msg);
+            m.setType(Message.Type.chat);
+            m.setFrom(this.oscarSession.getTransport().convertIDToJID(sn));
+            oscarSession.getTransport().sendPacket(m);
         }
         else if (cmd instanceof WarningNotification) {
             WarningNotification wn = (WarningNotification) cmd;
             MiniUserInfo warner = wn.getWarner();
             if (warner == null) {
-                Log.debug("*** You were warned anonymously to "
-                        + wn.getNewLevel() + "%");
+                Message m = new Message();
+                m.setTo(oscarSession.getJIDWithHighestPriority());
+                m.setBody("You have received an anonymous AIM warning.  Your warning level is now "+wn.getNewLevel()+"%.");
+                m.setType(Message.Type.headline);
+                m.setFrom(this.oscarSession.getTransport().getJID());
+                oscarSession.getTransport().sendPacket(m);
             }
             else {
                 Log.debug("*** " + warner.getScreenname()
                         + " warned you up to " + wn.getNewLevel() + "%");
+                Message m = new Message();
+                m.setTo(oscarSession.getJIDWithHighestPriority());
+                m.setBody("You have received an AIM warning from "+warner.getScreenname()+".  Your warning level is now "+wn.getNewLevel()+"%.");
+                m.setType(Message.Type.headline);
+                m.setFrom(this.oscarSession.getTransport().getJID());
+                oscarSession.getTransport().sendPacket(m);
+
             }
         }
         else if (cmd instanceof BuddyStatusCmd) {
@@ -240,7 +243,6 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             int[] classes = new int[rateClasses.length];
             for (int i = 0; i < rateClasses.length; i++) {
                 classes[i] = rateClasses[i].getRateClass();
-//                Log.debug("- " + rateClasses[i] + ": " + Arrays.asList(rateClasses[i].getCommands()));
             }
 
             request(new RateAck(classes));

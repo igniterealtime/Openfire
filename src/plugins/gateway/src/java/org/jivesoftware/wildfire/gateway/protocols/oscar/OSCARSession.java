@@ -13,10 +13,10 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.*;
@@ -70,9 +70,9 @@ public class OSCARSession extends TransportSession {
     /**
      * SSI tracking variables.
      */
-    private Map<String,BuddyItem> buddies = new HashMap<String,BuddyItem>();
-    private Map<Integer,GroupItem> groups = new HashMap<Integer,GroupItem>();
-    private Map<Integer,Integer> highestBuddyIdPerGroup = new HashMap<Integer,Integer>();
+    private ConcurrentHashMap<String,BuddyItem> buddies = new ConcurrentHashMap<String,BuddyItem>();
+    private ConcurrentHashMap<Integer,GroupItem> groups = new ConcurrentHashMap<Integer,GroupItem>();
+    private ConcurrentHashMap<Integer,Integer> highestBuddyIdPerGroup = new ConcurrentHashMap<Integer,Integer>();
     private Integer highestGroupId = -1;
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
@@ -164,7 +164,17 @@ public class OSCARSession extends TransportSession {
         // Now, lets clean up any groups this contact should no longer be a member of.
         for (BuddyItem buddy : buddies.values()) {
             if (buddy.getScreenname().equals(contact)) {
-                if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
+                if (buddy.getGroupId() == 0) {
+                    // Ok this group is the "main group", which we can cheerfully remove from.
+                    request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    buddies.remove(buddy.getGroupId()+"."+buddy.getId());
+                }
+                else if (!groups.contains(buddy.getGroupId())) {
+                    // Well this is odd, a group we don't know about?  Nuke it.
+                    request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    buddies.remove(buddy.getGroupId()+"."+buddy.getId());
+                }
+                else if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
                     request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
                     buddies.remove(buddy.getGroupId()+"."+buddy.getId());
                 }
@@ -328,7 +338,7 @@ public class OSCARSession extends TransportSession {
      * @param buddy The buddy we've been told about.
      */
     void gotBuddy(BuddyItem buddy) {
-        //Log.debug("Found buddy item: " + buddy.toString());
+        Log.debug("Found buddy item: " + buddy.toString() + " at id " + buddy.getId());
         buddies.put(buddy.getGroupId()+"."+buddy.getId(), buddy);
         if (!highestBuddyIdPerGroup.containsKey(buddy.getGroupId())) {
             highestBuddyIdPerGroup.put(buddy.getGroupId(), -1);
@@ -344,7 +354,7 @@ public class OSCARSession extends TransportSession {
      * @param group The group we've been told about.
      */
     void gotGroup(GroupItem group) {
-        //Log.debug("Found group item: " + group.toString());
+        Log.debug("Found group item: " + group.toString() + " at id " + group.getId());
         groups.put(group.getId(), group);
         if (!highestBuddyIdPerGroup.containsKey(group.getId())) {
             highestBuddyIdPerGroup.put(group.getId(), -1);

@@ -130,12 +130,9 @@ public class BOSConnection extends BasicFlapConnection {
                     Log.debug("AIM got group item " + obj);
                     oscarSession.gotGroup((GroupItem) obj);
                 }
-                //Log.debug("- " + (obj == null ? (Object) items[i]
-                //        : (Object) obj));
             }
 
             if (sdc.getLastModDate() != 0) {
-                //Log.debug("done with SSI");
                 request(new ActivateSsiCmd());
                 clientReady();
                 oscarSession.gotCompleteSSI();

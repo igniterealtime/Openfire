@@ -13,6 +13,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.Message;
 
 import net.kano.joscar.*;
 import net.kano.joscar.flap.*;
@@ -45,19 +46,28 @@ public class LoginConnection extends BaseFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
-        //Log.debug("state changed to: " + e.getNewState() + " (" + e.getReason() + ")");
-
         if (e.getNewState() == ClientFlapConn.STATE_CONNECTED) {
-            //Log.debug("connected, sending flap version and key request");
             getFlapProcessor().sendFlap(new LoginFlapCmd());
             request(new KeyRequest(oscarSession.getRegistration().getUsername()));
         }
         else if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
-            //Log.info("connection failed: " + e.getReason());
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setFrom(this.getMainSession().getTransport().getJID());
+            m.setTo(this.getMainSession().getJIDWithHighestPriority());
+            m.setBody("Connection failed: " + e.getReason());
+            this.getMainSession().getTransport().sendPacket(m);                            
+            this.getMainSession().logOut();
         }
         else if (e.getNewState() == ClientFlapConn.STATE_NOT_CONNECTED) {
             if (!loggedin) {
-                //Log.info("connection lost: " + e.getReason());
+                Message m = new Message();
+                m.setType(Message.Type.error);
+                m.setFrom(this.getMainSession().getTransport().getJID());
+                m.setTo(this.getMainSession().getJIDWithHighestPriority());
+                m.setBody("Connection lost: " + e.getReason());
+                this.getMainSession().getTransport().sendPacket(m);
+                this.getMainSession().logOut();
             }
         }
     }
@@ -68,9 +78,6 @@ public class LoginConnection extends BaseFlapConnection {
 
     protected void handleSnacResponse(SnacResponseEvent e) {
         SnacCommand cmd = e.getSnacCommand();
-        //Log.debug("snac response: "
-        //        + Integer.toHexString(cmd.getFamily()) + "/"
-        //        + Integer.toHexString(cmd.getCommand()) + ": " + cmd);
 
         if (cmd instanceof KeyResponse) {
             KeyResponse kr = (KeyResponse) cmd;

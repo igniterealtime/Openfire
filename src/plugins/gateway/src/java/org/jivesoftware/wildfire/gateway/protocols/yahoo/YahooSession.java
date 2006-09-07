@@ -105,7 +105,6 @@ public class YahooSession extends TransportSession {
                         Presence p = new Presence();
                         p.setTo(getJID());
                         p.setFrom(getTransport().getJID());
-                        Log.debug("Logged in, sending: " + p.toString());
                         getTransport().sendPacket(p);
 
                         yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(pType));

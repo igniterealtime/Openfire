@@ -130,17 +130,16 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="group.create.title"/></title>
-        <meta name="pageID" content="group-create"/>
-        <meta name="helpPage" content="create_a_group.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="group.create.title"/></title>
+<meta name="pageID" content="group-create"/>
+<meta name="helpPage" content="create_a_group.html"/>
+</head>
+<body>
 
 <c:set var="submit" value="${param.create}"/>
 
 <%  if (errors.get("general") != null) { %>
-
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
@@ -155,20 +154,22 @@
     </tbody>
     </table>
     </div><br>
-
 <%  } %>
 
 <p>
-<fmt:message key="group.create.form" />
+Use the form below to create your new group. Once you've created the group you will proceed to another
+screen where you can add members and set up group contact list.
+<!--<fmt:message key="group.create.form" />-->
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
 
-<fieldset>
-    <legend><fmt:message key="group.create.new_group_title" /></legend>
-    <div>
-
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+	<!-- BEGIN create group -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="group.create.new_group_title" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr valign="top">
         <td width="1%" nowrap>
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *
@@ -217,145 +218,31 @@
 
     <%  } %>
 
-    <tr>
-        <td nowrap width="1%" valign="top">
-            <fmt:message key="group.create.label_initial_member" />
-        </td>
-        <td nowrap class="c1" align="left">
-            <textarea name="users" cols="30" rows="3" id="users"
-             ><%= ((users != null) ? users : "") %></textarea>
-        </td>
-    </tr>
-    </table>
+	<tr>
+		<td></td>
+		<td>
 
-    <br>
-    <p><b><fmt:message key="group.create.share_groups_title" /></b></p>
-
-    <p>
-    <fmt:message key="group.create.share_groups_info" />
-    </p>
-
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
-            </td>
-            <td width="99%">
-                <label for="rb201"><fmt:message key="group.create.disable_share_group" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
-            </td>
-            <td width="99%">
-                <label for="rb202"><fmt:message key="group.create.enable_share_group" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-                &nbsp;
-            </td>
-            <td width="99%">
-
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <fmt:message key="group.create.group_display_name" />
-                        </td>
-                        <td width="99%">
-                            <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
-                             onchange="this.form.enableRosterGroups[1].checked=true;">
-
-                            <%  if (errors.get("groupDisplayName") != null) { %>
-
-                                    <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
-
-                            <%  } %>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="everybody" id="rb002"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb002"><fmt:message key="group.create.show_group_in_all_users" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb001"><fmt:message key="group.create.show_group_in_group_members" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="spefgroups" id="rb003"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb003"><fmt:message key="group.create.show_group_in_roster_group" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            &nbsp;
-                        </td>
-                        <td width="99%">
-                            <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
-                             multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
-
-                            <%  for (Group group : webManager.getGroupManager().getGroups()) { %>
-
-                                <option value="<%= URLEncoder.encode(group.getName(), "UTF-8") %>"
-                                 <%= (contains(groupNames, group.getName()) ? "selected" : "") %>
-                                 ><%= group.getName() %></option>
-
-                            <%  } %>
-
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
-
-            </td>
-        </tr>
-    </tbody>
-    </table>
-
-    <br>
-    <span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
-    </div>
-
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="create" value="<fmt:message key="group.create.create" />">
+			<input type="submit" name="create" value="<fmt:message key="group.create.create" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+		</td>
+	</tr>
+    </table>
+	</div>
+	<span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
+	<!-- END create group -->
+
+
+
 
 </form>
+
 
 <script language="JavaScript" type="text/javascript">
 document.f.name.focus();
 </script>
 
-    </body>
+
+</body>
 </html>
 
 <%!

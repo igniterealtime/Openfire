@@ -219,17 +219,21 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="group.edit.title"/></title>
-        <meta name="subPageID" content="group-edit"/>
-        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
-        <meta name="helpPage" content="edit_group_properties.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="group.edit.title"/></title>
+<meta name="subPageID" content="group-edit"/>
+<meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+<meta name="helpPage" content="edit_group_properties.html"/>
+</head>
+<body>
 
-    <p>
-        <fmt:message key="group.edit.form_info" />
-    </p>
+<p>
+	<fmt:message key="group.edit.form_info" />
+</p>
+
+<p>
+	<a href="group-summary.jsp" class="jive-link-back"><span>&laquo;</span> Back to all groups</a>
+</p>
 
 <%
     if (success) {
@@ -260,7 +264,7 @@
     }
     else if(!success && add){
 %>
- <div class="jive-error">
+	<div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
@@ -274,79 +278,128 @@
     </table>
     </div><br>
 <% } %>
+
+	<div class="jive-horizontalRule"></div>
+
 <form name="ff" action="group-edit.jsp">
 <input type="hidden" name="group" value="<%= groupName %>"/>
 
-    <fieldset>
-        <legend>
-            <fmt:message key="group.edit.group_summary" />
-        </legend>
 
-        <table cellpadding="3" cellspacing="1" border="0">
-            <tr>
-                <td  width="1%" nowrap>
-                    <fmt:message key="group.edit.group_name" />
-                </td>
-                <% if(!edit) { %>
-                <td align=left nowrap width="1%">
-                    <b><%= group.getName() %></b>
-                </td>
-                <td>
-                    <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
-                    <img src="images/edit-16x16.gif" border="0" alt="">
-                   </a>
-                </td>
-                <% } else { %>
+	<!-- BEGIN group name and description -->
+	<div class="jive-contentBox-plain">
+		<div class="jive-contentBox-toolbox">
+			<a href="group-create.jsp?group=<%= group.getName()%>" class="jive-link-edit">Edit Details</a>
+			<a href="group-delete.jsp?group=<%= group.getName()%>" class="jive-link-delete">Delete Group</a>
+		</div>
 
-                <td>
-                <input type="text" name="newName" value="<%= group.getName() %>">
-                </td>
-
-                <% } %>
-            </tr>
-            <tr>
-                <td width="1%" nowrap>
-                    <fmt:message key="group.edit.group_description" />
-                </td>
-                <% if(!edit) { %>
-                <td colspan="2">
-                    <%= ((group.getDescription() != null) ? group.getDescription() : "<i>"+LocaleUtils.getLocalizedString("group.edit.group_not_description")+"</i>") %>
-                </td>
-                <% } else { %>
-
-                <td>
-                <textarea name="newDescription" cols="40" rows="4"><%= group.getDescription() != null ? group.getDescription() : "" %></textarea>
-                </td>
-
-                <% } %>
-            </tr>
-            </table>
+		<h3>
+			<%= group.getName() %>
+		</h3>
+		<p>
+			<%= group.getDescription() != null ? group.getDescription() : "" %>
+		</p>
+    </div>
+	<!-- END group name and description -->
 
 
+	<!-- BEGIN contact list settings -->
+	<div class="jive-contentBoxHeader">
+		<!--<fmt:message key="group.edit.group_share_title" />-->
+		Shared Contact Lists (Rosters)
+	</div>
+	<div class="jive-contentBox">
+		<p>
+            <!--<fmt:message key="group.edit.group_share_content" />-->
+			You can use the form below to show this group in users' contact lists. <strong>By default</strong>,
+			<em>an enabled group roster only appears to members of the group</em>. However, you can share the
+			group roster with all users or members of other groups.
+        </p>
 
-    <br>
-    <p><fmt:message key="group.edit.group_share_title" /></p>
-
-    <p>
-    <fmt:message key="group.edit.group_share_content" />
-    </p>
-
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
+		<table cellpadding="3" cellspacing="0" border="0" width="100%">
+		<tbody>
+		<tr>
             <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
+                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'none';">
             </td>
             <td width="99%">
-                <label for="rb201"><fmt:message key="group.edit.group_share_not_in_rosters" /></label>
+                <label for="rb201">Disable contact list group<!--<fmt:message key="group.edit.group_share_not_in_rosters" />--></label>
             </td>
         </tr>
         <tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
+            <td width="1%" valign="top">
+                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'block';">
             </td>
             <td width="99%">
-                <label for="rb202"><fmt:message key="group.edit.group_share_in_rosters" /></label>
+                <label for="rb202">Enable contact list group<!--<fmt:message key="group.edit.group_share_in_rosters" />--></label>
+
+                <div id="jive-roster" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
+	               <b>Enter contact list group name<!--<fmt:message key="group.edit.group_display_name" />--></b>
+	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"><br>
+                       <%  if (errors.get("groupDisplayName") != null) { %>
+                           <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
+                       <%  } %>
+	                   <script type="text/javascript" language="JavaScript">
+		                   function toggleRosterShare() {
+			                   if (document.getElementById('cb101').checked == false) {
+			                       document.getElementById('jive-rosterShare').style.display = 'none';
+		                        } else {
+				                   document.getElementById('jive-rosterShare').style.display = 'block';
+			                   }
+		                   }
+	                   </script>
+
+	               <input type="checkbox" id="cb101" name="shareContactList" onClick="toggleRosterShare();" style="vertical-align: middle;">
+	               <label for="cb101">Share group with additional users</label>
+	                    <div id="jive-rosterShare" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
+		                    <table cellpadding="2" cellspacing="0" border="0" width="100%">
+							<tbody>
+								<tr>
+									<td width="1%" nowrap>
+										<input type="radio" name="showGroup" value="everybody" id="rb002"
+										 <%= ("everybody".equals(showGroup) || "nobody".equals(showGroup) ? "checked" : "") %>>
+									</td>
+									<td width="99%">
+										<label for="rb002">All users<!--<fmt:message key="group.edit.show_groups_in_all_user" />--></label>
+									</td>
+								</tr>
+								<tr>
+									<td width="1%" nowrap>
+										<input type="radio" name="showGroup" value="spefgroups" id="rb003"
+										 <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
+									</td>
+									<td width="99%">
+										<label for="rb003">The following groups:<!--<fmt:message key="group.edit.show_group_in_roster_group" />--></label>
+									</td>
+								</tr>
+								<tr>
+									<td width="1%" nowrap>
+										&nbsp;
+									</td>
+									<td width="99%">
+										<select name="groupNames" size="6" onclick="this.form.showGroup[1].checked=true;"
+										 multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
+
+										<%  for (Group g : webManager.getGroupManager().getGroups()) {
+											// Do not offer the edited group in the list of groups
+											// Members of the editing group can always see each other
+											if (g.equals(group)) {
+												continue;
+											}
+										%>
+
+											<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+											 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
+											 ><%= g.getName() %></option>
+
+										<%  } %>
+
+										</select>
+									</td>
+								</tr>
+							</tbody>
+							</table>
+		                </div>
+                </div>
             </td>
         </tr>
         <tr>
@@ -355,126 +408,59 @@
             </td>
             <td width="99%">
 
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <fmt:message key="group.edit.group_display_name" />
-                        </td>
-                        <td width="99%">
-                            <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
-                             onchange="this.form.enableRosterGroups[1].checked=true;">
-
-                            <%  if (errors.get("groupDisplayName") != null) { %>
-
-                                    <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
-
-                            <%  } %>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="everybody" id="rb002"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("everybody".equals(showGroup) || "nobody".equals(showGroup) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb002"><fmt:message key="group.edit.show_groups_in_all_user" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb001"><fmt:message key="group.edit.show_groups_in_groups_members" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="spefgroups" id="rb003"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb003"><fmt:message key="group.edit.show_group_in_roster_group" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            &nbsp;
-                        </td>
-                        <td width="99%">
-                            <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
-                             multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
-
-                            <%  for (Group g : webManager.getGroupManager().getGroups()) {
-                                // Do not offer the edited group in the list of groups
-                                // Members of the editing group can always see each other
-                                if (g.equals(group)) {
-                                    continue;
-                                }
-                            %>
-
-                                <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
-                                 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
-                                 ><%= g.getName() %></option>
-
-                            <%  } %>
-
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
+				<%  if (edit) { %>
+	                <input type="submit" name="save" value="Save Contact List Settings">
+					<!--<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">-->
+					<!--<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">-->
+				<%  } %>
 
             </td>
         </tr>
     </tbody>
     </table>
 
-    </fieldset>
-    <br>
 
-    <%  if (edit) { %>
-        <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
-        <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
-    <%  } %>
+	</div>
+	<!-- END contact list settings -->
 
-                    </form>
 
-    <br><br>
+</form>
 
-    <form action="group-edit.jsp" method="post" name="f">
+
+	<!-- BEGIN group membership management -->
+	<div class="jive-contentBoxHeader">
+		Members of This Group
+	</div>
+	<div class="jive-contentBox">
+		<p>
+			Use the form below to add users to this group. Once added, you will be able to remove them,
+			or give certain users administrative rights over the group.
+		</p>
+
+		<form action="group-edit.jsp" method="post" name="f">
         <input type="hidden" name="group" value="<%= groupName %>">
         <input type="hidden" name="add" value="Add"/>
-        <table cellpadding="3" cellspacing="1" border="0">
+        <table cellpadding="3" cellspacing="1" border="0" style="margin: 0px 0px 8px 0px;">
             <tr>
                 <td nowrap width="1%">
                     <fmt:message key="group.edit.add_user" />
                 </td>
                 <td nowrap class="c1" align="left">
-                    <input type="text" size="40" name="users"/>
+                    <input type="text" size="45" name="users"/>
                     &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
                 </td>
             </tr>
         </table>
-    </form>
+        </form>
 
-    <form action="group-edit.jsp" method="post" name="main">
+		<form action="group-edit.jsp" method="post" name="main">
         <input type="hidden" name="group" value="<%= groupName %>">
-        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
+        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>
-                <th colspan="2" nowrap><fmt:message key="group.edit.username" /></th>
-                <th width="1%" nowrap><fmt:message key="group.edit.admin" /></th>
-                <th width="1%" nowrap><fmt:message key="group.edit.remove" /></th>
+	            <th>&nbsp;</th>
+                <th nowrap><fmt:message key="group.edit.username" /></th>
+                <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
+                <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
             </tr>
             <!-- Add admins first -->
 <%
@@ -514,30 +500,29 @@
 %>
                 <tr>
                     <td width="1%">
-                     <%  if (user != null && presenceManager.isAvailable(user)) {
+                    <%  if (user != null && presenceManager.isAvailable(user)) {
                             Presence presence = presenceManager.getPresence(user);
                     %>
                     <% if (presence.getShow() == null) { %>
-                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
+                    <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                     <% } %>
                     <% if (presence.getShow() == Presence.Show.chat) { %>
-                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                    <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                     <% } %>
                     <% if (presence.getShow() == Presence.Show.away) { %>
-                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                    <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                     <% } %>
                     <% if (presence.getShow() == Presence.Show.xa) { %>
-                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                    <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                     <% } %>
                     <% if (presence.getShow() == Presence.Show.dnd) { %>
-                    <img src="images/user-red-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                    <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                     <% } %>
 
                     <%  } else { %>
-
-                    <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
-
+                    <img src="images/im_unavailable.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
                     <%  } %>
+
                     </td>
                     <% if (user != null) { %>
                     <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
@@ -581,15 +566,20 @@
             }
 %>
         </table>
-
-    </form>
+        </form>
 
     <script type="text/javascript">
         document.f.users.focus();
     </script>
 
-    </body>
+	</div>
+	<!-- END group membership management -->
+
+
+
+</body>
 </html>
+
 
 <%!
     private static String toList(String[] array, String enc) {

@@ -35,6 +35,7 @@ FIELDSET LEGEND {
     color : #000;
 }
 
+
 /* --------------------------------------------- */
 /*  Header                                       */
 /* --------------------------------------------- */
@@ -141,7 +142,7 @@ FIELDSET LEGEND {
 	margin-top: 0px;
     color: #006699;
     text-decoration: none;
-	background-color: EAF1F8;
+	background-color: #EAF1F8;
 	padding-top: 3px;
 	padding-bottom: 3px;
 }
@@ -322,6 +323,47 @@ html>body #jive-main #jive-sidebar a {
 #jive-runningtask {
     margin-left : 1em;
 }
+
+/* --------------------------------------------- */
+/*  Back link                                    */
+/* --------------------------------------------- */
+a.jive-link-back {
+    font-size: 9pt;
+}
+a.jive-link-back span {
+    font-size: 10pt;
+}
+
+/* --------------------------------------------- */
+/*  Edit & Delete links                          */
+/* --------------------------------------------- */
+a.jive-link-edit,
+a.jive-link-delete {
+	display: block;
+    font-size: 8pt;
+	padding-left: 19px;
+	margin: 3px 5px 6px 0px;
+}
+a.jive-link-edit {
+	background: transparent url(../images/edit-16x16.gif) no-repeat left;
+}
+a.jive-link-delete {
+	background: transparent url(../images/delete-16x16.gif) no-repeat left;
+}
+
+/* --------------------------------------------- */
+/*  Hoizontal Rule                               */
+/* --------------------------------------------- */
+.jive-horizontalRule {
+	height: 1px;
+	background-color: #dcdcdc;
+	margin: 20px 0px 10px 0px;
+	padding: 0px;
+	overflow: hidden;
+	}
+
+
+
 
 
 /* --------------------------------------------- */
@@ -584,3 +626,106 @@ A.cal:Hover {
     background-position : 5px 5px;
 	-moz-border-radius: 3px;
 }
+
+
+
+/* --------------------------------------------- */
+/*  Content Box                                  */
+/* --------------------------------------------- */
+
+.jive-contentBox {
+    display: block;
+	margin: 0px 0px 20px 0px;
+	padding: 12px 10px 12px 10px;
+	border: 1px solid #dcdcdc;
+	background-color: #fff;
+	-moz-border-radius:0px 0px 4px 4px ;
+	}
+.jive-contentBoxHeader {
+	display: block;
+	padding: 4px 4px 4px 6px;
+	margin: 8px 0px 0px 0px;
+	font-size: 9pt;
+	font-weight: bold;
+	background-color: #f3f7fa;
+	border: 1px solid #dcdcdc;
+	border-bottom: none;
+	}
+.jive-contentBoxGrey {
+	/* commenting out the below, for now */
+	/*background: #f5f5f5 url(../images/setup_contentbox_bg.gif) repeat-x top;*/
+	background-color: #f9f9f9;
+	}
+.jive-contentBox h3 {
+	margin: 0px;
+	padding: 0px 0px 5px 0px;
+	font-size: 10pt;
+	color: #09345b;
+	}
+.jive-contentBox form {
+	margin: 0px;
+	padding: 0px;
+	}
+.jive-contentBox table {
+	margin: 0px 0px 0px 0px;
+	padding: 0px;
+	}
+.jive-contentBox table td {
+	padding: 2px 2px 2px 2px;
+	}
+.jive-contentBox table th {
+	background-color: #f3f7fa;
+	padding: 4px;
+	}
+th.jive-table-th-center {
+	text-align: center;
+	}
+.jive-contentBox table td.jive-formLabel {
+	font-weight: bold;
+	text-align: right;
+	color: #09345b;
+	padding-right: 5px;
+	white-space: nowrap;
+	}
+
+.jive-contentBox-toolbox {
+	float: right;
+	margin-left: 20px;
+	}
+
+.jive-contentBox-plain {
+    display: block;
+	margin: 0px 0px 5px 0px;
+	padding: 12px 0px 12px 0px;
+}
+.jive-contentBox-plain h3 {
+	font-size: 14pt;
+	color: #34679a;
+	margin: 2px 0px 2px 0px;
+	}
+.jive-contentBox-plain p {
+	font-size: 9pt;
+	margin: 0px 0px 10px 0px;
+	}
+
+
+/* --------------------------------------------- */
+/*  Roster box (in Group Settings page           */
+/* --------------------------------------------- */
+
+#jive-roster {
+    display: block;
+	width: 390px;
+	margin: 3px 0px 4px 0px;
+	padding: 12px;
+	border: 1px solid #dcdcdc;
+	background-color: #f9f9f9;
+	-moz-border-radius: 4px;
+	font-size: 9pt;
+	}
+#jive-roster b {
+	display: block;
+	font-size: 8pt;
+	color: #09345b;
+	padding: 0px 0px 3px 0px;
+	}

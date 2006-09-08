@@ -54,14 +54,17 @@
 %>
 
 <html>
-<head><title><fmt:message key="filetransferproxy.settings.title"/></title></head>
-       <meta name="pageID" content="server-transfer-proxy"/>
+<head>
+<title><fmt:message key="filetransferproxy.settings.title"/></title>
+</head>
+<meta name="pageID" content="server-transfer-proxy"/>
 <body>
+
 <p>
     <fmt:message key="filetransferproxy.settings.info"/>
 </p>
-<%  if (!errors.isEmpty()) { %>
 
+<%  if (!errors.isEmpty()) { %>
 <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
@@ -78,7 +81,6 @@
     </table>
 </div>
 <br>
-
 <%  }
 else if (isUpdated) { %>
 <div class="jive-success">
@@ -98,48 +100,48 @@ else { %>
 <br>
 <% } %>
 
+
+<!-- BEGIN 'Proxy Service' -->
 <form action="file-transfer-proxy.jsp" method="post">
-
-    <fieldset>
-        <legend><fmt:message key="filetransferproxy.settings.enabled.legend"/></legend>
-
-        <div>
-            <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr valign="middle">
-                        <td width="1%" nowrap>
-                            <input type="radio" name="proxyEnabled" value="true" id="rb02"
-                            <%= (isProxyEnabled ? "checked" : "") %> >
-                        </td>
-                        <td width="99%">
-                            <label for="rb02">
-                                <b><fmt:message key="filetransferproxy.settings.label_enable"/></b>
-                                - <fmt:message key="filetransferproxy.settings.label_enable_info"/>
-                            </label>  <input type="text" size="5" maxlength="10" name="port"
-                                             value="<%= port %>" >
-                        </td>
-                    </tr>
-                    <tr valign="middle">
-                        <td width="1%" nowrap>
-                            <input type="radio" name="proxyEnabled" value="false" id="rb01"
-                            <%= (!isProxyEnabled ? "checked" : "") %> >
-                        </td>
-                        <td width="99%">
-                            <label for="rb01">
-                                <b><fmt:message key="filetransferproxy.settings.label_disable"/></b>
-                                - <fmt:message key="filetransferproxy.settings.label_disable_info"/>
-                            </label>
-                        </td>
-                    </tr>
-
-                </tbody>
-            </table>
-        </div>
-    </fieldset>
-    <br>
-
-    <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="filetransferproxy.settings.enabled.legend"/>
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+		<tr valign="middle">
+			<td width="1%" nowrap>
+				<input type="radio" name="proxyEnabled" value="true" id="rb02"
+				<%= (isProxyEnabled ? "checked" : "") %> >
+			</td>
+			<td width="99%">
+				<label for="rb02">
+					<b><fmt:message key="filetransferproxy.settings.label_enable"/></b>
+					- <fmt:message key="filetransferproxy.settings.label_enable_info"/>
+				</label>  <input type="text" size="5" maxlength="10" name="port"
+								 value="<%= port %>" >
+			</td>
+		</tr>
+		<tr valign="middle">
+			<td width="1%" nowrap>
+				<input type="radio" name="proxyEnabled" value="false" id="rb01"
+				<%= (!isProxyEnabled ? "checked" : "") %> >
+			</td>
+			<td width="99%">
+				<label for="rb01">
+					<b><fmt:message key="filetransferproxy.settings.label_disable"/></b>
+					- <fmt:message key="filetransferproxy.settings.label_disable_info"/>
+				</label>
+			</td>
+		</tr>
+		</tbody>
+		</table>
+		<br>
+		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 
 </form>
+<!-- END 'Proxy Service' -->
+
 </body>
 </html>

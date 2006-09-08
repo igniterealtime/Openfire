@@ -700,6 +700,14 @@ A.cal:Hover {
 	font-size: 10pt;
 	color: #09345b;
 	}
+.jive-contentBox h4 {
+	margin: 0px 0px 4px 0px;
+	padding: 3px 0px 3px 4px;
+	color: #34679a;
+	background-color: #fcfcfc;
+	font-size: 10pt;
+	border: 1px solid #e9e9e9;
+	}
 .jive-contentBox form {
 	margin: 0px;
 	padding: 0px;

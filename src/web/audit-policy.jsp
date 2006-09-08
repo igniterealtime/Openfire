@@ -25,12 +25,12 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <html>
-    <head>
-        <title><fmt:message key="audit.policy.title"/></title>
-        <meta name="pageID" content="server-audit-policy"/>
-        <meta name="helpPage" content="set_server_traffic_auditing_policy.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="audit.policy.title"/></title>
+<meta name="pageID" content="server-audit-policy"/>
+<meta name="helpPage" content="set_server_traffic_auditing_policy.html"/>
+</head>
+<body>
 
 
 
@@ -178,215 +178,215 @@
 <fmt:message key="audit.policy.title_info" />
 </p>
 
+<!-- BEGIN 'Set Message Audit Policy' -->
 <form action="audit-policy.jsp" name="f">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="audit.policy.policytitle" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="auditEnabled" value="false" id="rb01"
+					 <%= (!auditEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01">
+					<b><fmt:message key="audit.policy.label_disable_auditing" /></b> <fmt:message key="audit.policy.label_disable_auditing_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="auditEnabled" value="true" id="rb02"
+					 <%= (auditEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb02">
+					<b><fmt:message key="audit.policy.label_enable_auditing" /></b> <fmt:message key="audit.policy.label_enable_auditing_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td width="1%" nowrap>
+					&nbsp;
+				</td>
+				<td width="99%">
+					<table cellpadding="3" cellspacing="0" border="0">
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.log_directory" />
+						</td>
+						<td width="99%">
+							<input type="text" size="50" maxlength="150" name="logDir"
+							 value="<%= ((logDir != null) ? logDir : "") %>">
 
-<fieldset>
-    <legend><fmt:message key="audit.policy.policytitle" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="auditEnabled" value="false" id="rb01"
-                 <%= (!auditEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb01">
-                <b><fmt:message key="audit.policy.label_disable_auditing" /></b> <fmt:message key="audit.policy.label_disable_auditing_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="auditEnabled" value="true" id="rb02"
-                 <%= (auditEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb02">
-                <b><fmt:message key="audit.policy.label_enable_auditing" /></b> <fmt:message key="audit.policy.label_enable_auditing_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                &nbsp;
-            </td>
-            <td width="99%">
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.log_directory" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="50" maxlength="150" name="logDir"
-                         value="<%= ((logDir != null) ? logDir : "") %>">
+						<%  if (errors.get("logDir") != null) { %>
 
-                    <%  if (errors.get("logDir") != null) { %>
+							<span class="jive-error-text">
+							<fmt:message key="audit.policy.valid_log_directory" />
+							</span>
 
-                        <span class="jive-error-text">
-                        <fmt:message key="audit.policy.valid_log_directory" />
-                        </span>
+						<%  } %>
 
-                    <%  } %>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.maxtotal_size" />
+						</td>
+						<td width="99%">
+							<input type="text" size="15" maxlength="50" name="maxTotalSize"
+							 value="<%= ((maxTotalSize != null) ? maxTotalSize : "") %>">
 
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.maxtotal_size" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="maxTotalSize"
-                         value="<%= ((maxTotalSize != null) ? maxTotalSize : "") %>">
+						<%  if (errors.get("maxTotalSize") != null) { %>
 
-                    <%  if (errors.get("maxTotalSize") != null) { %>
+							<span class="jive-error-text">
+							<fmt:message key="audit.policy.validnumber" />
+							</span>
 
-                        <span class="jive-error-text">
-                        <fmt:message key="audit.policy.validnumber" />
-                        </span>
+						<%  } %>
 
-                    <%  } %>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.maxfile_size" />
+						</td>
+						<td width="99%">
+							<input type="text" size="15" maxlength="50" name="maxFileSize"
+							 value="<%= ((maxFileSize != null) ? maxFileSize : "") %>">
 
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.maxfile_size" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="maxFileSize"
-                         value="<%= ((maxFileSize != null) ? maxFileSize : "") %>">
+						<%  if (errors.get("maxFileSize") != null) { %>
 
-                    <%  if (errors.get("maxFileSize") != null) { %>
+							<span class="jive-error-text">
+							<fmt:message key="audit.policy.validnumber" />
+							</span>
 
-                        <span class="jive-error-text">
-                        <fmt:message key="audit.policy.validnumber" />
-                        </span>
+						<%  } %>
 
-                    <%  } %>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.maxdays_number" />
+						</td>
+						<td width="99%">
+							<input type="text" size="15" maxlength="50" name="maxDays"
+							 value="<%= ((maxDays != null) ? maxDays : "") %>">
 
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.maxdays_number" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="maxDays"
-                         value="<%= ((maxDays != null) ? maxDays : "") %>">
+							<%  if (errors.get("maxDays") != null) { %>
 
-                        <%  if (errors.get("maxDays") != null) { %>
+								<span class="jive-error-text">
+								<fmt:message key="audit.policy.validnumber" />
+								</span>
 
-                            <span class="jive-error-text">
-                            <fmt:message key="audit.policy.validnumber" />
-                            </span>
+							<%  } %>
 
-                        <%  } %>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.flush_interval" />
+						</td>
+						<td width="99%">
+							<input type="text" size="15" maxlength="50" name="logTimeout"
+							 value="<%= ((logTimeout != null) ? logTimeout : "") %>">
 
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.flush_interval" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="15" maxlength="50" name="logTimeout"
-                         value="<%= ((logTimeout != null) ? logTimeout : "") %>">
+						<%  if (errors.get("logTimeout") != null) { %>
 
-                    <%  if (errors.get("logTimeout") != null) { %>
+							<span class="jive-error-text">
+							<fmt:message key="audit.policy.validnumber" />
+							</span>
 
-                        <span class="jive-error-text">
-                        <fmt:message key="audit.policy.validnumber" />
-                        </span>
+						<%  } %>
 
-                    <%  } %>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.packet_audit" />
+						</td>
+						<td width="99%">
 
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.packet_audit" />
-                    </td>
-                    <td width="99%">
+							<table cellpadding="4" cellspacing="0" border="0" width="100%">
+							<tr valign="top">
+								<td width="1%" nowrap>
+									<input type="checkbox" name="auditMessages" id="cb01"
+									 onclick="this.form.auditEnabled[1].checked=true;"
+									 <%= (auditMessages ? "checked" : "") %>>
+								</td>
+								<td width="99%">
+									<label for="cb01">
+									<b><fmt:message key="audit.policy.label_audit_messenge_packets" /></b>
+									</label>
+								</td>
+							</tr>
+							<tr valign="top">
+								<td width="1%" nowrap>
+									<input type="checkbox" name="auditPresence" id="cb02"
+									 onclick="this.form.auditEnabled[1].checked=true;"
+									 <%= (auditPresence ? "checked" : "") %>>
+								</td>
+								<td width="99%">
+									<label for="cb02">
+									<b><fmt:message key="audit.policy.label_audit_presence_packets" /></b>
+									</label>
+								</td>
+							</tr>
+							<tr valign="top">
+								<td width="1%" nowrap>
+									<input type="checkbox" name="auditIQ" id="cb03"
+									 onclick="this.form.auditEnabled[1].checked=true;"
+									 <%= (auditIQ ? "checked" : "") %>>
+								</td>
+								<td width="99%">
+									<label for="cb03">
+									<b><fmt:message key="audit.policy.label_audit_iq_packets" /></b>
+									</label>
+								</td>
+							</tr>
+							</table>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="audit.policy.ignore" />
+						</td>
+						<td width="99%">
+							<textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
+							<%  if (errors.get("ignore") != null) { %>
 
-                        <table cellpadding="4" cellspacing="0" border="0" width="100%">
-                        <tr valign="top">
-                            <td width="1%" nowrap>
-                                <input type="checkbox" name="auditMessages" id="cb01"
-                                 onclick="this.form.auditEnabled[1].checked=true;"
-                                 <%= (auditMessages ? "checked" : "") %>>
-                            </td>
-                            <td width="99%">
-                                <label for="cb01">
-                                <b><fmt:message key="audit.policy.label_audit_messenge_packets" /></b>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr valign="top">
-                            <td width="1%" nowrap>
-                                <input type="checkbox" name="auditPresence" id="cb02"
-                                 onclick="this.form.auditEnabled[1].checked=true;"
-                                 <%= (auditPresence ? "checked" : "") %>>
-                            </td>
-                            <td width="99%">
-                                <label for="cb02">
-                                <b><fmt:message key="audit.policy.label_audit_presence_packets" /></b>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr valign="top">
-                            <td width="1%" nowrap>
-                                <input type="checkbox" name="auditIQ" id="cb03"
-                                 onclick="this.form.auditEnabled[1].checked=true;"
-                                 <%= (auditIQ ? "checked" : "") %>>
-                            </td>
-                            <td width="99%">
-                                <label for="cb03">
-                                <b><fmt:message key="audit.policy.label_audit_iq_packets" /></b>
-                                </label>
-                            </td>
-                        </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="audit.policy.ignore" />
-                    </td>
-                    <td width="99%">
-                        <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
-                        <%  if (errors.get("ignore") != null) { %>
+								<span class="jive-error-text">
+								<fmt:message key="audit.policy.validignore" />
+								</span>
 
-                            <span class="jive-error-text">
-                            <fmt:message key="audit.policy.validignore" />
-                            </span>
-
-                        <%  } %>
-                    </td>
-                </tr>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    <table border="0">
-        <tr valign="top">
-            <td width="1%" nowrap class="c1">
-                <fmt:message key="audit.policy.queued_packets" />
-            </td>
-            <td width="99%">
-                 <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
-            </td>
-        </tr>
-    </table>
-    </div>
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-
+							<%  } %>
+						</td>
+					</tr>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<table border="0">
+			<tr valign="top">
+				<td width="1%" nowrap class="c1">
+					<fmt:message key="audit.policy.queued_packets" />
+				</td>
+				<td width="99%">
+					 <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
+				</td>
+			</tr>
+		</table>
+		<br>
+		<br>
+	<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END 'Set Message Audit Policy' -->
 
-    </body>
+
+</body>
 </html>

@@ -228,73 +228,73 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="ssl.settings.title"/></title>
-        <meta name="pageID" content="server-ssl"/>
-        <meta name="helpPage" content="manage_security_certificates.html"/>
-        <script language="JavaScript" type="text/javascript">
-            <!-- // code for window popups
-            function showOrHide(whichLayer, mode)
-            {
+<head>
+<title><fmt:message key="ssl.settings.title"/></title>
+<meta name="pageID" content="server-ssl"/>
+<meta name="helpPage" content="manage_security_certificates.html"/>
+<script language="JavaScript" type="text/javascript">
+	<!-- // code for window popups
+	function showOrHide(whichLayer, mode)
+	{
 
-                if (mode == "show") {
-                    mode = "";
-                }
-                else {
-                    mode = "none";
-                }
+		if (mode == "show") {
+			mode = "";
+		}
+		else {
+			mode = "none";
+		}
 
-                if (document.getElementById)
-                {
-                    // this is the way the standards work
-                    var style2 = document.getElementById(whichLayer).style;
-                    style2.display = mode;
-                }
-                else if (document.all)
-                {
-                    // this is the way old msie versions work
-                    var style2 = document.all[whichLayer].style;
-                    style2.display = mode;
-                }
-                else if (document.layers)
-                {
-                    // this is the way nn4 works
-                    var style2 = document.layers[whichLayer].style;
-                    style2.display = mode;
-                }
-            }
+		if (document.getElementById)
+		{
+			// this is the way the standards work
+			var style2 = document.getElementById(whichLayer).style;
+			style2.display = mode;
+		}
+		else if (document.all)
+		{
+			// this is the way old msie versions work
+			var style2 = document.all[whichLayer].style;
+			style2.display = mode;
+		}
+		else if (document.layers)
+		{
+			// this is the way nn4 works
+			var style2 = document.layers[whichLayer].style;
+			style2.display = mode;
+		}
+	}
 
-            function togglePublicKey(pkLayer, indexLayer)
-            {
-                if (document.getElementById)
-                {
-                    // this is the way the standards work
-                    var style2 = document.getElementById(pkLayer).style;
-                    var certs = document.getElementById(indexLayer);
-                    certs.rowSpan = style2.display? 2:1;
-                    style2.display = style2.display? "":"none";
-                }
-                else if (document.all)
-                {
-                    // this is the way old msie versions work
-                    var style2 = document.all[pkLayer].style;
-                    var certs = document.all[indexLayer];
-                    certs.rowSpan = style2.display? 2:1;
-                    style2.display = style2.display? "":"none";
-                }
-                else if (document.layers)
-                {
-                    // this is the way nn4 works
-                    var style2 = document.layers[pkLayer].style;
-                    var certs = document.layers[indexLayer];
-                    certs.rowSpan = style2.display? 2:1;
-                    style2.display = style2.display? "":"none";
-                }
-            }
-            //-->
-        </script>
-    </head>
-    <body>
+	function togglePublicKey(pkLayer, indexLayer)
+	{
+		if (document.getElementById)
+		{
+			// this is the way the standards work
+			var style2 = document.getElementById(pkLayer).style;
+			var certs = document.getElementById(indexLayer);
+			certs.rowSpan = style2.display? 2:1;
+			style2.display = style2.display? "":"none";
+		}
+		else if (document.all)
+		{
+			// this is the way old msie versions work
+			var style2 = document.all[pkLayer].style;
+			var certs = document.all[indexLayer];
+			certs.rowSpan = style2.display? 2:1;
+			style2.display = style2.display? "":"none";
+		}
+		else if (document.layers)
+		{
+			// this is the way nn4 works
+			var style2 = document.layers[pkLayer].style;
+			var certs = document.layers[indexLayer];
+			certs.rowSpan = style2.display? 2:1;
+			style2.display = style2.display? "":"none";
+		}
+	}
+	//-->
+</script>
+</head>
+<body>
 
 <%  if (success) { %>
 
@@ -359,178 +359,182 @@
 <fmt:message key="ssl.settings.client.info" />
 </p>
 
+
+<!-- BEGIN 'Client Connection Security' -->
 <form action="ssl-settings.jsp" method="post">
-
-<fieldset>
-    <legend><fmt:message key="ssl.settings.client.legend" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="middle">
-            <tr valign="middle">
-                <td width="1%" nowrap>
-                    <input type="radio" name="clientSecurityRequired" value="notreq" id="rb02" onclick="showOrHide('custom', 'hide')"
-                     <%= ("notreq".equals(clientSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb02">
-                    <b><fmt:message key="ssl.settings.client.label_notrequired" /></b> - <fmt:message key="ssl.settings.client.label_notrequired_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
-                    <input type="radio" name="clientSecurityRequired" value="req" id="rb01" onclick="showOrHide('custom', 'hide')"
-                 <%= ("req".equals(clientSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb01">
-                    <b><fmt:message key="ssl.settings.client.label_required" /></b> - <fmt:message key="ssl.settings.client.label_required_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
-                    <input type="radio" name="clientSecurityRequired" value="custom" id="rb03" onclick="showOrHide('custom', 'show')"
-                     <%= ("custom".equals(clientSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb03">
-                    <b><fmt:message key="ssl.settings.client.label_custom" /></b> - <fmt:message key="ssl.settings.client.label_custom_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top" id="custom" <% if (!"custom".equals(clientSecurityRequired)) out.write("style=\"display:none\""); %>>
-                <td width="1%" nowrap>
-                    &nbsp;
-                </td>
-                <td width="99%">
-                    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                    <tr valign="top">
-                        <td width="1%" nowrap>
-                            <fmt:message key="ssl.settings.client.customSSL" />
-                        </td>
-                        <td width="99%">
-                            <input type="radio" name="ssl" value="notavailable" id="rb04" <%= ("notavailable".equals(ssl) ? "checked" : "") %>
-                                   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb04"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
-                            <input type="radio" name="ssl" value="available" id="rb05" <%= ("available".equals(ssl) ? "checked" : "") %>
-                                   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb05"><fmt:message key="ssl.settings.available" /></label>
-                        </td>
-                    </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap>
-                            <fmt:message key="ssl.settings.client.customTLS" />
-                        </td>
-                        <td width="99%">
-                            <input type="radio" name="tls" value="notavailable" id="rb06" <%= ("notavailable".equals(tls) ? "checked" : "") %>
-                                   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb06"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
-                            <input type="radio" name="tls" value="optional" id="rb07" <%= ("optional".equals(tls) ? "checked" : "") %>
-                                   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb07"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
-                            <input type="radio" name="tls" value="required" id="rb08" <%= ("required".equals(tls) ? "checked" : "") %>
-                                   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb08"><fmt:message key="ssl.settings.required" /></label>
-                        </td>
-                    </tr>
-                    </table>
-                </td>
-            </tr>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
-<br>
-
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="ssl.settings.client.legend" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<tr valign="middle">
+					<td width="1%" nowrap>
+						<input type="radio" name="clientSecurityRequired" value="notreq" id="rb02" onclick="showOrHide('custom', 'hide')"
+						 <%= ("notreq".equals(clientSecurityRequired) ? "checked" : "") %>>
+					</td>
+					<td width="99%">
+						<label for="rb02">
+						<b><fmt:message key="ssl.settings.client.label_notrequired" /></b> - <fmt:message key="ssl.settings.client.label_notrequired_info" />
+						</label>
+					</td>
+				</tr>
+				<tr valign="middle">
+					<td width="1%" nowrap>
+						<input type="radio" name="clientSecurityRequired" value="req" id="rb01" onclick="showOrHide('custom', 'hide')"
+					 <%= ("req".equals(clientSecurityRequired) ? "checked" : "") %>>
+					</td>
+					<td width="99%">
+						<label for="rb01">
+						<b><fmt:message key="ssl.settings.client.label_required" /></b> - <fmt:message key="ssl.settings.client.label_required_info" />
+						</label>
+					</td>
+				</tr>
+				<tr valign="middle">
+					<td width="1%" nowrap>
+						<input type="radio" name="clientSecurityRequired" value="custom" id="rb03" onclick="showOrHide('custom', 'show')"
+						 <%= ("custom".equals(clientSecurityRequired) ? "checked" : "") %>>
+					</td>
+					<td width="99%">
+						<label for="rb03">
+						<b><fmt:message key="ssl.settings.client.label_custom" /></b> - <fmt:message key="ssl.settings.client.label_custom_info" />
+						</label>
+					</td>
+				</tr>
+				<tr valign="top" id="custom" <% if (!"custom".equals(clientSecurityRequired)) out.write("style=\"display:none\""); %>>
+					<td width="1%" nowrap>
+						&nbsp;
+					</td>
+					<td width="99%">
+						<table cellpadding="3" cellspacing="0" border="0">
+						<tr valign="top">
+							<td width="1%" nowrap>
+								<fmt:message key="ssl.settings.client.customSSL" />
+							</td>
+							<td width="99%">
+								<input type="radio" name="ssl" value="notavailable" id="rb04" <%= ("notavailable".equals(ssl) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb04"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+								<input type="radio" name="ssl" value="available" id="rb05" <%= ("available".equals(ssl) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb05"><fmt:message key="ssl.settings.available" /></label>
+							</td>
+						</tr>
+						<tr valign="top">
+							<td width="1%" nowrap>
+								<fmt:message key="ssl.settings.client.customTLS" />
+							</td>
+							<td width="99%">
+								<input type="radio" name="tls" value="notavailable" id="rb06" <%= ("notavailable".equals(tls) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb06"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+								<input type="radio" name="tls" value="optional" id="rb07" <%= ("optional".equals(tls) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb07"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
+								<input type="radio" name="tls" value="required" id="rb08" <%= ("required".equals(tls) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb08"><fmt:message key="ssl.settings.required" /></label>
+							</td>
+						</tr>
+						</table>
+					</td>
+				</tr>
+			</tr>
+		</tbody>
+		</table>
+		<br>
+		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END 'Client Connection Security' -->
 
 <br>
+<br>
 
+
+<!-- BEGIN 'Server Connection Security' -->
 <form action="ssl-settings.jsp" method="post">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="ssl.settings.server.legend" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<tr valign="middle">
+					<td width="1%" nowrap>
+						<input type="radio" name="serverSecurityRequired" value="notreq" id="rb09" onclick="showOrHide('server_custom', 'hide')"
+						 <%= ("notreq".equals(serverSecurityRequired) ? "checked" : "") %>>
+					</td>
+					<td width="99%">
+						<label for="rb09">
+						<b><fmt:message key="ssl.settings.server.label_notrequired" /></b> - <fmt:message key="ssl.settings.server.label_notrequired_info" />
+						</label>
+					</td>
+				</tr>
+				<tr valign="middle">
+					<td width="1%" nowrap>
+						<input type="radio" name="serverSecurityRequired" value="req" id="rb10" onclick="showOrHide('server_custom', 'hide')"
+					 <%= ("req".equals(serverSecurityRequired) ? "checked" : "") %>>
+					</td>
+					<td width="99%">
+						<label for="rb10">
+						<b><fmt:message key="ssl.settings.server.label_required" /></b> - <fmt:message key="ssl.settings.server.label_required_info" />
+						</label>
+					</td>
+				</tr>
+				<tr valign="middle">
+					<td width="1%" nowrap>
+						<input type="radio" name="serverSecurityRequired" value="custom" id="rb11" onclick="showOrHide('server_custom', 'show')"
+						 <%= ("custom".equals(serverSecurityRequired) ? "checked" : "") %>>
+					</td>
+					<td width="99%">
+						<label for="rb11">
+						<b><fmt:message key="ssl.settings.server.label_custom" /></b> - <fmt:message key="ssl.settings.server.label_custom_info" />
+						</label>
+					</td>
+				</tr>
+				<tr valign="top" id="server_custom" <% if (!"custom".equals(serverSecurityRequired)) out.write("style=\"display:none\""); %>>
+					<td width="1%" nowrap>
+						&nbsp;
+					</td>
+					<td width="99%">
+						<table cellpadding="3" cellspacing="0" border="0" width="100%">
+						<tr valign="top">
+							<td width="1%" nowrap>
+								<fmt:message key="ssl.settings.server.dialback" />
+							</td>
+							<td width="99%">
+								<input type="radio" name="dialback" value="notavailable" id="rb12" <%= ("notavailable".equals(dialback) ? "checked" : "") %>
+									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb12"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+								<input type="radio" name="dialback" value="available" id="rb13" <%= ("available".equals(dialback) ? "checked" : "") %>
+									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb13"><fmt:message key="ssl.settings.available" /></label>
+							</td>
+						</tr>
+						<tr valign="top">
+							<td width="1%" nowrap>
+								<fmt:message key="ssl.settings.server.customTLS" />
+							</td>
+							<td width="99%">
+								<input type="radio" name="server_tls" value="notavailable" id="rb14" <%= ("notavailable".equals(server_tls) ? "checked" : "") %>
+									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb14"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+								<input type="radio" name="server_tls" value="optional" id="rb15" <%= ("optional".equals(server_tls) ? "checked" : "") %>
+									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb15"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
+							</td>
+						</tr>
+						</table>
+					</td>
+				</tr>
+			</tr>
+		</tbody>
+		</table>
+		<br>
+		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
+</form>
+<!-- BEGIN 'Server Connection Security' -->
 
-<fieldset>
-    <legend><fmt:message key="ssl.settings.server.legend" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="middle">
-            <tr valign="middle">
-                <td width="1%" nowrap>
-                    <input type="radio" name="serverSecurityRequired" value="notreq" id="rb09" onclick="showOrHide('server_custom', 'hide')"
-                     <%= ("notreq".equals(serverSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb09">
-                    <b><fmt:message key="ssl.settings.server.label_notrequired" /></b> - <fmt:message key="ssl.settings.server.label_notrequired_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
-                    <input type="radio" name="serverSecurityRequired" value="req" id="rb10" onclick="showOrHide('server_custom', 'hide')"
-                 <%= ("req".equals(serverSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb10">
-                    <b><fmt:message key="ssl.settings.server.label_required" /></b> - <fmt:message key="ssl.settings.server.label_required_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
-                    <input type="radio" name="serverSecurityRequired" value="custom" id="rb11" onclick="showOrHide('server_custom', 'show')"
-                     <%= ("custom".equals(serverSecurityRequired) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb11">
-                    <b><fmt:message key="ssl.settings.server.label_custom" /></b> - <fmt:message key="ssl.settings.server.label_custom_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top" id="server_custom" <% if (!"custom".equals(serverSecurityRequired)) out.write("style=\"display:none\""); %>>
-                <td width="1%" nowrap>
-                    &nbsp;
-                </td>
-                <td width="99%">
-                    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                    <tr valign="top">
-                        <td width="1%" nowrap>
-                            <fmt:message key="ssl.settings.server.dialback" />
-                        </td>
-                        <td width="99%">
-                            <input type="radio" name="dialback" value="notavailable" id="rb12" <%= ("notavailable".equals(dialback) ? "checked" : "") %>
-                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb12"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
-                            <input type="radio" name="dialback" value="available" id="rb13" <%= ("available".equals(dialback) ? "checked" : "") %>
-                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb13"><fmt:message key="ssl.settings.available" /></label>
-                        </td>
-                    </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap>
-                            <fmt:message key="ssl.settings.server.customTLS" />
-                        </td>
-                        <td width="99%">
-                            <input type="radio" name="server_tls" value="notavailable" id="rb14" <%= ("notavailable".equals(server_tls) ? "checked" : "") %>
-                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb14"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
-                            <input type="radio" name="server_tls" value="optional" id="rb15" <%= ("optional".equals(server_tls) ? "checked" : "") %>
-                                   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb15"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
-                        </td>
-                    </tr>
-                    </table>
-                </td>
-            </tr>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
+<br>
 <br>
 
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 
-</form>
-
-<br><br>
-
+<!-- BEGIN 'Installed Certificates' -->
 <p><b><fmt:message key="ssl.settings.certificate" /></b></p>
 
 <p>
@@ -631,87 +635,90 @@
 
 </tbody>
 </table>
+<!-- END 'Installed Certificates' -->
 
-<br><br>
+<br>
+<br>
 
+<!-- BEGIN 'Instal Certificate' -->
 <form action="ssl-settings.jsp" method="post">
-
-<fieldset>
-    <legend><fmt:message key="ssl.settings.install_certificate" /></legend>
-    <div>
-    <p>
-      <fmt:message key="ssl.settings.install_certificate_info" />
-    </p>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <%  if (errors.containsKey("alias")) { %>
-            <tr><td>&nbsp;</td>
-                <td>
-                    <span class="jive-error-text">
-                    <fmt:message key="ssl.settings.enter_alias" />
-                    </span>
-                </td>
-            </tr>
-        <%  } else if (errors.containsKey("cert")) { %>
-            <tr><td>&nbsp;</td>
-                <td>
-                    <span class="jive-error-text">
-                    <fmt:message key="ssl.settings.enter_certificate" />
-                    </span>
-                </td>
-            </tr>
-        <%  } else if (errors.containsKey("general")) {
-                String error = (String)errors.get("general");
-        %>
-            <tr><td>&nbsp;</td>
-                <td>
-                    <span class="jive-error-text">
-                    <fmt:message key="ssl.settings.error_installing" />
-                    <%  if (error != null && !"".equals(error.trim())) { %>
-                        <fmt:message key="ssl.settings.error_reported" />: <%= error %>.
-                    <%  } %>
-                    </span>
-                </td>
-            </tr>
-        <%  } %>
-        <tr>
-            <td nowrap><fmt:message key="ssl.settings.type" />:</td>
-            <td>
-                <select name="type" size="1">
-                    <option value="server"><fmt:message key="ssl.settings.server" /></option>
-                    <option value="client"><fmt:message key="ssl.settings.client" /></option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td nowrap><fmt:message key="ssl.settings.alias" />:</td>
-            <td>
-                <input name="alias" type="text" size="50" maxlength="255" value="<%= (alias != null ? alias : "") %>">
-            </td>
-        </tr>
-        <tr valign="top">
-            <td nowrap><fmt:message key="ssl.settings.a_certificate" />:</td>
-            <td>
-                <span class="jive-description">
-                <fmt:message key="ssl.settings.paste_certificate" /><br>
-                </span>
-                <textarea name="cert" cols="55" rows="7" wrap="virtual" style="font-size:8pt;"></textarea>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <br>
-                <input type="submit" name="install" value="<fmt:message key="ssl.settings.add_certificate" />">
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
-
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="ssl.settings.install_certificate" />
+	</div>
+	<div class="jive-contentBox">
+		<p>
+		  <fmt:message key="ssl.settings.install_certificate_info" />
+		</p>
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<%  if (errors.containsKey("alias")) { %>
+				<tr><td>&nbsp;</td>
+					<td>
+						<span class="jive-error-text">
+						<fmt:message key="ssl.settings.enter_alias" />
+						</span>
+					</td>
+				</tr>
+			<%  } else if (errors.containsKey("cert")) { %>
+				<tr><td>&nbsp;</td>
+					<td>
+						<span class="jive-error-text">
+						<fmt:message key="ssl.settings.enter_certificate" />
+						</span>
+					</td>
+				</tr>
+			<%  } else if (errors.containsKey("general")) {
+					String error = (String)errors.get("general");
+			%>
+				<tr><td>&nbsp;</td>
+					<td>
+						<span class="jive-error-text">
+						<fmt:message key="ssl.settings.error_installing" />
+						<%  if (error != null && !"".equals(error.trim())) { %>
+							<fmt:message key="ssl.settings.error_reported" />: <%= error %>.
+						<%  } %>
+						</span>
+					</td>
+				</tr>
+			<%  } %>
+			<tr>
+				<td nowrap width="15%"><fmt:message key="ssl.settings.type" />:</td>
+				<td>
+					<select name="type" size="1">
+						<option value="server"><fmt:message key="ssl.settings.server" /></option>
+						<option value="client"><fmt:message key="ssl.settings.client" /></option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td nowrap><fmt:message key="ssl.settings.alias" />:</td>
+				<td>
+					<input name="alias" type="text" size="50" maxlength="255" value="<%= (alias != null ? alias : "") %>">
+				</td>
+			</tr>
+			<tr valign="top">
+				<td nowrap><fmt:message key="ssl.settings.a_certificate" />:</td>
+				<td>
+					<span class="jive-description">
+					<fmt:message key="ssl.settings.paste_certificate" /><br>
+					</span>
+					<textarea name="cert" cols="55" rows="7" wrap="virtual" style="font-size:8pt;"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<br>
+					<input type="submit" name="install" value="<fmt:message key="ssl.settings.add_certificate" />">
+				</td>
+			</tr>
+		</tbody>
+		</table>
+	</div>
 </form>
+<!-- END 'Instal Certificate' -->
 
-    </body>
+
+</body>
 </html>
 
 <%  } catch (Throwable t) { t.printStackTrace(); } %>

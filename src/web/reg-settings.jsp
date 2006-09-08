@@ -24,12 +24,12 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <html>
-    <head>
-        <title><fmt:message key="reg.settings.title"/></title>
-        <meta name="pageID" content="server-reg-and-login"/>
-        <meta name="helpPage" content="manage_registration_and_login_settings.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="reg.settings.title"/></title>
+<meta name="pageID" content="server-reg-and-login"/>
+<meta name="helpPage" content="manage_registration_and_login_settings.html"/>
+</head>
+<body>
 
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
@@ -99,10 +99,14 @@
 
 <% } %>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.inband_account" /></legend>
-    <div>
-    <p>
+<!-- BEGIN registration settings -->
+	<!--<div class="jive-contentBoxHeader">
+
+	</div>-->
+	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
+
+	<h4><fmt:message key="reg.settings.inband_account" /></h4>
+	<p>
     <fmt:message key="reg.settings.inband_account_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -128,15 +132,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.change_password" /></legend>
-    <div>
-    <p>
+	<h4><fmt:message key="reg.settings.change_password" /></h4>
+	<p>
     <fmt:message key="reg.settings.change_password_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -161,15 +162,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.anonymous_login" /></legend>
-    <div>
-    <p>
+	<h4><fmt:message key="reg.settings.anonymous_login" /></h4>
+	<p>
     <fmt:message key="reg.settings.anonymous_login_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -194,15 +192,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.allowed_ips" /></legend>
-    <div>
-    <p>
+	<h4><fmt:message key="reg.settings.allowed_ips" /></h4>
+	<p>
     <fmt:message key="reg.settings.allowed_ips_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -214,14 +209,15 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br><br>
+	<br>
 
-<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+	<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+	</div>
+<!-- END registration settings -->
 
 </form>
 
-    </body>
+
+</body>
 </html>

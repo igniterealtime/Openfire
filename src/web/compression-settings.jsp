@@ -21,11 +21,11 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <html>
-    <head>
-        <title><fmt:message key="compression.settings.title"/></title>
-        <meta name="pageID" content="server-compression"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="compression.settings.title"/></title>
+<meta name="pageID" content="server-compression"/>
+</head>
+<body>
 
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -64,12 +64,16 @@
 <fmt:message key="compression.settings.info" />
 </p>
 
-<form action="compression-settings.jsp">
 
-<fieldset>
-    <legend><fmt:message key="compression.settings.client.policy" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+<!-- BEGIN compression settings -->
+<form action="compression-settings.jsp">
+	<!--<div class="jive-contentBoxHeader">
+
+	</div>-->
+	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
+
+	<h4><fmt:message key="compression.settings.client.policy" /></h4>
+	<table cellpadding="3" cellspacing="0" border="0">
     <tbody>
         <tr valign="top">
             <td width="1%" nowrap>
@@ -97,15 +101,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="compression.settings.server.policy" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+	<h4><fmt:message key="compression.settings.server.policy" /></h4>
+	<table cellpadding="3" cellspacing="0" border="0">
     <tbody>
         <tr valign="top">
             <td width="1%" nowrap>
@@ -133,14 +134,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-
+	<br>
+	<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END compression settings -->
 
-    </body>
+
+</body>
 </html>

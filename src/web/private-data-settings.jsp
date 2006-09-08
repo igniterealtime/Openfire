@@ -22,12 +22,12 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <html>
-    <head>
-        <title><fmt:message key="private.data.settings.title"/></title>
-        <meta name="pageID" content="server-data-settings"/>
-        <meta name="helpPage" content="set_private_data_storage_policy.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="private.data.settings.title"/></title>
+<meta name="pageID" content="server-data-settings"/>
+<meta name="helpPage" content="set_private_data_storage_policy.html"/>
+</head>
+<body>
 
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
@@ -64,47 +64,45 @@
 <fmt:message key="private.data.settings.info" />
 </p>
 
+<!-- BEGIN 'Set Private Data Policy' -->
 <form action="private-data-settings.jsp">
-
-<fieldset>
-    <legend><fmt:message key="private.data.settings.policy" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                <input type="radio" name="privateEnabled" value="true" id="rb01"
-                 <%= (privateEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb01">
-                <b><fmt:message key="private.data.settings.enable_storage" /></b> - 
-                <fmt:message key="private.data.settings.enable_storage_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                <input type="radio" name="privateEnabled" value="false" id="rb02"
-                 <%= (!privateEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb02">
-                <b><fmt:message key="private.data.settings.disable_storage" /></b> - 
-                <fmt:message key="private.data.settings.disable_storage_info" />
-                </label>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="private.data.settings.policy" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="top">
+				<td width="1%" nowrap>
+					<input type="radio" name="privateEnabled" value="true" id="rb01"
+					 <%= (privateEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01">
+					<b><fmt:message key="private.data.settings.enable_storage" /></b> -
+					<fmt:message key="private.data.settings.enable_storage_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td width="1%" nowrap>
+					<input type="radio" name="privateEnabled" value="false" id="rb02"
+					 <%= (!privateEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb02">
+					<b><fmt:message key="private.data.settings.disable_storage" /></b> -
+					<fmt:message key="private.data.settings.disable_storage_info" />
+					</label>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<br>
+	<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END 'Set Private Data Policy' -->
 
-    </body>
+</body>
 </html>

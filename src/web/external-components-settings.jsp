@@ -22,11 +22,11 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="component.settings.title"/></title>
-        <meta name="pageID" content="external-components-settings"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="component.settings.title"/></title>
+<meta name="pageID" content="external-components-settings"/>
+</head>
+<body>
 
 <%  // Get parameters
     boolean update = request.getParameter("update") != null;
@@ -204,244 +204,247 @@
 
 <%  } %>
 
+
+<!-- BEGIN 'Services Enabled' -->
 <form action="external-components-settings.jsp" method="post">
-
-<fieldset>
-    <legend><fmt:message key="component.settings.enabled.legend" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="componentEnabled" value="false" id="rb01"
-                 <%= (!componentEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb01">
-                <b><fmt:message key="component.settings.label_disable" /></b> - <fmt:message key="component.settings.label_disable_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="componentEnabled" value="true" id="rb02"
-                 <%= (componentEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb02">
-                <b><fmt:message key="component.settings.label_enable" /></b> - <fmt:message key="component.settings.label_enable_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
-                &nbsp;
-            </td>
-            <td width="99%">
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="component.settings.port" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="10" maxlength="50" name="port"
-                         value="<%= port %>">
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
-                        <fmt:message key="component.settings.defaultSecret" />
-                    </td>
-                    <td width="99%">
-                        <input type="text" size="15" maxlength="70" name="defaultSecret"
-                         value="<%= ((defaultSecret != null) ? defaultSecret : "") %>">
-                    </td>
-                </tr>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
-<br>
-
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="component.settings.enabled.legend" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="componentEnabled" value="false" id="rb01"
+					 <%= (!componentEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01">
+					<b><fmt:message key="component.settings.label_disable" /></b> - <fmt:message key="component.settings.label_disable_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="componentEnabled" value="true" id="rb02"
+					 <%= (componentEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb02">
+					<b><fmt:message key="component.settings.label_enable" /></b> - <fmt:message key="component.settings.label_enable_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td width="1%" nowrap>
+					&nbsp;
+				</td>
+				<td width="99%">
+					<table cellpadding="3" cellspacing="0" border="0" width="100%">
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="component.settings.port" />
+						</td>
+						<td width="99%">
+							<input type="text" size="10" maxlength="50" name="port"
+							 value="<%= port %>">
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">
+							<fmt:message key="component.settings.defaultSecret" />
+						</td>
+						<td width="99%">
+							<input type="text" size="15" maxlength="70" name="defaultSecret"
+							 value="<%= ((defaultSecret != null) ? defaultSecret : "") %>">
+						</td>
+					</tr>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END 'Services Enabled' -->
 
 <br>
 
-<fieldset>
-    <legend><fmt:message key="component.settings.allowed" /></legend>
-    <div>
-    <form action="external-components-settings.jsp" method="post">
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
+<!-- BEGIN 'Allowed to Connect' -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="component.settings.allowed" />
+	</div>
+	<div class="jive-contentBox">
+		<form action="external-components-settings.jsp" method="post">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
 
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.blacklist %>" id="rb03"
-                 <%= (ExternalComponentManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb03">
-                <b><fmt:message key="component.settings.anyone" /></b> - <fmt:message key="component.settings.anyone_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.whitelist %>" id="rb04"
-                 <%= (ExternalComponentManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb04">
-                <b><fmt:message key="component.settings.whitelist" /></b> - <fmt:message key="component.settings.whitelist_info" />
-                </label>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    <br>
-    <input type="submit" name="permissionUpdate" value="<fmt:message key="global.save_settings" />">
-    </form>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.blacklist %>" id="rb03"
+					 <%= (ExternalComponentManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb03">
+					<b><fmt:message key="component.settings.anyone" /></b> - <fmt:message key="component.settings.anyone_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.whitelist %>" id="rb04"
+					 <%= (ExternalComponentManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb04">
+					<b><fmt:message key="component.settings.whitelist" /></b> - <fmt:message key="component.settings.whitelist_info" />
+					</label>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<br>
+		<input type="submit" name="permissionUpdate" value="<fmt:message key="global.save_settings" />">
+		</form>
+		<br>
+		<table class="jive-table" cellpadding="0" cellspacing="0" border="0">
+		<thead>
+			<tr>
+				<th width="1%">&nbsp;</th>
+				<th width="50%" nowrap><fmt:message key="component.settings.subdomain" /></th>
+				<th width="49%" nowrap><fmt:message key="component.settings.secret" /></th>
+				<th width="10%" nowrap><fmt:message key="global.delete" /></th>
+			</tr>
+		</thead>
+		<tbody>
+		<% Collection<ExternalComponentConfiguration> configs = ExternalComponentManager.getAllowedComponents();
+		   if (configs.isEmpty()) { %>
+			<tr>
+				<td align="center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
+			</tr>
+		   <% }
+			else {
+			int count = 1;
+			for (Iterator<ExternalComponentConfiguration> it=configs.iterator(); it.hasNext(); count++) {
+				ExternalComponentConfiguration configuration = it.next();
+		   %>
+			<tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
+				<td>
+					<%= count %>
+				</td>
+				<td>
+					<%= configuration.getSubdomain() %>
+				</td>
+				<td>
+					<%= configuration.getSecret() %>
+				</td>
+				<td align="center" style="border-right:1px #ccc solid;">
+					<a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('external-components-settings.jsp?deleteConf=<%= configuration.getSubdomain() %>'); } "
+					 title="<fmt:message key="global.click_delete" />"
+					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+				</td>
+			</tr>
+		   <% }
+		   }
+		%>
+		</tbody>
+		</table>
+		<br>
+		<table cellpadding="3" cellspacing="1" border="0">
+		<form action="external-components-settings.jsp" method="post">
+		<tr>
+			<td nowrap width="1%">
+				<fmt:message key="component.settings.subdomain" />
+			</td>
+			<td>
+				<input type="text" size="40" name="subdomain" value="<%= componentAllowed ?  subdomain : "" %>"/>
+			</td>
+			<td nowrap width="1%">
+				<fmt:message key="component.settings.secret" />
+			</td>
+			<td>
+				<input type="text" size="15" name="secret"value="<%= componentAllowed ?  secret : "" %>"/>
+			</td>
+		</tr>
+		<tr align="center">
+			<td colspan="4">
+				<input type="submit" name="componentAllowed" value="<fmt:message key="component.settings.allow" />">
+			</td>
+		</tr>
+		</form>
+		</table>
+	</div>
+<!-- END 'Allowed to Connect' -->
 
-    <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <thead>
-        <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="50%" nowrap><fmt:message key="component.settings.subdomain" /></th>
-            <th width="49%" nowrap><fmt:message key="component.settings.secret" /></th>
-            <th width="10%" nowrap><fmt:message key="global.delete" /></th>
-        </tr>
-    </thead>
-    <tbody>
-    <% Collection<ExternalComponentConfiguration> configs = ExternalComponentManager.getAllowedComponents();
-       if (configs.isEmpty()) { %>
-        <tr>
-            <td align="center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
-        </tr>
-       <% }
-        else {
-        int count = 1;
-        for (Iterator<ExternalComponentConfiguration> it=configs.iterator(); it.hasNext(); count++) {
-            ExternalComponentConfiguration configuration = it.next();
-       %>
-	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
-	        <td>
-	            <%= count %>
-	        </td>
-	        <td>
-	            <%= configuration.getSubdomain() %>
-	        </td>
-	        <td>
-	            <%= configuration.getSecret() %>
-	        </td>
-	        <td align="center" style="border-right:1px #ccc solid;">
-	            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('external-components-settings.jsp?deleteConf=<%= configuration.getSubdomain() %>'); } "
-	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-	        </td>
-	    </tr>
-       <% }
-       }
-    %>
-    </tbody>
-    </table>
-    <br>
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
-    <form action="external-components-settings.jsp" method="post">
-    <tr>
-        <td nowrap width="1%">
-            <fmt:message key="component.settings.subdomain" />
-        </td>
-        <td>
-            <input type="text" size="40" name="subdomain" value="<%= componentAllowed ?  subdomain : "" %>"/>
-        </td>
-        <td nowrap width="1%">
-            <fmt:message key="component.settings.secret" />
-        </td>
-        <td>
-            <input type="text" size="15" name="secret"value="<%= componentAllowed ?  secret : "" %>"/>
-        </td>
-    </tr>
-    <tr align="center">
-        <td colspan="4">
-            <input type="submit" name="componentAllowed" value="<fmt:message key="component.settings.allow" />">
-        </td>
-    </tr>
-    </form>
-    </table>
+<br>
 
-    </div>
-</fieldset>
+<!-- BEGIN 'Not Allowed to Connect' -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="component.settings.disallowed" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0" >
+		<tbody>
+			<tr><td><p><fmt:message key="component.settings.disallowed.info" /></p></td></tr>
+		</tbody>
+		</table>
+		<br><br>
+		<table class="jive-table" cellpadding="3" cellspacing="0" border="0" >
+		<thead>
+			<tr>
+				<th width="1%">&nbsp;</th>
+				<th width="89%" nowrap><fmt:message key="component.settings.subdomain" /></th>
+				<th width="10%" nowrap><fmt:message key="global.delete" /></th>
+			</tr>
+		</thead>
+		<tbody>
+		<% Collection<ExternalComponentConfiguration> blockedComponents = ExternalComponentManager.getBlockedComponents();
+		   if (blockedComponents.isEmpty()) { %>
+			<tr>
+				<td align="center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
+			</tr>
+		   <% }
+			else {
+			int count = 1;
+			for (Iterator<ExternalComponentConfiguration> it=blockedComponents.iterator(); it.hasNext(); count++) {
+				ExternalComponentConfiguration configuration = it.next();
+		   %>
+			<tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
+				<td>
+					<%= count %>
+				</td>
+				<td>
+					<%= configuration.getSubdomain() %>
+				</td>
+				<td align="center" style="border-right:1px #ccc solid;">
+					<a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('external-components-settings.jsp?deleteConf=<%= configuration.getSubdomain() %>'); } "
+					 title="<fmt:message key="global.click_delete" />"
+					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+				</td>
+			</tr>
+		   <% }
+		   }
+		%>
+		</tbody>
+		</table>
+		<br>
+		<table cellpadding="3" cellspacing="1" border="0">
+		<form action="external-components-settings.jsp" method="post">
+		<tr>
+			<td nowrap width="1%">
+				<fmt:message key="component.settings.subdomain" />
+			</td>
+			<td>
+				<input type="text" size="40" name="subdomain" value="<%= componentBlocked ?  subdomain : "" %>"/>&nbsp;
+				<input type="submit" name="componentBlocked" value="<fmt:message key="component.settings.block" />">
+			</td>
+		</tr>
+		</form>
+		</table>
+	</div>
+<!-- END 'Not Allowed to Connect' -->
 
-<br><br>
 
-<fieldset>
-    <legend><fmt:message key="component.settings.disallowed" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr><td><p><fmt:message key="component.settings.disallowed.info" /></p></td></tr>
-    </tbody>
-    </table>
-    <br><br>
-    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="100%">
-    <thead>
-        <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="89%" nowrap><fmt:message key="component.settings.subdomain" /></th>
-            <th width="10%" nowrap><fmt:message key="global.delete" /></th>
-        </tr>
-    </thead>
-    <tbody>
-    <% Collection<ExternalComponentConfiguration> blockedComponents = ExternalComponentManager.getBlockedComponents();
-       if (blockedComponents.isEmpty()) { %>
-        <tr>
-            <td align="center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
-        </tr>
-       <% }
-        else {
-        int count = 1;
-        for (Iterator<ExternalComponentConfiguration> it=blockedComponents.iterator(); it.hasNext(); count++) {
-            ExternalComponentConfiguration configuration = it.next();
-       %>
-	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
-	        <td>
-	            <%= count %>
-	        </td>
-	        <td>
-	            <%= configuration.getSubdomain() %>
-	        </td>
-	        <td align="center" style="border-right:1px #ccc solid;">
-	            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('external-components-settings.jsp?deleteConf=<%= configuration.getSubdomain() %>'); } "
-	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-	        </td>
-	    </tr>
-       <% }
-       }
-    %>
-    </tbody>
-    </table>
-    <br>
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
-    <form action="external-components-settings.jsp" method="post">
-    <tr>
-        <td nowrap width="1%">
-            <fmt:message key="component.settings.subdomain" />
-        </td>
-        <td>
-            <input type="text" size="40" name="subdomain" value="<%= componentBlocked ?  subdomain : "" %>"/>&nbsp;
-            <input type="submit" name="componentBlocked" value="<fmt:message key="component.settings.block" />">
-        </td>
-    </tr>
-    </form>
-    </table>
-    </div>
-</fieldset>
-
-    </body>
+</body>
 </html>

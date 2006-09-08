@@ -307,17 +307,17 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="muc.room.edit.form.title"/></title>
-        <% if (create) { %>
-        <meta name="pageID" content="muc-room-create"/>
-        <% } else { %>
-        <meta name="subPageID" content="muc-room-edit-form"/>
-        <% } %>
-        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
-        <meta name="helpPage" content="view_group_chat_room_summary.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="muc.room.edit.form.title"/></title>
+<% if (create) { %>
+<meta name="pageID" content="muc-room-create"/>
+<% } else { %>
+<meta name="subPageID" content="muc-room-edit-form"/>
+<% } %>
+<meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
+<meta name="helpPage" content="view_group_chat_room_summary.html"/>
+</head>
+<body>
 
 <%  if (!errors.isEmpty()) { %>
 
@@ -351,8 +351,7 @@
         </tr>
     </tbody>
     </table>
-    </div>
-    <br>
+    </div><br>
 
 <%  } else if (success || addsuccess) { %>
 

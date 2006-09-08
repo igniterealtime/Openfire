@@ -156,6 +156,7 @@
 			</tr>
 		</tbody>
 		</table>
+		<br>
 		<input type="submit" name="update" value="<fmt:message key="groupchat.history.settings.save" />"/>
 	</div>
 </form>

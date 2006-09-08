@@ -140,10 +140,14 @@
         </td>
         <td width="45%" valign="middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
-                <%=  room.getName() %>
+                 <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
+	                 <%=  room.getName() %>
+	             </a>
             <% }
                else { %>
+	            <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
                 <%= room.getNaturalLanguageName() %> (<%=  room.getName() %>)
+	            </a>
             <% } %>
         </td>
         <td width="45%" valign="middle">

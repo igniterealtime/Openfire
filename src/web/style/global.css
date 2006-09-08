@@ -12,6 +12,11 @@ BODY {
     background-image : url("../images/page-background_new.gif");
     background-repeat : repeat-y;
 }
+
+a {
+	color: #34679a;
+}
+
 P {
     margin-top : 0px;
 }

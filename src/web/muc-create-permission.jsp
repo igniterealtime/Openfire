@@ -79,12 +79,12 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="muc.create.permission.title"/></title>
-        <meta name="pageID" content="muc-perms"/>
-        <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="muc.create.permission.title"/></title>
+<meta name="pageID" content="muc-perms"/>
+<meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
+</head>
+<body>
 
 <p>
 <fmt:message key="muc.create.permission.info" />
@@ -130,12 +130,13 @@
 
 <%  } %>
 
+<!-- BEGIN 'Permission Policy' -->
 <form action="muc-create-permission.jsp?save" method="post">
-
-<fieldset>
-    <legend><fmt:message key="muc.create.permission.policy" /></legend>
-    <div>
-        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="muc.create.permission.policy" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
         <tbody>
             <tr>
                 <td width="1%">
@@ -160,21 +161,21 @@
         </table>
         <br>
         <input type="submit" value="<fmt:message key="global.save_settings" />">
-    </div>
-</fieldset>
-
+	</div>
 </form>
+<!-- END 'Permission Policy' -->
 
 <br>
 
+
 <%  if (mucServer.isRoomCreationRestricted()) { %>
-
-    <form action="muc-create-permission.jsp?add" method="post">
-
-    <fieldset>
-        <legend><fmt:message key="muc.create.permission.allowed_users" /></legend>
-        <div>
-        <p>
+<!-- BEGIN 'Allowed Users' -->
+<form action="muc-create-permission.jsp?add" method="post">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="muc.create.permission.allowed_users" />
+	</div>
+	<div class="jive-contentBox">
+		<p>
         <label for="userJIDtf"><fmt:message key="muc.create.permission.add_jid" /></label>
         <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
          onclick="this.form.openPerms[1].checked=true;" id="userJIDtf">
@@ -182,49 +183,49 @@
         </p>
 
         <div class="jive-table" style="width:400px;">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
-        <thead>
-            <tr>
-                <th width="99%">User</th>
-                <th width="1%">Remove</th>
-            </tr>
-        </thead>
-        <tbody>
-            <%  if (mucServer.getUsersAllowedToCreate().size() == 0) { %>
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+			<thead>
+				<tr>
+					<th width="99%">User</th>
+					<th width="1%">Remove</th>
+				</tr>
+			</thead>
+			<tbody>
+				<%  if (mucServer.getUsersAllowedToCreate().size() == 0) { %>
 
-                <tr>
-                    <td colspan="2">
-                        <fmt:message key="muc.create.permission.no_allowed_users" />
-                    </td>
-                </tr>
+					<tr>
+						<td colspan="2">
+							<fmt:message key="muc.create.permission.no_allowed_users" />
+						</td>
+					</tr>
 
-            <%  } %>
+				<%  } %>
 
-            <%  for (Object obj : mucServer.getUsersAllowedToCreate()) {
-                    String user = (String)obj;
-            %>
-                <tr>
-                    <td width="99%">
-                        <%= user %>
-                    </td>
-                    <td width="1%" align="center">
-                        <a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
-                         title="<fmt:message key="muc.create.permission.click_title" />"
-                         onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
-                         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-                    </td>
-                </tr>
+				<%  for (Object obj : mucServer.getUsersAllowedToCreate()) {
+						String user = (String)obj;
+				%>
+					<tr>
+						<td width="99%">
+							<%= user %>
+						</td>
+						<td width="1%" align="center">
+							<a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
+							 title="<fmt:message key="muc.create.permission.click_title" />"
+							 onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
+							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+						</td>
+					</tr>
 
-            <%  } %>
-        </tbody>
-        </table>
+				<%  } %>
+			</tbody>
+			</table>
         </div>
-        </div>
-    </fieldset>
-
-    </form>
+	</div>
+</form>
+<!-- END 'Allowed Users' -->
 
 <%  } %>
 
-    </body>
+
+</body>
 </html>

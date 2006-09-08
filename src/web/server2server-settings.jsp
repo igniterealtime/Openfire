@@ -175,16 +175,16 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="server2server.settings.title"/></title>
-        <meta name="pageID" content="server2server-settings"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="server2server.settings.title"/></title>
+<meta name="pageID" content="server2server-settings"/>
+</head>
+<body>
 
 <p>
 <fmt:message key="server2server.settings.info">
-    <fmt:param value="<%= "<a href='server-session-summary.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+<fmt:param value="<%= "<a href='server-session-summary.jsp'>" %>" />
+<fmt:param value="<%= "</a>" %>" />
 </fmt:message>
 </p>
 
@@ -208,8 +208,7 @@
         </tr>
     </tbody>
     </table>
-    </div>
-    <br>
+    </div><br>
 
 <%  } else if (closeSettingsSuccess || updateSucess || allowSuccess || blockSuccess || deleteSuccess) { %>
 
@@ -238,248 +237,249 @@
 
 <%  } %>
 
+<!-- BEGIN 'Service Enabled' -->
 <form action="server2server-settings.jsp" method="post">
-
-<fieldset>
-    <legend><fmt:message key="server2server.settings.enabled.legend" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="s2sEnabled" value="false" id="rb01"
-                 <%= (!s2sEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb01">
-                <b><fmt:message key="server2server.settings.label_disable" /></b> - <fmt:message key="server2server.settings.label_disable_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="s2sEnabled" value="true" id="rb02"
-                 <%= (s2sEnabled ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb02">
-                <b><fmt:message key="server2server.settings.label_enable" /></b> - <fmt:message key="server2server.settings.label_enable_info" />
-                </label>  <input type="text" size="5" maxlength="10" name="port" value="<%= port %>">
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
-<br>
-
-<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="server2server.settings.enabled.legend" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="s2sEnabled" value="false" id="rb01"
+					 <%= (!s2sEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01">
+					<b><fmt:message key="server2server.settings.label_disable" /></b> - <fmt:message key="server2server.settings.label_disable_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="s2sEnabled" value="true" id="rb02"
+					 <%= (s2sEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb02">
+					<b><fmt:message key="server2server.settings.label_enable" /></b> - <fmt:message key="server2server.settings.label_enable_info" />
+					</label>  <input type="text" size="5" maxlength="10" name="port" value="<%= port %>">
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END 'Service Enabled' -->
 
 <br>
 
+<!-- BEGIN 'Idle Connection Settings' -->
 <form action="server2server-settings.jsp?closeSettings" method="post">
-
-<fieldset>
-    <legend><fmt:message key="server2server.settings.close_settings" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="closeEnabled" value="false" id="rb03"
-                 <%= ((webManager.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
-            </td>
-        </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="closeEnabled" value="true" id="rb04"
-                 <%= ((webManager.getSessionManager().getServerSessionIdleTime() > -1) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                    <label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
-                     <input type="text" name="idletime" size="5" maxlength="5"
-                         onclick="this.form.closeEnabled[1].checked=true;"
-                         value="<%= webManager.getSessionManager().getServerSessionIdleTime() == -1 ? 30 : webManager.getSessionManager().getServerSessionIdleTime() / 1000 / 60 %>">
-                     <fmt:message key="global.minutes" />.
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-</fieldset>
-
-<br>
-
-<input type="submit" value="<fmt:message key="global.save_settings" />">
-
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="server2server.settings.close_settings" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="closeEnabled" value="false" id="rb03"
+					 <%= ((webManager.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
+				</td>
+			</tr>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="closeEnabled" value="true" id="rb04"
+					 <%= ((webManager.getSessionManager().getServerSessionIdleTime() > -1) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+						<label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
+						 <input type="text" name="idletime" size="5" maxlength="5"
+							 onclick="this.form.closeEnabled[1].checked=true;"
+							 value="<%= webManager.getSessionManager().getServerSessionIdleTime() == -1 ? 30 : webManager.getSessionManager().getServerSessionIdleTime() / 1000 / 60 %>">
+						 <fmt:message key="global.minutes" />.
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<input type="submit" value="<fmt:message key="global.save_settings" />">
+	</div>
 </form>
+<!-- END 'Idle Connection Settings' -->
 
 <br>
 
-<fieldset>
-    <legend><fmt:message key="server2server.settings.allowed" /></legend>
-    <div>
-    <form action="server2server-settings.jsp" method="post">
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
+<!-- BEGIN 'Allowed to Connect' -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="server2server.settings.allowed" />
+	</div>
+	<div class="jive-contentBox">
+		<form action="server2server-settings.jsp" method="post">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
 
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.blacklist %>" id="rb05"
-                 <%= (RemoteServerManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb05">
-                <b><fmt:message key="server2server.settings.anyone" /></b> - <fmt:message key="server2server.settings.anyone_info" />
-                </label>
-            </td>
-        </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.whitelist %>" id="rb06"
-                 <%= (RemoteServerManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb06">
-                <b><fmt:message key="server2server.settings.whitelist" /></b> - <fmt:message key="server2server.settings.whitelist_info" />
-                </label>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    <br>
-    <input type="submit" name="permissionUpdate" value="<fmt:message key="global.save_settings" />">
-    </form>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.blacklist %>" id="rb05"
+					 <%= (RemoteServerManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb05">
+					<b><fmt:message key="server2server.settings.anyone" /></b> - <fmt:message key="server2server.settings.anyone_info" />
+					</label>
+				</td>
+			</tr>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.whitelist %>" id="rb06"
+					 <%= (RemoteServerManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb06">
+					<b><fmt:message key="server2server.settings.whitelist" /></b> - <fmt:message key="server2server.settings.whitelist_info" />
+					</label>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+		<br>
+		<input type="submit" name="permissionUpdate" value="<fmt:message key="global.save_settings" />">
+		<br><br>
+		</form>
 
-    <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <thead>
-        <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="50%" nowrap><fmt:message key="server2server.settings.domain" /></th>
-            <th width="49%" nowrap><fmt:message key="server2server.settings.remotePort" /></th>
-            <th width="10%" nowrap><fmt:message key="global.delete" /></th>
-        </tr>
-    </thead>
-    <tbody>
-    <% Collection<RemoteServerConfiguration> configs = RemoteServerManager.getAllowedServers();
-       if (configs.isEmpty()) { %>
-        <tr>
-            <td align="center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
-        </tr>
-       <% }
-        else {
-        int count = 1;
-        for (Iterator<RemoteServerConfiguration> it=configs.iterator(); it.hasNext(); count++) {
-            RemoteServerConfiguration configuration = it.next();
-       %>
-	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
-	        <td>
-	            <%= count %>
-	        </td>
-	        <td>
-	            <%= configuration.getDomain() %>
-	        </td>
-	        <td>
-	            <%= configuration.getRemotePort() %>
-	        </td>
-	        <td align="center" style="border-right:1px #ccc solid;">
-	            <a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('server2server-settings.jsp?deleteConf=<%= configuration.getDomain() %>'); } "
-	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-	        </td>
-	    </tr>
-       <% }
-       }
-    %>
-    </tbody>
-    </table>
-    <br>
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
-    <form action="server2server-settings.jsp" method="post">
-    <tr>
-        <td nowrap>
-            <fmt:message key="server2server.settings.domain" />
-            <input type="text" size="40" name="domain" value="<%= serverAllowed ?  domain : "" %>"/>
-            &nbsp;
-            <fmt:message key="server2server.settings.remotePort" />
-            <input type="text" size="5" name="remotePort"value="<%= serverAllowed ?  remotePort : "5269" %>"/>
-            <input type="submit" name="serverAllowed" value="<fmt:message key="server2server.settings.allow" />">
-        </td>
-    </tr>
-    </form>
-    </table>
+		<table class="jive-table" cellpadding="0" cellspacing="0" border="0" >
+		<thead>
+			<tr>
+				<th width="1%">&nbsp;</th>
+				<th width="50%" nowrap><fmt:message key="server2server.settings.domain" /></th>
+				<th width="49%" nowrap><fmt:message key="server2server.settings.remotePort" /></th>
+				<th width="10%" nowrap><fmt:message key="global.delete" /></th>
+			</tr>
+		</thead>
+		<tbody>
+		<% Collection<RemoteServerConfiguration> configs = RemoteServerManager.getAllowedServers();
+		   if (configs.isEmpty()) { %>
+			<tr>
+				<td align="center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
+			</tr>
+		   <% }
+			else {
+			int count = 1;
+			for (Iterator<RemoteServerConfiguration> it=configs.iterator(); it.hasNext(); count++) {
+				RemoteServerConfiguration configuration = it.next();
+		   %>
+			<tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
+				<td>
+					<%= count %>
+				</td>
+				<td>
+					<%= configuration.getDomain() %>
+				</td>
+				<td>
+					<%= configuration.getRemotePort() %>
+				</td>
+				<td align="center" style="border-right:1px #ccc solid;">
+					<a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('server2server-settings.jsp?deleteConf=<%= configuration.getDomain() %>'); } "
+					 title="<fmt:message key="global.click_delete" />"
+					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+				</td>
+			</tr>
+		   <% }
+		   }
+		%>
+		</tbody>
+		</table>
+		<br>
+		<table cellpadding="3" cellspacing="1" border="0" >
+		<form action="server2server-settings.jsp" method="post">
+		<tr>
+			<td nowrap>
+				<fmt:message key="server2server.settings.domain" />
+				<input type="text" size="40" name="domain" value="<%= serverAllowed ?  domain : "" %>"/>
+				&nbsp;
+				<fmt:message key="server2server.settings.remotePort" />
+				<input type="text" size="5" name="remotePort"value="<%= serverAllowed ?  remotePort : "5269" %>"/>
+				<input type="submit" name="serverAllowed" value="<fmt:message key="server2server.settings.allow" />">
+			</td>
+		</tr>
+		</form>
+		</table>
+	</div>
+<!-- END 'Allowed to Connect' -->
 
-    </div>
-</fieldset>
+<br>
 
-<br><br>
 
-<fieldset>
-    <legend><fmt:message key="server2server.settings.disallowed" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="1" border="0" width="100%"><tr><td>
-    <fmt:message key="server2server.settings.disallowed.info" />
-    </td></tr></table>
-    <p>
-    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="100%">
-    <thead>
-        <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="89%" nowrap><fmt:message key="server2server.settings.domain" /></th>
-            <th width="10%" nowrap><fmt:message key="global.delete" /></th>
-        </tr>
-    </thead>
-    <tbody>
-    <% Collection<RemoteServerConfiguration> blockedComponents = RemoteServerManager.getBlockedServers();
-       if (blockedComponents.isEmpty()) { %>
-        <tr>
-            <td align="center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
-        </tr>
-       <% }
-        else {
-        int count = 1;
-        for (Iterator<RemoteServerConfiguration> it=blockedComponents.iterator(); it.hasNext(); count++) {
-            RemoteServerConfiguration configuration = it.next();
-       %>
-	    <tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
-	        <td>
-	            <%= count %>
-	        </td>
-	        <td>
-	            <%= configuration.getDomain() %>
-	        </td>
-	        <td align="center" style="border-right:1px #ccc solid;">
-	            <a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('server2server-settings.jsp?deleteConf=<%= configuration.getDomain() %>'); } "
-	             title="<fmt:message key="global.click_delete" />"
-	             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-	        </td>
-	    </tr>
-       <% }
-       }
-    %>
-    </tbody>
-    </table>
-    <br>
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
-    <form action="server2server-settings.jsp" method="post">
-    <tr>
-        <td nowrap width="1%">
-            <fmt:message key="server2server.settings.domain" />
-        </td>
-        <td>
-            <input type="text" size="40" name="domain" value="<%= serverBlocked ?  domain : "" %>"/>&nbsp;
-            <input type="submit" name="serverBlocked" value="<fmt:message key="server2server.settings.block" />">
-        </td>
-    </tr>
-    </form>
-    </table>
-    </div>
-</fieldset>
+<!-- BEGIN 'Not Allowed to Connect' -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="server2server.settings.disallowed" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="1" border="0" width="100%"><tr><td>
+		<fmt:message key="server2server.settings.disallowed.info" />
+		</td></tr></table>
+		<p>
+		<table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="100%">
+		<thead>
+			<tr>
+				<th width="1%">&nbsp;</th>
+				<th width="89%" nowrap><fmt:message key="server2server.settings.domain" /></th>
+				<th width="10%" nowrap><fmt:message key="global.delete" /></th>
+			</tr>
+		</thead>
+		<tbody>
+		<% Collection<RemoteServerConfiguration> blockedComponents = RemoteServerManager.getBlockedServers();
+		   if (blockedComponents.isEmpty()) { %>
+			<tr>
+				<td align="center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
+			</tr>
+		   <% }
+			else {
+			int count = 1;
+			for (Iterator<RemoteServerConfiguration> it=blockedComponents.iterator(); it.hasNext(); count++) {
+				RemoteServerConfiguration configuration = it.next();
+		   %>
+			<tr class="jive-<%= (((count%2)==0) ? "even" : "odd") %>">
+				<td>
+					<%= count %>
+				</td>
+				<td>
+					<%= configuration.getDomain() %>
+				</td>
+				<td align="center" style="border-right:1px #ccc solid;">
+					<a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('server2server-settings.jsp?deleteConf=<%= configuration.getDomain() %>'); } "
+					 title="<fmt:message key="global.click_delete" />"
+					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+				</td>
+			</tr>
+		   <% }
+		   }
+		%>
+		</tbody>
+		</table>
+		<br>
+		<table cellpadding="3" cellspacing="1" border="0" width="100%">
+		<form action="server2server-settings.jsp" method="post">
+		<tr>
+			<td nowrap width="1%">
+				<fmt:message key="server2server.settings.domain" />
+			</td>
+			<td>
+				<input type="text" size="40" name="domain" value="<%= serverBlocked ?  domain : "" %>"/>&nbsp;
+				<input type="submit" name="serverBlocked" value="<fmt:message key="server2server.settings.block" />">
+			</td>
+		</tr>
+		</form>
+		</table>
+	</div>
+<!-- END 'Not Allowed to Connect' -->
 
-    </body>
+
+</body>
 </html>

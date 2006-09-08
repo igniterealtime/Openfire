@@ -165,67 +165,70 @@
 
 <form name="f" action="user-create.jsp" method="get">
 
-<fieldset>
-    <legend><fmt:message key="user.create.new_user" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-    <tr>
-        <td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
-        <td width="99%">
-            <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
-             id="usernametf" autocomplete="off">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-            <label for="nametf"><fmt:message key="user.create.name" />:</label>
-        </td>
-        <td width="99%">
-            <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
-             id="nametf">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-            <label for="emailtf"><fmt:message key="user.create.email" />:</label></td>
-        <td width="99%">
-            <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
-             id="emailtf">
-        </td>
-    </tr>
-    <tr>
-        <td nowrap>
-            <label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
-        </td>
-        <td width="99%">
-            <input type="password" name="password" value="" size="20" maxlength="75"
-             id="passtf">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-            <label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
-        </td>
-        <td width="99%">
-            <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
-             id="confpasstf">
-        </td>
-    </tr>
-    </tbody>
-    </table>
-    <br>
-    <span class="jive-description">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="user.create.new_user" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+		<tr>
+			<td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
+			<td width="99%">
+				<input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
+				 id="usernametf" autocomplete="off">
+			</td>
+		</tr>
+		<tr>
+			<td width="1%" nowrap>
+				<label for="nametf"><fmt:message key="user.create.name" />:</label>
+			</td>
+			<td width="99%">
+				<input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
+				 id="nametf">
+			</td>
+		</tr>
+		<tr>
+			<td width="1%" nowrap>
+				<label for="emailtf"><fmt:message key="user.create.email" />:</label></td>
+			<td width="99%">
+				<input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
+				 id="emailtf">
+			</td>
+		</tr>
+		<tr>
+			<td nowrap>
+				<label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
+			</td>
+			<td width="99%">
+				<input type="password" name="password" value="" size="20" maxlength="75"
+				 id="passtf">
+			</td>
+		</tr>
+		<tr>
+			<td width="1%" nowrap>
+				<label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
+			</td>
+			<td width="99%">
+				<input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
+				 id="confpasstf">
+			</td>
+		</tr>
+		<tr>
+
+			<td colspan="2" style="padding-top: 10px;">
+				<input type="submit" name="create" value="<fmt:message key="user.create.create" />">
+				<input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
+				<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
+		</tr>
+		</tbody>
+		</table>
+
+	</div>
+
+	<span class="jive-description">
     * <fmt:message key="user.create.requied" />
     </span>
-    </div>
-</fieldset>
 
-<br><br>
-
-<input type="submit" name="create" value="<fmt:message key="user.create.create" />">
-<input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
-<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
 

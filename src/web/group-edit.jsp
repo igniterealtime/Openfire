@@ -315,7 +315,7 @@
 			group roster with all users or members of other groups.
         </p>
 
-		<table cellpadding="3" cellspacing="0" border="0" width="100%">
+		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 		<tr>
             <td width="1%">

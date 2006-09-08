@@ -62,12 +62,12 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="groupchat.service.properties.title"/></title>
-        <meta name="pageID" content="muc-server-props"/>
-        <meta name="helpPage" content="edit_group_chat_service_properties.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="groupchat.service.properties.title"/></title>
+<meta name="pageID" content="muc-server-props"/>
+<meta name="helpPage" content="edit_group_chat_service_properties.html"/>
+</head>
+<body>
 
 <p>
 <fmt:message key="groupchat.service.properties.introduction" />
@@ -101,39 +101,37 @@
 
 <%  } %>
 
+<!-- BEGIN 'Service Name'-->
 <form action="muc-server-props-edit-form.jsp" method="post">
 <input type="hidden" name="save" value="true">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="groupchat.service.properties.legend" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
 
-<fieldset>
-    <legend><fmt:message key="groupchat.service.properties.legend" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0">
+		<tr>
+			<td class="c1">
+			   <fmt:message key="groupchat.service.properties.label_service_name" />
+			</td>
+			<td>
+			<input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">
 
-    <tr>
-        <td class="c1">
-           <fmt:message key="groupchat.service.properties.label_service_name" />
-        </td>
-        <td>
-        <input type="text" size="30" maxlength="150" name="mucname"  value="<%= (muc != null ? muc : "") %>">
+			<%  if (errors.get("mucname") != null) { %>
 
-        <%  if (errors.get("mucname") != null) { %>
+				<span class="jive-error-text">
+				<br><fmt:message key="groupchat.service.properties.error_service_name" />
+				</span>
 
-            <span class="jive-error-text">
-            <br><fmt:message key="groupchat.service.properties.error_service_name" />
-            </span>
-
-        <%  } %>
-        </td>
-    </tr>
-    </table>
-    </div>
-</fieldset>
-
-<br><br>
-
-<input type="submit" value="<fmt:message key="groupchat.service.properties.save" />">
-
+			<%  } %>
+			</td>
+		</tr>
+		</table>
+		<input type="submit" value="<fmt:message key="groupchat.service.properties.save" />">
+	</div>
 </form>
+<!-- END 'Service Name'-->
 
-    </body>
+
+</body>
 </html>

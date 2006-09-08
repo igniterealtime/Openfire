@@ -51,12 +51,12 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="groupchat.admins.title"/></title>
-        <meta name="pageID" content="muc-sysadmin"/>
-        <meta name="helpPage" content="edit_group_chat_service_administrators.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="groupchat.admins.title"/></title>
+<meta name="pageID" content="muc-sysadmin"/>
+<meta name="helpPage" content="edit_group_chat_service_administrators.html"/>
+</head>
+<body>
 
 <p>
 <fmt:message key="groupchat.admins.introduction" />
@@ -103,58 +103,60 @@
 
 <%  } %>
 
+
+<!-- BEGIN 'Administrators' -->
 <form action="muc-sysadmins.jsp?add" method="post">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="groupchat.admins.legend" />
+	</div>
+	<div class="jive-contentBox">
+		<label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
+		<input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
+		 id="userJIDtf">
+		<input type="submit"s value="<fmt:message key="groupchat.admins.add" />">
+		<br><br>
 
-<fieldset>
-    <legend><fmt:message key="groupchat.admins.legend" /></legend>
-    <div>
-    <label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
-    <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
-     id="userJIDtf">
-    <input type="submit"s value="<fmt:message key="groupchat.admins.add" />">
-    <br><br>
+		<div class="jive-table" style="width:400px;">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+			<thead>
+				<tr>
+					<th width="99%"><fmt:message key="groupchat.admins.column_user" /></th>
+					<th width="1%" nowrap><fmt:message key="groupchat.admins.column_remove" /></th>
+				</tr>
+			</thead>
+			<tbody>
+				<%  if (mucServer.getSysadmins().size() == 0) { %>
 
-    <div class="jive-table" style="width:400px;">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <thead>
-        <tr>
-            <th width="99%"><fmt:message key="groupchat.admins.column_user" /></th>
-            <th width="1%" nowrap><fmt:message key="groupchat.admins.column_remove" /></th>
-        </tr>
-    </thead>
-    <tbody>
-        <%  if (mucServer.getSysadmins().size() == 0) { %>
+					<tr>
+						<td colspan="2">
+							<fmt:message key="groupchat.admins.no_admins" />
+						</td>
+					</tr>
 
-            <tr>
-                <td colspan="2">
-                    <fmt:message key="groupchat.admins.no_admins" />
-                </td>
-            </tr>
+				<%  } %>
 
-        <%  } %>
+				<%  for (String user : mucServer.getSysadmins()) { %>
 
-        <%  for (String user : mucServer.getSysadmins()) { %>
+					<tr>
+						<td width="99%">
+							<%= user %>
+						</td>
+						<td width="1%" align="center">
+							<a href="muc-sysadmins.jsp?userJID=<%= user %>&delete=true"
+							 title="<fmt:message key="groupchat.admins.dialog.title" />"
+							 onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
+							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+						</td>
+					</tr>
 
-            <tr>
-                <td width="99%">
-                    <%= user %>
-                </td>
-                <td width="1%" align="center">
-                    <a href="muc-sysadmins.jsp?userJID=<%= user %>&delete=true"
-                     title="<fmt:message key="groupchat.admins.dialog.title" />"
-                     onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
-                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
-                </td>
-            </tr>
-
-        <%  } %>
-    </tbody>
-    </table>
-    </div>
-    </div>
-</fieldset>
-
+				<%  } %>
+			</tbody>
+			</table>
+		</div>
+	</div>
 </form>
+<!-- END 'Administrators' -->
 
-    </body>
+
+</body>
 </html>

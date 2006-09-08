@@ -71,13 +71,14 @@
 <fmt:message key="locale.title.info" />
 </p>
 
+
+<!-- BEGIN locale settings -->
 <form action="server-locale.jsp" method="post" name="sform">
-
-<fieldset>
-    <legend><fmt:message key="locale.system.set" /></legend>
-    <div style="padding-top:0.5em;">
-
-        <p>
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="locale.system.set" />
+	</div>
+	<div class="jive-contentBox">
+		<p>
         <b><fmt:message key="locale.current" />:</b> <%= locale.getDisplayName(locale) %> /
             <%= LocaleUtils.getTimeZoneName(JiveGlobals.getTimeZone().getID(), locale) %>
         </p>
@@ -195,14 +196,10 @@
             <option value="<%= timeZones[i][0] %>"<%= selected %>><%= timeZones[i][1] %>
         <%  } %>
         </select>
-    </div>
-</fieldset>
-
-<br><br>
-
+	</div>
 <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
-
 </form>
+<!-- END locale settings -->
 
 
 </body>

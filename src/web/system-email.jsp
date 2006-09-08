@@ -123,94 +123,91 @@
 
 <p>
 
+<!-- BEGIN SMTP settings -->
 <form action="system-email.jsp" name="f" method="post">
 
-<fieldset>
-    <legend><fmt:message key="system.email.name" /></legend>
-    <div>
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="system.email.name" />
+	</div>
+	<div class="jive-contentBox">
+		<table width="80%" cellpadding="3" cellspacing="0" border="0">
+		<tr>
+			<td width="30%" nowrap>
+				<fmt:message key="system.email.mail_host" />:
+			</td>
+			<td nowrap>
+				<input type="text" name="host" value="<%= (host != null)?host:"" %>" size="40" maxlength="150">
+			</td>
+		</tr>
 
-    <table cellpadding="3" cellspacing="0" border="0">
-    <tr>
-        <td width="1%" nowrap>
-            <fmt:message key="system.email.mail_host" />:
-        </td>
-        <td width="1%" nowrap>
-            <input type="text" name="host" value="<%= (host != null)?host:"" %>" size="40" maxlength="150">
-        </td>
-    </tr>
+		<%  if (errors.containsKey("host")) { %>
 
-    <%  if (errors.containsKey("host")) { %>
+			<tr>
+				<td nowrap>
+					&nbsp;
+				</td>
+				<td nowrap class="jive-error-text">
+					<fmt:message key="system.email.valid_host_name" />
+				</td>
+			</tr>
 
-        <tr>
-            <td width="1%" nowrap>
-                &nbsp;
-            </td>
-            <td width="1%" nowrap class="jive-error-text">
-                <fmt:message key="system.email.valid_host_name" />
-            </td>
-        </tr>
+		<%  } %>
 
-    <%  } %>
+		<tr>
+			<td nowrap>
+				<fmt:message key="system.email.server_port" />:
+			</td>
+			<td nowrap>
+				<input type="text" name="port" value="<%= (port > 0) ? String.valueOf(port) : "" %>" size="10" maxlength="15">
+			</td>
+		</tr>
+		<tr>
+			<td nowrap>
+				<fmt:message key="system.email.mail_debugging" />:
+			</td>
+			<td nowrap>
+				<input type="radio" name="debug" value="true"<%= (debug ? " checked" : "") %> id="rb01"> <label for="rb01">On</label>
+				&nbsp;
+				<input type="radio" name="debug" value="false"<%= (debug ? "" : " checked") %> id="rb02"> <label for="rb02">Off</label>
+				&nbsp; (<fmt:message key="system.email.restart_possible" />)
+			</td>
+		</tr>
 
-    <tr>
-        <td width="1%" nowrap>
-        	<fmt:message key="system.email.server_port" />:            
-        </td>
-        <td width="1%" nowrap>
-            <input type="text" name="port" value="<%= (port > 0) ? String.valueOf(port) : "" %>" size="10" maxlength="15">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-        	<fmt:message key="system.email.mail_debugging" />:            
-        </td>
-        <td width="1%" nowrap>
-            <input type="radio" name="debug" value="true"<%= (debug ? " checked" : "") %> id="rb01"> <label for="rb01">On</label>
-            &nbsp;
-            <input type="radio" name="debug" value="false"<%= (debug ? "" : " checked") %> id="rb02"> <label for="rb02">Off</label>
-            &nbsp; (<fmt:message key="system.email.restart_possible" />)
-        </td>
-    </tr>
+		<%-- spacer --%>
+		<tr><td colspan="2">&nbsp;</td></tr>
 
-    <%-- spacer --%>
-    <tr><td colspan="2">&nbsp;</td></tr>
+		<tr>
+			<td nowrap>
+				<fmt:message key="system.email.server_username" />:
+			</td>
+			<td nowrap>
+				<input type="text" name="server_username" value="<%= (username != null) ? username : "" %>" size="40" maxlength="150">
+			</td>
+		</tr>
+		<tr>
+			<td nowrap>
+				<fmt:message key="system.email.server_password" />:
+			</td>
+			<td nowrap>
+				<input type="password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
+			</td>
+		</tr>
 
-    <tr>
-        <td width="1%" nowrap>
-        	<fmt:message key="system.email.server_username" />:            
-        </td>
-        <td width="1%" nowrap>
-            <input type="text" name="server_username" value="<%= (username != null) ? username : "" %>" size="40" maxlength="150">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-        	<fmt:message key="system.email.server_password" />:            
-        </td>
-        <td width="1%" nowrap>
-            <input type="password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
-        </td>
-    </tr>
-
-    <tr>
-        <td width="1%" nowrap>
-        	<fmt:message key="system.email.ssl" />: 
-        </td>
-        <td width="1%" nowrap>
-            <input type="checkbox" name="ssl"<%= (ssl) ? " checked" : "" %>>
-        </td>
-    </tr>
-
-    </table>
-    </div>
-</fieldset>
-
-<br>
+		<tr>
+			<td nowrap>
+				<fmt:message key="system.email.ssl" />:
+			</td>
+			<td nowrap>
+				<input type="checkbox" name="ssl"<%= (ssl) ? " checked" : "" %>>
+			</td>
+		</tr>
+		</table>
+	</div>
 
 <input type="submit" name="save" value="<fmt:message key="system.email.save" />">
 <input type="submit" name="test" value="<fmt:message key="system.email.send_test" />">
-
 </form>
+<!-- END SMTP settings -->
 
-    </body>
+</body>
 </html>

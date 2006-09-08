@@ -166,11 +166,7 @@
 </script>
 
 <style type="text/css">
-.content {
-    border-color: #bbb;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-}
+
 
 .textfield {
     font-size: 11px;
@@ -198,14 +194,15 @@
 }
 
 .light-gray-border {
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 1px 1px 1px;
     padding: 5px;
+	-moz-border-radius: 3px;
 }
 
 .light-gray-border-bottom {
-    border-color: #bbb;
+    border-color: #dcdcdc;
     border-style: solid;
     border-width: 0px 0px 1px 0px;
 }
@@ -215,7 +212,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 0px 1px 0px;
     padding: 5px;
@@ -226,7 +223,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 0px 1px 1px;
     padding: 5px;
@@ -238,7 +235,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 1px 1px 0px;
     padding: 5px;
@@ -253,7 +250,6 @@
     text-align: left;
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 9pt;
-
     background: #E7FBDE;
     border-color: #73CB73;
     border-style: solid;
@@ -335,7 +331,7 @@
     text-align: left;
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 9pt;
-    border-color: #bbb;
+    border-color: #e3e3e3;
     border-style: solid;
     border-width: 0px 0px 1px 0px;
     padding: 5px;
@@ -397,7 +393,7 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 
 <div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
- <tr style="background:#F7F7FF;">
+ <tr style="background:#f3f7fa;">
 
     <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.description"/></td>

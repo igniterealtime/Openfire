@@ -60,10 +60,11 @@
 <style type="text/css">
 
 .light-gray-border {
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 1px 1px 1px;
     padding: 5px;
+	-moz-border-radius: 3px;
 }
 
 
@@ -73,7 +74,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 0px 1px 0px;
     padding: 5px;
@@ -84,7 +85,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 0px 1px 0px;
     padding: 5px;
@@ -95,7 +96,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 1px 1px 0px;
     padding: 5px;
@@ -106,7 +107,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 0px 1px 1px;
     padding: 5px;
@@ -118,7 +119,7 @@
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     font-weight: bold;
-    border-color: #bbb;
+    border-color: #ccc;
     border-style: solid;
     border-width: 1px 1px 1px 0px;
     padding: 5px;
@@ -127,7 +128,7 @@
 .line-bottom-border {
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 9pt;
-    border-color: #bbb;
+    border-color: #e3e3e3;
     border-style: solid;
     border-width: 0px 0px 1px 0px;
     padding: 5px;
@@ -250,7 +251,7 @@
 <div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
-    <tr style="background:#F7F7FF;">
+    <tr style="background:#f3f7fa;">
         <td class="table-header-left">&nbsp;</td>
         <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
         <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
@@ -350,7 +351,7 @@
     }
 %>
 <tr><td><br/></td></tr>
-<tr style="background:#F7F7FF;">
+<tr style="background:#f3f7fa;">
     <td class="table-header-left">&nbsp;</td>
     <td nowrap colspan="7" class="row-header"><fmt:message key="plugin.available.commercial_plugins" /></td>
 </tr>

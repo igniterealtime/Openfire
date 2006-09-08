@@ -306,14 +306,51 @@ html>body #jive-main #jive-sidebar a {
     padding-bottom : 3px;
     font-weight : bold;
 }
-#jive-main #jive-sidebar .subitems LI {
-    margin-left: 10px;
-    width: 130px;
+
+#jive-main #jive-sidebar ul.subitems {
+	width: 150px;
+	background-color: #d4e1ed;
+	border: 1px solid #34679a;
+	list-style-type: disc;
+	-moz-border-radius: 4px;
+	margin: 0px 0px 1px 0px;
+	overflow: hidden;
 }
-#jive-main #jive-sidebar .subitems LI A {
-    margin-left : 10px;
-    padding : 2px 2px 2px 5px;
-    width : 120px;
+#jive-main #jive-sidebar ul.subitems br {
+	display: none;
+}
+#jive-main #jive-sidebar ul.subitems li.category {
+	list-style-type: none;
+	display: block;
+	width: 150px;
+	padding: 2px 2px 2px 8px;
+	margin-left: 0px;
+	background-color: #5C7D9D;
+	border-bottom: 1px solid #34679a;
+	color: #FFFFFF;
+	font-weight: bold;
+	-moz-border-radius: 3px 3px 0px 0px;
+}
+#jive-main #jive-sidebar ul.subitems li {
+    margin-left: 25px;
+}
+#jive-main #jive-sidebar ul.subitems li a {
+    margin: 2px 0px 2px 0px;
+    padding: 1px 0px 1px 0px;
+	border: none;
+}
+#jive-main #jive-sidebar ul.subitems li a:hover {
+	background-color: transparent;
+	border: none;
+	text-decoration: underline;
+}
+#jive-main #jive-sidebar ul.subitems li.currentlink a,
+#jive-main #jive-sidebar ul.subitems li.currentlink a:visited ,
+#jive-main #jive-sidebar ul.subitems li.currentlink a:hover {
+	font-weight: bold;
+	color: #003366;
+	background-color: transparent;
+	border: none;
 }
 
 /* --------------------------------------------- */
@@ -395,7 +432,7 @@ PRE, TT {
 
 /* tables */
 .jive-table {
-    border-color : #bbb;
+    border-color : #ccc;
     border-style : solid;
     border-width : 1px 1px 0px 1px;
 }
@@ -412,8 +449,8 @@ PRE, TT {
     padding : 0 5px 0 3px;
 }
 .jive-table TH {
-    background-color : #EAF1F8;
-    border-bottom : 1px #bbb solid;
+    background-color : #f3f7fa;
+    border-bottom : 1px #ccc solid;
     text-align : left;
     font-family : verdana, arial, helvetica, sans-serif;
     font-size : 8pt;
@@ -429,7 +466,7 @@ PRE, TT {
 }
 
 .jive-table TR TD {
-    border-bottom : 1px #ccc solid;
+    border-bottom : 1px #e3e3e3 solid;
 }
 .jive-table TD {
     font-family : arial, helvetica, sans-serif;
@@ -442,8 +479,9 @@ PRE, TT {
     background-color : #fbfbfb;
 }
 .jive-table TFOOT TD {
-    background-color : #ddd;
+    background-color : #eee;
     font-family : verdana;
+	border-bottom: 1px solid #ccc;
     font-size : 8pt;
 }
 .jive-table TD TD {
@@ -637,7 +675,7 @@ A.cal:Hover {
     display: block;
 	margin: 0px 0px 20px 0px;
 	padding: 12px 10px 12px 10px;
-	border: 1px solid #dcdcdc;
+	border: 1px solid #ccc;
 	background-color: #fff;
 	-moz-border-radius:0px 0px 4px 4px ;
 	}
@@ -648,7 +686,7 @@ A.cal:Hover {
 	font-size: 9pt;
 	font-weight: bold;
 	background-color: #f3f7fa;
-	border: 1px solid #dcdcdc;
+	border: 1px solid #ccc;
 	border-bottom: none;
 	}
 .jive-contentBoxGrey {
@@ -710,7 +748,7 @@ th.jive-table-th-center {
 
 
 /* --------------------------------------------- */
-/*  Roster box (in Group Settings page           */
+/*  Roster box (in Group Settings page)          */
 /* --------------------------------------------- */
 
 #jive-roster {
@@ -729,3 +767,4 @@ th.jive-table-th-center {
 	color: #09345b;
 	padding: 0px 0px 3px 0px;
 	}
+

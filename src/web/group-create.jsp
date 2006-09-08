@@ -169,7 +169,7 @@ screen where you can add members and set up group contact list.
 		<fmt:message key="group.create.new_group_title" />
 	</div>
 	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0" width="100%">
+		<table cellpadding="3" cellspacing="0" border="0">
     <tr valign="top">
         <td width="1%" nowrap>
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *

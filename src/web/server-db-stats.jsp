@@ -74,10 +74,13 @@
 <fmt:message key="server.db_stats.description" />
 </p>
 
-<p><b><fmt:message key="server.db_stats.status" /></b></p>
+
+
+
+<div class="jive-contentBox jive-contentBoxGrey" style="width: 732px;">
+<h3><fmt:message key="server.db_stats.status" /></h3>
 
 <form action="server-db-stats.jsp">
-<ul>
     <table cellpadding="3" cellspacing="1" border="0">
     <tr>
         <td>
@@ -95,16 +98,14 @@
         </td>
     </tr>
     </table>
-</ul>
 </form>
 
 <%  if (showQueryStats) { %>
-
-    <p><b><fmt:message key="server.db_stats.settings" /></b></p>
+	<br>
+	<h3><fmt:message key="server.db_stats.settings" /></h3>
 
     <form action="server-db-stats.jsp">
-    <ul>
-        <table cellpadding="3" cellspacing="1" border="0">
+        <table cellpadding="3" cellspacing="1" border="0" width="730">
         <tr>
             <td>
                 <fmt:message key="server.db_stats.refresh" />:
@@ -133,18 +134,16 @@
             </td>
         </tr>
         </table>
-    </ul>
     </form>
 
-    <br />
+</div>
 
-    <p>
-    <b><fmt:message key="server.db_stats.select_stats" /></b>
-    </p>
 
-    <ul>
+    <h3><fmt:message key="server.db_stats.select_stats" /></h3>
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+
+
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="730">
     <tr><td>
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr bgcolor="#ffffff">
@@ -181,11 +180,11 @@
 
     <br />
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="730">
     <tr><td>
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr bgcolor="#ffffff"><td>
-    <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
+    <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"left\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
             out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
@@ -205,7 +204,7 @@
     </td></tr>
     </table>
 
-    </ul>
+
 
     <b><fmt:message key="server.db_stats.insert_stats" /></b>
 

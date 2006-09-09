@@ -1,7 +1,6 @@
 Name                   |  Version
 ---------------------------------------------
 cindy.jar              | 2.4.3
-commons-logging.jar    | 1.1
 irclib.jar             | 1.04
 jml.jar                | 1.0a2 (patched)
 joscar.jar             | 0.9.3 (patched)

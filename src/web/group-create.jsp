@@ -8,19 +8,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.util.Log,
+<%@ page import="org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.wildfire.group.Group,
-                 org.jivesoftware.wildfire.group.GroupAlreadyExistsException,
-                 org.jivesoftware.wildfire.user.UserManager,
-                 org.xmpp.packet.JID"
+                 org.jivesoftware.wildfire.group.GroupAlreadyExistsException"
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.util.StringTokenizer"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -33,17 +29,6 @@
     boolean cancel = request.getParameter("cancel") != null;
     String name = ParamUtils.getParameter(request, "name");
     String description = ParamUtils.getParameter(request, "description");
-    String users = ParamUtils.getParameter(request, "users", true);
-
-    boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
-    String groupDisplayName = ParamUtils.getParameter(request,"groupDisplayName");
-    String showGroup = ParamUtils.getParameter(request,"showGroup");
-    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
-
-//    String showInRosterType = ParamUtils.getParameter(request, "show");
-//    boolean showInRoster = "onlyGroup".equals(showInRosterType) || "everybody".equals(showInRosterType);
-//    String displayName = ParamUtils.getParameter(request, "display");
-//    String groupList = ParamUtils.getParameter(request, "groupList");
 
     Map<String, String> errors = new HashMap<String, String>();
 
@@ -58,14 +43,6 @@
         if (name == null) {
             errors.put("name", "");
         }
-        if (enableRosterGroups) {
-            if (groupDisplayName == null) {
-                errors.put("groupDisplayName", "");
-            }
-            if ("spefgroups".equals(showGroup) && (groupNames == null || groupNames.length == 0)) {
-                errors.put("groupNames","");
-            }
-        }
         // do a create if there were no errors
         if (errors.size() == 0) {
             try {
@@ -73,43 +50,11 @@
                 if (description != null) {
                     newGroup.setDescription(description);
                 }
-                if (enableRosterGroups) {
-                    if ("spefgroups".equals(showGroup)) {
-                        showGroup = "onlyGroup";
-                    }
-                    newGroup.getProperties().put("sharedRoster.showInRoster", showGroup);
-                    if (groupDisplayName != null) {
-                        newGroup.getProperties().put("sharedRoster.displayName", groupDisplayName);
-                    }
-                    newGroup.getProperties().put("sharedRoster.groupList", toList(groupNames));
-                }
-                else {
-                    newGroup.getProperties().put("sharedRoster.showInRoster", "nobody");
-                    newGroup.getProperties().put("sharedRoster.displayName", "");
-                    newGroup.getProperties().put("sharedRoster.groupList", "");
-                }
 
-                if (users.length() > 0){
-                    StringTokenizer tokenizer = new StringTokenizer(users, ", \t\n\r\f");
-                    while (tokenizer.hasMoreTokens()) {
-                        String username = tokenizer.nextToken();
-                        try {
-                            if (username.indexOf('@') == -1) {
-                                // No @ was found so assume this is a JID of a local user
-                                username = Stringprep.nodeprep(username);
-                                UserManager.getInstance().getUser(username);
-                                newGroup.getMembers().add(webManager.getXMPPServer().createJID(username, null));
-                            }
-                            else {
-                                // Admin entered a JID. Add the JID directly to the list of group members
-                                newGroup.getMembers().add(new JID(username));
-                            }
-                        }
-                        catch (Exception e) {
-                            throw new IllegalArgumentException("Invalid user.", e);
-                        }
-                    }
-                }
+                newGroup.getProperties().put("sharedRoster.showInRoster", "nobody");
+                newGroup.getProperties().put("sharedRoster.displayName", "");
+                newGroup.getProperties().put("sharedRoster.groupList", "");
+
                 // Successful, so redirect
                 response.sendRedirect("group-edit.jsp?creategroupsuccess=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
                 return;
@@ -122,10 +67,6 @@
                 Log.error(e);
             }
         }
-    }
-
-    if (errors.size() == 0) {
-        showGroup = "everybody";
     }
 %>
 
@@ -231,43 +172,11 @@ screen where you can add members and set up group contact list.
 	<span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
 	<!-- END create group -->
 
-
-
-
 </form>
-
 
 <script language="JavaScript" type="text/javascript">
 document.f.name.focus();
 </script>
 
-
 </body>
-</html>
-
-<%!
-    private static String toList(String[] array) {
-        if (array == null || array.length == 0) {
-            return "";
-        }
-        StringBuffer buf = new StringBuffer();
-        String sep = "";
-        for (int i=0; i<array.length; i++) {
-            buf.append(sep).append(array[i]);
-            sep = ",";
-        }
-        return buf.toString();
-    }
-
-    private static boolean contains(String[] array, String item) {
-        if (array == null || array.length == 0 || item == null) {
-            return false;
-        }
-        for (int i=0; i<array.length; i++) {
-            if (item.equals(array[i])) {
-                return true;
-            }
-        }
-        return false;
-    }
-%>
+</html>%>

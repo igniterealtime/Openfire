@@ -4,6 +4,7 @@ CREATE TABLE gatewayRegistration (
    transportType     VARCHAR(15)    NOT NULL,
    username          VARCHAR(255)   NOT NULL,
    password          VARCHAR(255),
+   nickname          VARCHAR(255),
    registrationDate  BIGINT         NOT NULL,
    lastLogin         BIGINT,
    PRIMARY KEY (registrationID),
@@ -11,4 +12,13 @@ CREATE TABLE gatewayRegistration (
    INDEX gatewayReg_type_idx(transportType)
 );
 
-INSERT INTO jiveVersion (name, version) VALUES ('gateway', 0);
+CREATE TABLE gatewayPseudoRoster (
+   registrationID    BIGINT         NOT NULL,
+   username          VARCHAR(255)   NOT NULL,
+   nickname          VARCHAR(255),
+   groups            VARCHAR(255),
+   INDEX gatewayPsRs_regid_idx(registrationID),
+   INDEX gatewayPsRs_uname_idx(username)
+);
+
+INSERT INTO jiveVersion (name, version) VALUES ('gateway', 1);

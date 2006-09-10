@@ -60,12 +60,13 @@ public class RegistrationManager implements Startable {
      * @param transportType the type of the transport.
      * @param username the username on the transport service.
      * @param password the password on the transport service.
+     * @param nickname the nickname on the transport service.
      * @return a new registration.
      */
     public Registration createRegistration(JID jid, TransportType transportType, String username,
-            String password)
+            String password, String nickname)
     {
-        return new Registration(jid, transportType, username, password);
+        return new Registration(jid, transportType, username, password, nickname);
     }
 
     /**

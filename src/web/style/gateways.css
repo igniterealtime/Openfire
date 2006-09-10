@@ -279,6 +279,14 @@ a.jive-gatewayButtonOn {
 	background: url(../images/icq-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
+.jive-gateway-IRCon {
+	background: url(../images/irc.gif) no-repeat left;
+	background-position: 2px 1px;
+	}
+.jive-gateway-IRCoff {
+	background: url(../images/irc-gray.gif) no-repeat left;
+	background-position: 2px 1px;
+	}
 .jive-gateway-MSNon {
 	background: url(../images/msn.gif) no-repeat left;
 	background-position: 2px 1px;
@@ -314,20 +322,23 @@ table tr.jive-registrations-editVisible {
 tr.jive-registrations-edit, tr.jive-registrations-editVisible td {
 	background-color: #f6f6f6;
 	}
-.jive-registrations-editUsername, .jive-registrations-editPassword {
+.jive-registrations-editUsername, .jive-registrations-editPassword, .jive-registrations-editNickname {
 	float: left;
 	}
-.jive-registrations-editUsername strong, .jive-registrations-editPassword  strong {
+.jive-registrations-editUsername strong, .jive-registrations-editPassword  strong, .jive-registrations-editNickname strong {
 	font-size: .9em;
 	color: #203050;
 	}
-.jive-registrations-editUsername input, .jive-registrations-editPassword  input {
+.jive-registrations-editUsername input, .jive-registrations-editPassword  input, .jive-registrations-editNickname input {
 	width: 110px;
 	height: 21px;
 	border: 1px solid #888888;
 	padding-left: 2px;
 	}
 .jive-registrations-editPassword {
+	padding-left: 8px;
+	}
+.jive-registrations-editNickname {
 	padding-left: 8px;
 	}
 .jive-registrations-editButtons {
@@ -384,7 +395,8 @@ tr.jive-registrations-edit, tr.jive-registrations-editVisible td {
 .jive-registrations-addJid input, 
 .jive-registrations-addGateway select, 
 .jive-registrations-addUsername input,
-.jive-registrations-addPassword input {
+.jive-registrations-addPassword input,
+.jive-registrations-addNickname input{
 	width: 130px;
 	height: 20px;
 	border: 1px solid #888888;

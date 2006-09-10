@@ -73,6 +73,7 @@
 
     GatewaySettings aimSettings = new GatewaySettings(out, plugin, TransportType.aim, "AOL Instant Messenger");
     GatewaySettings icqSettings = new GatewaySettings(out, plugin, TransportType.icq, "ICQ");
+    GatewaySettings ircSettings = new GatewaySettings(out, plugin, TransportType.irc, "IRC");
     GatewaySettings msnSettings = new GatewaySettings(out, plugin, TransportType.msn, "MSN Messenger");
     GatewaySettings yahooSettings = new GatewaySettings(out, plugin, TransportType.yahoo, "Yahoo! Messenger");
 %>
@@ -101,6 +102,7 @@
 
 <% aimSettings.printSettingsDialog(); %>
 <% icqSettings.printSettingsDialog(); %>
+<% ircSettings.printSettingsDialog(); %>    
 <% msnSettings.printSettingsDialog(); %>
 <% yahooSettings.printSettingsDialog(); %>
 

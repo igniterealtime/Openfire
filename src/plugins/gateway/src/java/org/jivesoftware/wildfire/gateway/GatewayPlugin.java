@@ -60,6 +60,10 @@ public class GatewayPlugin implements Plugin {
         transports.put("icq", new TransportInstance(TransportType.icq, "ICQ Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
         maybeStartService("icq");
 
+        /* Set up IRC transport. */
+        transports.put("irc", new TransportInstance(TransportType.irc, "IRC Transport", "org.jivesoftware.wildfire.gateway.protocols.irc.IRCTransport", componentManager));
+        maybeStartService("irc");
+
         /* Set up Yahoo transport. */
         transports.put("yahoo", new TransportInstance(TransportType.yahoo, "Yahoo! Transport", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooTransport", componentManager));
         maybeStartService("yahoo");

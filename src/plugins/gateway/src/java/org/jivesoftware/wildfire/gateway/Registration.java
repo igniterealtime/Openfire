@@ -36,9 +36,9 @@ public class Registration {
 
     private static final String INSERT_REGISTRATION =
             "INSERT INTO gatewayRegistration(registrationID, jid, transportType, " +
-            "username, password, registrationDate) VALUES (?,?,?,?,?,?)";
+            "username, password, nickname, registrationDate) VALUES (?,?,?,?,?,?,?)";
     private static final String LOAD_REGISTRATION =
-            "SELECT jid, transportType, username, password, registrationDate, lastLogin " +
+            "SELECT jid, transportType, username, password, nickname, registrationDate, lastLogin " +
             "FROM gatewayRegistration WHERE registrationID=?";
     private static final String SET_LAST_LOGIN =
             "UPDATE gatewayRegistration SET lastLogin=? WHERE registrationID=?";
@@ -46,12 +46,15 @@ public class Registration {
             "UPDATE gatewayRegistration SET password=? WHERE registrationID=?";
     private static final String SET_USERNAME =
             "UPDATE gatewayRegistration SET username=? WHERE registrationID=?";
+    private static final String SET_NICKNAME =
+            "UPDATE gatewayRegistration SET nickname=? WHERE registrationID=?";
 
     private long registrationID;
     private JID jid;
     private TransportType transportType;
     private String username;
     private String password;
+    private String nickname;
     private Date registrationDate;
     private Date lastLogin;
 
@@ -63,7 +66,7 @@ public class Registration {
      * @param username the username on the transport.
      * @param password the password on the transport.
      */
-    public Registration(JID jid, TransportType transportType, String username, String password) {
+    public Registration(JID jid, TransportType transportType, String username, String password, String nickname) {
         if (jid == null || transportType == null || username == null) {
             throw new NullPointerException("Arguments cannot be null.");
         }
@@ -72,6 +75,7 @@ public class Registration {
         this.transportType = transportType;
         this.username = username;
         this.password = password;
+        this.nickname = nickname;
         this.registrationDate = new Date();
         try {
             insertIntoDb();
@@ -140,6 +144,15 @@ public class Registration {
     }
 
     /**
+     * Returns the nickname used for logging in to the transport.
+     *
+     * @return the nickname.
+     */
+    public String getNickname() {
+        return nickname;
+    }
+
+    /**
      * Sets the password used for logging in to the transport.
      * @param password
      */
@@ -174,14 +187,40 @@ public class Registration {
      * @param username
      */
     public void setUsername(String username) {
+        if (username == null) {
+            throw new NullPointerException("Arguments cannot be null.");
+        }
         this.username = username;
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SET_USERNAME);
-            if (username != null) {
-                pstmt.setString(1, username);
+            pstmt.setString(1, username);
+            pstmt.setLong(2, registrationID);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    /**
+     * Sets the nickname used for logging in to the transport.
+     * @param nickname
+     */
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SET_NICKNAME);
+            if (nickname != null) {
+                pstmt.setString(1, nickname);
             }
             else {
                 pstmt.setNull(1, Types.VARCHAR);
@@ -267,7 +306,13 @@ public class Registration {
             else {
                 pstmt.setNull(5, Types.VARCHAR);
             }
-            pstmt.setLong(6, registrationDate.getTime());
+            if (nickname != null) {
+                pstmt.setString(6, nickname);
+            }
+            else {
+                pstmt.setNull(6, Types.VARCHAR);
+            }
+            pstmt.setLong(7, registrationDate.getTime());
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -296,8 +341,9 @@ public class Registration {
             this.username = rs.getString(3);
             // The password is stored in encrypted form, so decrypt it.
             this.password = AuthFactory.decryptPassword(rs.getString(4));
-            this.registrationDate = new Date(rs.getLong(5));
-            long loginDate = rs.getLong(6);
+            this.nickname = rs.getString(5);
+            this.registrationDate = new Date(rs.getLong(6));
+            long loginDate = rs.getLong(7);
             if (rs.wasNull()) {
                 this.lastLogin = null;
             }

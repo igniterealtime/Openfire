@@ -44,11 +44,28 @@ public class MSNTransport extends BaseTransport {
     }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyNickname()
+     */
+    public String getTerminologyNickname() {
+        return null;
+    }
+
+    /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyRegistration()
      */
     public String getTerminologyRegistration() {
         return "Please enter your MSN Passport e-mail address and password.";
     }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#isPasswordRequired()
+     */
+    public Boolean isPasswordRequired() { return true; }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#isNicknameRequired()
+     */
+    public Boolean isNicknameRequired() { return false; }    
 
     /**
      * Handles creating a MSN session and triggering a login.

@@ -22,7 +22,7 @@
     HashMap<String,Boolean> trEnabled = new HashMap<String,Boolean>();
     trEnabled.put("aim", plugin.getTransportInstance("aim").isEnabled());
     trEnabled.put("icq", plugin.getTransportInstance("icq").isEnabled());
-    //trEnabled.put("irc", plugin.getTransportInstance("irc").isEnabled());
+    trEnabled.put("irc", plugin.getTransportInstance("irc").isEnabled());
     trEnabled.put("msn", plugin.getTransportInstance("msn").isEnabled());
     trEnabled.put("yahoo", plugin.getTransportInstance("yahoo").isEnabled());
 
@@ -60,7 +60,8 @@
             try {
                 Registration reg = new Registration(regId);
                 reg.setUsername(ParamUtils.getParameter(request, "username"));
-                reg.setPassword(ParamUtils.getParameter(request, "password"));
+                reg.setPassword(ParamUtils.getParameter(request, "password"));                 reg.setPassword(ParamUtils.getParameter(request, "password"));
+                reg.setNickname(ParamUtils.getParameter(request, "nickname"));
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
             }
@@ -83,12 +84,13 @@
             String typeStr = ParamUtils.getParameter(request, "gatewayType");
             String username = ParamUtils.getParameter(request, "gatewayUser");
             String password = ParamUtils.getParameter(request, "gatewayPass");
+            String nickname = ParamUtils.getParameter(request, "gatewayNick");
             if (!trEnabled.get(typeStr)) {
                 response.sendRedirect("gateway-registrations.jsp?success=false");
                 return;
             }
             try {
-                plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password);
+                plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password, nickname);
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
             }
@@ -296,7 +298,8 @@ below and update the view.</p>
 			<option value="0" SELECTED> -- select -- </option>
 			<% if (trEnabled.get("aim")) { %> <option value="aim">AIM</option> <% } %>
 			<% if (trEnabled.get("icq")) { %> <option value="icq">ICQ</option> <% } %>
-			<% if (trEnabled.get("msn")) { %> <option value="msn">MSN</option> <% } %>
+			<% if (trEnabled.get("irc")) { %> <option value="irc">IRC</option> <% } %>
+            <% if (trEnabled.get("msn")) { %> <option value="msn">MSN</option> <% } %>
 			<% if (trEnabled.get("yahoo")) { %> <option value="yahoo">Yahoo</option> <% } %>
 			</select><br>
 			<strong>gateway</strong>
@@ -309,7 +312,11 @@ below and update the view.</p>
 			<input type="password" name="gatewayPass" size="12" maxlength="50" value=""><br>
 			<strong>password</strong>
 		</div>
-		<div class="jive-registrations-addButtons">
+            <div class="jive-registrations-addNickname">
+                <input type="text" name="gatewayNick" size="12" maxlength="50" value=""><br>
+                <strong>nickname</strong>
+            </div>
+        <div class="jive-registrations-addButtons">
 			<input type="submit" name="Submit" value="Add" class="savechanges"> &nbsp;
 			<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleAdd();">
 		</div>
@@ -393,7 +400,12 @@ below and update the view.</p>
 			<img src="images/icq.gif" alt="" border="0"> 
 			<span>ICQ</span>
 		</label>
-		<label for="filterMSNcheckbox">
+        <label for="filterIRCcheckbox">
+            <input type="checkbox" name="filter[]" value="icq" <%= ((filteropts.contains("irc")) ? "checked" : "") %> id="filterIRCcheckbox"> 
+            <img src="images/irc.gif" alt="" border="0">
+            <span>IRC</span>
+        </label>
+        <label for="filterMSNcheckbox">
 			<input type="checkbox" name="filter[]" value="msn" <%= ((filteropts.contains("msn")) ? "checked" : "") %> id="filterMSNcheckbox"> 
 			<img src="images/msn.gif" alt="" border="0"> 
 			<span>MSN</span>

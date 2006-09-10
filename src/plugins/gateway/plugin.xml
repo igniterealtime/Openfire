@@ -12,7 +12,7 @@
     <date>07/02/2006</date>
     <minServerVersion>3.1.0</minServerVersion>
     <databaseKey>gateway</databaseKey>
-    <databaseVersion>0</databaseVersion>
+    <databaseVersion>1</databaseVersion>
     <licenseType>gpl</licenseType>
     
     <!-- Admin console meta-data -->

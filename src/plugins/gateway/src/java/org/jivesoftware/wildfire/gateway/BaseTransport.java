@@ -507,6 +507,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             // User wants to register with the transport.
             String username = null;
             String password = null;
+            String nickname = null;
 
             try {
                 DataForm form = new DataForm(packet.getChildElement().element("x"));
@@ -519,6 +520,10 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     else if (var.equals("password")) {
                         password = field.getValues().get(0);
                     }
+                    else if (var.equals("nickname")) {
+                        nickname = field.getValues().get(0);
+                    }
+
                 }
             }
             catch (Exception e) {
@@ -528,6 +533,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             if (packet.getType() == IQ.Type.set) {
                 Element userEl = packet.getChildElement().element("username");
                 Element passEl = packet.getChildElement().element("password");
+                Element nickEl = packet.getChildElement().element("nickname");
 
                 if (userEl != null) {
                     username = userEl.getTextTrim();
@@ -537,7 +543,11 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     password = passEl.getTextTrim();
                 }
 
-                if (username == null || password == null) {
+                if (nickEl != null) {
+                    nickname = nickEl.getTextTrim();
+                }
+
+                if (username == null || (isPasswordRequired() && password == null) || (isNicknameRequired() && nickname == null)) {
                     // Found nothing from stanza, lets yell.
                     IQ result = IQ.createResultIQ(packet);
                     result.setError(Condition.bad_request);
@@ -551,7 +561,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     reply.add(result);
 
                     try {
-                        this.addNewRegistration(from, username, password);
+                        this.addNewRegistration(from, username, password, nickname);
                     }
                     catch (UserNotFoundException e) {
                         Log.error("Someone attempted to register with the gateway who is not registered with the server: " + from);
@@ -585,6 +595,14 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 passwordField.setVariable("password");
                 passwordField.setType(FormField.Type.text_private);
 
+                String nicknameTerm = getTerminologyNickname();
+                if (nicknameTerm != null) {
+                    FormField nicknameField = form.addField();
+                    nicknameField.setLabel(nicknameTerm);
+                    nicknameField.setVariable("nick");
+                    nicknameField.setType(FormField.Type.text_single);
+                }
+
                 response.add(form.getElement());
 
                 response.addElement("instructions").addText(getTerminologyRegistration());
@@ -594,10 +612,16 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     response.addElement("registered");
                     response.addElement("username").addText(registration.getUsername());
                     response.addElement("password").addText(registration.getPassword());
+                    if (nicknameTerm != null) {
+                        response.addElement("nickname").addText(registration.getNickname());
+                    }
                 }
                 else {
                     response.addElement("username");
                     response.addElement("password");
+                    if (nicknameTerm != null) {
+                        response.addElement("nickname");
+                    }
                 }
 
                 result.setChildElement(response);
@@ -1034,9 +1058,10 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @param jid JID of user to add registration to.
      * @param username Legacy username of registration.
      * @param password Legacy password of registration.
+     * @param nickname Legacy nickname of registration.
      * @throws UserNotFoundException if registration or roster not found.
      */
-    public void addNewRegistration(JID jid, String username, String password) throws UserNotFoundException {
+    public void addNewRegistration(JID jid, String username, String password, String nickname) throws UserNotFoundException {
         Collection<Registration> registrations = registrationManager.getRegistrations(jid, this.transportType);
         Boolean foundReg = false;
         for (Registration registration : registrations) {
@@ -1050,7 +1075,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         }
 
         if (!foundReg) {
-            registrationManager.createRegistration(jid, this.transportType, username, password);
+            registrationManager.createRegistration(jid, this.transportType, username, password, nickname);
         }
 
 
@@ -1284,6 +1309,15 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     public abstract String getTerminologyPassword();
 
     /**
+     * Returns the terminology used for a nickname on the legacy service.
+     *
+     * You can return null to indicate that this is not supported by the legacy service.
+     *
+     * @return String term for nickname.
+     */
+    public abstract String getTerminologyNickname();
+
+    /**
      * Returns instructions for registration in legacy complient terminology.
      *
      * You would write this out as if the entry textfields for the username and password
@@ -1291,5 +1325,15 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * Please enter your legacy username and password.
      */
     public abstract String getTerminologyRegistration();
+
+    /**
+     * Returns true or false whether the password is required.
+     */
+    public abstract Boolean isPasswordRequired();
+
+    /**
+     * Returns true or false whether the nickname is required.
+     */
+    public abstract Boolean isNicknameRequired();
 
 }

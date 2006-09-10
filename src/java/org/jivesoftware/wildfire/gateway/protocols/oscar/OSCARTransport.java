@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.wildfire.gateway.*;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
 
 /**
@@ -27,19 +28,14 @@ public class OSCARTransport extends BaseTransport {
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyUsername()
      */
     public String getTerminologyUsername() {
-        if (getType().equals(TransportType.icq)) {
-            return "UIN/ICQ#";
-        }
-        else {
-            return "ScreenName";
-        }
+        return LocaleUtils.getLocalizedString("gateway."+getType().toString()+".username", "gateway");
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyPassword()
      */
     public String getTerminologyPassword() {
-        return "Password";
+        return LocaleUtils.getLocalizedString("gateway."+getType().toString()+".password", "gateway");
     }
 
     /**
@@ -53,12 +49,7 @@ public class OSCARTransport extends BaseTransport {
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyRegistration()
      */
     public String getTerminologyRegistration() {
-        if (getType().equals(TransportType.icq)) {
-            return "Please enter your ICQ# (UIN) and password.";
-        }
-        else {
-            return "Please enter your AIM ScreenName and password.";
-        }
+        return LocaleUtils.getLocalizedString("gateway."+getType().toString()+".registration", "gateway");
     }
 
     /**

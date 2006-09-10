@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
@@ -33,14 +34,14 @@ public class YahooTransport extends BaseTransport {
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyUsername()
      */
     public String getTerminologyUsername() {
-        return "Yahoo! ID";
+        return LocaleUtils.getLocalizedString("gateway.yahoo.username", "gateway");
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyPassword()
      */
     public String getTerminologyPassword() {
-        return "Password";
+        return LocaleUtils.getLocalizedString("gateway.yahoo.password", "gateway");
     }
 
     /**
@@ -54,7 +55,7 @@ public class YahooTransport extends BaseTransport {
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyRegistration()
      */
     public String getTerminologyRegistration() {
-        return "Please enter your Yahoo! ID and password.";
+        return LocaleUtils.getLocalizedString("gateway.yahoo.registration", "gateway");
     }
 
     /**

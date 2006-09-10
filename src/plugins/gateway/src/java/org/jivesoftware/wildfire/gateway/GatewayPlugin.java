@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.xmpp.component.ComponentManager;
@@ -53,23 +54,23 @@ public class GatewayPlugin implements Plugin {
         ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
         /* Set up AIM transport. */
-        transports.put("aim", new TransportInstance(TransportType.aim, "AIM Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
+        transports.put("aim", new TransportInstance(TransportType.aim, LocaleUtils.getLocalizedString("gateway.aim.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
         maybeStartService("aim");
 
         /* Set up ICQ transport. */
-        transports.put("icq", new TransportInstance(TransportType.icq, "ICQ Transport", "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
+        transports.put("icq", new TransportInstance(TransportType.icq, LocaleUtils.getLocalizedString("gateway.icq.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.oscar.OSCARTransport", componentManager));
         maybeStartService("icq");
 
         /* Set up IRC transport. */
-        transports.put("irc", new TransportInstance(TransportType.irc, "IRC Transport", "org.jivesoftware.wildfire.gateway.protocols.irc.IRCTransport", componentManager));
+        transports.put("irc", new TransportInstance(TransportType.irc, LocaleUtils.getLocalizedString("gateway.irc.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.irc.IRCTransport", componentManager));
         maybeStartService("irc");
 
         /* Set up Yahoo transport. */
-        transports.put("yahoo", new TransportInstance(TransportType.yahoo, "Yahoo! Transport", "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooTransport", componentManager));
+        transports.put("yahoo", new TransportInstance(TransportType.yahoo, LocaleUtils.getLocalizedString("gateway.yahoo.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.yahoo.YahooTransport", componentManager));
         maybeStartService("yahoo");
 
         /* Set up MSN transport. */
-        transports.put("msn", new TransportInstance(TransportType.msn, "MSN Transport", "org.jivesoftware.wildfire.gateway.protocols.msn.MSNTransport", componentManager));
+        transports.put("msn", new TransportInstance(TransportType.msn, LocaleUtils.getLocalizedString("gateway.msn.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.msn.MSNTransport", componentManager));
         maybeStartService("msn");
     }
 

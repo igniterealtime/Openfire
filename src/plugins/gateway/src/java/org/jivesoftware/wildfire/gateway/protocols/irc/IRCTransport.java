@@ -15,6 +15,7 @@ import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
 
 /***
@@ -31,28 +32,28 @@ public class IRCTransport extends BaseTransport {
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyUsername()
      */
     public String getTerminologyUsername() {
-        return "Username";
+        return LocaleUtils.getLocalizedString("gateway.irc.username", "gateway");
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyPassword()
      */
     public String getTerminologyPassword() {
-        return "Password";
+        return LocaleUtils.getLocalizedString("gateway.irc.password", "gateway");
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyNickname()
      */
     public String getTerminologyNickname() {
-        return "Nickname";
+        return LocaleUtils.getLocalizedString("gateway.irc.nickname", "gateway");
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#getTerminologyRegistration()
      */
     public String getTerminologyRegistration() {
-        return "Please enter your IRC username, password, and nickname.  Nickname is the primary username used while username and password are used for authentication.  If no password is required, leave it blank.";
+        return LocaleUtils.getLocalizedString("gateway.irc.registration", "gateway");
     }
 
     /**

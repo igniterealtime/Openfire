@@ -209,11 +209,9 @@
         </tr>
     </tbody>
     </table>
-
-	<br>
-
-	<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+	
 	</div>
+    <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
 <!-- END registration settings -->
 
 </form>

@@ -159,9 +159,8 @@
             </tr>
         </tbody>
         </table>
-        <br>
-        <input type="submit" value="<fmt:message key="global.save_settings" />">
 	</div>
+    <input type="submit" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END 'Permission Policy' -->
 

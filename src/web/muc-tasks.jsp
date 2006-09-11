@@ -192,7 +192,8 @@
 			</tr>
 		</tbody>
 		</table>
-		<input type="submit" value="<fmt:message key="global.save_settings" />">
+        <br/>
+        <input type="submit" value="<fmt:message key="global.save_settings" />">
 	</div>
 </form>
 <!-- END 'Idle User Settings' -->
@@ -225,7 +226,8 @@
 			</td>
 		</tr>
 		</table>
-		<input type="submit" value="<fmt:message key="global.save_settings" />">
+        <br/>
+        <input type="submit" value="<fmt:message key="global.save_settings" />">
 	</div>
 </form>
 <!-- END 'Conversation Logging' -->

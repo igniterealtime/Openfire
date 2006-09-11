@@ -127,8 +127,8 @@
 			</td>
 		</tr>
 		</table>
-		<input type="submit" value="<fmt:message key="groupchat.service.properties.save" />">
 	</div>
+    <input type="submit" value="<fmt:message key="groupchat.service.properties.save" />">
 </form>
 <!-- END 'Service Name'-->
 

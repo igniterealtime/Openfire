@@ -15,7 +15,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginClassLoader;
 import org.jivesoftware.wildfire.container.PluginManager;
 
 import java.io.*;
@@ -71,7 +70,8 @@ public class SchemaManager {
                                     "resources" + File.separator + "database", resourceName);
                             try {
                                 return new FileInputStream(file);
-                            } catch (FileNotFoundException e) {
+                            }
+                            catch (FileNotFoundException e) {
                                 return null;
                             }
                         }
@@ -107,12 +107,17 @@ public class SchemaManager {
         try {
             con = DbConnectionManager.getConnection();
             return checkSchema(con, schemaKey, schemaVersion, new ResourceLoader() {
-                    public InputStream loadResource(String resourceName) {
-                        PluginClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
-                        ClassLoader classLoader = pluginClassLoader.getClassLoader();
-                        return classLoader.getResourceAsStream(resourceName);
-                        }
-                    });
+                public InputStream loadResource(String resourceName) {
+                    File file = new File(pluginManager.getPluginDirectory(plugin) +
+                            File.separator + "database", resourceName);
+                    try {
+                        return new FileInputStream(file);
+                    }
+                    catch (FileNotFoundException e) {
+                        return null;
+                    }
+                }
+            });
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"), e);
@@ -234,7 +239,7 @@ public class SchemaManager {
             // Run all upgrade scripts until we're up to the latest schema.
             for (int i = currentVersion + 1; i <= requiredVersion; i++) {
                 InputStream resource = getUpgradeResource(resourceLoader, i, schemaKey);
-                if(resource == null) {
+                if (resource == null) {
                     continue;
                 }
                 try {
@@ -260,7 +265,7 @@ public class SchemaManager {
     }
 
     private InputStream getUpgradeResource(ResourceLoader resourceLoader, int upgradeVersion,
-                                           String schemaKey)
+            String schemaKey)
     {
         InputStream resource = null;
         if ("wildfire".equals(schemaKey)) {
@@ -278,7 +283,7 @@ public class SchemaManager {
             }
         }
         else {
-            String resourceName = "database/upgrade/" + upgradeVersion + "/" + schemaKey + "_" +
+            String resourceName = "upgrade/" + upgradeVersion + "/" + schemaKey + "_" +
                     DbConnectionManager.getDatabaseType() + ".sql";
             resource = resourceLoader.loadResource(resourceName);
         }

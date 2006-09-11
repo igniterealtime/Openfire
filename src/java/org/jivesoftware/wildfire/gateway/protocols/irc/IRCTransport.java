@@ -64,7 +64,7 @@ public class IRCTransport extends BaseTransport {
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#isNicknameRequired()
      */
-    public Boolean isNicknameRequired() { return true; }    
+    public Boolean isNicknameRequired() { return true; }
 
     /**
      * Handles creating a IRC session and triggering a login.
@@ -92,6 +92,37 @@ public class IRCTransport extends BaseTransport {
         Log.debug("Logging out of IRC gateway.");
         ((IRCSession)session).logOut();
 //        session.sessionDone();
+    }
+
+    /**
+     * Converts a jabber status to an IRC away message (or not).
+     *
+     * @param jabStatus Jabber presence type.
+     * @param verboseStatus Verbose status information.
+     */
+    public String convertJabStatusToIRC(PresenceType jabStatus, String verboseStatus) {
+        if (jabStatus == PresenceType.available) {
+            return null;
+        }
+        else if (jabStatus == PresenceType.away) {
+            return verboseStatus.equals("") ? "Away" : "Away: "+verboseStatus;
+        }
+        else if (jabStatus == PresenceType.xa) {
+            return verboseStatus.equals("") ? "Extended Away" : "Extended Away: "+verboseStatus;
+        }
+        else if (jabStatus == PresenceType.dnd) {
+            return verboseStatus.equals("") ? "Do Not Disturb" : "Do Not Disturb: "+verboseStatus;
+        }
+        else if (jabStatus == PresenceType.chat) {
+            return null;
+        }
+        else if (jabStatus == PresenceType.unavailable) {
+            // This should never show up.
+            return null;
+        }
+        else {
+            return null;
+        }
     }
 
 }

@@ -193,6 +193,9 @@
                 else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
                 <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
              <% }
+                else if ("irc".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/irc.gif" width="16" height="16" border="0" alt="IRC">&nbsp;
+             <% }
             }
             %>
             <%= componentSession.getExternalComponent().getType() %>

@@ -149,7 +149,7 @@ public class MSNListener extends MsnAdapter {
      * Catches MSN exceptions.
      */
     public void exceptionCaught(MsnMessenger messenger, Throwable throwable) {
-        if (throwable.getClass().getName().equals("IncorrectPasswordException")) {
+        if (throwable.getClass().getName().equals("net.sf.jml.exception.IncorrectPasswordException")) {
             Message m = new Message();
             m.setType(Message.Type.error);
             m.setTo(msnSession.getJIDWithHighestPriority());
@@ -158,7 +158,7 @@ public class MSNListener extends MsnAdapter {
             msnSession.getTransport().sendPacket(m);
             msnSession.logOut();
         }
-        else if (throwable.getClass().getName().equals("MsnProtocolException")) {
+        else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsnProtocolException")) {
             Message m = new Message();
             m.setType(Message.Type.error);
             m.setTo(msnSession.getJIDWithHighestPriority());
@@ -166,7 +166,7 @@ public class MSNListener extends MsnAdapter {
             m.setBody("MSN error: "+throwable.toString());
             msnSession.getTransport().sendPacket(m);
         }
-        else if (throwable.getClass().getName().equals("MsgNotSendException")) {
+        else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsgNotSendException")) {
             Message m = new Message();
             m.setType(Message.Type.error);
             m.setTo(msnSession.getJIDWithHighestPriority());
@@ -174,7 +174,7 @@ public class MSNListener extends MsnAdapter {
             m.setBody("Unable to send MSN message.  Reason: "+throwable.toString());
             msnSession.getTransport().sendPacket(m);
         }
-        else if (throwable.getClass().getName().equals("UnknownMessageException")) {
+        else if (throwable.getClass().getName().equals("net.sf.jml.exception.UnknownMessageException")) {
             Message m = new Message();
             m.setType(Message.Type.error);
             m.setTo(msnSession.getJIDWithHighestPriority());
@@ -182,7 +182,7 @@ public class MSNListener extends MsnAdapter {
             m.setBody("Unknown message from MSN: "+throwable.toString());
             msnSession.getTransport().sendPacket(m);
         }
-        else if (throwable.getClass().getName().equals("UnsupportedProtocolException")) {
+        else if (throwable.getClass().getName().equals("net.sf.jml.exception.UnsupportedProtocolException")) {
             Message m = new Message();
             m.setType(Message.Type.error);
             m.setTo(msnSession.getJIDWithHighestPriority());

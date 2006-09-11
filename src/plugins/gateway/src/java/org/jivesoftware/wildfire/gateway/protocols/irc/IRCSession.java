@@ -40,7 +40,15 @@ public class IRCSession extends TransportSession {
      */
     public IRCSession(Registration registration, JID jid, IRCTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
-        conn = new IRCConnection("irc.freenode.net", new int[] { 6667, 7000 }, registration.getPassword(), registration.getNickname(), registration.getUsername(), "Wildfire User");
+
+        String server = "irc.freenode.net";
+        int[] ports = new int[] { 7000, 6667 };
+        String username = registration.getUsername();
+        String password = registration.getPassword();
+        password = (password == null || password.equals("")) ? null : password;
+        String nickname = registration.getNickname();
+
+        conn = new IRCConnection(server, ports, password, nickname, username, "Wildfire User");
         conn.setPong(true);
         conn.setDaemon(false);
         conn.setColors(false);
@@ -50,7 +58,7 @@ public class IRCSession extends TransportSession {
     /**
      * IRC connection.
      */
-    IRCConnection conn;
+    public IRCConnection conn;
 
     /**
      * Logs the session into IRC.
@@ -59,13 +67,11 @@ public class IRCSession extends TransportSession {
      * @param verboseStatus Initial full status information.
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
-        if (!isLoggedIn()) {
-            try {
-                conn.connect();
-            }
-            catch (IOException e) {
-                Log.error("IO error while connecting to IRC: "+e.toString());
-            }
+        try {
+            conn.connect();
+        }
+        catch (IOException e) {
+            Log.error("IO error while connecting to IRC: "+e.toString());
         }
     }
 
@@ -73,15 +79,27 @@ public class IRCSession extends TransportSession {
      * Logs the session out of IRC.
      */
     public void logOut() {
-        if (isLoggedIn()) {
-            conn.close();
-        }
+        conn.doQuit();
+    }
+
+    /**
+     * Returns the IRC connection associated with this session.
+     */
+    public IRCConnection getConnection() {
+        return conn;
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
+        String awayMsg = ((IRCTransport)getTransport()).convertJabStatusToIRC(presenceType, verboseStatus);
+        if (awayMsg == null) {
+            conn.doAway();
+        }
+        else {
+            conn.doAway(awayMsg);
+        }
     }
 
     /**
@@ -95,18 +113,21 @@ public class IRCSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
+        // TODO: Handle this        
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
+        // TODO: Handle this
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
+        // TODO: Handle this
     }
 
     /**
@@ -120,12 +141,14 @@ public class IRCSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
+        // TODO: Handle this
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
     public void resendContactStatuses(JID jid) {
+        // TODO: Handle this
     }
 
 }

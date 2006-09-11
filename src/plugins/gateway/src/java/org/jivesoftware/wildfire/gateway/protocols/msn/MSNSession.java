@@ -274,10 +274,10 @@ public class MSNSession extends TransportSession {
         if (isLoggedIn()) {
             msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
         }
-        else {
-            // Hrm, not logged in?  Lets fix that.
-            msnMessenger.login();
-        }
+//        else {
+//            // Hrm, not logged in?  Lets fix that.
+//            msnMessenger.login();
+//        }
     }
 
     /**

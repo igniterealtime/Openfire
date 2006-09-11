@@ -157,13 +157,19 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         JID from = packet.getFrom();
         JID to = packet.getTo();
 
-        try {
-            TransportSession session = sessionManager.getSession(from);
-            session.sendMessage(to, packet.getBody());
+        if (to.getNode() == null) {
+            // Message to gateway itself.  Throw away for now.
+            // TODO: Repsond with a message at some point?
         }
-        catch (NotFoundException e) {
-            // TODO: Should return an error packet here
-            Log.debug("Unable to find session.");
+        else {
+            try {
+                TransportSession session = sessionManager.getSession(from);
+                session.sendMessage(to, packet.getBody());
+            }
+            catch (NotFoundException e) {
+                // TODO: Should return an error packet here
+                Log.debug("Unable to find session.");
+            }
         }
 
         return reply;
@@ -520,7 +526,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     else if (var.equals("password")) {
                         password = field.getValues().get(0);
                     }
-                    else if (var.equals("nickname")) {
+                    else if (var.equals("nick")) {
                         nickname = field.getValues().get(0);
                     }
 
@@ -533,7 +539,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             if (packet.getType() == IQ.Type.set) {
                 Element userEl = packet.getChildElement().element("username");
                 Element passEl = packet.getChildElement().element("password");
-                Element nickEl = packet.getChildElement().element("nickname");
+                Element nickEl = packet.getChildElement().element("nick");
 
                 if (userEl != null) {
                     username = userEl.getTextTrim();
@@ -546,6 +552,10 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 if (nickEl != null) {
                     nickname = nickEl.getTextTrim();
                 }
+                
+                username = (username == null || username.equals("")) ? null : username;
+                password = (password == null || password.equals("")) ? null : password;
+                nickname = (nickname == null || nickname.equals("")) ? null : nickname;
 
                 if (username == null || (isPasswordRequired() && password == null) || (isNicknameRequired() && nickname == null)) {
                     // Found nothing from stanza, lets yell.
@@ -613,14 +623,14 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     response.addElement("username").addText(registration.getUsername());
                     response.addElement("password").addText(registration.getPassword());
                     if (nicknameTerm != null) {
-                        response.addElement("nickname").addText(registration.getNickname());
+                        response.addElement("nick").addText(registration.getNickname());
                     }
                 }
                 else {
                     response.addElement("username");
                     response.addElement("password");
                     if (nicknameTerm != null) {
-                        response.addElement("nickname");
+                        response.addElement("nick");
                     }
                 }
 

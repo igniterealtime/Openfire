@@ -183,8 +183,8 @@
 
 <p>
 <fmt:message key="server2server.settings.info">
-<fmt:param value="<%= "<a href='server-session-summary.jsp'>" %>" />
-<fmt:param value="<%= "</a>" %>" />
+<fmt:param value="<a href='server-session-summary.jsp'>" />
+<fmt:param value="</a>" />
 </fmt:message>
 </p>
 

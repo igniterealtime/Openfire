@@ -12,6 +12,6 @@ CREATE INDEX gatewayPsRs_regid_idx ON gatewayPseudoRoster (registrationID);
 CREATE INDEX gatewayPsRs_uname_idx ON gatewayPseudoRoster (username);
 
 -- Update database version
-UPDATE jiveVersion SET version = 1 WHERE name = "gateway";
+UPDATE jiveVersion SET version = 1 WHERE name = 'gateway';
 
 commit;

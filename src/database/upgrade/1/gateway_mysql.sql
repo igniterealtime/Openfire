@@ -12,4 +12,4 @@ CREATE TABLE gatewayPseudoRoster (
 );
 
 # Update database version
-UPDATE jiveVersion SET version = 1 WHERE name = "gateway";
+UPDATE jiveVersion SET version = 1 WHERE name = 'gateway';

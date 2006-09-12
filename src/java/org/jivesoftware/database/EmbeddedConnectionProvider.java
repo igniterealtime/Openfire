@@ -31,7 +31,7 @@ import java.sql.Statement;
 public class EmbeddedConnectionProvider implements ConnectionProvider {
 
     private ConnectionPool connectionPool = null;
-    private Object initLock = new Object();
+    private final Object initLock = new Object();
 
     public boolean isPooled() {
         return true;
@@ -59,11 +59,9 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 String driver = "org.hsqldb.jdbcDriver";
                 File databaseDir = new File(JiveGlobals.getHomeDirectory(), File.separator +
                         "embedded-db");
-                boolean initData = false;
                 // If the database doesn't exist, create it.
                 if (!databaseDir.exists()) {
                     databaseDir.mkdirs();
-                    initData = true;
                 }
 
                 String serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() +
@@ -76,11 +74,6 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
 
                 connectionPool = new ConnectionPool(driver, serverURL, username, password,
                         minConnections, maxConnections, connectionTimeout, false);
-                // Create initial tables if they don't already exist.
-                if (initData) {
-                    // TODO
-//                    initializeDatabase();
-                }
             }
             catch (IOException ioe) {
                 Log.error("Error starting connection pool.", ioe);
@@ -125,54 +118,8 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         connectionPool = null;
     }
 
-    public void finalize() {
+    public void finalize() throws Throwable {
+        super.finalize();
         destroy();
     }
-
-    // TODO
-
-    /*
-    private void initializeDatabase() {
-        BufferedReader in = null;
-        Connection con = null;
-        try {
-            in = new BufferedReader(new InputStreamReader(
-                    getClass().getResourceAsStream("/database/wildfire_hsqldb.sql")));
-            con = connectionPool.getConnection();
-            boolean done = false;
-            while (!done) {
-                StringBuilder command = new StringBuilder();
-                while (true) {
-                    String line = in.readLine();
-                    if (line == null) {
-                        done = true;
-                        break;
-                    }
-                    // Ignore comments and blank lines.
-                    if (DbConnectionManager.isSQLCommandPart(line)) {
-                        command.append(line);
-                    }
-                    if (line.endsWith(";")) {
-                        break;
-                    }
-                }
-                // Send command to database.
-                Statement stmt = con.createStatement();
-                stmt.execute(command.toString());
-                stmt.close();
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-            e.printStackTrace();
-        }
-        finally {
-            if (in != null) {
-                try { in.close(); }
-                catch (Exception e) { }
-            }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
-        }
-    }       */
 }

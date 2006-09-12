@@ -13,12 +13,10 @@ package org.jivesoftware.wildfire.gateway;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.database.DbConnectionManager;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * Representation of an entire roster associated with a registration id.
@@ -28,10 +26,12 @@ import java.util.ArrayList;
 public class PseudoRoster {
 
     private static final String GET_ALL_USER_ROSTER_ITEMS =
-            "SELECT username FROM gatewayPseudoRoster WHERE registrationID=?";
+            "SELECT username,nickname,groups FROM gatewayPseudoRoster WHERE registrationID=?";
+    private static final String REMOVE_ROSTER_ITEM =
+            "DELETE FROM gatewayPseudoRoster WHERE registrationID=? AND username=?";
 
     private long registrationID;
-    private List<String> pseudoRosterItems = new ArrayList<String>();
+    private ConcurrentHashMap<String,PseudoRosterItem> pseudoRosterItems = new ConcurrentHashMap<String,PseudoRosterItem>();
 
     /**
      * Loads an existing pseudo roster.
@@ -55,12 +55,80 @@ public class PseudoRoster {
     /**
      * Returns the list of roster items associated with this registration ID.
      *
-     * @return List of roster item usernames.
+     * @return Map of roster item usernames to PseudoRosterItems.
      */
-    public List<String> getRosterItems() {
+    public ConcurrentHashMap<String,PseudoRosterItem> getRosterItems() {
         return pseudoRosterItems;
     }
 
+    /**
+     * Returns a set of just the usernames of contacts from this roster.
+     *
+     * @return Set of usernames.
+     */
+    public Set<String> getContacts() {
+        return pseudoRosterItems.keySet();
+    }
+
+    /**
+     * Returns true or false if a pseudo roster item exists for a username.
+     *
+     * @param username Username to locate.
+     * @return Whether a roster item exists with the username.
+     */
+    public Boolean hasItem(String username) {
+        return pseudoRosterItems.containsKey(username);
+    }
+
+    /**
+     * Retrieves a pseudo roster item for a username.
+     *
+     * @param username Username to locate.
+     * @return A PseudoRosterItem for the user specified.
+     */
+    public PseudoRosterItem getItem(String username) {
+        return pseudoRosterItems.get(username);
+    }
+
+    /**
+     * Removes a pseudo roster item for a username.
+     *
+     * @param username Username to remove.
+     */
+    public void removeItem(String username) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(REMOVE_ROSTER_ITEM);
+            pstmt.setLong(1, registrationID);
+            pstmt.setString(2, username);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    /**
+     * Creates a new pseudo roster item for a username, nickname, and list of groups.
+     *
+     * @param username Username to add.
+     * @param nickname Nickname for roster item.
+     * @param groups List of groups for roster item.
+     */
+    public PseudoRosterItem createItem(String username, String nickname, String groups) {
+        PseudoRosterItem rosterItem = new PseudoRosterItem(registrationID, username, nickname, groups);
+        pseudoRosterItems.put(username, rosterItem);
+        return rosterItem;
+    }
+
+    /**
+     * Load pseudo roster from database.
+     */
     private void loadFromDb() {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -71,7 +139,10 @@ public class PseudoRoster {
             pstmt.setLong(1, registrationID);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                pseudoRosterItems.add(rs.getString(1));
+                String username = rs.getString(1);
+                String nickname = rs.getString(2);
+                String groups = rs.getString(3);
+                pseudoRosterItems.put(username, new PseudoRosterItem(registrationID, username, nickname, groups));
             }
         }
         catch (SQLException sqle) {

@@ -159,7 +159,14 @@ public abstract class BaseTransport implements Component, RosterEventListener {
 
         if (to.getNode() == null) {
             // Message to gateway itself.  Throw away for now.
-            // TODO: Repsond with a message at some point?
+            try {
+                TransportSession session = sessionManager.getSession(from);
+                session.sendServerMessage(packet.getBody());
+            }
+            catch (NotFoundException e) {
+                // TODO: Should return an error packet here
+                Log.debug("Unable to find session.");
+            }
         }
         else {
             try {
@@ -592,6 +599,19 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 Element response = DocumentHelper.createElement(QName.get("query", IQ_REGISTER));
                 IQ result = IQ.createResultIQ(packet);
 
+                String curUsername = null;
+                String curPassword = null;
+                String curNickname = null;
+                Boolean registered = false;
+                Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+                if (registrations.iterator().hasNext()) {
+                    Registration registration = registrations.iterator().next();
+                    curUsername = registration.getUsername();
+                    curPassword = registration.getPassword();
+                    curNickname = registration.getNickname();
+                    registered = true;
+                }
+
                 DataForm form = new DataForm(DataForm.Type.form);
                 form.addInstruction(getTerminologyRegistration());
 
@@ -599,11 +619,17 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 usernameField.setLabel(getTerminologyUsername());
                 usernameField.setVariable("username");
                 usernameField.setType(FormField.Type.text_single);
+                if (curUsername != null) {
+                    usernameField.addValue(curUsername);
+                }
 
                 FormField passwordField = form.addField();
                 passwordField.setLabel(getTerminologyPassword());
                 passwordField.setVariable("password");
                 passwordField.setType(FormField.Type.text_private);
+                if (curPassword != null) {
+                    passwordField.addValue(curPassword);
+                }
 
                 String nicknameTerm = getTerminologyNickname();
                 if (nicknameTerm != null) {
@@ -611,19 +637,30 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     nicknameField.setLabel(nicknameTerm);
                     nicknameField.setVariable("nick");
                     nicknameField.setType(FormField.Type.text_single);
+                    if (curNickname != null) {
+                        nicknameField.addValue(curNickname);
+                    }
                 }
 
                 response.add(form.getElement());
 
                 response.addElement("instructions").addText(getTerminologyRegistration());
-                Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
-                if (registrations.iterator().hasNext()) {
-                    Registration registration = registrations.iterator().next();
+                if (registered) {
                     response.addElement("registered");
-                    response.addElement("username").addText(registration.getUsername());
-                    response.addElement("password").addText(registration.getPassword());
+                    response.addElement("username").addText(curUsername);
+                    if (curPassword == null) {
+                        response.addElement("password");
+                    }
+                    else {
+                        response.addElement("password").addText(curPassword);
+                    }
                     if (nicknameTerm != null) {
-                        response.addElement("nick").addText(registration.getNickname());
+                        if (curNickname == null) {
+                            response.addElement("nick");
+                        }
+                        else {
+                            response.addElement("nick").addText(curNickname);
+                        }
                     }
                 }
                 else {
@@ -1227,6 +1264,10 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     public void contactUpdated(Roster roster, RosterItem item) {
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
+            return;
+        }
+        if (item.getJid().getNode() == null) {
+            // Gateway itself, don't care.
             return;
         }
         try {

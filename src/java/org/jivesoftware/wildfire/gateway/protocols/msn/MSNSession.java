@@ -253,6 +253,13 @@ public class MSNSession extends TransportSession {
     }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendServerMessage(String)
+     */
+    public void sendServerMessage(String message) {
+        // We don't care.
+    }
+
+    /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
@@ -274,10 +281,10 @@ public class MSNSession extends TransportSession {
         if (isLoggedIn()) {
             msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
         }
-//        else {
-//            // Hrm, not logged in?  Lets fix that.
-//            msnMessenger.login();
-//        }
+        else {
+            // Hrm, not logged in?  Lets fix that.
+            msnMessenger.login();
+        }
     }
 
     /**

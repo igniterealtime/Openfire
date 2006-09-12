@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.util.*;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.gateway.PresenceType;
-import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.TransportBuddy;
-import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.xmpp.packet.JID;
@@ -38,6 +35,8 @@ import ymsg.network.YahooUser;
  */
 public class YahooSession extends TransportSession {
 
+    final private PseudoRosterManager pseudoRosterManager = new PseudoRosterManager();
+
     /**
      * Create a Yahoo Session instance.
      *
@@ -49,9 +48,18 @@ public class YahooSession extends TransportSession {
     public YahooSession(Registration registration, JID jid, YahooTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
 
+        pseudoRoster = pseudoRosterManager.getPseudoRoster(registration);
+
         yahooSession = new Session();
         yahooSession.addSessionListener(new YahooSessionListener(this));
     }
+
+    /**
+     * Our pseudo roster.
+     *
+     * We only really use it for nickname tracking.
+     */
+    private PseudoRoster pseudoRoster;
 
     /**
      * Are we logged in?
@@ -192,22 +200,28 @@ public class YahooSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
-        // TODO: Sync nickname (local storage)
         // Syncing will take are of add.
         String contact = getTransport().convertJIDToID(item.getJid());
         syncContactGroups(contact, item.getGroups());
+        if (pseudoRoster.hasItem(contact)) {
+            PseudoRosterItem rosterItem = pseudoRoster.getItem(contact);
+            rosterItem.setNickname(item.getNickname());
+        }
+        else {
+            pseudoRoster.createItem(contact, item.getNickname(), null);
+        }
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-        // TODO: Clear local stored nickname.
         String contact = getTransport().convertJIDToID(item.getJid());
         for (YahooGroup yahooGroup : yahooSession.getGroups()) {
             if (yahooGroup.getIndexOfFriend(contact) != -1) {
                 try {
                     yahooSession.removeFriend(contact, yahooGroup.getName());
+                    pseudoRoster.removeItem(contact);
                 }
                 catch (IOException e) {
                     Log.error("Failed to remove yahoo user.");
@@ -220,9 +234,15 @@ public class YahooSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-        // TODO: Sync nickname (local storage)
-           String contact = getTransport().convertJIDToID(item.getJid());
-           syncContactGroups(contact, item.getGroups());
+        String contact = getTransport().convertJIDToID(item.getJid());
+        syncContactGroups(contact, item.getGroups());
+        if (pseudoRoster.hasItem(contact)) {
+            PseudoRosterItem rosterItem = pseudoRoster.getItem(contact);
+            rosterItem.setNickname(item.getNickname());
+        }
+        else {
+            pseudoRoster.createItem(contact, item.getNickname(), null);
+        }
     }
 
     /**
@@ -287,6 +307,13 @@ public class YahooSession extends TransportSession {
         catch (IOException e) {
             Log.error("Failed to send message to yahoo user.");
         }
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendServerMessage(String)
+     */
+    public void sendServerMessage(String message) {
+        // We don't care.
     }
 
     /**

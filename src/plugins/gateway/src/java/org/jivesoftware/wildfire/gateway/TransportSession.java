@@ -280,6 +280,15 @@ public abstract class TransportSession implements Runnable {
     public abstract void sendMessage(JID jid, String message);
 
     /**
+     * Sends an outgoing message directly to the legacy serivce.
+     *
+     * Doesn't -have- to do anything.  Only occasionally useful.
+     *
+     * @param message Message to be sent.
+     */
+    public abstract void sendServerMessage(String message);
+
+    /**
      * Asks the legacy service to send a presence packet for a contact.
      *
      * This is typically response to a probe.

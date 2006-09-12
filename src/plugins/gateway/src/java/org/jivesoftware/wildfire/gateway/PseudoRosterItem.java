@@ -13,7 +13,6 @@ package org.jivesoftware.wildfire.gateway;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
 
 import java.sql.*;
 
@@ -211,7 +210,6 @@ public class PseudoRosterItem {
      * Inserts a new registration into the database.
      */
     private void insertIntoDb() throws SQLException {
-        this.registrationID = SequenceManager.nextID(this);
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;

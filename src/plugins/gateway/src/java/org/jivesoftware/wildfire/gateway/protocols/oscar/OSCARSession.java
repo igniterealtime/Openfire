@@ -237,6 +237,13 @@ public class OSCARSession extends TransportSession {
     }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendServerMessage(String)
+     */
+    public void sendServerMessage(String message) {
+        // We don't care.
+    }
+
+    /**
      * Opens/creates a new BOS connection to a specific server and port, given a cookie.
      *
      * @param server Server to connect to.
@@ -286,7 +293,8 @@ public class OSCARSession extends TransportSession {
                 snacMgr.addRequest(request);
                 request(new ServiceRequest(family));
             } else {
-                Log.error("eep! can't find a service redirector server.");
+                // TODO: Why does this occur a lot and yet not cause problems?
+//                Log.error("eep! can't find a service redirector server.");
             }
         }
     }

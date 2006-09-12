@@ -324,6 +324,11 @@ public class Registration {
         }
     }
 
+    /**
+     * Load registration from database.
+     *
+     * @throws NotFoundException if registration was not found in database.
+     */
     private void loadFromDb() throws NotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;

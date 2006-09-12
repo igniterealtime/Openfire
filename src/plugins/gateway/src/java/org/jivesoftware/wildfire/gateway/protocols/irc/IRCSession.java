@@ -10,15 +10,15 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.irc;
 
-import org.jivesoftware.wildfire.gateway.TransportSession;
-import org.jivesoftware.wildfire.gateway.PresenceType;
-import org.jivesoftware.wildfire.gateway.Registration;
+import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 import org.schwering.irc.lib.IRCConnection;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents an IRC session.
@@ -29,6 +29,8 @@ import java.io.IOException;
  * @author Daniel Henninger
  */
 public class IRCSession extends TransportSession {
+
+    final private PseudoRosterManager pseudoRosterManager = new PseudoRosterManager();
 
     /**
      * Create a MSN Session instance.
@@ -41,6 +43,11 @@ public class IRCSession extends TransportSession {
     public IRCSession(Registration registration, JID jid, IRCTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
 
+        pseudoRoster = pseudoRosterManager.getPseudoRoster(registration);
+        for (String contact : pseudoRoster.getContacts()) {
+            buddyStatuses.put(contact, PresenceType.unavailable);
+        }
+
         String server = "irc.freenode.net";
         int[] ports = new int[] { 7000, 6667 };
         String username = registration.getUsername();
@@ -52,13 +59,31 @@ public class IRCSession extends TransportSession {
         conn.setPong(true);
         conn.setDaemon(false);
         conn.setColors(false);
-        conn.addIRCEventListener(new IRCListener(this));
+        ircListener = new IRCListener(this);
+        conn.addIRCEventListener(ircListener);
     }
+
+    /**
+     * Our pseudo roster.
+     *
+     * No server side buddy list, so we track it all here.
+     */
+    private PseudoRoster pseudoRoster;
 
     /**
      * IRC connection.
      */
     public IRCConnection conn;
+
+    /**
+     * IRC listener.
+     */
+    IRCListener ircListener;
+
+    /**
+     * Tracks status of 'buddy list'.
+     */
+    ConcurrentHashMap<String, PresenceType> buddyStatuses = new ConcurrentHashMap<String, PresenceType>();
 
     /**
      * Logs the session into IRC.
@@ -79,7 +104,43 @@ public class IRCSession extends TransportSession {
      * Logs the session out of IRC.
      */
     public void logOut() {
+        ircListener.setSilenced(true);
         conn.doQuit();
+    }
+
+    /**
+     * Retrieves the buddy status list.
+     */
+    public ConcurrentHashMap<String, PresenceType> getBuddyStatuses() {
+        return buddyStatuses;
+    }
+
+    /**
+     * Gets the current presence status of a buddy.
+     *
+     * @param username Username to look up.
+     */
+    public PresenceType getBuddyStatus(String username) {
+        return buddyStatuses.get(username);
+    }
+
+    /**
+     * Updates the current presence status of a buddy.
+     *
+     * @param username Username to set presence of.
+     * @param presenceType New presence type.
+     */
+    public void setBuddyStatus(String username, PresenceType presenceType) {
+        if (!buddyStatuses.get(username).equals(presenceType)) {
+            Presence p = new Presence();
+            if (presenceType.equals(PresenceType.unavailable)) {
+                p.setType(Presence.Type.unavailable);
+            }
+            p.setTo(getJID());
+            p.setFrom(getTransport().convertIDToJID(username));
+            getTransport().sendPacket(p);
+        }
+        buddyStatuses.put(username, presenceType);
     }
 
     /**
@@ -113,21 +174,45 @@ public class IRCSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
-        // TODO: Handle this        
+        String contact = getTransport().convertJIDToID(item.getJid());
+        if (pseudoRoster.hasItem(contact)) {
+            PseudoRosterItem rosterItem = pseudoRoster.getItem(contact);
+            rosterItem.setNickname(item.getNickname());
+            rosterItem.setGroups(item.getGroups().toString());
+            conn.doIson(contact);
+        }
+        else {
+            pseudoRoster.createItem(contact, item.getNickname(), item.getGroups().toString());
+            buddyStatuses.put(contact, PresenceType.unavailable);
+            conn.doIson(contact);
+        }
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-        // TODO: Handle this
+        String contact = getTransport().convertJIDToID(item.getJid());
+        pseudoRoster.removeItem(contact);
+        buddyStatuses.remove(contact);
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-        // TODO: Handle this
+        String contact = getTransport().convertJIDToID(item.getJid());
+        if (pseudoRoster.hasItem(contact)) {
+            PseudoRosterItem rosterItem = pseudoRoster.getItem(contact);
+            rosterItem.setNickname(item.getNickname());
+            rosterItem.setGroups(item.getGroups().toString());
+            conn.doIson(contact);
+        }
+        else {
+            pseudoRoster.createItem(contact, item.getNickname(), item.getGroups().toString());
+            buddyStatuses.put(contact, PresenceType.unavailable);
+            conn.doIson(contact);
+        }
     }
 
     /**
@@ -138,17 +223,39 @@ public class IRCSession extends TransportSession {
     }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendServerMessage(String)
+     */
+    public void sendServerMessage(String message) {
+        conn.send(message);
+    }
+
+    /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        // TODO: Handle this
+        String contact = getTransport().convertJIDToID(jid);
+        Presence p = new Presence();
+        if (buddyStatuses.get(contact).equals(PresenceType.unavailable)) {
+            p.setType(Presence.Type.unavailable);
+        }
+        p.setTo(jid);
+        p.setFrom(getTransport().convertIDToJID(contact));
+        getTransport().sendPacket(p);
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
     public void resendContactStatuses(JID jid) {
-        // TODO: Handle this
+        for (String contact : buddyStatuses.keySet()) {
+            Presence p = new Presence();
+            if (buddyStatuses.get(contact).equals(PresenceType.unavailable)) {
+                p.setType(Presence.Type.unavailable);
+            }
+            p.setTo(jid);
+            p.setFrom(getTransport().convertIDToJID(contact));
+            getTransport().sendPacket(p);
+        }
     }
 
 }

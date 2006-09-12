@@ -11,6 +11,8 @@
 package org.jivesoftware.wildfire.gateway;
 
 /**
+ * Handles retrieving pseudo rosters and other related tasks.
+ *
  * @author Daniel Henninger
  */
 public class PseudoRosterManager {

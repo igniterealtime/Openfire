@@ -48,7 +48,7 @@ public class MSNSession extends TransportSession {
         super(registration, jid, transport, priority);
 
         msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
-        msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP11 });
+        msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP12 });
     }
 
     /**

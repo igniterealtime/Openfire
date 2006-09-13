@@ -169,7 +169,15 @@ public class YahooSession extends TransportSession {
         for (YahooGroup group : yahooSession.getGroups()) {
             for (Enumeration e = group.getMembers().elements(); e.hasMoreElements();) {
                 YahooUser user = (YahooUser)e.nextElement();
-                legacyusers.add(new TransportBuddy(user.getId(), user.getId(), group.getName()));
+                PseudoRosterItem rosterItem = pseudoRoster.getItem(user.getId());
+                String nickname = null;
+                if (rosterItem != null) {
+                    nickname = rosterItem.getNickname();
+                }
+                if (nickname == null) {
+                    nickname = user.getId();
+                }
+                legacyusers.add(new TransportBuddy(user.getId(), nickname, group.getName()));
             }
         }
         try {

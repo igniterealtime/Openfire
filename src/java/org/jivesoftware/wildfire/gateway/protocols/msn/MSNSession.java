@@ -186,8 +186,6 @@ public class MSNSession extends TransportSession {
      */
     public void removeContact(RosterItem item) {
         Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
-        // TODO: JML doesn't actually -do- removal yet.  Dammit.
-        // Well lets at least run through the motions...
         MsnContact msnContact = msnContacts.get(contact.toString());
         for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
             msnMessenger.removeFriend(contact, msnGroup.getGroupId());
@@ -239,7 +237,6 @@ public class MSNSession extends TransportSession {
         // Now we will clean up groups that we should no longer belong to.
         for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
             if (!groups.contains(msnGroup.getGroupName())) {
-                // TODO: This is not going to work.  removeFriend is ignored.
                 msnMessenger.removeFriend(contact, msnGroup.getGroupId());
             }
         }
@@ -279,10 +276,18 @@ public class MSNSession extends TransportSession {
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
         if (isLoggedIn()) {
-            msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+            try {
+                msnMessenger.getOwner().setStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+            }
+            catch (IllegalStateException e) {
+                // Hrm, not logged in?  Lets fix that.
+                msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+                msnMessenger.login();
+            }
         }
         else {
             // Hrm, not logged in?  Lets fix that.
+            msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
             msnMessenger.login();
         }
     }

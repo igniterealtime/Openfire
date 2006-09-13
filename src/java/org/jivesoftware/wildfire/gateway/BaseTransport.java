@@ -882,7 +882,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     changed = true;
                 }
-                if (nickname != null && !gwitem.getNickname().equals(nickname)) {
+                if (nickname != null && !(gwitem.getNickname() != null) && !gwitem.getNickname().equals(nickname)) {
                     gwitem.setNickname(nickname);
                     changed = true;
                 }

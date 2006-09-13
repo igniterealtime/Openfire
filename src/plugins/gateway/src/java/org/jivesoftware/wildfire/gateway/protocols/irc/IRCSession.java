@@ -131,7 +131,8 @@ public class IRCSession extends TransportSession {
      * @param presenceType New presence type.
      */
     public void setBuddyStatus(String username, PresenceType presenceType) {
-        if (!buddyStatuses.get(username).equals(presenceType)) {
+        PresenceType buddyPresenceType = buddyStatuses.get(username);
+        if (buddyPresenceType == null || !buddyPresenceType.equals(presenceType)) {
             Presence p = new Presence();
             if (presenceType.equals(PresenceType.unavailable)) {
                 p.setType(Presence.Type.unavailable);

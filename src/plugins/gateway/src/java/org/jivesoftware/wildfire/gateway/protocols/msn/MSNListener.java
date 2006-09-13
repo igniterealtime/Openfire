@@ -196,6 +196,7 @@ public class MSNListener extends MsnAdapter {
             m.setTo(msnSession.getJIDWithHighestPriority());
             m.setFrom(msnSession.getTransport().getJID());
             m.setBody("Unknown error from MSN: "+throwable.toString());
+            throwable.printStackTrace();
             msnSession.getTransport().sendPacket(m);
         }
     }

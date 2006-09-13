@@ -999,6 +999,11 @@ public class MUCRoomImpl implements MUCRoom {
         if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
             throw new ForbiddenException();
         }
+        // Check if user is already an owner
+        if (owners.contains(bareJID)) {
+            // Do nothing
+            return Collections.emptyList();
+        }
         owners.add(bareJID);
         // Remove the user from other affiliation lists
         if (removeAdmin(bareJID)) {
@@ -1041,6 +1046,11 @@ public class MUCRoomImpl implements MUCRoom {
         // Check that the room always has an owner
         if (owners.contains(bareJID) && owners.size() == 1) {
             throw new ConflictException();
+        }
+        // Check if user is already an admin
+        if (admins.contains(bareJID)) {
+            // Do nothing
+            return Collections.emptyList();
         }
         admins.add(bareJID);
         // Remove the user from other affiliation lists
@@ -1150,6 +1160,11 @@ public class MUCRoomImpl implements MUCRoom {
         // Check that the room always has an owner
         if (owners.contains(bareJID) && owners.size() == 1) {
             throw new ConflictException();
+        }
+        // Check if user is already an outcast
+        if (outcasts.contains(bareJID)) {
+            // Do nothing
+            return Collections.emptyList();
         }
         // Update the presence with the new affiliation and inform all occupants
         JID actorJID = null;

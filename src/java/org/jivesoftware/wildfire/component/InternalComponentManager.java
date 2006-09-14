@@ -27,6 +27,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -262,6 +264,16 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                 Log.debug(throwable);
             }
         };
+    }
+
+    /**
+     * Returns the list of components that are currently installed in the server.
+     * This includes internal and external components.
+     *
+     * @return the list of installed components.
+     */
+    public Collection<Component> getComponents() {
+        return Collections.unmodifiableCollection(components.values());
     }
 
     /**

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.io.IOException;
+import java.awt.*;
 
 import rath.msnm.MSNMessenger;
 import rath.msnm.SwitchboardSession;
@@ -259,13 +260,16 @@ public class MSNSession extends TransportSession {
         String contact = getTransport().convertJIDToID(jid);
         SwitchboardSession session = msnMessenger.findSwitchboardSession(contact);
         if (session == null) {
+            Log.debug("New session being created.");
             session = new SwitchboardSession(msnMessenger, ServerInfo.getDefaultServerInfo(), contact);
+            session.
         }
         try {
-            MimeMessage mimeMessage = new MimeMessage();
-            mimeMessage.setKind(MimeMessage.KIND_MESSAGE);            
-            mimeMessage.setMessage(message);
-            session.sendMessage(mimeMessage);
+            MimeMessage mimeMessage = new MimeMessage(message, Color.black);
+            mimeMessage.setKind(MimeMessage.KIND_MESSAGE);
+            mimeMessage.setFontName("");
+//            session.sendInstantMessage(mimeMessage);
+            msnMessenger.sendMessage(contact, mimeMessage);
         }
         catch (IOException e) {
             Log.error("Failed to send MSN message.");

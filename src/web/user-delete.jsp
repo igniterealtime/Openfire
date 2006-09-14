@@ -76,7 +76,7 @@
 
 <p>
 <fmt:message key="user.delete.info" />
-<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a></b>
+<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a></b>
 <fmt:message key="user.delete.info1" />
 </p>
 

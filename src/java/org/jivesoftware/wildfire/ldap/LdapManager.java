@@ -59,6 +59,8 @@ import java.util.regex.Pattern;
  *      <li>ldap.autoFollowReferrals</li>
  *      <li>ldap.initialContextFactory --  if this value is not specified,
  *          "com.sun.jndi.ldap.LdapCtxFactory" will be used.</li>
+ *      <li>ldap.connectionPoolEnabled -- true if an LDAP connection pool should be used.
+ *          False if not set.</li>
  * </ul>
  *
  * @author Matt Tucker
@@ -308,9 +310,13 @@ public class LdapManager {
         catch (NamingException ne) {
             // If an alt baseDN is defined, attempt a lookup there.
             if (alternateBaseDN != null) {
-                try { ctx.close(); }
-                catch (Exception ignored) {
-                    // Ignore.
+                try {
+                    if (ctx != null) {
+                        ctx.close();
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);    
                 }
                 try {
                     // See if the user authenticates.
@@ -326,7 +332,7 @@ public class LdapManager {
                     env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                     env.put(Context.SECURITY_CREDENTIALS, password);
                     // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-                    // break with a teimout.
+                    // break with a timemout.
                     if (!sslEnabled) {
                         env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                     }
@@ -359,9 +365,13 @@ public class LdapManager {
             }
         }
         finally {
-            try { ctx.close(); }
-            catch (Exception ignored) {
-                // Ignore.
+            try {
+                if (ctx != null) {
+                    ctx.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
             }
         }
         return true;

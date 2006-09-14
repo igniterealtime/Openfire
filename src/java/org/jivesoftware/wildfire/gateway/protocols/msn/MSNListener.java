@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
 
 import java.util.Date;
 
@@ -61,6 +62,10 @@ public class MSNListener extends MsnAdapter {
     public void loginComplete(MsnFriend me) {
         msnSession.getRegistration().setLastLogin(new Date());
         msnSession.setLoginStatus(true);
+        Presence p = new Presence();
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().getJID());
+        msnSession.getTransport().sendPacket(p);
     }
 
 }

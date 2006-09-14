@@ -12,7 +12,7 @@
                  org.jivesoftware.admin.AdminConsole,
                  org.jivesoftware.util.LocaleUtils"
     errorPage="../error.jsp"
-%>
+%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -90,7 +90,7 @@
 		<strong>Administration Console</strong>
 	</div>
 	<div id="jive-logout" style="float: right;">
-		<a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(webManager.getUser().getUsername()) %>]</a>
+		<a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) %>]</a>
 	</div>
 	<div id="jive-tabs">
 		<admin:tabs css="" currentcss="currentlink">

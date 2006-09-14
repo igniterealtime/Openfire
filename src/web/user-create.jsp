@@ -16,7 +16,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.HashMap"%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -50,6 +50,7 @@
         else {
             try {
                 username = username.trim().toLowerCase();
+                username = JID.escapeNode(username);
                 username = Stringprep.nodeprep(username);
             }
             catch (StringprepException se) {

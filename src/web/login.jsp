@@ -49,6 +49,9 @@
 
 <%	// get parameters
     String username = ParamUtils.getParameter(request,"username");
+    if(username != null){
+        username = JID.escapeNode(username);
+    }
     // Escape HTML tags in username to prevent cross-site scripting attacks. This
     // is necessary because we display the username in the page below.
     username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);

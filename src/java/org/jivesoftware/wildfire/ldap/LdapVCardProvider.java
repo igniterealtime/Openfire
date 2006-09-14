@@ -126,6 +126,8 @@ public class LdapVCardProvider implements VCardProvider {
     }
 
     private Map<String, String> getLdapAttributes(String username) {
+        // Un-escape username
+        username = JID.unescapeNode(username);
         HashMap<String, String> map = new HashMap<String, String>();
 
         DirContext ctx = null;

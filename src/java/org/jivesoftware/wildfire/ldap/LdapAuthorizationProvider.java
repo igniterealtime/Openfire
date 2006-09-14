@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.ldap;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.sasl.AbstractAuthorizationProvider;
 import org.jivesoftware.wildfire.sasl.AuthorizationProvider;
+import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -69,6 +70,9 @@ public class LdapAuthorizationProvider extends AbstractAuthorizationProvider imp
      * @return A String Collection of principals that are authorized.
      */
     public Collection<String> getAuthorized(String username) {
+        // Un-escape Node
+        username = JID.unescapeNode(username);
+
         Collection<String> authorized = new ArrayList<String>();
         DirContext ctx = null;
         try {

@@ -12,7 +12,7 @@
                  org.jivesoftware.wildfire.user.*,
                  java.net.URLEncoder"
     errorPage="error.jsp"
-%>
+%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -87,7 +87,7 @@
                 <fmt:message key="user.create.username" />:
             </td>
             <td>
-                <%= user.getUsername() %>
+                <%= JID.unescapeNode(user.getUsername()) %>
             </td>
         </tr>
         <tr>

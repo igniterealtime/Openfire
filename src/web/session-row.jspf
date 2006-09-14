@@ -7,7 +7,7 @@
                  org.xmpp.packet.Presence,
                  java.net.URLEncoder,
                  org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.StringUtils"%>
+                 org.jivesoftware.util.StringUtils"%><%@ page import="org.xmpp.packet.JID"%>
 
 <%--
   - This page is meant to be included in other pages. It assumes 2 variables:
@@ -32,7 +32,7 @@
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
             <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"
-             ><%= ((name != null && !"".equals(name)) ? name : "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
+             ><%= ((name != null && !"".equals(name)) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
         <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>

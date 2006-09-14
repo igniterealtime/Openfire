@@ -15,6 +15,7 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.auth.AuthProvider;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.xmpp.packet.JID;
 
 import javax.naming.CommunicationException;
 
@@ -66,6 +67,9 @@ public class LdapAuthProvider implements AuthProvider {
         if (username == null || password == null || "".equals(password.trim())) {
             throw new UnauthorizedException();
         }
+
+        // Un-escape username.
+        username = JID.unescapeNode(username);
 
         // If cache is enabled, see if the auth is in cache.
         if (authCache != null && authCache.containsKey(username)) {

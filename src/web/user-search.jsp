@@ -8,7 +8,7 @@
                  java.util.HashMap,
                  java.util.Map,
                  java.net.URLEncoder"
-%>
+%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -19,6 +19,7 @@
     // Get parameters
     boolean search = ParamUtils.getBooleanParameter(request,"search");
     String username = ParamUtils.getParameter(request,"username");
+    username = JID.escapeNode(username);
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {

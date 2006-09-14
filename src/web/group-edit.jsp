@@ -142,6 +142,17 @@
             username = username.trim();
             username = username.toLowerCase();
 
+            if(username.indexOf('@') != -1){
+                try {
+                    UserManager.getInstance().getUser(JID.escapeNode(username));
+                    // That means that this user has an email address as their node.
+                    username = JID.escapeNode(username);
+                }
+                catch (UserNotFoundException e) {
+
+                }
+            }
+
             // Add to group as member by default.
             try {
                 boolean added = false;
@@ -525,7 +536,7 @@
 
                     </td>
                     <% if (user != null) { %>
-                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
+                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
                     <% } else { %>
                     <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
                     <% } %>

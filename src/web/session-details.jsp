@@ -113,7 +113,7 @@
 
             <%  } else { %>
 
-                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= n %></a>
+                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= JID.unescapeNode(n) %></a>
                 - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>

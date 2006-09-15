@@ -10,6 +10,8 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
+import net.sf.jml.*;
+import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.wildfire.gateway.TransportSession;
@@ -23,19 +25,10 @@ import org.xmpp.packet.Presence;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.io.IOException;
-import java.awt.*;
-
-import rath.msnm.MSNMessenger;
-import rath.msnm.SwitchboardSession;
-import rath.msnm.msg.MimeMessage;
-import rath.msnm.entity.MsnFriend;
-import rath.msnm.entity.Group;
-import rath.msnm.entity.ServerInfo;
 
 /**
  * Represents a MSN session.
- * 
+ *
  * This is the interface with which the base transport functionality will
  * communicate with MSN.
  *
@@ -54,23 +47,24 @@ public class MSNSession extends TransportSession {
     public MSNSession(Registration registration, JID jid, MSNTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
 
-        msnMessenger = new MSNMessenger(registration.getUsername(), registration.getPassword());
+        msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
+        msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP12 });
     }
 
     /**
      * MSN session
      */
-    private MSNMessenger msnMessenger = null;
+    private MsnMessenger msnMessenger = null;
 
     /**
      * MSN contacts/friends.
      */
-    private ConcurrentHashMap<String,MsnFriend> msnContacts = new ConcurrentHashMap<String,MsnFriend>();
+    private ConcurrentHashMap<String,MsnContact> msnContacts = new ConcurrentHashMap<String,MsnContact>();
 
     /**
      * MSN groups.
      */
-    private ConcurrentHashMap<String, Group> msnGroups = new ConcurrentHashMap<String,Group>();
+    private ConcurrentHashMap<String,MsnGroup> msnGroups = new ConcurrentHashMap<String,MsnGroup>();
 
     /**
      * Login status
@@ -85,8 +79,10 @@ public class MSNSession extends TransportSession {
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
-            msnMessenger.setInitialStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
-            msnMessenger.addMsnListener(new MSNListener(this));
+            msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+            msnMessenger.setLogIncoming(false);
+            msnMessenger.setLogOutgoing(false);
+            msnMessenger.addListener(new MSNListener(this));
             msnMessenger.login();
         }
     }
@@ -108,7 +104,7 @@ public class MSNSession extends TransportSession {
     /**
      * Retrieves the manager for this session.
      */
-    public MSNMessenger getManager() {
+    public MsnMessenger getManager() {
         return msnMessenger;
     }
 
@@ -129,15 +125,15 @@ public class MSNSession extends TransportSession {
     /**
      * Records information about a person on the user's contact list.
      */
-    public void storeFriend(MsnFriend msnContact) {
-        msnContacts.put(msnContact.getLoginName(), msnContact);
+    public void storeFriend(MsnContact msnContact) {
+        msnContacts.put(msnContact.getEmail().toString(), msnContact);
     }
 
     /**
      * Records information about a group on the user's contact list.
      */
-    public void storeGroup(Group msnGroup) {
-        msnGroups.put(msnGroup.getName(), msnGroup);
+    public void storeGroup(MsnGroup msnGroup) {
+        msnGroups.put(msnGroup.getGroupName(), msnGroup);
     }
 
     /**
@@ -145,12 +141,15 @@ public class MSNSession extends TransportSession {
      */
     public void syncUsers() {
         List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
-        for (MsnFriend friend : msnContacts.values()) {
+        for (MsnContact friend : msnContacts.values()) {
             ArrayList<String> friendGroups = new ArrayList<String>();
+            for (MsnGroup group : friend.getBelongGroups()) {
+                friendGroups.add(group.getGroupName());
+            }
             if (friendGroups.size() < 1) {
                 friendGroups.add("MSN Contacts");
             }
-            legacyusers.add(new TransportBuddy(friend.getLoginName(), friend.getFriendlyName(), friendGroups.get(0)));
+            legacyusers.add(new TransportBuddy(friend.getEmail().toString(), friend.getDisplayName(), friendGroups.get(0)));
         }
         try {
             getTransport().syncLegacyRoster(getJID(), legacyusers);
@@ -160,10 +159,10 @@ public class MSNSession extends TransportSession {
         }
 
         // Lets send initial presence statuses
-        for (MsnFriend friend : msnContacts.values()) {
+        for (MsnContact friend : msnContacts.values()) {
             Presence p = new Presence();
             p.setTo(getJID());
-            p.setFrom(getTransport().convertIDToJID(friend.getLoginName()));
+            p.setFrom(getTransport().convertIDToJID(friend.getEmail().toString()));
             ((MSNTransport)getTransport()).setUpPresencePacket(p, friend.getStatus());
             getTransport().sendPacket(p);
         }
@@ -173,42 +172,37 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
-//        String contact = getTransport().convertJIDToID(item.getJid());
-//        String nickname = getTransport().convertJIDToID(item.getJid());
-//        if (item.getNickname() != null && !item.getNickname().equals("")) {
-//            nickname = item.getNickname();
-//        }
-//        try {
-//            msnMessenger.addFriend(contact);
-//        }
-//        catch (IOException e) {
-//            Log.error("Error while adding MSN contact.");
-//        }
-//        syncContactGroups(contact, item.getGroups());
+        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        String nickname = getTransport().convertJIDToID(item.getJid());
+        if (item.getNickname() != null && !item.getNickname().equals("")) {
+            nickname = item.getNickname();
+        }
+        msnMessenger.addFriend(contact, nickname);
+        syncContactGroups(contact, item.getGroups());
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-//        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
-//        MsnContact msnContact = msnContacts.get(contact.toString());
-//        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
-//            msnMessenger.removeFriend(contact, msnGroup.getGroupId());
-//        }
+        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        MsnContact msnContact = msnContacts.get(contact.toString());
+        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
+            msnMessenger.removeFriend(contact, msnGroup.getGroupId());
+        }
     }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-//        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
-//        String nickname = getTransport().convertJIDToID(item.getJid());
-//        if (item.getNickname() != null && !item.getNickname().equals("")) {
-//            nickname = item.getNickname();
-//        }
-//        msnMessenger.renameFriend(contact, nickname);
-//        syncContactGroups(contact, item.getGroups());
+        Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        String nickname = getTransport().convertJIDToID(item.getJid());
+        if (item.getNickname() != null && !item.getNickname().equals("")) {
+            nickname = item.getNickname();
+        }
+        msnMessenger.renameFriend(contact, nickname);
+        syncContactGroups(contact, item.getGroups());
     }
 
     /**
@@ -218,62 +212,41 @@ public class MSNSession extends TransportSession {
      * @param contact Email address of contact.
      * @param groups List of groups contact should be in.
      */
-//    public void syncContactGroups(String contact, List<String> groups) {
-//        if (groups.isEmpty()) {
-//            groups.add("Transport Buddies");
-//        }
-//        MsnFriend msnContact = msnContacts.get(contact.toString());
-//        // Create groups that do not currently exist.
-//        for (String group : groups) {
-//            if (!msnGroups.containsKey(group)) {
-//                try {
-//                    msnMessenger.addGroup(group);
-//                }
-//                catch (IOException e) {
-//                    Log.error("Error while adding MSN group.");
-//                }
-//            }
-//        }
-//        // Lets update our list of groups.
-//        for (Group msnGroup : msnMessenger.getContactList().getGroups()) {
-//            storeGroup(msnGroup);
-//        }
-//        // Make sure contact belongs to groups that we want.
-//        for (String group : groups) {
-//            MsnGroup msnGroup = msnGroups.get(group);
-//            if (!msnContact.belongGroup(msnGroup)) {
-//                msnMessenger.copyFriend(contact, group);
-//            }
-//        }
-//        // Now we will clean up groups that we should no longer belong to.
-//        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
-//            if (!groups.contains(msnGroup.getGroupName())) {
-//                msnMessenger.removeFriend(contact, msnGroup.getGroupId());
-//            }
-//        }
-//    }
+    public void syncContactGroups(Email contact, List<String> groups) {
+        if (groups.isEmpty()) {
+            groups.add("Transport Buddies");
+        }
+        MsnContact msnContact = msnContacts.get(contact.toString());
+        // Create groups that do not currently exist.
+        for (String group : groups) {
+            if (!msnGroups.containsKey(group)) {
+                msnMessenger.addGroup(group);
+            }
+        }
+        // Lets update our list of groups.
+        for (MsnGroup msnGroup : msnMessenger.getContactList().getGroups()) {
+            storeGroup(msnGroup);
+        }
+        // Make sure contact belongs to groups that we want.
+        for (String group : groups) {
+            MsnGroup msnGroup = msnGroups.get(group);
+            if (!msnContact.belongGroup(msnGroup)) {
+                msnMessenger.copyFriend(contact, group);
+            }
+        }
+        // Now we will clean up groups that we should no longer belong to.
+        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
+            if (!groups.contains(msnGroup.getGroupName())) {
+                msnMessenger.removeFriend(contact, msnGroup.getGroupId());
+            }
+        }
+    }
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#sendMessage(org.xmpp.packet.JID, String)
      */
     public void sendMessage(JID jid, String message) {
-        String contact = getTransport().convertJIDToID(jid);
-        SwitchboardSession session = msnMessenger.findSwitchboardSession(contact);
-        if (session == null) {
-            Log.debug("New session being created.");
-            session = new SwitchboardSession(msnMessenger, ServerInfo.getDefaultServerInfo(), contact);
-            session.
-        }
-        try {
-            MimeMessage mimeMessage = new MimeMessage(message, Color.black);
-            mimeMessage.setKind(MimeMessage.KIND_MESSAGE);
-            mimeMessage.setFontName("");
-//            session.sendInstantMessage(mimeMessage);
-            msnMessenger.sendMessage(contact, mimeMessage);
-        }
-        catch (IOException e) {
-            Log.error("Failed to send MSN message.");
-        }
+        msnMessenger.sendText(Email.parseStr(getTransport().convertJIDToID(jid)), message);
     }
 
     /**
@@ -287,13 +260,13 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        MsnFriend msnContact = msnContacts.get(getTransport().convertJIDToID(jid));
+        MsnContact msnContact = msnContacts.get(getTransport().convertJIDToID(jid));
         if (msnContact == null) {
             return;
         }
         Presence p = new Presence();
         p.setTo(getJID());
-        p.setFrom(getTransport().convertIDToJID(msnContact.getLoginName()));
+        p.setFrom(getTransport().convertIDToJID(msnContact.getEmail().toString()));
         ((MSNTransport)getTransport()).setUpPresencePacket(p, msnContact.getStatus());
         getTransport().sendPacket(p);
     }
@@ -308,13 +281,13 @@ public class MSNSession extends TransportSession {
             }
             catch (IllegalStateException e) {
                 // Hrm, not logged in?  Lets fix that.
-                msnMessenger.setInitialStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+                msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
                 msnMessenger.login();
             }
         }
         else {
             // Hrm, not logged in?  Lets fix that.
-            msnMessenger.setInitialStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+            msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
             msnMessenger.login();
         }
     }
@@ -323,10 +296,10 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
     public void resendContactStatuses(JID jid) {
-        for (MsnFriend friend : msnContacts.values()) {
+        for (MsnContact friend : msnContacts.values()) {
             Presence p = new Presence();
             p.setTo(getJID());
-            p.setFrom(getTransport().convertIDToJID(friend.getLoginName()));
+            p.setFrom(getTransport().convertIDToJID(friend.getEmail().toString()));
             ((MSNTransport)getTransport()).setUpPresencePacket(p, friend.getStatus());
             getTransport().sendPacket(p);
         }

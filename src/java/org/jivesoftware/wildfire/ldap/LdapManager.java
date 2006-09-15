@@ -491,9 +491,11 @@ public class LdapManager {
                 throw new UserNotFoundException("LDAP username lookup for " + username +
                         " matched multiple entries.");
             }
-            //All other methods assume that userDN is not a full LDAP string.
-            //However if a referal was followed this is not the case.  The
-            //following code converts a referral back to a "partial" LDAP string.
+            // Close the enumeration.
+            answer.close();
+            // All other methods assume that userDN is not a full LDAP string.
+            // However if a referal was followed this is not the case.  The
+            // following code converts a referral back to a "partial" LDAP string.
             if (userDN.startsWith("ldap://")) {
                 userDN = userDN.replace("," + baseDN, "");
                 userDN = userDN.substring(userDN.lastIndexOf("/") + 1);

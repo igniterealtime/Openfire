@@ -152,6 +152,8 @@ public class LdapUserProvider implements UserProvider {
                 count++;
                 answer.nextElement();
             }
+            // Close the enumeration.
+            answer.close();
         }
         catch (Exception e) {
             Log.error(e);
@@ -206,6 +208,8 @@ public class LdapUserProvider implements UserProvider {
                 // Escape username and add to results.
                 usernames.add(JID.escapeNode(username));
             }
+            // Close the enumeration.
+            answer.close();
         }
         catch (Exception e) {
             Log.error(e);
@@ -293,6 +297,8 @@ public class LdapUserProvider implements UserProvider {
                     }
                 }
             }
+            // Close the enumeration.
+            answer.close();
         }
         catch (Exception e) {
             Log.error(e);
@@ -384,6 +390,8 @@ public class LdapUserProvider implements UserProvider {
                 // Escape username and add to results.
                 usernames.add(JID.escapeNode(username));
             }
+            // Close the enumeration.
+            answer.close();
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(usernames);
@@ -469,6 +477,8 @@ public class LdapUserProvider implements UserProvider {
                     break;
                 }
             }
+            // Close the enumeration.
+            answer.close();
             
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {

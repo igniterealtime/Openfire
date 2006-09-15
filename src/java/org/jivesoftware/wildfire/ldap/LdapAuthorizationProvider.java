@@ -66,7 +66,7 @@ public class LdapAuthorizationProvider extends AbstractAuthorizationProvider imp
      * Returns a String Collection of principals that are authorized to use
      * the named user.
      *
-     * @param username The username.
+     * @param username the username.
      * @return A String Collection of principals that are authorized.
      */
     public Collection<String> getAuthorized(String username) {

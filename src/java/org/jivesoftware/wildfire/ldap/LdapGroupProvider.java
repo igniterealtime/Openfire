@@ -96,6 +96,8 @@ public class LdapGroupProvider implements GroupProvider {
             NamingEnumeration<SearchResult> answer = ctx.search("", filter, searchControls);
 
             Collection<Group> groups = populateGroups(answer);
+            // Close the enumeration.
+            answer.close();
             if (groups.size() > 1) {
                 // If multiple groups found, throw exception.
                 throw new GroupNotFoundException("Too many groups with name " + groupName + " were found.");
@@ -173,6 +175,8 @@ public class LdapGroupProvider implements GroupProvider {
                 answer.next();
                 count++;
             }
+            // Close the enumeration.
+            answer.close();
         }
         catch (Exception e) {
             Log.error(e);
@@ -221,6 +225,8 @@ public class LdapGroupProvider implements GroupProvider {
                 // Escape group name and add to results.
                 groupNames.add(JID.escapeNode(groupName));
             }
+            // Close the enumeration.
+            answer.close();
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(groupNames);
@@ -288,6 +294,8 @@ public class LdapGroupProvider implements GroupProvider {
                     break;
                 }
             }
+            // Close the enumeration.
+            answer.close();
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(groupNames);
@@ -430,6 +438,8 @@ public class LdapGroupProvider implements GroupProvider {
                 // Escape group name and add to results.
                 groupNames.add(JID.escapeNode(groupName));
             }
+            // Close the enumeration.
+            answer.close();
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(groupNames);
@@ -507,6 +517,8 @@ public class LdapGroupProvider implements GroupProvider {
                     break;
                 }
             }
+            // Close the enumeration.
+            answer.close();
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(groupNames);
@@ -613,6 +625,8 @@ public class LdapGroupProvider implements GroupProvider {
                                                     .getAttributes().get(
                                                     manager.getUsernameField()).get();
                                         }
+                                        // Close the enumeration.
+                                        usrAnswer.close();
                                     }
                                 }
                                 catch (Exception e) {
@@ -655,6 +669,8 @@ public class LdapGroupProvider implements GroupProvider {
                                 }
                             }
                         }
+                        // Close the enumeration.
+                        ne.close();
                     }
                     if (manager.isDebugEnabled()) {
                         Log.debug("Adding group \"" + name + "\" with " + members.size() +

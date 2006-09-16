@@ -96,7 +96,59 @@ public class LoginConnection extends BaseFlapConnection {
                 if (ar.getErrorUrl() != null) {
                     Log.error("Error URL: " + ar.getErrorUrl());
                 }
-            } else {
+
+                String errormsg;
+                switch (error) {
+                    case (AuthResponse.ERROR_ACCOUNT_DELETED): {
+                        errormsg = "This account has been deleted.";
+                        break;
+                    }
+
+                    case (AuthResponse.ERROR_BAD_INPUT): {
+                        errormsg = "Illegal screen name/uin specified.";
+                        break;
+                    }
+
+                    case (AuthResponse.ERROR_BAD_PASSWORD): {
+                        errormsg = "Incorrect password specified.";
+                        break;
+                    }
+
+                    case (AuthResponse.ERROR_CLIENT_TOO_OLD): {
+                        errormsg = "Plugin is identifying itself as too old of a client.  Please contact the develop.";
+                        break;
+                    }
+
+                    case (AuthResponse.ERROR_CONNECTING_TOO_MUCH_A):
+                    case (AuthResponse.ERROR_CONNECTING_TOO_MUCH_B): {
+                        errormsg = "You have connected too many times in too short of a time frame.  Please wait around 15 minutes before trying again.";
+                        break;
+                    }
+
+                    case (AuthResponse.ERROR_INVALID_SN_OR_PASS_A):
+                    case (AuthResponse.ERROR_INVALID_SN_OR_PASS_B): {
+                        errormsg = "Invalid screen name or password specified.  Please re-register with a valid screen name and password.";
+                        break;
+                    }
+
+                    case (AuthResponse.ERROR_SIGNON_BLOCKED): {
+                        errormsg = "Your account has been temporarily suspended.";
+                        break;
+                    }
+
+                    default: {
+                        errormsg = "Unknown error code returned from AIM: "+error+"\nURL: "+ar.getErrorUrl();
+                    }
+                }
+
+                Message m = new Message();
+                m.setType(Message.Type.error);
+                m.setTo(getMainSession().getJID());
+                m.setFrom(getMainSession().getTransport().getJID());
+                m.setBody(errormsg);
+                getMainSession().getTransport().sendPacket(m);
+            }
+            else {
                 loggedin = true;
                 oscarSession.startBosConn(ar.getServer(), ar.getPort(), ar.getCookie());
                 Log.info("OSCAR connection to " + ar.getServer() + ":"

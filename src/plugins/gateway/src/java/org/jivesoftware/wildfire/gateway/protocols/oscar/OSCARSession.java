@@ -120,7 +120,7 @@ public class OSCARSession extends TransportSession {
      */
     public Integer getGroupIdOrCreateNew(String groupName) {
         for (GroupItem g : groups.values()) {
-            if (groupName.equals(g.getGroupName())) {
+            if (groupName.equalsIgnoreCase(g.getGroupName())) {
                 return g.getId();
             }
         }
@@ -129,8 +129,7 @@ public class OSCARSession extends TransportSession {
         Integer newGroupId = highestGroupId + 1;
         GroupItem newGroup = new GroupItem(groupName, newGroupId);
         request(new CreateItemsCmd(newGroup.toSsiItem()));
-        highestGroupId = newGroupId;
-        groups.put(newGroupId, newGroup);
+        gotGroup(newGroup);
 
         return newGroupId;
     }
@@ -147,6 +146,7 @@ public class OSCARSession extends TransportSession {
         if (grouplist.isEmpty()) {
             grouplist.add("Transport Buddies");
         }
+        Log.debug("contact = "+contact+", grouplist = "+grouplist);
         // First, lets take the known good list of groups and sync things up server side.
         for (String group : grouplist) {
             Integer groupId = getGroupIdOrCreateNew(group);
@@ -155,29 +155,31 @@ public class OSCARSession extends TransportSession {
             if (highestBuddyIdPerGroup.containsKey(groupId)) {
                 newBuddyId = highestBuddyIdPerGroup.get(groupId) + 1;
             }
-            highestBuddyIdPerGroup.put(groupId, newBuddyId);
 
-            BuddyItem newBuddy = new BuddyItem(contact, newBuddyId, groupId);
+            BuddyItem newBuddy = new BuddyItem(contact, groupId, newBuddyId);
             newBuddy.setAlias(nickname);
             request(new CreateItemsCmd(newBuddy.toSsiItem()));
-            buddies.put(groupId+"."+newBuddyId, newBuddy);
+            gotBuddy(newBuddy);
         }
         // Now, lets clean up any groups this contact should no longer be a member of.
         for (BuddyItem buddy : buddies.values()) {
-            if (buddy.getScreenname().equals(contact)) {
+            if (buddy.getScreenname().equalsIgnoreCase(contact)) {
                 if (buddy.getGroupId() == 0) {
                     // Ok this group is the "main group", which we can cheerfully remove from.
+                    Log.debug("Removing "+buddy+" because of in main group");
                     request(new DeleteItemsCmd(buddy.toSsiItem()));
-                    buddies.remove(buddy.getGroupId()+"."+buddy.getId());
+                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
-                else if (!groups.contains(buddy.getGroupId())) {
+                else if (!groups.containsKey(buddy.getGroupId())) {
                     // Well this is odd, a group we don't know about?  Nuke it.
+                    Log.debug("Removing "+buddy+" because of unknown group");
                     request(new DeleteItemsCmd(buddy.toSsiItem()));
-                    buddies.remove(buddy.getGroupId()+"."+buddy.getId());
+                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
                 else if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
+                    Log.debug("Removing "+buddy+" because not in list of groups");
                     request(new DeleteItemsCmd(buddy.toSsiItem()));
-                    buddies.remove(buddy.getGroupId()+"."+buddy.getId());
+                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
                 else {
                     if (!buddy.getAlias().equals(nickname)) {
@@ -193,6 +195,7 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
+        Log.debug("Add contact: "+item.getJid());
         String legacyId = getTransport().convertJIDToID(item.getJid());
         String nickname = item.getNickname();
         if (nickname == null || nickname.equals("")) {
@@ -207,11 +210,12 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
+        Log.debug("Remove contact: "+item.getJid());
         String legacyId = getTransport().convertJIDToID(item.getJid());
         for (BuddyItem i : buddies.values()) {
-            if (i.getScreenname().equals(legacyId)) {
+            if (i.getScreenname().equalsIgnoreCase(legacyId)) {
                 request(new DeleteItemsCmd(i.toSsiItem()));
-                buddies.remove(i.getGroupId()+"."+i.getId());
+                buddies.remove(""+i.getGroupId()+"."+i.getId());
             }
         }
     }
@@ -220,6 +224,7 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
+        Log.debug("Update contact: "+item.getJid());
         String legacyId = getTransport().convertJIDToID(item.getJid());
         String nickname = item.getNickname();
         if (nickname == null || nickname.equals("")) {
@@ -348,9 +353,9 @@ public class OSCARSession extends TransportSession {
      */
     void gotBuddy(BuddyItem buddy) {
         Log.debug("Found buddy item: " + buddy.toString() + " at id " + buddy.getId());
-        buddies.put(buddy.getGroupId()+"."+buddy.getId(), buddy);
+        buddies.put(""+buddy.getGroupId()+"."+buddy.getId(), buddy);
         if (!highestBuddyIdPerGroup.containsKey(buddy.getGroupId())) {
-            highestBuddyIdPerGroup.put(buddy.getGroupId(), -1);
+            highestBuddyIdPerGroup.put(buddy.getGroupId(), 0);
         }
         if (buddy.getId() > highestBuddyIdPerGroup.get(buddy.getGroupId())) {
             highestBuddyIdPerGroup.put(buddy.getGroupId(), buddy.getId());
@@ -366,7 +371,7 @@ public class OSCARSession extends TransportSession {
         Log.debug("Found group item: " + group.toString() + " at id " + group.getId());
         groups.put(group.getId(), group);
         if (!highestBuddyIdPerGroup.containsKey(group.getId())) {
-            highestBuddyIdPerGroup.put(group.getId(), -1);
+            highestBuddyIdPerGroup.put(group.getId(), 0);
         }
         if (group.getId() > highestGroupId) {
             highestGroupId = group.getId();
@@ -387,11 +392,11 @@ public class OSCARSession extends TransportSession {
             }
             
             int groupid = buddy.getGroupId();
-            String groupname = "Buddies";
+            String groupname = "Transport Buddies";
             if (groups.containsKey(groupid)) {
                 groupname = groups.get(groupid).getGroupName();
                 if (groupname.length() < 1) {
-                    groupname = "Buddies";
+                    groupname = "Transport Buddies";
                 }
             }
 
@@ -411,7 +416,9 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
+        if (bosConn != null) {
+            bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
+        }
     }
 
     private static final List<CapabilityBlock> MY_CAPS = Arrays.asList(new CapabilityBlock[] {
@@ -441,7 +448,9 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#resendContactStatuses(org.xmpp.packet.JID)
      */
     public void resendContactStatuses(JID jid) {
-        bosConn.getAndSendAllStatuses(jid);
+        if (bosConn != null) {
+            bosConn.getAndSendAllStatuses(jid);
+        }
     }
 
 }

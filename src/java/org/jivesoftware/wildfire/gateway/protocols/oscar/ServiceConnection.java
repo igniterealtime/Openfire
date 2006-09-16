@@ -12,14 +12,18 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import net.kano.joscar.*;
-import net.kano.joscar.flap.*;
-import net.kano.joscar.flapcmd.*;
-import net.kano.joscar.net.*;
-import net.kano.joscar.snac.*;
-import net.kano.joscar.snaccmd.conn.*;
-import net.kano.joscar.snaccmd.icon.*;
-import net.kano.joscar.snaccmd.search.*;
+
+import net.kano.joscar.flap.ClientFlapConn;
+import net.kano.joscar.flap.FlapPacketEvent;
+import net.kano.joscar.ByteBlock;
+import net.kano.joscar.flapcmd.SnacCommand;
+import net.kano.joscar.snaccmd.search.InterestListCmd;
+import net.kano.joscar.snaccmd.search.SearchResultsCmd;
+import net.kano.joscar.snaccmd.conn.RateInfoCmd;
+import net.kano.joscar.snaccmd.icon.IconDataCmd;
+import net.kano.joscar.snac.SnacPacketEvent;
+import net.kano.joscar.snac.SnacResponseEvent;
+import net.kano.joscar.net.ClientConnEvent;
 
 import java.net.InetAddress;
 
@@ -32,11 +36,6 @@ import java.net.InetAddress;
 public class ServiceConnection extends BasicFlapConnection {
 
     protected int serviceFamily;
-
-    public ServiceConnection(OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
-        super(mainSession, cookie);
-        this.serviceFamily = serviceFamily;
-    }
 
     public ServiceConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
         super(host, port, mainSession, cookie);

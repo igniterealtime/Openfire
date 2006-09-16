@@ -10,22 +10,23 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.kano.joscar.flapcmd.*;
-import net.kano.joscar.snac.*;
-import net.kano.joscar.snaccmd.*;
-import net.kano.joscar.snaccmd.conn.*;
-import net.kano.joscar.snaccmd.icbm.*;
-import net.kano.joscar.snaccmd.loc.*;
-import net.kano.joscar.snaccmd.ssi.*;
-import net.kano.joscar.ssiitem.*;
 import net.kano.joscar.ByteBlock;
+import net.kano.joscar.flapcmd.SnacCommand;
+import net.kano.joscar.snac.SnacRequest;
+import net.kano.joscar.snac.SnacRequestListener;
+import net.kano.joscar.snaccmd.ssi.CreateItemsCmd;
+import net.kano.joscar.snaccmd.ssi.DeleteItemsCmd;
+import net.kano.joscar.snaccmd.ssi.ModifyItemsCmd;
+import net.kano.joscar.snaccmd.icbm.SendImIcbm;
+import net.kano.joscar.snaccmd.conn.ServiceRequest;
+import net.kano.joscar.snaccmd.loc.SetInfoCmd;
+import net.kano.joscar.snaccmd.InfoData;
+import net.kano.joscar.snaccmd.CapabilityBlock;
+import net.kano.joscar.ssiitem.BuddyItem;
+import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
@@ -70,8 +71,8 @@ public class OSCARSession extends TransportSession {
     /**
      * SSI tracking variables.
      */
-    private ConcurrentHashMap<String,BuddyItem> buddies = new ConcurrentHashMap<String,BuddyItem>();
-    private ConcurrentHashMap<Integer,GroupItem> groups = new ConcurrentHashMap<Integer,GroupItem>();
+    private ConcurrentHashMap<String, BuddyItem> buddies = new ConcurrentHashMap<String,BuddyItem>();
+    private ConcurrentHashMap<Integer, GroupItem> groups = new ConcurrentHashMap<Integer,GroupItem>();
     private ConcurrentHashMap<Integer,Integer> highestBuddyIdPerGroup = new ConcurrentHashMap<Integer,Integer>();
     private Integer highestGroupId = -1;
 
@@ -127,7 +128,7 @@ public class OSCARSession extends TransportSession {
         // Group doesn't exist, lets create a new one.
         Integer newGroupId = highestGroupId + 1;
         GroupItem newGroup = new GroupItem(groupName, newGroupId);
-        request(new CreateItemsCmd(new SsiItem[] { newGroup.toSsiItem() }));
+        request(new CreateItemsCmd(newGroup.toSsiItem()));
         highestGroupId = newGroupId;
         groups.put(newGroupId, newGroup);
 
@@ -158,7 +159,7 @@ public class OSCARSession extends TransportSession {
 
             BuddyItem newBuddy = new BuddyItem(contact, newBuddyId, groupId);
             newBuddy.setAlias(nickname);
-            request(new CreateItemsCmd(new SsiItem[] { newBuddy.toSsiItem() }));
+            request(new CreateItemsCmd(newBuddy.toSsiItem()));
             buddies.put(groupId+"."+newBuddyId, newBuddy);
         }
         // Now, lets clean up any groups this contact should no longer be a member of.
@@ -166,22 +167,22 @@ public class OSCARSession extends TransportSession {
             if (buddy.getScreenname().equals(contact)) {
                 if (buddy.getGroupId() == 0) {
                     // Ok this group is the "main group", which we can cheerfully remove from.
-                    request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    request(new DeleteItemsCmd(buddy.toSsiItem()));
                     buddies.remove(buddy.getGroupId()+"."+buddy.getId());
                 }
                 else if (!groups.contains(buddy.getGroupId())) {
                     // Well this is odd, a group we don't know about?  Nuke it.
-                    request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    request(new DeleteItemsCmd(buddy.toSsiItem()));
                     buddies.remove(buddy.getGroupId()+"."+buddy.getId());
                 }
                 else if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
-                    request(new DeleteItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                    request(new DeleteItemsCmd(buddy.toSsiItem()));
                     buddies.remove(buddy.getGroupId()+"."+buddy.getId());
                 }
                 else {
                     if (!buddy.getAlias().equals(nickname)) {
                         buddy.setAlias(nickname);
-                        request(new ModifyItemsCmd(new SsiItem[] { buddy.toSsiItem() }));
+                        request(new ModifyItemsCmd(buddy.toSsiItem()));
                     }
                 }
             }
@@ -209,7 +210,7 @@ public class OSCARSession extends TransportSession {
         String legacyId = getTransport().convertJIDToID(item.getJid());
         for (BuddyItem i : buddies.values()) {
             if (i.getScreenname().equals(legacyId)) {
-                request(new DeleteItemsCmd(new SsiItem[] { i.toSsiItem() }));
+                request(new DeleteItemsCmd(i.toSsiItem()));
                 buddies.remove(i.getGroupId()+"."+i.getId());
             }
         }
@@ -413,6 +414,10 @@ public class OSCARSession extends TransportSession {
         bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
     }
 
+    private static final List<CapabilityBlock> MY_CAPS = Arrays.asList(new CapabilityBlock[] {
+        CapabilityBlock.BLOCK_ICQCOMPATIBLE,
+    });
+
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
      */
@@ -422,10 +427,10 @@ public class OSCARSession extends TransportSession {
             if (verboseStatus != null) {
                 awayMsg = verboseStatus;
             }
-            request(new SetInfoCmd(new InfoData(awayMsg)));
+            request(new SetInfoCmd(new InfoData(awayMsg, null, MY_CAPS, null)));
         }
         else {
-            request(new SetInfoCmd(new InfoData(InfoData.NOT_AWAY)));
+            request(new SetInfoCmd(new InfoData(InfoData.NOT_AWAY, null, MY_CAPS, null)));
         }
 
         this.presenceType = presenceType;

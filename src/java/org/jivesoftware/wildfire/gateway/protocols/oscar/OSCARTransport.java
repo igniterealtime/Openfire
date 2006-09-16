@@ -10,8 +10,11 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
-import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.wildfire.gateway.BaseTransport;
+import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.gateway.PresenceType;
+import org.jivesoftware.wildfire.gateway.Registration;
 import org.xmpp.packet.JID;
 
 /**

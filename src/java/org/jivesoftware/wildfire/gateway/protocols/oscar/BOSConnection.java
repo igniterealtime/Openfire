@@ -25,6 +25,8 @@ import net.kano.joscar.snaccmd.ssi.*;
 import net.kano.joscar.ssiitem.*;
 
 import java.net.InetAddress;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jivesoftware.util.Log;
 
@@ -36,10 +38,6 @@ import org.jivesoftware.util.Log;
  */
 public class BOSConnection extends BasicFlapConnection {
     protected SsiItemObjectFactory itemFactory = new DefaultSsiItemObjFactory();
-
-    public BOSConnection(OSCARSession mainSession, ByteBlock cookie) {
-        super(mainSession, cookie); // HAnd off to BasicFlapConnection
-    }
 
     public BOSConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
         super(host, port, mainSession, cookie); // HAnd off to BasicFlapConnection
@@ -79,9 +77,9 @@ public class BOSConnection extends BasicFlapConnection {
 
         if (cmd instanceof LocRightsCmd) {
             request(new SetInfoCmd(new InfoData("oscargateway",
-                    null, new CapabilityBlock[] {
+                    null, Arrays.asList(new CapabilityBlock[] {
                         CapabilityBlock.BLOCK_ICQCOMPATIBLE,
-                    }, null)));
+                    }), null)));
             request(new MyInfoRequest());
         } else if (cmd instanceof ParamInfoCmd) {
             ParamInfoCmd pic = (ParamInfoCmd) cmd;
@@ -119,7 +117,7 @@ public class BOSConnection extends BasicFlapConnection {
         } else if (cmd instanceof SsiDataCmd) {
             SsiDataCmd sdc = (SsiDataCmd) cmd;
 
-            SsiItem[] items = sdc.getItems();
+            List<SsiItem> items = sdc.getItems();
             for (SsiItem item : items) {
                 SsiItemObj obj = itemFactory.getItemObj(item);
                 if (obj instanceof BuddyItem) {

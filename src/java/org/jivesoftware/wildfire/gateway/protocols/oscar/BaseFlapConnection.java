@@ -14,13 +14,17 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.Log;
 
-import net.kano.joscar.flap.*;
-import net.kano.joscar.flapcmd.*;
-import net.kano.joscar.net.*;
-import net.kano.joscar.snac.*;
-import net.kano.joscar.snaccmd.*;
-
 import java.net.InetAddress;
+
+import net.kano.joscar.flap.ClientFlapConn;
+import net.kano.joscar.flap.FlapProcessor;
+import net.kano.joscar.flap.FlapPacketListener;
+import net.kano.joscar.flap.FlapPacketEvent;
+import net.kano.joscar.snac.*;
+import net.kano.joscar.flapcmd.DefaultFlapCmdFactory;
+import net.kano.joscar.flapcmd.SnacCommand;
+import net.kano.joscar.snaccmd.DefaultClientFactoryList;
+import net.kano.joscar.net.*;
 
 /**
  * Base class for all FLAP handlers.
@@ -32,19 +36,14 @@ public abstract class BaseFlapConnection extends ClientFlapConn {
     protected ClientSnacProcessor sp;
     OSCARSession oscarSession;
 
-    public BaseFlapConnection(OSCARSession mainSession) {
-        initBaseFlapConnection();
-        oscarSession = mainSession;
-    }
-
     public BaseFlapConnection(String host, int port, OSCARSession mainSession) {
-        super(host, port); // Hand off to ClientFlapConn
+        super(new ConnDescriptor(host, port)); // Hand off to ClientFlapConn
         initBaseFlapConnection();
         oscarSession = mainSession;
     }
 
     public BaseFlapConnection(InetAddress ip, int port, OSCARSession mainSession) {
-        super(ip, port); // Hand off to ClientFlapConn
+        super(new ConnDescriptor(ip, port)); // Hand off to ClientFlapConn
         initBaseFlapConnection();
         oscarSession = mainSession;
     }
@@ -67,8 +66,8 @@ public abstract class BaseFlapConnection extends ClientFlapConn {
                 BaseFlapConnection.this.handleFlapPacket(e);
             }
         });
-        getFlapProcessor().addExceptionHandler(new FlapExceptionHandler() {
-            public void handleException(FlapExceptionEvent event) {
+        getFlapProcessor().addExceptionHandler(new ConnProcessorExceptionHandler() {
+            public void handleException(ConnProcessorExceptionEvent event) {
                 Log.error(event.getType() + " FLAP ERROR: "
                         + event.getException().getMessage());
             }

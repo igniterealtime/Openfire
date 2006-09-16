@@ -33,10 +33,6 @@ import java.net.InetAddress;
 public class LoginConnection extends BaseFlapConnection {
     protected boolean loggedin = false;
 
-    public LoginConnection(OSCARSession mainSession) {
-        super(mainSession); // Hand off to BaseFlapConnection
-    }
-
     public LoginConnection(String host, int port, OSCARSession mainSession) {
         super(host, port, mainSession); // Hand off to BaseFlapConnection
     }

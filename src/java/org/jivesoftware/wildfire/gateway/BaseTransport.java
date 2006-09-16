@@ -23,7 +23,6 @@ import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
-import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -317,7 +316,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
 
                     if (packet.getType() == Presence.Type.probe) {
                         // Presence probe, lets try to tell them.
-                        session.retrieveContactStatus(packet.getTo());
+                        session.retrieveContactStatus(to);
                     }
                     else if (packet.getType() == Presence.Type.subscribe) {
                         // User wants to add someone to their legacy roster.
@@ -559,7 +558,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 if (nickEl != null) {
                     nickname = nickEl.getTextTrim();
                 }
-                
+
                 username = (username == null || username.equals("")) ? null : username;
                 password = (password == null || password.equals("")) ? null : password;
                 nickname = (nickname == null || nickname.equals("")) ? null : nickname;
@@ -1133,7 +1132,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         catch (UserNotFoundException ee) {
             throw new UserNotFoundException("Unable to find roster.");
         }
-            
+
         try {
             addOrUpdateRosterItem(jid, this.getJID(), this.getDescription(), "Transports");
         }
@@ -1239,7 +1238,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         try {
             this.componentManager.sendPacket(this, packet);
         }
-        catch (ComponentException e) {
+        catch (Exception e) {
             Log.error("Failed to deliver packet: " + packet.toString());
         }
     }
@@ -1304,18 +1303,17 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactDeleted(Roster roster, RosterItem item) {
-        // TODO: This is hella dangerous and I need to reevaluate it.
-//        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
-//            // Not ours, not our problem.
-//            return;
-//        }
-//        try {
-//            TransportSession session = sessionManager.getSession(roster.getUsername());
-//            session.removeContact(item);
-//        }
-//        catch (NotFoundException e) {
-//            //
-//        }
+        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
+            // Not ours, not our problem.
+            return;
+        }
+        try {
+            TransportSession session = sessionManager.getSession(roster.getUsername());
+            session.removeContact(item);
+        }
+        catch (NotFoundException e) {
+            // TODO: Should maybe do something about this
+        }
     }
 
     /**

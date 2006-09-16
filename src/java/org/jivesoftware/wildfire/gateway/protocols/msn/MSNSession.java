@@ -48,7 +48,7 @@ public class MSNSession extends TransportSession {
         super(registration, jid, transport, priority);
 
         msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
-        msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP12 });
+        msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP11 });
     }
 
     /**
@@ -80,8 +80,8 @@ public class MSNSession extends TransportSession {
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
             msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
-            msnMessenger.setLogIncoming(false);
-            msnMessenger.setLogOutgoing(false);
+            msnMessenger.setLogIncoming(true);
+            msnMessenger.setLogOutgoing(true);
             msnMessenger.addListener(new MSNListener(this));
             msnMessenger.login();
         }

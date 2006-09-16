@@ -4,7 +4,8 @@ cindy.jar              | 2.4.4
 commons-logging        | 1.1
 irclib.jar             | 1.04
 jml.jar                | 1.0a2 (patched)
-joscar.jar             | 0.9.3 (patched)
+joscar-common.jar      | svn-20060915
+joscar-protocol.jar    | svn-20060915
 picocontainer.jar      | 1.2.0
 ymsg_network.jar       | 0.61
 ymsg_support.jar       | 0.6

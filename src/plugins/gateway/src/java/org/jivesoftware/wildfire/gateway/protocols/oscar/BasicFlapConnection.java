@@ -15,24 +15,32 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.text.DateFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import net.kano.joscar.*;
-import net.kano.joscar.flap.*;
-import net.kano.joscar.flapcmd.*;
-import net.kano.joscar.ratelim.*;
-import net.kano.joscar.rv.*;
-import net.kano.joscar.rvcmd.*;
-import net.kano.joscar.snac.*;
-import net.kano.joscar.snaccmd.*;
-import net.kano.joscar.snaccmd.buddy.*;
-import net.kano.joscar.snaccmd.conn.*;
-import net.kano.joscar.snaccmd.icbm.*;
+import java.util.*;
+
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
+import net.kano.joscar.ByteBlock;
+import net.kano.joscar.OscarTools;
+import net.kano.joscar.BinaryTools;
+import net.kano.joscar.flap.FlapCommand;
+import net.kano.joscar.flap.FlapPacketEvent;
+import net.kano.joscar.snac.SnacPacketEvent;
+import net.kano.joscar.snac.SnacResponseEvent;
+import net.kano.joscar.snac.SnacRequest;
+import net.kano.joscar.snac.SnacRequestListener;
+import net.kano.joscar.flapcmd.LoginFlapCmd;
+import net.kano.joscar.flapcmd.SnacCommand;
+import net.kano.joscar.rvcmd.DefaultRvCommandFactory;
+import net.kano.joscar.snaccmd.conn.*;
+import net.kano.joscar.snaccmd.*;
+import net.kano.joscar.snaccmd.icbm.RecvImIcbm;
+import net.kano.joscar.snaccmd.icbm.InstantMessage;
+import net.kano.joscar.snaccmd.buddy.BuddyStatusCmd;
+import net.kano.joscar.snaccmd.buddy.BuddyOfflineCmd;
+import net.kano.joscar.rv.*;
+import net.kano.joscar.ratelim.RateLimitingQueueMgr;
 
 /**
  * Handles incoming FLAP packets.
@@ -44,10 +52,10 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected final ByteBlock cookie;
     protected boolean sentClientReady = false;
 
-    public Map<String,FullUserInfo> buddystore = new HashMap<String,FullUserInfo>();
+    public Map<String,FullUserInfo> buddystore = new HashMap<String, FullUserInfo>();
 
     protected int[] snacFamilies = null;
-    protected SnacFamilyInfo[] snacFamilyInfos;
+    protected Collection<SnacFamilyInfo> snacFamilyInfos;
     protected RateLimitingQueueMgr rateMgr = new RateLimitingQueueMgr();
     protected RvProcessor rvProcessor = new RvProcessor(sp);
     protected RvProcessorListener rvListener = new RvProcessorListener() {
@@ -78,11 +86,6 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         sp.setSnacQueueManager(rateMgr);
         rvProcessor.registerRvCmdFactory(new DefaultRvCommandFactory());
         rvProcessor.addListener(rvListener);
-    }
-
-    public BasicFlapConnection(OSCARSession mainSession, ByteBlock cookie) {
-        super(mainSession);
-        this.cookie = cookie;
     }
 
     public BasicFlapConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
@@ -125,8 +128,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
             setSnacFamilies(src.getSnacFamilies());
 
-            SnacFamilyInfo[] familyInfos = SnacFamilyInfoFactory
-                    .getDefaultFamilyInfos(src.getSnacFamilies());
+            Collection<SnacFamilyInfo> familyInfos = SnacFamilyInfoFactory.getDefaultFamilyInfos(src.getSnacFamilies());
 
             setSnacFamilyInfos(familyInfos);
 
@@ -185,7 +187,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 p.setShow(Presence.Show.away);
             }
 
-            ExtraInfoBlock[] extraInfo = info.getExtraInfoBlocks();
+            List<ExtraInfoBlock> extraInfo = info.getExtraInfoBlocks();
             if (extraInfo != null) {
                 for (ExtraInfoBlock i : extraInfo) {
                     ExtraInfoData data = i.getExtraData();
@@ -238,11 +240,11 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         if (cmd instanceof RateInfoCmd) {
             RateInfoCmd ric = (RateInfoCmd) cmd;
 
-            RateClassInfo[] rateClasses = ric.getRateClassInfos();
+            List <RateClassInfo> rateClasses = ric.getRateClassInfos();
 
-            int[] classes = new int[rateClasses.length];
-            for (int i = 0; i < rateClasses.length; i++) {
-                classes[i] = rateClasses[i].getRateClass();
+            int[] classes = new int[rateClasses.size()];
+            for (int i = 0; i < rateClasses.size(); i++) {
+                classes[i] = rateClasses.get(i).getRateClass();
             }
 
             request(new RateAck(classes));
@@ -256,7 +258,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         Arrays.sort(snacFamilies);
     }
 
-    protected void setSnacFamilyInfos(SnacFamilyInfo[] infos) {
+    protected void setSnacFamilyInfos(Collection<SnacFamilyInfo> infos) {
         snacFamilyInfos = infos;
     }
 
@@ -325,7 +327,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 p.setShow(Presence.Show.away);
             }
 
-            ExtraInfoBlock[] extraInfo = info.getExtraInfoBlocks();
+            List<ExtraInfoBlock> extraInfo = info.getExtraInfoBlocks();
             if (extraInfo != null) {
                 for (ExtraInfoBlock i : extraInfo) {
                     ExtraInfoData data = i.getExtraData();
@@ -377,7 +379,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 p.setShow(Presence.Show.away);
             }
 
-            ExtraInfoBlock[] extraInfo = info.getExtraInfoBlocks();
+            List<ExtraInfoBlock> extraInfo = info.getExtraInfoBlocks();
             if (extraInfo != null) {
                 for (ExtraInfoBlock i : extraInfo) {
                     ExtraInfoData data = i.getExtraData();
@@ -402,7 +404,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             }
             oscarSession.getTransport().sendPacket(p);
         }
-        
+
     }
 
 }

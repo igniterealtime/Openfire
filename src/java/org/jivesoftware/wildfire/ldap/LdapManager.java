@@ -292,9 +292,6 @@ public class LdapManager {
             if (ldapDebugEnabled) {
                 env.put("com.sun.jndi.ldap.trace.ber", System.err);
             }
-            if (connectionPoolEnabled) {
-                env.put("com.sun.jndi.ldap.connect.pool", "true");
-            }
             if (followReferrals) {
                 env.put(Context.REFERRAL, "follow");
             }
@@ -316,7 +313,7 @@ public class LdapManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);    
+                    Log.error(e);
                 }
                 try {
                     // See if the user authenticates.
@@ -338,9 +335,6 @@ public class LdapManager {
                     }
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
-                    }
-                    if (connectionPoolEnabled) {
-                        env.put("com.sun.jndi.ldap.connect.pool", "true");
                     }
                     if (followReferrals) {
                         env.put(Context.REFERRAL, "follow");

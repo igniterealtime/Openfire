@@ -47,24 +47,26 @@ public class LoginConnection extends BaseFlapConnection {
             request(new KeyRequest(oscarSession.getRegistration().getUsername()));
         }
         else if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
-            Message m = new Message();
-            m.setType(Message.Type.error);
-            m.setFrom(this.getMainSession().getTransport().getJID());
-            m.setTo(this.getMainSession().getJIDWithHighestPriority());
-            m.setBody("Connection failed: " + e.getReason());
-            this.getMainSession().getTransport().sendPacket(m);                            
-            this.getMainSession().logOut();
+            //TODO: Do we need to catch these?
+//            Message m = new Message();
+//            m.setType(Message.Type.error);
+//            m.setFrom(this.getMainSession().getTransport().getJID());
+//            m.setTo(this.getMainSession().getJIDWithHighestPriority());
+//            m.setBody("Connection failed: " + e.getReason());
+//            this.getMainSession().getTransport().sendPacket(m);
+//            this.getMainSession().logOut();
         }
         else if (e.getNewState() == ClientFlapConn.STATE_NOT_CONNECTED) {
-            if (!loggedin) {
-                Message m = new Message();
-                m.setType(Message.Type.error);
-                m.setFrom(this.getMainSession().getTransport().getJID());
-                m.setTo(this.getMainSession().getJIDWithHighestPriority());
-                m.setBody("Connection lost: " + e.getReason());
-                this.getMainSession().getTransport().sendPacket(m);
-                this.getMainSession().logOut();
-            }
+            //TODO: Do we need to catch these?
+//            if (!loggedin) {
+//                Message m = new Message();
+//                m.setType(Message.Type.error);
+//                m.setFrom(this.getMainSession().getTransport().getJID());
+//                m.setTo(this.getMainSession().getJIDWithHighestPriority());
+//                m.setBody("Connection lost: " + e.getReason());
+//                this.getMainSession().getTransport().sendPacket(m);
+//                this.getMainSession().logOut();
+//            }
         }
     }
 
@@ -92,11 +94,11 @@ public class LoginConnection extends BaseFlapConnection {
 
             int error = ar.getErrorCode();
             if (error != -1) {
-                Log.error("connection error! code: " + error);
-                if (ar.getErrorUrl() != null) {
-                    Log.error("Error URL: " + ar.getErrorUrl());
-                }
-
+//                Log.error("connection error! code: " + error);
+//                if (ar.getErrorUrl() != null) {
+//                    Log.error("Error URL: " + ar.getErrorUrl());
+//                }
+//
                 String errormsg;
                 switch (error) {
                     case (AuthResponse.ERROR_ACCOUNT_DELETED): {

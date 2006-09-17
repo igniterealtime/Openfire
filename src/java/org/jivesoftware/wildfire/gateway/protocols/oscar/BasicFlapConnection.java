@@ -32,14 +32,12 @@ import net.kano.joscar.snac.SnacRequest;
 import net.kano.joscar.snac.SnacRequestListener;
 import net.kano.joscar.flapcmd.LoginFlapCmd;
 import net.kano.joscar.flapcmd.SnacCommand;
-import net.kano.joscar.rvcmd.DefaultRvCommandFactory;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.*;
 import net.kano.joscar.snaccmd.icbm.RecvImIcbm;
 import net.kano.joscar.snaccmd.icbm.InstantMessage;
 import net.kano.joscar.snaccmd.buddy.BuddyStatusCmd;
 import net.kano.joscar.snaccmd.buddy.BuddyOfflineCmd;
-import net.kano.joscar.rv.*;
 import net.kano.joscar.ratelim.RateLimitingQueueMgr;
 
 /**
@@ -57,35 +55,9 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected int[] snacFamilies = null;
     protected Collection<SnacFamilyInfo> snacFamilyInfos;
     protected RateLimitingQueueMgr rateMgr = new RateLimitingQueueMgr();
-    protected RvProcessor rvProcessor = new RvProcessor(sp);
-    protected RvProcessorListener rvListener = new RvProcessorListener() {
-        public void handleNewSession(NewRvSessionEvent event) {
-            event.getSession().addListener(rvSessionListener);
-        }
-    };
-
-    protected RvSessionListener rvSessionListener = new RvSessionListener() {
-        public void handleRv(RecvRvEvent event) {
-//            RvCommand cmd = event.getRvCommand();
-//
-//            RvSession session = event.getRvSession();
-//            SnacCommand snaccmd = event.getSnacCommand();
-//            if (!(snaccmd instanceof RecvRvIcbm)) return;
-//            RecvRvIcbm icbm = (RecvRvIcbm) snaccmd;
-            //Log.debug("got rendezvous on session <" + session + ">");
-            //Log.debug("- command: " + cmd);
-        }
-        public void handleSnacResponse(RvSnacResponseEvent event) {
-            //Log.debug("got SNAC response for <"
-            //        + event.getRvSession() + ">: "
-            //        + event.getSnacCommand());
-        }
-    };
 
     { // init
         sp.setSnacQueueManager(rateMgr);
-        rvProcessor.registerRvCmdFactory(new DefaultRvCommandFactory());
-        rvProcessor.addListener(rvListener);
     }
 
     public BasicFlapConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
@@ -108,20 +80,10 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
         if (cmd instanceof LoginFlapCmd) {
             getFlapProcessor().sendFlap(new LoginFlapCmd(cookie));
-        } else {
-            //Log.debug("got FLAP command on channel 0x"
-            //        + Integer.toHexString(e.getFlapPacket().getChannel())
-            //        + ": " + cmd);
         }
     }
 
     protected void handleSnacPacket(SnacPacketEvent e) {
-//        SnacPacket packet = e.getSnacPacket();
-        //Log.debug("got snac packet type "
-        //        + Integer.toHexString(packet.getFamily()) + "/"
-        //        + Integer.toHexString(packet.getCommand()) + ": "
-        //        + e.getSnacCommand());
-
         SnacCommand cmd = e.getSnacCommand();
         if (cmd instanceof ServerReadyCmd) {
             ServerReadyCmd src = (ServerReadyCmd) cmd;
@@ -220,21 +182,9 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             p.setFrom(oscarSession.getTransport().convertIDToJID(boc.getScreenname()));
             oscarSession.getTransport().sendPacket(p);
         }
-        else if (cmd instanceof RateChange) {
-//            RateChange rc = (RateChange) cmd;
-
-            //Log.debug("rate change: current avg is "
-            //        + rc.getRateInfo().getCurrentAvg());
-        }
     }
 
     protected void handleSnacResponse(SnacResponseEvent e) {
-//        SnacPacket packet = e.getSnacPacket();
-        //Log.debug("got snac response type "
-        //        + Integer.toHexString(packet.getFamily()) + "/"
-        //        + Integer.toHexString(packet.getCommand()) + ": "
-        //        + e.getSnacCommand());
-
         SnacCommand cmd = e.getSnacCommand();
 
         if (cmd instanceof RateInfoCmd) {

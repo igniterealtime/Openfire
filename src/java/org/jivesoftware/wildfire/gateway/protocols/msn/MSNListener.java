@@ -106,12 +106,6 @@ public class MSNListener extends MsnAdapter {
      * Contact list initialization has completed.
      */
     public void contactListInitCompleted(MsnMessenger messenger) {
-    }
-
-    /**
-     * Contact list has been synced.
-     */
-    public void contactListSyncCompleted(MsnMessenger messenger) {
         for (MsnContact msnContact : messenger.getContactList().getContacts()) {
             Log.debug("Got contact "+msnContact);
             msnSession.storeFriend(msnContact);
@@ -119,7 +113,13 @@ public class MSNListener extends MsnAdapter {
         for (MsnGroup msnGroup : messenger.getContactList().getGroups()) {
             msnSession.storeGroup(msnGroup);
         }
-        msnSession.syncUsers();
+        msnSession.syncUsers();        
+    }
+
+    /**
+     * Contact list has been synced.
+     */
+    public void contactListSyncCompleted(MsnMessenger messenger) {
     }
 
     /**

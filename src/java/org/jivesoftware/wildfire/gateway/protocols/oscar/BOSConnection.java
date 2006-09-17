@@ -48,9 +48,6 @@ public class BOSConnection extends BasicFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
-        //Log.debug("main connection state changed from "
-        //        + e.getOldState() + " to " + e.getNewState() + ": "
-        //        + e.getReason());
     }
 
     protected void handleFlapPacket(FlapPacketEvent e) {

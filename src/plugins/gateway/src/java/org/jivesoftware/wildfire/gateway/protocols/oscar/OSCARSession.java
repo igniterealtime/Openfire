@@ -195,7 +195,6 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#addContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void addContact(RosterItem item) {
-        Log.debug("Add contact: "+item.getJid());
         String legacyId = getTransport().convertJIDToID(item.getJid());
         String nickname = item.getNickname();
         if (nickname == null || nickname.equals("")) {
@@ -210,7 +209,6 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-        Log.debug("Remove contact: "+item.getJid());
         String legacyId = getTransport().convertJIDToID(item.getJid());
         for (BuddyItem i : buddies.values()) {
             if (i.getScreenname().equalsIgnoreCase(legacyId)) {
@@ -224,7 +222,6 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void updateContact(RosterItem item) {
-        Log.debug("Update contact: "+item.getJid());
         String legacyId = getTransport().convertJIDToID(item.getJid());
         String nickname = item.getNickname();
         if (nickname == null || nickname.equals("")) {

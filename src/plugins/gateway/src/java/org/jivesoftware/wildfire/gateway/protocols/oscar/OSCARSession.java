@@ -293,8 +293,6 @@ public class OSCARSession extends TransportSession {
         } else {
             // it's time to request a service
             if (!(request.getCommand() instanceof ServiceRequest)) {
-                //Log.debug("requesting " + Integer.toHexString(family)
-                //        + " service.");
                 snacMgr.setPending(family, true);
                 snacMgr.addRequest(request);
                 request(new ServiceRequest(family));

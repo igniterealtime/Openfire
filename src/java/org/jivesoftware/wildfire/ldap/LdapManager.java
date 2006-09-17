@@ -159,29 +159,35 @@ public class LdapManager {
             initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
         }
 
+        StringBuilder buf = new StringBuilder();
+        buf.append("Created new LdapManager() instance, fields:\n");
+        buf.append("\t host: ").append(hosts).append("\n");
+        buf.append("\t port: ").append(port).append("\n");
+        buf.append("\t usernamefield: ").append(usernameField).append("\n");
+        buf.append("\t baseDN: ").append(baseDN).append("\n");
+        buf.append("\t alternateBaseDN: ").append(alternateBaseDN).append("\n");
+        buf.append("\t nameField: ").append(nameField).append("\n");
+        buf.append("\t emailField: ").append(emailField).append("\n");
+        buf.append("\t adminDN: ").append(adminDN).append("\n");
+        buf.append("\t adminPassword: ").append(adminPassword).append("\n");
+        buf.append("\t searchFilter: ").append(searchFilter).append("\n");
+        buf.append("\t subTreeSearch:").append(subTreeSearch).append("\n");
+        buf.append("\t ldapDebugEnabled: ").append(ldapDebugEnabled).append("\n");
+        buf.append("\t sslEnabled: ").append(sslEnabled).append("\n");
+        buf.append("\t initialContextFactory: ").append(initialContextFactory).append("\n");
+        buf.append("\t connectionPoolEnabled: ").append(connectionPoolEnabled).append("\n");
+        buf.append("\t autoFollowReferrals: ").append(followReferrals).append("\n");
+        buf.append("\t groupNameField: ").append(groupNameField).append("\n");
+        buf.append("\t groupMemberField: ").append(groupMemberField).append("\n");
+        buf.append("\t groupDescriptionField: ").append(groupDescriptionField).append("\n");
+        buf.append("\t posixMode: ").append(posixMode).append("\n");
+        buf.append("\t groupSearchFilter: ").append(groupSearchFilter).append("\n");
+
         if (Log.isDebugEnabled()) {
-            Log.debug("Created new LdapManager() instance, fields:");
-            Log.debug("\t host: " + hosts);
-            Log.debug("\t port: " + port);
-            Log.debug("\t usernamefield: " + usernameField);
-            Log.debug("\t baseDN: " + baseDN);
-            Log.debug("\t alternateBaseDN: " + alternateBaseDN);
-            Log.debug("\t nameField: " + nameField);
-            Log.debug("\t emailField: " + emailField);
-            Log.debug("\t adminDN: " + adminDN);
-            Log.debug("\t adminPassword: " + adminPassword);
-            Log.debug("\t searchFilter: " + searchFilter);
-            Log.debug("\t subTreeSearch:" + subTreeSearch);
-            Log.debug("\t ldapDebugEnabled: " + ldapDebugEnabled);
-            Log.debug("\t sslEnabled: " + sslEnabled);
-            Log.debug("\t initialContextFactory: " + initialContextFactory);
-            Log.debug("\t connectionPoolEnabled: " + connectionPoolEnabled);
-            Log.debug("\t autoFollowReferrals: " + followReferrals);
-            Log.debug("\t groupNameField: " + groupNameField);
-            Log.debug("\t groupMemberField: " + groupMemberField);
-            Log.debug("\t groupDescriptionField: " + groupDescriptionField);
-            Log.debug("\t posixMode: " + posixMode);
-            Log.debug("\t groupSearchFilter: " + groupSearchFilter);
+            Log.debug(buf.toString());
+        }
+        if (ldapDebugEnabled) {
+            System.err.println(buf.toString());
         }
     }
 
@@ -285,7 +291,7 @@ public class LdapManager {
             env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
             env.put(Context.SECURITY_CREDENTIALS, password);
             // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-            // break with a teimout.
+            // break with a timemout.
             if (!sslEnabled) {
                 env.put("com.sun.jndi.ldap.connect.timeout", "10000");
             }

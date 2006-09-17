@@ -69,15 +69,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/ymsg_network.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -133,6 +124,24 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/jml.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar-protocol.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar-common.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

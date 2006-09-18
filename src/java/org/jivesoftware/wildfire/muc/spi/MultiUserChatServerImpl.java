@@ -932,7 +932,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public String getName() {
-                return "Public Chatrooms";
+                // Check if there is a system property that overrides the default value
+                String serviceName = JiveGlobals.getProperty("muc.service-name");
+                if (serviceName != null && serviceName.trim().length() > 0) {
+                    return serviceName;
+                }
+                // Return the default service name based on the current locale
+                return LocaleUtils.getLocalizedString("muc.service-name");
             }
 
             public String getAction() {

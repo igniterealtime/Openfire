@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# wildfired
+# wildfired	Stops and starts the wildfire XMPP service
 #
-# chkconfig: 2345 20 80
+# chkconfig: 2345 99 1
 # description: Used to start and stop the wildfire XMPP server
 # 
 # Script used to start wildfire as daemon
@@ -52,6 +52,7 @@ function execCommand() {
 	cd $WILDFIRE_HOME/bin
 	CMD="./wildfire $1"
 	su -c "$CMD" $WILDFIRE_USER &
+	sleep 1 # allows prompt to return
 	cd $OLD_PWD
 }
 
@@ -72,8 +73,23 @@ case "$1" in
 	stop)
 		stop
 		;;
+	restart)
+		stop
+		sleep 10 # since stop is backgrounded
+		start
+		;;
+	status) 
+		retval=$(pgrep -u $WILDFIRE_USER -f $WILDFIRE_HOME/bin/wildfire > /dev/null ; echo $?)
+		if [ "$retval" = "0" ] ; then 
+			echo "wildfire is running"
+			exit 0
+		else 
+			echo "wildfire is not running"
+			exit 0
+		fi
+		;;
 	*)
-		echo "Usage $0 {start|stop}"
+		echo "Usage $0 {start|stop|restart|status}"
 		exit 1
 esac
 

@@ -59,9 +59,9 @@
             long regId = ParamUtils.getLongParameter(request, "editid", -1);
             try {
                 Registration reg = new Registration(regId);
-                reg.setUsername(ParamUtils.getParameter(request, "username"));
-                reg.setPassword(ParamUtils.getParameter(request, "password"));
-                reg.setNickname(ParamUtils.getParameter(request, "nickname"));
+                reg.setUsername(ParamUtils.getParameter(request, "gatewayUsername"));
+                reg.setPassword(ParamUtils.getParameter(request, "gatewayPassword"));
+                reg.setNickname(ParamUtils.getParameter(request, "gatewayNickname"));
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
             }
@@ -464,15 +464,15 @@
 			<td colspan="4"><form method="post" id="editRegistration<%= result.id %>" name="editRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="edit" /><input type="hidden" name="editid" value="<%= result.id %>" />
 			<span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %>on">
 				<div class="jive-registrations-editUsername">
-				<input type="text" name="username" size="12" maxlength="50" value="<%= result.username %>"><br>
+				<input type="text" name="gatewayUsername" size="12" maxlength="50" value="<%= result.username %>"><br>
 				<strong><fmt:message key="gateway.web.registrations.username" /></strong>
 				</div>
 				<div class="jive-registrations-editPassword">
-				<input type="password" name="password" size="12" maxlength="50" value="*********"><br>
+				<input type="password" name="gatewayPassword" size="12" maxlength="50" value="*********"><br>
 				<strong><fmt:message key="gateway.web.registrations.password" /></strong>
 				</div>
                 <div class="jive-registrations-editNickname">
-                <input type="text" name="nickname" size="12" maxlength="50" value="<%= result.nickname %>"><br>
+                <input type="text" name="gatewayNickname" size="12" maxlength="50" value="<%= result.nickname %>"><br>
                 <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
                 </div>
                 <div class="jive-registrations-editButtons">

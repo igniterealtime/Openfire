@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.*;
@@ -25,7 +26,7 @@ import java.util.Set;
 public class PseudoRoster {
 
     private static final String GET_ALL_USER_ROSTER_ITEMS =
-            "SELECT username,nickname,groups FROM gatewayPseudoRoster WHERE registrationID=?";
+            "SELECT username FROM gatewayPseudoRoster WHERE registrationID=?";
     private static final String REMOVE_ROSTER_ITEM =
             "DELETE FROM gatewayPseudoRoster WHERE registrationID=? AND username=?";
 
@@ -139,9 +140,12 @@ public class PseudoRoster {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String username = rs.getString(1);
-                String nickname = rs.getString(2);
-                String groups = rs.getString(3);
-                pseudoRosterItems.put(username, new PseudoRosterItem(registrationID, username, nickname, groups));
+                try {
+                    pseudoRosterItems.put(username, new PseudoRosterItem(registrationID, username));
+                }
+                catch (NotFoundException e) {
+                    Log.error("Could not find pseudo roster item after already having found it.");
+                }
             }
         }
         catch (SQLException sqle) {

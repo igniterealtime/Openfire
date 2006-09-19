@@ -401,7 +401,7 @@ below and update the view.</p>
 			<span>ICQ</span>
 		</label>
         <label for="filterIRCcheckbox">
-            <input type="checkbox" name="filter[]" value="icq" <%= ((filteropts.contains("irc")) ? "checked" : "") %> id="filterIRCcheckbox"> 
+            <input type="checkbox" name="filter[]" value="irc" <%= ((filteropts.contains("irc")) ? "checked" : "") %> id="filterIRCcheckbox"> 
             <img src="images/irc.gif" alt="" border="0">
             <span>IRC</span>
         </label>

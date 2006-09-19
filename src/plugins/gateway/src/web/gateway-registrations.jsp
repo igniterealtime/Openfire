@@ -60,7 +60,7 @@
             try {
                 Registration reg = new Registration(regId);
                 reg.setUsername(ParamUtils.getParameter(request, "username"));
-                reg.setPassword(ParamUtils.getParameter(request, "password"));                 reg.setPassword(ParamUtils.getParameter(request, "password"));
+                reg.setPassword(ParamUtils.getParameter(request, "password"));
                 reg.setNickname(ParamUtils.getParameter(request, "nickname"));
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
@@ -113,6 +113,7 @@
         public long id = -1;
         public String type = null;
         public String username = null;
+        public String nickname = null;
         public String status = "unavailable";
         public String linestatus = "offline";
         public String lastLogin = null;
@@ -157,6 +158,7 @@
         res.id = registration.getRegistrationID();
         res.jid = registration.getJID();
         res.username = registration.getUsername();
+        res.nickname = registration.getNickname();
         res.type = registration.getTransportType().toString();
         if (!filteropts.contains(res.type)) { continue; }
 
@@ -239,8 +241,7 @@
 
 <body>
 
-<p>Below is a list of all gateway service registrations. To filter by active sessions and/or specific gateways select the options 
-below and update the view.</p>
+<p><fmt:message key="gateway.web.registrations.instructions" /></p>
 
 <%
     if (success != null) {
@@ -253,7 +254,7 @@ below and update the view.</p>
         <tr><td class="jive-icon"><img src="/images/success-16x16.gif" width="16"
  height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
-            Registration successfully updated.
+            <fmt:message key="gateway.web.registrations.regsuccess" />
         </td></tr>
     </tbody>
     </table>
@@ -270,7 +271,7 @@ below and update the view.</p>
         <tr><td class="jive-icon"><img src="/images/error-16x16.gif" width="16"
  height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
-            Registration update failed.
+            <fmt:message key="gateway.web.registrations.regfailure" />
         </td></tr>
     </tbody>
     </table>
@@ -283,7 +284,7 @@ below and update the view.</p>
 
 <!-- BEGIN add registration -->
 <div class="jive-gateway-addregBtn" id="jiveAddRegButton">
-	<a href="" onClick="toggleAdd(); return false" id="jiveAddRegLink">Add a new registration</a>
+	<a href="" onClick="toggleAdd(); return false" id="jiveAddRegLink"><fmt:message key="gateway.web.registrations.addnewreg" /></a>
 </div>
 <div class="jive-gateway-addreg" id="jiveAddRegPanel" style="display: none;">
 	<div class="jive-gateway-addregPad">
@@ -291,34 +292,34 @@ below and update the view.</p>
         <input type="hidden" name="action" value="add" />
 		<div class="jive-registrations-addJid">
 			<input type="text" name="gatewayJID" size="12" maxlength="50" value=""><br>
-			<strong>user (JID)</strong>
+			<strong><fmt:message key="gateway.web.registrations.jid" /></strong>
 		</div>
 		<div class="jive-registrations-addGateway">
 			<select name="gatewayType" size="1">
 			<option value="0" SELECTED> -- select -- </option>
-			<% if (trEnabled.get("aim")) { %> <option value="aim">AIM</option> <% } %>
-			<% if (trEnabled.get("icq")) { %> <option value="icq">ICQ</option> <% } %>
-			<% if (trEnabled.get("irc")) { %> <option value="irc">IRC</option> <% } %>
-            <% if (trEnabled.get("msn")) { %> <option value="msn">MSN</option> <% } %>
-			<% if (trEnabled.get("yahoo")) { %> <option value="yahoo">Yahoo</option> <% } %>
+			<% if (trEnabled.get("aim")) { %> <option value="aim"><fmt:message key="gateway.aim.shortservice" /></option> <% } %>
+			<% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
+			<% if (trEnabled.get("irc")) { %> <option value="irc"><fmt:message key="gateway.irc.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("msn")) { %> <option value="msn"><fmt:message key="gateway.msn.shortservice" /></option> <% } %>
+			<% if (trEnabled.get("yahoo")) { %> <option value="yahoo"><fmt:message key="gateway.yahoo.shortservice" /></option> <% } %>
 			</select><br>
-			<strong>gateway</strong>
+			<strong><fmt:message key="gateway.web.registrations.gateway" /></strong>
 		</div>
 		<div class="jive-registrations-addUsername">
 			<input type="text" name="gatewayUser" size="12" maxlength="50" value=""><br>
-			<strong>username</strong>
+			<strong><fmt:message key="gateway.web.registrations.username" /></strong>
 		</div>
 		<div class="jive-registrations-addPassword">
 			<input type="password" name="gatewayPass" size="12" maxlength="50" value=""><br>
-			<strong>password</strong>
+			<strong><fmt:message key="gateway.web.registrations.password" /></strong>
 		</div>
             <div class="jive-registrations-addNickname">
                 <input type="text" name="gatewayNick" size="12" maxlength="50" value=""><br>
-                <strong>nickname</strong>
+                <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
             </div>
         <div class="jive-registrations-addButtons">
-			<input type="submit" name="Submit" value="Add" class="savechanges"> &nbsp;
-			<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleAdd();">
+			<input type="submit" name="Submit" value="<fmt:message key="global.add" />" class="savechanges"> &nbsp;
+			<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleAdd();">
 		</div>
 		</form>
 	</div>
@@ -334,7 +335,7 @@ below and update the view.</p>
 
 	<!-- BEGIN results -->
 	<div class="jive-registrations-results">
-		Registrations: <strong><%= (start+1) %>-<%= topRange %></strong> of <strong><%= resCount %></strong>
+		<fmt:message key="gateway.web.registrations.registrations" />: <strong><%= (start+1) %>-<%= topRange %></strong> of <strong><%= resCount %></strong>
 	</div>
 	<!-- END results -->
 
@@ -359,7 +360,7 @@ below and update the view.</p>
             <%
                 if (numPages > 1 && ((curPage) > 1)) {
             %>
-                    <a href="gateway-registrations.jsp?start=<%= ((curPage-2)*range) %>">&lt; Prev</a> 
+                    <a href="gateway-registrations.jsp?start=<%= ((curPage-2)*range) %>">&lt; <fmt:message key="gateway.web.registrations.prev" /></a>
             <%
                 }
                 for (int i=0; i<numPages; i++) {
@@ -377,7 +378,7 @@ below and update the view.</p>
                 }
                 if (numPages > 1 && ((curPage) < numPages)) {
             %>
-                    <a href="gateway-registrations.jsp?start=<%= (curPage*range) %>">Next &gt;</a>
+                    <a href="gateway-registrations.jsp?start=<%= (curPage*range) %>"><fmt:message key="gateway.web.registrations.next" /> &gt;</a>
             <%
                 }
             %>
@@ -393,33 +394,33 @@ below and update the view.</p>
 		<label for="filterAIMcheckbox">
 			<input type="checkbox" name="filter[]" value="aim" <%= ((filteropts.contains("aim")) ? "checked" : "") %> id="filterAIMcheckbox"> 
 			<img src="images/aim.gif" alt="" border="0"> 
-			<span>AIM</span>
+			<span><fmt:message key="gateway.aim.shortservice" /></span>
 		</label>
 		<label for="filterICQcheckbox">
 			<input type="checkbox" name="filter[]" value="icq" <%= ((filteropts.contains("icq")) ? "checked" : "") %> id="filterICQcheckbox"> 
 			<img src="images/icq.gif" alt="" border="0"> 
-			<span>ICQ</span>
+			<span><fmt:message key="gateway.icq.shortservice" /></span>
 		</label>
         <label for="filterIRCcheckbox">
-            <input type="checkbox" name="filter[]" value="irc" <%= ((filteropts.contains("irc")) ? "checked" : "") %> id="filterIRCcheckbox"> 
+            <input type="checkbox" name="filter[]" value="irc" <%= ((filteropts.contains("irc")) ? "checked" : "") %> id="filterIRCcheckbox">
             <img src="images/irc.gif" alt="" border="0">
-            <span>IRC</span>
+            <span><fmt:message key="gateway.irc.shortservice" /></span>
         </label>
         <label for="filterMSNcheckbox">
 			<input type="checkbox" name="filter[]" value="msn" <%= ((filteropts.contains("msn")) ? "checked" : "") %> id="filterMSNcheckbox"> 
 			<img src="images/msn.gif" alt="" border="0"> 
-			<span>MSN</span>
+			<span><fmt:message key="gateway.msn.shortservice" /></span>
 		</label>
 		<label for="filterYAHOOcheckbox">
 			<input type="checkbox" name="filter[]" value="yahoo" <%= ((filteropts.contains("yahoo")) ? "checked" : "") %> id="filterYAHOOcheckbox"> 
 			<img src="images/yahoo.gif" alt="" border="0"> 
-			<span>Yahoo</span>
+			<span><fmt:message key="gateway.yahoo.shortservice" /></span>
 		</label>
 		<label for="filterActiveOnly">
 			<input type="checkbox" name="filter[]" value="signedon" <%= ((filteropts.contains("signedon")) ? "checked" : "") %> id="filterActiveOnly"> 
-			<span>Signed on only</span>
+			<span><fmt:message key="gateway.web.registrations.signedon" /></span>
 		</label>	
-		<input type="submit" name="submit" value="Update" class="filterBtn"> 
+		<input type="submit" name="submit" value="<fmt:message key="gateway.web.registrations.update" />" class="filterBtn">
 		</div>
 	</div>
 	</form>
@@ -432,11 +433,11 @@ below and update the view.</p>
 	<thead>
 		<tr>
 			<th width="20" class="border-left">&nbsp;</th>
-			<th width="25%">User</th>
-			<th>Service/Username</th>
-			<th>Last Login</th>
-			<th width="1%"><div align="center">Edit</div></th>
-			<th width="1%" class="border-right">Remove</th>
+			<th width="25%"><fmt:message key="gateway.web.registrations.user" /></th>
+			<th><fmt:message key="gateway.web.registrations.serviceusername" /></th>
+			<th><fmt:message key="gateway.web.registrations.lastlogin" /></th>
+			<th width="1%"><div align="center"><fmt:message key="gateway.web.registrations.edit" /></div></th>
+			<th width="1%" class="border-right"><fmt:message key="gateway.web.registrations.remove" /></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -455,7 +456,7 @@ below and update the view.</p>
 			<td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><%= result.username %></span></td>
 			<td><%= result.lastLogin %></td>
 			<td align="center"><a href="" onClick="toggleEdit(<%= result.id %>); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="if (confirm('Are you sure you want to delete this registration?')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }"><img src="/images/delete-16x16.gif" alt="" border="0"></a></form></td>
+			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }"><img src="/images/delete-16x16.gif" alt="" border="0"></a></form></td>
 		</tr>
 		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none;">
 			<td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>
@@ -464,15 +465,19 @@ below and update the view.</p>
 			<span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %>on">
 				<div class="jive-registrations-editUsername">
 				<input type="text" name="username" size="12" maxlength="50" value="<%= result.username %>"><br>
-				<strong>username</strong>
+				<strong><fmt:message key="gateway.web.registrations.username" /></strong>
 				</div>
 				<div class="jive-registrations-editPassword">
 				<input type="password" name="password" size="12" maxlength="50" value="*********"><br>
-				<strong>password</strong>
+				<strong><fmt:message key="gateway.web.registrations.password" /></strong>
 				</div>
-				<div class="jive-registrations-editButtons">
-				<input type="submit" name="Submit" value="Save Changes" class="savechanges" onClick="document.getElementById.submit()"> &nbsp;
-				<input type="reset" name="reset" value="Cancel" class="cancel" onClick="toggleEdit(<%= result.id %>);">
+                <div class="jive-registrations-editNickname">
+                <input type="text" name="nickname" size="12" maxlength="50" value="<%= result.nickname %>"><br>
+                <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
+                </div>
+                <div class="jive-registrations-editButtons">
+				<input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />" class="savechanges" onClick="document.getElementById.submit()"> &nbsp;
+				<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleEdit(<%= result.id %>);">
 				</div>
 			</span>
 			</form></td>

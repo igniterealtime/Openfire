@@ -166,15 +166,15 @@ public class OSCARSession extends TransportSession {
             if (buddy.getScreenname().equalsIgnoreCase(contact)) {
                 if (buddy.getGroupId() == 0) {
                     // Ok this group is the "main group", which we can cheerfully remove from.
-                    Log.debug("Removing "+buddy+" because of in main group");
-                    request(new DeleteItemsCmd(buddy.toSsiItem()));
-                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
+//                    Log.debug("Removing "+buddy+" because of in main group");
+//                    request(new DeleteItemsCmd(buddy.toSsiItem()));
+//                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
                 else if (!groups.containsKey(buddy.getGroupId())) {
                     // Well this is odd, a group we don't know about?  Nuke it.
-                    Log.debug("Removing "+buddy+" because of unknown group");
-                    request(new DeleteItemsCmd(buddy.toSsiItem()));
-                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
+//                    Log.debug("Removing "+buddy+" because of unknown group");
+//                    request(new DeleteItemsCmd(buddy.toSsiItem()));
+//                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
                 else if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
                     Log.debug("Removing "+buddy+" because not in list of groups");

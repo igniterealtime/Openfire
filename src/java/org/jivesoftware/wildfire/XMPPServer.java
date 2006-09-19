@@ -812,7 +812,7 @@ public class XMPPServer {
             pluginManager.shutdown();
         }
         // Stop the Db connection manager.
-        DbConnectionManager.getConnectionProvider().destroy();
+        DbConnectionManager.destroyConnectionProvider();
         // hack to allow safe stopping
         Log.info("Wildfire stopped");
     }

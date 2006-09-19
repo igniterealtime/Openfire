@@ -4,6 +4,7 @@
                  org.jivesoftware.wildfire.gateway.TransportType"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -71,11 +72,11 @@
         }
     }
 
-    GatewaySettings aimSettings = new GatewaySettings(out, plugin, TransportType.aim, "AOL Instant Messenger");
-    GatewaySettings icqSettings = new GatewaySettings(out, plugin, TransportType.icq, "ICQ");
-    GatewaySettings ircSettings = new GatewaySettings(out, plugin, TransportType.irc, "IRC");
-    GatewaySettings msnSettings = new GatewaySettings(out, plugin, TransportType.msn, "MSN Messenger");
-    GatewaySettings yahooSettings = new GatewaySettings(out, plugin, TransportType.yahoo, "Yahoo! Messenger");
+    GatewaySettings aimSettings = new GatewaySettings(out, plugin, TransportType.aim, LocaleUtils.getLocalizedString("gateway.aim.service", "gateway"));
+    GatewaySettings icqSettings = new GatewaySettings(out, plugin, TransportType.icq, LocaleUtils.getLocalizedString("gateway.icq.service", "gateway"));
+    GatewaySettings ircSettings = new GatewaySettings(out, plugin, TransportType.irc, LocaleUtils.getLocalizedString("gateway.irc.service", "gateway"));
+    GatewaySettings msnSettings = new GatewaySettings(out, plugin, TransportType.msn, LocaleUtils.getLocalizedString("gateway.msn.service", "gateway"));
+    GatewaySettings yahooSettings = new GatewaySettings(out, plugin, TransportType.yahoo, LocaleUtils.getLocalizedString("gateway.yahoo.service", "gateway"));
 %>
 
 
@@ -95,7 +96,7 @@
 <body>
 
 
-<p>Select which gateways will be allowed, what features are available, and who can connect to each gateway service. Checking a gateway enables the service.</p>
+<p><fmt:message key="gateway.web.settings.instructions" /></p>
 
 
 <form action="" name="gatewayForm">

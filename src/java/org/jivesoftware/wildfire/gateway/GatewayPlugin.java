@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.gateway;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -100,7 +99,6 @@ public class GatewayPlugin implements Plugin {
     private void maybeStartService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
         trInstance.startInstance();
-        Log.info("Starting transport service: "+serviceName);
     }
 
     /**
@@ -109,7 +107,6 @@ public class GatewayPlugin implements Plugin {
     public void enableService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
         trInstance.enable();
-        Log.info("Enabling transport service: "+serviceName);
     }
 
     /**
@@ -118,7 +115,6 @@ public class GatewayPlugin implements Plugin {
     public void disableService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
         trInstance.disable();
-        Log.info("Disabling transport service: "+serviceName);
     }
 
     /**

@@ -1303,17 +1303,17 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactDeleted(Roster roster, RosterItem item) {
-        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
-            // Not ours, not our problem.
-            return;
-        }
-        try {
-            TransportSession session = sessionManager.getSession(roster.getUsername());
-            session.removeContact(item);
-        }
-        catch (NotFoundException e) {
-            // TODO: Should maybe do something about this
-        }
+//        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
+//            // Not ours, not our problem.
+//            return;
+//        }
+//        try {
+//            TransportSession session = sessionManager.getSession(roster.getUsername());
+//            session.removeContact(item);
+//        }
+//        catch (NotFoundException e) {
+//            // TODO: Should maybe do something about this
+//        }
     }
 
     /**

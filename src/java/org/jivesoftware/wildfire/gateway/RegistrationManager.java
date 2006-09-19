@@ -44,6 +44,8 @@ public class RegistrationManager implements Startable {
             "SELECT registrationID FROM gatewayRegistration WHERE transportType=? ORDER BY jid";
     private static final String USER_GATEWAY_REGISTRATIONS =
             "SELECT registrationID FROM gatewayRegistration WHERE jid=? AND transportType=?";
+    private static final String DELETE_PSEUDO_ROSTER =
+            "DELETE FROM gatewayPseudoRoster WHERE registrationID=?";
 
     public void start() {
 
@@ -80,6 +82,10 @@ public class RegistrationManager implements Startable {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_REGISTRATION);
+            pstmt.setLong(1, registration.getRegistrationID());
+            pstmt.executeUpdate();
+
+            pstmt = con.prepareStatement(DELETE_PSEUDO_ROSTER);
             pstmt.setLong(1, registration.getRegistrationID());
             pstmt.executeUpdate();
         }

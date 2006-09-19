@@ -12,8 +12,12 @@ package org.jivesoftware.wildfire.gateway;
 
 import org.xmpp.packet.JID;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.database.DbConnectionManager;
 
 import java.util.Collection;
+import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 /**
  * Handles retrieving pseudo rosters and other related tasks.
@@ -21,6 +25,9 @@ import java.util.Collection;
  * @author Daniel Henninger
  */
 public class PseudoRosterManager {
+
+    private static final String REMOVE_ROSTER =
+            "DELETE FROM gatewayPseudoRoster WHERE registrationID=?";
 
     /**
      * Manages registration information.
@@ -63,6 +70,30 @@ public class PseudoRosterManager {
         }
         Registration registration = registrations.iterator().next();
         return getPseudoRoster(registration);
+    }
+
+    /**
+     * Removes a pseudo roster entirely.
+     *
+     * @param registrationID ID to be removed.
+     */
+    public void removePseudoRoster(Long registrationID) throws SQLException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
+        try {
+            con = DbConnectionManager.getTransactionConnection();
+            pstmt = con.prepareStatement(REMOVE_ROSTER);
+            pstmt.setLong(1, registrationID);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            abortTransaction = true;
+            throw sqle;
+        }
+        finally {
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+        }
     }
 
 }

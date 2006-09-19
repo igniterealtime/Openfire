@@ -110,6 +110,8 @@ public class TransportInstance implements PropertyEventListener {
             return;
         }
 
+        Log.info("Starting transport service: "+type.toString());
+
         transport = null;
 
         //Log.debug("Loading class "+nameOfClass);
@@ -145,6 +147,8 @@ public class TransportInstance implements PropertyEventListener {
         if (!running) {
             return;
         }
+
+        Log.info("Stopping transport service: "+type.toString());
 
         PropertyEventDispatcher.removeListener(this);
         try {

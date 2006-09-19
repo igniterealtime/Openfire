@@ -15,7 +15,6 @@ import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.List;
 import java.util.Set;
 
 /**

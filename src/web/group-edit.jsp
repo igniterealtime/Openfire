@@ -35,6 +35,7 @@
 <%  // Get parameters
     boolean add = request.getParameter("add") != null;
     boolean delete = request.getParameter("remove") != null;
+    boolean updateMember = request.getParameter("updateMember") != null;
     boolean update = request.getParameter("save") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String users = ParamUtils.getParameter(request, "users");
@@ -42,9 +43,6 @@
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
-    boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
-    String newName = ParamUtils.getParameter(request, "newName");
-    String newDescription = ParamUtils.getParameter(request, "newDescription");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
     Map<String,String> errors = new HashMap<String,String>();
@@ -54,14 +52,13 @@
     UserManager userManager = webManager.getUserManager();
 
     boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
+    boolean shareAdditional = ParamUtils.getParameter(request, "shareContactList") != null;
     String groupDisplayName = ParamUtils.getParameter(request,"groupDisplayName");
     String showGroup = ParamUtils.getParameter(request,"showGroup");
     String[] groupNames = ParamUtils.getParameters(request, "groupNames");
 
-    edit = true;
-
     Group group = groupManager.getGroup(groupName);
-    boolean success = false;
+    boolean success;
     StringBuffer errorBuf = new StringBuffer();
 
     if (cancel) {
@@ -69,15 +66,16 @@
         return;
     }
 
-    if (newName != null && newName.length() > 0) {
+    if (update) {
         if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().length() == 0)) {
             errors.put("groupDisplayName", "");
         }
         if (errors.isEmpty()) {
-            group.setName(newName);
-            group.setDescription(newDescription);
 
                 if (enableRosterGroups) {
+                    if (showGroup == null || !shareAdditional) {
+                        showGroup = "onlyGroup";
+                    }
                     if ("spefgroups".equals(showGroup)) {
                         showGroup = "onlyGroup";
                     }
@@ -96,20 +94,18 @@
                     group.getProperties().put("sharedRoster.groupList", "");
                 }
 
-            groupName = newName;
              // Get admin list and compare it the admin posted list.
             response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
             return;
         }
         else {
             // Continue editing since there are some errors
-            edit = true;
-            update = false;
+            updateMember = false;
         }
     }
 
 
-    if (update) {
+    if (updateMember) {
         Set<JID> adminIDSet = new HashSet<JID>();
         for (String adminID : adminIDs) {
             JID newAdmin = new JID(adminID);
@@ -155,7 +151,7 @@
 
             // Add to group as member by default.
             try {
-                boolean added = false;
+                boolean added;
                 if (username.indexOf('@') == -1) {
                     // No @ was found so assume this is a JID of a local user
                     username = Stringprep.nodeprep(username);
@@ -211,19 +207,23 @@
             "true".equals(request.getParameter("creategroupsuccess"));
 
     if (errors.size() == 0) {
-        enableRosterGroups = !"nobody".equals(group.getProperties().get("sharedRoster.showInRoster"));
         showGroup = group.getProperties().get("sharedRoster.showInRoster");
+        enableRosterGroups = !"nobody".equals(showGroup);
+        shareAdditional = "everybody".equals(showGroup);
         if ("onlyGroup".equals(showGroup)) {
             String glist = group.getProperties().get("sharedRoster.groupList");
-            List l = new ArrayList();
+            List<String> l = new ArrayList<String>();
             if (glist != null) {
                 StringTokenizer tokenizer = new StringTokenizer(glist,",\t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String tok = tokenizer.nextToken().trim();
                     l.add(tok.trim());
                 }
+                if (!l.isEmpty()) {
+                    shareAdditional = true;
+                }
             }
-            groupNames = (String[])l.toArray(new String[]{});
+            groupNames = l.toArray(new String[]{});
         }
         groupDisplayName = group.getProperties().get("sharedRoster.displayName"); 
     }
@@ -353,21 +353,23 @@
 		                   function toggleRosterShare() {
 			                   if (document.getElementById('cb101').checked == false) {
 			                       document.getElementById('jive-rosterShare').style.display = 'none';
-		                        } else {
+                                } else {
 				                   document.getElementById('jive-rosterShare').style.display = 'block';
+                                   document.getElementById('rb002').checked = true;
 			                   }
 		                   }
 	                   </script>
 
-	               <input type="checkbox" id="cb101" name="shareContactList" onClick="toggleRosterShare();" style="vertical-align: middle;">
+	               <input type="checkbox" id="cb101" name="shareContactList" onClick="toggleRosterShare();" style="vertical-align: middle;"
+										 <%= (shareAdditional ? "checked" : "") %>>
 	               <label for="cb101">Share group with additional users</label>
-	                    <div id="jive-rosterShare" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
+	                    <div id="jive-rosterShare" style="display: <%= (enableRosterGroups && shareAdditional) ? "block" : "none"  %>;">
 		                    <table cellpadding="2" cellspacing="0" border="0" width="100%">
 							<tbody>
 								<tr>
 									<td width="1%" nowrap>
 										<input type="radio" name="showGroup" value="everybody" id="rb002"
-										 <%= ("everybody".equals(showGroup) || "nobody".equals(showGroup) ? "checked" : "") %>>
+										 <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
 									</td>
 									<td width="99%">
 										<label for="rb002">All users<!--<fmt:message key="group.edit.show_groups_in_all_user" />--></label>
@@ -419,11 +421,9 @@
             </td>
             <td width="99%">
 
-				<%  if (edit) { %>
-	                <input type="submit" name="save" value="Save Contact List Settings">
-					<!--<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">-->
-					<!--<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">-->
-				<%  } %>
+                <input type="submit" name="save" value="Save Contact List Settings">
+                <!--<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">-->
+                <!--<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">-->
 
             </td>
         </tr>
@@ -557,7 +557,7 @@
                         &nbsp;
                     </td>
                     <td align="center">
-                        <input type="submit" name="save" value="Update">
+                        <input type="submit" name="updateMember" value="Update">
                     </td>
                     <td align="center">
                         <input type="submit" name="remove" value="Remove">

@@ -35,6 +35,8 @@ public class PseudoRosterItem {
             "UPDATE gatewayPseudoRoster SET nickname=? WHERE registrationID=? AND username=?";
     private static final String SET_GROUPS =
             "UPDATE gatewayPseudoRoster SET groups=? WHERE registrationID=? AND username=?";
+    private static final String REMOVE_ROSTER_ITEM =
+            "DELETE FROM gatewayPseudoRoster WHERE registrationID=? AND username=?";
 
     private long registrationID;
     private String username;
@@ -58,7 +60,15 @@ public class PseudoRosterItem {
         this.nickname = nickname;
         this.groups = groups;
         try {
-            insertIntoDb();
+            // Clean up potentially already existing item.
+            removeFromDb();
+            try {
+                // Insert new roster item.
+                insertIntoDb();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         catch (Exception e) {
             Log.error(e);
@@ -207,7 +217,7 @@ public class PseudoRosterItem {
     }
 
     /**
-     * Inserts a new registration into the database.
+     * Inserts a new roster item into the database.
      */
     private void insertIntoDb() throws SQLException {
         Connection con = null;
@@ -230,6 +240,29 @@ public class PseudoRosterItem {
             else {
                 pstmt.setNull(4, Types.VARCHAR);
             }
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            abortTransaction = true;
+            throw sqle;
+        }
+        finally {
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+        }
+    }
+
+    /**
+     * Removeds a roster item from the database.
+     */
+    private void removeFromDb() throws SQLException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
+        try {
+            con = DbConnectionManager.getTransactionConnection();
+            pstmt = con.prepareStatement(REMOVE_ROSTER_ITEM);
+            pstmt.setLong(1, registrationID);
+            pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {

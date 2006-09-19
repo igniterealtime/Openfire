@@ -271,7 +271,7 @@ public class LdapGroupProvider implements GroupProvider {
             searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
             String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
 
-            // TODO: used paged results is supported by LDAP server.
+            // TODO: used paged results if supported by LDAP server.
             NamingEnumeration answer = ctx.search("", filter, searchControls);
             for (int i=0; i < startIndex; i++) {
                 if (answer.hasMoreElements()) {
@@ -320,6 +320,7 @@ public class LdapGroupProvider implements GroupProvider {
 
     public Collection<String> getGroupNames(JID user) {
         return Collections.emptyList();
+        // TODO: the implementation of this method is broken.
         /* XMPPServer server = XMPPServer.getInstance();
         String username;
         if (!manager.isPosixMode()) {
@@ -494,7 +495,7 @@ public class LdapGroupProvider implements GroupProvider {
             StringBuilder filter = new StringBuilder();
             filter.append("(").append(manager.getGroupNameField()).append("=").append(query).append(")");
 
-            // TODO: used paged results is supported by LDAP server.
+            // TODO: used paged results if supported by LDAP server.
             NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
             for (int i=0; i < startIndex; i++) {
                 if (answer.hasMoreElements()) {

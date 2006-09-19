@@ -23,67 +23,66 @@
 %>
 <html>
 <head>
-    <title>Profile Settings - Directory Server</title>
+    <title><fmt:message key="setup.ldap.server.title" /></title>
     <meta name="currentStep" content="3"/>
 
 </head>
 
 <body>
 
-	<h1>Profile Settings <span>- LDAP Connection Settings</span></h1>
+	<h1><fmt:message key="setup.ldap.title" /> <span><fmt:message key="setup.ldap.server.settings" /></span></h1>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
-		<span class="jive-stepbar_step"><strong>1. Connection Settings</strong></span>
-		<span class="jive-stepbar_step"><em>2. User Mapping</em></span>
-		<span class="jive-stepbar_step"><em>3. Group Mapping</em></span>
+		<span class="jive-stepbar_step"><strong>1. <fmt:message key="setup.ldap.connection_settings" /></strong></span>
+		<span class="jive-stepbar_step"><em>2. <fmt:message key="setup.ldap.user_mapping" /></em></span>
+		<span class="jive-stepbar_step"><em>3. <fmt:message key="setup.ldap.group_mapping" /></em></span>
 	</div>
 	<!-- END jive-contentBox-stepbar -->
 
 	<!-- BEGIN jive-contentBox -->
 	<div class="jive-contentBox jive-contentBox_for-stepbar">
 
-	<h2>Step 1 of 3: <span>Connection Settings</span></h2>
-	<p>Configure connection settings for your LDAP directory below. All fields are required; if you
-    need additional information about a field, hover your mouse over the corresponsing help icon.</p>
+	<h2><fmt:message key="setup.ldap.step_one" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h2>
+	<p><fmt:message key="setup.ldap.server.description" /></p>
 
 	<form action="" method="get">
 		<!-- BEGIN jive-contentBox_bluebox -->
 		<div class="jive-contentBox_bluebox">
 			<table border="0" cellpadding="0" cellspacing="2">
 			<tr>
-			<td colspan="4"><strong>LDAP Server</strong></td>
+			<td colspan="4"><strong><fmt:message key="setup.ldap.server.ldap_server" /></strong></td>
 			</tr>
 			<tr>
-			<td align="right">Server Type:</td>
+			<td align="right"><fmt:message key="setup.ldap.server.type" />:</td>
 			<td colspan="3" nowrap><select name="servertype" size="1" id="jiveLDAPserverType">
-				<option value="1" SELECTED>--Select directory server type--</option>
+				<option value="1" SELECTED><fmt:message key="setup.ldap.server.type_select" /></option>
 				<option value="2">Active Directory</option>
 				<option value="3">OpenLDAP</option>
-                <option value="4">Other or Unknown</option>
-                </select><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The type of directory server you are connecting to.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+                <option value="4"><fmt:message key="setup.ldap.server.type_other" /></option>
+                </select><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			<tr>
-			<td align="right">Host:</td>
-			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server host name; e.g. ldap.example.com, etc.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
-			<td align="right">&nbsp;Port:</td>
-			<td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="389"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'LDAP server port number. The default value is 389.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td align="right"><fmt:message key="setup.ldap.server.host" />:</td>
+			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td align="right">&nbsp;<fmt:message key="setup.ldap.server.port" />:</td>
+			<td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="389"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			<tr>
-			<td align="right">Base DN:</td>
-			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The starting DN that contains all user accounts. The entire subtree under the base DN will be searched for user accounts (unless subtree searching is disabled).', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></a></span></td>
+			<td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
+			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></a></span></td>
 			</tr>
             <tr><td colspan="4">&nbsp;</td></tr>
             <tr>
-			<td colspan="4"><strong>Authentication:</strong></td>
+			<td colspan="4"><strong><fmt:message key="setup.ldap.server.auth" />:</strong></td>
 			</tr>
 			<tr>
-			<td align="right">Administrator DN:</td>
-			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'A directory administrator\'s DN. All directory operations will be performed with this account. The admin must be able to perform searches and load user records. The user does not need to be able to make changes to the directory, as Wildfire treats the directory as read-only. If this property is not set, an anonymous login to the server will be attempted.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
+			<td align="right"><fmt:message key="setup.ldap.server.admindn" />:</td>
+			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 			</tr>
 			<tr>
-			<td align="right">Password:</td>
-			<td colspan="3"><input type="text" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="30"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The password for the directory administrator.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td align="right"><fmt:message key="setup.ldap.server.password" />:</td>
+			<td colspan="3"><input type="text" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="30"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
 			</tr>
 			</table>
 		</div>
@@ -92,7 +91,7 @@
 
 		<!-- BEGIN jiveAdvancedButton -->
 		<div class="jiveAdvancedButton">
-			<a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink">Advanced Settings</a>
+			<a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink"><fmt:message key="setup.ldap.server.advanced" /></a>
 		</div>
 		<!-- END jiveAdvancedButton -->
 
@@ -104,8 +103,8 @@
 				<tr>
 					<th width="10%"></th>
 					<th></th>
-					<th width="50">Yes</th>
-					<th width="50">No</th>
+					<th width="50"><fmt:message key="global.yes" /></th>
+					<th width="50"><fmt:message key="global.no" /></th>
 				</tr>
 				</thead>
 				<tbody>

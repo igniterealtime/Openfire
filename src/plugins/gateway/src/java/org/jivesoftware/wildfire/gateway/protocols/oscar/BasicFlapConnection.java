@@ -13,9 +13,9 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
@@ -24,6 +24,7 @@ import org.xmpp.packet.JID;
 import net.kano.joscar.ByteBlock;
 import net.kano.joscar.OscarTools;
 import net.kano.joscar.BinaryTools;
+import net.kano.joscar.net.ConnDescriptor;
 import net.kano.joscar.flap.FlapCommand;
 import net.kano.joscar.flap.FlapPacketEvent;
 import net.kano.joscar.snac.SnacPacketEvent;
@@ -50,25 +51,20 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     protected final ByteBlock cookie;
     protected boolean sentClientReady = false;
 
-    public Map<String,FullUserInfo> buddystore = new HashMap<String, FullUserInfo>();
+    public ConcurrentHashMap<String,FullUserInfo> buddystore = new ConcurrentHashMap<String, FullUserInfo>();
 
     protected int[] snacFamilies = null;
     protected Collection<SnacFamilyInfo> snacFamilyInfos;
     protected RateLimitingQueueMgr rateMgr = new RateLimitingQueueMgr();
 
-    { // init
+    public BasicFlapConnection(ConnDescriptor cd, OSCARSession mainSession, ByteBlock cookie) {
+        super(cd, mainSession);
+        this.cookie = cookie;
+        initBasicFlapConnection();
+    }
+
+    private void initBasicFlapConnection() {
         sp.setSnacQueueManager(rateMgr);
-    }
-
-    public BasicFlapConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
-        super(host, port, mainSession);
-        this.cookie = cookie;
-    }
-
-    public BasicFlapConnection(InetAddress ip, int port, OSCARSession mainSession,
-            ByteBlock cookie) {
-        super(ip, port, mainSession);
-        this.cookie = cookie;
     }
 
     protected DateFormat dateFormat
@@ -87,18 +83,15 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         SnacCommand cmd = e.getSnacCommand();
         if (cmd instanceof ServerReadyCmd) {
             ServerReadyCmd src = (ServerReadyCmd) cmd;
-
             setSnacFamilies(src.getSnacFamilies());
 
             Collection<SnacFamilyInfo> familyInfos = SnacFamilyInfoFactory.getDefaultFamilyInfos(src.getSnacFamilies());
-
             setSnacFamilyInfos(familyInfos);
 
             oscarSession.registerSnacFamilies(this);
 
             request(new ClientVersionsCmd(familyInfos));
             request(new RateInfoRequest());
-
         }
         else if (cmd instanceof RecvImIcbm) {
             RecvImIcbm icbm = (RecvImIcbm) cmd;
@@ -134,7 +127,6 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 m.setType(Message.Type.headline);
                 m.setFrom(this.oscarSession.getTransport().getJID());
                 oscarSession.getTransport().sendPacket(m);
-
             }
         }
         else if (cmd instanceof BuddyStatusCmd) {
@@ -155,17 +147,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                     ExtraInfoData data = i.getExtraData();
 
                     if (i.getType() == ExtraInfoBlock.TYPE_AVAILMSG) {
-                        ByteBlock msgBlock = data.getData();
-                        int len = BinaryTools.getUShort(msgBlock, 0);
-                        byte[] msgBytes = msgBlock.subBlock(2, len).toByteArray(
-);
-                        String msg;
-                        try {
-                            msg = new String(msgBytes, "UTF-8");
-                        }
-                        catch (UnsupportedEncodingException e1) {
-                            continue;
-                        }
+                        String msg = ExtraInfoData.readAvailableMessage(data);
                         if (msg.length() > 0) {
                             p.setStatus(msg);
                         }
@@ -189,7 +171,6 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
         if (cmd instanceof RateInfoCmd) {
             RateInfoCmd ric = (RateInfoCmd) cmd;
-
             List <RateClassInfo> rateClasses = ric.getRateClassInfos();
 
             int[] classes = new int[rateClasses.size()];
@@ -252,7 +233,8 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         if (snacFamilies == null || supportsFamily(family)) {
             // this connection supports this snac, so we'll send it here
             sendRequest(request);
-        } else {
+        }
+        else {
             oscarSession.handleRequest(request);
         }
     }

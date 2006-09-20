@@ -28,6 +28,7 @@ import java.util.Map;
  * Heavily inspired by joscardemo from the joscar project.
  */
 public class SnacManager {
+
     protected Map<Integer,List<BasicFlapConnection>> conns = new HashMap<Integer,List<BasicFlapConnection>>();
     protected PendingSnacMgr pendingSnacs = new PendingSnacMgr();
     protected List<PendingSnacListener> listeners = new ArrayList<PendingSnacListener>();
@@ -48,7 +49,7 @@ public class SnacManager {
 
             if (handlers == null) {
                 handlers = new LinkedList<BasicFlapConnection>();
-                conns.put(familyCode, handlers);
+                conns.put((Integer)familyCode, handlers);
             }
 
             if (!handlers.contains(conn)) {
@@ -70,31 +71,29 @@ public class SnacManager {
     }
 
     protected void dequeueSnacs(int familyCode) {
-        SnacRequest[] pending = pendingSnacs.getPending(familyCode);
+        List<SnacRequest> pending = pendingSnacs.getPending(familyCode);
         
         pendingSnacs.setPending(familyCode, false);
 
-        for (Object listener1 : listeners) {
-            PendingSnacListener listener = (PendingSnacListener) listener1;
-
+        for (PendingSnacListener listener : listeners) {
             listener.dequeueSnacs(pending);
         }
     }
 
     public void unregister(BasicFlapConnection conn) {
-        for (List<BasicFlapConnection> basicFlapConnections : conns.values()) {
-            basicFlapConnections.remove(conn);
+        for (List<BasicFlapConnection> handlers : conns.values()) {
+            handlers.remove(conn);
         }
     }
 
     public BasicFlapConnection getConn(int familyCode) {
-        List handlers = conns.get(familyCode);
+        List<BasicFlapConnection> handlers = conns.get(familyCode);
 
         if (handlers == null || handlers.size() == 0) {
             return null;
         }
 
-        return (BasicFlapConnection) handlers.get(0);
+        return handlers.get(0);
     }
 
 
@@ -103,6 +102,11 @@ public class SnacManager {
     }
 
     public void addRequest(SnacRequest request) {
+        int family = request.getCommand().getFamily();
+        if (!isPending(family)) {
+            throw new IllegalArgumentException("Family 0x"
+                    + Integer.toHexString(family) + " is not pending");             
+        }
         pendingSnacs.add(request);
     }
 

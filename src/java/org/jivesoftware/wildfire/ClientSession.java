@@ -595,7 +595,11 @@ public class ClientSession extends Session {
      *         becomes online.
      */
     public boolean canFloodOfflineMessages() {
-        for (ClientSession session : sessionManager.getSessions()) {
+        if(offlineFloodStopped) {
+            return false;
+        }
+        String username = getAddress().getNode();
+        for (ClientSession session : sessionManager.getSessions(username)) {
             if (session.isOfflineFloodStopped()) {
                 return false;
             }

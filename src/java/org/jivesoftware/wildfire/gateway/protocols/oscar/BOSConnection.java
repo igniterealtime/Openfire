@@ -24,7 +24,6 @@ import net.kano.joscar.snaccmd.loc.*;
 import net.kano.joscar.snaccmd.ssi.*;
 import net.kano.joscar.ssiitem.*;
 
-import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,12 +38,12 @@ import org.jivesoftware.util.Log;
 public class BOSConnection extends BasicFlapConnection {
     protected SsiItemObjectFactory itemFactory = new DefaultSsiItemObjFactory();
 
-    public BOSConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie) {
-        super(host, port, mainSession, cookie); // HAnd off to BasicFlapConnection
-    }
+    private static final List<CapabilityBlock> MY_CAPS = Arrays.asList(
+        CapabilityBlock.BLOCK_ICQCOMPATIBLE
+    );
 
-    public BOSConnection(InetAddress ip, int port, OSCARSession mainSession, ByteBlock cookie) {
-        super(ip, port, mainSession, cookie); // HAnd off to BasicFlapConnection
+    public BOSConnection(ConnDescriptor cd, OSCARSession mainSession, ByteBlock cookie) {
+        super(cd, mainSession, cookie); // Hand off to BasicFlapConnection
     }
 
     protected void handleStateChange(ClientConnEvent e) {
@@ -74,11 +73,10 @@ public class BOSConnection extends BasicFlapConnection {
 
         if (cmd instanceof LocRightsCmd) {
             request(new SetInfoCmd(new InfoData("oscargateway",
-                    null, Arrays.asList(new CapabilityBlock[] {
-                        CapabilityBlock.BLOCK_ICQCOMPATIBLE,
-                    }), null)));
+                    null, MY_CAPS, null)));
             request(new MyInfoRequest());
-        } else if (cmd instanceof ParamInfoCmd) {
+        }
+        else if (cmd instanceof ParamInfoCmd) {
             ParamInfoCmd pic = (ParamInfoCmd) cmd;
 
             ParamInfo info = pic.getParamInfo();
@@ -87,31 +85,15 @@ public class BOSConnection extends BasicFlapConnection {
                     info.getFlags() | ParamInfo.FLAG_TYPING_NOTIFICATION, 8000,
                     info.getMaxSenderWarning(), info.getMaxReceiverWarning(),
                     0)));
-
-        } else if (cmd instanceof YourInfoCmd) {
-//            YourInfoCmd yic = (YourInfoCmd) cmd;
-//
-//            FullUserInfo info = yic.getUserInfo();
-
-            //Log.debug("got my user info: " + info);
-
-        } else if (cmd instanceof UserInfoCmd) {
-//            UserInfoCmd uic = (UserInfoCmd) cmd;
-//
-//            String sn = uic.getUserInfo().getScreenname();
-            //Log.debug("user info for " + sn + ": "
-            //        + uic.getInfoData());
-
-        } else if (cmd instanceof ServiceRedirect) {
+        }
+        else if (cmd instanceof ServiceRedirect) {
             ServiceRedirect sr = (ServiceRedirect) cmd;
-
-            //Log.debug("connecting to " + sr.getRedirectHost()
-            //        + " for 0x" + Integer.toHexString(sr.getSnacFamily()));
 
             oscarSession.connectToService(sr.getSnacFamily(), sr.getRedirectHost(),
                     sr.getCookie());
 
-        } else if (cmd instanceof SsiDataCmd) {
+        }
+        else if (cmd instanceof SsiDataCmd) {
             SsiDataCmd sdc = (SsiDataCmd) cmd;
 
             List<SsiItem> items = sdc.getItems();

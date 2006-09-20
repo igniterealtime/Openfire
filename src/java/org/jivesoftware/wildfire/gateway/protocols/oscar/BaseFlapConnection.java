@@ -14,10 +14,7 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.Log;
 
-import java.net.InetAddress;
-
 import net.kano.joscar.flap.ClientFlapConn;
-import net.kano.joscar.flap.FlapProcessor;
 import net.kano.joscar.flap.FlapPacketListener;
 import net.kano.joscar.flap.FlapPacketEvent;
 import net.kano.joscar.snac.*;
@@ -33,25 +30,17 @@ import net.kano.joscar.net.*;
  * Heavily inspired by joscardemo from the joscar project.
  */
 public abstract class BaseFlapConnection extends ClientFlapConn {
-    protected ClientSnacProcessor sp;
+    protected ClientSnacProcessor sp = new ClientSnacProcessor(getFlapProcessor());
     OSCARSession oscarSession;
 
-    public BaseFlapConnection(String host, int port, OSCARSession mainSession) {
-        super(new ConnDescriptor(host, port)); // Hand off to ClientFlapConn
-        initBaseFlapConnection();
-        oscarSession = mainSession;
-    }
-
-    public BaseFlapConnection(InetAddress ip, int port, OSCARSession mainSession) {
-        super(new ConnDescriptor(ip, port)); // Hand off to ClientFlapConn
+    public BaseFlapConnection(ConnDescriptor cd, OSCARSession mainSession) {
+        super(cd); // Hand off to ClientFlapConn
         initBaseFlapConnection();
         oscarSession = mainSession;
     }
 
     private void initBaseFlapConnection() {
-        FlapProcessor fp = getFlapProcessor();
-        sp = new ClientSnacProcessor(fp);
-        fp.setFlapCmdFactory(new DefaultFlapCmdFactory());
+        getFlapProcessor().setFlapCmdFactory(new DefaultFlapCmdFactory());
 
         sp.addPreprocessor(new FamilyVersionPreprocessor());
         sp.getCmdFactoryMgr().setDefaultFactoryList(new DefaultClientFactoryList());

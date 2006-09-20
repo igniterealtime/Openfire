@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.kano.joscar.ByteBlock;
+import net.kano.joscar.net.ConnDescriptor;
 import net.kano.joscar.flapcmd.SnacCommand;
 import net.kano.joscar.snac.SnacRequest;
 import net.kano.joscar.snac.SnacRequestListener;
@@ -78,7 +79,7 @@ public class OSCARSession extends TransportSession {
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!isLoggedIn()) {
-            LoginConnection loginConn = new LoginConnection("login.oscar.aol.com", 5190, this);
+            LoginConnection loginConn = new LoginConnection(new ConnDescriptor("login.oscar.aol.com", 5190), this);
             loginConn.connect();
 
             loggedIn = true;
@@ -254,7 +255,7 @@ public class OSCARSession extends TransportSession {
      * @param cookie Auth cookie.
      */
     void startBosConn(String server, int port, ByteBlock cookie) {
-        bosConn = new BOSConnection(server, port, this, cookie);
+        bosConn = new BOSConnection(new ConnDescriptor(server, port), this, cookie);
         bosConn.connect();
     }
 
@@ -268,10 +269,9 @@ public class OSCARSession extends TransportSession {
     }
 
     protected SnacManager snacMgr = new SnacManager(new PendingSnacListener() {
-        public void dequeueSnacs(SnacRequest[] pending) {
-            //Log.debug("dequeuing " + pending.length + " snacs");
-            for (SnacRequest aPending : pending) {
-                handleRequest(aPending);
+        public void dequeueSnacs(List<SnacRequest> pending) {
+            for (SnacRequest request : pending) {
+                handleRequest(request);
             }
         }
     });
@@ -287,7 +287,8 @@ public class OSCARSession extends TransportSession {
 
         if (conn != null) {
             conn.sendRequest(request);
-        } else {
+        }
+        else {
             // it's time to request a service
             if (!(request.getCommand() instanceof ServiceRequest)) {
                 snacMgr.setPending(family, true);
@@ -311,7 +312,7 @@ public class OSCARSession extends TransportSession {
     }
 
     void connectToService(int snacFamily, String host, ByteBlock cookie) {
-        ServiceConnection conn = new ServiceConnection(host, 5190, this,
+        ServiceConnection conn = new ServiceConnection(new ConnDescriptor(host, 5190), this,
                 cookie, snacFamily);
 
         conn.connect();

@@ -21,8 +21,7 @@ import net.kano.joscar.snaccmd.conn.RateInfoCmd;
 import net.kano.joscar.snac.SnacPacketEvent;
 import net.kano.joscar.snac.SnacResponseEvent;
 import net.kano.joscar.net.ClientConnEvent;
-
-import java.net.InetAddress;
+import net.kano.joscar.net.ConnDescriptor;
 
 /**
  * Represents a connection to a particular OSCAR service.
@@ -34,13 +33,8 @@ public class ServiceConnection extends BasicFlapConnection {
 
     protected int serviceFamily;
 
-    public ServiceConnection(String host, int port, OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
-        super(host, port, mainSession, cookie);
-        this.serviceFamily = serviceFamily;
-    }
-
-    public ServiceConnection(InetAddress ip, int port, OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
-        super(ip, port, mainSession, cookie);
+    public ServiceConnection(ConnDescriptor cd, OSCARSession mainSession, ByteBlock cookie, int serviceFamily) {
+        super(cd, mainSession, cookie);
         this.serviceFamily = serviceFamily;
     }
 
@@ -77,4 +71,5 @@ public class ServiceConnection extends BasicFlapConnection {
             clientReady();
         }
     }
+
 }

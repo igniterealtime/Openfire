@@ -13,6 +13,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import net.kano.joscar.snac.SnacRequest;
+import net.kano.joscar.DefensiveTools;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,9 +42,9 @@ public class PendingSnacMgr {
         pending.add(request);
     }
 
-    public SnacRequest[] getPending(int familyCode) {
+    public List<SnacRequest> getPending(int familyCode) {
         List<SnacRequest> pending = snacs.get(familyCode);
-        return pending.toArray(new SnacRequest[0]);
+        return DefensiveTools.getUnmodifiableCopy(pending);
     }
 
     public void setPending(int familyCode, boolean pending) {

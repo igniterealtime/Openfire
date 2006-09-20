@@ -881,7 +881,14 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     changed = true;
                 }
-                if (nickname != null && !(gwitem.getNickname() != null) && !gwitem.getNickname().equals(nickname)) {
+                // This could probably be simplified, for not I'm going with brute force logic.
+                // gnickname is null, nickname is null, leave
+                // gnickname is not null, nickname is null, set gnickname to null
+                // gnickname is null, nickname is not null, set gnickname to nickname
+                // gnickname is not null, nickname is not null, if different, set gnickname to nickname
+                if (    (gwitem.getNickname() != null && nickname == null) ||
+                        (gwitem.getNickname() == null && nickname != null) ||
+                        (gwitem.getNickname() != null && nickname != null && !gwitem.getNickname().equals(nickname))) {
                     gwitem.setNickname(nickname);
                     changed = true;
                 }

@@ -22,8 +22,6 @@ import net.kano.joscar.net.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.auth.*;
 
-import java.net.InetAddress;
-
 /**
  * Handles the login process with the OSCAR login server.
  *
@@ -33,12 +31,8 @@ import java.net.InetAddress;
 public class LoginConnection extends BaseFlapConnection {
     protected boolean loggedin = false;
 
-    public LoginConnection(String host, int port, OSCARSession mainSession) {
-        super(host, port, mainSession); // Hand off to BaseFlapConnection
-    }
-
-    public LoginConnection(InetAddress ip, int port, OSCARSession mainSession) {
-        super(ip, port, mainSession); // Hand off to BaseFlapConnection
+    public LoginConnection(ConnDescriptor cd, OSCARSession mainSession) {
+        super(cd, mainSession); // Hand off to BaseFlapConnection
     }
 
     protected void handleStateChange(ClientConnEvent e) {
@@ -79,12 +73,11 @@ public class LoginConnection extends BaseFlapConnection {
 
         if (cmd instanceof KeyResponse) {
             KeyResponse kr = (KeyResponse) cmd;
-
             ByteBlock authkey = kr.getKey();
 
             ClientVersionInfo version = new ClientVersionInfo(
-                    "AOL Instant Messenger, version 5.2.3292/WIN32",
-                    5, 1, 0, 3292, 238);
+                    "AOL Instant Messenger, version 5.5.3415/WIN32",
+                    -1, 5, 5, 0, 3415, 239);
 
             request(new AuthRequest(oscarSession.getRegistration().getUsername(), oscarSession.getRegistration().getPassword(), version, authkey));
 
@@ -94,11 +87,6 @@ public class LoginConnection extends BaseFlapConnection {
 
             int error = ar.getErrorCode();
             if (error != -1) {
-//                Log.error("connection error! code: " + error);
-//                if (ar.getErrorUrl() != null) {
-//                    Log.error("Error URL: " + ar.getErrorUrl());
-//                }
-//
                 String errormsg;
                 switch (error) {
                     case (AuthResponse.ERROR_ACCOUNT_DELETED): {

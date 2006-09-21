@@ -1019,7 +1019,7 @@ public class SessionManager extends BasicModule {
      */
     public Collection<ClientSession> getSessions() {
         List<ClientSession> allSessions = new ArrayList<ClientSession>();
-        copyUserSessions(allSessions);
+        copyAllUserSessions(allSessions);
         copyAnonSessions(allSessions);
         return allSessions;
     }
@@ -1032,7 +1032,7 @@ public class SessionManager extends BasicModule {
             if (filter.getUsername() == null) {
                 // No user id filtering
                 copyAnonSessions(results);
-                copyUserSessions(results);
+                copyAllUserSessions(results);
             }
             else {
                 try {
@@ -1191,16 +1191,14 @@ public class SessionManager extends BasicModule {
 
     private void copyAnonSessions(List<ClientSession> sessions) {
         // Add anonymous sessions
-        for (ClientSession session : anonymousSessions.values()) {
-            sessions.add(session);
-        }
+        sessions.addAll(anonymousSessions.values());
     }
 
-    private void copyUserSessions(List<ClientSession> sessions) {
+    private void copyAllUserSessions(List<ClientSession> sessions) {
         // Get a copy of the sessions from all users
-        for (String username : getSessionUsers()) {
-            for (ClientSession session : getSessions(username)) {
-                sessions.add(session);
+        for(SessionMap sessionMap : this.sessions.values()) {
+            if(sessionMap != null) {
+                sessions.addAll(sessionMap.getSessions());
             }
         }
     }
@@ -1209,14 +1207,12 @@ public class SessionManager extends BasicModule {
         // Get a copy of the sessions from all users
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
-            for (ClientSession session : sessionMap.getSessions()) {
-                sessionList.add(session);
-            }
+            sessionList.addAll(sessionMap.getSessions());
         }
     }
 
     public Iterator getAnonymousSessions() {
-        return Arrays.asList(anonymousSessions.values().toArray()).iterator();
+        return Collections.unmodifiableCollection(anonymousSessions.values()).iterator();
     }
 
     public Collection<ClientSession> getSessions(String username) {

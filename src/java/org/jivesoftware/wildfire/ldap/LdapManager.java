@@ -122,7 +122,7 @@ public class LdapManager {
         this.alternateBaseDN = JiveGlobals.getXMLProperty("ldap.alternateBaseDN", null);
         this.nameField = JiveGlobals.getXMLProperty("ldap.nameField", "cn");
         this.emailField = JiveGlobals.getXMLProperty("ldap.emailField", "mail");
-        this.connectionPoolEnabled = JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled", false);
+        this.connectionPoolEnabled = JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled", true);
         this.searchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
         this.subTreeSearch = JiveGlobals.getXMLProperty("ldap.subTreeSearch", true);
         this.groupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField", "cn");

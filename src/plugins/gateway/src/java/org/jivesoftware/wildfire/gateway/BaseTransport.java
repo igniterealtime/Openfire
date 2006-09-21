@@ -17,11 +17,13 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.roster.*;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.PresenceEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
@@ -41,7 +43,7 @@ import java.util.*;
  *
  * @author Daniel Henninger
  */
-public abstract class BaseTransport implements Component, RosterEventListener {
+public abstract class BaseTransport implements Component, RosterEventListener, PresenceEventListener {
 
     /**
      * Create a new BaseTransport instance.
@@ -1331,6 +1333,42 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     public void rosterLoaded(Roster roster) {
         // Don't care
         // TODO: Evaluate if we could use this.
+    }
+
+    /**
+     * Handles a session coming online (available).
+     *
+     * @see org.jivesoftware.wildfire.user.PresenceEventListener#availableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
+     */
+    public void availableSession(ClientSession session, Presence presence) {
+
+    }
+
+    /**
+     * Handles a session going offline (unavailable).
+     *
+     * @see org.jivesoftware.wildfire.user.PresenceEventListener#unavailableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
+     */
+    public void unavailableSession(ClientSession session, Presence presence) {
+
+    }
+
+    /**
+     * Handles a session's priority changing.
+     *
+     * @see org.jivesoftware.wildfire.user.PresenceEventListener#presencePriorityChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
+     */
+    public void presencePriorityChanged(ClientSession session, Presence presence) {
+
+    }
+
+    /**
+     * Handles a session's status changing.
+     *
+     * @see org.jivesoftware.wildfire.user.PresenceEventListener#presenceChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
+     */
+    public void presenceChanged(ClientSession session, Presence presence) {
+
     }
 
     /**

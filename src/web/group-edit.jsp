@@ -299,8 +299,8 @@
 	<!-- BEGIN group name and description -->
 	<div class="jive-contentBox-plain">
 		<div class="jive-contentBox-toolbox">
-			<a href="group-create.jsp?group=<%= group.getName()%>" class="jive-link-edit">Edit Details</a>
-			<a href="group-delete.jsp?group=<%= group.getName()%>" class="jive-link-delete">Delete Group</a>
+			<a href="group-create.jsp?group=<%= group.getName()%>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
+			<a href="group-delete.jsp?group=<%= group.getName()%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
 		</div>
 
 		<h3>
@@ -315,15 +315,12 @@
 
 	<!-- BEGIN contact list settings -->
 	<div class="jive-contentBoxHeader">
-		<!--<fmt:message key="group.edit.group_share_title" />-->
-		Shared Contact Lists (Rosters)
+		<fmt:message key="group.edit.share_title" />
+
 	</div>
 	<div class="jive-contentBox">
 		<p>
-            <!--<fmt:message key="group.edit.group_share_content" />-->
-			You can use the form below to show this group in users' contact lists. <strong>By default</strong>,
-			<em>an enabled group roster only appears to members of the group</em>. However, you can share the
-			group roster with all users or members of other groups.
+            <fmt:message key="group.edit.share_content" />
         </p>
 
 		<table cellpadding="3" cellspacing="0" border="0">
@@ -333,7 +330,7 @@
                 <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'none';">
             </td>
             <td width="99%">
-                <label for="rb201">Disable contact list group<!--<fmt:message key="group.edit.group_share_not_in_rosters" />--></label>
+                <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
             </td>
         </tr>
         <tr>
@@ -341,13 +338,13 @@
                 <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'block';">
             </td>
             <td width="99%">
-                <label for="rb202">Enable contact list group<!--<fmt:message key="group.edit.group_share_in_rosters" />--></label>
+                <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>
 
                 <div id="jive-roster" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
-	               <b>Enter contact list group name<!--<fmt:message key="group.edit.group_display_name" />--></b>
+	               <b><fmt:message key="group.edit.share_display_name" /></b>
 	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"><br>
                        <%  if (errors.get("groupDisplayName") != null) { %>
-                           <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
+                           <span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span>
                        <%  } %>
 	                   <script type="text/javascript" language="JavaScript">
 		                   function toggleRosterShare() {
@@ -362,7 +359,7 @@
 
 	               <input type="checkbox" id="cb101" name="shareContactList" onClick="toggleRosterShare();" style="vertical-align: middle;"
 										 <%= (shareAdditional ? "checked" : "") %>>
-	               <label for="cb101">Share group with additional users</label>
+	               <label for="cb101"><fmt:message key="group.edit.share_additional" /></label>
 	                    <div id="jive-rosterShare" style="display: <%= (enableRosterGroups && shareAdditional) ? "block" : "none"  %>;">
 		                    <table cellpadding="2" cellspacing="0" border="0" width="100%">
 							<tbody>
@@ -372,7 +369,7 @@
 										 <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
 									</td>
 									<td width="99%">
-										<label for="rb002">All users<!--<fmt:message key="group.edit.show_groups_in_all_user" />--></label>
+										<label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
 									</td>
 								</tr>
 								<tr>
@@ -381,7 +378,7 @@
 										 <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
 									</td>
 									<td width="99%">
-										<label for="rb003">The following groups:<!--<fmt:message key="group.edit.show_group_in_roster_group" />--></label>
+										<label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
 									</td>
 								</tr>
 								<tr>
@@ -421,9 +418,7 @@
             </td>
             <td width="99%">
 
-                <input type="submit" name="save" value="Save Contact List Settings">
-                <!--<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">-->
-                <!--<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">-->
+                <input type="submit" name="save" value="<fmt:message key="group.edit.share_save" />">
 
             </td>
         </tr>
@@ -440,12 +435,11 @@
 
 	<!-- BEGIN group membership management -->
 	<div class="jive-contentBoxHeader">
-		Members of This Group
+		<fmt:message key="group.edit.members" />
 	</div>
 	<div class="jive-contentBox">
 		<p>
-			Use the form below to add users to this group. Once added, you will be able to remove them,
-			or give certain users administrative rights over the group.
+			<fmt:message key="group.edit.members_description" />
 		</p>
 
 		<form action="group-edit.jsp" method="post" name="f">

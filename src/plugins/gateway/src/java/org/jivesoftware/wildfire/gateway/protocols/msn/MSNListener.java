@@ -14,10 +14,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import net.sf.jml.event.MsnAdapter;
-import net.sf.jml.MsnSwitchboard;
-import net.sf.jml.MsnContact;
-import net.sf.jml.MsnMessenger;
-import net.sf.jml.MsnGroup;
+import net.sf.jml.*;
 import net.sf.jml.message.MsnInstantMessage;
 import net.sf.jml.message.MsnControlMessage;
 import net.sf.jml.message.MsnDatacastMessage;
@@ -108,7 +105,9 @@ public class MSNListener extends MsnAdapter {
     public void contactListInitCompleted(MsnMessenger messenger) {
         for (MsnContact msnContact : messenger.getContactList().getContacts()) {
             Log.debug("Got contact "+msnContact);
-            msnSession.storeFriend(msnContact);
+            if (msnContact.isInList(MsnList.FL) && msnContact.getEmail() != null) {
+                msnSession.storeFriend(msnContact);
+            }
         }
         for (MsnGroup msnGroup : messenger.getContactList().getGroups()) {
             msnSession.storeGroup(msnGroup);
@@ -126,6 +125,10 @@ public class MSNListener extends MsnAdapter {
      * A friend for this user has changed status.
      */
     public void contactStatusChanged(MsnMessenger messenger, MsnContact friend) {
+        if (!friend.isInList(MsnList.FL) || friend.getEmail() == null) {
+            // Not in our buddy list, don't care, or null email address.  We need that.
+            return;
+        }
         Presence p = new Presence();
         p.setTo(msnSession.getJID());
         p.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));

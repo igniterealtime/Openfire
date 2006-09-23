@@ -299,8 +299,8 @@
 	<!-- BEGIN group name and description -->
 	<div class="jive-contentBox-plain">
 		<div class="jive-contentBox-toolbox">
-			<a href="group-create.jsp?group=<%= group.getName()%>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
-			<a href="group-delete.jsp?group=<%= group.getName()%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
+			<a href="group-create.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&name=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&description=<%= URLEncoder.encode(group.getDescription(), "UTF-8")%>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
+			<a href="group-delete.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
 		</div>
 
 		<h3>

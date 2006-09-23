@@ -25,16 +25,24 @@
 <%  webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters //
+    String groupName = ParamUtils.getParameter(request, "group");
+
     boolean create = request.getParameter("create") != null;
+    boolean edit = request.getParameter("edit") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String name = ParamUtils.getParameter(request, "name");
     String description = ParamUtils.getParameter(request, "description");
-
+    
     Map<String, String> errors = new HashMap<String, String>();
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("group-summary.jsp");
+        if (groupName == null) {
+            response.sendRedirect("group-summary.jsp");
+        }
+        else {
+            response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8"));    
+        }
         return;
     }
     // Handle a request to create a group:
@@ -68,12 +76,56 @@
             }
         }
     }
+    // Handle a request to edit a group:
+    if (edit) {
+        // Validate
+        if (name == null) {
+            errors.put("name", "");
+        }
+        // do a create if there were no errors
+        if (errors.size() == 0) {
+            try {
+                Group group = webManager.getGroupManager().getGroup(groupName);
+                group.setName(name);
+                if (description != null) {
+                    group.setDescription(description);
+                }
+
+                // Successful, so redirect
+                response.sendRedirect("group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode(group.getName(), "UTF-8"));
+                return;
+            }
+            catch (Exception e) {
+                errors.put("general", "");
+                Log.error(e);
+            }
+        }
+    }
 %>
 
 <html>
 <head>
-<title><fmt:message key="group.create.title"/></title>
+<title><%
+           // If editing the group.
+           if (groupName != null) {
+        %>
+        <fmt:message key="group.edit.title" />
+        <% }
+           // Otherwise creating a new group.
+           else {
+        %>
+        <fmt:message key="group.create.title" />
+        <% } %>
+</title>
+
+<% if (groupName == null) { %>
 <meta name="pageID" content="group-create"/>
+<% }
+   else { %>
+<meta name="subPageID" content="group-edit"/>
+<meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+<% } %>
+    
 <meta name="helpPage" content="create_a_group.html"/>
 </head>
 <body>
@@ -98,17 +150,39 @@
 <%  } %>
 
 <p>
-Use the form below to create your new group. Once you've created the group you will proceed to another
-screen where you can add members and set up group contact list.
-<!--<fmt:message key="group.create.form" />-->
+    <%
+        // If editing the group.
+        if (groupName != null) {
+    %>
+    <fmt:message key="group.edit.details_info" />
+    <% }
+       // Otherwise creating a new group.
+       else {
+    %>
+    <fmt:message key="group.create.form" />
+    <% } %>
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
 
-	<!-- BEGIN create group -->
+   <% if (groupName != null) { %>
+    <input type="hidden" name="group" value="<%= groupName %>" id="existingName">
+   <% } %>
+
+    <!-- BEGIN create group -->
 	<div class="jive-contentBoxHeader">
-		<fmt:message key="group.create.new_group_title" />
-	</div>
+        <%
+            // If editing the group.
+            if (groupName != null) {
+        %>
+        <fmt:message key="group.edit.title" />
+        <% }
+           // Otherwise creating a new group.
+           else {
+        %>
+        <fmt:message key="group.create.new_group_title" />
+        <% } %>
+    </div>
 	<div class="jive-contentBox">
 		<table cellpadding="3" cellspacing="0" border="0">
     <tr valign="top">
@@ -162,9 +236,18 @@ screen where you can add members and set up group contact list.
 	<tr>
 		<td></td>
 		<td>
-
-			<input type="submit" name="create" value="<fmt:message key="group.create.create" />">
-<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+            <%
+               // If editing the group.
+               if (groupName != null) {
+            %>
+            <input type="submit" name="edit" value="<fmt:message key="group.edit.title" />">
+            <% }
+               // Otherwise creating a new group.
+               else {
+            %>
+            <input type="submit" name="create" value="<fmt:message key="group.create.create" />">
+            <% } %>
+            <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 		</td>
 	</tr>
     </table>

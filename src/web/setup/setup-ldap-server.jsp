@@ -1,4 +1,6 @@
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.JiveGlobals"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -13,6 +15,12 @@
 
 <%
     // Get parameters
+    String serverType = ParamUtils.getParameter(request, "serverType");
+    String host = JiveGlobals.getXMLProperty("ldap.host");
+    if (ParamUtils.getParameter(request, "host") != null) {
+        host = ParamUtils.getParameter(request, "host");
+    }
+
 
     boolean next = request.getParameter("continue") != null;
     if (next) {
@@ -110,24 +118,24 @@
 				<tbody>
 				<tr>
 					<td class="jive-advancedLabel" nowrap>
-						Use Connection Pool:
+						<fmt:message key="setup.ldap.server.connection_pool" />:
 					</td>
 					<td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
-						Connection Pooling. Default is 'Yes'
+					    <fmt:message key="setup.ldap.server.connection_pool_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-						<input type="radio" name="connectionpool" value="yes">
+						<input type="radio" name="connectionpool" value="yes" checked>
 					</td>
 					<td class="jive-advancedBorderBottom" align="center">
-						<input type="radio" name="connectionpool" value="no" checked>
+						<input type="radio" name="connectionpool" value="no">
 					</td>
 				</tr>
 				<tr>
 					<td class="jive-advancedLabel" nowrap>
-						Use SSL:
+						<fmt:message key="setup.ldap.server.ssl" />:
 					</td>
 					<td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
-						Enable SSL connections to your LDAP server, default port is usually 636
+						<fmt:message key="setup.ldap.server.ssl_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
 						<input type="radio" name="ssl" value="yes">
@@ -138,10 +146,10 @@
 				</tr>
 				<tr>
 					<td class="jive-advancedLabel" nowrap>
-						Enable Debug:
+						<fmt:message key="setup.ldap.server.debug" />:
 					</td>
 					<td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
-						Trace information about buffers written to System.out
+						<fmt:message key="setup.ldap.server.debug_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
 						<input type="radio" name="debug" value="yes">
@@ -152,7 +160,7 @@
 				</tr>
 				<tr>
 					<td class="jive-advancedLabel" nowrap>
-						Allow Referrals:
+						Follow Referrals:
 					</td>
 					<td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
 						Automatically followed LDAP referrals

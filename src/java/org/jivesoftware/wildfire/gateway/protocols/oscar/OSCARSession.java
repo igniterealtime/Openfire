@@ -29,10 +29,7 @@ import net.kano.joscar.snaccmd.CapabilityBlock;
 import net.kano.joscar.ssiitem.BuddyItem;
 import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.gateway.PresenceType;
-import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.TransportBuddy;
-import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.xmpp.packet.JID;
@@ -65,7 +62,6 @@ public class OSCARSession extends TransportSession {
 
     private BOSConnection bosConn = null;
     private Set<ServiceConnection> services = new HashSet<ServiceConnection>();
-    private Boolean loggedIn = false;
     private PresenceType presenceType = null;
     private String verboseStatus = null;
     
@@ -78,39 +74,31 @@ public class OSCARSession extends TransportSession {
     private Integer highestGroupId = -1;
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
+        setLoginStatus(TransportLoginStatus.LOGGING_IN);
         if (!isLoggedIn()) {
             LoginConnection loginConn = new LoginConnection(new ConnDescriptor("login.oscar.aol.com", 5190), this);
             loginConn.connect();
 
-            loggedIn = true;
-
-            Presence p = new Presence();
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-
             this.presenceType = presenceType;
             this.verboseStatus = verboseStatus;
-        } else {
+        }
+        else {
             Log.warn(this.jid + " is already logged in");
         }
     }
-    
-    public Boolean isLoggedIn() {
-        return loggedIn;
-    }
-    
+
     public synchronized void logOut() {
+        setLoginStatus(TransportLoginStatus.LOGGING_OUT);
         if (isLoggedIn()) {
             if (bosConn != null) {
                 bosConn.disconnect();
             }
-            loggedIn = false;
             Presence p = new Presence(Presence.Type.unavailable);
             p.setTo(getJID());
             p.setFrom(getTransport().getJID());
             getTransport().sendPacket(p);
         }
+        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     /**
@@ -178,12 +166,12 @@ public class OSCARSession extends TransportSession {
 //                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
                 else if (!grouplist.contains(groups.get(buddy.getGroupId()).getGroupName())) {
-                    Log.debug("Removing "+buddy+" because not in list of groups");
-                    request(new DeleteItemsCmd(buddy.toSsiItem()));
-                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
+//                    Log.debug("Removing "+buddy+" because not in list of groups");
+//                    request(new DeleteItemsCmd(buddy.toSsiItem()));
+//                    buddies.remove(""+buddy.getGroupId()+"."+buddy.getId());
                 }
                 else {
-                    if (!buddy.getAlias().equals(nickname)) {
+                    if (buddy.getAlias() == null || !buddy.getAlias().equals(nickname)) {
                         buddy.setAlias(nickname);
                         request(new ModifyItemsCmd(buddy.toSsiItem()));
                     }

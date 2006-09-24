@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import net.sf.jml.event.MsnAdapter;
@@ -96,7 +97,7 @@ public class MSNListener extends MsnAdapter {
      */
     public void loginCompleted(MsnMessenger messenger) {
         msnSession.getRegistration().setLastLogin(new Date());
-        msnSession.setLoginStatus(true);
+        msnSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
     }
 
     /**

@@ -19,6 +19,7 @@ import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.PresenceType;
+import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 
 import java.util.*;
 
@@ -74,6 +75,7 @@ public class IRCListener implements IRCEventListener {
         getSession().getTransport().sendPacket(p);
         statusCheck = new StatusCheck();
         timer.schedule(statusCheck, timerInterval, timerInterval);
+        getSession().setLoginStatus(TransportLoginStatus.LOGGED_IN);
     }
 
     public void onDisconnected() {
@@ -84,6 +86,7 @@ public class IRCListener implements IRCEventListener {
         getSession().getTransport().sendPacket(p);
         getSession().getConnection().close();
         timer.cancel();
+        getSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     public void onError(String string) {
@@ -184,6 +187,7 @@ public class IRCListener implements IRCEventListener {
         p.setFrom(getSession().getTransport().getJID());
         getSession().getTransport().sendPacket(p);
         getSession().getConnection().close();
+        getSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     public void onReply(int i, String string, String string1) {

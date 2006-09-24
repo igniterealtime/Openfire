@@ -92,6 +92,7 @@ public class IRCSession extends TransportSession {
      * @param verboseStatus Initial full status information.
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
+        setLoginStatus(TransportLoginStatus.LOGGED_IN);
         try {
             conn.connect();
         }
@@ -104,8 +105,10 @@ public class IRCSession extends TransportSession {
      * Logs the session out of IRC.
      */
     public void logOut() {
+        setLoginStatus(TransportLoginStatus.LOGGING_OUT);
         ircListener.setSilenced(true);
         conn.doQuit();
+        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     /**
@@ -162,13 +165,6 @@ public class IRCSession extends TransportSession {
         else {
             conn.doAway(awayMsg);
         }
-    }
-
-    /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#isLoggedIn()
-     */
-    public Boolean isLoggedIn() {
-        return conn.isConnected();
     }
 
     /**

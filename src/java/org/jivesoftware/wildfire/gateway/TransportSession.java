@@ -83,6 +83,11 @@ public abstract class TransportSession implements Runnable {
     public boolean validSession = true;
 
     /**
+     * The current login status on the legacy network.
+     */
+    public TransportLoginStatus loginStatus = TransportLoginStatus.LOGGED_OUT;
+
+    /**
      * Associates a resource with the session, and tracks it's priority.
      */
     public void addResource(String resource, Integer priority) {
@@ -222,6 +227,27 @@ public abstract class TransportSession implements Runnable {
     }
 
     /**
+     * Updates the login status.
+     */
+    public void setLoginStatus(TransportLoginStatus status) {
+        loginStatus = status;
+    }
+
+    /**
+     * Retrieves the current login status.
+     */
+    public TransportLoginStatus getLoginStatus() {
+        return loginStatus;
+    }
+
+    /**
+     * Returns true only if we are completely logged in.
+     */
+    public Boolean isLoggedIn() {
+        return (loginStatus == TransportLoginStatus.LOGGED_IN);
+    }
+
+    /**
      * Handles monitoring of whether session is still valid.
      */
     public void run() {
@@ -242,13 +268,6 @@ public abstract class TransportSession implements Runnable {
      * @param verboseStatus Longer status description.
      */
     public abstract void updateStatus(PresenceType presenceType, String verboseStatus);
-
-    /**
-     * Is the legacy service account logged in?
-     *
-     * @return True or false if the legacy account is logged in.
-     */
-    public abstract Boolean isLoggedIn();
 
     /**
      * Adds a legacy contact to the legacy service.

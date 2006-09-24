@@ -62,16 +62,6 @@ public class YahooSession extends TransportSession {
     private PseudoRoster pseudoRoster;
 
     /**
-     * Are we logged in?
-     */
-    private Boolean loggedIn = false;
-
-    /**
-     * Are we trying to log in right now?
-     */
-    private Boolean loggingIn = false;
-
-    /**
      * How many attempts have been made so far?
      */
     private Integer loginAttempts = 0;
@@ -101,14 +91,14 @@ public class YahooSession extends TransportSession {
         this.presenceType = presenceType;
         this.verboseStatus = verboseStatus;
         final PresenceType pType = presenceType;
-        if (!isLoggedIn() && !loggingIn && loginAttempts <= 3) {
-            loggingIn = true;
+        if (!isLoggedIn() && getLoginStatus() != TransportLoginStatus.LOGGING_IN && loginAttempts <= 3) {
+            setLoginStatus(TransportLoginStatus.LOGGING_IN);
             new Thread() {
                 public void run() {
                     try {
                         loginAttempts++;
                         yahooSession.login(registration.getUsername(), registration.getPassword());
-                        loggedIn = true;
+                        setLoginStatus(TransportLoginStatus.LOGGED_IN);
 
                         Presence p = new Presence();
                         p.setTo(getJID());
@@ -128,7 +118,7 @@ public class YahooSession extends TransportSession {
                     catch (IOException e) {
                         Log.error("Yahoo login caused IO exception:", e);
                     }
-                    loggingIn = false;
+                    setLoginStatus(TransportLoginStatus.LOGGED_OUT);
                 }
             }.run();
         }
@@ -138,9 +128,8 @@ public class YahooSession extends TransportSession {
      * Log out of Yahoo.
      */
     public void logOut() {
-        loggedIn = false;
-        loggingIn = false;
-        loginAttempts = 0;        
+        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        loginAttempts = 0;
         try {
             yahooSession.logout();
         }
@@ -152,13 +141,6 @@ public class YahooSession extends TransportSession {
         p.setTo(getJID());
         p.setFrom(getTransport().getJID());
         getTransport().sendPacket(p);
-    }
-
-    /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#isLoggedIn()
-     */
-    public Boolean isLoggedIn() {
-        return loggedIn;
     }
 
     /**
@@ -329,7 +311,12 @@ public class YahooSession extends TransportSession {
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
         try {
-            yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(presenceType));
+            if (isLoggedIn()) {
+                yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(presenceType));
+            }
+            else {
+                // TODO: Should we consider auto-logging back in?
+            }
         }
         catch (Exception e) {
             Log.error("Unable to set Yahoo Status:", e);

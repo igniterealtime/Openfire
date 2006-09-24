@@ -162,7 +162,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             // Message to gateway itself.  Throw away for now.
             try {
                 TransportSession session = sessionManager.getSession(from);
-                session.sendServerMessage(packet.getBody());
+                if (packet.getBody() != null) {
+                    session.sendServerMessage(packet.getBody());
+                }
             }
             catch (NotFoundException e) {
                 // TODO: Should return an error packet here
@@ -172,7 +174,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
         else {
             try {
                 TransportSession session = sessionManager.getSession(from);
-                session.sendMessage(to, packet.getBody());
+                if (packet.getBody() != null) {
+                    session.sendMessage(to, packet.getBody());
+                }
             }
             catch (NotFoundException e) {
                 // TODO: Should return an error packet here

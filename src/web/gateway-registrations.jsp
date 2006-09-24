@@ -60,7 +60,9 @@
             try {
                 Registration reg = new Registration(regId);
                 reg.setUsername(ParamUtils.getParameter(request, "gatewayUsername"));
-                reg.setPassword(ParamUtils.getParameter(request, "gatewayPassword"));
+                if (!ParamUtils.getParameter(request, "gatewayPassword").equals("********")) {
+                    reg.setPassword(ParamUtils.getParameter(request, "gatewayPassword"));
+                }
                 reg.setNickname(ParamUtils.getParameter(request, "gatewayNickname"));
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
@@ -468,7 +470,7 @@
 				<strong><fmt:message key="gateway.web.registrations.username" /></strong>
 				</div>
 				<div class="jive-registrations-editPassword">
-				<input type="password" name="gatewayPassword" size="12" maxlength="50" value="*********"><br>
+				<input type="password" name="gatewayPassword" size="12" maxlength="50" value="********"><br>
 				<strong><fmt:message key="gateway.web.registrations.password" /></strong>
 				</div>
                 <div class="jive-registrations-editNickname">

@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
+import org.xmpp.packet.Presence;
 
 /**
  * Handles BOS related packets.
@@ -112,6 +114,13 @@ public class BOSConnection extends BasicFlapConnection {
             if (sdc.getLastModDate() != 0) {
                 request(new ActivateSsiCmd());
                 clientReady();
+
+                Presence p = new Presence();
+                p.setTo(oscarSession.getJID());
+                p.setFrom(oscarSession.getTransport().getJID());
+                oscarSession.getTransport().sendPacket(p);
+
+                oscarSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
                 oscarSession.gotCompleteSSI();
             }
         }

@@ -12,10 +12,7 @@ package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import net.sf.jml.*;
 import net.sf.jml.impl.MsnMessengerFactory;
-import org.jivesoftware.wildfire.gateway.PresenceType;
-import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.TransportSession;
-import org.jivesoftware.wildfire.gateway.TransportBuddy;
+import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.util.Log;
@@ -67,17 +64,13 @@ public class MSNSession extends TransportSession {
     private ConcurrentHashMap<String,MsnGroup> msnGroups = new ConcurrentHashMap<String,MsnGroup>();
 
     /**
-     * Login status
-     */
-    private boolean loginStatus = false;
-
-    /**
      * Log in to MSN.
      *
      * @param presenceType Type of presence.
      * @param verboseStatus Long representation of status.
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
+        setLoginStatus(TransportLoginStatus.LOGGING_IN);
         if (!this.isLoggedIn()) {
             msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
             msnMessenger.setLogIncoming(false);
@@ -91,6 +84,7 @@ public class MSNSession extends TransportSession {
      * Log out of MSN.
      */
     public void logOut() {
+        setLoginStatus(TransportLoginStatus.LOGGING_OUT);
         if (this.isLoggedIn()) {
             msnMessenger.logout();
         }
@@ -98,7 +92,7 @@ public class MSNSession extends TransportSession {
         p.setTo(getJID());
         p.setFrom(getTransport().getJID());
         getTransport().sendPacket(p);
-        loginStatus = false;
+        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     /**
@@ -106,20 +100,6 @@ public class MSNSession extends TransportSession {
      */
     public MsnMessenger getManager() {
         return msnMessenger;
-    }
-
-    /**
-     * @see org.jivesoftware.wildfire.gateway.TransportSession#isLoggedIn()
-     */
-    public Boolean isLoggedIn() {
-        return loginStatus;
-    }
-
-    /**
-     * Sets login status flag (am i logged in or not)
-     */
-    public void setLoginStatus(Boolean status) {
-        loginStatus = status;
     }
 
     /**

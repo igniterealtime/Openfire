@@ -446,11 +446,20 @@ html>body .jive-vcardTable {
 	clear: both;
 	font-size: 11px;
 	}
-.jive-error-text {
-	display: block;
-	clear: both;
-	color : #f00;
-	}
+.error {
+    color : #900;
+    font-weight : bold;
+    background-color : #EDB9B1;
+    padding : 5px;
+    border: 1px solid #BB8888;
+    margin-top : 10px;
+	margin-bottom: 20px;
+    padding-left : 28px;
+    background-image : url(../../images/error-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+	-moz-border-radius: 3px;
+}
 .jive_setup_launchAdmin a,
 .jive_setup_launchAdmin a:visited {
 	position: relative;

@@ -1,5 +1,4 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision: 1772 $
@@ -210,8 +209,7 @@
 	</p>
 
 <%  if (errors.size() > 0) { %>
-
-    <span class="jive-error-text">
+    <div class="error">
     <%  if (errors.get("general") != null) { %>
 
         <%= errors.get("general") %>
@@ -221,8 +219,7 @@
         <fmt:message key="setup.datasource.standard.failed_connect" />
 
     <%  } %>
-    </span>
-
+    </div>
 <%  } %>
 
 

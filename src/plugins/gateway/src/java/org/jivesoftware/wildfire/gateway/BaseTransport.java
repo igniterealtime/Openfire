@@ -584,6 +584,13 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
 
                     try {
                         this.addNewRegistration(from, username, password, nickname);
+
+                        // Lets ask them what their presence is, maybe log
+                        // them in immediately.
+                        Presence p = new Presence(Presence.Type.probe);
+                        p.setTo(from);
+                        p.setFrom(to);
+                        reply.add(p);
                     }
                     catch (UserNotFoundException e) {
                         Log.error("Someone attempted to register with the gateway who is not registered with the server: " + from);
@@ -591,13 +598,12 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         eresult.setError(Condition.bad_request);
                         reply.add(eresult);
                     }
-
-                    // Lets ask them what their presence is, maybe log
-                    // them in immediately.
-                    Presence p = new Presence(Presence.Type.probe);
-                    p.setTo(from);
-                    p.setFrom(to);
-                    reply.add(p);
+                    catch (IllegalAccessException e) {
+                        Log.error("Someone who is not a user of this server tried to register with the transport: "+from);
+                        IQ eresult = IQ.createResultIQ(packet);
+                        eresult.setError(Condition.not_allowed);
+                        reply.add(eresult);
+                    }
                 }
             }
             else if (packet.getType() == IQ.Type.get) {
@@ -1119,8 +1125,13 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @param password Legacy password of registration.
      * @param nickname Legacy nickname of registration.
      * @throws UserNotFoundException if registration or roster not found.
+     * @throws IllegalAccessException if jid is not from this server.
      */
-    public void addNewRegistration(JID jid, String username, String password, String nickname) throws UserNotFoundException {
+    public void addNewRegistration(JID jid, String username, String password, String nickname) throws UserNotFoundException, IllegalAccessException {
+        if (!XMPPServer.getInstance().getServerInfo().getName().equals(jid.getDomain())) {
+            throw new IllegalAccessException("Domain of jid registering does not match domain of server.");
+        }
+
         Collection<Registration> registrations = registrationManager.getRegistrations(jid, this.transportType);
         Boolean foundReg = false;
         for (Registration registration : registrations) {

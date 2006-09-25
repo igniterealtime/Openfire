@@ -101,6 +101,11 @@
                 response.sendRedirect("gateway-registrations.jsp?success=false");
                 return;
             }
+            catch (IllegalAccessException e) {
+                Log.error("Domain of JID specified for registration is not on this server: "+jid.toString());
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
         }
     }
 

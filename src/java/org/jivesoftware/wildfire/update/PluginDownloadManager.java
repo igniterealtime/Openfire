@@ -1,14 +1,16 @@
 /**
- * $Revision$
- * $Date$
+ * $RCSfile$
+ * $Revision: 3191 $
+ * $Date: 2005-12-12 13:41:22 -0300 (Mon, 12 Dec 2005) $
  *
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.update;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 
 /**
@@ -42,7 +44,7 @@ public class PluginDownloadManager {
     /**
      * Installs a new plugin into Wildfire.
      *
-     * @param url      the url of the plugin to install.
+     * @param url the url of the plugin to install.
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */
@@ -56,32 +58,6 @@ public class PluginDownloadManager {
         status.setSuccessfull(worked);
         status.setUrl(url);
 
-        /**
-         *   mj bmmmmmmmmmmmmmmmmmmmmv   cvvbv    vvvv .nnnnn               vvvvvvvvv
-         *   @author Nate DeMoro
-         */
         return status;
     }
-
-    public boolean updatePluginsList() {
-        UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
-        try {
-            // Todo: Unify update checking into one xml file. Have the update check set the last check property.
-            updateManager.checkForServerUpdate(true);
-            updateManager.checkForPluginsUpdates(true);
-
-            // Keep track of the last time we checked for updates
-            JiveGlobals.setProperty("update.lastCheck",
-                    String.valueOf(System.currentTimeMillis()));
-
-
-            return true;
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-
-        return false;
-    }
-
 }

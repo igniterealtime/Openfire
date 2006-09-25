@@ -4,15 +4,7 @@
   -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 java.util.Date,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager,
-                 org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -45,17 +37,17 @@
 %>
 <html>
 <head>
-    <title>Profile Settings</title>
+    <title><fmt:message key="setup.profile.title" /></title>
     <meta name="currentStep" content="3"/>
 </head>
 <body>
 
 	<h1>
-    Profile Settings
+    <fmt:message key="setup.profile.title" />
 	</h1>
 
 	<p>
-	Choose the user and group system to use with Wildfire.
+	<fmt:message key="setup.profile.description" />
 	</p>
 
 	<!-- BEGIN jive-contentBox -->
@@ -68,9 +60,8 @@
         <input type="radio" name="mode" value="default" id="rb01" checked>
     </td>
     <td>
-        <label for="rb01"><b>Default</b></label><br>
-	    Store users and groups in the Wildfire database. This is the best option for simple
-        deployments.
+        <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>
+	    <fmt:message key="setup.profile.default_description" />
     </td>
 </tr>
 <tr>
@@ -78,15 +69,13 @@
         <input type="radio" name="mode" value="ldap" id="rb02">
     </td>
     <td>
-        <label for="rb02"><b>Directory Server (LDAP)</b></label><br>
-	    Integrate with a directory server such as Active Directory or OpenLDAP using the
-        LDAP protocol. Users and groups are stored in the directory and treated as read-only.
+        <label for="rb02"><b><fmt:message key="setup.profile.ldap" /></b></label><br>
+	    <fmt:message key="setup.profile.ldap_description" />
     </td>
 </tr>
 </table>
 
 <br>
-
 		<div align="right">
 			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
 		</div>
@@ -94,8 +83,6 @@
 	</form>
 	</div>
 	<!-- END jive-contentBox -->
-
-
 
 </body>
 </html>

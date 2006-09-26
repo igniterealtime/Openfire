@@ -390,7 +390,7 @@ public class OSCARSession extends TransportSession {
             getTransport().syncLegacyRoster(getJID(), legacyusers);
         }
         catch (UserNotFoundException e) {
-            Log.error("Unable to sync oscar contact list for " + getJID());
+            Log.error("Unable to sync oscar contact list for " + getJID(), e);
         }
 
         updateStatus(this.presenceType, this.verboseStatus);

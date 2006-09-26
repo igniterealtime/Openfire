@@ -135,7 +135,7 @@ public class MSNSession extends TransportSession {
             getTransport().syncLegacyRoster(getJID(), legacyusers);
         }
         catch (UserNotFoundException e) {
-            Log.error("Unable to sync MSN contact list for " + getJID());
+            Log.error("Unable to sync MSN contact list for " + getJID(), e);
         }
 
         // Lets send initial presence statuses

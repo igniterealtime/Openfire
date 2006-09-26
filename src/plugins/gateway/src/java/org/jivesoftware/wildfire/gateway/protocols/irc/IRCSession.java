@@ -97,7 +97,7 @@ public class IRCSession extends TransportSession {
             conn.connect();
         }
         catch (IOException e) {
-            Log.error("IO error while connecting to IRC: "+e.toString());
+            Log.error("IO error while connecting to IRC: ", e);
         }
     }
 

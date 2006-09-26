@@ -19,6 +19,7 @@ import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.Message;
 import ymsg.network.LoginRefusedException;
 import ymsg.network.Session;
 import ymsg.network.YahooGroup;
@@ -114,11 +115,26 @@ public class YahooSession extends TransportSession {
                     catch (LoginRefusedException e) {
                         yahooSession.reset();
                         Log.warn("Yahoo login failed for " + getJID());
+
+                        Message m = new Message();
+                        m.setType(Message.Type.error);
+                        m.setTo(getJID());
+                        m.setFrom(getTransport().getJID());
+                        m.setBody("Failed to log into Yahoo! messenger account.  (login refused)");
+                        getTransport().sendPacket(m);
+                        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
                     }
                     catch (IOException e) {
                         Log.error("Yahoo login caused IO exception:", e);
+
+                        Message m = new Message();
+                        m.setType(Message.Type.error);
+                        m.setTo(getJID());
+                        m.setFrom(getTransport().getJID());
+                        m.setBody("Failed to log into Yahoo! messenger account.  (unknown error)");
+                        getTransport().sendPacket(m);
+                        setLoginStatus(TransportLoginStatus.LOGGED_OUT);                        
                     }
-                    setLoginStatus(TransportLoginStatus.LOGGED_OUT);
                 }
             }.run();
         }

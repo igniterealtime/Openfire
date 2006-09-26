@@ -937,11 +937,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     roster.updateRosterItem(gwitem);
                 }
                 catch (UserAlreadyExistsException ee) {
-                    Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?");
+                    Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?", ee);
                     // TODO: Should we throw exception or something?
                 }
                 catch (Exception ee) {
-                    Log.error("createRosterItem caused exception: " + ee.toString());
+                    Log.error("Exception while creating roster item:", ee);
                     // TODO: Should we throw exception or something?
                 }
             }
@@ -1007,7 +1007,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         roster.deleteRosterItem(ri.getJid(), false);
                     }
                     catch (Exception e) {
-                        Log.error("Error removing roster item: " + ri.toString());
+                        Log.error("Error removing roster item: " + ri.toString(), e);
                         // TODO: Should we say something?
                     }
                 }
@@ -1083,7 +1083,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     }
                     catch (UserNotFoundException e) {
                         // TODO: Something is quite wrong if we see this.
-                        Log.error("Failed updating roster item");
+                        Log.error("Failed updating roster item", e);
                     }
                     legacymap.remove(jid);
                 }
@@ -1095,7 +1095,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     }
                     catch (UserNotFoundException e) {
                         // TODO: Something is quite wrong if we see this.
-                        Log.error("Failed removing roster item");
+                        Log.error("Failed removing roster item", e);
                     }
                 }
             }
@@ -1108,7 +1108,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                 }
                 catch (UserNotFoundException e) {
                     // TODO: Something is quite wrong if we see this.
-                    Log.error("Failed adding new roster item");
+                    Log.error("Failed adding new roster item", e);
                 }
             }
         }
@@ -1215,7 +1215,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         roster.deleteRosterItem(ri.getJid(), false);
                     }
                     catch (Exception e) {
-                        Log.error("Error removing roster item: " + ri.toString());
+                        Log.error("Error removing roster item: " + ri.toString(), e);
                     }
                 }
             }

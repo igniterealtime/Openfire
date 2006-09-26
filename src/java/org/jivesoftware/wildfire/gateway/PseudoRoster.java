@@ -144,7 +144,7 @@ public class PseudoRoster {
                     pseudoRosterItems.put(username, new PseudoRosterItem(registrationID, username));
                 }
                 catch (NotFoundException e) {
-                    Log.error("Could not find pseudo roster item after already having found it.");
+                    Log.error("Could not find pseudo roster item after already having found it.", e);
                 }
             }
         }

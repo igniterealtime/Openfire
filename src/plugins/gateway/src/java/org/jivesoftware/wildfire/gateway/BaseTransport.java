@@ -571,8 +571,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
 
                 if (    username == null
                         || (isPasswordRequired() && password == null)
-                        || (isNicknameRequired() && nickname == null)
-                        || !isUsernameValid(username)) {
+                        || (isNicknameRequired() && nickname == null)) {
                     // Invalid information from stanza, lets yell.
                     IQ result = IQ.createResultIQ(packet);
                     result.setError(Condition.bad_request);
@@ -605,6 +604,12 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         Log.error("Someone who is not a user of this server tried to register with the transport: "+from);
                         IQ eresult = IQ.createResultIQ(packet);
                         eresult.setError(Condition.not_allowed);
+                        reply.add(eresult);
+                    }
+                    catch (IllegalArgumentException e) {
+                        Log.error("Someone attempted to register with the gateway with an invalid username: " + from);
+                        IQ eresult = IQ.createResultIQ(packet);
+                        eresult.setError(Condition.bad_request);
                         reply.add(eresult);
                     }
                 }
@@ -1129,10 +1134,15 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @param nickname Legacy nickname of registration.
      * @throws UserNotFoundException if registration or roster not found.
      * @throws IllegalAccessException if jid is not from this server.
+     * @throws IllegalArgumentException if username is not valid for this transport type.
      */
     public void addNewRegistration(JID jid, String username, String password, String nickname) throws UserNotFoundException, IllegalAccessException {
         if (!XMPPServer.getInstance().getServerInfo().getName().equals(jid.getDomain())) {
             throw new IllegalAccessException("Domain of jid registering does not match domain of server.");
+        }
+
+        if (!isUsernameValid(username)) {
+            throw new IllegalArgumentException("Username specified is not valid for this transport type.");
         }
 
         Collection<Registration> registrations = registrationManager.getRegistrations(jid, this.transportType);

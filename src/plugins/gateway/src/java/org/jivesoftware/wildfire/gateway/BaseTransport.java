@@ -569,8 +569,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                 password = (password == null || password.equals("")) ? null : password;
                 nickname = (nickname == null || nickname.equals("")) ? null : nickname;
 
-                if (username == null || (isPasswordRequired() && password == null) || (isNicknameRequired() && nickname == null)) {
-                    // Found nothing from stanza, lets yell.
+                if (    username == null
+                        || (isPasswordRequired() && password == null)
+                        || (isNicknameRequired() && nickname == null)
+                        || !isUsernameValid(username)) {
+                    // Invalid information from stanza, lets yell.
                     IQ result = IQ.createResultIQ(packet);
                     result.setError(Condition.bad_request);
                     reply.add(result);
@@ -1445,5 +1448,10 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * Returns true or false whether the nickname is required.
      */
     public abstract Boolean isNicknameRequired();
+
+    /**
+     * Returns true or false whether the passed username is valud for the service.
+     */
+    public abstract Boolean isUsernameValid(String username);
 
 }

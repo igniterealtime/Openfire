@@ -67,6 +67,13 @@ public class IRCTransport extends BaseTransport {
     public Boolean isNicknameRequired() { return true; }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#isUsernameValid(String)
+     */
+    public Boolean isUsernameValid(String username) {
+        return username.matches("\\p{Alnum}+");
+    }
+
+    /**
      * Handles creating a IRC session and triggering a login.
      *
      * @param registration Registration information to be used to log in.

@@ -69,6 +69,13 @@ public class MSNTransport extends BaseTransport {
     public Boolean isNicknameRequired() { return false; }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#isUsernameValid(String)
+     */
+    public Boolean isUsernameValid(String username) {
+        return username.matches("\\w+@[\\w\\.]+");
+    }
+
+    /**
      * Handles creating a MSN session and triggering a login.
      *
      * @param registration Registration information to be used to log in.

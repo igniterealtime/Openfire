@@ -106,6 +106,11 @@
                 response.sendRedirect("gateway-registrations.jsp?success=false");
                 return;
             }
+            catch (IllegalArgumentException e) {
+                Log.error("Username specified for registration is not valid.");
+                response.sendRedirect("gateway-registrations.jsp?success=false");
+                return;
+            }
         }
     }
 

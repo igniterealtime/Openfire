@@ -11,10 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.wildfire.gateway.BaseTransport;
-import org.jivesoftware.wildfire.gateway.TransportSession;
-import org.jivesoftware.wildfire.gateway.PresenceType;
-import org.jivesoftware.wildfire.gateway.Registration;
+import org.jivesoftware.wildfire.gateway.*;
 import org.xmpp.packet.JID;
 
 /**
@@ -63,7 +60,19 @@ public class OSCARTransport extends BaseTransport {
     /**
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#isNicknameRequired()
      */
-    public Boolean isNicknameRequired() { return false; }    
+    public Boolean isNicknameRequired() { return false; }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#isUsernameValid(String)
+     */
+    public Boolean isUsernameValid(String username) {
+        if (getType() == TransportType.icq) {
+            return username.matches("\\p{Digit}+");
+        }
+        else {
+            return username.matches("\\p{Alnum}+") || username.matches("\\w+@[\\w\\.]+");
+        }
+    }
 
     /**
      * Handles creating an OSCAR session and triggering a login.

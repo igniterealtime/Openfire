@@ -11,6 +11,8 @@
 
 package org.jivesoftware.wildfire.update;
 
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 
 /**
@@ -44,7 +46,7 @@ public class PluginDownloadManager {
     /**
      * Installs a new plugin into Wildfire.
      *
-     * @param url the url of the plugin to install.
+     * @param url      the url of the plugin to install.
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */
@@ -59,5 +61,32 @@ public class PluginDownloadManager {
         status.setUrl(url);
 
         return status;
+    }
+
+    /**
+     * Updates the PluginList from the server. Please note, this method is used with javascript calls and will not
+     * be found with a find usages.
+     *
+     * @return true if the plugin list was updated.
+     */
+    public boolean updatePluginsList() {
+        UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
+        try {
+            // Todo: Unify update checking into one xml file. Have the update check set the last check property.
+            updateManager.checkForServerUpdate(true);
+            updateManager.checkForPluginsUpdates(true);
+
+            // Keep track of the last time we checked for updates
+            JiveGlobals.setProperty("update.lastCheck",
+                    String.valueOf(System.currentTimeMillis()));
+
+
+            return true;
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+
+        return false;
     }
 }

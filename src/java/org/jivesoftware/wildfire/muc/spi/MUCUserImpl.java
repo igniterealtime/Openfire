@@ -369,6 +369,9 @@ public class MUCUserImpl implements MUCUser {
                     catch (NotAllowedException e) {
                         sendErrorPacket(packet, PacketError.Condition.not_allowed);
                     }
+                    catch (Exception e) {
+                        sendErrorPacket(packet, PacketError.Condition.internal_server_error);
+                    }
                 }
             }
         }

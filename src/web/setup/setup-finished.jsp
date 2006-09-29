@@ -54,6 +54,12 @@
 	</p>
 
 <%
+    String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+    String authorizedJIDS = JiveGlobals.getXMLProperty("admin.authorizedJIDs");
+
+    boolean useAdmin = authorizedJIDS == null  && authorizedUsernames == null;
+    String parameters = useAdmin ? "?username=admin" : "";
+
     // Figure out the URL that the user can use to login to the admin console.
     String url;
     if (XMPPServer.getInstance().isStandAlone()) {
@@ -63,15 +69,15 @@
         // Use secure login if we're currently secure (and the secure port isn't disabled)
         // or if the user disabled the plain port.
         if ((request.isSecure() && securePort > 0) || plainPort < 0) {
-            url = "https://" + server + ":" + securePort + "/login.jsp?username=admin";
+            url = "https://" + server + ":" + securePort + "/login.jsp"+parameters;
         }
         else {
-            url = "http://" + server + ":" + plainPort + "/login.jsp?username=admin";
+            url = "http://" + server + ":" + plainPort + "/login.jsp"+parameters;
         }
     }
     else {
         url = request.getRequestURL().toString();
-        url = url.replace("setup/setup-finished.jsp", "login.jsp?username=admin");
+        url = url.replace("setup/setup-finished.jsp", "login.jsp"+parameters);
     }
 %>
 

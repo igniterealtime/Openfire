@@ -12,7 +12,7 @@
                  org.jivesoftware.wildfire.user.UserManager,
                  org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%>
+<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%><%@ page import="java.util.Collection"%><%@ page import="java.util.List"%><%@ page import="java.util.ArrayList"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -40,6 +40,13 @@
 
     boolean doContinue = request.getParameter("continue") != null;
     boolean doSkip = request.getParameter("doSkip") != null;
+
+    boolean ldap = "true".equals(request.getParameter("ldap"));
+
+
+    boolean addAdmin = request.getParameter("addAdministrator") != null;
+    boolean deleteAdmins = request.getParameter("deleteAdmins") != null;
+    boolean ldapFinished = request.getParameter("ldapFinished") != null;
 
     // Handle a skip request
     if (doSkip) {
@@ -96,6 +103,59 @@
             }
         }
     }
+
+    if(ldapFinished){
+        setSetupFinished(session);
+        // All good so redirect
+        response.sendRedirect("setup-finished.jsp");
+        return;
+    }
+
+    if(addAdmin){
+        final String admin = request.getParameter("administrator");
+        if(admin != null){
+            String currentList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+            final List users = new ArrayList(StringUtils.stringToCollection(currentList));
+            users.add(admin);
+
+            String userList = StringUtils.collectionToString(users);
+            JiveGlobals.setXMLProperty("admin.authorizedUsernames", userList);
+        }
+        else {
+            errors.put("administrator", "");
+        }
+    }
+
+    if (deleteAdmins) {
+        String[] params = request.getParameterValues("remove");
+        String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+        Collection<String> adminCollection = StringUtils.stringToCollection(currentAdminList);
+        List temporaryUserList = new ArrayList<String>(adminCollection);
+        final int no = params != null ? params.length : 0;
+        for (int i = 0; i < no; i++) {
+            temporaryUserList.remove(params[i]);
+        }
+
+        String newUserList = StringUtils.collectionToString(temporaryUserList);
+        if (temporaryUserList.size() == 0) {
+            JiveGlobals.setXMLProperty("admin.authorizedUsernames", "");
+        }
+        else {
+            JiveGlobals.setXMLProperty("admin.authorizedUsernames", newUserList);
+        }
+    }
+
+    // This handles the case of reverting back to default settings from LDAP. Will
+    // add admin to the authorizedUsername list if the authorizedUsername list contains
+    // entries.
+    if(!ldap){
+        String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+        List<String> adminCollection = new ArrayList<String>(StringUtils.stringToCollection(currentAdminList));
+        if((!adminCollection.isEmpty() && !adminCollection.contains("admin")) || JiveGlobals.getXMLProperty("admin.authorizedJIDs") != null){
+            adminCollection.add("admin");
+            JiveGlobals.setXMLProperty("admin.authorizedUsernames", StringUtils.collectionToString(adminCollection));
+        }
+    }
 %>
 <html>
 <head>
@@ -109,7 +169,8 @@
 	<fmt:message key="setup.admin.settings.account" />
 	</h1>
 
-	<p>
+<% if(!ldap){ %>
+    <p>
 	<fmt:message key="setup.admin.settings.info" />
 	</p>
 
@@ -274,5 +335,92 @@ document.acctform.newPassword.focus();
 //-->
 </script>
 
+
+
+<% } else { %>
+    <p>
+     <fmt:message key="setup.admin.settings.ldap.info" />
+      </p>
+    <div class="jive-contentBox">
+
+    <form action="setup-admin-settings.jsp" name="acctform" method="post">
+
+        <!-- Admin Table -->
+
+    <table cellpadding="3" cellspacing="2" border="0">
+        <tr valign="top">
+            <td class="jive-label">
+                <fmt:message key="setup.admin.settings.add.administrator" />:
+            </td>
+             <td>
+            <input type="text" name="administrator" size="20" maxlength="50"/>
+            </td>
+            <td>
+                <input type="submit" name="addAdministrator" value="Add"/>
+            </td>
+        </tr>
+    </table>
+<%
+        String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+        boolean hasAuthorizedName = authorizedUsernames != null && authorizedUsernames.length() > 0;
+%>
+        <% if(hasAuthorizedName) { %>
+        <!-- List of admins -->
+        <table class="jive-vcardTable" cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
+                <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
+            </tr>
+    <%
+        for (String username : StringUtils.stringToCollection(authorizedUsernames)) {
+    %>
+        <tr valign="top">
+            <td>
+                <%= username%>
+            </td>
+            <td>
+                <input type="checkbox" name="remove" value="<%=username%>"/>
+            </td>
+        </tr>
+
+        <%
+            }
+            if (authorizedUsernames != null) {
+        %>
+             <tr valign="top">
+            <td>
+               &nbsp;
+            </td>
+            <td>
+                <input type="submit" name="deleteAdmins" value="Remove"/>
+            </td>
+        </tr>
+
+            <%
+                }
+
+            %>
+    </table>
+        <% } %>
+
+
+    <input type="hidden" name="ldap" value="true"/>
+
+         <div align="right">
+        <br/>
+      <input type="submit" name="ldapFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" border="0" style="display:none;">
+              </div>
+     </form>
+
+    </div>
+
+    <%
+        if(hasAuthorizedName) {%>
+            <script type="text/javascript">
+                document.getElementById("jive-setup-save").style.display = "";
+            </script>
+    <% } %>
+
+<% } %>
 </body>
 </html>

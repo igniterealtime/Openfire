@@ -49,23 +49,23 @@ public class AdminConsole {
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
 
             public void propertySet(String property, Map params) {
-                // Do nothing.
+                if ("enterpriseInfoEnabled".equals(property)) {
+                    rebuildModel();
+                }
             }
 
             public void propertyDeleted(String property, Map params) {
-                // Do nothing.
+                if ("enterpriseInfoEnabled".equals(property)) {
+                    rebuildModel();
+                }
             }
 
             public void xmlPropertySet(String property, Map params) {
-                if ("enterpriseInfoEnabled".equals(property)) {
-                    rebuildModel();
-                }
+                // Do nothing
             }
 
             public void xmlPropertyDeleted(String property, Map params) {
-                if ("enterpriseInfoEnabled".equals(property)) {
-                    rebuildModel();
-                }
+                // Do nothing    
             }
         });
     }
@@ -355,7 +355,7 @@ public class AdminConsole {
         // Special case: show an informational tab about Wildfire Enterprise if Enterprise
         // is not installed and if the user has not chosen to hide tab.
         Element enterprise = (Element)generatedModel.selectSingleNode("//tab[@id='tab-enterprise']");
-        if (enterprise == null && JiveGlobals.getXMLProperty("enterpriseInfoEnabled", true)) {
+        if (enterprise == null && JiveGlobals.getBooleanProperty("enterpriseInfoEnabled", true)) {
             enterprise = generatedModel.addElement("tab");
             enterprise.addAttribute("id", "tab-enterprise");
             enterprise.addAttribute("name", "Enterprise");

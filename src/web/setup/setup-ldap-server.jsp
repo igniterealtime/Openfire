@@ -107,7 +107,7 @@
 
 <body>
 
-	<h1><fmt:message key="setup.ldap.profile" /> <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
+	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
@@ -157,7 +157,7 @@
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
-			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="50" value="<%= baseDN!=null?baseDN:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></a></span></td>
+			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="150" value="<%= baseDN!=null?baseDN:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></a></span></td>
 			</tr>
             <tr><td colspan="4">&nbsp;</td></tr>
             <tr>
@@ -165,7 +165,7 @@
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.server.admindn" />:</td>
-			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="50" value="<%= adminDN!=null?adminDN:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
+			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="150" value="<%= adminDN!=null?adminDN:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.server.password" />:</td>
@@ -263,10 +263,10 @@
 
 			<!-- BEGIN right-aligned buttons -->
 			<div align="right">
-				<a href="setup-ldap-server_test.jsp" class="lbOn" id="jive-setup-test2">
+				<%--<a href="setup-ldap-server_test.jsp" class="lbOn" id="jive-setup-test2">
 				<img src="../images/setup_btn_gearplay.gif" alt="" width="14" height="14" border="0">
 				<fmt:message key="setup.ldap.test" />
-				</a>
+				</a>--%>
 
 				<input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
 			</div>

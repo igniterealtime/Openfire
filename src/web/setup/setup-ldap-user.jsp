@@ -87,7 +87,7 @@
 
 <body>
 
-	<h1><fmt:message key="setup.ldap.profile" /> <span><fmt:message key="setup.ldap.user_mapping" /></h1>
+	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.user_mapping" /></h1>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
@@ -429,10 +429,10 @@
 
 			<!-- BEGIN right-aligned buttons -->
 			<div align="right">
-				<a href="setup-ldap-user_test.jsp" class="lbOn" id="jive-setup-test2">
+				<%--<a href="setup-ldap-user_test.jsp" class="lbOn" id="jive-setup-test2">
 				<img src="../images/setup_btn_gearplay.gif" alt="" width="14" height="14" border="0">
 				<fmt:message key="setup.ldap.test" />
-				</a>
+				</a>--%>
 
 				<input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
 			</div>

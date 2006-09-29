@@ -21,11 +21,57 @@
 
 <%
     // Get parameters
+    String serverType = ParamUtils.getParameter(request, "serverType");
+    // Server type should never be null, but if it is, assume "other"
+    if (serverType == null) {
+        serverType = "other";
+    }
 
-    boolean next = request.getParameter("continue") != null;
-    if (next) {
+    // Determine the right default values based on the the server type.
+    String defaultUsernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
+    String defaultSearchFields = JiveGlobals.getXMLProperty("ldap.searchFields");
+    String defaultSearchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
+    if (serverType.equals("activedirectory")) {
+        if (defaultUsernameField == null) {
+            defaultUsernameField = "sAMAccountName";
+        }
+        if (defaultSearchFilter == null) {
+            defaultSearchFilter = "(objectClass=organizationalPerson)";
+        }
+    }
+    else {
+        if (defaultUsernameField == null) {
+            defaultUsernameField = "uid";
+        }
+    }
+
+    String usernameField = ParamUtils.getParameter(request, "usernameField");
+    if (usernameField == null) {
+        usernameField = defaultUsernameField;
+    }
+    String searchFields = ParamUtils.getParameter(request, "searchFields");
+    if (searchFields == null) {
+        searchFields = defaultSearchFields;
+    }
+    String searchFilter = ParamUtils.getParameter(request, "searchFilter");
+    if (searchFilter == null) {
+        searchFilter = defaultSearchFilter;
+    }
+    System.out.println(searchFilter);
+
+    boolean save = request.getParameter("save") != null;
+    if (save) {
+        // Save settings.
+        JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
+        JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+        JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+
+        // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
+        JiveGlobals.setXMLProperty("provider.user.className",
+                "org.jivesoftware.wildfire.ldap.LdapUserProvider");
+
         // Redirect
-        response.sendRedirect("setup-admin-settings.jsp");
+        response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);
         return;
     }
 %>
@@ -56,8 +102,9 @@
 	<h2>Step 2 of 3: <span>User Mapping</span></h2>
 	<p>A sentance detailing the setup options below. Also, noting that the usermapping field is <strong>required</strong>. Lorem ipsum dolor siet amet. Also mention the help tooltip rollovers.</p>
 
-	<form action="" method="get">
-		<!-- BEGIN jive-contentBox_bluebox -->
+	<form action="setup-ldap-user.jsp" method="post">
+		<input type="hidden" name="serverType" value="<%=serverType%>">
+        <!-- BEGIN jive-contentBox_bluebox -->
 		<div class="jive-contentBox_bluebox">
 
 			<table border="0" cellpadding="0" cellspacing="2">
@@ -66,7 +113,7 @@
 			</tr>
 			<tr>
 			<td align="right">Username:</td>
-			<td><input type="text" name="username" id="jiveLDAPusername" size="22" maxlength="30"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The field name that the username lookups will be performed on. If this property is not set, the default value is <b>uid</b>. Active Directory users should try the default value <b>sAMAccountName</b>', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></a></span></td>
+			<td><input type="text" name="usernameField" id="jiveLDAPusername" size="22" maxlength="30" value="<%= usernameField!=null?usernameField:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The field name that the username lookups will be performed on. If this property is not set, the default value is <b>uid</b>. Active Directory users should try the default value <b>sAMAccountName</b>', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 			</tr>
 			</table>
 
@@ -82,11 +129,11 @@
 						<table border="0" cellpadding="0" cellspacing="2">
 						<tr>
 						<td align="right">Search Fields:</td>
-						<td><input type="text" name="searchfield" value="Username/uid,Name/cname" id="jiveLDAPsearchfields" size="22" maxlength="50"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The LDAP fields that will be used for user searches. If this property is not set, the username, name, and email fields will be searched. An example value for this field is &quot;Username/uid,Name/cname&quot;. That searches the uid and cname fields in the directory and labels them as &quot;Username&quot; and &quot;Name&quot; in the search UI. You can add as many fields as you\'d like using comma-delimited &quot;DisplayName/Field&quot; pairs. You should ensure that any fields used for searching are properly indexed so that searches return quickly.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 10000);"></a></span></td>
+						<td><input type="text" name="searchFields" value="<%= searchFields!=null?searchFields:""%>" id="jiveLDAPsearchfields" size="22" maxlength="100"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The LDAP fields that will be used for user searches. It is not recommended that you set a value for this field unless the default search fields does not work for you (username, name, and email fields). An example search value is &quot;Username/uid,Name/cname&quot;. That searches the uid and cname fields in the directory and labels them as &quot;Username&quot; and &quot;Name&quot; in the search UI. You can add as many fields as you\'d like using comma-delimited &quot;DisplayName/Field&quot; pairs. You should ensure that any fields used for searching are properly indexed so that searches return quickly.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 						</tr>
 						<tr>
 						<td align="right">Search Filter:</td>
-						<td><input type="text" name="searchfilter" value="uid={0}" id="jiveLDAPsearchfilter" size="22" maxlength="30"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'An optional search filter to append to the default filter when loading users. The default search filter is created using the attribute specified by ldap.usernameField. For example, if the username field is &quot;uid&quot;, then the default search filter would be &quot;(uid={0})&quot; where {0} is dynamically replaced with the username being searched for. ', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 10000);"></a></span></td>
+						<td><input type="text" name="searchFilter" value="<%= searchFilter!=null?searchFilter:""%>" id="jiveLDAPsearchfilter" size="22" maxlength="100"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'An optional search filter to append to the default filter when loading users. The default search filter is created using the attribute specified by ldap.usernameField. For example, if the username field is &quot;uid&quot;, then the default search filter would be &quot;(uid={0})&quot; where {0} is dynamically replaced with the username being searched for.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 						</tr>
 						</table>
 					</div>
@@ -109,7 +156,7 @@
 			}
 
 		</script>
-
+        <%--
 		<!-- BEGIN jive-contentBox_greybox -->
 		<div class="jive-contentBox_greybox">
 			<strong>User Profiles (vCard)</strong>
@@ -361,6 +408,8 @@
 
 		</div>
 		<!-- END jive-contentBox_greybox -->
+
+		--%>
 
 
 

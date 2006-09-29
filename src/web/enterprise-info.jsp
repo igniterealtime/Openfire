@@ -373,9 +373,18 @@
     <a href="#" class="jive-enterprise-info-install-btn">Install Enterprise Plugin</a>
     <p>Version 3.0.1 - 3.9 MB<br>
     <a href="#">Readme</a> &nbsp;|&nbsp; <a href="#">Changelog</a></p>
+    <div class="jive-enterprise-info-close"><a href="#">Don't Show This Again</a></div>
     </div>
 
-    <div class="jive-enterprise-info-close"><a href="#">Don't Show This Again</a></div>
+    <div class="jive-enterprise-info-wait">
+       <img src="images/wait24trans.gif" alt="" align="left">    <strong>Installing Enterprise Plugin...</strong>
+    </div>
+
+    <div class="jive-enterprise-info-success">
+       <strong>Enterprise plugin installed successfully</strong> Please [insert instructions here]
+    </div>
+
+
 
 </body>
 </html>

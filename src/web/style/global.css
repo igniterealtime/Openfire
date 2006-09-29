@@ -843,3 +843,25 @@ th.jive-table-th-center {
     margin: 0px 0px 6px 0px;
     padding: 20px 0px 20px 0px;
     }
+
+.jive-enterprise-info-wait {
+    clear: both;
+    }
+.jive-enterprise-info-wait img,
+.jive-enterprise-info-wait strong {
+    float: left;
+    padding: 0px 2px 0px 2px;
+}
+.jive-enterprise-info-wait strong {
+    padding-top: 4px;
+    }
+
+.jive-enterprise-info-success {
+    clear: both;
+    padding: 4px 0px 4px 0px;
+    }
+.jive-enterprise-info-success strong {
+    background: transparent url(../images/success-16x16.gif) no-repeat left;
+    color: #106600;
+    padding-left: 20px;
+    }

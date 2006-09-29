@@ -844,8 +844,10 @@ th.jive-table-th-center {
     padding: 20px 0px 20px 0px;
     }
 
-.jive-enterprise-info-wait {
+.jive-enterprise-info-wait,
+.jive-enterprise-info-success {
     clear: both;
+    padding: 4px 0px 140px 0px;
     }
 .jive-enterprise-info-wait img,
 .jive-enterprise-info-wait strong {
@@ -856,10 +858,6 @@ th.jive-table-th-center {
     padding-top: 4px;
     }
 
-.jive-enterprise-info-success {
-    clear: both;
-    padding: 4px 0px 4px 0px;
-    }
 .jive-enterprise-info-success strong {
     background: transparent url(../images/success-16x16.gif) no-repeat left;
     color: #106600;

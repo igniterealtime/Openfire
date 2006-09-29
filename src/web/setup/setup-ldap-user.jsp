@@ -59,8 +59,12 @@
         // Save settings and redirect.
         if (errors.isEmpty()) {
             JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
-            JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
-            JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+            if (searchFields != null) {
+                JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+            }
+            if (searchFilter != null) {
+                JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+            }
 
             // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
             JiveGlobals.setXMLProperty("provider.user.className",

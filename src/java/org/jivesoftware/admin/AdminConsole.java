@@ -11,9 +11,7 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -43,6 +41,33 @@ public class AdminConsole {
     static {
         overrideModels = new LinkedHashMap<String,Element>();
         load();
+
+        // The admin console model has special logic to include an informational
+        // Enterprise tab when the Enterprise plugin is not installed. A property
+        // controls whether to show that tab. Listen for the property value changing
+        // and rebuild the model when that happens.
+        PropertyEventDispatcher.addListener(new PropertyEventListener() {
+
+            public void propertySet(String property, Map params) {
+                // Do nothing.
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                // Do nothing.
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+                if ("enterpriseInfoEnabled".equals(property)) {
+                    rebuildModel();
+                }
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+                if ("enterpriseInfoEnabled".equals(property)) {
+                    rebuildModel();
+                }
+            }
+        });
     }
 
     /** Not instantiatable */
@@ -325,6 +350,25 @@ public class AdminConsole {
                     overrideTab(existingTab, tab);
                 }
             }
+        }
+
+        // Special case: show an informational tab about Wildfire Enterprise if Enterprise
+        // is not installed and if the user has not chosen to hide tab.
+        Element enterprise = (Element)generatedModel.selectSingleNode("//tab[@id='tab-enterprise']");
+        if (enterprise == null && JiveGlobals.getXMLProperty("enterpriseInfoEnabled", true)) {
+            enterprise = generatedModel.addElement("tab");
+            enterprise.addAttribute("id", "tab-enterprise");
+            enterprise.addAttribute("name", "Enterprise");
+            enterprise.addAttribute("url", "enterprise-info.jsp");
+            enterprise.addAttribute("description", "Click for Enterprise information.");
+            Element sidebar = enterprise.addElement("sidebar");
+            sidebar.addAttribute("id", "sidebar-enterprise-info");
+            sidebar.addAttribute("name", "Wildfire Enterprise");
+            Element item = sidebar.addElement("item");
+            item.addAttribute("id", "enterprise-info");
+            item.addAttribute("name", "Try Enterprise");
+            item.addAttribute("url", "enterprise-info.jsp");
+            item.addAttribute("description", "Wildfire Enterprise overview inforation");
         }
     }
 

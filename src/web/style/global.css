@@ -781,3 +781,65 @@ th.jive-table-th-center {
 	padding: 0px 0px 3px 0px;
 	}
 
+
+
+/* --------------------------------------------- */
+/*  Roster box (in Group Settings page)          */
+/* --------------------------------------------- */
+.jive-enterprise-info img {
+    clear: both;
+    }
+.jive-enterprise-info h3 {
+    color: #34679a;
+    font-size: 13pt;
+    margin: 4px 0px 4px 0px;
+    padding: 0px;
+    }
+.jive-enterprise-info ul,
+.jive-enterprise-info ol {
+    margin: 0px 0px 20px 30px;
+    padding: 0px;
+    }
+.jive-enterprise-info ul li,
+.jive-enterprise-info ol li{
+    margin: 0px;
+    padding: 3px 0px 3px 0px;
+    }
+.jive-enterprise-info ul p {
+    padding: 20px 0px 10px 0px;
+    margin: 0px;
+    }
+
+.jive-enterprise-info-install {
+    clear: both;
+    margin: 0px 0px 0px 0px;
+    padding: 10px 0px 20px 0px;
+    }
+.jive-enterprise-info-install a.jive-enterprise-info-install-btn {
+    display: block;
+    float: left;
+    clear: both;
+    padding: 8px 20px 8px 20px;
+    margin: 0px;
+    font-weight: bold;
+    font-size: 10pt;
+    text-decoration: none;
+    color: #fff;
+    background: url(../images/enterprise-info-btn.gif) repeat-x center;
+    }
+.jive-enterprise-info-install p {
+    float: left;
+    clear: both;
+    padding: 5px 0px 20px 1px;
+    margin: 0px;
+    font-size: 8pt;
+    }
+
+.jive-enterprise-info {
+    font-size: 9pt;
+    }
+.jive-enterprise-info-close {
+    clear: both;
+    margin: 0px 0px 6px 0px;
+    padding: 20px 0px 20px 0px;
+    }

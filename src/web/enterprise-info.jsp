@@ -206,43 +206,41 @@
 </style>
 <body>
 
-<img src="images/enterprise.png" alt="Wildfire Enterprise" hspace="10" vspace="10" width="200" height="197" border="0" align="right" /> 
+<span class="jive-enterprise-info">
 
-<p><b>What is it?</b>
+    <img src="images/enterprise.png" alt="Wildfire Enterprise" hspace="10" vspace="10" width="200" height="197" border="0" align="right" />
 
-<ul>
-    <li>A commercial extension to Wildfire that provides practical and valuable features.</li>
-    <li>Delivered as a plugin that works with the Open Source edition.</li>
-    <li>Low per-user pricing.</li>
-</ul></p>
+    <h3>What is it?</h3>
 
-<p><b>Why use it?</b>
-<ul>
-    <li><b>Reporting:</b> What manager wouldn't love graphs like the one pictured to the right?</li>
+    <ul>
+        <li>A commercial extension to Wildfire that provides practical and valuable features.</li>
+        <li>Delivered as a plugin that works with the Open Source edition.</li>
+        <li>Low per-user pricing.</li>
+    </ul>
 
-    <li><b>Client Control:</b> Stop the client madness -- take control of versions, features and more.</li>
+    <h3>Why use it?</h3>
+    <ul>
+        <li><b>Reporting:</b> What manager wouldn't love graphs like the one pictured to the right?</li>
+        <li><b>Client Control:</b> Stop the client madness -- take control of versions, features and more.</li>
+        <li><b>Archiving:</b> If "compliance" is a word your organization uses, you need this feature.</li>
+        <li><b>Customer Chat:</b> Generate leads, close sales, route questions -- your sales and support people will love this feature.</li>
+        <li><b>Support.</b> Professional support by the hard-working and friendly Jive Software team.</li>
+        <li>Best of all, by using Enterprise, you're directly supporting the Open Source project.</li>
 
-    <li><b>Archiving:</b> If "compliance" is a word your organization uses, you need this feature.</li>
+        <p>Interested? See the full <a href="http://www.jivesoftware.com/products/wildfire/features/enterprise.jsp">feature overview</a>.</p>
+    </ul>
 
-    <li><b>Customer Chat:</b> Generate leads, close sales, route questions -- your sales and
-       support people will love this feature.</li>
 
-    <li><b>Support.</b> Professional support by the hard-working and friendly Jive Software team.</li>
-    
-    <li>Best of all, by using Enterprise, you're directly supporting the Open Source project.</li>
-    <br/>
-    Interested? See the full <a href="http://www.jivesoftware.com/products/wildfire/features/enterprise.jsp">feature overview</a>.
-</ul>
-</p>
 
-<p><b>How to get started:</b>
-<ol>
-    <li>Install the plugin (no re-start necessary).</li>
-    <li>Get an evaluation license file (you'll be prompted after install).</li>
-</ol>
-</p>
+    <h3>How to get started:</h3>
+    <ol>
+        <li>Install the plugin (no re-start necessary).</li>
+        <li>Get an evaluation license file (you'll be prompted after install).</li>
+    </ol>
 
-<br/>
+
+</span>
+
 
 <%if(plugins.size() == 0){ %>
 <div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
@@ -353,7 +351,7 @@
 
 </div>
 
-<br/>
+
  <%
         String time = JiveGlobals.getProperty("update.lastCheck");
         if(time != null){
@@ -361,7 +359,7 @@
         time = JiveGlobals.formatDate(date);
         }
     %>
-       <p>
+       <p style="font-size: 8pt; padding: 4px 0px 10px 0px;">
            <% if(time != null) { %>
         Last checked for an updated version <%= time%>.
            <% } %>
@@ -369,6 +367,15 @@
            &nbsp;<span id="reloader2"><a href="javascript:updatePluginsListNow()"><fmt:message key="plugin.available.manual.update" /></a></span>
         </p>
            <% } %>
+
+
+    <div class="jive-enterprise-info-install">
+    <a href="#" class="jive-enterprise-info-install-btn">Install Enterprise Plugin</a>
+    <p>Version 3.0.1 - 3.9 MB<br>
+    <a href="#">Readme</a> &nbsp;|&nbsp; <a href="#">Changelog</a></p>
+    </div>
+
+    <div class="jive-enterprise-info-close"><a href="#">Don't Show This Again</a></div>
 
 </body>
 </html>

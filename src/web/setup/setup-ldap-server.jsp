@@ -77,11 +77,9 @@
                     Boolean.toString(connectionPoolEnabled));
             JiveGlobals.setXMLProperty("ldap.sslEnabled", Boolean.toString(sslEnabled));
             JiveGlobals.setXMLProperty("ldap.debugEnabled", Boolean.toString(debugEnabled));
-            JiveGlobals
-                    .setXMLProperty("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
-            // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
-            JiveGlobals.setXMLProperty("provider.auth.className",
-                    "org.jivesoftware.wildfire.ldap.LdapAuthProvider");
+            JiveGlobals.setXMLProperty("ldap.autoFollowReferrals",
+                    Boolean.toString(referralsEnabled));
+
             // Redirect to next step.
             response.sendRedirect("setup-ldap-user.jsp?serverType=" + serverType);
             return;

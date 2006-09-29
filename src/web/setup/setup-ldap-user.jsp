@@ -62,9 +62,11 @@
             JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
             JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
 
-            // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
+            // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
             JiveGlobals.setXMLProperty("provider.user.className",
                     "org.jivesoftware.wildfire.ldap.LdapUserProvider");
+            JiveGlobals.setXMLProperty("provider.auth.className",
+                    "org.jivesoftware.wildfire.ldap.LdapAuthProvider");
 
             // Redirect
             response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);

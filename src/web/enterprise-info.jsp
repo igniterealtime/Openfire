@@ -207,34 +207,39 @@
 <body>
 
 <img src="images/enterprise.png" alt="Wildfire Enterprise" hspace="10" vspace="10" width="200" height="197" border="0" align="right" /> 
-<p>Wildfire Enterprise is a commercial extension to Wildfire that adds practical and valuable
-features for businesses. Best of all, it's delivered as a plugin. That makes it simple to
-try while preserving all the benefits of the Open Source edition. Use the link below to download
-the Wildfire Enterprise plugin and get a free 30 day
-<a href="http://www.jivesoftware.com/products/wildfire/eval_landing.jsp" target="_blank">evaluation license</a>.</p>
 
-<b>What It Does</b>
+<p><b>What is it?</b>
+
 <ul>
-    <li><b>Reporting:</b> provides real-time and historical reports to monitor server usage.</li>
+    <li>A commercial extension to Wildfire that provides practical and valuable features.</li>
+    <li>Delivered as a plugin that works with the Open Source edition.</li>
+    <li>Low per-user pricing.</li>
+</ul></p>
+
+<p><b>Why use it?</b>
+<ul>
+    <li><b>Reporting:</b> What manager wouldn't love graphs like the one pictured to the right?</li>
+
+    <li><b>Client Control:</b> Stop the client madness -- take control of versions, features and more.</li>
+
+    <li><b>Archiving:</b> If "compliance" is a word your organization uses, you need this feature.</li>
+
+    <li><b>Customer Chat:</b> Generate leads, close sales, route questions -- your sales and
+       support people will love this feature.</li>
+
+    <li><b>Support.</b> Professional support by the hard-working and friendly Jive Software team.</li>
+    
+    <li>Best of all, by using Enterprise, you're directly supporting the Open Source project.</li>
     <br/>
-    <li><b>Client Control:</b> deploy new versions of Spark to your network, enable or disable client
-        features.</li>
-    <br/>
-    <li><b>Archiving:</b> light-weight or full archiving for organizations with compliance requirements.</li>
-    <br/>
-    <li><b>Customer Chat</b>: Adds sales and support chat. Incoming leads and customers route from your 
-        website to the right person based on flexible rules.</li>
-    <br/>
-    Want more details? See the full <a href="http://www.jivesoftware.com/products/wildfire/features/enterprise.jsp">feature overview</a>.
+    Interested? See the full <a href="http://www.jivesoftware.com/products/wildfire/features/enterprise.jsp">feature overview</a>.
 </ul>
+</p>
 
-<p><b>Why You Should Try It</b>  </p>
-<p>The Wildfire Enterprise plugin provides a great feature set at a good price. Purchasing
-    Enterprise also entitles you to professional support for the entire Wildfire/Spark platform.
-    Further, the Wildfire and Spark Open Source projects depend on a healthy and symbiotic
-    relationship with their commercial extensions. By trying out Enterprise, you're supporting
-    continued Open Source development. 
-
+<p><b>How to get started:</b>
+<ol>
+    <li>Install the plugin (no re-start necessary).</li>
+    <li>Get an evaluation license file (you'll be prompted after install).</li>
+</ol>
 </p>
 
 <br/>

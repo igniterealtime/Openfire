@@ -103,13 +103,13 @@
 %>
 <html>
 <head>
-    <title><fmt:message key="setup.ldap.server.title" /></title>
+    <title><fmt:message key="setup.ldap.title" /></title>
     <meta name="currentStep" content="3"/>
 </head>
 
 <body>
 
-	<h1><fmt:message key="setup.ldap.title" /> <span><fmt:message key="setup.ldap.server.settings" /></span></h1>
+	<h1><fmt:message key="setup.ldap.profile" /> <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
@@ -133,7 +133,7 @@
         <% } %>
     </div>
 
-<%  } %>
+    <%  } %>
 
     <form action="setup-ldap-server.jsp" method="post">
 		<!-- BEGIN jive-contentBox_bluebox -->
@@ -180,7 +180,7 @@
 
 		<!-- BEGIN jiveAdvancedButton -->
 		<div class="jiveAdvancedButton">
-			<a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink"><fmt:message key="setup.ldap.server.advanced" /></a>
+			<a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink"><fmt:message key="setup.ldap.advanced" /></a>
 		</div>
 		<!-- END jiveAdvancedButton -->
 

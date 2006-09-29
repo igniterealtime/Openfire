@@ -1,12 +1,8 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.HashMap,
                  java.util.Map,
-                 java.util.Date,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager,
                  org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -45,81 +41,90 @@
         }
     }
 
-    String usernameField = ParamUtils.getParameter(request, "usernameField");
-    if (usernameField == null) {
-        usernameField = defaultUsernameField;
-    }
-    String searchFields = ParamUtils.getParameter(request, "searchFields");
-    if (searchFields == null) {
-        searchFields = defaultSearchFields;
-    }
-    String searchFilter = ParamUtils.getParameter(request, "searchFilter");
-    if (searchFilter == null) {
-        searchFilter = defaultSearchFilter;
-    }
-    System.out.println(searchFilter);
+    String usernameField = defaultUsernameField;
+    String searchFields = defaultSearchFields;
+    String searchFilter = defaultSearchFilter;
+
+    Map<String, String> errors = new HashMap<String, String>();
 
     boolean save = request.getParameter("save") != null;
     if (save) {
-        // Save settings.
-        JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
-        JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
-        JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+        usernameField = ParamUtils.getParameter(request, "usernameField");
+        if (usernameField == null) {
+            errors.put("username", LocaleUtils.getLocalizedString("setup.ldap.user.username_field_error"));
+        }
+        searchFields = ParamUtils.getParameter(request, "searchFields");
+        searchFilter = ParamUtils.getParameter(request, "searchFilter");
 
-        // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
-        JiveGlobals.setXMLProperty("provider.user.className",
-                "org.jivesoftware.wildfire.ldap.LdapUserProvider");
+        // Save settings and redirect.
+        if (errors.isEmpty()) {
+            JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
+            JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+            JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
 
-        // Redirect
-        response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);
-        return;
+            // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
+            JiveGlobals.setXMLProperty("provider.user.className",
+                    "org.jivesoftware.wildfire.ldap.LdapUserProvider");
+
+            // Redirect
+            response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);
+            return;
+        }
     }
 %>
 <html>
 <head>
-    <title>Profile Settings - Directory Server</title>
+    <title><fmt:message key="setup.ldap.title" /></title>
     <meta name="currentStep" content="3"/>
 
 </head>
 
 <body>
 
-	<h1>Profile Settings <span>- User Mapping</span></h1>
-
-	<p>Configure user mapping and user profiles.</p>
+	<h1><fmt:message key="setup.ldap.profile" /> <span><fmt:message key="setup.ldap.user_mapping" /></h1>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
-		<span class="jive-stepbar_step">1. Connection Settings</span>
-		<span class="jive-stepbar_step"><strong>2. User Mapping</strong></span>
-		<span class="jive-stepbar_step"><em>3. Group Mapping</em></span>
+		<span class="jive-stepbar_step"><em>1. <fmt:message key="setup.ldap.connection_settings" /></em></span>
+		<span class="jive-stepbar_step"><strong>2. <fmt:message key="setup.ldap.user_mapping" /></strong></span>
+		<span class="jive-stepbar_step"><em>3. <fmt:message key="setup.ldap.group_mapping" /></em></span>
 	</div>
 	<!-- END jive-contentBox-stepbar -->
 
 	<!-- BEGIN jive-contentBox -->
 	<div class="jive-contentBox jive-contentBox_for-stepbar">
 
-	<h2>Step 2 of 3: <span>User Mapping</span></h2>
-	<p>A sentance detailing the setup options below. Also, noting that the usermapping field is <strong>required</strong>. Lorem ipsum dolor siet amet. Also mention the help tooltip rollovers.</p>
+	<h2><fmt:message key="setup.ldap.step_two" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h2>
+	<p><fmt:message key="setup.ldap.user.description" /></p>
 
-	<form action="setup-ldap-user.jsp" method="post">
+    <%  if (errors.size() > 0) { %>
+
+    <div class="error">
+        <% for (String error:errors.values()) { %>
+            <%= error%><br/>
+        <% } %>
+    </div>
+
+    <%  } %>
+
+    <form action="setup-ldap-user.jsp" method="post">
 		<input type="hidden" name="serverType" value="<%=serverType%>">
         <!-- BEGIN jive-contentBox_bluebox -->
 		<div class="jive-contentBox_bluebox">
 
 			<table border="0" cellpadding="0" cellspacing="2">
 			<tr>
-			<td colspan="2"><strong>User Mapping</strong></td>
+			<td colspan="2"><strong><fmt:message key="setup.ldap.user_mapping" /></strong></td>
 			</tr>
 			<tr>
-			<td align="right">Username:</td>
-			<td><input type="text" name="usernameField" id="jiveLDAPusername" size="22" maxlength="30" value="<%= usernameField!=null?usernameField:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The field name that the username lookups will be performed on. If this property is not set, the default value is <b>uid</b>. Active Directory users should try the default value <b>sAMAccountName</b>', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
+			<td align="right"><fmt:message key="setup.ldap.user.username_field" />:</td>
+			<td><input type="text" name="usernameField" id="jiveLDAPusername" size="22" maxlength="40" value="<%= usernameField!=null?usernameField:""%>"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.username_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 			</tr>
 			</table>
 
 			<!-- BEGIN jiveAdvancedButton -->
 			<div class="jiveAdvancedButton jiveAdvancedButtonTopPad">
-				<a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink">Advanced Settings</a>
+				<a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink"><fmt:message key="setup.ldap.advanced" /></a>
 			</div>
 			<!-- END jiveAdvancedButton -->
 
@@ -128,12 +133,12 @@
 					<div>
 						<table border="0" cellpadding="0" cellspacing="2">
 						<tr>
-						<td align="right">Search Fields:</td>
-						<td><input type="text" name="searchFields" value="<%= searchFields!=null?searchFields:""%>" id="jiveLDAPsearchfields" size="22" maxlength="100"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'The LDAP fields that will be used for user searches. It is not recommended that you set a value for this field unless the default search fields does not work for you (username, name, and email fields). An example search value is &quot;Username/uid,Name/cname&quot;. That searches the uid and cname fields in the directory and labels them as &quot;Username&quot; and &quot;Name&quot; in the search UI. You can add as many fields as you\'d like using comma-delimited &quot;DisplayName/Field&quot; pairs. You should ensure that any fields used for searching are properly indexed so that searches return quickly.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
+						<td align="right"><fmt:message key="setup.ldap.user.search_fields" />:</td>
+						<td><input type="text" name="searchFields" value="<%= searchFields!=null?searchFields:""%>" id="jiveLDAPsearchfields" size="40" maxlength="100"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.search_fields_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 						</tr>
 						<tr>
-						<td align="right">Search Filter:</td>
-						<td><input type="text" name="searchFilter" value="<%= searchFilter!=null?searchFilter:""%>" id="jiveLDAPsearchfilter" size="22" maxlength="100"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', 'An optional search filter to append to the default filter when loading users. The default search filter is created using the attribute specified by ldap.usernameField. For example, if the username field is &quot;uid&quot;, then the default search filter would be &quot;(uid={0})&quot; where {0} is dynamically replaced with the username being searched for.', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
+						<td align="right"><fmt:message key="setup.ldap.user.user_filter" />:</td>
+						<td><input type="text" name="searchFilter" value="<%= searchFilter!=null?searchFilter:""%>" id="jiveLDAPsearchfilter" size="40" maxlength="100"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.user_filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 						</tr>
 						</table>
 					</div>
@@ -416,20 +421,14 @@
 		<!-- BEGIN jive-buttons -->
 		<div class="jive-buttons">
 
-			<!-- BEGIN left-aligned buttons -->
-			<div align="left" style="float: left;">
-				<input type="Submit" name="back" value="Back" id="jive-setup-back" border="0">
-			</div>
-			<!-- END left-aligned buttons -->
-
 			<!-- BEGIN right-aligned buttons -->
 			<div align="right">
 				<a href="setup-ldap-user_test.jsp" class="lbOn" id="jive-setup-test2">
 				<img src="../images/setup_btn_gearplay.gif" alt="" width="14" height="14" border="0">
-				Test Settings
+				<fmt:message key="setup.ldap.test" />
 				</a>
 
-				<input type="Submit" name="save" value="Save & Continue" id="jive-setup-save" border="0">
+				<input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
 			</div>
 			<!-- END right-aligned buttons -->
 

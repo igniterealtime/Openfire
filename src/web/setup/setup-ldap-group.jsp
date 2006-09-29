@@ -177,7 +177,7 @@
 							<span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.posix_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 						</tr>
 						<tr>
-						<td align="right">'<fmt:message key="setup.ldap.group.filter" /></td>
+						<td align="right"><fmt:message key="setup.ldap.group.filter" /></td>
 						<td><input type="text" name="groupSearchFilter" value="<%= groupSearchFilter!=null?groupSearchFilter:""%>" id="jiveLDAPgroupsearchfilter" size="22" maxlength="30"><span class="jive-setup-helpicon"><a href="" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></a></span></td>
 						</tr>
 						</table>

@@ -15,13 +15,11 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.event.GroupEventDispatcher;
 import org.jivesoftware.wildfire.event.GroupEventListener;
-import org.jivesoftware.wildfire.ldap.LdapGroupProvider;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -338,16 +336,6 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        // TODO Remove this temp fix for LDAP and fix LDAP to get correct list of groups of a user
-        if (provider.getClass() == LdapGroupProvider.class) {
-            Collection<Group> userGroups = new ArrayList<Group>();
-            for (Group group : getGroups()) {
-                if (group.isUser(user)) {
-                    userGroups.add(group);
-                }
-            }
-            return userGroups;
-        }
         String key = user.toBareJID();
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);

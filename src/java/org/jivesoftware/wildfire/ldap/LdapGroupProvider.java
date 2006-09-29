@@ -17,6 +17,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.group.GroupProvider;
+import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
@@ -319,8 +320,14 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     public Collection<String> getGroupNames(JID user) {
-        return Collections.emptyList();
-        // TODO: the implementation of this method is broken.
+        // TODO Remove this temp fix for LDAP and fix LDAP to get correct list of groups of a user
+        Collection<String> userGroups = new ArrayList<String>();
+        for (Group group : GroupManager.getInstance().getGroups()) {
+            if (group.isUser(user)) {
+                userGroups.add(group.getName());
+            }
+        }
+        return userGroups;
         /* XMPPServer server = XMPPServer.getInstance();
         String username;
         if (!manager.isPosixMode()) {

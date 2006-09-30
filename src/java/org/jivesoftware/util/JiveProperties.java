@@ -189,13 +189,15 @@ public class JiveProperties implements Map<String, String> {
             insertProperty(key, value);
         }
 
+        String result = properties.put((String)key, (String)value);
+
         // Generate event.
         Map<String, String> params = new HashMap<String, String>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set,
                 params);
 
-        return properties.put((String)key, (String)value);
+        return result;
     }
 
     private void insertProperty(String name, String value) {

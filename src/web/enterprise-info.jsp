@@ -26,6 +26,13 @@
     boolean downloadRequested = request.getParameter("download") != null;
     String url = request.getParameter("url");
 
+    boolean disable = request.getParameter("disable") != null;
+    if(disable){
+        JiveGlobals.setProperty("enterpriseInfoEnabled", "false");
+        response.sendRedirect("/index.jsp");
+        return;
+    }
+
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
     List<AvailablePlugin> plugins = updateManager.getNotInstalledPlugins();
 
@@ -56,8 +63,9 @@
     var downloading;
     function downloadPlugin(url, id) {
         downloading = true;
-        document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
-        document.getElementById(id).style.background = "#FFFFCC";
+        document.getElementById("install-button").style.display = 'none';
+        document.getElementById("installing-button").style.display = '';
+        document.getElementById("installed").style.display = 'none';
         setTimeout("startDownload('" + url + "','" + id + "')", 5000);
     }
 
@@ -68,18 +76,21 @@
     function downloadComplete(status) {
         downloading = false;
         if (!status.successfull) {
-            document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/add-16x16.gif" border="0"/>';
-            document.getElementById(status.hashCode).style.background = "#FFFFFF";
-            document.getElementById("errorMessage").style.display = '';
-            document.getElementById(status.hashCode).style.display = '';
-            document.getElementById(status.hashCode + "-row").style.display = 'none';
-            setTimeout("closeErrorMessage()", 5000);
+            document.getElementById("install-button").style.display = '';
+            document.getElementById("installing-button").style.display = 'none';
+            document.getElementById("installed").style.display = 'none';
+            document.getElementById("error-message").style.display = '';
         }
         else {
-            document.getElementById(status.hashCode).style.display = 'none';
-            document.getElementById(status.hashCode + "-row").style.display = '';
-            setTimeout("fadeIt('" + status.hashCode + "')", 3000);
+            document.getElementById("install-button").style.display = 'none';
+            document.getElementById("installing-button").style.display = 'none';
+            document.getElementById("installed").style.display = '';
+            setTimeout("gotoEnterprise()", 5000);
         }
+    }
+
+    function gotoEnterprise(){
+        window.location.href = "plugins/enterprise/index.jsp";
     }
 
     function closeErrorMessage(){
@@ -244,7 +255,7 @@
 
 <%if(plugins.size() == 0){ %>
 <div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
-    <fmt:message key="plugin.available.no.list" />&nbsp;<span id="reloaderID"><a href="javascript:updatePluginsList();"><fmt:message key="plugin.available.list" /></a></span>
+    <fmt:message key="plugin.available.no.plugin" />&nbsp;<span id="reloaderID"><a href="javascript:updatePluginsList();"><fmt:message key="plugin.available.list" /></a></span>
 </div>
 <br/>
 <div style="width:75%;">
@@ -264,13 +275,6 @@
 </div>
 
 
-<div class="light-gray-border" style="padding:10px;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-
-<tr style="background:#f3f7fa;">
-    <td class="table-header-left">&nbsp;</td>
-    <td nowrap colspan="7" class="row-header">Install Enterprise Plugin</td>
-</tr>
 <%
     for (AvailablePlugin plugin : plugins) {
         String pluginName = plugin.getName();
@@ -284,43 +288,6 @@
             continue;
         }
 %>
-<tr id="<%= plugin.hashCode()%>">
-    <td width="1%" class="line-bottom-border">
-        <% if (plugin.getIcon() != null) { %>
-        <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
-        <% }
-        else { %>
-        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-        <% } %>
-    </td>
-    <td width="20%" nowrap class="line-bottom-border">
-        <%= (pluginName != null ? pluginName : "") %> &nbsp;
-    </td>
-    <td nowrap valign="top" class="line-bottom-border">
-        <% if (plugin.getReadme() != null) { %>
-        <a href="<%= plugin.getReadme() %>"
-            ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-        <% }
-        else { %> &nbsp; <% } %>
-        <% if (plugin.getChangelog() != null) { %>
-        <a href="<%= plugin.getChangelog() %>"
-            ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-        <% }
-        else { %> &nbsp; <% } %>
-    </td>
-    <td width="60%" class="line-bottom-border">
-        <%= pluginDescription != null ? pluginDescription : "" %>
-    </td>
-    <td width="5%" align="center" valign="top" class="line-bottom-border">
-        <%= pluginVersion != null ? pluginVersion : "" %>
-    </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
-    </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= fileSize  %>
-    </td>
-    <td width="1%" align="center" valign="top" class="line-bottom-border">
         <%
             String updateURL = plugin.getURL();
             if (updateManager.isPluginDownloaded(updateURL)) {
@@ -329,62 +296,27 @@
         <%  }
         else { %>
 
-        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
-                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></a></span>
-        <% } %>
-    </td>
-</tr>
-<tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
-     <td width="1%" class="line-bottom-border">
-        <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
-    </td>
-    <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
-    <td class="line-bottom-border" align="center">
-        <img src="images/success-16x16.gif" height="16" width="16"/>
-    </td>
-</tr>
-<%
-    }
-%>
-
-</table>
-
-</div>
+        <div id="error-message" class="error" style="display:none;">
+           <fmt:message key="plugin.enterprise.download.error" />
+        </div>
 
 
- <%
-        String time = JiveGlobals.getProperty("update.lastCheck");
-        if(time != null){
-        Date date = new Date(Long.parseLong(time));
-        time = JiveGlobals.formatDate(date);
-        }
-    %>
-       <p style="font-size: 8pt; padding: 4px 0px 10px 0px;">
-           <% if(time != null) { %>
-        Last checked for an updated version <%= time%>.
-           <% } %>
-          
-           &nbsp;<span id="reloader2"><a href="javascript:updatePluginsListNow()"><fmt:message key="plugin.available.manual.update" /></a></span>
-        </p>
-           <% } %>
+        <div id="install-button" class="jive-enterprise-info-install">
+            <a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')" class="jive-enterprise-info-install-btn">Install Enterprise Plugin</a>
+            <p>Version <%= pluginVersion%> - <%= fileSize%><br>
+            <a href="<%=plugin.getReadme()%>" target=_blank>Readme</a> &nbsp;|&nbsp; <a href="<%= plugin.getChangelog()%>" target=_blank>ChangeLog</a></p>
+            <div class="jive-enterprise-info-close"><a href="enterprise-info.jsp?disable=true"><fmt:message key="plugin.enterprise.dont.show" /></a></div>
+            </div>
 
 
-    <div class="jive-enterprise-info-install">
-    <a href="#" class="jive-enterprise-info-install-btn">Install Enterprise Plugin</a>
-    <p>Version 3.0.1 - 3.9 MB<br>
-    <a href="#">Readme</a> &nbsp;|&nbsp; <a href="#">Changelog</a></p>
-    <div class="jive-enterprise-info-close"><a href="#">Don't Show This Again</a></div>
-    </div>
+        <div id="installing-button" class="jive-enterprise-info-wait" style="display:none;">
+           <img src="images/wait24trans.gif" alt="" align="left">    <strong><fmt:message key="plugin.enterprise.installing" /></strong>
+        </div>
 
-    <div class="jive-enterprise-info-wait">
-       <img src="images/wait24trans.gif" alt="" align="left">    <strong>Installing Enterprise Plugin...</strong>
-    </div>
+         <div id="installed" class="jive-enterprise-info-success" style="display:none;">
+          <strong><fmt:message key="plugin.enterprise.installed" /></strong>
+         </div>
 
-    <div class="jive-enterprise-info-success">
-       <strong>Enterprise plugin installed successfully</strong> Please [insert instructions here]
-    </div>
-
-
-
+        <% } } } %>
 </body>
 </html>

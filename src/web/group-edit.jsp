@@ -299,7 +299,7 @@
 	<!-- BEGIN group name and description -->
 	<div class="jive-contentBox-plain">
 		<div class="jive-contentBox-toolbox">
-			<a href="group-create.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&name=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&description=<%= URLEncoder.encode(group.getDescription(), "UTF-8")%>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
+			<a href="group-create.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&name=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&description=<%= group.getDescription() != null? URLEncoder.encode(group.getDescription(), "UTF-8") : "" %>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
 			<a href="group-delete.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
 		</div>
 
@@ -344,7 +344,7 @@
 	               <b><fmt:message key="group.edit.share_display_name" /></b>
 	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"><br>
                        <%  if (errors.get("groupDisplayName") != null) { %>
-                           <span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span>
+                           <span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span><br/>
                        <%  } %>
 	                   <script type="text/javascript" language="JavaScript">
 		                   function toggleRosterShare() {

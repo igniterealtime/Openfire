@@ -37,7 +37,7 @@ public class ParamUtils {
      * @param request the HttpServletRequest object, known as "request" in a
      *      JSP page.
      * @param name the name of the parameter you want to get
-     * @param emptyStringsOK teturn the parameter values even if it is an empty string.
+     * @param emptyStringsOK return the parameter values even if it is an empty string.
      * @return the value of the parameter or null if the parameter was not
      *      found.
      */

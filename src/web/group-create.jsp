@@ -31,7 +31,7 @@
     boolean edit = request.getParameter("edit") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String name = ParamUtils.getParameter(request, "name");
-    String description = ParamUtils.getParameter(request, "description");
+    String description = ParamUtils.getParameter(request, "description", true);
     
     Map<String, String> errors = new HashMap<String, String>();
 

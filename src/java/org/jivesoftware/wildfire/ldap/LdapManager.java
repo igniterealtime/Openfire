@@ -25,15 +25,12 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Hashtable;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Centralized administration of LDAP connections. The getInstance() method
+ * Centralized administration of LDAP connections. The {@link #getInstance()} method
  * should be used to get an instace. The following properties configure this manager:
  *
  * <ul>
@@ -67,6 +64,68 @@ import java.util.regex.Pattern;
  */
 public class LdapManager {
 
+    private static LdapManager instance;
+    static {
+        // Create a special Map implementation to wrap XMLProperties. We only implement
+        // the get, put, and remove operations, since those are the only ones used. Using a Map
+        // makes it easier to perform LdapManager testing.
+        Map<String, String> properties = new Map<String, String>() {
+
+            public String get(Object key) {
+                return JiveGlobals.getXMLProperty((String)key);
+            }
+
+            public String put(String key, String value) {
+                JiveGlobals.setProperty(key, value);
+                // Always return null since XMLProperties doesn't support the normal semantics.
+                return null;
+            }
+
+            public String remove(Object key) {
+                JiveGlobals.deleteProperty((String)key);
+                // Always return null since XMLProperties doesn't support the normal semantics.
+                return null;
+            }
+
+
+            public int size() {
+                return 0;
+            }
+
+            public boolean isEmpty() {
+                return false;
+            }
+
+            public boolean containsKey(Object key) {
+                return false;
+            }
+
+            public boolean containsValue(Object value) {
+                return false;
+            }
+
+            public void putAll(Map<? extends String, ? extends String> t) {
+            }
+
+            public void clear() {
+            }
+
+            public Set<String> keySet() {
+                return null;
+            }
+
+            public Collection<String> values() {
+                return null;
+            }
+
+            public Set<Entry<String, String>> entrySet() {
+                return null;
+            }
+        };
+        instance = new LdapManager(properties);
+    }
+
+
     private Collection<String> hosts = new ArrayList<String>();
     private int port;
     private String usernameField;
@@ -87,13 +146,13 @@ public class LdapManager {
 
     private String groupNameField;
     private String groupMemberField;
-    private String groupDescriptionField = "description";
+    private String groupDescriptionField;
     private boolean posixMode = false;
     private String groupSearchFilter = null;
 
     private Pattern userDNPattern;
 
-    private static LdapManager instance = new LdapManager();
+    private Map<String, String> properties;
 
     /**
      * Provides singleton access to an instance of the LdapManager class.
@@ -105,45 +164,109 @@ public class LdapManager {
     }
 
     /**
-     * Constructs a new LdapManager instance. This class is a singleton so the
-     * constructor is private.
+     * Constructs a new LdapManager instance. Typically, {@link #getInstance()} should be
+     * called instead of this method. LdapManager instances should only be created directly
+     * for testing purposes.
+     *
+     * @param properties the Map that contains properties used by the LDAP manager, such as
+     *      LDAP host and base DN.
      */
-    private LdapManager() {
-        String host = JiveGlobals.getXMLProperty("ldap.host");
+    public LdapManager(Map<String, String> properties) {
+        this.properties = properties;
+        
+        String host = properties.get("ldap.host");
         // Parse the property and check if many hosts were defined. Hosts can be separated
         // by commas or white spaces
         StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
         while (st.hasMoreTokens()) {
             hosts.add(st.nextToken());
         }
-        this.port = JiveGlobals.getXMLProperty("ldap.port", 389);
-        this.usernameField = JiveGlobals.getXMLProperty("ldap.usernameField", "uid");
-        this.baseDN = JiveGlobals.getXMLProperty("ldap.baseDN", "");
-        this.alternateBaseDN = JiveGlobals.getXMLProperty("ldap.alternateBaseDN", null);
-        this.nameField = JiveGlobals.getXMLProperty("ldap.nameField", "cn");
-        this.emailField = JiveGlobals.getXMLProperty("ldap.emailField", "mail");
-        this.connectionPoolEnabled = JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled", true);
-        this.searchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
-        this.subTreeSearch = JiveGlobals.getXMLProperty("ldap.subTreeSearch", true);
-        this.groupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField", "cn");
-        this.groupMemberField = JiveGlobals.getXMLProperty("ldap.groupMemberField", "member");
-        this.groupDescriptionField = JiveGlobals.getXMLProperty("ldap.groupDescriptionField",
-                "description");
-        this.posixMode = JiveGlobals.getXMLProperty("ldap.posixMode", false);
-        this.groupSearchFilter = JiveGlobals.getXMLProperty("ldap.groupSearchFilter");
+        String portStr = properties.get("ldap.port");
+        port = 389;
+        if (portStr != null) {
+            try {
+                this.port = Integer.parseInt(portStr);
+            }
+            catch (NumberFormatException nfe) {
+                Log.error(nfe);
+            }
+        }
 
-        this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
+        usernameField = properties.get("ldap.usernameField");
+        if (usernameField == null) {
+            usernameField = "uid";
+        }
+        baseDN = properties.get("ldap.baseDN");
+        if (baseDN == null) {
+            baseDN = "";
+        }
+        alternateBaseDN = properties.get("ldap.alternateBaseDN");
+        nameField = properties.get("ldap.nameField");
+        if (nameField == null) {
+            nameField = "cn";
+        }
+        emailField = properties.get("ldap.emailField");
+        if (emailField == null) {
+            emailField = "mail";
+        }
+        connectionPoolEnabled = true;
+        String connectionPoolStr = properties.get("ldap.connectionPoolEnabled");
+        if (connectionPoolStr != null) {
+            connectionPoolEnabled = Boolean.valueOf(connectionPoolStr);
+        }
+        searchFilter = properties.get("ldap.searchFilter");
+        subTreeSearch = true;
+        String subTreeStr = properties.get("ldap.subTreeSearch");
+        if (subTreeStr != null) {
+            subTreeSearch = Boolean.valueOf(subTreeStr);
+        }
+        groupNameField = properties.get("ldap.groupNameField");
+        if (groupNameField == null) {
+            groupNameField = "cn";
+        }
+        groupMemberField = properties.get("ldap.groupMemberField");
+        if (groupMemberField ==null) {
+            groupMemberField = "member";
+        }
+        groupDescriptionField = properties.get("ldap.groupDescriptionField");
+        if (groupDescriptionField == null) {
+            groupDescriptionField = "description";
+        }
+        posixMode = false;
+        String posixStr = properties.get("ldap.posixMode");
+        if (posixStr != null) {
+            posixMode = Boolean.valueOf(posixStr);
+        }
+        groupSearchFilter = properties.get("ldap.groupSearchFilter");
+
+        adminDN = properties.get("ldap.adminDN");
         if (adminDN != null && adminDN.trim().equals("")) {
             adminDN = null;
         }
-        this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
-        this.ldapDebugEnabled = JiveGlobals.getXMLProperty("ldap.debugEnabled", false);
-        this.sslEnabled = JiveGlobals.getXMLProperty("ldap.sslEnabled", false);
-        this.followReferrals = JiveGlobals.getXMLProperty("ldap.autoFollowReferrals", false);
-        encloseUserDN = JiveGlobals.getXMLProperty("ldap.encloseUserDN", true);
+        adminPassword = properties.get("ldap.adminPassword");
+        ldapDebugEnabled = false;
+        String ldapDebugStr = properties.get("ldap.debugEnabled");
+        if (ldapDebugStr != null) {
+            ldapDebugEnabled = Boolean.valueOf(ldapDebugStr);
+        }
+        sslEnabled = false;
+        String sslEnabledStr = properties.get("ldap.sslEnabled");
+        if (sslEnabledStr != null) {
+            sslEnabled = Boolean.valueOf(sslEnabledStr);
+        }
+        followReferrals = false;
+        String followReferralsStr = properties.get("ldap.autoFollowReferrals");
+        if (followReferralsStr != null) {
+            followReferrals = Boolean.valueOf(followReferralsStr);
+        }
+        encloseUserDN = true;
+        String encloseUserStr = properties.get("ldap.encloseUserDN");
+        if (encloseUserStr != null) {
+            encloseUserDN = Boolean.valueOf(encloseUserStr);    
+        }
         // Set the pattern to use to wrap userDNs values "
         userDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
-        this.initialContextFactory = JiveGlobals.getXMLProperty("ldap.initialContextFactory");
+        this.initialContextFactory = properties.get("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
                 Class.forName(initialContextFactory);
@@ -585,7 +708,7 @@ public class LdapManager {
             // Remove the last comma
             hostProperty.setLength(hostProperty.length()-1);
         }
-        JiveGlobals.setXMLProperty("ldap.host", hostProperty.toString());
+        properties.put("ldap.host", hostProperty.toString());
     }
 
     /**
@@ -606,7 +729,7 @@ public class LdapManager {
      */
     public void setPort(int port) {
         this.port = port;
-        JiveGlobals.setXMLProperty("ldap.port", ""+port);
+        properties.put("ldap.port", Integer.toString(port));
     }
 
     /**
@@ -629,7 +752,7 @@ public class LdapManager {
      */
     public void setDebugEnabled(boolean debugEnabled) {
         this.ldapDebugEnabled = debugEnabled;
-        JiveGlobals.setXMLProperty("ldap.ldapDebugEnabled", ""+debugEnabled);
+        properties.put("ldap.ldapDebugEnabled", Boolean.toString(debugEnabled));
     }
 
     /**
@@ -648,7 +771,7 @@ public class LdapManager {
      */
     public void setSslEnabled(boolean sslEnabled) {
         this.sslEnabled = sslEnabled;
-        JiveGlobals.setXMLProperty("ldap.sslEnabled", ""+sslEnabled);
+        properties.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
     }
 
     /**
@@ -671,11 +794,11 @@ public class LdapManager {
     public void setUsernameField(String usernameField) {
         this.usernameField = usernameField;
         if (usernameField == null) {
-            JiveGlobals.deleteXMLProperty("ldap.usernameField");
+            properties.remove("ldap.usernameField");
             this.usernameField = "uid";
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
+            properties.put("ldap.usernameField", usernameField);
         }
     }
 
@@ -698,10 +821,10 @@ public class LdapManager {
     public void setNameField(String nameField) {
         this.nameField = nameField;
         if (nameField == null) {
-            JiveGlobals.deleteXMLProperty("ldap.nameField");
+            properties.remove("ldap.nameField");
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.nameField", nameField);
+            properties.put("ldap.nameField", nameField);
         }
     }
 
@@ -726,10 +849,10 @@ public class LdapManager {
     public void setEmailField(String emailField) {
         this.emailField = emailField;
         if (emailField == null) {
-            JiveGlobals.deleteXMLProperty("ldap.emailField");
+            properties.remove("ldap.emailField");
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.emailField", emailField);
+            properties.put("ldap.emailField", emailField);
         }
     }
 
@@ -751,7 +874,7 @@ public class LdapManager {
      */
     public void setBaseDN(String baseDN) {
         this.baseDN = baseDN;
-        JiveGlobals.setXMLProperty("ldap.baseDN", baseDN);
+        properties.put("ldap.baseDN", baseDN);
     }
 
     /**
@@ -776,10 +899,10 @@ public class LdapManager {
     public void setAlternateBaseDN(String alternateBaseDN) {
         this.alternateBaseDN = alternateBaseDN;
         if (alternateBaseDN == null) {
-            JiveGlobals.deleteXMLProperty("ldap.alternateBaseDN");
+            properties.remove("ldap.alternateBaseDN");
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.alternateBaseDN", alternateBaseDN);
+            properties.put("ldap.alternateBaseDN", alternateBaseDN);
         }
     }
 
@@ -801,7 +924,7 @@ public class LdapManager {
      */
     public void setAdminDN(String adminDN) {
         this.adminDN = adminDN;
-        JiveGlobals.setXMLProperty("ldap.adminDN", adminDN);
+        properties.put("ldap.adminDN", adminDN);
     }
 
     /**
@@ -822,7 +945,7 @@ public class LdapManager {
      */
     public void setAdminPassword(String adminPassword) {
         this.adminPassword = adminPassword;
-        JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
+        properties.put("ldap.adminPassword", adminPassword);
     }
 
     /**
@@ -851,7 +974,7 @@ public class LdapManager {
      */
     public void setSearchFilter(String searchFilter) {
         this.searchFilter = searchFilter;
-        JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+        properties.put("ldap.searchFilter", searchFilter);
     }
 
     /**
@@ -878,7 +1001,7 @@ public class LdapManager {
      */
     public void setSubTreeSearch(boolean subTreeSearch) {
         this.subTreeSearch = subTreeSearch;
-        JiveGlobals.setXMLProperty("ldap.subTreeSearch", String.valueOf(subTreeSearch));
+        properties.put("ldap.subTreeSearch", String.valueOf(subTreeSearch));
     }
 
     /**
@@ -898,7 +1021,7 @@ public class LdapManager {
      */
     public void setGroupNameField(String groupNameField) {
         this.groupNameField = groupNameField;
-        JiveGlobals.setXMLProperty("ldap.groupNameField", groupNameField);
+        properties.put("ldap.groupNameField", groupNameField);
     }
 
     /**
@@ -919,7 +1042,7 @@ public class LdapManager {
      */
     public void setGroupmemberField(String groupMemberField) {
         this.groupMemberField = groupMemberField;
-        JiveGlobals.setXMLProperty("ldap.groupMemberField", groupMemberField);
+        properties.put("ldap.groupMemberField", groupMemberField);
     }
 
     /**
@@ -940,7 +1063,7 @@ public class LdapManager {
      */
     public void setGroupDescriptionField(String groupDescriptionField) {
         this.groupDescriptionField = groupDescriptionField;
-        JiveGlobals.setXMLProperty("ldap.groupDescriptionField", groupDescriptionField);
+        properties.put("ldap.groupDescriptionField", groupDescriptionField);
     }
 
     /**
@@ -964,7 +1087,7 @@ public class LdapManager {
      */
     public void setPosixMode(boolean posixMode) {
         this.posixMode = posixMode;
-        JiveGlobals.setXMLProperty("ldap.posixMode", String.valueOf(posixMode));
+        properties.put("ldap.posixMode", String.valueOf(posixMode));
     }
 
     /**
@@ -993,6 +1116,6 @@ public class LdapManager {
      */
     public void setGroupSearchFilter(String groupSearchFilter) {
         this.groupSearchFilter = groupSearchFilter;
-        JiveGlobals.setXMLProperty("ldap.groupSearchFilter", groupSearchFilter);
+        properties.put("ldap.groupSearchFilter", groupSearchFilter);
     }
 }

@@ -67,10 +67,10 @@ public class OSCARTransport extends BaseTransport {
      */
     public Boolean isUsernameValid(String username) {
         if (getType() == TransportType.icq) {
-            return username.matches("\\p{Digit}+");
+            return username.matches("\\d+");
         }
         else {
-            return username.matches("\\p{Alnum}+") || username.matches("\\w+@[\\w\\.]+");
+            return username.matches("\\w+") || username.matches("\\w+@[\\w\\.]+");
         }
     }
 

@@ -3,7 +3,7 @@ ALTER TABLE gatewayRegistration ADD nickname VARCHAR2(255) NULL;
 
 -- Add pseudo roster table
 CREATE TABLE gatewayPseudoRoster (
-   registrationID    BIGINT         NOT NULL,
+   registrationID    INTEGER        NOT NULL,
    username          VARCHAR2(255)  NOT NULL,
    nickname          VARCHAR2(255),
    groups            VARCHAR2(255)

@@ -13,7 +13,7 @@ CREATE INDEX gatewayReg_jid_idx ON gatewayRegistration (jid);
 CREATE INDEX gatewayReg_type_idx ON gatewayRegistration (transportType);
 
 CREATE TABLE gatewayPseudoRoster (
-   registrationID    BIGINT         NOT NULL,
+   registrationID    INTEGER        NOT NULL,
    username          VARCHAR2(255)  NOT NULL,
    nickname          VARCHAR2(255),
    groups            VARCHAR2(255)

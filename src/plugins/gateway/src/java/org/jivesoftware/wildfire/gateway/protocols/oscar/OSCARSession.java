@@ -61,6 +61,7 @@ public class OSCARSession extends TransportSession {
     }
 
     private BOSConnection bosConn = null;
+    private LoginConnection loginConn = null;
     private Set<ServiceConnection> services = new HashSet<ServiceConnection>();
     private PresenceType presenceType = null;
     private String verboseStatus = null;
@@ -74,9 +75,9 @@ public class OSCARSession extends TransportSession {
     private Integer highestGroupId = -1;
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
-        setLoginStatus(TransportLoginStatus.LOGGING_IN);
         if (!isLoggedIn()) {
-            LoginConnection loginConn = new LoginConnection(new ConnDescriptor("login.oscar.aol.com", 5190), this);
+            setLoginStatus(TransportLoginStatus.LOGGING_IN);
+            loginConn = new LoginConnection(new ConnDescriptor("login.oscar.aol.com", 5190), this);
             loginConn.connect();
 
             this.presenceType = presenceType;
@@ -88,17 +89,42 @@ public class OSCARSession extends TransportSession {
     }
 
     public synchronized void logOut() {
-        setLoginStatus(TransportLoginStatus.LOGGING_OUT);
         if (isLoggedIn()) {
+            setLoginStatus(TransportLoginStatus.LOGGING_OUT);
+            if (loginConn != null) {
+                loginConn.disconnect();
+                loginConn = null;
+            }
             if (bosConn != null) {
                 bosConn.disconnect();
+                bosConn = null;
+            }
+            for (ServiceConnection conn : getServiceConnections()) {
+                try {
+                    conn.disconnect();
+                }
+                catch (Exception e) {
+                    // Ignore.
+                }
+                try {
+                    services.remove(conn);
+                }
+                catch (Exception e) {
+                    // Ignore.
+                }
+                try {
+                    snacMgr.unregister(conn);
+                }
+                catch (Exception e) {
+                    // Ignore.
+                }
             }
             Presence p = new Presence(Presence.Type.unavailable);
             p.setTo(getJID());
             p.setFrom(getTransport().getJID());
             getTransport().sendPacket(p);
+            setLoginStatus(TransportLoginStatus.LOGGED_OUT);
         }
-        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     /**

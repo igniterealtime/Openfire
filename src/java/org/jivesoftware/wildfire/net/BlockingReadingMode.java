@@ -101,7 +101,7 @@ class BlockingReadingMode extends SocketReadingMode {
             else {
                 // Close and release the created connection
                 socketReader.connection.close();
-                Log.error(LocaleUtils.getLocalizedString("admin.error.connection")
+                Log.debug(LocaleUtils.getLocalizedString("admin.error.connection")
                         + "\n" + socket.toString());
             }
             socketReader.shutdown();

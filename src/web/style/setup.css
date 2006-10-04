@@ -486,14 +486,9 @@ html>body .jive-vcardTable {
 	float: left;
 	width: 17px;
 	height: 17px;
-	}
-.jive-setup-helpicon a {
-	display: block;
-	width: 14px;
-	height: 14px;
-	margin: 3px 0px 0px 3px;
+    margin: 3px 0px 0px 3px;
 	background: transparent url(../images/setup_helpicon.gif) no-repeat;
-	}
+    }
 div.jiveTooltip {
 	position: absolute;
 	width: 330px;

@@ -11,13 +11,12 @@
 
 package org.jivesoftware.wildfire.ldap;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.group.Group;
 import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.group.GroupProvider;
-import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
@@ -25,9 +24,9 @@ import org.xmpp.packet.JID;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
 import javax.naming.ldap.SortControl;
 import java.text.MessageFormat;
 import java.util.*;
@@ -320,15 +319,8 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     public Collection<String> getGroupNames(JID user) {
-        // TODO Remove this temp fix for LDAP and fix LDAP to get correct list of groups of a user
-        Collection<String> userGroups = new ArrayList<String>();
-        for (Group group : GroupManager.getInstance().getGroups()) {
-            if (group.isUser(user)) {
-                userGroups.add(group.getName());
-            }
-        }
-        return userGroups;
-        /* XMPPServer server = XMPPServer.getInstance();
+        // Get DN of specified user
+        XMPPServer server = XMPPServer.getInstance();
         String username;
         if (!manager.isPosixMode()) {
             // Check if the user exists (only if user is a local user)
@@ -347,17 +339,62 @@ public class LdapGroupProvider implements GroupProvider {
         else {
             username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
         }
-        System.out.println("Username for search: " + username);
-
-        String filter = MessageFormat.format(manager.getSearchFilter(), username);
-        System.out.println("Filter: " + filter);
+        // Do nothing if the user is empty or null
+        if (username == null || "".equals(username)) {
+            return Collections.emptyList();
+        }
+        // Perform the LDAP query
+        List<String> groupNames = new ArrayList<String>();
+        LdapContext ctx = null;
         try {
-            return populateGroups(searchForGroups(filter, standardAttributes));
+            ctx = manager.getContext();
+            // Search for the dn based on the group name.
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (manager.isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
+
+            StringBuilder filter = new StringBuilder();
+            filter.append("(&");
+            filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
+            filter.append("(").append(manager.getGroupMemberField()).append("=").append(username);
+            filter.append("))");
+            NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
+            while (answer.hasMoreElements()) {
+                // Get the next group.
+                String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
+                        manager.getGroupNameField()).get();
+                // Escape group name and add to results.
+                groupNames.add(JID.escapeNode(groupName));
+            }
+            // Close the enumeration.
+            answer.close();
+            // If client-side sorting is enabled, sort.
+            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
+                Collections.sort(groupNames);
+            }
         }
         catch (Exception e) {
-            Log.error("Error populating groups recieved from LDAP", e);
+            Log.error("Error getting groups for user: " + user, e);
             return Collections.emptyList();
-        }*/
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+        return groupNames;
     }
 
     /**
@@ -558,6 +595,7 @@ public class LdapGroupProvider implements GroupProvider {
      *
      * @param answer LDAP search result.
      * @return a collection of groups.
+     * @throws javax.naming.NamingException
      */
     private Collection<Group> populateGroups(Enumeration<SearchResult> answer) throws NamingException {
         if (manager.isDebugEnabled()) {

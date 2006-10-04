@@ -30,6 +30,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
 import java.util.zip.ZipFile;
 
 /**
@@ -939,6 +941,10 @@ public class PluginManager {
                     }
                 }
                 zipFile.close();
+
+                // The lib directory of the plugin may contain Pack200 versions of the JAR
+                // file. If so, unpack them.
+                unpackArchives(new File(dir, "lib"));
             }
             catch (Exception e) {
                 Log.error(e);
@@ -946,9 +952,61 @@ public class PluginManager {
         }
 
         /**
-         * Deletes a directory.
+         * Converts any pack files in a directory into standard JAR files. Each
+         * pack file will be deleted after being converted to a JAR. If no
+         * pack files are found, this method does nothing.
+         *
+         * @param libDir the directory containing pack files.
          */
-        public boolean deleteDir(File dir) {
+        private void unpackArchives(File libDir) {
+            // Get a list of all packed files in the lib directory.
+            File [] packedFiles = libDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".pack");
+                }
+            });
+
+            if (packedFiles == null) {
+                // Do nothing since no .pack files were found
+                return;
+            }
+
+            // Unpack each.
+            for (File packedFile : packedFiles) {
+                try {
+                    String jarName = packedFile.getName().substring(0,
+                            packedFile.getName().length() - ".pack".length());
+                    // Delete JAR file with same name if it exists (could be due to upgrade
+                    // from old Wildfire release).
+                    File jarFile = new File(libDir, jarName);
+                    if (jarFile.exists()) {
+                        jarFile.delete();
+                    }
+
+                    InputStream in = new BufferedInputStream(new FileInputStream(packedFile));
+                    JarOutputStream out = new JarOutputStream(new BufferedOutputStream(
+                            new FileOutputStream(new File(libDir, jarName))));
+                    Pack200.Unpacker unpacker = Pack200.newUnpacker();
+                    // Call the unpacker
+                    unpacker.unpack(in, out);
+
+                    in.close();
+                    out.close();
+                    packedFile.delete();
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+        }
+
+        /**
+         * Deletes a directory.
+         *
+         * @param dir the directory to delete.
+         * @return true if the directory was deleted.
+         */
+        private boolean deleteDir(File dir) {
             if (dir.isDirectory()) {
                 String[] childDirs = dir.list();
                 // Always try to delete JAR files first since that's what will

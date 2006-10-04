@@ -1101,10 +1101,28 @@
                 </then>
             </if>
 
+            <!-- Some JAR files don't work well through Pack200. When that's the case, they should
+                 be manually added to this list.
+            -->
+            <property name="pack200.excludes" value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+
+            <for param="jar">
+                <path>
+                    <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar" excludes="${pack200.excludes}"/>
+                </path>
+                <sequential>
+                    <delete file="@{jar}.pack" />
+                    <pack200 src="@{jar}"
+                        destfile="@{jar}.pack"
+                        gzipoutput="false"
+                    />
+                </sequential>
+            </for>
+
             <!-- Copy everything else to Wildfire's plugin dir -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true" >
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
-                    <include name="lib/*.jar"/>
+                    <include name="lib/*.pack"/>
                     <include name="web/WEB-INF/web.xml"/>
                     <include name="web/WEB-INF/web-custom.xml"/>
                 </fileset>
@@ -1121,6 +1139,11 @@
                     <exclude name="web/**/*.html"/>
                     <exclude name="java/**/*.java"/>
                 </fileset>
+            </copy>
+
+            <!-- Excluded pack files need to be copied over as well -->
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true" >
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="${pack200.excludes}"/>
             </copy>
 
             <!-- Jar the plugin -->

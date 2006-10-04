@@ -1,6 +1,6 @@
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.util.JiveGlobals, java.util.Map, java.util.HashMap, org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.JiveGlobals"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.wildfire.XMPPServer, java.util.HashMap, java.util.Map"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -27,10 +27,11 @@
 
     // Get parameters
     boolean save = request.getParameter("save") != null;
+    boolean test = request.getParameter("test") != null;
 
     Map<String, String> errors = new HashMap<String, String>();
 
-    if (save) {
+    if (save || test) {
         int serverTypeInt = ParamUtils.getIntParameter(request, "servertype", 1);
         switch (serverTypeInt) {
             case 1:
@@ -66,22 +67,44 @@
         debugEnabled = ParamUtils.getBooleanParameter(request, "debug", debugEnabled);
         referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", referralsEnabled);
 
-        // Save settings and redirect
         if (errors.isEmpty()) {
-            JiveGlobals.setXMLProperty("ldap.host", host);
-            JiveGlobals.setXMLProperty("ldap.port", Integer.toString(port));
-            JiveGlobals.setXMLProperty("ldap.baseDN", baseDN);
-            JiveGlobals.setXMLProperty("ldap.adminDN", adminDN);
-            JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
-            JiveGlobals.setXMLProperty("ldap.connectionPoolEnabled",
+            // Store settings in a map and keep it in the session
+            Map<String, String> settings = new HashMap<String, String>();
+            settings.put("ldap.serverType", serverType);
+            settings.put("ldap.host", host);
+            settings.put("ldap.port", Integer.toString(port));
+            settings.put("ldap.baseDN", baseDN);
+            settings.put("ldap.adminDN", adminDN);
+            settings.put("ldap.adminPassword", adminPassword);
+            settings.put("ldap.connectionPoolEnabled",
                     Boolean.toString(connectionPoolEnabled));
-            JiveGlobals.setXMLProperty("ldap.sslEnabled", Boolean.toString(sslEnabled));
-            JiveGlobals.setXMLProperty("ldap.debugEnabled", Boolean.toString(debugEnabled));
-            JiveGlobals.setXMLProperty("ldap.autoFollowReferrals",
+            settings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
+            settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
+            settings.put("ldap.autoFollowReferrals",
                     Boolean.toString(referralsEnabled));
+            session.setAttribute("ldapSettings", settings);
 
-            // Redirect to next step.
-            response.sendRedirect("setup-ldap-user.jsp?serverType=" + serverType);
+            if (test) {
+                // Redirect to testing page.
+                response.sendRedirect("setup-ldap-server_test.jsp");
+            }
+            else {
+                // Save settings and redirect
+                JiveGlobals.setXMLProperty("ldap.host", host);
+                JiveGlobals.setXMLProperty("ldap.port", Integer.toString(port));
+                JiveGlobals.setXMLProperty("ldap.baseDN", baseDN);
+                JiveGlobals.setXMLProperty("ldap.adminDN", adminDN);
+                JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
+                JiveGlobals.setXMLProperty("ldap.connectionPoolEnabled",
+                        Boolean.toString(connectionPoolEnabled));
+                JiveGlobals.setXMLProperty("ldap.sslEnabled", Boolean.toString(sslEnabled));
+                JiveGlobals.setXMLProperty("ldap.debugEnabled", Boolean.toString(debugEnabled));
+                JiveGlobals.setXMLProperty("ldap.autoFollowReferrals",
+                        Boolean.toString(referralsEnabled));
+
+                // Redirect to next step.
+                response.sendRedirect("setup-ldap-user.jsp?serverType=" + serverType);
+            }
             return;
         }
     }

@@ -5,10 +5,10 @@
    <name>Subscription</name>
    <description>Automatically accepts or rejects subsription requests</description>
    <author>Ryan Graham</author>
-   <version>1.0.0</version>
-   <date>07/17/2006</date>
+   <version>1.0.1</version>
+   <date>10/06/2006</date>
    <url>http://www.jivesoftware.org</url>
-   <minServerVersion>2.6.0</minServerVersion>
+   <minServerVersion>3.1.0</minServerVersion>
 
    <adminconsole>
       <tab id="tab-server">

@@ -5,9 +5,9 @@
     <name>Search</name>
     <description>Provides support for Jabber Search (JEP-0055)</description>
     <author>Ryan Graham</author>
-    <version>1.2.0</version>
-    <date>08/07/2006</date>
-    <minServerVersion>2.4.0</minServerVersion>
+    <version>1.2.1</version>
+    <date>10/06/2006</date>
+    <minServerVersion>3.1.0</minServerVersion>
 	
 	<adminconsole>		
 		<tab id="tab-server">

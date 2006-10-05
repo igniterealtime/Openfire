@@ -909,7 +909,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void logConversation(MUCRoom room, Message message, JID sender) {
-        logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
+        // Only log messages that have a subject or body. Otherwise ignore it.
+        if (message.getSubject() != null || message.getBody() != null) {
+            logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
+        }
     }
 
     public void messageBroadcastedTo(int numOccupants) {

@@ -80,15 +80,12 @@
                     Boolean.toString(connectionPoolEnabled));
             settings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
             settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
-            settings.put("ldap.autoFollowReferrals",
-                    Boolean.toString(referralsEnabled));
+            settings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
+            // Always disable connection pooling so that connections aren't left hanging open.
+            settings.put("ldap.connectionPoolEnabled", "false");
             session.setAttribute("ldapSettings", settings);
 
-            if (test) {
-                // Redirect to testing page.
-                response.sendRedirect("setup-ldap-server_test.jsp");
-            }
-            else {
+            if (save) {
                 // Save settings and redirect
                 JiveGlobals.setXMLProperty("ldap.host", host);
                 JiveGlobals.setXMLProperty("ldap.port", Integer.toString(port));
@@ -104,8 +101,8 @@
 
                 // Redirect to next step.
                 response.sendRedirect("setup-ldap-user.jsp?serverType=" + serverType);
+                return;
             }
-            return;
         }
     }
     else {
@@ -130,7 +127,20 @@
 
 <body>
 
-	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
+    <% if (test) { %>
+
+        <a href="setup-ldap-server_test.jsp" id="lbmessage" title="Test" style="display:none;"></a>
+        <script type="text/javascript">
+            function loadMsg() {
+                var lb = new lightbox(document.getElementById('lbmessage'));
+                lb.activate();
+            }
+            setTimeout('loadMsg()', 250);
+        </script>
+
+    <% } %>
+
+    <h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
 	<div id="jive-contentBox_stepbar">
@@ -188,11 +198,11 @@
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.server.admindn" />:</td>
-			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="150" value="<%= adminDN!=null?adminDN:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="150" value="<%= adminDN!=null?adminDN:""%>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.server.password" />:</td>
-			<td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="30" value="<%= adminPassword!=null?adminPassword:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+			<td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="30" value="<%= adminPassword!=null?adminPassword:""%>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
 			</tr>
 			</table>
 		</div>
@@ -286,12 +296,10 @@
 
 			<!-- BEGIN right-aligned buttons -->
 			<div align="right">
-				<%--<a href="setup-ldap-server_test.jsp" class="lbOn" id="jive-setup-test2">
-				<img src="../images/setup_btn_gearplay.gif" alt="" width="14" height="14" border="0">
-				<fmt:message key="setup.ldap.test" />
-				</a>--%>
+				
+                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test" border="0">
 
-				<input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
+                <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
 			</div>
 			<!-- END right-aligned buttons -->
 

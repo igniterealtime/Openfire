@@ -67,7 +67,7 @@ lightbox.prototype = {
 		Event.observe(ctrl, 'click', this.activate.bindAsEventListener(this), false);
 		ctrl.onclick = function(){return false;};
 	},
-	
+
 	// Turn everything on - mainly the IE fixes
 	activate: function(){
 		if (browser == 'Internet Explorer'){
@@ -78,18 +78,18 @@ lightbox.prototype = {
 		}
 		this.displayLightbox("block");
 	},
-	
+
 	// Ie requires height to 100% and overflow hidden or else you can scroll down past the lightbox
 	prepareIE: function(height, overflow){
 		bod = document.getElementsByTagName('body')[0];
 		bod.style.height = height;
 		bod.style.overflow = overflow;
-  
+
 		htm = document.getElementsByTagName('html')[0];
 		htm.style.height = height;
-		htm.style.overflow = overflow; 
+		htm.style.overflow = overflow;
 	},
-	
+
 	// In IE, select elements hover on top of the lightbox
 	hideSelects: function(visibility){
 		selects = document.getElementsByTagName('select');
@@ -97,45 +97,45 @@ lightbox.prototype = {
 			selects[i].style.visibility = visibility;
 		}
 	},
-	
+
 	// Taken from lightbox implementation found at http://www.huddletogether.com/projects/lightbox/
 	getScroll: function(){
 		if (self.pageYOffset) {
 			this.yPos = self.pageYOffset;
 		} else if (document.documentElement && document.documentElement.scrollTop){
-			this.yPos = document.documentElement.scrollTop; 
+			this.yPos = document.documentElement.scrollTop;
 		} else if (document.body) {
 			this.yPos = document.body.scrollTop;
 		}
 	},
-	
+
 	setScroll: function(x, y){
-		window.scrollTo(x, y); 
+		window.scrollTo(x, y);
 	},
-	
+
 	displayLightbox: function(display){
-		$('overlay').style.display = display;
+        $('overlay').style.display = display;
 		$('lightbox').style.display = display;
 		if(display != 'none') this.loadInfo();
 	},
-	
+
 	// Begin Ajax request based off of the href of the clicked linked
 	loadInfo: function() {
 		var myAjax = new Ajax.Request(
         this.content,
         {method: 'post', parameters: "", onComplete: this.processInfo.bindAsEventListener(this)}
 		);
-		
+
 	},
-	
+
 	// Display Ajax response
 	processInfo: function(response){
 		info = "<div id='lbContent'>" + response.responseText + "</div>";
 		new Insertion.Before($('lbLoadMessage'), info)
-		$('lightbox').className = "done";	
-		this.actions();			
+		$('lightbox').className = "done";
+		this.actions();
 	},
-	
+
 	// Search through new links within the lightbox, and attach click event
 	actions: function(){
 		lbActions = document.getElementsByClassName('lbAction');
@@ -146,29 +146,29 @@ lightbox.prototype = {
 		}
 
 	},
-	
+
 	// Example of creating your own functionality once lightbox is initiated
 	insert: function(e){
 	   link = Event.element(e).parentNode;
 	   Element.remove($('lbContent'));
-	 
+
 	   var myAjax = new Ajax.Request(
 			  link.href,
 			  {method: 'post', parameters: "", onComplete: this.processInfo.bindAsEventListener(this)}
 	   );
-	 
+
 	},
-	
+
 	// Example of creating your own functionality once lightbox is initiated
 	deactivate: function(){
 		Element.remove($('lbContent'));
-		
+
 		if (browser == "Internet Explorer"){
 			this.setScroll(0,this.yPos);
 			this.prepareIE("auto", "auto");
 			this.hideSelects("visible");
 		}
-		
+
 		this.displayLightbox("none");
 	}
 }

@@ -11,10 +11,14 @@
 
 package org.jivesoftware.admin;
 
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
+import org.dom4j.*;
+import org.dom4j.io.OutputFormat;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.XMLWriter;
+
+import java.io.IOException;
+import java.io.StringWriter;
 
 /**
  * Bean that stores the vcard mapping. It is also responsible for saving the mapping
@@ -24,32 +28,32 @@ import org.jivesoftware.util.JiveGlobals;
  */
 public class LdapUserProfile {
 
-    private String name;
-    private String email;
-    private String fullName;
-    private String nickname;
-    private String birthday;
-    private String home_street;
-    private String home_city;
-    private String home_state;
-    private String home_zip;
-    private String home_country;
-    private String home_phone;
-    private String home_mobile;
-    private String home_fax;
-    private String home_pager;
-    private String business_street;
-    private String business_city;
-    private String business_state;
-    private String business_zip;
-    private String business_country;
-    private String business_job_title;
-    private String business_department;
-    private String business_phone;
-    private String business_mobile;
-    private String business_fax;
-    private String business_pager;
-    private String business_web_page;
+    private String name = "";
+    private String email = "";
+    private String fullName = "";
+    private String nickname = "";
+    private String birthday = "";
+    private String homeStreet = "";
+    private String homeCity = "";
+    private String homeState = "";
+    private String homeZip = "";
+    private String homeCountry = "";
+    private String homePhone = "";
+    private String homeMobile = "";
+    private String homeFax = "";
+    private String homePager = "";
+    private String businessStreet = "";
+    private String businessCity = "";
+    private String businessState = "";
+    private String businessZip = "";
+    private String businessCountry = "";
+    private String businessJobTitle = "";
+    private String businessDepartment = "";
+    private String businessPhone = "";
+    private String businessMobile = "";
+    private String businessFax = "";
+    private String businessPager = "";
+    private String businessWebPage = "";
 
     public String getName() {
         return name;
@@ -91,172 +95,172 @@ public class LdapUserProfile {
         this.birthday = birthday;
     }
 
-    public String getHome_street() {
-        return home_street;
+    public String getHomeStreet() {
+        return homeStreet;
     }
 
-    public void setHome_street(String home_street) {
-        this.home_street = home_street;
+    public void setHomeStreet(String homeStreet) {
+        this.homeStreet = homeStreet;
     }
 
-    public String getHome_city() {
-        return home_city;
+    public String getHomeCity() {
+        return homeCity;
     }
 
-    public void setHome_city(String home_city) {
-        this.home_city = home_city;
+    public void setHomeCity(String homeCity) {
+        this.homeCity = homeCity;
     }
 
-    public String getHome_state() {
-        return home_state;
+    public String getHomeState() {
+        return homeState;
     }
 
-    public void setHome_state(String home_state) {
-        this.home_state = home_state;
+    public void setHomeState(String homeState) {
+        this.homeState = homeState;
     }
 
-    public String getHome_zip() {
-        return home_zip;
+    public String getHomeZip() {
+        return homeZip;
     }
 
-    public void setHome_zip(String home_zip) {
-        this.home_zip = home_zip;
+    public void setHomeZip(String homeZip) {
+        this.homeZip = homeZip;
     }
 
-    public String getHome_country() {
-        return home_country;
+    public String getHomeCountry() {
+        return homeCountry;
     }
 
-    public void setHome_country(String home_country) {
-        this.home_country = home_country;
+    public void setHomeCountry(String homeCountry) {
+        this.homeCountry = homeCountry;
     }
 
-    public String getHome_phone() {
-        return home_phone;
+    public String getHomePhone() {
+        return homePhone;
     }
 
-    public void setHome_phone(String home_phone) {
-        this.home_phone = home_phone;
+    public void setHomePhone(String homePhone) {
+        this.homePhone = homePhone;
     }
 
-    public String getHome_mobile() {
-        return home_mobile;
+    public String getHomeMobile() {
+        return homeMobile;
     }
 
-    public void setHome_mobile(String home_mobile) {
-        this.home_mobile = home_mobile;
+    public void setHomeMobile(String homeMobile) {
+        this.homeMobile = homeMobile;
     }
 
-    public String getHome_fax() {
-        return home_fax;
+    public String getHomeFax() {
+        return homeFax;
     }
 
-    public void setHome_fax(String home_fax) {
-        this.home_fax = home_fax;
+    public void setHomeFax(String homeFax) {
+        this.homeFax = homeFax;
     }
 
-    public String getHome_pager() {
-        return home_pager;
+    public String getHomePager() {
+        return homePager;
     }
 
-    public void setHome_pager(String home_pager) {
-        this.home_pager = home_pager;
+    public void setHomePager(String homePager) {
+        this.homePager = homePager;
     }
 
-    public String getBusiness_street() {
-        return business_street;
+    public String getBusinessStreet() {
+        return businessStreet;
     }
 
-    public void setBusiness_street(String business_street) {
-        this.business_street = business_street;
+    public void setBusinessStreet(String businessStreet) {
+        this.businessStreet = businessStreet;
     }
 
-    public String getBusiness_city() {
-        return business_city;
+    public String getBusinessCity() {
+        return businessCity;
     }
 
-    public void setBusiness_city(String business_city) {
-        this.business_city = business_city;
+    public void setBusinessCity(String businessCity) {
+        this.businessCity = businessCity;
     }
 
-    public String getBusiness_state() {
-        return business_state;
+    public String getBusinessState() {
+        return businessState;
     }
 
-    public void setBusiness_state(String business_state) {
-        this.business_state = business_state;
+    public void setBusinessState(String businessState) {
+        this.businessState = businessState;
     }
 
-    public String getBusiness_zip() {
-        return business_zip;
+    public String getBusinessZip() {
+        return businessZip;
     }
 
-    public void setBusiness_zip(String business_zip) {
-        this.business_zip = business_zip;
+    public void setBusinessZip(String businessZip) {
+        this.businessZip = businessZip;
     }
 
-    public String getBusiness_country() {
-        return business_country;
+    public String getBusinessCountry() {
+        return businessCountry;
     }
 
-    public void setBusiness_country(String business_country) {
-        this.business_country = business_country;
+    public void setBusinessCountry(String businessCountry) {
+        this.businessCountry = businessCountry;
     }
 
-    public String getBusiness_job_title() {
-        return business_job_title;
+    public String getBusinessJobTitle() {
+        return businessJobTitle;
     }
 
-    public void setBusiness_job_title(String business_job_title) {
-        this.business_job_title = business_job_title;
+    public void setBusinessJobTitle(String businessJobTitle) {
+        this.businessJobTitle = businessJobTitle;
     }
 
-    public String getBusiness_department() {
-        return business_department;
+    public String getBusinessDepartment() {
+        return businessDepartment;
     }
 
-    public void setBusiness_department(String business_department) {
-        this.business_department = business_department;
+    public void setBusinessDepartment(String businessDepartment) {
+        this.businessDepartment = businessDepartment;
     }
 
-    public String getBusiness_phone() {
-        return business_phone;
+    public String getBusinessPhone() {
+        return businessPhone;
     }
 
-    public void setBusiness_phone(String business_phone) {
-        this.business_phone = business_phone;
+    public void setBusinessPhone(String businessPhone) {
+        this.businessPhone = businessPhone;
     }
 
-    public String getBusiness_mobile() {
-        return business_mobile;
+    public String getBusinessMobile() {
+        return businessMobile;
     }
 
-    public void setBusiness_mobile(String business_mobile) {
-        this.business_mobile = business_mobile;
+    public void setBusinessMobile(String businessMobile) {
+        this.businessMobile = businessMobile;
     }
 
-    public String getBusiness_fax() {
-        return business_fax;
+    public String getBusinessFax() {
+        return businessFax;
     }
 
-    public void setBusiness_fax(String business_fax) {
-        this.business_fax = business_fax;
+    public void setBusinessFax(String businessFax) {
+        this.businessFax = businessFax;
     }
 
-    public String getBusiness_pager() {
-        return business_pager;
+    public String getBusinessPager() {
+        return businessPager;
     }
 
-    public void setBusiness_pager(String business_pager) {
-        this.business_pager = business_pager;
+    public void setBusinessPager(String businessPager) {
+        this.businessPager = businessPager;
     }
 
-    public String getBusiness_web_page() {
-        return business_web_page;
+    public String getBusinessWebPage() {
+        return businessWebPage;
     }
 
-    public void setBusiness_web_page(String business_web_page) {
-        this.business_web_page = business_web_page;
+    public void setBusinessWebPage(String businessWebPage) {
+        this.businessWebPage = businessWebPage;
     }
 
     /**
@@ -268,27 +272,27 @@ public class LdapUserProfile {
         fullName = "{displayName}";
         nickname = "";
         birthday = "";
-        home_street = "{homePostalAddress}";
-        home_city = "";
-        home_state = "";
-        home_zip = "{homeZip}";
-        home_country = "{countryCode}";
-        home_phone = "{homePhone}";
-        home_mobile = "";
-        home_fax = "";
-        home_pager = "";
-        business_street = "{postalAddress}";
-        business_city = "{l}";
-        business_state = "{st}";
-        business_zip = "{postalCode}";
-        business_country = "{countryCode}";
-        business_job_title = "{title}";
-        business_department = "{department}";
-        business_phone = "{otherTelephone}";
-        business_mobile = "{mobile}";
-        business_fax = "{facsimileTelephoneNumber}";
-        business_pager = "{pager}";
-        business_web_page = "";
+        homeStreet = "{homePostalAddress}";
+        homeCity = "";
+        homeState = "";
+        homeZip = "{homeZip}";
+        homeCountry = "{countryCode}";
+        homePhone = "{homePhone}";
+        homeMobile = "";
+        homeFax = "";
+        homePager = "";
+        businessStreet = "{postalAddress}";
+        businessCity = "{l}";
+        businessState = "{st}";
+        businessZip = "{postalCode}";
+        businessCountry = "{countryCode}";
+        businessJobTitle = "{title}";
+        businessDepartment = "{department}";
+        businessPhone = "{otherTelephone}";
+        businessMobile = "{mobile}";
+        businessFax = "{facsimileTelephoneNumber}";
+        businessPager = "{pager}";
+        businessWebPage = "";
     }
 
     /**
@@ -300,379 +304,221 @@ public class LdapUserProfile {
         fullName = "{displayName}";
         nickname = "{uid}";
         birthday = "";
-        home_street = "{homePostalAddress}";
-        home_city = "";
-        home_state = "";
-        home_zip = "";
-        home_country = "";
-        home_phone = "{homePhone}";
-        home_mobile = "";
-        home_fax = "";
-        home_pager = "";
-        business_street = "{postalAddress}";
-        business_city = "{l}";
-        business_state = "{st}";
-        business_zip = "{postalCode}";
-        business_country = "";
-        business_job_title = "{title}";
-        business_department = "{departmentNumber}";
-        business_phone = "{telephoneNumber}";
-        business_mobile = "{mobile}";
-        business_fax = "";
-        business_pager = "{pager}";
-        business_web_page = "";
+        homeStreet = "{homePostalAddress}";
+        homeCity = "";
+        homeState = "";
+        homeZip = "";
+        homeCountry = "";
+        homePhone = "{homePhone}";
+        homeMobile = "";
+        homeFax = "";
+        homePager = "";
+        businessStreet = "{postalAddress}";
+        businessCity = "{l}";
+        businessState = "{st}";
+        businessZip = "{postalCode}";
+        businessCountry = "";
+        businessJobTitle = "{title}";
+        businessDepartment = "{departmentNumber}";
+        businessPhone = "{telephoneNumber}";
+        businessMobile = "{mobile}";
+        businessFax = "";
+        businessPager = "{pager}";
+        businessWebPage = "";
     }
 
     /**
      * Saves current configuration as XML properties.
      */
-    public void saveXMLProperties() {
+    public void saveProperties() {
         Element vCard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
         Element subelement;
 
         // Add name
         if (name != null && name.trim().length() > 0) {
             subelement = vCard.addElement("N");
-            Element given = subelement.addElement("GIVEN");
-            if (name.trim().startsWith("{")) {
-                String xmlValue = name.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                given.addAttribute("attrs", xmlValue.trim());
-                given.setText("{0}");
-            }
-            else {
-                given.setText(name.trim());
-            }
+            subelement.addElement("GIVEN").setText(name.trim());
         }
         // Add email
         if (email != null && email.trim().length() > 0) {
             subelement = vCard.addElement("EMAIL");
             subelement.addElement("INTERNET");
-            Element userID = subelement.addElement("USERID");
-            if (email.trim().startsWith("{")) {
-                String xmlValue = email.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                userID.addAttribute("attrs", xmlValue.trim());
-                userID.setText("{0}");
-            }
-            else {
-                userID.setText(name.trim());
-            }
+            subelement.addElement("USERID").setText(email.trim());
         }
         // Add Full Name
-        subelement = vCard.addElement("FN");
-        if (fullName.trim().startsWith("{")) {
-            String xmlValue = fullName.replaceAll("\\{", "");
-            xmlValue = xmlValue.replaceAll("}", "");
-            subelement.addAttribute("attrs", xmlValue.trim());
-            subelement.setText("{0}");
-        }
-        else {
-            subelement.setText(fullName.trim());
-        }
+        vCard.addElement("FN").setText(fullName.trim());
         // Add nickname
         if (nickname != null && nickname.trim().length() > 0) {
-            subelement = vCard.addElement("NICKNAME");
-            if (nickname.trim().startsWith("{")) {
-                String xmlValue = nickname.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                subelement.addAttribute("attrs", xmlValue.trim());
-                subelement.setText("{0}");
-            }
-            else {
-                subelement.setText(nickname.trim());
-            }
+            vCard.addElement("NICKNAME").setText(nickname.trim());
         }
         // Add birthday
         if (birthday != null && birthday.trim().length() > 0) {
-            subelement = vCard.addElement("BDAY");
-            if (birthday.trim().startsWith("{")) {
-                String xmlValue = birthday.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                subelement.addAttribute("attrs", xmlValue.trim());
-                subelement.setText("{0}");
-            }
-            else {
-                subelement.setText(birthday.trim());
-            }
+            vCard.addElement("BDAY").setText(birthday.trim());
         }
         // Add home address
         subelement = vCard.addElement("ADR");
         subelement.addElement("HOME");
-        if (home_street != null && home_street.trim().length() > 0) {
-            Element street = subelement.addElement("STREET");
-            if (home_street.trim().startsWith("{")) {
-                String xmlValue = home_street.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                street.addAttribute("attrs", xmlValue.trim());
-                street.setText("{0}");
-            }
-            else {
-                street.setText(home_street.trim());
-            }
+        if (homeStreet != null && homeStreet.trim().length() > 0) {
+            subelement.addElement("STREET").setText(homeStreet.trim());
         }
-        if (home_city != null && home_city.trim().length() > 0) {
-            Element city = subelement.addElement("LOCALITY");
-            if (home_city.trim().startsWith("{")) {
-                String xmlValue = home_city.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(home_city.trim());
-            }
+        if (homeCity != null && homeCity.trim().length() > 0) {
+            subelement.addElement("LOCALITY").setText(homeCity.trim());
         }
-        if (home_state != null && home_state.trim().length() > 0) {
-            Element city = subelement.addElement("REGION");
-            if (home_state.trim().startsWith("{")) {
-                String xmlValue = home_state.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(home_state.trim());
-            }
+        if (homeState != null && homeState.trim().length() > 0) {
+            subelement.addElement("REGION").setText(homeState.trim());
         }
-        if (home_zip != null && home_zip.trim().length() > 0) {
-            Element city = subelement.addElement("PCODE");
-            if (home_zip.trim().startsWith("{")) {
-                String xmlValue = home_zip.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(home_zip.trim());
-            }
+        if (homeZip != null && homeZip.trim().length() > 0) {
+            subelement.addElement("PCODE").setText(homeZip.trim());
         }
-        if (home_country != null && home_country.trim().length() > 0) {
-            Element city = subelement.addElement("CTRY");
-            if (home_country.trim().startsWith("{")) {
-                String xmlValue = home_country.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(home_country.trim());
-            }
+        if (homeCountry != null && homeCountry.trim().length() > 0) {
+            subelement.addElement("CTRY").setText(homeCountry.trim());
         }
         // Add business address
         subelement = vCard.addElement("ADR");
         subelement.addElement("WORK");
-        if (business_street != null && business_street.trim().length() > 0) {
-            Element street = subelement.addElement("STREET");
-            if (business_street.trim().startsWith("{")) {
-                String xmlValue = business_street.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                street.addAttribute("attrs", xmlValue.trim());
-                street.setText("{0}");
-            }
-            else {
-                street.setText(business_street.trim());
-            }
+        if (businessStreet != null && businessStreet.trim().length() > 0) {
+            subelement.addElement("STREET").setText(businessStreet.trim());
         }
-        if (business_city != null && business_city.trim().length() > 0) {
-            Element city = subelement.addElement("LOCALITY");
-            if (business_city.trim().startsWith("{")) {
-                String xmlValue = business_city.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(business_city.trim());
-            }
+        if (businessCity != null && businessCity.trim().length() > 0) {
+            subelement.addElement("LOCALITY").setText(businessCity.trim());
         }
-        if (business_state != null && business_state.trim().length() > 0) {
-            Element city = subelement.addElement("REGION");
-            if (business_state.trim().startsWith("{")) {
-                String xmlValue = business_state.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(business_state.trim());
-            }
+        if (businessState != null && businessState.trim().length() > 0) {
+            subelement.addElement("REGION").setText(businessState.trim());
         }
-        if (business_zip != null && business_zip.trim().length() > 0) {
-            Element city = subelement.addElement("PCODE");
-            if (business_zip.trim().startsWith("{")) {
-                String xmlValue = business_zip.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(home_zip.trim());
-            }
+        if (businessZip != null && businessZip.trim().length() > 0) {
+            subelement.addElement("PCODE").setText(homeZip.trim());
         }
-        if (business_country != null && business_country.trim().length() > 0) {
-            Element city = subelement.addElement("CTRY");
-            if (business_country.trim().startsWith("{")) {
-                String xmlValue = business_country.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                city.addAttribute("attrs", xmlValue.trim());
-                city.setText("{0}");
-            }
-            else {
-                city.setText(business_country.trim());
-            }
+        if (businessCountry != null && businessCountry.trim().length() > 0) {
+            subelement.addElement("CTRY").setText(businessCountry.trim());
         }
         // Add home phone
-        if (home_phone != null && home_phone.trim().length() > 0) {
+        if (homePhone != null && homePhone.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("VOICE");
-            Element number = subelement.addElement("NUMBER");
-            if (home_phone.trim().startsWith("{")) {
-                String xmlValue = home_phone.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(home_phone.trim());
-            }
+            subelement.addElement("NUMBER").setText(homePhone.trim());
         }
         // Add home mobile
-        if (home_mobile != null && home_mobile.trim().length() > 0) {
+        if (homeMobile != null && homeMobile.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("VOICE");
             subelement.addElement("CELL");
-            Element number = subelement.addElement("NUMBER");
-            if (home_mobile.trim().startsWith("{")) {
-                String xmlValue = home_mobile.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(home_mobile.trim());
-            }
+            subelement.addElement("NUMBER").setText(homeMobile.trim());
         }
         // Add home fax
-        if (home_fax != null && home_fax.trim().length() > 0) {
+        if (homeFax != null && homeFax.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("FAX");
-            Element number = subelement.addElement("NUMBER");
-            if (home_fax.trim().startsWith("{")) {
-                String xmlValue = home_fax.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(home_fax.trim());
-            }
+            subelement.addElement("NUMBER").setText(homeFax.trim());
         }
         // Add home pager
-        if (home_pager != null && home_pager.trim().length() > 0) {
+        if (homePager != null && homePager.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("PAGER");
-            Element number = subelement.addElement("NUMBER");
-            if (home_pager.trim().startsWith("{")) {
-                String xmlValue = home_pager.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(home_pager.trim());
-            }
+            subelement.addElement("NUMBER").setText(homePager.trim());
         }
         // Add business phone
-        if (business_phone != null && business_phone.trim().length() > 0) {
+        if (businessPhone != null && businessPhone.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("VOICE");
-            Element number = subelement.addElement("NUMBER");
-            if (business_phone.trim().startsWith("{")) {
-                String xmlValue = business_phone.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(business_phone.trim());
-            }
+            subelement.addElement("NUMBER").setText(businessPhone.trim());
         }
         // Add business mobile
-        if (business_mobile != null && business_mobile.trim().length() > 0) {
+        if (businessMobile != null && businessMobile.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("VOICE");
             subelement.addElement("CELL");
-            Element number = subelement.addElement("NUMBER");
-            if (business_mobile.trim().startsWith("{")) {
-                String xmlValue = business_mobile.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(business_mobile.trim());
-            }
+            subelement.addElement("NUMBER").setText(businessMobile.trim());
         }
         // Add business fax
-        if (business_fax != null && business_fax.trim().length() > 0) {
+        if (businessFax != null && businessFax.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("FAX");
-            Element number = subelement.addElement("NUMBER");
-            if (business_fax.trim().startsWith("{")) {
-                String xmlValue = business_fax.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(business_fax.trim());
-            }
+            subelement.addElement("NUMBER").setText(businessFax.trim());
         }
         // Add business pager
-        if (business_pager != null && business_pager.trim().length() > 0) {
+        if (businessPager != null && businessPager.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("PAGER");
-            Element number = subelement.addElement("NUMBER");
-            if (business_pager.trim().startsWith("{")) {
-                String xmlValue = business_pager.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                number.addAttribute("attrs", xmlValue.trim());
-                number.setText("{0}");
-            }
-            else {
-                number.setText(business_pager.trim());
-            }
+            subelement.addElement("NUMBER").setText(businessPager.trim());
         }
         // Add job title
-        if (business_job_title != null && business_job_title.trim().length() > 0) {
-            subelement = vCard.addElement("TITLE");
-            if (business_job_title.trim().startsWith("{")) {
-                String xmlValue = business_job_title.replaceAll("\\{", "");
-                xmlValue = xmlValue.replaceAll("}", "");
-                subelement.addAttribute("attrs", xmlValue.trim());
-                subelement.setText("{0}");
-            }
-            else {
-                subelement.setText(business_job_title.trim());
-            }
+        if (businessJobTitle != null && businessJobTitle.trim().length() > 0) {
+            vCard.addElement("TITLE").setText(businessJobTitle.trim());
         }
         // TODO Add job department
         // TODO Add web page
 
-        String vcardXML = vCard.asXML();
+        // Generate content to store in property
+        String vcardXML;
+        StringWriter writer = new StringWriter();
+        OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
+        XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
+        try {
+            xmlWriter.write(vCard);
+            vcardXML = writer.toString();
+        }
+        catch (IOException e) {
+            Log.error("Error pretty formating XML", e);
+            vcardXML = vCard.asXML();
+        }
+
         StringBuilder sb = new StringBuilder(vcardXML.length());
         sb.append("<![CDATA[").append(vcardXML).append("]]>");
-
+        // Save mapping as an XML property
         JiveGlobals.setXMLProperty("ldap.vcard-mapping", sb.toString());
+    }
 
+    /**
+     * Returns true if the vCard mappings where successfully loaded from the XML
+     * property.
+     *
+     * @return true if mappings where loaded from saved property.
+     */
+    public boolean loadFromProperties() {
+        String xmlProperty = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
+        if (xmlProperty == null || xmlProperty.trim().length() == 0) {
+            return false;
+        }
+
+        try {
+            Document document = DocumentHelper.parseText(xmlProperty);
+            Element vCard = document.getRootElement();
+
+            Element element = vCard.element("N");
+            if (element != null) {
+                name = element.elementTextTrim("GIVEN");
+            }
+            element = vCard.element("EMAIL");
+            if (element != null) {
+                email = element.elementTextTrim("USERID");
+            }
+            element = vCard.element("FN");
+            if (element != null) {
+                fullName = vCard.getTextTrim();
+            }
+            element = vCard.element("NICKNAME");
+            if (element != null) {
+                nickname = vCard.getTextTrim();
+            }
+            element = vCard.element("BDAY");
+            if (element != null) {
+                birthday = vCard.getTextTrim();
+            }
+            // TODO add rest of fields
+        }
+        catch (DocumentException e) {
+            Log.error("Error loading vcard mappings from property", e);
+            return false;
+        }
+
+        return true;
     }
 }

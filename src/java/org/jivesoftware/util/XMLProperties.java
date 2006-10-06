@@ -313,7 +313,13 @@ public class XMLProperties {
         }
         // Add the new children.
         for (String value : values) {
-            element.addElement(childName).setText(value);
+            Element childElement = element.addElement(childName);
+            if (value.startsWith("<![CDATA[")) {
+                childElement.addCDATA(value.substring(9, value.length()-3));
+            }
+            else {
+                childElement.setText(value);
+            }
         }
         saveProperties();
 
@@ -386,7 +392,12 @@ public class XMLProperties {
             element = element.element(propName[i]);
         }
         // Set the value of the property in this node.
-        element.setText(value);
+        if (value.startsWith("<![CDATA[")) {
+            element.addCDATA(value.substring(9, value.length()-3));
+        }
+        else {
+            element.setText(value);
+        }
         // Write the XML properties to disk
         saveProperties();
 

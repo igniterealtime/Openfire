@@ -43,9 +43,9 @@ import java.util.regex.Pattern;
  *      <li>ldap.usernameField -- default value is "uid".</li>
  *      <li>ldap.nameField -- default value is "cn".</li>
  *      <li>ldap.emailField -- default value is "mail".</li>
- *      <li>ldap.searchFilter -- the filter used to load the list of users. The
- *              default value is in the form "([usernameField]={0})" where [usernameField]
- *              is the value of ldap.usernameField.
+ *      <li>ldap.searchFilter -- the filter used to load the list of users. When defined, it
+ *              will be used with the default filter, which is "([usernameField]={0})" where
+ *              [usernameField] is the value of ldap.usernameField.
  *      <li>ldap.groupNameField</li>
  *      <li>ldap.groupMemberField</li>
  *      <li>ldap.groupDescriptionField</li>
@@ -1002,6 +1002,25 @@ public class LdapManager {
     public void setSubTreeSearch(boolean subTreeSearch) {
         this.subTreeSearch = subTreeSearch;
         properties.put("ldap.subTreeSearch", String.valueOf(subTreeSearch));
+    }
+
+    /**
+     * Returns true if LDAP referrals will automatically be followed when found.
+     *
+     * @return true if LDAP referrals are automatically followed.
+     */
+    public boolean isFollowReferralsEnabled() {
+        return followReferrals;
+    }
+
+    /**
+     * Sets whether LDAP referrals should be automatically followed.
+     *
+     * @param followReferrals true if LDAP referrals should be automatically followed.
+     */
+    public void setFollowReferralsEnabled(boolean followReferrals) {
+        this.followReferrals = followReferrals;
+        properties.put("ldap.autoFollowReferrals", String.valueOf(followReferrals));
     }
 
     /**

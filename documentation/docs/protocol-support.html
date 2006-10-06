@@ -28,8 +28,8 @@ protocol defined by <a href="http://www.xmpp.org/specs/rfc3920.html">RFC 3920</a
 <a href="http://www.xmpp.org/specs/rfc3921.html">RFC 3921</a>. In addition to full
 XMPP support, Wildfire also provides support for numerous extensions to XMPP
 that are defined through the
-<acronym title="Jabber Enhancement Proposals">JEP</acronym> process at
-<a href="http://www.jabber.org">Jabber.org</a>.  This document provides a
+<acronym title="XMPP Enhancement Proposals">XEP</acronym> process at
+<a href="http://www.xmpp.org">xmpp.org</a>.  This document provides a
 summary of that protocol support and is updated for every Wildfire
 release.</p>
 
@@ -37,7 +37,7 @@ release.</p>
 <ul>
   <li><a href="#basic">Basic IM Protocol Suite Support</a></li>
   <li><a href="#intermediate">Intermediate IM Protocol Suite Support</a></li>
-  <li><a href="#jeps">List of JEPs Supported</a></li>
+  <li><a href="#jeps">List of XEPs Supported</a></li>
   <li><a href="#footnotes">Footnotes</a></li>
 </ul>
 
@@ -48,7 +48,7 @@ release.</p>
 
 <p>The basic suite includes full support of the XMPP RFC's as well as the most common extensions.
 The table below details the level of support for the requirements set by
-<a href="http://www.jabber.org/jeps/jep-0073.html">JEP-0073: Basic IM Protocol
+<a href="http://www.xmpp.org/extensions/xep-0073.html">XEP-0073: Basic IM Protocol
 Suite</a>.</p>
 
 <table class="dbtable">
@@ -64,17 +64,17 @@ Suite</a>.</p>
   <td class="supported">Yes</td>
 
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0030.html">JEP-0030</a>: Service Discovery</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0030.html">XEP-0030</a>: Service Discovery</td>
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0077.html">JEP-0077</a>: In-Band Registration</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0077.html">XEP-0077</a>: In-Band Registration</td>
   <td class="supported">Yes</td>
 </tr><tr>
 
-  <td><a href="http://www.jabber.org/jeps/jep-0078.html">JEP-0078</a>: Non-SASL Authentication</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0078.html">XEP-0078</a>: Non-SASL Authentication</td>
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0086.html">JEP-0086</a>: Error Condition Mappings</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0086.html">XEP-0086</a>: Error Condition Mappings</td>
   <td class="supported">Yes</td>
 </tr>
 </table>
@@ -86,7 +86,7 @@ Suite</a>.</p>
 
 <p>The intermediate suite includes the full basic suite as well as more advanced features in common use
 by XMPP clients. The table below details the level of support for the requirements set by
-<a href="http://www.jabber.org/jeps/jep-0117.html">JEP-0117: Intermediate IM Protocol
+<a href="http://www.xmpp.org/extensions/xep-0117.html">XEP-0117: Intermediate IM Protocol
 Suite</a>.</p>
 
 <table class="dbtable">
@@ -95,34 +95,34 @@ Suite</a>.</p>
   <th width="35%">Supported</th>
 
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0073.html">JEP-0073</a>: Basic IM Protocol Suite</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0073.html">XEP-0073</a>: Basic IM Protocol Suite</td>
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0004.html">JEP-0004</a>: Data Forms</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0004.html">XEP-0004</a>: Data Forms</td>
   <td class="supported">Yes</td>
 </tr><tr>
 
-  <td><a href="http://www.jabber.org/jeps/jep-0020.html">JEP-0020</a>: Feature Negotiation</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0020.html">XEP-0020</a>: Feature Negotiation</td>
   <td class="unsupported">No</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0045.html">JEP-0045</a>: Multi-User Chat</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0045.html">XEP-0045</a>: Multi-User Chat</td>
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0047.html">JEP-0047</a>: In-Band Bytestreams</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0047.html">XEP-0047</a>: In-Band Bytestreams</td>
 
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0065.html">JEP-0065</a>: SOCKS5 Bytestreams</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0065.html">XEP-0065</a>: SOCKS5 Bytestreams</td>
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0071.html">JEP-0071</a>: XHTML-IM</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0071.html">XEP-0071</a>: XHTML-IM</td>
   <td class="supported">Yes [<a href="#fn1">1</a>]</td>
 
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0096.html">JEP-0096</a>: File Transfer</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0096.html">XEP-0096</a>: File Transfer</td>
   <td class="supported">Yes</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0115.html">JEP-0115</a>: Entity Capabilities</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0115.html">XEP-0115</a>: Entity Capabilities</td>
   <td class="partially_supported">Yes [<a href="#fn2">2</a>]</td>
 
 </tr>
@@ -141,90 +141,90 @@ JEPs that only require client-side support are omitted.</p>
   <th>Specification</th>
   <th>Suite</th>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0004.html">JEP-0004</a>: Data Forms</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0004.html">XEP-0004</a>: Data Forms</td>
   <td>Intermediate</td>
 </tr><tr>
 
-  <td><a href="http://www.jabber.org/jeps/jep-0012.html">JEP-0012</a>: Last Activity</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0012.html">XEP-0012</a>: Last Activity</td>
   <td>-</td>
  </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0013.html">JEP-0013</a>: Flexible Offline Message Retrieval</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0013.html">XEP-0013</a>: Flexible Offline Message Retrieval</td>
   <td>-</td>
 </tr><tr>
 
-  <td><a href="http://www.jabber.org/jeps/jep-0030.html">JEP-0030</a>: Service Discovery</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0030.html">XEP-0030</a>: Service Discovery</td>
   <td>Basic</td>
 </tr><tr>
- <td><a href="http://www.jabber.org/jeps/jep-0033.html">JEP-0033</a>: Extended Stanza Addressing</td>
+ <td><a href="http://www.xmpp.org/extensions/xep-0033.html">XEP-0033</a>: Extended Stanza Addressing</td>
  <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0045.html">JEP-0045</a>: Multi-User Chat</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0045.html">XEP-0045</a>: Multi-User Chat</td>
 
   <td>Intermediate</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0049.html">JEP-0049</a>: Private XML Storage</td>
+  <td><a href="http://www.xmpp.org/xeps/xep-0049.html">XEP-0049</a>: Private XML Storage</td>
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0050.html">JEP-0050</a>: Ad-Hoc Commands</td>
-  <td>-</td>
-
-</tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0054.html">JEP-0054</a>: vcard-temp</td>
-  <td>-</td>
-</tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0055.html">JEP-0055</a>: Jabber Search [<a href="#fn3">3</a>]</td>
+  <td><a href="http://www.xmpp.org/jeps/xep-0050.html">XEP-0050</a>: Ad-Hoc Commands</td>
   <td>-</td>
 
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0060.html">JEP-0060</a>: Publish-Subscribe</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0054.html">XEP-0054</a>: vcard-temp</td>
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0065.html">JEP-0065</a>: SOCKS5 Bytestreams</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0055.html">XEP-0055</a>: Jabber Search [<a href="#fn3">3</a>]</td>
+  <td>-</td>
+
+</tr><tr>
+  <td><a href="http://www.xmpp.org/extensions/xep-0060.html">XEP-0060</a>: Publish-Subscribe</td>
+  <td>-</td>
+</tr><tr>
+  <td><a href="http://www.jabber.org/jeps/xep-0065.html">XEP-0065</a>: SOCKS5 Bytestreams</td>
   <td>Intermediate</td>
 </tr><tr>
 
-  <td><a href="http://www.jabber.org/jeps/jep-0077.html">JEP-0077</a>: In-Band Registration</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0077.html">XEP-0077</a>: In-Band Registration</td>
   <td>Basic</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0078.html">JEP-0078</a>: Non-SASL Authentication</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0078.html">XEP-0078</a>: Non-SASL Authentication</td>
   <td>Basic</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0082.html">JEP-0082</a>: Jabber Date and Time Profiles</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0082.html">XEP-0082</a>: Jabber Date and Time Profiles</td>
 
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0086.html">JEP-0086</a>: Error Condition Mappings</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0086.html">XEP-0086</a>: Error Condition Mappings</td>
   <td>Basic</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0090.html">JEP-0090</a>: Entity Time</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0090.html">XEP-0090</a>: Entity Time</td>
   <td>-</td>
 
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0091.html">JEP-0091</a>: Delayed Delivery</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0091.html">XEP-0091</a>: Delayed Delivery</td>
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0092.html">JEP-0092</a>: Software Version</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0092.html">XEP-0092</a>: Software Version</td>
   <td>-</td>
 </tr><tr>
 
-  <td><a href="http://www.jabber.org/jeps/jep-0096.html">JEP-0096</a>: File Transfer</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0096.html">XEP-0096</a>: File Transfer</td>
   <td>Intermediate</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0106.html">JEP-0106</a>: JID Escaping</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0106.html">XEP-0106</a>: JID Escaping</td>
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0114.html">JEP-0114</a>: Jabber Component Protocol</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0114.html">XEP-0114</a>: Jabber Component Protocol</td>
 
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0128.html">JEP-0128</a>: Service Discovery Extensions</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0128.html">XEP-0128</a>: Service Discovery Extensions</td>
   <td>-</td>
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0138.html">JEP-0138</a>: Stream Compression</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0138.html">XEP-0138</a>: Stream Compression</td>
   <td>-</td>
 
 </tr><tr>
-  <td><a href="http://www.jabber.org/jeps/jep-0175.html">JEP-0175</a>: Best Practices for Use of SASL ANONYMOUS</td>
+  <td><a href="http://www.xmpp.org/extensions/xep-0175.html">XEP-0175</a>: Best Practices for Use of SASL ANONYMOUS</td>
   <td>-</td>
 </tr>
 </table>
@@ -234,11 +234,11 @@ JEPs that only require client-side support are omitted.</p>
 <a name="footnotes"></a>
 <h2>Footnotes</h2>
 
- [<a name="fn1">1</a>] Some requirements of <u>JEP-0117: Intermediate IM Protocol Suite</u> do not pertain to servers.
+ [<a name="fn1">1</a>] Some requirements of <u>XEP-0117: Intermediate IM Protocol Suite</u> do not pertain to servers.
  <br>
- [<a name="fn2">2</a>] The entity capabilities JEP is primarily for clients to implement. However, Wildfire does not support an optional server extensions defined by the JEP.
+ [<a name="fn2">2</a>] The entity capabilities XEP is primarily for clients to implement. However, Wildfire does not support an optional server extensions defined by the XEP.
  <br>
- [<a name="fn3">3</a>] Support for <u>JEP-0055: Jabber Search</u> is provided by the <a href="http://www.jivesoftware.org/wildfire/plugins.jsp">Search plugin</a>.
+ [<a name="fn3">3</a>] Support for <u>XEP-0055: Jabber Search</u> is provided by the <a href="http://www.jivesoftware.org/wildfire/plugins.jsp">Search plugin</a>.
  <br>
 
  

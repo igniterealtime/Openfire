@@ -101,7 +101,12 @@ public class PluginManager {
         }
         // Shutdown all installed plugins.
         for (Plugin plugin : plugins.values()) {
-            plugin.destroyPlugin();
+            try {
+                plugin.destroyPlugin();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         plugins.clear();
         pluginDirs.clear();
@@ -506,7 +511,17 @@ public class PluginManager {
             PluginServlet.unregisterServlets(customWebXML);
         }
 
-        plugin.destroyPlugin();
+        // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
+        // in the destroy plugin process will disrupt the whole unloading process. It's still
+        // possible that classloader destruction won't work in the case that destroying the plugin
+        // fails. In that case, Wildfire may need to be restarted to fully cleanup the plugin
+        // resources.
+        try {
+            plugin.destroyPlugin();
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
         PluginClassLoader classLoader = classloaders.get(plugin);
         // Destroy class loader if defined, which it won't be if this is a child plugin.
         if (classLoader != null) {

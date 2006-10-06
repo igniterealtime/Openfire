@@ -26,9 +26,9 @@
 <p>
     This document details how to configure your Wildfire installation to use
     an external directory such as Open LDAP or Active Directory. Integration with a directory
-    lets users authenticate using their directory username and password.
-    Optionally, you can configure Wildfire to load user profile and group information from the directory.
-    Any group in Wildfire can be designated as a shared group, which means that you can pre-populate user's
+    lets users authenticate using their directory username and password. Optionally, you can
+    configure Wildfire to load user profile and group information from the directory. Any group in
+    Wildfire can be designated as a shared group, which means that you can pre-populate user's
     rosters using directory groups.
 </p>
 
@@ -67,26 +67,35 @@
 <h2>Configuration</h2>
 
 <p>
-    In order to configure your server to use LDAP:
+    The Wildfire setup tool includes an easy to use LDAP setup wizard.
+    Choose the LDAP option on the Profile Settings page to configure directory integration.
+    The wizard along with in-line help will guide you through the rest of the process.
+
+    <img src="images/setup_ldap.png" alt="LDAP settup" width="710" height="400" vspace="10">
+    <br clear="left"/>
+
+    If you have already completed the setup process but need to enable LDAP integration, you
+    can re-run the setup tool. To do so:
     <ol>
 
         <li>
             Stop Wildfire.
         </li>
-        <li>Edit <tt>conf/wildfire.xml</tt> in your Wildfire installation folder as
-            described below.
+        <li>Edit <tt>conf/wildfire.xml</tt> in your Wildfire installation folder and set
+            &lt;setup&gt;true&lt;/setup&gt; to &lt;setup&gt;false&lt;/setup&gt;.
         </li>
         <li>
-            Restart Wildfire.
+            Restart Wildfire and enter the setup tool.
         </li>
     </ol>
 
 </p>
 
-<h3>Editing the Config File</h3>
+<h3>Manually Editing the Config File</h3>
 
 <p>
-    Open the configuration file <tt>conf/wildfire.xml</tt> from your Wildfire
+    If you prefer to edit the configuration file to enable LDAP integration directly, use the following
+    instructions. Open the configuration file <tt>conf/wildfire.xml</tt> from your Wildfire
     installation in your favorite
     editor and add or change the following settings. Properties flagged with (<font color="red">
     <b>*</b></font>)
@@ -377,9 +386,9 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
 
         &lt;![CDATA[
           &lt;vCard xmlns='vcard-temp'&gt;
-            &lt;FN attrs=&quot;displayName&quot;&gt;{0}&lt;/FN&gt;
-            &lt;NICKNAME attrs=&quot;uid&quot;&gt;{0}&lt;/NICKNAME&gt;
-            &lt;BDAY attrs=&quot;dob&quot;&gt;{0}&lt;/BDAY&gt;
+            &lt;FN&gt;{displayName}&lt;/FN&gt;
+            &lt;NICKNAME&gt;{uid}&lt;/NICKNAME&gt;
+            &lt;BDAY&gt;{dob}&lt;/BDAY&gt;
 
             &lt;ADR&gt;
               &lt;HOME/&gt;
@@ -395,24 +404,24 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
             &lt;TEL&gt;
               &lt;HOME/&gt;
               &lt;VOICE/&gt;
-              &lt;NUMBER attrs=&quot;telephoneNumber&quot;&gt;{0}&lt;/NUMBER&gt;
+              &lt;NUMBER&gt;{telephoneNumber}&lt;/NUMBER&gt;
             &lt;/TEL&gt;
 
             &lt;EMAIL&gt;
             &lt;INTERNET/&gt;
-            &lt;USERID attrs=&quot;mail&quot;&gt;{0}&lt;/USERID&gt;
+            &lt;USERID&gt;{mail}&lt;/USERID&gt;
             &lt;/EMAIL&gt;
-            &lt;TITLE attrs=&quot;title&quot;&gt;{0}&lt;/TITLE&gt;
+            &lt;TITLE&gt;{title}&lt;/TITLE&gt;
 
-            &lt;ROLE attrs=&quot;&quot;&gt;{0}&lt;/ROLE&gt;
+            &lt;ROLE&gt;&lt;/ROLE&gt;
             &lt;ORG&gt;
-              &lt;ORGNAME attrs=&quot;o&quot;&gt;{0}&lt;/ORGNAME&gt;
-              &lt;ORGUNIT attrs=&quot;&quot;&gt;{0}&lt;/ORGUNIT&gt;
+              &lt;ORGNAME&gt;{o}&lt;/ORGNAME&gt;
+              &lt;ORGUNIT&gt;&lt;/ORGUNIT&gt;
 
             &lt;/ORG&gt;
-            &lt;URL attrs=&quot;labeledURI&quot;&gt;{0}&lt;/URL&gt;
-            &lt;DESC attrs=&quot;uidNumber,homeDirectory,loginShell&quot;&gt;
-            uid: {0} home: {1} shell: {2}
+            &lt;URL&gt;{labeledURI}&lt;/URL&gt;
+            &lt;DESC&gt;
+            uid: {uidNumber} home: {homeDirectory} shell: {loginShell}
             &lt;/DESC&gt;
 
           &lt;/vCard&gt;

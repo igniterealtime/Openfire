@@ -15,15 +15,15 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.ClientSession;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.roster.*;
 import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.wildfire.roster.*;
+import org.jivesoftware.wildfire.user.PresenceEventListener;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.PresenceEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
@@ -152,6 +152,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * Handles all incoming message stanzas.
      *
      * @param packet The message packet to be processed.
+     * @return list of packets that will be sent back to the message sender.
      */
     private List<Packet> processPacket(Message packet) {
         List<Packet> reply = new ArrayList<Packet>();
@@ -191,6 +192,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * Handles all incoming presence stanzas.
      *
      * @param packet The presence packet to be processed.
+     * @return list of packets that will be sent back to the presence requester.
      */
     private List<Packet> processPacket(Presence packet) {
         List<Packet> reply = new ArrayList<Packet>();
@@ -354,6 +356,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * Handles all incoming iq stanzas.
      *
      * @param packet The iq packet to be processed.
+     * @return list of packets that will be sent back to the IQ requester.
      */
     private List<Packet> processPacket(IQ packet) {
         List<Packet> reply = new ArrayList<Packet>();
@@ -745,6 +748,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * Gets an easy to use presence type from a presence packet.
      *
      * @param packet A presence packet from which the type will be pulled.
+     * @return the presence type of the specified packet.
      */
     public PresenceType getPresenceType(Presence packet) {
         Presence.Type ptype = packet.getType();
@@ -806,6 +810,8 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
 
     /**
      * Returns the jid of the transport.
+     *
+     * @return the jid of the transport.
      */
     public JID getJID() {
         return this.jid;
@@ -813,6 +819,8 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
 
     /**
      * Returns the roster manager for the transport.
+     *
+     * @return the roster manager for the transport.
      */
     public RosterManager getRosterManager() {
         return this.rosterManager;

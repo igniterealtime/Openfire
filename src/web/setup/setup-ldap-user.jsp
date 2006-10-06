@@ -1,11 +1,14 @@
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.BeanUtils,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="vcardBean" scope="session" class="org.jivesoftware.admin.LdapUserProfile" />  
 
 <%
 	// Redirect if we've already run setup:
@@ -29,13 +32,22 @@
     String defaultSearchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
     if (serverType.equals("activedirectory")) {
         if (defaultUsernameField == null) {
+            // Initialize vCard mappings
+            vcardBean.initForActiveDirectory();
+        }
+        if (defaultUsernameField == null) {
             defaultUsernameField = "sAMAccountName";
+            // Initialize vCard mappings
         }
         if (defaultSearchFilter == null) {
             defaultSearchFilter = "(objectClass=organizationalPerson)";
         }
     }
     else {
+        if (defaultUsernameField == null) {
+            // Initialize vCard mappings
+            vcardBean.initForOpenLDAP();
+        }
         if (defaultUsernameField == null) {
             defaultUsernameField = "uid";
         }
@@ -55,6 +67,8 @@
         }
         searchFields = ParamUtils.getParameter(request, "searchFields");
         searchFilter = ParamUtils.getParameter(request, "searchFilter");
+        // Set the properties to the vCard bean with the user input
+        BeanUtils.setProperties(vcardBean, request.getParameterMap());
 
         // Save settings and redirect.
         if (errors.isEmpty()) {
@@ -65,6 +79,8 @@
             if (searchFilter != null) {
                 JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
             }
+            // Save vCard mappings
+            vcardBean.saveXMLProperties();
 
             // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
             JiveGlobals.setXMLProperty("provider.user.className",
@@ -167,7 +183,6 @@
 			}
 
 		</script>
-        <%--
 		<!-- BEGIN jive-contentBox_greybox -->
 		<div class="jive-contentBox_greybox">
 			<strong>User Profiles (vCard)</strong>
@@ -187,7 +202,7 @@
 						<strong>Name</strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="name" value="{cn}" id="jiveLDAPname" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="name" value="<%= vcardBean.getName() %>" id="name" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -195,7 +210,7 @@
 						<strong>Email</strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="email" value="{mail}" id="jiveLDAPemail" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="email" value="<%= vcardBean.getEmail() %>" id="email" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -211,7 +226,7 @@
 						<strong>Full Name</strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="fullname" value="{firstName} {middleName} {lastName}" id="jiveLDAPfullname" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="fullname" value="<%= vcardBean.getFullName() %>" id="fullName" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -219,7 +234,7 @@
 						<strong>Nickname</strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="nickname" value="{nick}" id="jiveLDAPnickname" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="nickname" value="<%= vcardBean.getNickname() %>" id="nickname" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -227,7 +242,7 @@
 						<strong>Birthday</strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="dob" value="{dob}" id="jiveLDAPdob" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="dob" value="<%= vcardBean.getBirthday() %>" id="birthday" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -243,7 +258,7 @@
 						- Street Address
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homestreet" value="{homeAddress} {homeExtrAddress}" id="jiveLDAPhomestreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homestreet" value="<%= vcardBean.getHome_street() %>" id="home_street" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -251,7 +266,7 @@
 						- City
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homecity" value="{homeCity}" id="jiveLDAPhomecity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homecity" value="<%= vcardBean.getHome_city() %>" id="home_city" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -259,7 +274,7 @@
 						- State/Province
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homestate" value="{homeState}" id="jiveLDAPhomestate" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homestate" value="<%= vcardBean.getHome_state() %>" id="home_state" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -267,7 +282,7 @@
 						- Postal Code
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homezip" value="{homeZip}" id="jiveLDAPhomezip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homezip" value="<%= vcardBean.getHome_zip() %>" id="home_zip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -275,7 +290,7 @@
 						- Country
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homecountry" value="{homeCountry}" id="jiveLDAPhomecountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homecountry" value="<%= vcardBean.getHome_country() %>" id="home_country" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -283,7 +298,7 @@
 						- Phone Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homephone" value="{homePhone}" id="jiveLDAPhomephone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homephone" value="<%= vcardBean.getHome_phone() %>" id="home_phone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -291,7 +306,7 @@
 						- Mobile Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homemobile" value="{homeMobile}" id="jiveLDAPhomemobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homemobile" value="<%= vcardBean.getHome_mobile() %>" id="home_mobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -299,7 +314,7 @@
 						- Fax
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homefax" value="{homeFax}" id="jiveLDAPhomefax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homefax" value="<%= vcardBean.getHome_fax() %>" id="home_fax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -307,7 +322,7 @@
 						- Pager
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homepager" value="{homePager}" id="jiveLDAPhomePager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homepager" value="<%= vcardBean.getHome_pager() %>" id="home_pager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -323,7 +338,7 @@
 						- Street Address
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workstreet" value="317 SW Alder St, Ste 500" id="jiveLDAPworkstreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workstreet" value="<%= vcardBean.getBusiness_street() %>" id="business_street" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -331,7 +346,7 @@
 						- City
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workcity" value="Portland" id="jiveLDAPworkcity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workcity" value="<%= vcardBean.getBusiness_city() %>" id="business_city" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -339,7 +354,7 @@
 						- State/Province
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workstate" value="Oregon" id="jiveLDAPworkstate" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workstate" value="<%= vcardBean.getBusiness_state() %>" id="business_state" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -347,7 +362,7 @@
 						- Postal Code
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workzip" value="97204" id="jiveLDAPworkzip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workzip" value="<%= vcardBean.getBusiness_zip() %>" id="business_zip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -355,7 +370,7 @@
 						- Country
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workcountry" value="USA" id="jiveLDAPworkcountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workcountry" value="<%= vcardBean.getBusiness_country() %>" id="business_country" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -363,7 +378,7 @@
 						- Job Title
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="worktitle" value="{title}" id="jiveLDAPworktitle" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="worktitle" value="<%= vcardBean.getBusiness_job_title() %>" id="business_job_title" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -371,7 +386,7 @@
 						- Department
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workdept" value="{department}" id="jiveLDAPworkdept" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workdept" value="<%= vcardBean.getBusiness_department() %>" id="business_department" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -379,7 +394,7 @@
 						- Phone Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workphone" value="{workPhone}" id="jiveLDAPworkphone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workphone" value="<%= vcardBean.getBusiness_phone() %>" id="business_phone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -387,7 +402,7 @@
 						- Mobile Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workmobile" value="{workMobile}" id="jiveLDAPworkmobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workmobile" value="<%= vcardBean.getBusiness_mobile() %>" id="business_mobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -395,7 +410,7 @@
 						- Fax
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workfax" value="{workFax}" id="jiveLDAPworkfax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workfax" value="<%= vcardBean.getBusiness_fax() %>" id="business_fax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -403,7 +418,7 @@
 						- Pager
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workpager" value="{workPager}" id="jiveLDAPworkPager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workpager" value="<%= vcardBean.getBusiness_pager() %>" id="business_pager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -411,7 +426,7 @@
 						- Web page
 					</td>
 					<td class="jive-vcardTable-value">
-						<input type="text" name="workurl" value="{webAddress}" id="jiveLDAPworkurl" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="workurl" value="<%= vcardBean.getBusiness_web_page() %>" id="business_web_page" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 			</table>
@@ -419,10 +434,6 @@
 
 		</div>
 		<!-- END jive-contentBox_greybox -->
-
-		--%>
-
-
 
 		<!-- BEGIN jive-buttons -->
 		<div class="jive-buttons">

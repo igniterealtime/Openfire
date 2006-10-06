@@ -5,20 +5,27 @@
   -	$Date: 2005-08-11 12:56:15 -0700 (Thu, 11 Aug 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.util.*,
-                 org.jivesoftware.util.JiveGlobals,
-                 java.sql.Connection,
-                 java.io.File,
-                 java.sql.Statement,
-                 java.sql.SQLException,
-                 org.jivesoftware.database.DbConnectionManager,
+<%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.DefaultConnectionProvider,
                  org.jivesoftware.util.ClassUtils,
+                 org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.Log,
-                 org.jivesoftware.database.DefaultConnectionProvider"
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.XMPPServer,
+                 java.io.File,
+                 java.lang.Double,
+                 java.lang.Exception,
+                 java.lang.Integer,
+                 java.lang.String"
 %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="java.lang.Throwable"%>
+<%@ page import="java.sql.Connection" %>
+<%@ page import="java.sql.SQLException" %>
+<%@ page import="java.sql.Statement" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
@@ -337,19 +344,27 @@ function checkSubmit() {
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td nowrap align="right">
-        <fmt:message key="setup.datasource.standard.connect" />
+        <%--<fmt:message key="setup.datasource.standard.connect" />--%>
+        Minimum Connections:
     </td>
     <td>
-        <span style="display: block; float: left; padding: 2px 2px 0px 0px;"><fmt:message key="setup.datasource.standard.min" /></span>
 	    <input type="text" name="minConnections" size="5" maxlength="5" value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
-        <span style="display: block; float: left; padding: 2px 2px 0px 5px;"><fmt:message key="setup.datasource.standard.max" /></span>
-	    <input type="text" name="maxConnections" size="5" maxlength="5" value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("minConnections") != null) { %>
             <span class="jive-error-text">
             <%= errors.get("minConnections") %>
             </span>
         <%  } %>
+    </td>
+</tr>
+<tr valign="top">
+    <td nowrap align="right">
+        <%--<fmt:message key="setup.datasource.standard.connect" />--%>
+        Maximum Connections:
+    </td>
+    <td>
+	    <input type="text" name="maxConnections" size="5" maxlength="5" value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
+        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("maxConnections") != null) { %>
             <span class="jive-error-text">
             <%= errors.get("maxConnections") %>
@@ -376,8 +391,8 @@ function checkSubmit() {
 
 <br>
 
-		<div align="right"><span class="jive-description">
-			<fmt:message key="setup.datasource.standard.note" /></span>
+		<div align="right"><div class="jive-description" style="padding-bottom:10px;">
+			<fmt:message key="setup.datasource.standard.note" /></div>
 			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
 		</div>
 	</form>

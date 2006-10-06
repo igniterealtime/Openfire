@@ -127,7 +127,7 @@
 
 <body>
 
-    <% if (test) { %>
+    <% if (test && errors.isEmpty()) { %>
 
         <a href="setup-ldap-server_test.jsp" id="lbmessage" title="Test" style="display:none;"></a>
         <script type="text/javascript">
@@ -171,38 +171,57 @@
 		<div class="jive-contentBox_bluebox">
 			<table border="0" cellpadding="0" cellspacing="2">
 			<tr>
-			<td colspan="4"><strong><fmt:message key="setup.ldap.server.ldap_server" /></strong></td>
+			    <td colspan="4"><strong><fmt:message key="setup.ldap.server.ldap_server" /></strong></td>
 			</tr>
 			<tr>
-			<td align="right"><fmt:message key="setup.ldap.server.type" />:</td>
-			<td colspan="3" nowrap><select name="servertype" size="1" id="jiveLDAPserverType">
-				<option value="1" SELECTED><fmt:message key="setup.ldap.server.type_select" /></option>
-				<option value="2">Active Directory</option>
-				<option value="3">OpenLDAP</option>
-                <option value="4"><fmt:message key="setup.ldap.server.type_other" /></option>
-                </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.type" />:</td>
+                <td colspan="3" nowrap>
+                    <select name="servertype" size="1" id="jiveLDAPserverType" style="width:90%;">
+                        <option value="1" selected="selected"><fmt:message key="setup.ldap.server.type_select" /></option>
+                        <option value="2">Active Directory</option>
+                        <option value="3">OpenLDAP</option>
+                        <option value="4"><fmt:message key="setup.ldap.server.type_other" /></option>
+                    </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                </td>
 			</tr>
 			<tr>
-			<td align="right"><fmt:message key="setup.ldap.server.host" />:</td>
-			<td><input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50" value="<%= host!=null?host:"" %>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
-			<td align="right">&nbsp;<fmt:message key="setup.ldap.server.port" />:</td>
-			<td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="<%= port %>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+			    <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.host" />:</td>
+                <td width="1%">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                        <td width="1%" nowrap="nowrap">
+                            <input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="50" value="<%= host!=null?host:"" %>">    
+                        </td>
+                        <td width="99%">
+                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+                <td align="right" width="1%" nowrap="nowrap">&nbsp;&nbsp; <fmt:message key="setup.ldap.server.port" />:</td>
+                <td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="<%= port %>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
 			</tr>
 			<tr>
-			<td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
-			<td colspan="3"><input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="150" value="<%= baseDN!=null?baseDN:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></span></td>
+                <td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
+                <td colspan="3">
+                    <input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="150" value="<%= baseDN!=null?baseDN:""%>" style="width:90%;">
+                    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></span>
+                </td>
 			</tr>
             <tr><td colspan="4">&nbsp;</td></tr>
             <tr>
-			<td colspan="4"><strong><fmt:message key="setup.ldap.server.auth" />:</strong></td>
+			    <td colspan="4"><strong><fmt:message key="setup.ldap.server.auth" />:</strong></td>
 			</tr>
 			<tr>
-			<td align="right"><fmt:message key="setup.ldap.server.admindn" />:</td>
-			<td colspan="3"><input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="150" value="<%= adminDN!=null?adminDN:""%>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.admindn" />:</td>
+                <td colspan="3">
+                    <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="150" value="<%= adminDN!=null?adminDN:""%>" style="width:90%;">
+                    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span>
+                </td>
 			</tr>
 			<tr>
-			<td align="right"><fmt:message key="setup.ldap.server.password" />:</td>
-			<td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="30" value="<%= adminPassword!=null?adminPassword:""%>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.password" />:</td>
+                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="30" value="<%= adminPassword!=null?adminPassword:""%>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
 			</tr>
 			</table>
 		</div>

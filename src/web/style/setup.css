@@ -239,7 +239,7 @@ form {
 .jive-contentBox td select#jiveLDAPserverType,
 .jive-contentBox td input#jiveLDAPbasedn,
 .jive-contentBox td input#jiveLDAPadmindn {
-	width: 270px;
+	width: 320px;
 	}
 .jive-contentBox td input#jiveLDAPhost,
 .jive-contentBox td input#jiveLDAPadminpwd,

@@ -11,8 +11,10 @@
 
 package org.jivesoftware.util;
 
+import org.dom4j.CDATA;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 
@@ -315,6 +317,14 @@ public class XMLProperties {
         for (String value : values) {
             Element childElement = element.addElement(childName);
             if (value.startsWith("<![CDATA[")) {
+                Iterator it = childElement.nodeIterator();
+                while (it.hasNext()) {
+                    Node node = (Node) it.next();
+                    if (node instanceof CDATA) {
+                        childElement.remove(node);
+                        break;
+                    }
+                }
                 childElement.addCDATA(value.substring(9, value.length()-3));
             }
             else {
@@ -393,6 +403,14 @@ public class XMLProperties {
         }
         // Set the value of the property in this node.
         if (value.startsWith("<![CDATA[")) {
+            Iterator it = element.nodeIterator();
+            while (it.hasNext()) {
+                Node node = (Node) it.next();
+                if (node instanceof CDATA) {
+                    element.remove(node);
+                    break;
+                }
+            }
             element.addCDATA(value.substring(9, value.length()-3));
         }
         else {

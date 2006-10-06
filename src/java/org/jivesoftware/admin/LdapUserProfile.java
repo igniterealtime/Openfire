@@ -502,15 +502,15 @@ public class LdapUserProfile {
             }
             element = vCard.element("FN");
             if (element != null) {
-                fullName = vCard.getTextTrim();
+                fullName = element.getTextTrim();
             }
             element = vCard.element("NICKNAME");
             if (element != null) {
-                nickname = vCard.getTextTrim();
+                nickname = element.getTextTrim();
             }
             element = vCard.element("BDAY");
             if (element != null) {
-                birthday = vCard.getTextTrim();
+                birthday = element.getTextTrim();
             }
             // TODO add rest of fields
         }

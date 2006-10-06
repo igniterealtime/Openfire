@@ -10,26 +10,24 @@
 
 package org.jivesoftware.wildfire.ldap;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.wildfire.vcard.VCardProvider;
+import org.xmpp.packet.JID;
+
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.Node;
-import org.jivesoftware.wildfire.vcard.VCardProvider;
-import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
-import org.xmpp.packet.JID;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
@@ -229,14 +227,12 @@ public class LdapVCardProvider implements VCardProvider {
                 Node node = element.node(i);
                 if (node instanceof Element) {
                     Element emement = (Element) node;
-                    Attribute attr = emement.attribute("attrs");
-                    if (attr != null) {
-                        String[] attrs = attr.getStringValue().split(",");
-                        for (String string : attrs) {
-                            Log.debug("VCardTemplate: found attribute "
-                                    + string);
-                            set.add(string);
-                        }
+                    String[] attrs = emement.getTextTrim().split(",");
+                    for (String string : attrs) {
+                        // Remove enclosing {}
+                        string = string.replaceAll("(\\{)([\\d\\D]+)(})", "$2");
+                        Log.debug("VCardTemplate: found attribute " + string);
+                        set.add(string);
                     }
                     treeWalk(emement, set);
                 }
@@ -266,17 +262,17 @@ public class LdapVCardProvider implements VCardProvider {
                 Node node = element.node(i);
                 if (node instanceof Element) {
                     Element emement = (Element) node;
-                    Attribute attr = emement.attribute("attrs");
-                    if (attr != null) {
-                        String[] attrs = attr.getStringValue().split(",");
-                        Object[] values = new String[attrs.length];
-                        for (int j = 0; j < attrs.length; j++) {
-                            values[j] = map.get(attrs[j]);
-                        }
-                        emement.remove(attr);
-                        emement.setText(MessageFormat.format(emement
-                                .getStringValue(), values));
+
+                    String[] attrs = emement.getTextTrim().split(",");
+                    Object[] values = new String[attrs.length];
+                    String format = emement.getStringValue();
+                    for (int j = 0; j < attrs.length; j++) {
+                        // Remove enclosing {}
+                        String attrib = attrs[j].replaceAll("(\\{)([\\d\\D]+)(})", "$2");
+                        values[j] = map.get(attrib);
+                        format = format.replaceFirst("(\\{)([\\d\\D]+)(})", "$1" + j + "$3");
                     }
+                    emement.setText(MessageFormat.format(format, values));
                     treeWalk(emement, map);
                 }
             }

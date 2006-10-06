@@ -76,13 +76,13 @@ public class LdapManager {
             }
 
             public String put(String key, String value) {
-                JiveGlobals.setProperty(key, value);
+                JiveGlobals.setXMLProperty(key, value);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
 
             public String remove(Object key) {
-                JiveGlobals.deleteProperty((String)key);
+                JiveGlobals.deleteXMLProperty((String)key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
@@ -175,11 +175,13 @@ public class LdapManager {
         this.properties = properties;
         
         String host = properties.get("ldap.host");
-        // Parse the property and check if many hosts were defined. Hosts can be separated
-        // by commas or white spaces
-        StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
-        while (st.hasMoreTokens()) {
-            hosts.add(st.nextToken());
+        if (host != null) {
+            // Parse the property and check if many hosts were defined. Hosts can be separated
+            // by commas or white spaces
+            StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
+            while (st.hasMoreTokens()) {
+                hosts.add(st.nextToken());
+            }
         }
         String portStr = properties.get("ldap.port");
         port = 389;

@@ -10,12 +10,16 @@
 
 package org.jivesoftware.util;
 
-import java.beans.*;
-import java.awt.Color;
-import java.util.*;
+import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * A utility class that provides methods that are useful for dealing with
@@ -43,11 +47,10 @@ public class BeanUtils {
      * @param bean the JavaBean to set properties on.
      * @param properties String name/value pairs of the properties to set.
      */
-    public static void setProperties(Object bean, Map properties) {
+    public static void setProperties(Object bean, Map<String, String> properties) {
         try {
             // Loop through all the property names in the Map
-            for (Iterator iter = properties.keySet().iterator(); iter.hasNext();) {
-                String propName = (String)iter.next();
+            for (String propName : properties.keySet()) {
                 try {
                     // Create a property descriptor for the named property. If
                     // the bean doesn't have the named property, an
@@ -58,9 +61,9 @@ public class BeanUtils {
                     Class propertyType = descriptor.getPropertyType();
                     // Get the value of the property by converting it from a
                     // String to the correct object type.
-                    Object value = decode(propertyType, (String)properties.get(propName));
+                    Object value = decode(propertyType, properties.get(propName));
                     // Set the value of the bean.
-                    descriptor.getWriteMethod().invoke(bean, new Object[] { value });
+                    descriptor.getWriteMethod().invoke(bean, value);
                 }
                 catch (IntrospectionException ie) {
                     // Ignore. This exception means that the key in the map
@@ -79,6 +82,53 @@ public class BeanUtils {
     }
 
     /**
+     * Sets the properties of a Java Bean based on the request's properties. Because
+     * this method has to know how to convert a String value into the correct type
+     * for the bean, only a few bean property types are supported. They are: String,
+     * boolean, int, long, float, double, Color, and Class.<p>
+     *
+     * If key/value pairs exist in the Map that don't correspond to properties
+     * of the bean, they will be ignored.
+     *
+     * @param bean the JavaBean to set properties on.
+     * @param request the HTTP request.
+     */
+    public static void setProperties(Object bean, HttpServletRequest request) {
+        for (Enumeration propNames = request.getParameterNames(); propNames.hasMoreElements();) {
+            String propName = (String) propNames.nextElement();
+            try {
+                // Create a property descriptor for the named property. If
+                // the bean doesn't have the named property, an
+                // Introspection will be thrown.
+                PropertyDescriptor descriptor = new PropertyDescriptor(
+                        propName, bean.getClass());
+                // Load the class type of the property.
+                Class propertyType = descriptor.getPropertyType();
+                // Get the value of the property by converting it from a
+                // String to the correct object type.
+                Object value = decode(propertyType, request.getParameter(propName));
+                // Set the value of the bean.
+                descriptor.getWriteMethod().invoke(bean, value);
+            }
+            catch (IntrospectionException ie) {
+                // Ignore. This exception means that the key in the map
+                // does not correspond to a property of the bean.
+            }
+            catch (InvocationTargetException ite) {
+                // Ignore. This exception most often occurs when a
+                // value in the map is null and the target method doesn't
+                // support null properties.
+            }
+            catch (IllegalAccessException e) {
+                Log.error(e);
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+        }
+    }
+
+    /**
      * Gets the properties from a Java Bean and returns them in a Map of String
      * name/value pairs. Because this method has to know how to convert a
      * bean property into a String value, only a few bean property
@@ -88,8 +138,8 @@ public class BeanUtils {
      * @param bean a Java Bean to get properties from.
      * @return a Map of all properties as String name/value pairs.
      */
-    public static Map getProperties(Object bean) {
-        Map properties = new HashMap();
+    public static Map<String, String> getProperties(Object bean) {
+        Map<String, String> properties = new HashMap<String, String>();
         try {
             BeanInfo beanInfo = Introspector.getBeanInfo(bean.getClass());
             // Loop through all properties of the bean.
@@ -98,7 +148,7 @@ public class BeanUtils {
             for (int i=0; i<names.length; i++) {
                 // Determine the property name.
                 String name = descriptors[i].getName();
-                Class type = descriptors[i].getPropertyType();
+                //Class type = descriptors[i].getPropertyType();
                 // Decode the property value using the property type and
                 // encoded String value.
                 Object value = descriptors[i].getReadMethod().invoke(bean,(java.lang.Object[]) null);
@@ -122,6 +172,7 @@ public class BeanUtils {
      *
      * @param beanClass the Class of the JavaBean.
      * @return the PropertyDescriptor array for the specified Java Bean Class.
+     * @throws java.beans.IntrospectionException
      */
     public static PropertyDescriptor[] getPropertyDescriptors(Class beanClass)
             throws IntrospectionException
@@ -147,6 +198,7 @@ public class BeanUtils {
      * supported, null will be returned.
      *
      * @param value an Object to encode in a String representation.
+     * @return the encoded bean.
      */
     private static String encode(Object value) {
         if (value instanceof String) {
@@ -185,6 +237,7 @@ public class BeanUtils {
      * @param type the type of the property.
      * @param value the encode String value to decode.
      * @return the String value decoded into the specified type.
+     * @throws Exception
      */
     private static Object decode(Class type, String value) throws Exception {
         if (type.getName().equals("java.lang.String")) {

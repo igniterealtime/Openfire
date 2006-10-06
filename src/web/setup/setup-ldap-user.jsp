@@ -63,12 +63,13 @@
     if (save) {
         usernameField = ParamUtils.getParameter(request, "usernameField");
         if (usernameField == null) {
-            errors.put("username", LocaleUtils.getLocalizedString("setup.ldap.user.username_field_error"));
+            errors.put("username",
+                    LocaleUtils.getLocalizedString("setup.ldap.user.username_field_error"));
         }
         searchFields = ParamUtils.getParameter(request, "searchFields");
         searchFilter = ParamUtils.getParameter(request, "searchFilter");
         // Set the properties to the vCard bean with the user input
-        BeanUtils.setProperties(vcardBean, request.getParameterMap());
+        BeanUtils.setProperties(vcardBean, request);
 
         // Save settings and redirect.
         if (errors.isEmpty()) {
@@ -226,7 +227,7 @@
 						<strong>Full Name</strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="fullname" value="<%= vcardBean.getFullName() %>" id="fullName" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="fullName" value="<%= vcardBean.getFullName() %>" id="fullName" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -258,7 +259,7 @@
 						- Street Address
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homestreet" value="<%= vcardBean.getHomeStreet() %>" id="home_street" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeStreet" value="<%= vcardBean.getHomeStreet() %>" id="homeStreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -266,7 +267,7 @@
 						- City
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homecity" value="<%= vcardBean.getHomeCity() %>" id="home_city" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeCity" value="<%= vcardBean.getHomeCity() %>" id="homeCity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -274,7 +275,7 @@
 						- State/Province
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homestate" value="<%= vcardBean.getHomeState() %>" id="home_state" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeState" value="<%= vcardBean.getHomeState() %>" id="homeState" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -282,7 +283,7 @@
 						- Postal Code
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homezip" value="<%= vcardBean.getHomeZip() %>" id="home_zip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeZip" value="<%= vcardBean.getHomeZip() %>" id="homeZip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -290,7 +291,7 @@
 						- Country
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homecountry" value="<%= vcardBean.getHomeCountry() %>" id="home_country" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeCountry" value="<%= vcardBean.getHomeCountry() %>" id="homeCountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -298,7 +299,7 @@
 						- Phone Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homephone" value="<%= vcardBean.getHomePhone() %>" id="home_phone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homePhone" value="<%= vcardBean.getHomePhone() %>" id="homePhone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -306,7 +307,7 @@
 						- Mobile Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homemobile" value="<%= vcardBean.getHomeMobile() %>" id="home_mobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeMobile" value="<%= vcardBean.getHomeMobile() %>" id="homeMobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -314,7 +315,7 @@
 						- Fax
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homefax" value="<%= vcardBean.getHomeFax() %>" id="home_fax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homeFax" value="<%= vcardBean.getHomeFax() %>" id="homeFax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -322,7 +323,7 @@
 						- Pager
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="homepager" value="<%= vcardBean.getHomePager() %>" id="home_pager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="homePager" value="<%= vcardBean.getHomePager() %>" id="homePager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -338,7 +339,7 @@
 						- Street Address
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workstreet" value="<%= vcardBean.getBusinessStreet() %>" id="business_street" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessStreet" value="<%= vcardBean.getBusinessStreet() %>" id="businessStreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -346,7 +347,7 @@
 						- City
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workcity" value="<%= vcardBean.getBusinessCity() %>" id="business_city" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessCity" value="<%= vcardBean.getBusinessCity() %>" id="businessCity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -354,7 +355,7 @@
 						- State/Province
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workstate" value="<%= vcardBean.getBusinessState() %>" id="business_state" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessState" value="<%= vcardBean.getBusinessState() %>" id="businessState" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -362,7 +363,7 @@
 						- Postal Code
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workzip" value="<%= vcardBean.getBusinessZip() %>" id="business_zip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessZip" value="<%= vcardBean.getBusinessZip() %>" id="businessZip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -370,7 +371,7 @@
 						- Country
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workcountry" value="<%= vcardBean.getBusinessCountry() %>" id="business_country" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessCountry" value="<%= vcardBean.getBusinessCountry() %>" id="businessCountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -378,7 +379,7 @@
 						- Job Title
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="worktitle" value="<%= vcardBean.getBusinessJobTitle() %>" id="business_job_title" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessJobTitle" value="<%= vcardBean.getBusinessJobTitle() %>" id="businessJobTitle" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -386,7 +387,7 @@
 						- Department
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workdept" value="<%= vcardBean.getBusinessDepartment() %>" id="business_department" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessDepartment" value="<%= vcardBean.getBusinessDepartment() %>" id="businessDepartment" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -394,7 +395,7 @@
 						- Phone Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workphone" value="<%= vcardBean.getBusinessPhone() %>" id="business_phone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessPhone" value="<%= vcardBean.getBusinessPhone() %>" id="businessPhone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -402,7 +403,7 @@
 						- Mobile Number
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workmobile" value="<%= vcardBean.getBusinessMobile() %>" id="business_mobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessMobile" value="<%= vcardBean.getBusinessMobile() %>" id="businessMobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -410,7 +411,7 @@
 						- Fax
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workfax" value="<%= vcardBean.getBusinessFax() %>" id="business_fax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessFax" value="<%= vcardBean.getBusinessFax() %>" id="businessFax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -418,15 +419,7 @@
 						- Pager
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="workpager" value="<%= vcardBean.getBusinessPager() %>" id="business_pager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
-					</td>
-				</tr>
-				<tr>
-					<td class="jive-vcardTable-label jive-vardBorderRight" nowrap>
-						- Web page
-					</td>
-					<td class="jive-vcardTable-value">
-						<input type="text" name="workurl" value="<%= vcardBean.getBusinessWebPage() %>" id="business_web_page" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="businessPager" value="<%= vcardBean.getBusinessPager() %>" id="businessPager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 			</table>

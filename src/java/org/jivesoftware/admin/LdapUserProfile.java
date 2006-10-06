@@ -16,9 +16,12 @@ import org.dom4j.io.OutputFormat;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLWriter;
+import org.jivesoftware.wildfire.ldap.LdapManager;
+import org.jivesoftware.wildfire.ldap.LdapVCardProvider;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Iterator;
 
 /**
  * Bean that stores the vcard mapping. It is also responsible for saving the mapping
@@ -53,7 +56,6 @@ public class LdapUserProfile {
     private String businessMobile = "";
     private String businessFax = "";
     private String businessPager = "";
-    private String businessWebPage = "";
 
     public String getName() {
         return name;
@@ -255,14 +257,6 @@ public class LdapUserProfile {
         this.businessPager = businessPager;
     }
 
-    public String getBusinessWebPage() {
-        return businessWebPage;
-    }
-
-    public void setBusinessWebPage(String businessWebPage) {
-        this.businessWebPage = businessWebPage;
-    }
-
     /**
      * Sets default mapping values when using an Active Directory server.
      */
@@ -281,7 +275,7 @@ public class LdapUserProfile {
         homeMobile = "";
         homeFax = "";
         homePager = "";
-        businessStreet = "{postalAddress}";
+        businessStreet = "{streetAddress}";
         businessCity = "{l}";
         businessState = "{st}";
         businessZip = "{postalCode}";
@@ -292,7 +286,6 @@ public class LdapUserProfile {
         businessMobile = "{mobile}";
         businessFax = "{facsimileTelephoneNumber}";
         businessPager = "{pager}";
-        businessWebPage = "";
     }
 
     /**
@@ -324,7 +317,6 @@ public class LdapUserProfile {
         businessMobile = "{mobile}";
         businessFax = "";
         businessPager = "{pager}";
-        businessWebPage = "";
     }
 
     /**
@@ -386,7 +378,7 @@ public class LdapUserProfile {
             subelement.addElement("REGION").setText(businessState.trim());
         }
         if (businessZip != null && businessZip.trim().length() > 0) {
-            subelement.addElement("PCODE").setText(homeZip.trim());
+            subelement.addElement("PCODE").setText(businessZip.trim());
         }
         if (businessCountry != null && businessCountry.trim().length() > 0) {
             subelement.addElement("CTRY").setText(businessCountry.trim());
@@ -402,7 +394,6 @@ public class LdapUserProfile {
         if (homeMobile != null && homeMobile.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
-            subelement.addElement("VOICE");
             subelement.addElement("CELL");
             subelement.addElement("NUMBER").setText(homeMobile.trim());
         }
@@ -431,7 +422,6 @@ public class LdapUserProfile {
         if (businessMobile != null && businessMobile.trim().length() > 0) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
-            subelement.addElement("VOICE");
             subelement.addElement("CELL");
             subelement.addElement("NUMBER").setText(businessMobile.trim());
         }
@@ -453,9 +443,10 @@ public class LdapUserProfile {
         if (businessJobTitle != null && businessJobTitle.trim().length() > 0) {
             vCard.addElement("TITLE").setText(businessJobTitle.trim());
         }
-        // TODO Add job department
-        // TODO Add web page
-
+        // Add job department
+        if (businessDepartment != null && businessDepartment.trim().length() > 0) {
+            vCard.addElement("ORG").addElement("ORGUNIT").setText(businessDepartment.trim());
+        }
         // Generate content to store in property
         String vcardXML;
         StringWriter writer = new StringWriter();
@@ -474,6 +465,13 @@ public class LdapUserProfile {
         sb.append("<![CDATA[").append(vcardXML).append("]]>");
         // Save mapping as an XML property
         JiveGlobals.setXMLProperty("ldap.vcard-mapping", sb.toString());
+
+        // Set that the vcard provider is LdapVCardProvider
+        JiveGlobals.setXMLProperty("provider.vcard.className", LdapVCardProvider.class.getName());
+
+        // Save duplicated fields in LdapManager (should be removed in the future)
+        LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D]+)(})", "$2"));
+        LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D]+)(})", "$2"));
     }
 
     /**
@@ -489,6 +487,11 @@ public class LdapUserProfile {
         }
 
         try {
+            // Remove CDATA wrapping element
+            if (xmlProperty.startsWith("<![CDATA[")) {
+                xmlProperty = xmlProperty.substring(9, xmlProperty.length()-3);
+            }
+            // Parse XML
             Document document = DocumentHelper.parseText(xmlProperty);
             Element vCard = document.getRootElement();
 
@@ -512,7 +515,88 @@ public class LdapUserProfile {
             if (element != null) {
                 birthday = element.getTextTrim();
             }
-            // TODO add rest of fields
+            // Parse addresses
+            Iterator addresses = vCard.elementIterator("ADR");
+            while (addresses.hasNext()) {
+                element = (Element) addresses.next();
+                if (element.element("HOME") != null) {
+                    if (element.element("STREET") != null) {
+                        homeStreet = element.elementTextTrim("STREET");
+                    }
+                    if (element.element("LOCALITY") != null) {
+                        homeCity = element.elementTextTrim("LOCALITY");
+                    }
+                    if (element.element("REGION") != null) {
+                        homeState = element.elementTextTrim("REGION");
+                    }
+                    if (element.element("PCODE") != null) {
+                        homeZip = element.elementTextTrim("PCODE");
+                    }
+                    if (element.element("CTRY") != null) {
+                        homeCountry = element.elementTextTrim("CTRY");
+                    }
+                }
+                else if (element.element("WORK") != null) {
+                    if (element.element("STREET") != null) {
+                        businessStreet = element.elementTextTrim("STREET");
+                    }
+                    if (element.element("LOCALITY") != null) {
+                        businessCity = element.elementTextTrim("LOCALITY");
+                    }
+                    if (element.element("REGION") != null) {
+                        businessState = element.elementTextTrim("REGION");
+                    }
+                    if (element.element("PCODE") != null) {
+                        businessZip = element.elementTextTrim("PCODE");
+                    }
+                    if (element.element("CTRY") != null) {
+                        businessCountry = element.elementTextTrim("CTRY");
+                    }
+                }
+            }
+            // Parse telephones
+            Iterator telephones = vCard.elementIterator("TEL");
+            while (telephones.hasNext()) {
+                element = (Element) telephones.next();
+                if (element.element("HOME") != null) {
+                    if (element.element("VOICE") != null) {
+                        homePhone = element.elementTextTrim("NUMBER");
+                    }
+                    else if (element.element("CELL") != null) {
+                        homeMobile = element.elementTextTrim("NUMBER");
+                    }
+                    else if (element.element("FAX") != null) {
+                        homeFax = element.elementTextTrim("NUMBER");
+                    }
+                    else if (element.element("PAGER") != null) {
+                        homePager = element.elementTextTrim("NUMBER");
+                    }
+                }
+                else if (element.element("WORK") != null) {
+                    if (element.element("VOICE") != null) {
+                        businessPhone = element.elementTextTrim("NUMBER");
+                    }
+                    else if (element.element("CELL") != null) {
+                        businessMobile = element.elementTextTrim("NUMBER");
+                    }
+                    else if (element.element("FAX") != null) {
+                        businessFax = element.elementTextTrim("NUMBER");
+                    }
+                    else if (element.element("PAGER") != null) {
+                        businessPager = element.elementTextTrim("NUMBER");
+                    }
+                }
+            }
+            element = vCard.element("TITLE");
+            if (element != null) {
+                businessJobTitle = element.getTextTrim();
+            }
+            element = vCard.element("ORG");
+            if (element != null) {
+                if (element.element("ORGUNIT") != null) {
+                    businessDepartment = element.elementTextTrim("ORGUNIT");
+                }
+            }
         }
         catch (DocumentException e) {
             Log.error("Error loading vcard mappings from property", e);

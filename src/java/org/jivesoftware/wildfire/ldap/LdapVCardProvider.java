@@ -113,6 +113,10 @@ public class LdapVCardProvider implements VCardProvider {
         String property = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
         Log.debug("Found vcard mapping: '" + property);
         try {
+            // Remove CDATA wrapping element
+            if (property.startsWith("<![CDATA[")) {
+                property = property.substring(9, property.length()-3);
+            }
             Document document = DocumentHelper.parseText(property);
             template = new VCardTemplate(document);
         }

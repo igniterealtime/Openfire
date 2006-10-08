@@ -14,7 +14,7 @@
 %>
 
 <%
-    String serverType;
+    String serverType = null;
     String host;
     int port = 389;
     String baseDN;
@@ -129,7 +129,7 @@
 
     <% if (test && errors.isEmpty()) { %>
 
-        <a href="setup-ldap-server_test.jsp" id="lbmessage" title="Test" style="display:none;"></a>
+        <a href="setup-ldap-server_test.jsp?serverType=<%= serverType%>" id="lbmessage" title="Test" style="display:none;"></a>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
@@ -177,10 +177,10 @@
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.type" />:</td>
                 <td colspan="3" nowrap>
                     <select name="servertype" size="1" id="jiveLDAPserverType" style="width:90%;">
-                        <option value="1" selected="selected"><fmt:message key="setup.ldap.server.type_select" /></option>
-                        <option value="2">Active Directory</option>
-                        <option value="3">OpenLDAP</option>
-                        <option value="4"><fmt:message key="setup.ldap.server.type_other" /></option>
+                        <option value="1" <%= serverType == null ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_select" /></option>
+                        <option value="2" <%= "activedirectory".equals(serverType) ? "selected" : "" %>>Active Directory</option>
+                        <option value="3" <%= "openldap".equals(serverType) ? "selected" : "" %>>OpenLDAP</option>
+                        <option value="4" <%= "other".equals(serverType) ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_other" /></option>
                     </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
                 </td>
 			</tr>

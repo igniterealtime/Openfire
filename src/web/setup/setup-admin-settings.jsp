@@ -4,15 +4,15 @@
   -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 java.util.Date,
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.wildfire.auth.AuthFactory,
                  org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager,
-                 org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.auth.AuthFactory"%><%@ page import="java.util.Collection"%><%@ page import="java.util.List"%><%@ page import="java.util.ArrayList"%>
+                 org.jivesoftware.wildfire.user.UserManager" %>
+<%@ page import="javax.servlet.http.HttpSession"%>
+<%@ page import="java.util.*"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -356,7 +356,7 @@ document.acctform.newPassword.focus();
             <input type="text" name="administrator" size="20" maxlength="50"/>
             </td>
             <td>
-                <input type="submit" name="addAdministrator" value="Add"/>
+                <input type="submit" name="addAdministrator" value="<fmt:message key="global.add" />"/>
             </td>
         </tr>
     </table>

@@ -1,5 +1,10 @@
-<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager" %>
-<%@ page import="java.util.Map, java.net.UnknownHostException, javax.naming.ldap.LdapContext, javax.naming.*" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager, javax.naming.*, javax.naming.ldap.LdapContext, java.net.UnknownHostException" %>
+<%@ page import="java.util.Map" %>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <%
     boolean success = false;
     String errorDetail = "";
@@ -16,25 +21,22 @@
         }
         catch (NamingException e) {
             if (e instanceof AuthenticationException) {
-                errorDetail =
-                        "Error authenticating with the LDAP server. Check supplied credentials.";
+                errorDetail = LocaleUtils.getLocalizedString("setup.ldap.server.test.error-auth");
             }
             else if (e instanceof CommunicationException) {
-                errorDetail = "Error connecting to the LDAP server. Ensure that the directory " +
-                        "server is running at the specified host name and port and that a firewall " +
-                        "is not blocking access to the server.";
+                errorDetail = LocaleUtils.getLocalizedString("setup.ldap.server.test.error-connection");
                 Throwable cause = e.getCause();
                 if (cause != null) {
                     if (cause instanceof UnknownHostException) {
-                        errorDetail = "Unknown host address.";
+                        errorDetail = LocaleUtils.getLocalizedString("setup.ldap.server.test.error-unknownhost");
                     }
                 }
             }
             else if (e instanceof InvalidNameException) {
-                errorDetail = "Invalid DN syntax or naming violation.";
+                errorDetail = LocaleUtils.getLocalizedString("setup.ldap.server.test.invalid-name");
             }
             else if (e instanceof NameNotFoundException) {
-                errorDetail = "Error verifying base DN. Verify that the value is correct.";   
+                errorDetail = LocaleUtils.getLocalizedString("setup.ldap.server.test.name-not-found");
             }
             else {
                 errorDetail = e.getExplanation();
@@ -57,18 +59,17 @@
 		<div class="jive-testPanel-content">
 		
 			<div align="right" class="jive-testPanel-close">
-				<a href="#" class="lbAction" rel="deactivate">Close</a>
+				<a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
 			</div>
 			
 			
-			<h2>Test: <span>Connection Settings</span></h2>
+			<h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.server.test.title-desc" /></span></h2>
             <% if (success) { %>
-            <h4 class="jive-testSuccess">Status: Success!</h4>
+            <h4 class="jive-testSuccess"><fmt:message key="setup.ldap.server.test.status-success" /></h4>
 
-			<p>A connection was successfully established to the LDAP server using the settings above.
-			Close this test panel and continue to the next step.</p>
+			<p><fmt:message key="setup.ldap.server.test.status-success.detail" /></p>
             <% } else { %>
-            <h4 class="jive-testError">Status: Error</h4>
+            <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
             <p><%= errorDetail %></p>
             <% } %>
             

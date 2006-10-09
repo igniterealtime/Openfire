@@ -57,6 +57,7 @@ public class Registration {
     private String nickname;
     private Date registrationDate;
     private Date lastLogin;
+    private boolean disconnectedMode = false;
 
     /**
      * Creates a new registration.
@@ -71,6 +72,38 @@ public class Registration {
         if (jid == null || transportType == null || username == null) {
             throw new NullPointerException("Arguments cannot be null.");
         }
+        // Ensure that we store the bare JID.
+        this.jid = new JID(jid.toBareJID());
+        this.transportType = transportType;
+        this.username = username;
+        this.password = password;
+        this.nickname = nickname;
+        this.registrationDate = new Date();
+        try {
+            insertIntoDb();
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+    }
+
+    /**
+     * Creates a new registration in disconnected (test) mode.
+     *
+     * Passing false for disconnectedMode is the same as the previous constructor.
+     *
+     * @param jid the JID of the user making the registration.
+     * @param transportType the type of the transport.
+     * @param username the username on the transport.
+     * @param password the password on the transport.
+     * @param nickname the nickname on the transport.
+     * @param disconnectedMode True or false if we are in disconnected mode.
+     */
+    public Registration(JID jid, TransportType transportType, String username, String password, String nickname, Boolean disconnectedMode) {
+        if (jid == null || transportType == null || username == null) {
+            throw new NullPointerException("Arguments cannot be null.");
+        }
+        this.disconnectedMode = disconnectedMode;
         // Ensure that we store the bare JID.
         this.jid = new JID(jid.toBareJID());
         this.transportType = transportType;
@@ -160,6 +193,7 @@ public class Registration {
      */
     public void setPassword(String password) {
         this.password = password;
+        if (disconnectedMode) { return; }
         // The password is stored in encrypted form for improved security.
         String encryptedPassword = AuthFactory.encryptPassword(password);
         Connection con = null;
@@ -194,6 +228,7 @@ public class Registration {
             throw new NullPointerException("Arguments cannot be null.");
         }
         this.username = username;
+        if (disconnectedMode) { return; }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -218,6 +253,7 @@ public class Registration {
      */
     public void setNickname(String nickname) {
         this.nickname = nickname;
+        if (disconnectedMode) { return; }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -266,6 +302,7 @@ public class Registration {
      */
     public void setLastLogin(Date lastLogin) {
         this.lastLogin = lastLogin;
+        if (disconnectedMode) { return; }
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -293,6 +330,7 @@ public class Registration {
      * @throws SQLException if the SQL statement is wrong for whatever reason.
      */
     private void insertIntoDb() throws SQLException {
+        if (disconnectedMode) { return; }
         this.registrationID = SequenceManager.nextID(this);
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -336,6 +374,7 @@ public class Registration {
      * @throws NotFoundException if registration was not found in database.
      */
     private void loadFromDb() throws NotFoundException {
+        if (disconnectedMode) { return; }        
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

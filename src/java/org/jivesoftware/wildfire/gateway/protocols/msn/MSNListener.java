@@ -99,6 +99,7 @@ public class MSNListener extends MsnAdapter {
      * The user's login has completed and was accepted.
      */
     public void loginCompleted(MsnMessenger messenger) {
+        Log.debug("MSN: Login completed for "+messenger.getOwner().getEmail());
         msnSession.getRegistration().setLastLogin(new Date());
         msnSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
     }
@@ -108,7 +109,7 @@ public class MSNListener extends MsnAdapter {
      */
     public void contactListInitCompleted(MsnMessenger messenger) {
         for (MsnContact msnContact : messenger.getContactList().getContacts()) {
-            Log.debug("Got contact "+msnContact);
+            Log.debug("MSN: Got contact "+msnContact);
             if (msnContact.isInList(MsnList.FL) && msnContact.getEmail() != null) {
                 msnSession.storeFriend(msnContact);
             }
@@ -123,6 +124,7 @@ public class MSNListener extends MsnAdapter {
      * Contact list has been synced.
      */
     public void contactListSyncCompleted(MsnMessenger messenger) {
+        Log.debug("MSN: Contact list sync for "+messenger.getOwner().getEmail());        
     }
 
     /**
@@ -156,6 +158,7 @@ public class MSNListener extends MsnAdapter {
      * Catches MSN exceptions.
      */
     public void exceptionCaught(MsnMessenger messenger, Throwable throwable) {
+        Log.debug("MSN: Exception occurred for "+messenger.getOwner().getEmail()+" : "+throwable);        
         if (throwable.getClass().getName().equals("net.sf.jml.exception.IncorrectPasswordException")) {
             Message m = new Message();
             m.setType(Message.Type.error);

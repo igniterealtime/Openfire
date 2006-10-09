@@ -12,6 +12,7 @@ package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import net.sf.jml.*;
 import net.sf.jml.impl.MsnMessengerFactory;
+import net.sf.jml.impl.BasicMessenger;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
@@ -44,7 +45,9 @@ public class MSNSession extends TransportSession {
     public MSNSession(Registration registration, JID jid, MSNTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
 
+        Log.debug("Creating MSN session for " + registration.getUsername());        
         msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
+        ((BasicMessenger)msnMessenger).addSessionListener(new MsnSessionListener(this));
         msnMessenger.setSupportedProtocol(MsnProtocol.getAllSupportedProtocol());
     }
 
@@ -71,12 +74,18 @@ public class MSNSession extends TransportSession {
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
-            setLoginStatus(TransportLoginStatus.LOGGING_IN);
-            msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
-            msnMessenger.setLogIncoming(false);
-            msnMessenger.setLogOutgoing(false);
-            msnMessenger.addListener(new MSNListener(this));
-            msnMessenger.login();
+            try {
+                Log.debug("Logging in to MSN session for " + msnMessenger.getOwner().getEmail());
+                setLoginStatus(TransportLoginStatus.LOGGING_IN);
+                msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
+                msnMessenger.setLogIncoming(false);
+                msnMessenger.setLogOutgoing(false);
+                msnMessenger.addListener(new MSNListener(this));
+                msnMessenger.login();
+            }
+            catch (Exception e) {
+                Log.error("MSN user is not able to log in: " + msnMessenger.getOwner().getEmail(), e);                
+            }
         }
     }
 

@@ -78,6 +78,7 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     public Group getGroup(String groupName) throws GroupNotFoundException {
+        Collection<Group> groups;
         LdapContext ctx = null;
         try {
             ctx = manager.getContext();
@@ -95,17 +96,10 @@ public class LdapGroupProvider implements GroupProvider {
             String filter = MessageFormat.format(manager.getGroupSearchFilter(), groupName);
             NamingEnumeration<SearchResult> answer = ctx.search("", filter, searchControls);
 
-            Collection<Group> groups = populateGroups(answer);
+            groups = populateGroups(answer);
             // Close the enumeration.
             answer.close();
-            if (groups.size() > 1) {
-                // If multiple groups found, throw exception.
-                throw new GroupNotFoundException("Too many groups with name " + groupName + " were found.");
-            }
-            else if (groups.isEmpty()) {
-                throw new GroupNotFoundException("Group with name " + groupName + " not found.");
-            }
-            else {
+            if (groups.size() == 1) {
                 return groups.iterator().next();
             }
         }
@@ -124,6 +118,12 @@ public class LdapGroupProvider implements GroupProvider {
                 // Ignore.
             }
         }
+        if (groups.size() > 1) {
+            // If multiple groups found, throw exception.
+            throw new GroupNotFoundException(
+                    "Too many groups with name " + groupName + " were found.");
+        }
+        throw new GroupNotFoundException("Group with name " + groupName + " not found.");
     }
 
     /**

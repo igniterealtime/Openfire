@@ -263,7 +263,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="/images/success-16x16.gif" width="16"
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16"
  height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             <fmt:message key="gateway.web.registrations.regsuccess" />
@@ -280,7 +280,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="/images/error-16x16.gif" width="16"
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16"
  height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             <fmt:message key="gateway.web.registrations.regfailure" />
@@ -467,8 +467,8 @@
 			<td><%= result.jid %></td>
 			<td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><%= result.username %></span></td>
 			<td><%= result.lastLogin %></td>
-			<td align="center"><a href="" onClick="toggleEdit(<%= result.id %>); return false"><img src="/images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }"><img src="/images/delete-16x16.gif" alt="" border="0"></a></form></td>
+			<td align="center"><a href="" onClick="toggleEdit(<%= result.id %>); return false"><img src="images/edit-16x16.gif" alt="" border="0"></a></td>
+			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }"><img src="images/delete-16x16.gif" alt="" border="0"></a></form></td>
 		</tr>
 		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none;">
 			<td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>

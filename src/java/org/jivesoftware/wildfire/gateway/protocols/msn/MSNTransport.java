@@ -107,6 +107,7 @@ public class MSNTransport extends BaseTransport {
      * Converts a jabber status to an MSN status.
      *
      * @param jabStatus Jabber presence type.
+     * @return MSN user status id.
      */
     public MsnUserStatus convertJabStatusToMSN(PresenceType jabStatus) {
         if (jabStatus == PresenceType.available) {
@@ -136,6 +137,7 @@ public class MSNTransport extends BaseTransport {
      * Sets up a presence packet according to MSN status.
      *
      * @param msnStatus MSN ContactStatus constant.
+     * @param packet Presence packet to set up.
      */
     public void setUpPresencePacket(Presence packet, MsnUserStatus msnStatus) {
         if (msnStatus.equals(MsnUserStatus.ONLINE)) {

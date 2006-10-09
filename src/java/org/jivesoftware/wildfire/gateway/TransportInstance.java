@@ -163,6 +163,8 @@ public class TransportInstance implements PropertyEventListener {
 
     /**
      * Retrieves actual transport associated with this instance.
+     *
+     * @return Transport that the instance is associated with.
      */
     public BaseTransport getTransport() {
         return transport;

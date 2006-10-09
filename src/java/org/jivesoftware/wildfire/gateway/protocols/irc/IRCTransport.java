@@ -106,6 +106,7 @@ public class IRCTransport extends BaseTransport {
      *
      * @param jabStatus Jabber presence type.
      * @param verboseStatus Verbose status information.
+     * @return IRC status string.
      */
     public String convertJabStatusToIRC(PresenceType jabStatus, String verboseStatus) {
         if (jabStatus == PresenceType.available) {

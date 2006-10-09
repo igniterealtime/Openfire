@@ -65,6 +65,7 @@ public class Registration {
      * @param transportType the type of the transport.
      * @param username the username on the transport.
      * @param password the password on the transport.
+     * @param nickname the nickname on the transport.
      */
     public Registration(JID jid, TransportType transportType, String username, String password, String nickname) {
         if (jid == null || transportType == null || username == null) {
@@ -154,7 +155,8 @@ public class Registration {
 
     /**
      * Sets the password used for logging in to the transport.
-     * @param password
+     *
+     * @param password new password for registration.
      */
     public void setPassword(String password) {
         this.password = password;
@@ -184,7 +186,8 @@ public class Registration {
 
     /**
      * Sets the username used for logging in to the transport.
-     * @param username
+     *
+     * @param username New username for transport registration.
      */
     public void setUsername(String username) {
         if (username == null) {
@@ -210,7 +213,8 @@ public class Registration {
 
     /**
      * Sets the nickname used for logging in to the transport.
-     * @param nickname
+     *
+     * @param nickname New nickname for transport registration.
      */
     public void setNickname(String nickname) {
         this.nickname = nickname;
@@ -285,6 +289,8 @@ public class Registration {
 
     /**
      * Inserts a new registration into the database.
+     *
+     * @throws SQLException if the SQL statement is wrong for whatever reason.
      */
     private void insertIntoDb() throws SQLException {
         this.registrationID = SequenceManager.nextID(this);

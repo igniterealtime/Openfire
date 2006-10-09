@@ -55,6 +55,8 @@ public class TransportSessionManager {
 
     /**
      * Creates the transport session manager instance and initializes.
+     *
+     * @param transport Transport associated with this session manager.
      */
     TransportSessionManager(BaseTransport transport) {
         this.transport = transport;

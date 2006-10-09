@@ -49,7 +49,7 @@ public class SnacManager {
 
             if (handlers == null) {
                 handlers = new LinkedList<BasicFlapConnection>();
-                conns.put((Integer)familyCode, handlers);
+                conns.put(familyCode, handlers);
             }
 
             if (!handlers.contains(conn)) {

@@ -97,6 +97,8 @@ public class MSNSession extends TransportSession {
 
     /**
      * Retrieves the manager for this session.
+     *
+     * @return Messenger instance the session is associated with.
      */
     public MsnMessenger getManager() {
         return msnMessenger;
@@ -104,6 +106,8 @@ public class MSNSession extends TransportSession {
 
     /**
      * Records information about a person on the user's contact list.
+     *
+     * @param msnContact MSN contact we are storing a copy of.
      */
     public void storeFriend(MsnContact msnContact) {
         msnContacts.put(msnContact.getEmail().toString(), msnContact);
@@ -111,6 +115,8 @@ public class MSNSession extends TransportSession {
 
     /**
      * Records information about a group on the user's contact list.
+     *
+     * @param msnGroup MSN group we are storing a copy of.
      */
     public void storeGroup(MsnGroup msnGroup) {
         msnGroups.put(msnGroup.getGroupName(), msnGroup);

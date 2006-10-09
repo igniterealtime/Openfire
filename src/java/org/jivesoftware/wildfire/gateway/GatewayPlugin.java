@@ -93,8 +93,10 @@ public class GatewayPlugin implements Plugin {
     }
 
     /**
-     *  Starts a transport service, identified by subdomain.  The transport
-     *  service will only start if it is enabled.
+     * Starts a transport service, identified by subdomain.  The transport
+     * service will only start if it is enabled.
+     *
+     * @param serviceName name of service to start.
      */
     private void maybeStartService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
@@ -102,7 +104,9 @@ public class GatewayPlugin implements Plugin {
     }
 
     /**
-     *  Enables a transport service, identified by subdomain.
+     * Enables a transport service, identified by subdomain.
+     *
+     * @param serviceName name of service to enable.
      */
     public void enableService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
@@ -111,6 +115,8 @@ public class GatewayPlugin implements Plugin {
 
     /**
      *  Disables a transport service, identified by subdomain.
+     *
+     * @param serviceName name of service to disable.
      */
     public void disableService(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
@@ -119,6 +125,9 @@ public class GatewayPlugin implements Plugin {
 
     /**
      *  Returns the state of a transport service, identified by subdomain.
+     *
+     * @param serviceName name of service to check.
+     * @return True of false if service is enabled.
      */
     public Boolean serviceEnabled(String serviceName) {
         TransportInstance trInstance = transports.get(serviceName);
@@ -127,6 +136,9 @@ public class GatewayPlugin implements Plugin {
 
     /**
      *  Returns the transport instance, identified by subdomain.
+     *
+     * @param serviceName name of service to get instance of.
+     * @return Instance of service requested.
      */
     public TransportInstance getTransportInstance(String serviceName) {
         return transports.get(serviceName);

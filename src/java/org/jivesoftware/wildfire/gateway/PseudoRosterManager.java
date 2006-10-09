@@ -61,6 +61,7 @@ public class PseudoRosterManager {
      * @param jid To retrieve the roster for.
      * @param type TransportType the roster is for.
      * @return A Pseudo roster
+     * @throws UserNotFoundException if the user is not actually registered.
      */
     public PseudoRoster getPseudoRoster(JID jid, TransportType type) throws UserNotFoundException {
         Collection<Registration> registrations = registrationManager.getRegistrations(jid, type);
@@ -76,6 +77,7 @@ public class PseudoRosterManager {
      * Removes a pseudo roster entirely.
      *
      * @param registrationID ID to be removed.
+     * @throws SQLException if the SQL statement is wrong for whatever reason.
      */
     public void removePseudoRoster(Long registrationID) throws SQLException {
         Connection con = null;

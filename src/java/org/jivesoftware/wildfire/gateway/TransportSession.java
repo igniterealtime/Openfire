@@ -89,6 +89,9 @@ public abstract class TransportSession implements Runnable {
 
     /**
      * Associates a resource with the session, and tracks it's priority.
+     *
+     * @param resource Resource string
+     * @param priority Priority of resource
      */
     public void addResource(String resource, Integer priority) {
         resources.put(priority, resource);
@@ -96,6 +99,8 @@ public abstract class TransportSession implements Runnable {
 
     /**
      * Removes an association of a resource with the session.
+     *
+     * @param resource Resource string
      */
     public void removeResource(String resource) {
         for (Integer i : resources.keySet()) {
@@ -228,6 +233,8 @@ public abstract class TransportSession implements Runnable {
 
     /**
      * Updates the login status.
+     *
+     * @param status New login status.
      */
     public void setLoginStatus(TransportLoginStatus status) {
         loginStatus = status;
@@ -235,6 +242,8 @@ public abstract class TransportSession implements Runnable {
 
     /**
      * Retrieves the current login status.
+     *
+     * @return Login status of session.
      */
     public TransportLoginStatus getLoginStatus() {
         return loginStatus;
@@ -242,6 +251,8 @@ public abstract class TransportSession implements Runnable {
 
     /**
      * Returns true only if we are completely logged in.
+     *
+     * @return True or false whether we are currently completely logged in.
      */
     public Boolean isLoggedIn() {
         return (loginStatus == TransportLoginStatus.LOGGED_IN);

@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<install4j version="3.2.4">
+  <directoryPresets config="../../target/release/wildfire/lib" />
+  <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" lzmaCompression="true" keepModificationTimes="true" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+    <searchSequence>
+      <registry />
+      <envVar name="JAVA_HOME" />
+      <envVar name="JDK_HOME" />
+    </searchSequence>
+    <variables>
+      <variable name="VERSION_MAJOR" value="3" />
+      <variable name="VERSION_MINOR" value="0" />
+      <variable name="VERSION_REVISION" value="0" />
+      <variable name="APP_NAME" value="Wildfire" />
+      <variable name="APP_SHORT_NAME" value="wildfire" />
+      <variable name="PRODUCT_NAME" value="wildfire" />
+      <variable name="PUBLISHER" value="Jive Software" />
+      <variable name="PUBLISHER_URL" value="www.jivesoftware.org" />
+      <variable name="RELEASE_DIR" value="%APP_SHORT_NAME%" />
+      <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
+      <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%\%RELEASE_DIR%" />
+      <variable name="FILE_PREFIX" value="%APP_SHORT_NAME%" />
+      <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
+      <variable name="UNIX_INSTALL_DIR" value="wildfire" />
+      <variable name="WINDOWS_INSTALL_DIR" value="Wildfire" />
+    </variables>
+  </application>
+  <files>
+    <mountPoints>
+      <mountPoint name="" id="33" location="resources" mode="755" />
+      <mountPoint name="" id="34" location="resources/security" mode="755" />
+      <mountPoint name="" id="46" location="conf" mode="755" />
+      <mountPoint name="" id="1" location="" mode="755" />
+    </mountPoints>
+    <entries>
+      <fileEntry mountPoint="34" file="%RELEASE_FULL_PATH%/resources/security/truststore" overwrite="0" shared="false" mode="644" dontUninstall="true" />
+      <fileEntry mountPoint="34" file="%RELEASE_FULL_PATH%/resources/security/keystore" overwrite="0" shared="false" mode="644" dontUninstall="true" />
+      <fileEntry mountPoint="46" file="%RELEASE_FULL_PATH%/conf/wildfire.xml" overwrite="0" shared="false" mode="644" dontUninstall="true" />
+      <dirEntry mountPoint="1" file="%RELEASE_FULL_PATH%" overwrite="4" shared="false" mode="644" dontUninstall="false" excludeSuffixes="" dirMode="755">
+        <exclude>
+          <entry location="conf/wildfire.xml" launcher="false" />
+          <entry location="resources/security/keystore" launcher="false" />
+          <entry location="resources/security/truststore" launcher="false" />
+        </exclude>
+      </dirEntry>
+    </entries>
+    <components />
+  </files>
+  <launchers>
+    <launcher name="Wildfire" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
+      <executable name="%PRODUCT_NAME%-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="%APP_NAME%" jreLocation="">
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME%" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+      </executable>
+      <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
+        <text>
+          <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+        </text>
+      </splashScreen>
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
+        <searchSequence>
+          <registry />
+          <envVar name="JAVA_HOME" />
+          <envVar name="JDK_HOME" />
+        </searchSequence>
+        <classPath>
+          <scanDirectory location="lib" failOnError="false" />
+        </classPath>
+        <nativeLibraryDirectories />
+      </java>
+      <includedFiles />
+    </launcher>
+    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="%APP_NAME% Server" icnsFile="" pngIcon16File="./images/wildfire-16x16.png" pngIcon32File="./images/wildfire-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
+      <executable name="%PRODUCT_NAME%" type="1" iconSet="true" iconFile="./images/wildfire.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Launcher" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+      </executable>
+      <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
+        <text>
+          <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+        </text>
+      </splashScreen>
+      <java mainClass="org.jivesoftware.wildfire.launcher.Launcher" vmParameters="&quot;-Dappdir=%INSTALL4J_EXEDIR%&quot;" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="" allowBetaVM="false" jdkOnly="false">
+        <searchSequence>
+          <registry />
+          <envVar name="JAVA_HOME" />
+          <envVar name="JDK_HOME" />
+        </searchSequence>
+        <classPath>
+          <scanDirectory location="lib" failOnError="false" />
+        </classPath>
+        <nativeLibraryDirectories />
+      </java>
+      <includedFiles />
+    </launcher>
+    <launcher name="wildfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/wildfired-16x16.png" pngIcon32File="./images/wildfired-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
+      <executable name="%PRODUCT_NAME%d" type="1" iconSet="true" iconFile="./images/wildfired.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Server" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+      </executable>
+      <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
+        <text>
+          <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+        </text>
+      </splashScreen>
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
+        <searchSequence>
+          <registry />
+          <envVar name="JAVA_HOME" />
+          <envVar name="JDK_HOME" />
+        </searchSequence>
+        <classPath>
+          <scanDirectory location="lib" failOnError="false" />
+        </classPath>
+        <nativeLibraryDirectories />
+      </java>
+      <includedFiles />
+    </launcher>
+    <launcher name="wildfire" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" allowUserChangeServiceStartType="true">
+      <executable name="%PRODUCT_NAME%" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
+        <versionInfo include="false" fileVersion="" companyName="" fileDescription="" legalCopyright="" productVersion="" internalName="" />
+      </executable>
+      <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
+        <text>
+          <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+        </text>
+      </splashScreen>
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="-DwildfireHome=$app_home -Dwildfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
+        <searchSequence>
+          <registry />
+          <envVar name="JAVA_HOME" />
+          <envVar name="JDK_HOME" />
+        </searchSequence>
+        <classPath>
+          <scanDirectory location="lib" failOnError="true" />
+        </classPath>
+        <nativeLibraryDirectories />
+      </java>
+      <includedFiles />
+    </launcher>
+  </launchers>
+  <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="true" useCustomHeaderImage="true" customHeaderImage="./images/wildfire_logo_small.png" customSize="false" customWidth="500" customHeight="390">
+    <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="true" postUninstallActionClass="org.jivesoftware.wildfire.launcher.Uninstaller" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="">
+      <archive location="../../target/release/wildfire/lib/startup.jar" />
+    </customCode>
+    <standardScreens>
+      <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
+      <screen id="license" enabled="true" file="%RELEASE_FULL_PATH%/LICENSE.html" />
+      <screen id="location" enabled="true" showSpace="true" suggestAppDir="true" />
+      <screen id="components" enabled="true" allSelected="true" firstMandatory="true">
+        <selectedComponents />
+        <mandatoryComponents />
+      </screen>
+      <screen id="programGroup" enabled="true" />
+      <screen id="fileAssociations" enabled="true">
+        <associations />
+      </screen>
+      <screen id="services" enabled="false" allSelected="false">
+        <selectedServiceLaunchers />
+      </screen>
+      <screen id="additionalTasks" enabled="false" customTasksPlacement="1">
+        <customTasks />
+      </screen>
+      <screen id="preInfo" enabled="false" file="" />
+      <screen id="install" enabled="true" />
+      <screen id="postInfo" enabled="false" file="" />
+      <screen id="finished" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
+    </standardScreens>
+    <customScreens />
+  </installerGui>
+  <mediaSets>
+    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_08_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
+      <selectedLaunchers>
+        <launcher id="2" />
+        <launcher id="12" />
+        <launcher id="15" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
+        <entry location="bin/extra/wildfired" launcher="false" />
+        <entry location="bin/wildfire.bat" launcher="false" />
+        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
+      </exclude>
+      <variables />
+      <excludedScreenIds />
+      <additionalStartMenuEntries>
+        <entry name="Readme" target="README.html" icon="" />
+      </additionalStartMenuEntries>
+    </win32>
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_08" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
+      <selectedLaunchers>
+        <launcher id="22" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
+        <entry location="bin/wildfire.bat" launcher="false" />
+        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
+      </exclude>
+      <variables />
+      <customScriptLines />
+    </linuxRPM>
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="%PRODUCT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
+      <selectedLaunchers>
+        <launcher id="22" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
+        <entry location="bin/wildfire.bat" launcher="false" />
+        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
+      </exclude>
+      <variables />
+      <customScriptLines />
+    </unixArchive>
+    <win32Archive name="Windows Archive" id="31" mediaFileName="" installDir="%APP_SHORT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false">
+      <selectedLaunchers>
+        <launcher id="2" />
+        <launcher id="12" />
+        <launcher id="15" />
+      </selectedLaunchers>
+      <messageSet language="English" />
+      <exclude>
+        <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
+        <entry location="bin/extra/wildfired" launcher="false" />
+        <entry location="bin/wildfire.bat" launcher="false" />
+        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
+      </exclude>
+      <variables />
+    </win32Archive>
+  </mediaSets>
+  <buildIds buildAll="false">
+    <mediaSet refId="31" />
+  </buildIds>
+</install4j>
+

@@ -1,0 +1,17 @@
+Package: wildfire
+Version: @version@
+Section: net
+Priority: optional
+Maintainer: Jive Software <webmaster@jivesoftware.com>
+Depends: sun-java5-jdk
+Standards-Version: 3.7.2
+Installed-Size: 26726
+Architecture: all
+Description: A high performance XMPP (Jabber) server.
+ Wildfire is an instant messaging server that implements the XMPP
+ (Jabber) protocol. It features high performance, a robust
+ administration console, and a full plugin system. The server
+ is 100% Java.
+ .
+ Wildfire is a professional Open Source project, led by Jive Software.
+ 

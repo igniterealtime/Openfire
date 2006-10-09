@@ -1,0 +1,10 @@
+Name                   |  Version
+---------------------------------------------
+cindy.jar              | 2.4.4
+irclib.jar             | 1.04
+jml.jar                | svn-20061008
+joscar-common.jar      | svn-20060915
+joscar-protocol.jar    | svn-20060915
+picocontainer.jar      | 1.2.0
+ymsg_network.jar       | 0.61 (patched)
+ymsg_support.jar       | 0.61 (patched)

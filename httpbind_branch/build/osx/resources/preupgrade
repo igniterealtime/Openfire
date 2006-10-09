@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# stop wildfire
+/bin/launchctl stop org.jivesoftware.wildfire
+/bin/launchctl unload /System/Library/LaunchDaemons/org.jivesoftware.wildfire.plist
+
+# preserve these files, they should never be upgraded
+cp /usr/local/wildfire/conf/wildfire.xml /tmp/
+cp -r /usr/local/wildfire/resources/security /tmp/
+
+
+

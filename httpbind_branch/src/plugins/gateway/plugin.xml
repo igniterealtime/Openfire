@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+    <!-- Main plugin class -->
+    <class>org.jivesoftware.wildfire.gateway.GatewayPlugin</class>
+    
+    <!-- Plugin meta-data -->
+    <name>IM Gateway</name>
+    <description>Provides gateway connectivity to the other public instant messaging networks</description>
+    <author>Daniel Henninger</author>
+    <version>1.0 Beta 3a</version>
+    <date>10/02/2006</date>
+    <minServerVersion>3.1.0</minServerVersion>
+    <databaseKey>gateway</databaseKey>
+    <databaseVersion>1</databaseVersion>
+    <licenseType>gpl</licenseType>
+    
+    <!-- Admin console meta-data -->
+    <adminconsole>              
+        <tab id="tab-server">
+		
+            <sidebar id="gateways" name="Gateways" description="Gateway setup">
+                <item id="gateway-settings" 
+                      name="Settings"
+                      url="gateway-settings.jsp"
+                      description="Click to manage the service that provides access to other IM networks"/>
+                <item id="gateway-registrations" 
+                      name="Registrations"
+                      url="gateway-registrations.jsp"
+                      description="Click to view and manage the user registrations to other IM networks"/>
+            </sidebar>
+		
+        </tab>
+    </adminconsole>
+</plugin>

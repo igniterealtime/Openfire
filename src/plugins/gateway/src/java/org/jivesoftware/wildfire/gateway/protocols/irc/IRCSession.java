@@ -113,6 +113,8 @@ public class IRCSession extends TransportSession {
 
     /**
      * Retrieves the buddy status list.
+     *
+     * @return Hash of buddies mapped to presence type.
      */
     public ConcurrentHashMap<String, PresenceType> getBuddyStatuses() {
         return buddyStatuses;
@@ -122,6 +124,7 @@ public class IRCSession extends TransportSession {
      * Gets the current presence status of a buddy.
      *
      * @param username Username to look up.
+     * @return Presence type of a particular buddy.
      */
     public PresenceType getBuddyStatus(String username) {
         return buddyStatuses.get(username);
@@ -148,7 +151,7 @@ public class IRCSession extends TransportSession {
     }
 
     /**
-     * Returns the IRC connection associated with this session.
+     * @return the IRC connection associated with this session.
      */
     public IRCConnection getConnection() {
         return conn;

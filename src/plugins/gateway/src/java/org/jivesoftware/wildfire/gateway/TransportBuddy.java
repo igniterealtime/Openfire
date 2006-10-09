@@ -51,6 +51,8 @@ public class TransportBuddy {
 
     /**
      * Retrieves the name of the contact.
+     *
+     * @return Name of contact.
      */
     public String getName() {
        return contactname;
@@ -58,6 +60,8 @@ public class TransportBuddy {
 
     /**
      * Retrieves the nickname of the contact.
+     *
+     * @return Nickname of contact.
      */
     public String getNickname() {
        return nickname;
@@ -65,6 +69,8 @@ public class TransportBuddy {
 
     /**
      * Retrieves the group of the contact.
+     *
+     * @return Group contact is in.
      */
     public String getGroup() {
        return group;

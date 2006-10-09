@@ -61,6 +61,8 @@ public class IRCListener implements IRCEventListener {
 
     /**
      * Retrieves the session this listener is associated with.
+     *
+     * @return The session the listener is associated with.
      */
     public IRCSession getSession() {
         return session;

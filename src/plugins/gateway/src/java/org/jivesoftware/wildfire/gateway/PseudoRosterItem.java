@@ -218,6 +218,8 @@ public class PseudoRosterItem {
 
     /**
      * Inserts a new roster item into the database.
+     *
+     * @throws SQLException if the SQL statement is wrong for whatever reason.
      */
     private void insertIntoDb() throws SQLException {
         Connection con = null;
@@ -253,6 +255,8 @@ public class PseudoRosterItem {
 
     /**
      * Removeds a roster item from the database.
+     *
+     * @throws SQLException if the SQL statement is wrong for whatever reason.
      */
     private void removeFromDb() throws SQLException {
         Connection con = null;

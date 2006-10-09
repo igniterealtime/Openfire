@@ -155,6 +155,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @return list of packets that will be sent back to the message sender.
      */
     private List<Packet> processPacket(Message packet) {
+        Log.debug("Received message packet: "+packet.toXML());
         List<Packet> reply = new ArrayList<Packet>();
         JID from = packet.getFrom();
         JID to = packet.getTo();
@@ -195,6 +196,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @return list of packets that will be sent back to the presence requester.
      */
     private List<Packet> processPacket(Presence packet) {
+        Log.debug("Received presence packet: "+packet.toXML());
         List<Packet> reply = new ArrayList<Packet>();
         JID from = packet.getFrom();
         JID to = packet.getTo();
@@ -359,6 +361,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @return list of packets that will be sent back to the IQ requester.
      */
     private List<Packet> processPacket(IQ packet) {
+        Log.debug("Received iq packet: "+packet.toXML());                
         List<Packet> reply = new ArrayList<Packet>();
 
         if (packet.getType() == IQ.Type.error) {
@@ -834,35 +837,35 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     }
 
     /**
-     * Returns the type of the transport.
+     * @return the type of the transport.
      */
     public TransportType getType() {
         return transportType;
     }
 
     /**
-     * Returns the description of the transport.
+     * @return the description of the transport.
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Returns the component manager of the transport.
+     * @return the component manager of the transport.
      */
     public ComponentManager getComponentManager() {
         return componentManager;
     }
 
     /**
-     * Returns the registration manager of the transport.
+     * @return the registration manager of the transport.
      */
     public RegistrationManager getRegistrationManager() {
         return registrationManager;
     }
 
     /**
-     * Returns the session manager of the transport.
+     * @return the session manager of the transport.
      */
     public TransportSessionManager getSessionManager() {
         return sessionManager;
@@ -874,7 +877,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     private String versionString = null;
 
     /**
-     * Returns the version string of the gateway.
+     * @return the version string of the gateway.
      */
     public String getVersionString() {
         if (versionString == null) {
@@ -1280,6 +1283,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @param packet Packet to be sent.
      */
     public void sendPacket(Packet packet) {
+        Log.debug("Sending packet: "+packet.toXML());
         try {
             this.componentManager.sendPacket(this, packet);
         }
@@ -1294,6 +1298,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#addingContact(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem, boolean)
      */
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
+        Log.debug("addingContact "+roster.getUsername()+":"+item.getJid()+" is "+persistent);
         if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
             return false;
         }
@@ -1306,6 +1311,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactUpdated(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactUpdated(Roster roster, RosterItem item) {
+        Log.debug("contactUpdated "+roster.getUsername()+":"+item.getJid());
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
             return;
@@ -1329,8 +1335,13 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactAdded(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactAdded(Roster roster, RosterItem item) {
+        Log.debug("contactAdded "+roster.getUsername()+":"+item.getJid());
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
+            return;
+        }
+        if (item.getJid().getNode() == null) {
+            // Gateway itself, don't care.
             return;
         }
         try {
@@ -1348,8 +1359,13 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactDeleted(Roster roster, RosterItem item) {
+        Log.debug("contactDeleted "+roster.getUsername()+":"+item.getJid());
 //        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
 //            // Not ours, not our problem.
+//            return;
+//        }
+//        if (item.getJid().getNode() == null) {
+//            // TODO: The gateway itself was removed?
 //            return;
 //        }
 //        try {
@@ -1367,8 +1383,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#rosterLoaded(org.jivesoftware.wildfire.roster.Roster)
      */
     public void rosterLoaded(Roster roster) {
+        Log.debug("rosterLoaded "+roster.getUsername());
         // Don't care
-        // TODO: Evaluate if we could use this.
+        // TODO: Evaluate if we could use this, maybe an opportunity to clean up.
     }
 
     /**
@@ -1377,7 +1394,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#availableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void availableSession(ClientSession session, Presence presence) {
-
+        Log.debug("availableSession "+session+":"+presence);
     }
 
     /**
@@ -1386,6 +1403,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#unavailableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void unavailableSession(ClientSession session, Presence presence) {
+        Log.debug("unavailableSession "+session+":"+presence);
 
     }
 
@@ -1395,7 +1413,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#presencePriorityChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void presencePriorityChanged(ClientSession session, Presence presence) {
-
+        Log.debug("presencePriorityChanged "+session+":"+presence);
     }
 
     /**
@@ -1404,7 +1422,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#presenceChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void presenceChanged(ClientSession session, Presence presence) {
-
+        Log.debug("presenceChanged "+session+":"+presence);
     }
 
     /**
@@ -1414,6 +1432,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @param jid JID that is logged into the transport.
      * @param presenceType Type of presence.
      * @param verboseStatus Longer status description.
+     * @param priority Priority of the session (from presence packet).
      * @return A session instance for the new login.
      */
     public abstract TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority);
@@ -1454,21 +1473,30 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * You would write this out as if the entry textfields for the username and password
      * are after it/on the same page.  So something along these lines would be good:
      * Please enter your legacy username and password.
+     *
+     * @return String phrase for registration.
      */
     public abstract String getTerminologyRegistration();
 
     /**
-     * Returns true or false whether the password is required.
+     * Is a password required for this service?
+     *
+     * @return True or false whether the password is required.
      */
     public abstract Boolean isPasswordRequired();
 
     /**
-     * Returns true or false whether the nickname is required.
+     * Is a nickname required for this service?
+     *
+     * @return True or false whether the nickname is required.
      */
     public abstract Boolean isNicknameRequired();
 
     /**
-     * Returns true or false whether the passed username is valud for the service.
+     * Is the specified username valid?
+     *
+     * @param username Username to validate.
+     * @return True or false whether the passed username is valud for the service.
      */
     public abstract Boolean isUsernameValid(String username);
 

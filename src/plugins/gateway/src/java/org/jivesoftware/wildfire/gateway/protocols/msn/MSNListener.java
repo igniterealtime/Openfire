@@ -61,6 +61,9 @@ public class MSNListener extends MsnAdapter {
 
     /**
      * Handles incoming system messages from MSN.
+     *
+     * @param switchboard Switchboard session the message is associated with.
+     * @param message MSN message.
      */
     public void systemMessageReceived(MsnSwitchboard switchboard, MsnInstantMessage message) {
         Message m = new Message();

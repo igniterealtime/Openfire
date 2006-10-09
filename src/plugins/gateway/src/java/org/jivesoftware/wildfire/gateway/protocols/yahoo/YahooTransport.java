@@ -107,6 +107,7 @@ public class YahooTransport extends BaseTransport {
      * Converts a jabber status to an Yahoo status.
      *
      * @param jabStatus Jabber presence type.
+     * @return Yahoo status identifier.
      */
     public long convertJabStatusToYahoo(PresenceType jabStatus) {
         if (jabStatus == PresenceType.available) {
@@ -135,6 +136,7 @@ public class YahooTransport extends BaseTransport {
     /**
      * Sets up a presence packet according to Yahoo status.
      *
+     * @param packet Presence packet to be set up.
      * @param yahooStatus Yahoo StatusConstants constant.
      */
     public void setUpPresencePacket(Presence packet, long yahooStatus) {

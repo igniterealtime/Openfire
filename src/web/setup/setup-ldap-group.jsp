@@ -146,15 +146,15 @@
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.group.name_field" />:</td>
-			<td><input type="text" name="groupNameField" id="jiveLDAPgroupname" size="22" maxlength="30" value="<%= groupNameField!=null?groupNameField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.name_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+			<td><input type="text" name="groupNameField" id="jiveLDAPgroupname" size="22" maxlength="50" value="<%= groupNameField!=null?groupNameField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.name_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.group.member_field" />:</td>
-			<td><input type="text" name="groupMemberField" id="jiveLDAPgroupmember" size="22" maxlength="30" value="<%= groupMemberField!=null?groupMemberField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.member_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+			<td><input type="text" name="groupMemberField" id="jiveLDAPgroupmember" size="22" maxlength="50" value="<%= groupMemberField!=null?groupMemberField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.member_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.group.description_field" />:</td>
-			<td><input type="text" name="groupDescriptionField" id="jiveLDAPgroupdesc" size="22" maxlength="30" value="<%= groupDescriptionField!=null?groupDescriptionField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.description_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+			<td><input type="text" name="groupDescriptionField" id="jiveLDAPgroupdesc" size="22" maxlength="50" value="<%= groupDescriptionField!=null?groupDescriptionField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.description_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
 			</tr>
 			</table>
 
@@ -178,7 +178,7 @@
 						</tr>
 						<tr>
 						<td align="right"><fmt:message key="setup.ldap.group.filter" /></td>
-						<td><input type="text" name="groupSearchFilter" value="<%= groupSearchFilter!=null?groupSearchFilter:""%>" id="jiveLDAPgroupsearchfilter" size="22" maxlength="30"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+						<td><input type="text" name="groupSearchFilter" value="<%= groupSearchFilter!=null?groupSearchFilter:""%>" id="jiveLDAPgroupsearchfilter" size="22" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
 						</tr>
 						</table>
 					</div>

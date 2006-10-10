@@ -10,20 +10,21 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
-import java.io.IOException;
-import java.util.*;
-
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.*;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 import ymsg.network.LoginRefusedException;
 import ymsg.network.Session;
 import ymsg.network.YahooGroup;
 import ymsg.network.YahooUser;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Represents a Yahoo session.
@@ -348,14 +349,22 @@ public class YahooSession extends TransportSession {
         YahooUser user = yahooSession.getUser(jid.getNode());
         Presence p = new Presence();
         p.setTo(getJID());
-        p.setFrom(getTransport().convertIDToJID(user.getId()));
+        if (user != null) {
+            // User was found so update presence accordingly
+            p.setFrom(getTransport().convertIDToJID(user.getId()));
 
-        String custommsg = user.getCustomStatusMessage();
-        if (custommsg != null) {
-            p.setStatus(custommsg);
+            String custommsg = user.getCustomStatusMessage();
+            if (custommsg != null) {
+                p.setStatus(custommsg);
+            }
+
+            ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
         }
-
-        ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
+        else {
+            // User was not found so send an error presence
+            p.setFrom(jid);
+            p.setError(PacketError.Condition.forbidden);
+        }
         getTransport().sendPacket(p);
     }
 

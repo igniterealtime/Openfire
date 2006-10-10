@@ -11,17 +11,18 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import net.sf.jml.*;
-import net.sf.jml.impl.MsnMessengerFactory;
 import net.sf.jml.impl.BasicMessenger;
-import org.jivesoftware.wildfire.gateway.*;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.roster.RosterItem;
+import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.*;
+import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -256,13 +257,17 @@ public class MSNSession extends TransportSession {
      */
     public void retrieveContactStatus(JID jid) {
         MsnContact msnContact = msnContacts.get(getTransport().convertJIDToID(jid));
-        if (msnContact == null) {
-            return;
-        }
         Presence p = new Presence();
         p.setTo(getJID());
-        p.setFrom(getTransport().convertIDToJID(msnContact.getEmail().toString()));
-        ((MSNTransport)getTransport()).setUpPresencePacket(p, msnContact.getStatus());
+        if (msnContact != null) {
+            p.setFrom(getTransport().convertIDToJID(msnContact.getEmail().toString()));
+            ((MSNTransport)getTransport()).setUpPresencePacket(p, msnContact.getStatus());
+        }
+        else {
+            // User was not found so send an error presence
+            p.setFrom(jid);
+            p.setError(PacketError.Condition.forbidden);
+        }
         getTransport().sendPacket(p);
     }
 

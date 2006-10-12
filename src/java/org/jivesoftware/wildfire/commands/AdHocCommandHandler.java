@@ -193,6 +193,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new AddGroup());
         addCommand(new UpdateGroup());
         addCommand(new DeleteGroup());
+        addCommand(new ChangeUserPassword());
     }
 
     private void startCommand(AdHocCommand command) {

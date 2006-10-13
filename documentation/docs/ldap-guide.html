@@ -124,10 +124,8 @@
     </li>
 
     <li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the
-        alternate base DN
-        will be used for authentication and loading single users, but will not be used to display a
-        list of users
-        (due to technical limitations).
+        alternate base DN will be used for authentication, loading single users and displaying a
+        list of users. Content in the base DN and the alternate DN will be treated as one.
     <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be
             performed
             with this account. The admin must be able to perform searches and load user records. The

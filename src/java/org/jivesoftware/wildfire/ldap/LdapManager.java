@@ -318,14 +318,24 @@ public class LdapManager {
 
     /**
      * Returns a DirContext for the LDAP server that can be used to perform
-     * lookups and searches using the default base DN. The context uses the
+     * lookups and searches using the default base DN. The alternate DN will be used
+     * in case there is a {@link NamingException} using base DN. The context uses the
      * admin login that is defined by <tt>adminDN</tt> and <tt>adminPassword</tt>.
      *
      * @return a connection to the LDAP server.
      * @throws NamingException if there is an error making the LDAP connection.
      */
     public LdapContext getContext() throws NamingException {
-        return getContext(baseDN);
+        try {
+            return getContext(baseDN);
+        }
+        catch (NamingException e) {
+            if (alternateBaseDN != null) {
+                return getContext(alternateBaseDN);
+            } else {
+                throw(e);
+            }
+        }
     }
 
     /**
@@ -624,6 +634,7 @@ public class LdapManager {
             if (userDN.startsWith("ldap://")) {
                 userDN = userDN.replace("," + baseDN, "");
                 userDN = userDN.substring(userDN.lastIndexOf("/") + 1);
+                userDN = java.net.URLDecoder.decode(userDN, "UTF-8");
             }
             if (encloseUserDN) {
                 // Enclose userDN values between "
@@ -906,6 +917,32 @@ public class LdapManager {
         else {
             properties.put("ldap.alternateBaseDN", alternateBaseDN);
         }
+    }
+
+    /**
+     * Returns the BaseDN for the given username.
+     *
+     * @param username username to return its base DN.
+     * @return the BaseDN for the given username. If no baseDN is found,
+     *         this method will return <tt>null</tt>.
+     */
+    public String getUsersBaseDN(String username) {
+        try {
+            findUserDN(username, baseDN);
+            return baseDN;
+        }
+        catch (Exception e) {
+            try {
+                if (alternateBaseDN != null) {
+                    findUserDN(username, alternateBaseDN);
+                    return alternateBaseDN;
+                }
+            }
+            catch (Exception ex) {
+                Log.debug(ex);
+            }
+        }
+        return null;
     }
 
     /**

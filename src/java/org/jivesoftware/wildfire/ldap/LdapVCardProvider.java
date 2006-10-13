@@ -136,7 +136,7 @@ public class LdapVCardProvider implements VCardProvider {
         try {
             String userDN = manager.findUserDN(username);
 
-            ctx = manager.getContext();
+            ctx = manager.getContext(manager.getUsersBaseDN(username));
             Attributes attrs = ctx.getAttributes(userDN, template.getAttributes());
 
             for (String attribute : template.getAttributes()) {

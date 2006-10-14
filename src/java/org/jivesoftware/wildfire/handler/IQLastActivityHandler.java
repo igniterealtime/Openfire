@@ -58,6 +58,10 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
                     // The user is offline so answer the user's "last available time and the
                     // status message of the last unavailable presence received from the user"
                     long lastActivityTime = presenceManager.getLastActivity(user);
+                    if (lastActivityTime > -1) {
+                        // Convert it to seconds
+                        lastActivityTime = lastActivityTime / 1000;
+                    }
                     lastActivity.addAttribute("seconds", String.valueOf(lastActivityTime));
                     String lastStatus = presenceManager.getLastPresenceStatus(user);
                     if (lastStatus != null && lastStatus.length() > 0) {

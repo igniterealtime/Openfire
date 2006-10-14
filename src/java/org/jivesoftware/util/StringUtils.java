@@ -894,6 +894,52 @@ public class StringUtils {
     }
 
     /**
+     * Returns a textual representation for the time that has elapsed.
+     *
+     * @param delta the elapsed time.
+     * @return textual representation for the time that has elapsed.
+     */
+    public static String getElapsedTime(long delta) {
+        if (delta < JiveConstants.MINUTE) {
+            return LocaleUtils.getLocalizedString("global.less-minute");
+        }
+        else if (delta < JiveConstants.HOUR) {
+            long mins = delta / JiveConstants.MINUTE;
+            StringBuilder sb = new StringBuilder();
+            sb.append(mins).append(" ");
+            sb.append((mins==1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            return sb.toString();
+        }
+        else if (delta < JiveConstants.DAY) {
+            long hours = delta / JiveConstants.HOUR;
+            delta -= hours * JiveConstants.HOUR;
+            long mins = delta / JiveConstants.MINUTE;
+            StringBuilder sb = new StringBuilder();
+            sb.append(hours).append(" ");
+            sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
+            sb.append(", ");
+            sb.append(mins).append(" ");
+            sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            return sb.toString();
+        } else {
+            long days = delta / JiveConstants.DAY;
+            delta -= days * JiveConstants.DAY;
+            long hours = delta / JiveConstants.HOUR;
+            delta -= hours * JiveConstants.HOUR;
+            long mins = delta / JiveConstants.MINUTE;
+            StringBuilder sb = new StringBuilder();
+            sb.append(days).append(" ");
+            sb.append((days == 1) ? LocaleUtils.getLocalizedString("global.day") : LocaleUtils.getLocalizedString("global.days"));
+            sb.append(", ");
+            sb.append(hours).append(" ");
+            sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
+            sb.append(", ");
+            sb.append(mins).append(" ");
+            sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            return sb.toString();
+        }
+    }
+    /**
      * Returns a collection of Strings as a comma-delimitted list of strings.
      *
      * @return a String representing the Collection.

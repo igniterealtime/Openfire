@@ -9,14 +9,17 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
-                 java.util.*,
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.wildfire.PresenceManager,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.JiveGlobals"
+                 org.jivesoftware.wildfire.user.User,
+                 org.jivesoftware.wildfire.user.UserManager"
 %><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.xmpp.packet.Presence" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.Collection" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -154,6 +157,7 @@
         <th nowrap><fmt:message key="user.create.username" /></th>
         <th nowrap><fmt:message key="user.create.name" /></th>
         <th nowrap><fmt:message key="user.summary.created" /></th>
+        <th nowrap><fmt:message key="user.summary.last-logout" /></th>
          <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>
         <th nowrap><fmt:message key="user.summary.edit" /></th>
@@ -209,14 +213,23 @@
 
             <%  } %>
         </td>
-        <td width="30%">
+        <td width="23%">
             <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
         </td>
-        <td width="40%">
+        <td width="33%">
             <%= user.getName() %> &nbsp;
         </td>
-        <td width="26%">
+        <td width="15%">
             <%= JiveGlobals.formatDate(user.getCreationDate()) %>
+        </td>
+        <td width="25%">
+            <% long logoutTime = presenceManager.getLastActivity(user);
+                if (logoutTime > -1) {
+                    out.println(StringUtils.getElapsedTime(logoutTime));
+                }
+                else {
+                    out.println("&nbsp;");
+                } %>
         </td>
          <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>

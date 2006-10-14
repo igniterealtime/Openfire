@@ -127,7 +127,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         String offline = user.getProperties().get(LAST_ACTIVITY_PROP);
         if (offline != null) {
             try {
-                answer = (System.currentTimeMillis() - Long.parseLong(offline)) / 1000;
+                answer = (System.currentTimeMillis() - Long.parseLong(offline));
             }
             catch (NumberFormatException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

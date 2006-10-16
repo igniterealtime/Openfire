@@ -15,6 +15,7 @@ import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.PacketError;
 import org.schwering.irc.lib.IRCConnection;
 
 import java.io.IOException;
@@ -244,8 +245,13 @@ public class IRCSession extends TransportSession {
     public void retrieveContactStatus(JID jid) {
         String contact = getTransport().convertJIDToID(jid);
         Presence p = new Presence();
-        if (buddyStatuses.get(contact).equals(PresenceType.unavailable)) {
-            p.setType(Presence.Type.unavailable);
+        if (buddyStatuses.containsKey(contact)) {
+            if (buddyStatuses.get(contact).equals(PresenceType.unavailable)) {
+                p.setType(Presence.Type.unavailable);
+            }
+        }
+        else {
+            p.setError(PacketError.Condition.forbidden);
         }
         p.setTo(jid);
         p.setFrom(getTransport().convertIDToJID(contact));

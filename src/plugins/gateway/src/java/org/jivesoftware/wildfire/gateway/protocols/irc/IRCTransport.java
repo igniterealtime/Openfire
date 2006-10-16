@@ -10,10 +10,7 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.irc;
 
-import org.jivesoftware.wildfire.gateway.BaseTransport;
-import org.jivesoftware.wildfire.gateway.TransportSession;
-import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.PresenceType;
+import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
@@ -99,6 +96,8 @@ public class IRCTransport extends BaseTransport {
         Log.debug("Logging out of IRC gateway.");
         ((IRCSession)session).logOut();
 //        session.sessionDone();
+        // Just in case.
+        session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     /**

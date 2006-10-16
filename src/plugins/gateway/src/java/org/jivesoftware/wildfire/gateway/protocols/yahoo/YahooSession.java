@@ -338,6 +338,22 @@ public class YahooSession extends TransportSession {
         catch (Exception e) {
             Log.error("Unable to set Yahoo Status:", e);
         }
+        Presence p = new Presence();
+        if (presenceType == PresenceType.away) {
+            p.setShow(Presence.Show.away);
+        }
+        else if (presenceType == PresenceType.xa) {
+            p.setShow(Presence.Show.xa);
+        }
+        else if (presenceType == PresenceType.dnd) {
+            p.setShow(Presence.Show.dnd);
+        }
+        else if (presenceType == PresenceType.chat) {
+            p.setShow(Presence.Show.chat);
+        }
+        p.setTo(getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
         this.presenceType = presenceType;
         this.verboseStatus = verboseStatus;
     }

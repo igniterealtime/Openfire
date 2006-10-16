@@ -12,10 +12,7 @@ package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.wildfire.gateway.BaseTransport;
-import org.jivesoftware.wildfire.gateway.PresenceType;
-import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.TransportSession;
+import org.jivesoftware.wildfire.gateway.*;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import net.sf.jml.MsnUserStatus;
@@ -101,6 +98,8 @@ public class MSNTransport extends BaseTransport {
         Log.debug("Logging out of MSN gateway.");
         ((MSNSession)session).logOut();
 //        session.sessionDone();
+        // Just in case.
+        session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
     /**

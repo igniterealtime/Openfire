@@ -164,9 +164,18 @@ public class IRCSession extends TransportSession {
         String awayMsg = ((IRCTransport)getTransport()).convertJabStatusToIRC(presenceType, verboseStatus);
         if (awayMsg == null) {
             conn.doAway();
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
         }
         else {
             conn.doAway(awayMsg);
+            Presence p = new Presence();
+            p.setShow(Presence.Show.away);
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
         }
     }
 

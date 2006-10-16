@@ -117,7 +117,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#friendAddedReceived(ymsg.network.event.SessionFriendEvent)
      */
     public void friendAddedReceived(SessionFriendEvent event) {
-        Presence p = new Presence(Presence.Type.subscribed);
+        Presence p = new Presence(Presence.Type.subscribe);
         p.setTo(yahooSession.getJID());
         p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
         yahooSession.getTransport().sendPacket(p);
@@ -127,7 +127,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#friendRemovedReceived(ymsg.network.event.SessionFriendEvent)
      */
     public void friendRemovedReceived(SessionFriendEvent event) {
-        Presence p = new Presence(Presence.Type.unsubscribed);
+        Presence p = new Presence(Presence.Type.unsubscribe);
         p.setTo(yahooSession.getJID());
         p.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
         yahooSession.getTransport().sendPacket(p);

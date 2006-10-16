@@ -16,7 +16,7 @@ body, td, th {
 	font-size : 10pt;
 }
 pre, tt, code {
-	font-family : courier new, monospaced;
+	font-family : courier new, monospace;
 	font-size : 9pt;
 }
 #pageContainer {
@@ -27,7 +27,6 @@ pre, tt, code {
 	border: 1px solid #999;
 	padding: 40px;
 	margin: 30px;
-	-moz-border-radius: 6px;
 }
 #pageHeader {
 	display: block;
@@ -36,7 +35,6 @@ pre, tt, code {
 	background-color: #e7eaee;
 	border: 1px solid #cccccc;
 	border-bottom: none;
-	-moz-border-radius: 5px 5px 0px 0px;
 	margin: 10px 0px 0px 0px;
 }
 #pageBody {
@@ -126,7 +124,7 @@ li {
 	padding-bottom : 4px;
 }
 tt {
-	font-family : courier new;
+	font-family : courier new, monospace;
 	font-weight : bold;
 	color : #060;
 }
@@ -221,6 +219,22 @@ hr {
     set who has access to the specific transports and even enforce manual
     registrations only.  If a specific transport has any options, they will
     be made available from the web interface.
+</p>
+<p>
+    If you have a firewall set up, you do not need to open any inbound ports.
+    However, you will need to make sure the following outgoing connections
+    will work based on the transport in question:
+    <ul>
+        <li>AIM: login.oscar.aol.com 5190</li>
+        <li>ICQ: login.oscar.aol.com 5190</li>
+        <li>IRC: currently irc.freenode.net 7000 (in the future this will be configurable)</li>
+        <li>MSN: messenger.hotmail.com 1863</li>
+        <li>Yahoo: scs.msg.yahoo.com 5050</li>
+    </ul>
+</p>
+<p>
+    There is additional documentation available at:
+    <a href="http://wiki.jivesoftware.org/display/WILDFIRE/IM+Gateway+Plugin">IM Gateway Plugin Wiki</a>
 </p>
 
 <h3>For end users:</h3>

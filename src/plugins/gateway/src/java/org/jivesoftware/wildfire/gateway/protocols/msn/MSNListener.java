@@ -144,6 +144,28 @@ public class MSNListener extends MsnAdapter {
     }
 
     /**
+     * Someone added us to their contact list.
+     */
+    public void contactAddedMe(MsnMessenger messenger, MsnContact friend) {
+        Presence p = new Presence();
+        p.setType(Presence.Type.subscribe);
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));
+        msnSession.getTransport().sendPacket(p);
+    }
+
+    /**
+     * Someone removed us from their contact list.
+     */
+    public void contactRemovedMe(MsnMessenger messenger, MsnContact friend) {
+        Presence p = new Presence();
+        p.setType(Presence.Type.unsubscribe);
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().convertIDToJID(friend.getEmail().toString()));
+        msnSession.getTransport().sendPacket(p);
+    }
+
+    /**
      * Owner status has changed.
      */
     public void ownerStatusChanged(MsnMessenger messenger) {

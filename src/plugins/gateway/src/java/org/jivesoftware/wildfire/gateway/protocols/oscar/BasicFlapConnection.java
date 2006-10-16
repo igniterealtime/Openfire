@@ -21,6 +21,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 import net.kano.joscar.ByteBlock;
 import net.kano.joscar.OscarTools;
 import net.kano.joscar.BinaryTools;
@@ -285,9 +286,10 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             oscarSession.getTransport().sendPacket(p);
         }
         else {
-            Presence p = new Presence(Presence.Type.unavailable);
+            Presence p = new Presence();
             p.setTo(oscarSession.getJID());
             p.setFrom(oscarSession.getTransport().convertIDToJID(sn));
+            p.setError(PacketError.Condition.forbidden);
             oscarSession.getTransport().sendPacket(p);
         }
     }

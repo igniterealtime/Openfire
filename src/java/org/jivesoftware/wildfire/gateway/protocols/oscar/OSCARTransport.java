@@ -98,6 +98,8 @@ public class OSCARTransport extends BaseTransport {
     public void registrationLoggedOut(TransportSession session) {
         ((OSCARSession)session).logOut();
 //        session.sessionDone();
+        // Just in case.
+        session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 
 }

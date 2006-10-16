@@ -445,9 +445,18 @@ public class OSCARSession extends TransportSession {
                 awayMsg = verboseStatus;
             }
             request(new SetInfoCmd(new InfoData(awayMsg, null, MY_CAPS, null)));
+            Presence p = new Presence();
+            p.setShow(Presence.Show.away);
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
         }
         else {
             request(new SetInfoCmd(new InfoData(InfoData.NOT_AWAY, null, MY_CAPS, null)));
+            Presence p = new Presence();
+            p.setTo(getJID());
+            p.setFrom(getTransport().getJID());
+            getTransport().sendPacket(p);
         }
 
         this.presenceType = presenceType;

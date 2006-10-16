@@ -16,8 +16,10 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.container.AdminConsolePlugin;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.wildfire.net.*;
+import org.mortbay.jetty.Server;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -82,6 +84,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         startClientListeners(localIPAddress);
         // Start the port listener for secured clients
         startClientSSLListeners(localIPAddress);
+        // Start the HTTP client listener
+        startHTTPBindListeners();
     }
 
     private void startServerListener(String localIPAddress) {
@@ -279,6 +283,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     new SocketConnection(new MultiplexerPacketDeliverer(), sock, isSecure);
             return new ConnectionMultiplexerSocketReader(router, routingTable, serverName, sock,
                     conn, useBlockingMode);
+        }
+    }
+
+    private void startHTTPBindListeners() {
+        Server jetty = AdminConsolePlugin.getJettyServer();
+        if(jetty == null) {
+            return;
         }
     }
 

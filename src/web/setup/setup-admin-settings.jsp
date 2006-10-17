@@ -13,6 +13,7 @@
                  org.jivesoftware.wildfire.user.UserManager" %>
 <%@ page import="javax.servlet.http.HttpSession"%>
 <%@ page import="java.util.*"%>
+<%@ page import="java.net.URLEncoder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -33,6 +34,7 @@
 
 <%
     // Get parameters
+    String username = ParamUtils.getParameter(request,"username");
     String password = ParamUtils.getParameter(request,"password");
     String email = ParamUtils.getParameter(request,"email");
     String newPassword = ParamUtils.getParameter(request,"newPassword");
@@ -40,6 +42,7 @@
 
     boolean doContinue = request.getParameter("continue") != null;
     boolean doSkip = request.getParameter("doSkip") != null;
+    boolean doTest = request.getParameter("test") != null;
 
     boolean ldap = "true".equals(request.getParameter("ldap"));
 
@@ -148,7 +151,7 @@
     // This handles the case of reverting back to default settings from LDAP. Will
     // add admin to the authorizedUsername list if the authorizedUsername list contains
     // entries.
-    if(!ldap){
+    if(!ldap && !doTest){
         String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
         List<String> adminCollection = new ArrayList<String>(StringUtils.stringToCollection(currentAdminList));
         if((!adminCollection.isEmpty() && !adminCollection.contains("admin")) || JiveGlobals.getXMLProperty("admin.authorizedJIDs") != null){
@@ -338,6 +341,25 @@ document.acctform.newPassword.focus();
 
 
 <% } else { %>
+    <% if (doTest) {
+        StringBuffer testLink = new StringBuffer();
+        testLink.append("setup-admin-settings_test.jsp?username=");
+        testLink.append(URLEncoder.encode(username, "UTF-8"));
+        if (password != null) {
+            testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
+        }
+    %>
+
+        <a href="<%= testLink %>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+        <script type="text/javascript">
+            function loadMsg() {
+                var lb = new lightbox(document.getElementById('lbmessage'));
+                lb.activate();
+            }
+            setTimeout('loadMsg()', 250);
+        </script>
+
+    <% } %>
     <p>
      <fmt:message key="setup.admin.settings.ldap.info" />
       </p>
@@ -369,17 +391,23 @@ document.acctform.newPassword.focus();
         <table class="jive-vcardTable" cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
+                <th width="1%" nowrap><fmt:message key="global.test" /></th>
                 <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
             </tr>
     <%
-        for (String username : StringUtils.stringToCollection(authorizedUsernames)) {
+        for (String authUsername : StringUtils.stringToCollection(authorizedUsernames)) {
     %>
         <tr valign="top">
             <td>
-                <%= username%>
+                <%= authUsername%>
+            </td>
+            <td width="1%" align="center">
+                <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authUsername, "UTF-8") %>"
+                 title="<fmt:message key="global.click_test" />"
+                 ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
             </td>
             <td>
-                <input type="checkbox" name="remove" value="<%=username%>"/>
+                <input type="checkbox" name="remove" value="<%=authUsername%>"/>
             </td>
         </tr>
 
@@ -388,6 +416,9 @@ document.acctform.newPassword.focus();
             if (authorizedUsernames != null) {
         %>
              <tr valign="top">
+            <td>
+               &nbsp;
+            </td>
             <td>
                &nbsp;
             </td>

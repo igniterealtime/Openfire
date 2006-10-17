@@ -10,6 +10,7 @@
     <excludes>
         <pattern>/setup/setup-completed.jsp*</pattern>
         <pattern>/setup/setup-ldap-server_test.jsp*</pattern>
+        <pattern>/setup/setup-admin-settings_test.jsp*</pattern>
         <pattern>/login.jsp*</pattern>
         <pattern>/plugin-icon.jsp*</pattern>
         <pattern>/js/jscalendar/i18n.jsp*</pattern>

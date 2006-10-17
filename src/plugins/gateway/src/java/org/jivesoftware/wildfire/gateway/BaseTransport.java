@@ -160,30 +160,31 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
         JID from = packet.getFrom();
         JID to = packet.getTo();
 
-        if (to.getNode() == null) {
-            // Message to gateway itself.  Throw away for now.
-            try {
-                TransportSession session = sessionManager.getSession(from);
+        try {
+            TransportSession session = sessionManager.getSession(from);
+            if (!session.isLoggedIn()) {
+                Message m = new Message();
+                m.setError(Condition.service_unavailable);
+                m.setTo(from);
+                m.setFrom(getJID());
+                m.setBody("You are not currently logged into the transport.");
+                reply.add(m);
+            }
+            else if (to.getNode() == null) {
+                // Message to gateway itself.  Throw away for now.
                 if (packet.getBody() != null) {
                     session.sendServerMessage(packet.getBody());
                 }
             }
-            catch (NotFoundException e) {
-                // TODO: Should return an error packet here
-                Log.debug("Unable to find session.");
-            }
-        }
-        else {
-            try {
-                TransportSession session = sessionManager.getSession(from);
+            else {
                 if (packet.getBody() != null) {
                     session.sendMessage(to, packet.getBody());
                 }
             }
-            catch (NotFoundException e) {
-                // TODO: Should return an error packet here
-                Log.debug("Unable to find session.");
-            }
+        }
+        catch (NotFoundException e) {
+            // TODO: Should return an error packet here
+            Log.debug("Unable to find session.");
         }
 
         return reply;

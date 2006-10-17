@@ -13,11 +13,11 @@ package org.jivesoftware.wildfire.http;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.StreamID;
 import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.net.VirtualConnection;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Message;
 
 import java.util.*;
 import java.net.InetAddress;
@@ -36,7 +36,7 @@ public class HttpSession extends ClientSession {
     private int hold = -1000;
     private String language;
     private final Queue<HttpConnection> connectionQueue = new LinkedList<HttpConnection>();
-    private final List<Packet> pendingElements = new ArrayList<Packet>();
+    private final List<Deliverable> pendingElements = new ArrayList<Deliverable>();
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
@@ -44,7 +44,7 @@ public class HttpSession extends ClientSession {
     private boolean isClosed;
     private int inactivityTimeout;
 
-    protected HttpSession(String serverName, StreamID streamID) {
+    public HttpSession(String serverName, StreamID streamID) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection();
     }
@@ -103,11 +103,39 @@ public class HttpSession extends ClientSession {
     }
 
     public String getAvailableStreamFeatures() {
-        return null;
+        StringBuilder sb = new StringBuilder(200);
+
+        // Include Stream Compression Mechanism
+        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+                !conn.isCompressed()) {
+            sb.append(
+                    "<compression xmlns=\"http://jabber.org/features/compress\">" +
+                            "<method>zlib</method></compression>");
+        }
+
+        if (getAuthToken() == null) {
+            // Advertise that the server supports Non-SASL Authentication
+            sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+            // Advertise that the server supports In-Band Registration
+            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
+                sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
+            }
+        }
+        else {
+            // If the session has been authenticated then offer resource binding
+            // and session establishment
+            sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
+            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+        }
+        return sb.toString();
     }
 
     public InetAddress getInetAddress() {
         return null;
+    }
+
+    public void close() {
+        close(false);
     }
 
     public synchronized void close(boolean isServerShuttingDown) {
@@ -129,10 +157,12 @@ public class HttpSession extends ClientSession {
     }
 
     private void failDelivery() {
-        ClientFailoverDeliverer deliverer = new ClientFailoverDeliverer();
-        deliverer.setStreamID(getStreamID());
-        for(Element element : pendingElements) {
-            deliverer.deliver(element);
+        for(Deliverable deliverable : pendingElements) {
+            Packet packet = deliverable.packet;
+            if (packet != null && packet instanceof Message) {
+                XMPPServer.getInstance().getOfflineMessageStrategy()
+                        .storeOffline((Message) packet);
+            }
         }
         pendingElements.clear();
     }
@@ -141,10 +171,15 @@ public class HttpSession extends ClientSession {
         return isClosed;
     }
 
-    private void deliver(String text) {
+    private synchronized void deliver(String text) {
+        deliver(new Deliverable(text));
     }
 
     public synchronized void deliver(Packet stanza) {
+        deliver(new Deliverable(stanza));
+    }
+
+    private void deliver(Deliverable stanza) {
         String deliverable = createDeliverable(Arrays.asList(stanza));
         boolean delivered = false;
         while(!delivered && connectionQueue.size() > 0) {
@@ -172,14 +207,14 @@ public class HttpSession extends ClientSession {
         }
     }
 
-    private String createDeliverable(Collection<Packet> elements) {
-        Element body = DocumentHelper.createElement("body");
-        body.addAttribute("xmlns", "http://jabber.org/protocol/httpbind");
-        for(Packet child : elements) {
-            child = child.createCopy();
-            body.add(child.getElement());
+    private String createDeliverable(Collection<Deliverable> elements) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<body xmlns='" + "http://jabber.org/protocol/httpbind" + "'>");
+        for(Deliverable child : elements) {
+            builder.append(child.getDeliverable());
         }
-        return body.asXML();
+        builder.append("</body>");
+        return builder.toString();
     }
 
     /**
@@ -294,7 +329,7 @@ public class HttpSession extends ClientSession {
      * A virtual server connection relates to a virtual session which its self can relate to many
      * http connections.
      */
-    public class HttpVirtualConnection extends VirtualConnection {
+    public static class HttpVirtualConnection extends VirtualConnection {
 
         public void closeVirtualConnection() {
             ((HttpSession)session).close(false);
@@ -314,6 +349,31 @@ public class HttpSession extends ClientSession {
 
         public void deliverRawText(String text) {
             ((HttpSession)session).deliver(text);
+        }
+    }
+
+    private class Deliverable {
+
+        private final String text;
+        private final Packet packet;
+
+        public Deliverable(String text) {
+            this.text = text;
+            this.packet = null;
+        }
+
+        public Deliverable(Packet element) {
+            this.text = null;
+            this.packet = element.createCopy();
+        }
+
+        public String getDeliverable() {
+            if(text == null) {
+                return packet.toXML();
+            }
+            else {
+                return text;
+            }
         }
     }
 }

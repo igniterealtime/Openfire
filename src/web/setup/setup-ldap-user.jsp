@@ -89,6 +89,13 @@
             JiveGlobals.setXMLProperty("provider.auth.className",
                     "org.jivesoftware.wildfire.ldap.LdapAuthProvider");
 
+            // Save information in the session so we can use it in testing pages during setup
+            Map<String, String> settings = new HashMap<String, String>();
+            settings.put("ldap.usernameField", usernameField);
+            settings.put("ldap.searchFields", searchFields);
+            settings.put("ldap.searchFilter", searchFilter);
+            session.setAttribute("ldapUserSettings", settings);
+
             // Redirect
             response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);
             return;

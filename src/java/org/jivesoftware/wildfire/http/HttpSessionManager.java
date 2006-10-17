@@ -187,10 +187,10 @@ public class HttpSessionManager {
                 router.route(packet);
             }
             catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                throw new HttpBindException("Bad auth request, unknown encoding", true, 400);
             }
             catch (UnknownStanzaException e) {
-                e.printStackTrace();
+                throw new HttpBindException("Unknown packet type.", false, 400);
             }
         }
 
@@ -227,7 +227,7 @@ public class HttpSessionManager {
         }
 
         public void run() {
-            session.close(false);
+            session.close();
         }
     }
 }

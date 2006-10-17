@@ -14,6 +14,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.net.MXParser;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.dom4j.io.XMPPPacketReader;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -146,9 +147,18 @@ public class HttpBindServlet extends HttpServlet {
             return;
         }
 
-        HttpConnection connection = new HttpConnection(rid, request.isSecure());
-        connection.setSession(sessionManager.createSession(rootNode, connection));
-        respond(response, connection);
+
+        try {
+            HttpConnection connection = new HttpConnection(rid, request.isSecure());
+            connection.setSession(sessionManager.createSession(rootNode, connection));
+            respond(response, connection);
+        }
+        catch (UnauthorizedException e) {
+            // Server wasn't initialized yet.
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Server Not initialized");
+        }
+
     }
 
     private void respond(HttpServletResponse response, HttpConnection connection)

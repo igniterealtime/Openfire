@@ -135,10 +135,10 @@ public class HttpSession extends ClientSession {
     }
 
     public void close() {
-        close(false);
+        conn.close();
     }
 
-    public synchronized void close(boolean isServerShuttingDown) {
+    private synchronized void close(boolean isServerShuttingDown) {
         if(isClosed) {
             return;
         }

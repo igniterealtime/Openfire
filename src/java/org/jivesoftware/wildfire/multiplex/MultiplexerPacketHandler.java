@@ -16,11 +16,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.interceptor.InterceptorManager;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
-import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.xmpp.packet.*;
 
 import java.io.UnsupportedEncodingException;
@@ -40,12 +36,10 @@ import java.util.List;
 public class MultiplexerPacketHandler {
 
     private String connectionManagerDomain;
-    private PacketRouter router;
     private final ConnectionMultiplexerManager multiplexerManager;
 
     public MultiplexerPacketHandler(String connectionManagerDomain) {
         this.connectionManagerDomain = connectionManagerDomain;
-        router = XMPPServer.getInstance().getPacketRouter();
         multiplexerManager = ConnectionMultiplexerManager.getInstance();
     }
 
@@ -160,135 +154,20 @@ public class MultiplexerPacketHandler {
             sendErrorPacket(route, PacketError.Condition.item_not_found, null);
             return;
         }
-        // Connection Manager wrapped a packet from a Client Session.
-        Element wrappedElement = route.getChildElement();
-        String tag = wrappedElement.getName();
+
+        MultiplexerPacketRouter router = new MultiplexerPacketRouter(session);
         try {
-            if ("auth".equals(tag) || "response".equals(tag)) {
-                SASLAuthentication.handle(session, wrappedElement);
-            }
-            else if ("iq".equals(tag)) {
-                processIQ(session, getIQ(wrappedElement));
-            }
-            else if ("message".equals(tag)) {
-                processMessage(session, new Message(wrappedElement));
-            }
-            else if ("presence".equals(tag)) {
-                processPresence(session, new Presence(wrappedElement));
-            }
-            else {
-                Element extraError = DocumentHelper.createElement(QName.get(
-                        "unknown-stanza",
-                        "http://jabber.org/protocol/connectionmanager#errors"));
-                sendErrorPacket(route, PacketError.Condition.bad_request, extraError);
-            }
+            router.route(route.getChildElement());
+        }
+        catch (UnknownStanzaException use) {
+            Element extraError = DocumentHelper.createElement(QName.get(
+                    "unknown-stanza",
+                    "http://jabber.org/protocol/connectionmanager#errors"));
+            sendErrorPacket(route, PacketError.Condition.bad_request, extraError);
         }
         catch (UnsupportedEncodingException e) {
-            Log.error("Error processing wrapped packet: " + wrappedElement.asXML(), e);
+            Log.error("Error processing wrapped packet: " + route.getChildElement().asXML(), e);
             sendErrorPacket(route, PacketError.Condition.internal_server_error, null);
-        }
-    }
-
-    private void processIQ(ClientSession session, IQ packet) {
-        packet.setFrom(session.getAddress());
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            IQ reply = new IQ();
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
-            // Check if a message notifying the rejection should be sent
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message notification = new Message();
-                notification.setTo(session.getAddress());
-                notification.setFrom(packet.getTo());
-                notification.setBody(e.getRejectionMessage());
-                session.process(notification);
-            }
-        }
-    }
-
-    private void processPresence(ClientSession session, Presence packet) {
-        packet.setFrom(session.getAddress());
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            Presence reply = new Presence();
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
-            // Check if a message notifying the rejection should be sent
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message notification = new Message();
-                notification.setTo(session.getAddress());
-                notification.setFrom(packet.getTo());
-                notification.setBody(e.getRejectionMessage());
-                session.process(notification);
-            }
-        }
-    }
-
-    private void processMessage(ClientSession session, Message packet) {
-        packet.setFrom(session.getAddress());
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message reply = new Message();
-                reply.setID(packet.getID());
-                reply.setTo(session.getAddress());
-                reply.setFrom(packet.getTo());
-                reply.setType(packet.getType());
-                reply.setThread(packet.getThread());
-                reply.setBody(e.getRejectionMessage());
-                session.process(reply);
-            }
-        }
-    }
-
-    private IQ getIQ(Element doc) {
-        Element query = doc.element("query");
-        if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
-            return new Roster(doc);
-        }
-        else {
-            return new IQ(doc);
         }
     }
 
@@ -298,6 +177,7 @@ public class MultiplexerPacketHandler {
      *
      * @param packet     the packet to be bounced.
      * @param extraError application specific error or null if none.
+     * @param error the error.
      */
     private void sendErrorPacket(IQ packet, PacketError.Condition error, Element extraError) {
         IQ reply = IQ.createResultIQ(packet);
@@ -316,6 +196,7 @@ public class MultiplexerPacketHandler {
      *
      * @param packet     the packet to be bounced.
      * @param extraError application specific error or null if none.
+     * @param error the error.
      */
     private void sendErrorPacket(Route packet, PacketError.Condition error, Element extraError) {
         Route reply = new Route(packet.getStreamID());

@@ -11,16 +11,15 @@
 package org.jivesoftware.wildfire.http;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.multiplexer.ServerSurrogate;
-import org.jivesoftware.multiplexer.ConnectionManager;
-import org.jivesoftware.multiplexer.Session;
 import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.ConnectionManager;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.StreamID;
+import org.jivesoftware.wildfire.multiplex.MultiplexerPacketRouter;
+import org.jivesoftware.wildfire.multiplex.UnknownStanzaException;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.dom4j.Element;
 
 import java.util.*;
+import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -77,7 +76,9 @@ public class HttpSessionManager {
         return sessionMap.get(streamID);
     }
 
-    public HttpSession createSession(Element rootNode, HttpConnection connection) {
+    public HttpSession createSession(Element rootNode, HttpConnection connection)
+            throws UnauthorizedException
+    {
         // TODO Check if IP address is allowed to connect to the server
 
         // Default language is English ("en").
@@ -88,9 +89,6 @@ public class HttpSessionManager {
 
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
-
-        // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy(serverSurrogate.getCompressionPolicy());
 
         HttpSession session = createSession(serverName);
         session.setWait(wait);
@@ -111,34 +109,30 @@ public class HttpSessionManager {
         return session;
     }
 
-    private HttpSession createSession(String serverName) {
+    private HttpSession createSession(String serverName) throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         HttpSession session = new HttpSession(serverName, streamID);
+        // Send to the server that a new client session has been created
+        sessionManager.createClientHttpSession(streamID);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
-        // Send to the server that a new client session has been created
-        serverSurrogate.clientSessionCreated(streamID);
         session.addSessionCloseListener(new SessionListener() {
             public void connectionOpened(HttpSession session, HttpConnection connection) {
                 if (session instanceof HttpSession) {
-                    timer.stop((HttpSession) session);
+                    timer.stop(session);
                 }
             }
 
             public void connectionClosed(HttpSession session, HttpConnection connection) {
-                if(session instanceof HttpSession) {
-                    HttpSession http = (HttpSession) session;
-                    if(http.getConnectionCount() <= 0) {
-                        timer.reset(http);
-                    }
+                if (session.getConnectionCount() <= 0) {
+                    timer.reset(session);
                 }
             }
 
             public void sessionClosed(HttpSession session) {
                 sessionMap.remove(session.getStreamID());
                 timer.stop(session);
-                serverSurrogate.clientSessionClosed(session.getStreamID());
             }
         });
         return session;
@@ -170,9 +164,7 @@ public class HttpSessionManager {
                 .append(" wait='").append(String.valueOf(session.getWait())).append("'")
                 .append(">");
         builder.append("<stream:features>");
-        builder.append(serverSurrogate.getSASLMechanismsElement(session).asXML());
-        builder.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
-        builder.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+        builder.append(session.getAvailableStreamFeatures());
         builder.append("</stream:features>");
         builder.append("</body>");
 
@@ -188,9 +180,18 @@ public class HttpSessionManager {
         boolean isPoll = elements.size() <= 0;
         HttpConnection connection = new HttpConnection(rid, isSecure);
         session.addConnection(connection, isPoll);
+        MultiplexerPacketRouter router = new MultiplexerPacketRouter(session);
 
         for (Element packet : elements) {
-            serverSurrogate.send(packet, session.getStreamID());
+            try {
+                router.route(packet);
+            }
+            catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            catch (UnknownStanzaException e) {
+                e.printStackTrace();
+            }
         }
 
         return connection;
@@ -219,14 +220,14 @@ public class HttpSessionManager {
     }
 
     private class InactivityTimeoutTask extends TimerTask {
-        private Session session;
+        private HttpSession session;
 
-        public InactivityTimeoutTask(Session session) {
+        public InactivityTimeoutTask(HttpSession session) {
             this.session = session;
         }
 
         public void run() {
-            session.close();
+            session.close(false);
         }
     }
 }

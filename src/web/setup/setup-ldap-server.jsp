@@ -129,7 +129,7 @@
 
     <% if (test && errors.isEmpty()) { %>
 
-        <a href="setup-ldap-server_test.jsp?serverType=<%= serverType%>" id="lbmessage" title="Test" style="display:none;"></a>
+        <a href="setup-ldap-server_test.jsp?serverType=<%= serverType%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));

@@ -7,23 +7,38 @@ This toggles toggles an individual panel (slides up and down), or switches
 between the two if one's already open.
 */
 
-function togglePanel(thisID,thatID) {
+lastID = "";
 
-activeLink = thisID.id+"Link";
-oldLink = thatID.id+"Link";
+function togglePanel(thisID) {
 
-	if ($(thisID).style.display != 'none' && $(thatID).style.display == 'none') {
-		Effect.toggle($(thisID),'slide', {duration: .4});
-		$(activeLink).className = "";
-	} else if ($(thisID).style.display == 'none' && $(thatID).style.display != 'none') {
-		$(thatID).style.display = 'none';
-		$(thisID).style.display = 'block';
-		$(oldLink).className = "";
-		$(activeLink).className = "jive-gatewayButtonOn";
-	} else {
-		Effect.toggle($(thisID),'slide', {duration: .4});
-		$(activeLink).className = "jive-gatewayButtonOn";
-	}
+    activeLink = thisID.id+"Link";
+    if (lastID != "") {
+        thatID = lastID;
+        oldLink = thatID.id+"Link";
+        if ($(thisID).style.display != 'none' && $(thatID).style.display == 'none') {
+            Effect.toggle($(thisID),'slide', {duration: .4});
+            $(activeLink).className = "";
+        } else if ($(thisID).style.display == 'none' && $(thatID).style.display != 'none') {
+            $(thatID).style.display = 'none';
+            $(thisID).style.display = 'block';
+            $(oldLink).className = "";
+            $(activeLink).className = "jive-gatewayButtonOn";
+        } else {
+            Effect.toggle($(thisID),'slide', {duration: .4});
+            $(activeLink).className = "jive-gatewayButtonOn";
+        }
+    }
+    else {
+        if ($(thisID).style.display != 'none') {
+            Effect.toggle($(thisID),'slide', {duration: .4});
+            $(activeLink).className = "";
+        } else {
+            Effect.toggle($(thisID),'slide', {duration: .4});
+            $(activeLink).className = "jive-gatewayButtonOn";
+        }
+    }
+
+    lastID = thisID;
 }
 
 
@@ -35,15 +50,18 @@ unchecks a gateway the box goes grey panels aren't accessible.
 */
 function checkToggle(theID) {
 
-theCheckbox = theID.id+"checkbox";
-optsLink = theID.id+"optionsLink";
-permLink = theID.id+"permsLink";
-optsPanel = theID.id+"options";
-permPanel = theID.id+"perms";
+    theCheckbox = theID.id+"checkbox";
+    testLink = theID.id+"testsLink";
+    optsLink = theID.id+"optionsLink";
+    permLink = theID.id+"permsLink";
+    testPanel = theID.id+"tests";
+    optsPanel = theID.id+"options";
+    permPanel = theID.id+"perms";
 
 	if ($(theCheckbox).checked) {
 		$(theID).className = "jive-gateway";
-		$(optsLink).style.display = 'block';
+        $(testLink).style.display = 'block';
+        $(optsLink).style.display = 'block';
 		$(permLink).style.display = 'block';
 		/* the below doesn't work right in IE, work on later */
 		//$(optsLink).setAttribute('onclick',"togglePanel($(optsPanel),$(permPanel))");
@@ -53,18 +71,22 @@ permPanel = theID.id+"perms";
 		/* the below doesn't work right in IE, work on later */
 		//$(optsLink).removeAttribute('onclick');
 		//$(permLink).removeAttribute('onclick');
-		$(optsLink).style.display = 'none';
+        $(testLink).style.display = 'none';
+        $(optsLink).style.display = 'none';
 		$(permLink).style.display = 'none';
 		/* fix the panels so they roll up and the buttons go back to default states */
-		$(optsLink).className = "";
+        $(testLink).className = "";
+        $(optsLink).className = "";
 		$(permLink).className = "";
 		if ($(optsPanel).style.display != 'none') {
 			Effect.toggle($(optsPanel), 'slide', {duration: .1});
 		} else if ($(permPanel).style.display != 'none') {
 			Effect.toggle($(permPanel), 'slide', {duration: .1});
-		}
-	
-	}
+        } else if ($(testPanel).style.display != 'none') {
+            Effect.toggle($(testPanel), 'slide', {duration: .1});
+        }
+
+    }
 
 }
 

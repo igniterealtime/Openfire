@@ -58,6 +58,7 @@ public class PluginManager {
     private Map<Plugin, String> childPluginMap;
     private Set<String> devPlugins;
     private PluginMonitor pluginMonitor;
+    private Set<PluginListener> pluginListeners = new HashSet<PluginListener>();
 
     /**
      * Constructs a new plugin manager.
@@ -457,6 +458,7 @@ public class PluginManager {
 
                     AdminConsole.addModel(pluginName, adminElement);
                 }
+                firePluginCreatedEvent(pluginDir.getName(), plugin);
             }
             else {
                 Log.warn("Plugin " + pluginDir + " could not be loaded: no plugin.xml file found");
@@ -464,6 +466,14 @@ public class PluginManager {
         }
         catch (Throwable e) {
             Log.error("Error loading plugin", e);
+        }
+    }
+
+    private void firePluginCreatedEvent(String name, Plugin plugin) {
+        Collection<PluginListener> pluginListeners
+                = new ArrayList<PluginListener>(this.pluginListeners);
+        for(PluginListener listener : pluginListeners) {
+            listener.pluginCreated(name, plugin);
         }
     }
 
@@ -537,6 +547,15 @@ public class PluginManager {
             unloadPlugin(childPluginMap.get(plugin));
         }
         childPluginMap.remove(plugin);
+        firePluginDestroyedEvent(pluginName, plugin);
+    }
+
+    private void firePluginDestroyedEvent(String name, Plugin plugin) {
+        Collection<PluginListener> pluginListeners
+                = new ArrayList<PluginListener>(this.pluginListeners);
+        for (PluginListener listener : pluginListeners) {
+            listener.pluginDestroyed(name, plugin);
+        }
     }
 
     /**
@@ -1051,5 +1070,13 @@ public class PluginManager {
             }
             return dir.delete();
         }
+    }
+
+    public void addPluginListener(PluginListener listener) {
+        pluginListeners.add(listener);
+    }
+
+    public void removePluginListener(PluginListener listener) {
+        pluginListeners.remove(listener);
     }
 }

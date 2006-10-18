@@ -12,7 +12,6 @@
 package org.jivesoftware.wildfire;
 
 import org.jivesoftware.wildfire.net.SocketReader;
-import org.mortbay.jetty.Server;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -42,6 +41,8 @@ public interface ConnectionManager {
      * @param serverPort holds information about the port on which the server is listening for
      *        connections.
      * @param useBlockingMode true means that the server will use a thread per connection.
+     * @return the created socket reader.
+     * @throws java.io.IOException when there is an error creating the socket reader.
      */
     public SocketReader createSocketReader(Socket socket, boolean isSecure, ServerPort serverPort,
             boolean useBlockingMode) throws IOException;
@@ -209,13 +210,4 @@ public interface ConnectionManager {
      * @return the port to use for connection managers.
      */
     public int getConnectionManagerListenerPort();
-
-    /**
-     * Returns the jetty server.
-     *
-     * @return the jetty server.
-     */
-    Server getHttpServer();
-
-    void setHttpServer(Server server);
 }

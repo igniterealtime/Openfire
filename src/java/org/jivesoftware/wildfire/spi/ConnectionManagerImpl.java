@@ -18,10 +18,8 @@ import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.http.HttpSessionManager;
 import org.jivesoftware.wildfire.http.HttpBindServlet;
 import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.container.AdminConsolePlugin;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.wildfire.net.*;
-import org.mortbay.jetty.Server;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.servlet.ServletHandler;
@@ -54,12 +52,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private boolean isStarted = false;
     // Used to know if the sockets have been started
     private boolean isSocketStarted = false;
-    private Server jettyServer;
+    private HttpServerManager serverManager;
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
         ports = new ArrayList<ServerPort>(4);
-        jettyServer = new Server();
+        serverManager = HttpServerManager.getInstance();
     }
 
     private void createSocket() {
@@ -293,14 +291,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void startHTTPBindListeners() {
-        if(jettyServer == null) {
-            jettyServer = AdminConsolePlugin.getJettyServer();
-            if(jettyServer == null) {
-                return;
-            }
-        }
-
-        jettyServer.addHandler(createServletHandler());
+        serverManager.setHttpBindContext(createServletHandler());
     }
 
     private Handler createServletHandler() {
@@ -518,14 +509,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public int getConnectionManagerListenerPort() {
         return JiveGlobals.getIntProperty("xmpp.multiplex.socket.port",
                 SocketAcceptThread.DEFAULT_MULTIPLEX_PORT);
-    }
-
-    public Server getHttpServer() {
-        return jettyServer;
-    }
-
-    public void setHttpServer(Server server) {
-        this.jettyServer = server;
     }
 
     // #####################################################################

@@ -19,6 +19,7 @@ junit.jar              | 3.8.1
 jdic.jar               | 0.9.1 (for windows only)
 jstl.jar               | Jakarta standard taglib 1.1.2
 jmdns.jar              | 1.0 RC1
+jsp-api.jar			   | Jetty 6.1.0 (2.0)
 jtds.jar               | 1.2
 jzlib.jar              | 1.0.7
 mysql.jar              | 3.1.13

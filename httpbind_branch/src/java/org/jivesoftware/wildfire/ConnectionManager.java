@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire;
 
 import org.jivesoftware.wildfire.net.SocketReader;
+import org.mortbay.jetty.Server;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -208,4 +209,13 @@ public interface ConnectionManager {
      * @return the port to use for connection managers.
      */
     public int getConnectionManagerListenerPort();
+
+    /**
+     * Returns the jetty server.
+     *
+     * @return the jetty server.
+     */
+    Server getHttpServer();
+
+    void setHttpServer(Server server);
 }

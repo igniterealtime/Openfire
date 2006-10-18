@@ -14,15 +14,15 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.mortbay.http.HttpContext;
-import org.mortbay.http.HttpListener;
-import org.mortbay.http.SunJsseListener;
+import org.jivesoftware.wildfire.ConnectionManager;
+import org.jivesoftware.wildfire.net.SSLConfig;
+import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
-import org.mortbay.log.Factory;
-import org.mortbay.log.LogImpl;
-import org.mortbay.log.OutputStreamLogSink;
-import org.mortbay.util.InetAddrPort;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.jetty.webapp.WebAppContext;
 
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.File;
 
 /**
@@ -33,19 +33,29 @@ import java.io.File;
  */
 public class AdminConsolePlugin implements Plugin {
 
-    private static Server jetty = null;
+    private static Server server = null;
     private int port;
     private int securePort;
 
     private File pluginDir;
-    private HttpContext context = null;
-    private HttpListener plainListener = null;
-    private HttpListener secureListener = null;
+    private WebAppContext context = null;
+    private Connector plainListener = null;
+    private Connector secureListener = null;
 
     /**
      * Create a jetty module.
      */
     public AdminConsolePlugin() {
+        ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
+        if(manager != null) {
+            server = manager.getHttpServer();
+        }
+        if(server == null) {
+            server = new Server();
+            if(manager != null) {
+                manager.setHttpServer(server);
+            }
+        }
     }
 
     public void restartListeners() {
@@ -54,33 +64,21 @@ public class AdminConsolePlugin implements Plugin {
             System.out.println(restarting);
             Log.info(restarting);
 
-            jetty.stop();
+            server.stop();
             if (plainListener != null) {
-                jetty.removeListener(plainListener);
+                server.removeConnector(plainListener);
                 plainListener = null;
             }
             if (secureListener != null) {
-                jetty.removeListener(secureListener);
+                server.removeConnector(secureListener);
                 secureListener = null;
             }
-            jetty.removeContext(context);
+            server.removeHandler(context);
             loadListeners();
 
-            // Add web-app. Check to see if we're in development mode. If so, we don't
-            // add the normal web-app location, but the web-app in the project directory.
-            if (Boolean.getBoolean("developmentMode")) {
-                System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
-                context = jetty.addWebApplication("/",
-                    pluginDir.getParentFile().getParentFile().getParent() + File.separator + "src" +
-                            File.separator + "web");
-            }
-            else {
-                context = jetty.addWebApplication("/",
-                    pluginDir.getAbsoluteFile() + File.separator + "webapp");
-            }
-            context.setWelcomeFiles(new String[]{"index.jsp"});
-
-            jetty.start();
+            context = createWebAppContext();
+            server.addHandler(context);
+            server.start();
 
             printListenerMessages();
         }
@@ -93,35 +91,33 @@ public class AdminConsolePlugin implements Plugin {
         // Configure HTTP socket listener. Setting the interface property to a
         // non null value will imply that the Jetty server will only
         // accept connect requests to that IP address.
-        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+//        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
         port = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
-        InetAddrPort address = new InetAddrPort(interfaceName, port);
+        SelectChannelConnector connector = new SelectChannelConnector();
+        connector.setPort(port);
+//        InetAddrPort address = new InetAddrPort(interfaceName, port);
         if (port > 0) {
-            plainListener = jetty.addListener(address);
+            plainListener = connector;
+            server.addConnector(connector);
         }
 
         try {
             securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
             if (securePort > 0) {
-                SunJsseListener listener = new SunJsseListener();
-                // Get the keystore location. The default location is security/keystore
-                String keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
-                        "resources" + File.separator + "security" + File.separator + "keystore");
-                // The location is relative to the home directory of the application.
-                keyStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + keyStoreLocation;
+                SslSocketConnector secureConnector = new JiveSslConnector();
+                secureConnector.setPort(securePort);
 
-                // Get the keystore password. The default password is "changeit".
-                String keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
-                keypass = keypass.trim();
+                secureConnector.setTrustPassword(SSLConfig.getTrustPassword());
+                secureConnector.setTruststoreType(SSLConfig.getStoreType());
+                secureConnector.setTruststore(SSLConfig.getTruststoreLocation());
+                secureConnector.setNeedClientAuth(false);
+                secureConnector.setWantClientAuth(false);
 
-                listener.setKeystore(keyStoreLocation);
-                listener.setKeyPassword(keypass);
-                listener.setPassword(keypass);
-
-                listener.setHost(interfaceName);
-                listener.setPort(securePort);
-
-                secureListener = jetty.addListener(listener);
+                secureConnector.setKeyPassword(SSLConfig.getKeyPassword());
+                secureConnector.setKeystoreType(SSLConfig.getStoreType());
+                secureConnector.setKeystore(SSLConfig.getKeystoreLocation());
+                secureListener = secureConnector;
+                server.addConnector(secureListener);
             }
         }
         catch (Exception e) {
@@ -132,9 +128,7 @@ public class AdminConsolePlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
         try {
-            // Configure logging to a file, creating log dir if needed
-            System.setProperty("org.apache.commons.logging.LogFactory", "org.mortbay.log.Factory");
-            File logDir = null;
+            File logDir;
             String logDirectory = JiveGlobals.getXMLProperty("log.directory");
             // Check if the "log.directory" was defined
             if (logDirectory != null) {
@@ -151,45 +145,28 @@ public class AdminConsolePlugin implements Plugin {
             if (!logDir.exists()) {
                 logDir.mkdirs();
             }
-            File logFile = new File(logDir, "admin-console.log");
-            OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
-            logSink.start();
-            // In some cases, commons-logging settings can be stomped by other
-            // libraries in the classpath. Make sure that hasn't happened before
-            // setting configuration.
-            Object logImpl = Factory.getFactory().getInstance("");
-            if (logImpl instanceof LogImpl) {
-                LogImpl log = (LogImpl)logImpl;
-                // Ignore INFO logs unless debugging turned on.
-                if (Log.isDebugEnabled() &&
-                        JiveGlobals.getBooleanProperty("jetty.debug.enabled", true)) {
-                    log.setVerbose(1);
-                }
-                else {
-                    log.setVerbose(-1);
-                }
-                log.add(logSink);
-            }
-
-            jetty = new Server();
+//            File logFile = new File(logDir, "admin-console.log");
+//            OutputStreamLogSink logSink = new OutputStreamLogSink(logFile.toString());
+//            logSink.start();
+//            // In some cases, commons-logging settings can be stomped by other
+//            // libraries in the classpath. Make sure that hasn't happened before
+//            // setting configuration.
+//            Logger log = (Logger) LogFactory.getFactory().getInstance("");
+//                // Ignore INFO logs unless debugging turned on.
+//                if (Log.isDebugEnabled() &&
+//                        JiveGlobals.getBooleanProperty("jetty.debug.enabled", true)) {
+//                    log.setVerbose(1);
+//                }
+//                else {
+//                    log.setVerbose(-1);
+//                }
+//                log.add(logSink);
 
             loadListeners();
 
-            // Add web-app. Check to see if we're in development mode. If so, we don't
-            // add the normal web-app location, but the web-app in the project directory.
-            if (Boolean.getBoolean("developmentMode")) {
-                System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
-                context = jetty.addWebApplication("/",
-                    pluginDir.getParentFile().getParentFile().getParent() + File.separator + "src" +
-                            File.separator + "web");
-            }
-            else {
-                context = jetty.addWebApplication("/",
-                    pluginDir.getAbsoluteFile() + File.separator + "webapp");
-            }
-            context.setWelcomeFiles(new String[]{"index.jsp"});
-
-            jetty.start();
+            context = createWebAppContext();
+            server.addHandler(context);
+            server.start();
 
             printListenerMessages();
         }
@@ -199,16 +176,34 @@ public class AdminConsolePlugin implements Plugin {
         }
     }
 
+    private WebAppContext createWebAppContext() {
+        WebAppContext context;
+        // Add web-app. Check to see if we're in development mode. If so, we don't
+        // add the normal web-app location, but the web-app in the project directory.
+        if (Boolean.getBoolean("developmentMode")) {
+            System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
+            context = new WebAppContext(
+                    pluginDir.getParentFile().getParentFile().getParent() + File.separator +
+                            "src" + File.separator + "web", "/");
+        }
+        else {
+            context = new WebAppContext(pluginDir.getAbsoluteFile() + File.separator + "webapp",
+                    "/");
+        }
+        context.setWelcomeFiles(new String[]{"index.jsp"});
+        return context;
+    }
+
     public void destroyPlugin() {
         plainListener = null;
         secureListener = null;
         try {
-            if (jetty != null) {
-                jetty.stop();
-                jetty = null;
+            if (server != null) {
+                server.stop();
+                server = null;
             }
         }
-        catch (InterruptedException e) {
+        catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
     }
@@ -219,7 +214,7 @@ public class AdminConsolePlugin implements Plugin {
      * @return the Jetty server instance.
      */
     public static Server getJettyServer() {
-        return jetty;
+        return server;
     }
 
     /**
@@ -253,6 +248,13 @@ public class AdminConsolePlugin implements Plugin {
                     securePort;
             Log.info(msg);
             System.out.println(msg);
+        }
+    }
+
+    public class JiveSslConnector extends SslSocketConnector {
+        @Override
+        protected SSLServerSocketFactory createFactory() throws Exception {
+            return SSLConfig.getServerSocketFactory();
         }
     }
 }

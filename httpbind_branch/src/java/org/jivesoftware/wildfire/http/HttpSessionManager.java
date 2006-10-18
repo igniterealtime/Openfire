@@ -55,7 +55,6 @@ public class HttpSessionManager {
      */
     private static int pollingInterval;
 
-    private String serverName;
     private InactivityTimer timer = new InactivityTimer();
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new HashMap<String, HttpSession>();
@@ -67,8 +66,7 @@ public class HttpSessionManager {
         pollingInterval = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.polling", 5);
     }
 
-    public HttpSessionManager(String serverName) {
-        this.serverName = serverName;
+    public HttpSessionManager() {
         this.sessionManager = SessionManager.getInstance();
     }
 
@@ -90,7 +88,7 @@ public class HttpSessionManager {
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
 
-        HttpSession session = createSession(serverName);
+        HttpSession session = createSession();
         session.setWait(wait);
         session.setHold(hold);
         session.setSecure(connection.isSecure());
@@ -109,12 +107,11 @@ public class HttpSessionManager {
         return session;
     }
 
-    private HttpSession createSession(String serverName) throws UnauthorizedException {
+    private HttpSession createSession() throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
-        HttpSession session = new HttpSession(serverName, streamID);
         // Send to the server that a new client session has been created
-        sessionManager.createClientHttpSession(streamID);
+        HttpSession session = sessionManager.createClientHttpSession(streamID);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(new SessionListener() {

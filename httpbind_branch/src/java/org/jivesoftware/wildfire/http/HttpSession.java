@@ -134,11 +134,11 @@ public class HttpSession extends ClientSession {
         return null;
     }
 
-    public void close() {
+    public synchronized void close() {
         conn.close();
     }
 
-    private synchronized void close(boolean isServerShuttingDown) {
+    private synchronized void closeConnection() {
         if(isClosed) {
             return;
         }
@@ -175,7 +175,7 @@ public class HttpSession extends ClientSession {
         deliver(new Deliverable(text));
     }
 
-    public synchronized void deliver(Packet stanza) {
+    private synchronized void deliver(Packet stanza) {
         deliver(new Deliverable(stanza));
     }
 
@@ -332,7 +332,7 @@ public class HttpSession extends ClientSession {
     public static class HttpVirtualConnection extends VirtualConnection {
 
         public void closeVirtualConnection() {
-            ((HttpSession)session).close(false);
+            ((HttpSession)session).closeConnection();
         }
 
         public InetAddress getInetAddress() {
@@ -340,7 +340,7 @@ public class HttpSession extends ClientSession {
         }
 
         public void systemShutdown() {
-            ((HttpSession)session).close(true);
+            ((HttpSession)session).closeConnection();
         }
 
         public void deliver(Packet packet) throws UnauthorizedException {
@@ -353,7 +353,6 @@ public class HttpSession extends ClientSession {
     }
 
     private class Deliverable {
-
         private final String text;
         private final Packet packet;
 

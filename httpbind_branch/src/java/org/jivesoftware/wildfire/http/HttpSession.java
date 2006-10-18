@@ -326,7 +326,7 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * A virtual server connection relates to a virtual session which its self can relate to many
+     * A virtual server connection relates to a http session which its self can relate to many
      * http connections.
      */
     public static class HttpVirtualConnection extends VirtualConnection {

@@ -37,15 +37,25 @@
 			<strong><%= this.description %></strong>
 		</label>
 		<div class="jive-gatewayButtons">
-			<!--<a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>optionsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>>Options</a>-->
-			<!--<a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms,jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>permsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>>Permissions</a>-->
+            <a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>tests); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>testsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>>Tests</a>
+            <a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>optionsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>>Options</a>
+			<a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>permsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>>Permissions</a>
 		</div>
 	</div>
-	<div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>options" style="display: none;">
+    <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>tests" style="display: none;">
+        <div>
+            <i>This is not yet functional.</i><br />
+        <form action="">
+            <input type="submit" name="submit" value="Test Connection" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>tests,jive<%= this.gatewayType.toString().toUpperCase() %>tests); return false" class="jive-formButton">
+        </form>
+        </div>
+    </div>
+    <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>options" style="display: none;">
 		<div>
-		<form action="">
+            <i>This is not yet functional.</i><br />
+        <form action="">
 			<!-- <input type="checkbox" name="filetransfer" value="enabled"> Enable file transfer<br> -->
-			<input type="checkbox" name="reconnect" value="enabled"> Reconnect on disconnect<br>
+			<!-- <input type="checkbox" name="reconnect" value="enabled"> Reconnect on disconnect<br> -->
 			<input type="submit" name="submit" value="Save Options" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" class="jive-formButton"> 
 			<input type="reset" name="cancel" value="Cancel" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" class="jive-formButton">
 		</form>
@@ -53,7 +63,8 @@
 	</div>
 	<div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>perms" style="display: none;">
 		<div>
-		<form action="">
+            <i>This is not yet functional.</i><br />
+        <form action="">
 			<input type="radio" name="userreg" value="all" checked> All users can register<br>
 			<input type="radio" name="userreg" value="specific"> These users and/or groups can register<br>
 			<input type="radio" name="userreg" value="manual"> Manual registration only (see the Registrations section to manage)<br>
@@ -62,7 +73,7 @@
 		</form>
 		</div>
 	</div>
-	<!-- END gateway 1 - <%= this.gatewayType.toString().toUpperCase() %> -->
+	<!-- END gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
 
 <%
             }

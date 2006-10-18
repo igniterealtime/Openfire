@@ -37,7 +37,9 @@
             long regId = ParamUtils.getLongParameter(request, "deleteid", -1);
             try {
                 Registration reg = new Registration(regId);
-                // TODO: Check if transport is enabled
+                if (!trEnabled.get(reg.getTransportType().toString())) {
+                    response.sendRedirect("gateway-registrations.jsp?success=false");
+                }
                 plugin.getTransportInstance(reg.getTransportType().toString()).getTransport().deleteRegistration(reg.getJID());
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
@@ -467,8 +469,8 @@
 			<td><%= result.jid %></td>
 			<td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><%= result.username %></span></td>
 			<td><%= result.lastLogin %></td>
-			<td align="center"><a href="" onClick="toggleEdit(<%= result.id %>); return false"><img src="images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }"><img src="images/delete-16x16.gif" alt="" border="0"></a></form></td>
+			<td align="center"><a href="" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>toggleEdit(<%= result.id %>); return false<% } %>"><img src="images/edit-16x16.gif" alt="" border="0"></a></td>
+			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }<% } %>"><img src="images/delete-16x16.gif" alt="" border="0"></a></form></td>
 		</tr>
 		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none;">
 			<td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>

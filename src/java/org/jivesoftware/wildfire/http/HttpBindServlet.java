@@ -46,7 +46,7 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    HttpBindServlet(HttpSessionManager sessionManager) {
+    public HttpBindServlet(HttpSessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
 

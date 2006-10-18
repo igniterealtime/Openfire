@@ -15,7 +15,9 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.net.SSLConfig;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
 
@@ -41,6 +43,7 @@ public class HttpServerManager {
     public static final String HTTP_BIND_PORT = "httpbind.port.plain";
 
     public static final String HTTP_BIND_SECURE_PORT = "httpbind.port.secure";
+    private String httpBindPath;
 
     public static HttpServerManager getInstance() {
         return instance;
@@ -50,21 +53,22 @@ public class HttpServerManager {
     private int securePort;
     private Server adminServer;
     private Server httpBindServer;
-    private Handler adminConsoleContext;
-    private Handler httpBindContext;
+    private Context adminConsoleContext;
+    private ServletHolder httpBindContext;
 
     private HttpServerManager() {
     }
 
-    public void setAdminConsoleContext(Handler context) {
+    public void setAdminConsoleContext(Context context) {
         this.adminConsoleContext = context;
     }
 
-    public void setHttpBindContext(Handler context) {
+    public void setHttpBindContext(ServletHolder context, String httpBindPath) {
         this.httpBindContext = context;
+        this.httpBindPath = httpBindPath;
     }
 
-    private void createHttpBindServer(Handler context) {
+    private void createHttpBindServer() {
         port = JiveGlobals.getIntProperty(HTTP_BIND_PORT, 9090);
         securePort = JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, 9091);
 
@@ -77,10 +81,9 @@ public class HttpServerManager {
         for (Connector connector : connectors) {
             httpBindServer.addConnector(connector);
         }
-        httpBindServer.addHandler(context);
     }
 
-    private void createAdminConsoleServer(Handler context) {
+    private void createAdminConsoleServer() {
         int port = JiveGlobals.getXMLProperty(ADMIN_CONSOLE_PORT, 9090);
         int securePort = JiveGlobals.getXMLProperty(ADMIN_CONOSLE_SECURE_PORT, 9091);
         boolean loadConnectors = true;
@@ -95,7 +98,6 @@ public class HttpServerManager {
                         " ports.");
                 httpBindServer = null;
                 httpBindServer = new Server();
-                httpBindServer.addHandler(httpBindContext);
                 adminServer = httpBindServer;
             }
             else {
@@ -117,16 +119,18 @@ public class HttpServerManager {
                 adminServer.addConnector(connector);
             }
         }
-        adminServer.addHandler(context);
     }
 
     public void startup() {
         if(httpBindContext != null) {
-            createHttpBindServer(httpBindContext);
+            createHttpBindServer();
         }
         if(adminConsoleContext != null) {
-            createAdminConsoleServer(adminConsoleContext);
+            createAdminConsoleServer();
         }
+
+        addContexts();
+
         if(httpBindServer != null) {
             try {
                 httpBindServer.start();
@@ -142,6 +146,23 @@ public class HttpServerManager {
             catch (Exception e) {
                 Log.error("Could not start admin conosle server", e);
             }
+        }
+    }
+
+    private void addContexts() {
+        if(httpBindServer == adminServer && httpBindServer != null) {
+            adminConsoleContext.addServlet(httpBindContext, httpBindPath);
+            adminServer.addHandler(adminConsoleContext);
+            return;
+        }
+        if(httpBindServer != null) {
+            ServletHandler servletHandler = new ServletHandler();
+            servletHandler.addServletWithMapping(httpBindContext, httpBindPath);
+            httpBindServer.addHandler(servletHandler);
+        }
+        if(adminServer != null) {
+            adminServer.addHandler(adminConsoleContext);
+            // TODO remove the http bind servlet
         }
     }
 

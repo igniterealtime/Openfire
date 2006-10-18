@@ -291,15 +291,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void startHTTPBindListeners() {
-        serverManager.setHttpBindContext(createServletHandler());
+        serverManager.setHttpBindContext(createServletHandler(), "/http-bind/");
     }
 
-    private Handler createServletHandler() {
-        ServletHolder servletHolder = new ServletHolder(
-                new HttpBindServlet(new HttpSessionManager()));
-        ServletHandler servletHandler = new ServletHandler();
-        servletHandler.addServletWithMapping(servletHolder, "/http-bind/");
-        return servletHandler;
+    private ServletHolder createServletHandler() {
+        return new ServletHolder(new HttpBindServlet(new HttpSessionManager()));
     }
 
     public void initialize(XMPPServer server) {

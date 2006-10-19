@@ -219,6 +219,44 @@ public class HttpServerManager {
         return connectorList;
     }
 
+    /**
+     * Returns true if the HTTP bind server is currently enabled.
+     *
+     * @return true if the HTTP bind server is currently enabled.
+     */
+    public boolean isHttpBindEnabled() {
+        return httpBindServer != null && httpBindServer.isRunning();
+    }
+
+    /**
+     * Returns the HTTP binding port which does not use SSL.
+     *
+     * @return the HTTP binding port which does not use SSL.
+     */
+    public int getHttpBindUnsecurePort() {
+        return JiveGlobals.getIntProperty(HTTP_BIND_PORT, 9090);
+    }
+
+    /**
+     * Returns the HTTP binding port which uses SSL.
+     *
+     * @return the HTTP binding port which uses SSL.
+     */
+    public int getHttpBindSecurePort() {
+        return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, 9091);
+    }
+
+    /**
+     * Returns true if the HTTP binding service is running on a seperate server than the admin
+     * console.
+     *
+     * @return true if the HTTP binding service is running on a seperate server than the admin
+     * console.
+     */
+    public boolean isSeperateHttpBindServerConfigured() {
+        return httpBindServer != adminServer;
+    }
+
     private class JiveSslConnector extends SslSocketConnector {
 
         @Override

@@ -187,6 +187,8 @@ public interface GroupProvider {
      * to ensure that searching is supported.
      *
      * @param query the search string for group names.
+     * @param startIndex start index in results.
+     * @param numResults number of results to return.
      * @return all groups that match the search.
      */
     Collection<String> search(String query, int startIndex, int numResults);

@@ -73,7 +73,6 @@ public interface UserProvider {
      */
     public Collection<User> getUsers();
 
-
     /**
      * Returns an unmodifiable Collection of usernames of all users in the system.
      *
@@ -193,9 +192,9 @@ public interface UserProvider {
      *
      * @param fields the fields to search on.
      * @param query the query string.
+     * @param startIndex the starting index in the search result to return.
+     * @param numResults the number of users to return in the search result.
      * @return a Collection of users that match the search.
-     * @return startIndex the starting index in the search result to return.
-     * @return numResults the number of users to return in the search result.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */

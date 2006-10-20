@@ -14,11 +14,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%
-    HttpServerManager serverManager = HttpServerManager.getInstance();
+<%!
     Map<String, String> errorMap = new HashMap<String, String>();
+    HttpServerManager serverManager = HttpServerManager.getInstance();
 
-    if (request.getParameter("update") != null) {
+    void handleUpdate(HttpServletRequest request) {
         boolean isEnabled = ParamUtils.getBooleanParameter(request, "httpBindEnabled");
         if (isEnabled) {
             boolean httpPortsDistinct = ParamUtils.getBooleanParameter(request, "httpPortsDistinct",
@@ -41,6 +41,12 @@
             }
         }
         serverManager.setHttpBindEnabled(isEnabled);
+    }
+%>
+
+<%
+    if (request.getParameter("update") != null) {
+        handleUpdate(request);
     }
 
     boolean isHttpBindEnabled = serverManager.isHttpBindEnabled();

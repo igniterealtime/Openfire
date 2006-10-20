@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/plugins-dev" />
     <exclude-output />
     <exclude-exploded />
@@ -106,15 +106,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/cindy.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/commons-logging.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

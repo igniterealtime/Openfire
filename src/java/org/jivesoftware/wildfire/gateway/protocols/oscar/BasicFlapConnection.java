@@ -73,6 +73,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                     DateFormat.SHORT);
 
     protected void handleFlapPacket(FlapPacketEvent e) {
+        Log.debug("OSCAR flap packet received: "+e);
         FlapCommand cmd = e.getFlapCommand();
 
         if (cmd instanceof LoginFlapCmd) {
@@ -81,6 +82,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
     }
 
     protected void handleSnacPacket(SnacPacketEvent e) {
+        Log.debug("OSCAR snac packet received: "+e);
         SnacCommand cmd = e.getSnacCommand();
         if (cmd instanceof ServerReadyCmd) {
             ServerReadyCmd src = (ServerReadyCmd) cmd;

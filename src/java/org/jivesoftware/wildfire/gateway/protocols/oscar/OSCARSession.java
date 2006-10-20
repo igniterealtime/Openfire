@@ -34,6 +34,8 @@ import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
 
 /**
  * Represents an OSCAR session.
@@ -333,9 +335,11 @@ public class OSCARSession extends TransportSession {
     }
 
     void serviceFailed(ServiceConnection conn) {
+        Log.debug("OSCAR service failed: "+conn.toString());
     }
 
     void serviceConnected(ServiceConnection conn) {
+        Log.debug("OSCAR service connected: "+conn.toString());
         services.add(conn);
     }
 
@@ -348,12 +352,25 @@ public class OSCARSession extends TransportSession {
     }
 
     void serviceReady(ServiceConnection conn) {
+        Log.debug("OSCAR service ready: "+conn.toString());
         snacMgr.dequeueSnacs(conn);
     }
 
     void serviceDied(ServiceConnection conn) {
+        Log.debug("OSCAR service died: "+conn.toString());
         services.remove(conn);
         snacMgr.unregister(conn);
+    }
+
+    void bosDisconnected() {
+        Message m = new Message();
+        m.setType(Message.Type.error);
+        m.setError(PacketError.Condition.internal_server_error);
+        m.setTo(getJID());
+        m.setFrom(getTransport().getJID());
+        m.setBody("You have been disconnected automatically by the server.");
+        getTransport().sendPacket(m);
+        logOut();
     }
 
     /**

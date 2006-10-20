@@ -36,6 +36,7 @@ public class LoginConnection extends BaseFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
+        Log.debug("OSCAR login service state change from "+e.getOldState()+" to "+e.getNewState());
         if (e.getNewState() == ClientFlapConn.STATE_CONNECTED) {
             getFlapProcessor().sendFlap(new LoginFlapCmd());
             request(new KeyRequest(oscarSession.getRegistration().getUsername()));

@@ -37,7 +37,7 @@ import org.xmpp.packet.Presence;
  * @author Daniel Henninger
  * Heavily inspired by joscardemo from the joscar project.
  */
-public class BOSConnection extends BasicFlapConnection {
+public class BOSConnection extends BasicFlapConnection {            
     protected SsiItemObjectFactory itemFactory = new DefaultSsiItemObjFactory();
 
     private static final List<CapabilityBlock> MY_CAPS = Arrays.asList(
@@ -49,13 +49,19 @@ public class BOSConnection extends BasicFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
+        Log.debug("OSCAR bos service state change from "+e.getOldState()+" to "+e.getNewState());
+        if (e.getNewState() == ClientFlapConn.STATE_NOT_CONNECTED && e.getOldState() == ClientFlapConn.STATE_CONNECTED && getMainSession().isLoggedIn()) {
+            getMainSession().bosDisconnected();
+        }
     }
 
     protected void handleFlapPacket(FlapPacketEvent e) {
+        Log.debug("OSCAR bps flap packet received: "+e);
         super.handleFlapPacket(e);
     }
 
     protected void handleSnacPacket(SnacPacketEvent e) {
+        Log.debug("OSCAR bos snac packet received: "+e);
         super.handleSnacPacket(e);
 
         SnacCommand cmd = e.getSnacCommand();
@@ -70,6 +76,8 @@ public class BOSConnection extends BasicFlapConnection {
 
     protected void handleSnacResponse(SnacResponseEvent e) {
         super.handleSnacResponse(e);
+
+        Log.debug("OSCAR bos snac response received: "+e);
 
         SnacCommand cmd = e.getSnacCommand();
 

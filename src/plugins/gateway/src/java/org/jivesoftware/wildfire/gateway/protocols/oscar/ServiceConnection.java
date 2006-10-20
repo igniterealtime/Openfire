@@ -22,6 +22,7 @@ import net.kano.joscar.snac.SnacPacketEvent;
 import net.kano.joscar.snac.SnacResponseEvent;
 import net.kano.joscar.net.ClientConnEvent;
 import net.kano.joscar.net.ConnDescriptor;
+import org.jivesoftware.util.Log;
 
 /**
  * Represents a connection to a particular OSCAR service.
@@ -44,6 +45,7 @@ public class ServiceConnection extends BasicFlapConnection {
     }
 
     protected void handleStateChange(ClientConnEvent e) {
+        Log.debug("OSCAR service state change from "+e.getOldState()+" to "+e.getNewState());
         if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
             oscarSession.serviceFailed(this);
         } else if (e.getNewState() == ClientFlapConn.STATE_CONNECTED) {

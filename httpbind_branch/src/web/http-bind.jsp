@@ -19,24 +19,28 @@
     Map<String, String> errorMap = new HashMap<String, String>();
 
     if (request.getParameter("update") != null) {
-        boolean httpPortsDistinct = ParamUtils.getBooleanParameter(request, "httpPortsDistinct",
-                false);
-        int requestedPort;
-        int requestedSecurePort;
-        if (httpPortsDistinct) {
-            requestedPort = ParamUtils.getIntParameter(request, "port", -1);
-            requestedSecurePort = ParamUtils.getIntParameter(request, "securePort", -1);
+        boolean isEnabled = ParamUtils.getBooleanParameter(request, "httpBindEnabled");
+        if (isEnabled) {
+            boolean httpPortsDistinct = ParamUtils.getBooleanParameter(request, "httpPortsDistinct",
+                    false);
+            int requestedPort;
+            int requestedSecurePort;
+            if (httpPortsDistinct) {
+                requestedPort = ParamUtils.getIntParameter(request, "port", -1);
+                requestedSecurePort = ParamUtils.getIntParameter(request, "securePort", -1);
+            }
+            else {
+                requestedPort = serverManager.getAdminUnsecurePort();
+                requestedSecurePort = serverManager.getAdminSecurePort();
+            }
+            try {
+                serverManager.setHttpBindPorts(requestedPort, requestedSecurePort);
+            }
+            catch (Exception e) {
+                errorMap.put("port", e.getMessage());
+            }
         }
-        else {
-            requestedPort = serverManager.getAdminUnsecurePort();
-            requestedSecurePort = serverManager.getAdminSecurePort();
-        }
-        try {
-            serverManager.setHttpBindPorts(requestedPort, requestedSecurePort);
-        }
-        catch (Exception e) {
-            errorMap.put("port", e.getMessage());
-        }
+        serverManager.setHttpBindEnabled(isEnabled);
     }
 
     boolean isHttpBindEnabled = serverManager.isHttpBindEnabled();

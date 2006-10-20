@@ -12,12 +12,15 @@ package org.jivesoftware.wildfire;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.wildfire.net.SSLConfig;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.servlet.ServletMapping;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
 
@@ -25,6 +28,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Manages the instances of Jetty which provide the admin console funtionality and the http binding
@@ -40,10 +44,11 @@ public class HttpServerManager {
 
     public static final String ADMIN_CONOSLE_SECURE_PORT = "adminConsole.securePort";
 
+    public static final String HTTP_BIND_ENABLED = "httpbind.enabled";
+
     public static final String HTTP_BIND_PORT = "httpbind.port.plain";
 
     public static final String HTTP_BIND_SECURE_PORT = "httpbind.port.secure";
-    private String httpBindPath;
 
     public static HttpServerManager getInstance() {
         return instance;
@@ -55,8 +60,10 @@ public class HttpServerManager {
     private Server httpBindServer;
     private Context adminConsoleContext;
     private ServletHolder httpBindContext;
+    private String httpBindPath;
 
     private HttpServerManager() {
+        PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
     }
 
     public void setAdminConsoleContext(Context context) {
@@ -71,7 +78,10 @@ public class HttpServerManager {
     private void createHttpBindServer() {
         port = JiveGlobals.getIntProperty(HTTP_BIND_PORT, 9090);
         securePort = JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, 9091);
+        createHttpBindServer(port, securePort);
+    }
 
+    private void createHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
         Collection<Connector> connectors = createAdminConsoleConnectors(port, securePort);
         if(connectors.size() == 0) {
@@ -92,8 +102,8 @@ public class HttpServerManager {
                 adminServer = httpBindServer;
                 loadConnectors = false;
             }
-            else if(port == this.port || port == this.securePort
-                    || securePort == this.port || securePort == this.securePort) {
+            else if(checkPorts(new int[] { this.port, this.securePort },
+                    new int [] {port, securePort})) {
                 Log.warn("Http bind ports must be either the same or distinct from admin console" +
                         " ports.");
                 httpBindServer = null;
@@ -119,6 +129,12 @@ public class HttpServerManager {
                 adminServer.addConnector(connector);
             }
         }
+    }
+
+    private boolean checkPorts(int [] httpBindPorts, int [] adminConsolePorts) {
+        return httpBindPorts[0] == adminConsolePorts[0] || httpBindPorts[0] == adminConsolePorts[0]
+                || httpBindPorts[1] == adminConsolePorts[0]
+                || httpBindPorts[1] == adminConsolePorts[1];
     }
 
     public void startup() {
@@ -155,15 +171,43 @@ public class HttpServerManager {
             adminServer.addHandler(adminConsoleContext);
             return;
         }
+        if(adminServer != null) {
+            if(adminServer.getHandler() != null) {
+                removeHttpBindServlet(adminConsoleContext);
+            }
+            else {
+                adminServer.addHandler(adminConsoleContext);
+            }
+        }
         if(httpBindServer != null) {
             ServletHandler servletHandler = new ServletHandler();
             servletHandler.addServletWithMapping(httpBindContext, httpBindPath);
             httpBindServer.addHandler(servletHandler);
         }
-        if(adminServer != null) {
-            adminServer.addHandler(adminConsoleContext);
-            // TODO remove the http bind servlet
+    }
+
+    private void removeHttpBindServlet(Context adminConsoleContext) {
+        ServletHandler handler = adminConsoleContext.getServletHandler();
+        ServletMapping[] servletMappings = handler.getServletMappings();
+        List<ServletMapping> toAdd = new ArrayList<ServletMapping>();
+        for(ServletMapping mapping : servletMappings) {
+            if(mapping.getServletName().equals(httpBindContext.getName())) {
+                continue;
+            }
+            toAdd.add(mapping);
         }
+
+        ServletHolder [] servletHolder = handler.getServlets();
+        List<ServletHolder> toAddServlets = new ArrayList<ServletHolder>();
+        for(ServletHolder holder : servletHolder) {
+            if(holder.equals(httpBindContext)) {
+                continue;
+            }
+            toAddServlets.add(holder);
+        }
+
+        handler.setServletMappings(toAdd.toArray(new ServletMapping[toAdd.size()]));
+        handler.setServlets(toAddServlets.toArray(new ServletHolder[toAddServlets.size()]));
     }
 
     public void shutdown() {
@@ -234,7 +278,7 @@ public class HttpServerManager {
      * @return the HTTP binding port which does not use SSL.
      */
     public int getHttpBindUnsecurePort() {
-        return JiveGlobals.getIntProperty(HTTP_BIND_PORT, 9090);
+        return JiveGlobals.getIntProperty(HTTP_BIND_PORT, 8080);
     }
 
     /**
@@ -243,7 +287,7 @@ public class HttpServerManager {
      * @return the HTTP binding port which uses SSL.
      */
     public int getHttpBindSecurePort() {
-        return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, 9091);
+        return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, 8483);
     }
 
     /**
@@ -255,6 +299,99 @@ public class HttpServerManager {
      */
     public boolean isSeperateHttpBindServerConfigured() {
         return httpBindServer != adminServer;
+    }
+
+    public void setHttpBindEnabled(boolean isEnabled) {
+        JiveGlobals.setProperty(HTTP_BIND_ENABLED, String.valueOf(isEnabled));
+    }
+
+    /**
+     * Set the ports on which the HTTP bind service will be running.
+     *
+     * @param unsecurePort the unsecured connection port which clients can connect to.
+     * @param securePort the secured connection port which clients can connect to.
+     */
+    public void setHttpBindPorts(int unsecurePort, int securePort) {
+        if(unsecurePort < 0 && securePort < 0) {
+            throw new IllegalArgumentException("At least one port must be greater than zero.");
+        }
+        if(unsecurePort == securePort) {
+            throw new IllegalArgumentException("Ports must be distinct.");
+        }
+
+        changeHttpBindPorts(unsecurePort, securePort);
+        if (unsecurePort != getAdminUnsecurePort()) {
+            JiveGlobals.setProperty(HTTP_BIND_PORT, String.valueOf(unsecurePort));
+        }
+        if (securePort != getAdminSecurePort()) {
+            JiveGlobals.setProperty(HTTP_BIND_SECURE_PORT, String.valueOf(securePort));
+        }
+    }
+
+    private void changeHttpBindPorts(int unsecurePort, int securePort) {
+        int adminPort = JiveGlobals.getXMLProperty(ADMIN_CONSOLE_PORT, 9090);
+        int adminSecurePort = JiveGlobals.getXMLProperty(ADMIN_CONOSLE_SECURE_PORT, 9091);
+        if (unsecurePort == adminPort && securePort == adminSecurePort) {
+            if (httpBindServer == adminServer) {
+                return;
+            }
+            if (httpBindServer != null) {
+                try {
+                    httpBindServer.stop();
+                }
+                catch (Exception e) {
+                    Log.error("Error stopping http bind service", e);
+                }
+                httpBindServer = null;
+            }
+            httpBindServer = adminServer;
+            addContexts();
+            return;
+        }
+        else if (checkPorts(new int[]{unsecurePort, securePort},
+                new int[]{adminPort, adminSecurePort})) {
+            throw new IllegalArgumentException("Ports must be distinct from admin console ports.");
+        }
+
+        if (httpBindServer != adminServer) {
+            try {
+                httpBindServer.stop();
+            }
+            catch (Exception e) {
+                Log.error("Error stopping http bind service", e);
+            }
+        }
+        createHttpBindServer(unsecurePort, securePort);
+        addContexts();
+        try {
+            httpBindServer.start();
+        }
+        catch (Exception e) {
+            Log.error("Error starting http bind service", e);
+        }
+    }
+
+    public int getAdminUnsecurePort() {
+        return JiveGlobals.getXMLProperty(ADMIN_CONSOLE_PORT, 9090);
+    }
+
+    public int getAdminSecurePort() {
+        return JiveGlobals.getXMLProperty(ADMIN_CONOSLE_SECURE_PORT, 9091);
+    }
+
+    private class HttpServerPropertyListener implements PropertyEventListener {
+
+        public void propertySet(String property, Map params) {
+        }
+
+        public void propertyDeleted(String property, Map params) {
+        }
+
+        public void xmlPropertySet(String property, Map params) {
+        }
+
+        public void xmlPropertyDeleted(String property, Map params) {
+        }
     }
 
     private class JiveSslConnector extends SslSocketConnector {

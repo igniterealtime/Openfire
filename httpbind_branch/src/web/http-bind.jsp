@@ -1,4 +1,7 @@
 <%@ page import="org.jivesoftware.wildfire.HttpServerManager" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.HashMap" %>
 <%--
   -	$Revision:  $
   -	$Date:  $
@@ -13,6 +16,29 @@
 
 <%
     HttpServerManager serverManager = HttpServerManager.getInstance();
+    Map<String, String> errorMap = new HashMap<String, String>();
+
+    if (request.getParameter("update") != null) {
+        boolean httpPortsDistinct = ParamUtils.getBooleanParameter(request, "httpPortsDistinct",
+                false);
+        int requestedPort;
+        int requestedSecurePort;
+        if (httpPortsDistinct) {
+            requestedPort = ParamUtils.getIntParameter(request, "port", -1);
+            requestedSecurePort = ParamUtils.getIntParameter(request, "securePort", -1);
+        }
+        else {
+            requestedPort = serverManager.getAdminUnsecurePort();
+            requestedSecurePort = serverManager.getAdminSecurePort();
+        }
+        try {
+            serverManager.setHttpBindPorts(requestedPort, requestedSecurePort);
+        }
+        catch (Exception e) {
+            errorMap.put("port", e.getMessage());
+        }
+    }
+
     boolean isHttpBindEnabled = serverManager.isHttpBindEnabled();
     boolean isHttpBindServerSperate = serverManager.isSeperateHttpBindServerConfigured();
     int port = serverManager.getHttpBindUnsecurePort();
@@ -107,7 +133,8 @@
                         <label for="port">
                         <fmt:message key="httpbind.settings.vanilla_port"/>
                         </label>
-                        <input id="port" type="text" size="5" maxlength="10" name="port" value="<%=port%>" />
+                        <input id="port" type="text" size="5" maxlength="10" name="port"
+                               value="<%=port%>" />
                     </td>
                 </tr>
                 <tr>
@@ -118,12 +145,14 @@
                         <label for="securePort">
                         <fmt:message key="httpbind.settings.secure_port"/>
                         </label>
-                        <input id="securePort" type="text" size="5" maxlength="10" name="securePort" value="<%=securePort%>" />
+                        <input id="securePort" type="text" size="5" maxlength="10" name="securePort"
+                               value="<%=securePort%>" />
                     </td>
                 </tr>
             </tbody>
         </table>
-        <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+        <input type="submit" id="settingsUpdate" name="update"
+               value="<fmt:message key="global.save_settings" />">
     </div>
 </form>
 </body>

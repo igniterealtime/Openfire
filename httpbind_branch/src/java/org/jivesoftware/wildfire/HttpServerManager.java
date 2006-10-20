@@ -168,7 +168,9 @@ public class HttpServerManager {
     private void addContexts() {
         if(httpBindServer == adminServer && httpBindServer != null) {
             adminConsoleContext.addServlet(httpBindContext, httpBindPath);
-            adminServer.addHandler(adminConsoleContext);
+            if (adminConsoleContext.getServer() == null) {
+                adminServer.addHandler(adminConsoleContext);
+            }
             return;
         }
         if(adminServer != null) {

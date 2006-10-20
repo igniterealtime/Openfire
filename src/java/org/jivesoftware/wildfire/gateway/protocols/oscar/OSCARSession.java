@@ -224,13 +224,13 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#removeContact(org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void removeContact(RosterItem item) {
-        String legacyId = getTransport().convertJIDToID(item.getJid());
-        for (BuddyItem i : buddies.values()) {
-            if (i.getScreenname().equalsIgnoreCase(legacyId)) {
-                request(new DeleteItemsCmd(i.toSsiItem()));
-                buddies.remove(""+i.getGroupId()+"."+i.getId());
-            }
-        }
+//        String legacyId = getTransport().convertJIDToID(item.getJid());
+//        for (BuddyItem i : buddies.values()) {
+//            if (i.getScreenname().equalsIgnoreCase(legacyId)) {
+//                request(new DeleteItemsCmd(i.toSsiItem()));
+//                buddies.remove(""+i.getGroupId()+"."+i.getId());
+//            }
+//        }
     }
 
     /**

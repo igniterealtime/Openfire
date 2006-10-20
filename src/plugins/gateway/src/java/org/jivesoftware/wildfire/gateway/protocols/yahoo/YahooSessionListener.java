@@ -175,7 +175,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#errorPacketReceived(ymsg.network.event.SessionErrorEvent)
      */
     public void errorPacketReceived(SessionErrorEvent event) {
-        //Log.error(event.toString());
+        Log.error("Error from yahoo: "+event.getMessage()+", Code:"+event.getCode());
         Message m = new Message();
         m.setType(Message.Type.error);
         m.setTo(yahooSession.getJIDWithHighestPriority());
@@ -188,8 +188,7 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#inputExceptionThrown(ymsg.network.event.SessionExceptionEvent)
      */
     public void inputExceptionThrown(SessionExceptionEvent event) {
-        //event.getException().printStackTrace();
-        //Log.error(event.toString());
+        Log.error("Input error from yahoo: "+event.getMessage(), event.getException());
         Message m = new Message();
         m.setType(Message.Type.error);
         m.setTo(yahooSession.getJIDWithHighestPriority());

@@ -18,10 +18,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-import ymsg.network.LoginRefusedException;
-import ymsg.network.Session;
-import ymsg.network.YahooGroup;
-import ymsg.network.YahooUser;
+import ymsg.network.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -99,6 +96,7 @@ public class YahooSession extends TransportSession {
                 public void run() {
                     try {
                         loginAttempts++;
+                        yahooSession.setStatus(StatusConstants.STATUS_AVAILABLE);
                         yahooSession.login(registration.getUsername(), registration.getPassword());
                         setLoginStatus(TransportLoginStatus.LOGGED_IN);
 

@@ -9,11 +9,13 @@
                  org.jivesoftware.util.StringUtils,
                  org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.wildfire.auth.AuthFactory,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager" %>
-<%@ page import="javax.servlet.http.HttpSession"%>
-<%@ page import="java.util.*"%>
+                 org.jivesoftware.wildfire.ldap.LdapManager,
+                 org.jivesoftware.wildfire.user.User" %>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
+<%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -34,11 +36,11 @@
 
 <%
     // Get parameters
-    String username = ParamUtils.getParameter(request,"username");
-    String password = ParamUtils.getParameter(request,"password");
-    String email = ParamUtils.getParameter(request,"email");
-    String newPassword = ParamUtils.getParameter(request,"newPassword");
-    String newPasswordConfirm = ParamUtils.getParameter(request,"newPasswordConfirm");
+    String username = ParamUtils.getParameter(request, "username");
+    String password = ParamUtils.getParameter(request, "password");
+    String email = ParamUtils.getParameter(request, "email");
+    String newPassword = ParamUtils.getParameter(request, "newPassword");
+    String newPasswordConfirm = ParamUtils.getParameter(request, "newPasswordConfirm");
 
     boolean doContinue = request.getParameter("continue") != null;
     boolean doSkip = request.getParameter("doSkip") != null;
@@ -61,24 +63,23 @@
     }
 
     // Error checks
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String, String> errors = new HashMap<String, String>();
     if (doContinue) {
         if (password == null) {
-            errors.put("password","password");
+            errors.put("password", "password");
         }
         if (email == null) {
-            errors.put("email","email");
+            errors.put("email", "email");
         }
         if (newPassword == null) {
-            errors.put("newPassword","newPassword");
+            errors.put("newPassword", "newPassword");
         }
         if (newPasswordConfirm == null) {
-            errors.put("newPasswordConfirm","newPasswordConfirm");
+            errors.put("newPasswordConfirm", "newPasswordConfirm");
         }
         if (newPassword != null && newPasswordConfirm != null
-                && !newPassword.equals(newPasswordConfirm))
-        {
-            errors.put("match","match");
+                && !newPassword.equals(newPasswordConfirm)) {
+            errors.put("match", "match");
         }
         // if no errors, continue:
         if (errors.size() == 0) {
@@ -100,31 +101,49 @@
             }
             catch (Exception e) {
                 System.err.println("Could not find UserManager");
-                errors.put("general","There was an unexpected error encountered when "
+                errors.put("general", "There was an unexpected error encountered when "
                         + "setting the new admin information. Please check your error "
                         + "logs and try to remedy the problem.");
             }
         }
     }
 
-    if(ldapFinished){
+    if (ldapFinished) {
         setSetupFinished(session);
         // All good so redirect
         response.sendRedirect("setup-finished.jsp");
         return;
     }
 
-    if(addAdmin){
+    if (addAdmin) {
         final String admin = request.getParameter("administrator");
-        if(admin != null){
-            String currentList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
-            final List users = new ArrayList(StringUtils.stringToCollection(currentList));
-            users.add(admin);
+        if (admin != null) {
+            if (ldap) {
+                // Try to verify that the username exists in LDAP
+                Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
+                Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
+                if (settings != null) {
+                    LdapManager manager = new LdapManager(settings);
+                    manager.setUsernameField(userSettings.get("ldap.usernameField"));
+                    manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
+                    try {
+                        manager.findUserDN(JID.unescapeNode(admin));
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        errors.put("administrator", "");
+                    }
+                }
+            }
+            if (errors.isEmpty()) {
+                String currentList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+                final List users = new ArrayList(StringUtils.stringToCollection(currentList));
+                users.add(admin);
 
-            String userList = StringUtils.collectionToString(users);
-            JiveGlobals.setXMLProperty("admin.authorizedUsernames", userList);
-        }
-        else {
+                String userList = StringUtils.collectionToString(users);
+                JiveGlobals.setXMLProperty("admin.authorizedUsernames", userList);
+            }
+        } else {
             errors.put("administrator", "");
         }
     }
@@ -142,8 +161,7 @@
         String newUserList = StringUtils.collectionToString(temporaryUserList);
         if (temporaryUserList.size() == 0) {
             JiveGlobals.setXMLProperty("admin.authorizedUsernames", "");
-        }
-        else {
+        } else {
             JiveGlobals.setXMLProperty("admin.authorizedUsernames", newUserList);
         }
     }
@@ -151,12 +169,14 @@
     // This handles the case of reverting back to default settings from LDAP. Will
     // add admin to the authorizedUsername list if the authorizedUsername list contains
     // entries.
-    if(!ldap && !doTest){
+    if (!ldap && !doTest) {
         String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
         List<String> adminCollection = new ArrayList<String>(StringUtils.stringToCollection(currentAdminList));
-        if((!adminCollection.isEmpty() && !adminCollection.contains("admin")) || JiveGlobals.getXMLProperty("admin.authorizedJIDs") != null){
+        if ((!adminCollection.isEmpty() && !adminCollection.contains("admin")) ||
+                JiveGlobals.getXMLProperty("admin.authorizedJIDs") != null) {
             adminCollection.add("admin");
-            JiveGlobals.setXMLProperty("admin.authorizedUsernames", StringUtils.collectionToString(adminCollection));
+            JiveGlobals.setXMLProperty("admin.authorizedUsernames",
+                    StringUtils.collectionToString(adminCollection));
         }
     }
 %>
@@ -179,17 +199,21 @@
 
 <%  if (errors.size() > 0) { %>
 
-    <span class="jive-error-text">
+    <div class="error">
     <%  if (errors.get("general") != null) { %>
 
         <%= errors.get("general") %>
+
+    <%  } else if (errors.get("administrator") != null) { %>
+
+        <fmt:message key="setup.admin.settings.username-error" />
 
     <%  } else { %>
 
         <fmt:message key="setup.admin.settings.error" />
 
     <%  } %>
-    </span>
+    </div>
 
 <%  } %>
 
@@ -340,14 +364,33 @@ document.acctform.newPassword.focus();
 
 
 
-<% } else { %>
-    <% if (doTest) {
-        StringBuffer testLink = new StringBuffer();
-        testLink.append("setup-admin-settings_test.jsp?username=");
-        testLink.append(URLEncoder.encode(username, "UTF-8"));
-        if (password != null) {
-            testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
-        }
+<% } else {
+    if (errors.size() > 0) { %>
+
+        <div class="error">
+        <%  if (errors.get("general") != null) { %>
+
+            <%= errors.get("general") %>
+
+        <%  } else if (errors.get("administrator") != null) { %>
+
+            <fmt:message key="setup.admin.settings.username-error" />
+
+        <%  } else { %>
+
+            <fmt:message key="setup.admin.settings.error" />
+
+        <%  } %>
+        </div>
+
+    <%  }
+        if (doTest) {
+            StringBuffer testLink = new StringBuffer();
+            testLink.append("setup-admin-settings_test.jsp?username=");
+            testLink.append(URLEncoder.encode(username, "UTF-8"));
+            if (password != null) {
+                testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
+            }
     %>
 
         <a href="<%= testLink %>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>

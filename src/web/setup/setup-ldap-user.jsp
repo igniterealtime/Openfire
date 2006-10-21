@@ -1,8 +1,9 @@
-<%@ page import="org.jivesoftware.util.BeanUtils,
+<%@ page import="org.jivesoftware.admin.LdapUserProfile,
+                 org.jivesoftware.util.BeanUtils,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+                 org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 
@@ -27,29 +28,42 @@
     }
 
     // Determine the right default values based on the the server type.
-    String defaultUsernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
-    String defaultSearchFields = JiveGlobals.getXMLProperty("ldap.searchFields");
-    String defaultSearchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
-    if (serverType.equals("activedirectory")) {
-        if (!vcardBean.loadFromProperties()) {
-            // Initialize vCard mappings
-            vcardBean.initForActiveDirectory();
-        }
-        if (defaultUsernameField == null) {
-            defaultUsernameField = "sAMAccountName";
-            // Initialize vCard mappings
-        }
-        if (defaultSearchFilter == null) {
-            defaultSearchFilter = "(objectClass=organizationalPerson)";
-        }
+    String defaultUsernameField;
+    String defaultSearchFields;
+    String defaultSearchFilter;
+    // First check if the http session holds data from a previous post of this page
+    if (session.getAttribute("ldapUserSettings") != null && session.getAttribute("ldapVCardBean") != null) {
+        Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
+        defaultUsernameField = userSettings.get("ldap.usernameField");
+        defaultSearchFields = userSettings.get("ldap.searchFields");
+        defaultSearchFilter = userSettings.get("ldap.searchFilter");
+        vcardBean = (LdapUserProfile) session.getAttribute("ldapVCardBean");
     }
     else {
-        if (!vcardBean.loadFromProperties()) {
-            // Initialize vCard mappings
-            vcardBean.initForOpenLDAP();
-        }
-        if (defaultUsernameField == null) {
-            defaultUsernameField = "uid";
+        // No info in the session so try stored XML values or default ones
+        defaultUsernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
+        defaultSearchFields = JiveGlobals.getXMLProperty("ldap.searchFields");
+        defaultSearchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
+        if (serverType.equals("activedirectory")) {
+            if (!vcardBean.loadFromProperties()) {
+                // Initialize vCard mappings
+                vcardBean.initForActiveDirectory();
+            }
+            if (defaultUsernameField == null) {
+                defaultUsernameField = "sAMAccountName";
+                // Initialize vCard mappings
+            }
+            if (defaultSearchFilter == null) {
+                defaultSearchFilter = "(objectClass=organizationalPerson)";
+            }
+        } else {
+            if (!vcardBean.loadFromProperties()) {
+                // Initialize vCard mappings
+                vcardBean.initForOpenLDAP();
+            }
+            if (defaultUsernameField == null) {
+                defaultUsernameField = "uid";
+            }
         }
     }
 
@@ -60,7 +74,9 @@
     Map<String, String> errors = new HashMap<String, String>();
 
     boolean save = request.getParameter("save") != null;
-    if (save) {
+    boolean doTest = request.getParameter("test") != null;
+    boolean isTesting = request.getParameter("userIndex") != null;
+    if ((save || doTest) && !isTesting) {
         usernameField = ParamUtils.getParameter(request, "usernameField");
         if (usernameField == null) {
             errors.put("username",
@@ -73,32 +89,35 @@
 
         // Save settings and redirect.
         if (errors.isEmpty()) {
-            JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
-            if (searchFields != null) {
-                JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
-            }
-            if (searchFilter != null) {
-                JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
-            }
-            // Save vCard mappings
-            vcardBean.saveProperties();
-
-            // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
-            JiveGlobals.setXMLProperty("provider.user.className",
-                    "org.jivesoftware.wildfire.ldap.LdapUserProvider");
-            JiveGlobals.setXMLProperty("provider.auth.className",
-                    "org.jivesoftware.wildfire.ldap.LdapAuthProvider");
-
             // Save information in the session so we can use it in testing pages during setup
             Map<String, String> settings = new HashMap<String, String>();
             settings.put("ldap.usernameField", usernameField);
             settings.put("ldap.searchFields", searchFields);
             settings.put("ldap.searchFilter", searchFilter);
             session.setAttribute("ldapUserSettings", settings);
+            session.setAttribute("ldapVCardBean", vcardBean);
 
-            // Redirect
-            response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);
-            return;
+            if (save) {
+                JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
+                if (searchFields != null) {
+                    JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+                }
+                if (searchFilter != null) {
+                    JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+                }
+                // Save vCard mappings
+                vcardBean.saveProperties();
+
+                // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
+                JiveGlobals.setXMLProperty("provider.user.className",
+                        "org.jivesoftware.wildfire.ldap.LdapUserProvider");
+                JiveGlobals.setXMLProperty("provider.auth.className",
+                        "org.jivesoftware.wildfire.ldap.LdapAuthProvider");
+
+                // Redirect
+                response.sendRedirect("setup-ldap-group.jsp?serverType=" + serverType);
+                return;
+            }
         }
     }
 %>
@@ -110,6 +129,24 @@
 </head>
 
 <body>
+
+    <% if (doTest && errors.isEmpty()) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("serverType=").append(serverType);
+        if (isTesting) {
+            sb.append("&userIndex=").append(request.getParameter("userIndex"));
+        }
+    %>
+        <a href="setup-ldap-user_test.jsp?<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+        <script type="text/javascript">
+            function loadMsg() {
+                var lb = new lightbox(document.getElementById('lbmessage'));
+                lb.activate();
+            }
+            setTimeout('loadMsg()', 250);
+        </script>
+
+    <% } %>
 
 	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.user_mapping" /></h1>
 
@@ -250,7 +287,7 @@
 						<strong><fmt:message key="setup.ldap.user.vcard.birthday" /></strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">
-						<input type="text" name="dob" value="<%= vcardBean.getBirthday() %>" id="birthday" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+						<input type="text" name="birthday" value="<%= vcardBean.getBirthday() %>" id="birthday" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
 					</td>
 				</tr>
 				<tr>
@@ -440,10 +477,7 @@
 
 			<!-- BEGIN right-aligned buttons -->
 			<div align="right">
-				<%--<a href="setup-ldap-user_test.jsp" class="lbOn" id="jive-setup-test2">
-				<img src="../images/setup_btn_gearplay.gif" alt="" width="14" height="14" border="0">
-				<fmt:message key="setup.ldap.test" />
-				</a>--%>
+                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test" border="0">
 
 				<input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
 			</div>

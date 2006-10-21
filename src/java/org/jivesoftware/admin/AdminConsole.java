@@ -13,6 +13,7 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.container.PluginManager;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
@@ -111,6 +112,8 @@ public class AdminConsole {
 
     /**
      * Returns the name of the application.
+     *
+     * @return the name of the application.
      */
     public static String getAppName() {
         Element appName = (Element)generatedModel.selectSingleNode("//adminconsole/global/appname");
@@ -239,7 +242,9 @@ public class AdminConsole {
         try {
             in.close();
         }
-        catch (Exception ignored) {}
+        catch (Exception ignored) {
+            // Ignore.
+        }
 
         // Load other admin-sidebar.xml files from the classpath
         ClassLoader[] classLoaders = getClassLoaders();
@@ -256,7 +261,9 @@ public class AdminConsole {
                         }
                         finally {
                             try { if (in != null) { in.close(); } }
-                            catch (Exception ignored) {}
+                            catch (Exception ignored) {
+                                // Ignore.
+                            }
                         }
                     }
                 }
@@ -354,9 +361,11 @@ public class AdminConsole {
 
         // Special case: show an informational tab about Wildfire Enterprise if Enterprise
         // is not installed and if the user has not chosen to hide tab.
-        Element enterprise = (Element)generatedModel.selectSingleNode("//tab[@id='tab-enterprise']");
-        if (enterprise == null && JiveGlobals.getBooleanProperty("enterpriseInfoEnabled", true)) {
-            enterprise = generatedModel.addElement("tab");
+        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        boolean pluginExists = pluginManager != null && pluginManager.isPluginDownloaded(
+                "enterprise.jar");
+        if (!pluginExists && JiveGlobals.getBooleanProperty("enterpriseInfoEnabled", true)) {
+            Element enterprise = generatedModel.addElement("tab");
             enterprise.addAttribute("id", "tab-enterprise");
             enterprise.addAttribute("name", "Enterprise");
             enterprise.addAttribute("url", "enterprise-info.jsp");
@@ -464,6 +473,8 @@ public class AdminConsole {
 
     /**
      * Returns an array of class loaders to load resources from.
+     *
+     * @return an array of class loaders to load resources from.
      */
     private static ClassLoader[] getClassLoaders() {
         ClassLoader[] classLoaders = new ClassLoader[3];

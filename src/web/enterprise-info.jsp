@@ -11,7 +11,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.*, org.jivesoftware.wildfire.update.UpdateManager, org.jivesoftware.wildfire.update.AvailablePlugin, java.net.URLEncoder, java.io.File, org.jivesoftware.wildfire.container.PluginManager, org.jivesoftware.wildfire.container.Plugin"
+                 org.jivesoftware.wildfire.*,
+                 org.jivesoftware.wildfire.update.UpdateManager,
+                 org.jivesoftware.wildfire.update.AvailablePlugin,
+                 org.jivesoftware.wildfire.container.PluginManager"
     errorPage="error.jsp"
 %>
 
@@ -19,10 +22,17 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%
-    WebManager webManager = new WebManager();
-%>
+    // It's possible for the page to still be displayed after Enterprise
+    // has been downloaded, like when the user has not done a page refresh.
+    // Detect that case and do a re-direct.
+    PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+    boolean pluginExists = pluginManager != null && pluginManager.getPlugin("enterprise") != null;
+    if (pluginExists) {
+        // Redirect to the main Enterprise page.
+        response.sendRedirect("/plugins/enterprise/dashboard.jsp");
+        return;
+    }
 
-<%
     boolean downloadRequested = request.getParameter("download") != null;
     String url = request.getParameter("url");
 

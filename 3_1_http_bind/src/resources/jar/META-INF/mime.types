@@ -1,0 +1,124 @@
+# MIME type to file extension mappings. Adapted from the 
+# Apache mime.types file and other sources.
+
+# MIME type                     Extension
+application/andrew-inset        ez EZ
+application/iges                igs iges IGS IGES
+application/acad                dwg DWG
+application/dxf                 dxf DXF
+application/mdb                 mdb MDB
+application/ptc                 prt PRT
+application/dwf                 dwf DWF
+application/mac-binhex40        hqx HQX
+application/mac-compactpro      cpt CPT
+application/msword              doc DOC
+application/octet-stream        bin dms lha lzh exe class so dll BIN DMS LHA LZH EXE CLASS SO DLL
+application/oda                 oda ODA
+application/pdf                 pdf PDF
+application/postscript          ai eps ps AI EPS PS
+application/rtf                 rtf RTF
+application/set                 set SET
+application/smil                smi smil SMI SMIL
+application/tajima              dst DST
+application/vnd.mif             mif MIF
+application/vnd.ms-excel        xls XLS
+application/vnd.ms-powerpoint   ppt PPT
+application/vnd.wap.wbxml       wbxml WBXML
+application/vnd.wap.wmlc        wmlc WMLC
+application/vnd.wap.wmlscriptc  wmlsc WMLSC
+application/x-bcpio             bcpio BCPIO
+application/x-bzip2             bz2 BZ2
+application/x-cdlink            vcd VCD
+application/x-chess-pgn         pgn PGN
+application/x-cpio              cpio CPIO
+application/x-csh               csh CSH
+application/x-director          dcr dir dxr DCR DIR DXR
+application/x-dvi               dvi DVI
+application/x-envoy             evy EVY
+application/x-futuresplash      spl SPL
+application/x-gtar              gtar GTAR
+application/x-gzip              gz tgz GZ TGZ
+application/x-hdf               hdf HDF
+application/x-javascript        js JS
+application/x-kword             kwd kwt KWD KWT
+application/x-kspread           ksp KSP
+application/x-kpresenter        kpr kpt KPR KPT
+application/x-kchart            chrt CHRT
+application/x-killustrator      kil KIL
+application/x-koan              skp skd skt skm SKP SKD SKT SKM
+application/x-latex             latex LATEX
+application/x-lisp              lsp LSP
+application/x-netcdf            nc cdf NC CDF
+application/x-ogg               ogg OGG
+application/x-rpm               rpm RPM
+application/x-sh                sh SH
+application/x-shar              shar SHAR
+application/x-shockwave-flash   swf SWF
+application/x-stuffit           sit SIT
+application/x-sv4cpio           sv4cpio SV4PIO
+application/x-sv4crc            sv4crc SV4CRC
+application/x-tar               tar TAR
+application/x-tcl               tcl TCL
+application/x-tex               tex TEX
+application/x-texinfo           texinfo texi TEXINFO TEXI
+application/x-troff             t tr roff T TR ROFF
+application/x-troff-man         man MAN
+application/x-troff-me          me ME
+application/x-troff-ms          ms MS
+application/x-ustar             ustar USTAR
+application/x-vrml              vrml VRML
+application/x-wais-source       src SRC
+application/xhtml+xml           xhtml xht XHTML XHT
+application/zip                 zip ZIP
+audio/basic                     au snd AU SND
+audio/midi                      mid midi kar MID MIDI KAR
+audio/mpeg                      mpga mp2 mp3 MPGA MP2 MP3
+audio/x-aiff                    aif aiff aifc AIF AIFF AIFC
+audio/x-mpegurl                 m3u M3U
+audio/x-pn-realaudio            ram rm RAM RM
+audio/x-realaudio               ra RA
+audio/x-wav                     wav WAV
+chemical/x-pdb                  pdb PDB
+chemical/x-xyz                  xyz XYZ
+image/bmp                       bmp BMP
+image/gif                       gif GIF
+image/ief                       ief IEF
+image/jpeg                      jpeg jpg jpe JPG JPEG JPE
+image/png                       png PNG
+image/tga                       tga TGA
+image/tiff                      tiff tif TIFF TIF
+image/vnd                       svf SVF
+image/vnd.dwg                   dwg DWG
+image/vnd.djvu                  djvu djv DJVU DJV
+image/vnd.svf                   svf SVF
+image/vnd.wap.wbmp              wbmp WBMP
+image/x-cmu-raster              ras RAS
+image/x-portable-anymap         pnm PNM
+image/x-portable-bitmap         pbm PBM
+image/x-portable-graymap        pgm PGM
+image/x-portable-pixmap         ppm PPM
+image/x-rgb                     rgb RGB
+image/x-xbitmap                 xbm XBM
+image/x-xpixmap                 xpm XPM
+image/x-xwindowdump             xwd XWD
+model/iges                      igs iges IGS IGES
+model/mesh                      msh mesh silo MSH MESH SILO
+model/vrml                      wrl vrml WRL VRML
+text/css                        css CSS
+text/html                       html htm HTML HTM
+text/plain                      asc txt ASC TXT TEXT
+text/richtext                   rtx RTX
+text/rtf                        rtf RTF
+text/sgml                       sgml sgm SGML SGM
+text/tab-separated-values       tsv TSV
+text/vnd.wap.wml                wml WML
+text/vnd.wap.wmlscript          wmls WMLS
+text/x-setext                   etx ETX
+text/x-vcard                    cvd CVD
+text/xml                        xml xsl XML XSL
+video/mpeg                      mpeg mpg mpe MPEG MPG MPE
+video/quicktime                 qt mov QT MOV
+video/vnd.mpegurl               mxu MXU
+video/x-msvideo                 avi AVI
+video/x-sgi-movie               movie MOVIE
+x-conference/x-cooltalk         ice ICE

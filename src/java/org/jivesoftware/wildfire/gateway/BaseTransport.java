@@ -24,6 +24,7 @@ import org.jivesoftware.wildfire.roster.*;
 import org.jivesoftware.wildfire.user.PresenceEventListener;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.PresenceEventDispatcher;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
@@ -69,6 +70,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     public void initialize(JID jid, ComponentManager componentManager) {
         this.jid = jid;
         this.componentManager = componentManager;
+        sessionManager.startThreadManager(jid);
     }
 
     /**
@@ -215,91 +217,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     Log.debug("Unable to find registration.");
                     return reply;
                 }
-                Registration registration = registrations.iterator().next();
 
                 // This packet is to the transport itself.
-                if (packet.getType() == null) {
-                    // A user's resource has come online.
-                    TransportSession session;
-                    try {
-                        session = sessionManager.getSession(from);
-
-                        if (session.hasResource(from.getResource())) {
-                            Log.debug("An existing resource has changed status: " + from);
-
-                            if (session.getPriority(from.getResource()) != packet.getPriority()) {
-                                session.updatePriority(from.getResource(), packet.getPriority());
-                            }
-                            if (session.isHighestPriority(from.getResource())) {
-                                // Well, this could represent a status change.
-                                session.updateStatus(getPresenceType(packet), packet.getStatus());
-                            }
-                        }
-                        else {
-                            Log.debug("A new resource has come online: " + from);
-
-                            // This is a new resource, lets send them what we know.
-                            session.addResource(from.getResource(), packet.getPriority());
-                            // Tell the new resource what the state of their buddy list is.
-                            session.resendContactStatuses(from);
-                            // If this priority is the highest, treat it's status as golden
-                            if (session.isHighestPriority(from.getResource())) {
-                                session.updateStatus(getPresenceType(packet), packet.getStatus());
-                            }
-                        }
-                    }
-                    catch (NotFoundException e) {
-                        Log.debug("A new session has come online: " + from);
-
-                        session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
-                        sessionManager.storeSession(from, session);
-
-                    }
-                }
-                else if (packet.getType() == Presence.Type.unavailable) {
-                    // A user's resource has gone offline.
-                    TransportSession session;
-                    try {
-                        session = sessionManager.getSession(from);
-                        if (session.getResourceCount() > 1) {
-                            String resource = from.getResource();
-
-                            // Just one of the resources, lets adjust accordingly.
-                            if (session.isHighestPriority(resource)) {
-                                Log.debug("A high priority resource (of multiple) has gone offline: " + from);
-
-                                // Ooh, the highest resource went offline, drop to next highest.
-                                session.removeResource(resource);
-
-                                // Lets ask the next highest resource what it's presence is.
-                                Presence p = new Presence(Presence.Type.probe);
-                                p.setTo(session.getJIDWithHighestPriority());
-                                p.setFrom(this.getJID());
-                                sendPacket(p);
-                            }
-                            else {
-                                Log.debug("A low priority resource (of multiple) has gone offline: " + from);
-
-                                // Meh, lower priority, big whoop.
-                                session.removeResource(resource);
-                            }
-                        }
-                        else {
-                            Log.debug("A final resource has gone offline: " + from);
-
-                            // No more resources, byebye.
-                            if (session.isLoggedIn()) {
-                                this.registrationLoggedOut(session);
-                            }
-
-                            sessionManager.removeSession(from);
-                        }
-                    }
-                    catch (NotFoundException e) {
-                        Log.debug("Ignoring unavailable presence for inactive seession.");
-                    }
-                }
-                else if (packet.getType() == Presence.Type.probe) {
+                if (packet.getType() == Presence.Type.probe) {
                     // Client is asking for presence status.
                     TransportSession session;
                     try {
@@ -328,16 +248,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     if (packet.getType() == Presence.Type.probe) {
                         // Presence probe, lets try to tell them.
                         session.retrieveContactStatus(to);
-                    }
-                    else if (packet.getType() == Presence.Type.subscribe) {
-                        // User wants to add someone to their legacy roster.
-                        // TODO: experimenting with doing this a different way
-                        //session.addContact(packet.getTo());
-                    }
-                    else if (packet.getType() == Presence.Type.unsubscribe) {
-                        // User wants to remove someone from their legacy roster.
-                        // TODO: experimenting with doing this a different way
-                        //session.removeContact(packet.getTo());
                     }
                     else {
                         // Anything else we will ignore for now.
@@ -786,7 +696,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      */
     public void start() {
         RosterEventDispatcher.addListener(this);
+        PresenceEventDispatcher.addListener(this);
         // Probe all registered users [if they are logged in] to auto-log them in
+        // TODO: This is no longer going to work...  need to find a way that doesn't involve presence packets or anything like that
         for (Registration registration : registrationManager.getRegistrations()) {
             if (SessionManager.getInstance().getSessionCount(registration.getJID().getNode()) > 0) {
                 Presence p = new Presence(Presence.Type.probe);
@@ -804,6 +716,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      */
     public void shutdown() {
         RosterEventDispatcher.removeListener(this);
+        PresenceEventDispatcher.removeListener(this);
         // Disconnect everyone's session
         for (TransportSession session : sessionManager.getSessions()) {
             registrationLoggedOut(session);
@@ -904,7 +817,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             Roster roster = rosterManager.getRoster(userjid.getNode());
             try {
                 RosterItem gwitem = roster.getRosterItem(contactjid);
-                Boolean changed = false;
+                boolean changed = false;
                 if (gwitem.getSubStatus() != RosterItem.SUB_BOTH) {
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);
                     changed = true;
@@ -1300,10 +1213,12 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      */
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
         Log.debug("addingContact "+roster.getUsername()+":"+item.getJid()+" is "+persistent);
-        if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
-            return false;
-        }
-        return persistent;
+        return !(item.getJid().getDomain().equals(this.getJID()) &&
+                item.getJid().getNode() != null) && persistent;
+//        if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
+//            return false;
+//        }
+//        return persistent;
     }
 
     /**
@@ -1394,8 +1309,53 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      *
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#availableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
-    public void availableSession(ClientSession session, Presence presence) {
-        Log.debug("availableSession "+session+":"+presence);
+    public void availableSession(ClientSession clSession, Presence packet) {
+        Log.debug("availableSession "+clSession+":"+packet);
+        JID from = packet.getFrom();
+
+        Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+        if (registrations.isEmpty()) {
+            // User is not registered with us.
+            return;
+        }
+        Registration registration = registrations.iterator().next();
+
+        // A user's resource has come online.
+        TransportSession session;
+        try {
+            session = sessionManager.getSession(from);
+
+            if (session.hasResource(from.getResource())) {
+                Log.debug("An existing resource has changed status: " + from);
+
+                if (session.getPriority(from.getResource()) != packet.getPriority()) {
+                    session.updatePriority(from.getResource(), packet.getPriority());
+                }
+                if (session.isHighestPriority(from.getResource())) {
+                    // Well, this could represent a status change.
+                    session.updateStatus(getPresenceType(packet), packet.getStatus());
+                }
+            }
+            else {
+                Log.debug("A new resource has come online: " + from);
+
+                // This is a new resource, lets send them what we know.
+                session.addResource(from.getResource(), packet.getPriority());
+                // Tell the new resource what the state of their buddy list is.
+                session.resendContactStatuses(from);
+                // If this priority is the highest, treat it's status as golden
+                if (session.isHighestPriority(from.getResource())) {
+                    session.updateStatus(getPresenceType(packet), packet.getStatus());
+                }
+            }
+        }
+        catch (NotFoundException e) {
+            Log.debug("A new session has come online: " + from);
+
+            session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
+            sessionManager.storeSession(from, session);
+
+        }
     }
 
     /**
@@ -1403,9 +1363,57 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      *
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#unavailableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
-    public void unavailableSession(ClientSession session, Presence presence) {
-        Log.debug("unavailableSession "+session+":"+presence);
+    public void unavailableSession(ClientSession clSession, Presence packet) {
+        Log.debug("unavailableSession "+clSession+":"+packet);
+        JID from = packet.getFrom();
 
+        Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+        if (registrations.isEmpty()) {
+            // User is not registered with us.
+            return;
+        }
+
+        // A user's resource has gone offline.
+        TransportSession session;
+        try {
+            session = sessionManager.getSession(from);
+            if (session.getResourceCount() > 1) {
+                String resource = from.getResource();
+
+                // Just one of the resources, lets adjust accordingly.
+                if (session.isHighestPriority(resource)) {
+                    Log.debug("A high priority resource (of multiple) has gone offline: " + from);
+
+                    // Ooh, the highest resource went offline, drop to next highest.
+                    session.removeResource(resource);
+
+                    // Lets ask the next highest resource what it's presence is.
+                    Presence p = new Presence(Presence.Type.probe);
+                    p.setTo(session.getJIDWithHighestPriority());
+                    p.setFrom(this.getJID());
+                    sendPacket(p);
+                }
+                else {
+                    Log.debug("A low priority resource (of multiple) has gone offline: " + from);
+
+                    // Meh, lower priority, big whoop.
+                    session.removeResource(resource);
+                }
+            }
+            else {
+                Log.debug("A final resource has gone offline: " + from);
+
+                // No more resources, byebye.
+                if (session.isLoggedIn()) {
+                    this.registrationLoggedOut(session);
+                }
+
+                sessionManager.removeSession(from);
+            }
+        }
+        catch (NotFoundException e) {
+            Log.debug("Ignoring unavailable presence for inactive seession.");
+        }
     }
 
     /**
@@ -1413,8 +1421,35 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      *
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#presencePriorityChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
-    public void presencePriorityChanged(ClientSession session, Presence presence) {
-        Log.debug("presencePriorityChanged "+session+":"+presence);
+    public void presencePriorityChanged(ClientSession clSession, Presence packet) {
+        Log.debug("presencePriorityChanged "+clSession+":"+packet);
+        JID from = packet.getFrom();
+
+        Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+        if (registrations.isEmpty()) {
+            // User is not registered with us.
+            return;
+        }
+
+        TransportSession session;
+        try {
+            session = sessionManager.getSession(from);
+
+            if (session.hasResource(from.getResource())) {
+                Log.debug("An existing resource has changed status: " + from);
+
+                if (session.getPriority(from.getResource()) != packet.getPriority()) {
+                    session.updatePriority(from.getResource(), packet.getPriority());
+                }
+                if (session.isHighestPriority(from.getResource())) {
+                    // Well, this could represent a status change.
+                    session.updateStatus(getPresenceType(packet), packet.getStatus());
+                }
+            }
+        }
+        catch (NotFoundException e) {
+            // Not actually logged in.
+        }
     }
 
     /**
@@ -1422,8 +1457,32 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      *
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#presenceChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
-    public void presenceChanged(ClientSession session, Presence presence) {
-        Log.debug("presenceChanged "+session+":"+presence);
+    public void presenceChanged(ClientSession clSession, Presence packet) {
+        Log.debug("presenceChanged "+clSession+":"+packet);
+        JID from = packet.getFrom();
+
+        Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+        if (registrations.isEmpty()) {
+            // User is not registered with us.
+            return;
+        }
+
+        TransportSession session;
+        try {
+            session = sessionManager.getSession(from);
+
+            if (session.hasResource(from.getResource())) {
+                Log.debug("An existing resource has changed status: " + from);
+
+                if (session.isHighestPriority(from.getResource())) {
+                    // Well, this could represent a status change.
+                    session.updateStatus(getPresenceType(packet), packet.getStatus());
+                }
+            }
+        }
+        catch (NotFoundException e) {
+            // Not actually logged in.
+        }
     }
 
     /**

@@ -84,8 +84,7 @@ public class OSCARTransport extends BaseTransport {
      */
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         TransportSession session = new OSCARSession(registration, jid, this, priority);
-        Thread sessionThread = new Thread(session);
-        sessionThread.start();
+        this.getSessionManager().startThread(session);
         ((OSCARSession)session).logIn(presenceType, verboseStatus);
         return session;
     }

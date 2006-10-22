@@ -298,12 +298,15 @@
 
 	<!-- BEGIN group name and description -->
 	<div class="jive-contentBox-plain">
-		<div class="jive-contentBox-toolbox">
+        <%  // Only show edit and delete options if the groups aren't read-only.
+            if (!webManager.getGroupManager().isReadOnly()) { %>
+        <div class="jive-contentBox-toolbox">
 			<a href="group-create.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&name=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&description=<%= group.getDescription() != null? URLEncoder.encode(group.getDescription(), "UTF-8") : "" %>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
 			<a href="group-delete.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
 		</div>
+        <% } %>
 
-		<h3>
+        <h3>
 			<%= group.getName() %>
 		</h3>
 		<p>
@@ -438,11 +441,13 @@
 		<fmt:message key="group.edit.members" />
 	</div>
 	<div class="jive-contentBox">
-		<p>
+		<%  // Only show if the group isn't read-only.
+            if (!webManager.getGroupManager().isReadOnly()) { %>
+        <p>
 			<fmt:message key="group.edit.members_description" />
 		</p>
 
-		<form action="group-edit.jsp" method="post" name="f">
+        <form action="group-edit.jsp" method="post" name="f">
         <input type="hidden" name="group" value="<%= groupName %>">
         <input type="hidden" name="add" value="Add"/>
         <table cellpadding="3" cellspacing="1" border="0" style="margin: 0px 0px 8px 0px;">
@@ -458,14 +463,19 @@
         </table>
         </form>
 
-		<form action="group-edit.jsp" method="post" name="main">
+        <% } %>
+
+        <form action="group-edit.jsp" method="post" name="main">
         <input type="hidden" name="group" value="<%= groupName %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>
 	            <th>&nbsp;</th>
                 <th nowrap><fmt:message key="group.edit.username" /></th>
+                <%  // Only show if the group isn't read-only.
+                if (!webManager.getGroupManager().isReadOnly()) { %>
                 <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
                 <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
+                <% } %>
             </tr>
             <!-- Add admins first -->
 <%
@@ -534,17 +544,20 @@
                     <% } else { %>
                     <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
                     <% } %>
+                    <%  // Only show if the group isn't read-only.
+                    if (!webManager.getGroupManager().isReadOnly()) { %>
                     <td align="center">
                         <input type="checkbox" name="admin" value="<%= jid %>" <% if (admins.contains(jid)) { %>checked<% } %>>
                     </td>
                     <td align="center">
                         <input type="checkbox" name="delete" value="<%= jid %>">
                     </td>
+                    <% } %>
                 </tr>
 <%
                 }
             }
-            if (showUpdateButtons) {
+            if (showUpdateButtons && !webManager.getGroupManager().isReadOnly()) {
 %>
                 <tr>
                     <td colspan="2">

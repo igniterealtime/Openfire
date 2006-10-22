@@ -14,6 +14,7 @@ import org.xmpp.packet.JID;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.Roster;
+import org.jivesoftware.util.Log;
 
 import java.util.TreeMap;
 
@@ -40,6 +41,7 @@ public abstract class TransportSession implements Runnable {
         this.jid = new JID(jid.toBareJID());
         this.registration = registration;
         this.transport = transport;
+        Log.debug("Created "+transport.getType()+" session for "+jid+" as '"+registration.getUsername()+"'");
     }
 
     /**
@@ -55,6 +57,7 @@ public abstract class TransportSession implements Runnable {
         this.registration = registration;
         this.transport = transport;
         addResource(jid.getResource(), priority);
+        Log.debug("Created "+transport.getType()+" session for "+jid+" as '"+registration.getUsername()+"'");
     }
 
     /**

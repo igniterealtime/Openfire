@@ -54,7 +54,7 @@ public class MsnSessionListener extends SessionAdapter {
     }
 
     public void sessionTimeout(Session session) {
-        Log.debug("MSN: Session timeout for "+msnSession.getRegistration().getUsername());
+        // This is used to handle regular pings to the MSN server.  No need to mention it.
     }
 
     public void sessionClosed(Session session) {

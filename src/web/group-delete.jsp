@@ -56,7 +56,7 @@
 
 <% if (webManager.getGroupManager().isReadOnly()) { %>
 <div class="error">
-    <fmt:message key="user.read_only"/>
+    <fmt:message key="group.read_only"/>
 </div>
 <% } %>
 

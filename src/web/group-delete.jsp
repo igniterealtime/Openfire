@@ -10,7 +10,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.wildfire.group.Group,
                  java.net.URLEncoder"
     errorPage="error.jsp"
@@ -55,6 +54,12 @@
     </head>
     <body>
 
+<% if (webManager.getGroupManager().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="user.read_only"/>
+</div>
+<% } %>
+
 <p>
 <fmt:message key="group.delete.hint_info" />
 <b><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>"><%= group.getName() %></a></b>
@@ -66,6 +71,20 @@
 <input type="submit" name="delete" value="<fmt:message key="group.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
+
+    <%  // Disable the form if a read-only user provider.
+    if (webManager.getGroupManager().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+    var limit = document.forms[0].elements.length;
+    for (i=0;i<limit;i++) {
+      document.forms[0].elements[i].disabled = true;
+    }
+  }
+  disable();
+</script>
+    <% } %>
 
     </body>
 </html>

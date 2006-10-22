@@ -44,7 +44,8 @@
 	</div>
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>tests" style="display: none;">
         <div>
-            <i>This is not yet functional.</i><br />
+            <span style="font-weight: bold">Connect to host:</span> <span id="testhost">ninja</span><br />
+            <span style="font-weight: bold">Connect to port:</span> <span id="testport">1234</span><br />
         <form action="">
             <input type="submit" name="submit" value="Test Connection" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>tests,jive<%= this.gatewayType.toString().toUpperCase() %>tests); return false" class="jive-formButton">
         </form>
@@ -52,22 +53,64 @@
     </div>
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>options" style="display: none;">
 		<div>
-            <i>This is not yet functional.</i><br />
         <form action="">
-			<!-- <input type="checkbox" name="filetransfer" value="enabled"> Enable file transfer<br> -->
-			<!-- <input type="checkbox" name="reconnect" value="enabled"> Reconnect on disconnect<br> -->
-			<input type="submit" name="submit" value="Save Options" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" class="jive-formButton"> 
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tr valign="top">
+                    <td align="left" width="50%">
+                        <table border="0" cellpadding="1" cellspacing="2">
+                            <tr valign="middle">
+                                <td width="1%"><input type="checkbox" name="filetransfer" value="enabled"></td>
+                                <td>Enable file transfer</td>
+                            </tr>
+                            <tr valign="middle">
+                                <td width="1%"><input type="checkbox" name="reconnect" value="enabled"></td>
+                                <td>Reconnect on disconnect</td>
+                            </tr>
+                            <tr valign="middle">
+                                <td width="1%">&nbsp;</td>
+                                <td>Reconnect Attemps: <input type="text" style="margin: 0.0px; padding: 0.0px" name="reconnect_attempts" size="4" maxlength="4" value="10" /></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td align="left" width="50%">
+                        <table border="0">
+                            <tr valign="middle">
+                                <td align="right" width="1%">Host:</td>
+                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
+                            </tr>
+                            <tr valign="middle">
+                                <td align="right" width="1%">Port:</td>
+                                <td><input type="text" name="host" value="1234" onChange="getElementById('testport').innerHTML = this.value" /></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+			<input type="submit" name="submit" value="Save Options" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" class="jive-formButton">
 			<input type="reset" name="cancel" value="Cancel" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" class="jive-formButton">
 		</form>
 		</div>
 	</div>
 	<div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>perms" style="display: none;">
 		<div>
-            <i>This is not yet functional.</i><br />
         <form action="">
-			<input type="radio" name="userreg" value="all" checked> All users can register<br>
-			<input type="radio" name="userreg" value="specific"> These users and/or groups can register<br>
-			<input type="radio" name="userreg" value="manual"> Manual registration only (see the Registrations section to manage)<br>
+			<input type="radio" name="userreg" value="all" onClick="getElementById('userreg_specific').style.display = 'none'" checked> All users can register<br>
+			<input type="radio" name="userreg" value="specific" onClick="getElementById('userreg_specific').style.display = 'block'"> These users and/or groups can register<br>
+            <div id="userreg_specific" style="display: none; margin: 0; padding: 0; font-size: 80%">
+                <table border="0" cellpadding="0" cellspacing="0" style="padding-left: 30.0px">
+                    <tr valign="top">
+                        <td align="left">
+                            <span style="font-weight: bold">Users</span> <a href="">(Modify Users)</a><br />
+                            (none selected)
+                        </td>
+                        <td align="left" style="padding-left: 30.0px">
+                            <span style="font-weight: bold">Groups</span> <a href="">(Modify Groups)</a><br />
+                            (none selected)
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <input type="radio" name="userreg" value="manual" onClick="getElementById('userreg_specific').style.display = 'none'"> Manual registration only (see the Registrations section to manage)<br>
 			<input type="submit" name="submit" value="Save Permissions" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms,jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" class="jive-formButton"> 
 			<input type="reset" name="cancel" value="Cancel" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms,jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" class="jive-formButton">
 		</form>

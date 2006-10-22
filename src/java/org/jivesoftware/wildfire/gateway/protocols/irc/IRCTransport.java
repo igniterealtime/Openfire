@@ -81,8 +81,8 @@ public class IRCTransport extends BaseTransport {
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         Log.debug("Logging in to IRC gateway.");
         TransportSession session = new IRCSession(registration, jid, this, priority);
-//        Thread sessionThread = new Thread(session);
-//        sessionThread.start();
+        Thread sessionThread = new Thread(session);
+        sessionThread.start();
         ((IRCSession)session).logIn(presenceType, verboseStatus);
         return session;
     }
@@ -95,7 +95,7 @@ public class IRCTransport extends BaseTransport {
     public void registrationLoggedOut(TransportSession session) {
         Log.debug("Logging out of IRC gateway.");
         ((IRCSession)session).logOut();
-//        session.sessionDone();
+        session.sessionDone();
         // Just in case.
         session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }

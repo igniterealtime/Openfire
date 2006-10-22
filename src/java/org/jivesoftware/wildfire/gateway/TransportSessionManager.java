@@ -46,7 +46,7 @@ public class TransportSessionManager {
     /**
      * The actual repear task.
      */
-    @SuppressWarnings({"FieldCanBeLocal"}) private SessionReaper sessionReaper;
+    private SessionReaper sessionReaper;
 
     /**
      * The transport we are associated with.

@@ -83,8 +83,8 @@ public class YahooTransport extends BaseTransport {
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         Log.debug("Logging in to Yahoo gateway.");
         TransportSession session = new YahooSession(registration, jid, this, priority);
-//        Thread sessionThread = new Thread(session);
-//        sessionThread.start();
+        Thread sessionThread = new Thread(session);
+        sessionThread.start();
         ((YahooSession)session).logIn(presenceType, verboseStatus);
         return session;
     }
@@ -97,7 +97,7 @@ public class YahooTransport extends BaseTransport {
     public void registrationLoggedOut(TransportSession session) {
         Log.debug("Logging out of Yahoo gateway.");
         ((YahooSession)session).logOut();
-//        session.sessionDone();
+        session.sessionDone();
         // Just in case.
         session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }

@@ -54,6 +54,11 @@ public class TransportSessionManager {
     BaseTransport transport;
 
     /**
+     * Group of all threads related to this session.
+     */
+    public ThreadGroup threadGroup;
+
+    /**
      * Creates the transport session manager instance and initializes.
      *
      * @param transport Transport associated with this session manager.
@@ -70,6 +75,34 @@ public class TransportSessionManager {
     public void shutdown() {
         sessionReaper.cancel();
         timer.cancel();
+    }
+
+    /**
+     * Initialize the thread group manager.
+     *
+     * @param jid JID for naming purposes of the thread group manager.
+     */
+    public void startThreadManager(JID jid) {
+        threadGroup = new ThreadGroup(jid.toString());
+    }
+
+    /**
+     * Destroys the thread group manager.
+     */
+    public void stopThreadManager() {
+        threadGroup.destroy();
+    }
+
+    /**
+     * Starts a thread associated with a session.
+     *
+     * @param session Session the thread will be associated with.
+     * @return A thread wrapped around the session.
+     */
+    public Thread startThread(TransportSession session) {
+        Thread sessionThread = new Thread(threadGroup, session);
+        sessionThread.start();
+        return sessionThread;
     }
 
     /**

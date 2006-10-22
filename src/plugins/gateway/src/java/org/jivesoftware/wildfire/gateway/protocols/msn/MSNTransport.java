@@ -83,8 +83,7 @@ public class MSNTransport extends BaseTransport {
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         Log.debug("Logging in to MSN gateway.");
         TransportSession session = new MSNSession(registration, jid, this, priority);
-        Thread sessionThread = new Thread(session);
-        sessionThread.start();
+        this.getSessionManager().startThread(session);
         ((MSNSession)session).logIn(presenceType, verboseStatus);
         return session;
     }

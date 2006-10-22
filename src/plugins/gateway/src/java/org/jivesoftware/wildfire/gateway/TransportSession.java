@@ -17,6 +17,7 @@ import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.util.Log;
 
 import java.util.TreeMap;
+import java.util.ArrayList;
 
 /**
  * Interface for a transport session.
@@ -89,6 +90,11 @@ public abstract class TransportSession implements Runnable {
      * The current login status on the legacy network.
      */
     public TransportLoginStatus loginStatus = TransportLoginStatus.LOGGED_OUT;
+
+    /**
+     * Supported features.
+     */
+    public ArrayList<SupportedFeature> supportedFeatures = new ArrayList<SupportedFeature>();
 
     /**
      * Associates a resource with the session, and tracks it's priority.
@@ -248,6 +254,43 @@ public abstract class TransportSession implements Runnable {
      */
     public Boolean hasResource(String resource) {
         return (resources.containsValue(resource));
+    }
+
+    /**
+     * Sets a feature that the client supports.
+     *
+     * @param feature Feature that the session supports.
+     */
+    public void setSupportedFeature(SupportedFeature feature) {
+        if (!supportedFeatures.contains(feature)) {
+            supportedFeatures.add(feature);
+        }
+    }
+
+    /**
+     * Removes a feature that the client supports.
+     *
+     * @param feature Feature to be removed from the supported list.
+     */
+    public void removeSupportedFeature(SupportedFeature feature) {
+        supportedFeatures.remove(feature);
+    }
+
+    /**
+     * Clears all of the supported features recorded.
+     */
+    public void clearSupportedFeatures() {
+        supportedFeatures.clear();
+    }
+
+    /**
+     * Retrieves whether this session supports a specific feature.
+     *
+     * @param feature Feature to check for support of.
+     * @return True or false if the session supports the specified feature.
+     */
+    public Boolean isFeatureSupported(SupportedFeature feature) {
+        return supportedFeatures.contains(feature);
     }
 
     /**

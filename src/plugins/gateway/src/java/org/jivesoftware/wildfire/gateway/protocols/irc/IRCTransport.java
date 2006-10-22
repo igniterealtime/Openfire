@@ -81,8 +81,7 @@ public class IRCTransport extends BaseTransport {
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         Log.debug("Logging in to IRC gateway.");
         TransportSession session = new IRCSession(registration, jid, this, priority);
-        Thread sessionThread = new Thread(session);
-        sessionThread.start();
+        this.getSessionManager().startThread(session);
         ((IRCSession)session).logIn(presenceType, verboseStatus);
         return session;
     }

@@ -1098,7 +1098,7 @@ public class LdapManager {
      *
      * @param groupMemberField the field used to list members within a group.
      */
-    public void setGroupmemberField(String groupMemberField) {
+    public void setGroupMemberField(String groupMemberField) {
         this.groupMemberField = groupMemberField;
         properties.put("ldap.groupMemberField", groupMemberField);
     }

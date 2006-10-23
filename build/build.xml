@@ -122,7 +122,7 @@
 
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
-    <property name="installer.dest.dir" value="${release.dest.dir}/installers"/>
+    <property name="installer.dest.dir" value="${release.dest.dir}"/>
     <property name="installer.install4j.srcfile" value="${installer.src}/wildfire.install4j"/>
     <property name="installer.app_name" value="Wildfire"/>
     <property name="installer.app_short_name" value="wildfire"/>
@@ -431,13 +431,12 @@
     </target>
 
     <!-- javadoc =============================================================================== -->
-    <target name="javadoc" depends="compile" description="Produces Wildfire Javadocs">
+    <target name="javadoc" depends="init" description="Produces Wildfire Javadocs">
         <mkdir dir="${javadoc.dest.dir}"/>
         <antcall target="-javadoc-impl"/>
-
     </target>
-    <target name="-javadoc-impl" unless="no.javadoc">
 
+    <target name="-javadoc-impl" unless="no.javadoc">
         <!-- Run javadoc over all source code -->
         <javadoc
             packagenames="org.jivesoftware.*, org.xmpp.*"
@@ -696,70 +695,22 @@
 		<target name="-extract-help" if="help.exists">
 				<unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp" />
 		</target>
-
-    <!-- release =============================================================================== -->
-    <target name="release" depends="jar,javadoc" description="Creates a distribution">
+		
+		<!-- dist.src =============================================================================== -->
+		<target name="dist.src" depends="javadoc, -i18n" description="Creates a source distribution package">
         <mkdir dir="${release.dest.dir}"/>
 
         <!-- Create a new prop for the final release dirs then create the dirs -->
 
-        <!-- ie: wildfire -->
-        <property name="release.name" value="${dist.prefix}"/>
         <!-- ie: wildfire_src -->
         <property name="release.name.src" value="${dist.prefix}_src"/>
-        <!-- ie: wildfire_2_1_2 -->
-        <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
         <!-- ie: wildfire_src_2_1_2 -->
         <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
 
-        <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
         <property name="release.src.out.dir" value="${release.dest.dir}/${release.name.src}"/>
 
-        <mkdir dir="${release.out.dir}"/>
         <mkdir dir="${release.src.out.dir}"/>
-
-        <!-- Make & copy the search plugin. -->
-        <copy todir="${release.out.dir}">
-            <fileset dir="${target.dir}">
-                <include name="plugins/search.jar"/>
-            </fileset>
-        </copy>
-
-        <antcall target="enterprise" />
-
-        <!-- Copy all prepare dirs to the binary dist -->
-        <antcall target="wildfireHome">
-            <param name="target.wildfireHome" value="${release.out.dir}"/>
-        </antcall>
-
-        <!-- Remove the development scripts -->
-        <delete file="${release.out.dir}/bin/wildfire-dev.bat"/>
-        <delete file="${release.out.dir}/bin/wildfire-dev.sh"/>
-
-        <!-- Pack200 processing on JAR files in lib dir -->
-
-        <for param="jar">
-            <path>
-                <fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar" />
-            </path>
-            <sequential>
-                <delete file="@{jar}.pack" />
-                <pack200 src="@{jar}"
-                    destfile="@{jar}.pack"
-                    gzipoutput="false"
-                />
-                <delete file="@{jar}" />
-            </sequential>
-        </for>
-
         <!-- Copy dist docs, use filtering  -->
-        <copy todir="${release.out.dir}">
-            <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
-            <filterset>
-                <filter token="builddate" value="${builddate}"/>
-                <filter token="version" value="${version}"/>
-            </filterset>
-        </copy>
         <copy todir="${release.src.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
             <filterset>
@@ -768,36 +719,18 @@
             </filterset>
         </copy>
         <!-- Copy the license -->
-        <copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html"/>
         <copy todir="${release.src.out.dir}" file="${license.file.path}/LICENSE.html"/>
-        <mkdir dir="${release.out.dir}/logs" />
-        <touch file="${release.out.dir}/logs/stderr.out" />
-
         <!-- Copy docs -->
-        <copy todir="${release.out.dir}/documentation">
-            <fileset dir="${docs.dir}/docs"/>
-            <filterset>
-                <filter token="version" value="${version}"/>
-            </filterset>
-        </copy>
         <copy todir="${release.src.out.dir}/documentation">
             <fileset dir="${docs.dir}" includes="**/*.*"/>
             <filterset>
                 <filter token="version" value="${version}"/>
             </filterset>
         </copy>
-        <copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
-            <fileset dir="${docs.dir}/docs/images"/>
-        </copy>
-
         <!-- Copy Javadocs -->
-        <copy todir="${release.out.dir}/documentation/javadoc">
-            <fileset dir="${javadoc.dest.dir}"/>
-        </copy>
         <copy todir="${release.src.out.dir}/documentation/docs/javadoc">
             <fileset dir="${javadoc.dest.dir}"/>
         </copy>
-
         <!-- Copy source -->
         <copy todir="${release.src.out.dir}/src">
             <fileset dir="${src.dir}"/>
@@ -807,25 +740,137 @@
                 <exclude name="org/xmpp/packet.*.java"/>
             </fileset>
         </copy>
-
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
-        <copy todir="${release.out.dir}/resources/i18n">
-            <fileset dir="${target.i18n.dir}" includes="*.properties"/>
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
-        </copy>
         <copy todir="${release.src.out.dir}/resources/i18n">
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
         </copy>
-
         <!-- Copy build -->
         <copy todir="${release.src.out.dir}/build">
             <fileset dir="${basedir}/build"/>
         </copy>
+        
+				<property name="package.dest.dir" value="${release.dest.dir}"/>
+
+				<if>
+					<not> <isset property="no.package"/> </not>
+					<then>
+						<parallel>
+								<!-- Source Packages -->
+								<zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
+										basedir="${release.src.out.dir}/.."
+										includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
+										/>
+								<tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
+										basedir="${release.src.out.dir}/.."
+										includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
+										compression="gzip"
+										longfile="gnu"
+										/>
+						</parallel>
+					</then>
+				</if>
+		</target>
+
+    <!-- dist.bin =============================================================================== -->
+    <target name="dist.bin" depends="plugins,enterprise,javadoc" description="Creates a binary distribution package">
+				<!-- ie: wildfire -->
+				<property name="release.name" value="${dist.prefix}"/>
+				<!-- ie: wildfire_2_1_2 -->
+				<property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
+				<property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
+
+
+				<mkdir dir="${release.out.dir}"/>
+
+				<!-- Make & copy the search plugin. -->
+				<copy todir="${release.out.dir}">
+						<fileset dir="${target.dir}">
+								<include name="plugins/search.jar"/>
+						</fileset>
+				</copy>
+
+				<!-- Copy all prepare dirs to the binary dist -->
+				<antcall target="wildfireHome">
+						<param name="target.wildfireHome" value="${release.out.dir}"/>
+				</antcall>
+
+				<!-- Remove the development scripts -->
+				<delete file="${release.out.dir}/bin/wildfire-dev.bat"/>
+				<delete file="${release.out.dir}/bin/wildfire-dev.sh"/>
+
+				<!-- Pack200 processing on JAR files in lib dir -->
+
+				<for param="jar">
+						<path>
+								<fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar" />
+						</path>
+						<sequential>
+								<delete file="@{jar}.pack" />
+								<pack200 src="@{jar}"
+										destfile="@{jar}.pack"
+										gzipoutput="false"
+								/>
+								<delete file="@{jar}" />
+						</sequential>
+				</for>
+
+				<!-- Copy dist docs, use filtering  -->
+				<copy todir="${release.out.dir}">
+						<fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
+						<filterset>
+								<filter token="builddate" value="${builddate}"/>
+								<filter token="version" value="${version}"/>
+						</filterset>
+				</copy>
+
+				<!-- Copy the license -->
+				<copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html"/>
+				<mkdir dir="${release.out.dir}/logs" />
+				<touch file="${release.out.dir}/logs/stderr.out" />
+
+				<!-- Copy docs -->
+				<copy todir="${release.out.dir}/documentation">
+						<fileset dir="${docs.dir}/docs"/>
+						<filterset>
+								<filter token="version" value="${version}"/>
+						</filterset>
+				</copy>
+				<copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
+						<fileset dir="${docs.dir}/docs/images"/>
+				</copy>
+
+				<!-- Copy Javadocs -->
+				<copy todir="${release.out.dir}/documentation/javadoc">
+						<fileset dir="${javadoc.dest.dir}"/>
+				</copy>
+
+
+				<!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
+				<copy todir="${release.out.dir}/resources/i18n">
+						<fileset dir="${target.i18n.dir}" includes="*.properties"/>
+						<fileset dir="${src.i18n.dir}" includes="*.properties"/>
+				</copy>
 
         <!-- Package the release -->
-        <antcall target="release-package"/>
+				<property name="package.dest.dir" value="${release.dest.dir}"/>
 
+				<if>
+					<not> <isset property="no.package"/> </not>
+					<then>
+						<parallel>
+								<!-- Binary packages -->
+								<zip zipfile="${package.dest.dir}/${release.fullname}.zip"
+									 basedir="${release.out.dir}/.."
+									 includes="${release.fullname}/**/*, ${release.name}/**/*"/>
+								<tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
+									 basedir="${release.out.dir}/.."
+									 includes="${release.fullname}/**/*, ${release.name}/**/*"
+									 compression="gzip"
+									 longfile="gnu"/>
+						</parallel>
+					</then>
+				</if>
     </target>
 
     <target name="enterprise" if="do.enterprise">
@@ -843,40 +888,14 @@
 
     <!-- quickrelease ========================================================================== -->
     <target name="quickrelease" description="Makes an unpackaged release without Javadocs">
-        <antcall target="release">
+        <antcall target="dist.bin">
             <param name="no.javadoc" value="true"/>
             <param name="no.package" value="true"/>
         </antcall>
-    </target>
-
-    <!-- release-package ======================================================================= -->
-    <target name="release-package" unless="no.package" description="Packages a release">
-
-        <property name="package.dest.dir" value="${release.dest.dir}"/>
-
-        <!-- ZIP -->
-        <zip zipfile="${package.dest.dir}/${release.fullname}.zip"
-            basedir="${release.out.dir}/.."
-            includes="${release.fullname}/**/*, ${release.name}/**/*"
-            />
-        <zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
-            basedir="${release.src.out.dir}/.."
-            includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
-            />
-        <!-- TAR.GZ -->
-        <tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
-            basedir="${release.out.dir}/.."
-            includes="${release.fullname}/**/*, ${release.name}/**/*"
-            compression="gzip"
-            longfile="gnu"
-            />
-        <tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
-            basedir="${release.src.out.dir}/.."
-            includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
-            compression="gzip"
-            longfile="gnu"
-            />
-
+        <antcall target="dist.src">
+            <param name="no.javadoc" value="true"/>
+            <param name="no.package" value="true"/>
+        </antcall>
     </target>
 
     <!-- dailybuild ============================================================================ -->
@@ -887,17 +906,22 @@
         <property name="release.fullname.src" value="${release.src.out.name}"/>
         <property name="release.out.dir" value="${release.dest.dir}/dailybuild/${release.out.name}"/>
         <property name="release.src.out.dir" value="${release.dest.dir}/dailybuild/${release.src.out.name}"/>
-        <antcall target="release">
-            <param name="release.out.name" value="${release.out.name}"/>
+        <antcall target="dist.src">
             <param name="release.src.out.name" value="${release.src.out.name}"/>
-            <param name="release.out.dir" value="${release.out.dir}"/>
             <param name="release.src.out.dir" value="${release.src.out.dir}"/>
             <param name="package.dest.dir" value="${release.dest.dir}/dailybuild"/>
+        </antcall>
+        <antcall target="dist.bin">
+            <param name="release.out.name" value="${release.out.name}"/>
+            <param name="release.out.dir" value="${release.out.dir}"/>
+            <param name="package.dest.dir" value="${release.dest.dir}/dailybuild"/>
+            <!-- dist.src above does this already, so don't need to do it twice -->
+	        	<param name="no.javadoc" value="true" />
         </antcall>
     </target>
 
     <!-- installer ============================================================================= -->
-    <target name="installer" depends="release" description="Creates an Install4j installer">
+    <target name="installer" description="Creates an Install4j installer">
 
         <condition property="install4j.not.ok" value="true">
             <not>
@@ -905,7 +929,16 @@
             </not>
         </condition>
         <fail if="install4j.not.ok" message="Path to Install4j not set, see build.properties.template file."/>
+        
+        <antcall target="dist.src" /> 
 
+        <antcall target="dist.bin" >
+        	<!-- Don't need package for installer build -->
+        	<param name="no.package" value="true" />
+        	<!-- Already built javadoc with dist.src above -->
+        	<param name="no.javadoc" value="true" />
+        </antcall>
+        
         <taskdef name="install4j"
             classname="com.install4j.Install4JTask"
             classpath="${installer.install4j.home}/bin/install4j.jar"/>
@@ -1330,7 +1363,7 @@
         <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
     </tstamp>
 
-    <target name="installer-debian" depends="release" description="Creates a Debian package">
+    <target name="installer-debian" depends="dist.bin" description="Creates a Debian package">
         <mkdir dir="${debian.release.install_path}/${dist.prefix}"/>
         <copy todir="${debian.release.install_path}/${dist.prefix}">
             <fileset dir="${release.dest.dir}/${dist.prefix}">

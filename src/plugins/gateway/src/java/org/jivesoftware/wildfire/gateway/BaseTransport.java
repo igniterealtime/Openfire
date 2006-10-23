@@ -185,8 +185,13 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             }
         }
         catch (NotFoundException e) {
-            // TODO: Should return an error packet here
             Log.debug("Unable to find session.");
+            Message m = new Message();
+            m.setError(Condition.service_unavailable);
+            m.setTo(from);
+            m.setFrom(getJID());
+            m.setBody("You are not currently logged into the transport.");
+            reply.add(m);
         }
 
         return reply;
@@ -504,12 +509,14 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     try {
                         this.addNewRegistration(from, username, password, nickname);
 
-                        // Lets ask them what their presence is, maybe log
-                        // them in immediately.
-                        Presence p = new Presence(Presence.Type.probe);
-                        p.setTo(from);
-                        p.setFrom(to);
-                        reply.add(p);
+                        // Lets check what their presence is, maybe log them in immediately.
+                        SessionManager sessionManager = SessionManager.getInstance();
+                        String user = from.getNode();
+                        if (sessionManager.getSessionCount(user) > 0) {
+                            for (ClientSession session : sessionManager.getSessions(user)) {
+                                availableSession(session, session.getPresence());
+                            }
+                        }
                     }
                     catch (UserNotFoundException e) {
                         Log.error("Someone attempted to register with the gateway who is not registered with the server: " + from);
@@ -697,14 +704,14 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     public void start() {
         RosterEventDispatcher.addListener(this);
         PresenceEventDispatcher.addListener(this);
-        // Probe all registered users [if they are logged in] to auto-log them in
-        // TODO: This is no longer going to work...  need to find a way that doesn't involve presence packets or anything like that
+        SessionManager sessionManager = SessionManager.getInstance();
+        // Check all registered users to auto-log them in
         for (Registration registration : registrationManager.getRegistrations()) {
-            if (SessionManager.getInstance().getSessionCount(registration.getJID().getNode()) > 0) {
-                Presence p = new Presence(Presence.Type.probe);
-                p.setFrom(this.getJID());
-                p.setTo(registration.getJID());
-                sendPacket(p);
+            String user = registration.getJID().getNode();
+            if (sessionManager.getSessionCount(user) > 0) {
+                for (ClientSession session : sessionManager.getSessions(user)) {
+                    availableSession(session, session.getPresence());
+                }
             }
         }
     }
@@ -871,11 +878,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                 }
                 catch (UserAlreadyExistsException ee) {
                     Log.error("getRosterItem claims user exists, but couldn't find via getRosterItem?", ee);
-                    // TODO: Should we throw exception or something?
                 }
                 catch (Exception ee) {
                     Log.error("Exception while creating roster item:", ee);
-                    // TODO: Should we throw exception or something?
                 }
             }
         }
@@ -941,7 +946,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     }
                     catch (Exception e) {
                         Log.error("Error removing roster item: " + ri.toString(), e);
-                        // TODO: Should we say something?
                     }
                 }
             }
@@ -1015,7 +1019,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         this.addOrUpdateRosterItem(userjid, buddy.getName(), buddy.getNickname(), buddy.getGroup());
                     }
                     catch (UserNotFoundException e) {
-                        // TODO: Something is quite wrong if we see this.
                         Log.error("Failed updating roster item", e);
                     }
                     legacymap.remove(jid);
@@ -1027,7 +1030,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         this.removeFromRoster(userjid, jid);
                     }
                     catch (UserNotFoundException e) {
-                        // TODO: Something is quite wrong if we see this.
                         Log.error("Failed removing roster item", e);
                     }
                 }
@@ -1040,7 +1042,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     this.addOrUpdateRosterItem(userjid, buddy.getName(), buddy.getNickname(), buddy.getGroup());
                 }
                 catch (UserNotFoundException e) {
-                    // TODO: Something is quite wrong if we see this.
                     Log.error("Failed adding new roster item", e);
                 }
             }
@@ -1387,11 +1388,18 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     // Ooh, the highest resource went offline, drop to next highest.
                     session.removeResource(resource);
 
-                    // Lets ask the next highest resource what it's presence is.
-                    Presence p = new Presence(Presence.Type.probe);
-                    p.setTo(session.getJIDWithHighestPriority());
-                    p.setFrom(this.getJID());
-                    sendPacket(p);
+                    // Lets check the next highest resource for what it's presence is.
+                    SessionManager sessionManager = SessionManager.getInstance();
+                    String user = from.getNode();
+                    String nextResource = session.getJIDWithHighestPriority().getResource();
+                    if (sessionManager.getSessionCount(user) > 0) {
+                        for (ClientSession cSession : sessionManager.getSessions(user)) {
+                            Presence p = cSession.getPresence();
+                            if (p.getFrom().getResource().equals(nextResource)) {
+                                presenceChanged(cSession, cSession.getPresence());
+                            }
+                        }
+                    }
                 }
                 else {
                     Log.debug("A low priority resource (of multiple) has gone offline: " + from);

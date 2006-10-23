@@ -31,11 +31,11 @@ goto end
 
 :run
 if "%1" == "-debug" goto debug
-start "Wildfire" "%JAVA_HOME%\bin\java" -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\build\lib\ant.jar;..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\wildfire.jar" org.jivesoftware.wildfire.starter.ServerStarter
+start "Wildfire" "%JAVA_HOME%\bin\java" -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\..\build\lib\ant.jar;..\..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\wildfire.jar" org.jivesoftware.wildfire.starter.ServerStarter
 goto end
 
 :debug
-start "Wildfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\build\lib\ant.jar;..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\wildfire.jar" org.jivesoftware.wildfire.starter.ServerStarter
+start "Wildfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\..\build\lib\ant.jar;..\..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\wildfire.jar" org.jivesoftware.wildfire.starter.ServerStarter
 goto end
 :end
 

@@ -71,7 +71,7 @@ public class AdminConsolePlugin implements Plugin {
             if (Boolean.getBoolean("developmentMode")) {
                 System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
                 context = jetty.addWebApplication("/",
-                    pluginDir.getParentFile().getParentFile().getParent() + File.separator + "src" +
+                    pluginDir.getParentFile().getParentFile().getParentFile().getParent() + File.separator + "src" +
                             File.separator + "web");
             }
             else {
@@ -180,7 +180,7 @@ public class AdminConsolePlugin implements Plugin {
             if (Boolean.getBoolean("developmentMode")) {
                 System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
                 context = jetty.addWebApplication("/",
-                    pluginDir.getParentFile().getParentFile().getParent() + File.separator + "src" +
+                    pluginDir.getParentFile().getParentFile().getParentFile().getParent() + File.separator + "src" +
                             File.separator + "web");
             }
             else {

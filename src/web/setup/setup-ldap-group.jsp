@@ -1,6 +1,8 @@
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -46,8 +48,7 @@
         if (defaultGroupSearchFilter == null) {
             defaultGroupSearchFilter = "(objectClass=group)";
         }
-    }
-    else {
+    } else {
         if (defaultGroupNameField == null) {
             defaultGroupNameField = "cn";
         }
@@ -78,8 +79,7 @@
     boolean posixMode;
     if (posixModeParam == null) {
         posixMode = defaultPosixMode;
-    }
-    else {
+    } else {
         posixMode = Boolean.parseBoolean(posixModeParam);
     }
     String groupSearchFilter = ParamUtils.getParameter(request, "groupSearchFilter");
@@ -88,28 +88,40 @@
     }
 
     boolean save = request.getParameter("save") != null;
-    if (save) {
-        if (groupNameField != null) {
-            JiveGlobals.setXMLProperty("ldap.groupNameField", groupNameField);
-        }
-        if (groupMemberField != null) {
-            JiveGlobals.setXMLProperty("ldap.groupMemberField", groupMemberField);
-        }
-        if (groupDescriptionField != null) {
-            JiveGlobals.setXMLProperty("ldap.groupDescriptionField", groupDescriptionField);
-        }
-        JiveGlobals.setXMLProperty("ldap.posixMode", Boolean.toString(posixMode));
-        if (groupSearchFilter != null) {
-            JiveGlobals.setXMLProperty("ldap.groupSearchFilter", groupSearchFilter);
-        }
+    boolean doTest = request.getParameter("test") != null;
+    if (save || doTest) {
+        // Save information in the session so we can use it in testing pages during setup
+        Map<String, String> settings = new HashMap<String, String>();
+        settings.put("ldap.groupNameField", groupNameField);
+        settings.put("ldap.groupMemberField", groupMemberField);
+        settings.put("ldap.groupDescriptionField", groupDescriptionField);
+        settings.put("ldap.posixMode", Boolean.toString(posixMode));
+        settings.put("ldap.groupSearchFilter", groupSearchFilter);
+        session.setAttribute("ldapGroupSettings", settings);
 
-        // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
-        JiveGlobals.setXMLProperty("provider.group.className",
-                "org.jivesoftware.wildfire.ldap.LdapGroupProvider");
+        if (save) {
+            if (groupNameField != null) {
+                JiveGlobals.setXMLProperty("ldap.groupNameField", groupNameField);
+            }
+            if (groupMemberField != null) {
+                JiveGlobals.setXMLProperty("ldap.groupMemberField", groupMemberField);
+            }
+            if (groupDescriptionField != null) {
+                JiveGlobals.setXMLProperty("ldap.groupDescriptionField", groupDescriptionField);
+            }
+            JiveGlobals.setXMLProperty("ldap.posixMode", Boolean.toString(posixMode));
+            if (groupSearchFilter != null) {
+                JiveGlobals.setXMLProperty("ldap.groupSearchFilter", groupSearchFilter);
+            }
 
-        // Redirect
-        response.sendRedirect("setup-admin-settings.jsp?ldap=true");
-        return;
+            // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
+            JiveGlobals.setXMLProperty("provider.group.className",
+                    "org.jivesoftware.wildfire.ldap.LdapGroupProvider");
+
+            // Redirect
+            response.sendRedirect("setup-admin-settings.jsp?ldap=true");
+            return;
+        }
     }
 %>
 <html>
@@ -119,6 +131,23 @@
 </head>
 
 <body>
+    <% if (doTest) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("serverType=").append(serverType);
+        /*if (isTesting) {
+            sb.append("&userIndex=").append(request.getParameter("userIndex"));
+        }*/
+    %>
+        <a href="setup-ldap-group_test.jsp?<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+        <script type="text/javascript">
+            function loadMsg() {
+                var lb = new lightbox(document.getElementById('lbmessage'));
+                lb.activate();
+            }
+            setTimeout('loadMsg()', 250);
+        </script>
+
+    <% } %>
 
 	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.group_mapping" /></h1>
 
@@ -195,10 +224,7 @@
 
 			<!-- BEGIN right-aligned buttons -->
 			<div align="right">
-				<%--<a href="setup-ldap-group_test.jsp" class="lbOn" id="jive-setup-test2">
-				<img src="../images/setup_btn_gearplay.gif" alt="" width="14" height="14" border="0">
-                <fmt:message key="setup.ldap.test" />
-				</a>--%>
+                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test" border="0">
 
 				<input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
 			</div>

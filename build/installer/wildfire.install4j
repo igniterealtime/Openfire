@@ -142,7 +142,7 @@
   </launchers>
   <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="true" useCustomHeaderImage="true" customHeaderImage="./images/wildfire_logo_small.png" customSize="false" customWidth="500" customHeight="390">
     <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="true" postUninstallActionClass="org.jivesoftware.wildfire.launcher.Uninstaller" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="">
-      <archive location="../../target/release/wildfire/lib/startup.jar" />
+      <archive location="%RELEASE_FULL_PATH%/lib/startup.jar" />
     </customCode>
     <standardScreens>
       <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />

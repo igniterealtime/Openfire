@@ -106,7 +106,7 @@
     <property name="plugin.src.dir" value="${src.dir}/plugins"/>
     <property name="plugin.dev.dir" value=""/> <!-- Set by a developer as alt plugin location -->
     <property name="plugin.dev.dest.dir" value="${target.dir}/plugins-dev"/>
-    <property name="plugin.dest.dir" value="${target.dir}/plugins"/>
+    <property name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
     <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
     <property name="webapp.dest.dir" value="${target.dir}/webapp"/>
     <property name="war.name" value="wildfire.war"/>
@@ -974,7 +974,7 @@
             >
             <property name="no.jspc" value="true"/>
         </ant>
-        
+
         <mkdir dir="${plugin.dest.dir}" />
 
         <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. -->

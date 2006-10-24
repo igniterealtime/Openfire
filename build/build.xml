@@ -357,7 +357,8 @@
 
     <!-- run =================================================================================== -->
     <target name="run"  description="Starts Wildfire inline to the build process.">
-        <echo>Ensure that you have run ant jar!</echo>
+        <available file="${target.wildfireHome}" type="dir" property="wildfireHome.found"/>
+        <fail unless="wildfireHome.found" message="Can't find wildfireHome, run 'ant wildfireHome' or specify with -Dtarget.wildfireHome."/>
 
         <condition property="run.debug" value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
             <isset property="debug"/>
@@ -805,7 +806,7 @@
 
 				<!-- Make & copy the search plugin. -->
 				<copy todir="${release.out.dir}">
-						<fileset dir="${target}">
+						<fileset dir="${target.dir}">
 								<include name="plugins/search.jar"/>
 						</fileset>
 				</copy>

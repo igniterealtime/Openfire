@@ -863,8 +863,10 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     // Create new roster item for the gateway service or legacy contact. Only
                     // roster items related to the gateway service will be persistent. Roster
                     // items of legacy users are never persisted in the DB.
+//                    RosterItem gwitem =
+//                            roster.createRosterItem(contactjid, true, contactjid.getNode() == null);
                     RosterItem gwitem =
-                            roster.createRosterItem(contactjid, true, contactjid.getNode() == null);
+                            roster.createRosterItem(contactjid, true, false);
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     gwitem.setNickname(nickname);
@@ -1146,6 +1148,9 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     if (ri.isShared()) {
                         continue;
                     }
+                    if (ri.getID() == 0) { // Is a non-persistent roster item.
+                        continue;
+                    }
                     if (leaveDomain && ri.getJid().getNode() == null) {
                         continue;
                     }
@@ -1198,7 +1203,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @param packet Packet to be sent.
      */
     public void sendPacket(Packet packet) {
-        Log.debug("Sending packet: "+packet.toXML());
+        Log.debug(getType().toString()+": Sending packet: "+packet.toXML());
         try {
             this.componentManager.sendPacket(this, packet);
         }
@@ -1213,7 +1218,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#addingContact(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem, boolean)
      */
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
-        Log.debug("addingContact "+roster.getUsername()+":"+item.getJid()+" is "+persistent);
+        Log.debug(getType().toString()+": addingContact "+roster.getUsername()+":"+item.getJid()+" is "+persistent);
         return !(item.getJid().getDomain().equals(this.getJID()) &&
                 item.getJid().getNode() != null) && persistent;
 //        if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
@@ -1228,7 +1233,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactUpdated(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactUpdated(Roster roster, RosterItem item) {
-        Log.debug("contactUpdated "+roster.getUsername()+":"+item.getJid());
+        Log.debug(getType().toString()+": contactUpdated "+roster.getUsername()+":"+item.getJid());
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
             return;
@@ -1252,7 +1257,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactAdded(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactAdded(Roster roster, RosterItem item) {
-        Log.debug("contactAdded "+roster.getUsername()+":"+item.getJid());
+        Log.debug(getType().toString()+": contactAdded "+roster.getUsername()+":"+item.getJid());
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
             return;
@@ -1276,7 +1281,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactDeleted(Roster roster, RosterItem item) {
-        Log.debug("contactDeleted "+roster.getUsername()+":"+item.getJid());
+        Log.debug(getType().toString()+": contactDeleted "+roster.getUsername()+":"+item.getJid());
 //        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
 //            // Not ours, not our problem.
 //            return;
@@ -1300,7 +1305,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#rosterLoaded(org.jivesoftware.wildfire.roster.Roster)
      */
     public void rosterLoaded(Roster roster) {
-        Log.debug("rosterLoaded "+roster.getUsername());
+        Log.debug(getType().toString()+": rosterLoaded "+roster.getUsername());
         // Don't care
         // TODO: Evaluate if we could use this, maybe an opportunity to clean up.
     }
@@ -1311,7 +1316,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#availableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void availableSession(ClientSession clSession, Presence packet) {
-        Log.debug("availableSession "+clSession+":"+packet);
+        Log.debug(getType().toString()+": availableSession "+clSession+":"+packet);
         JID from = packet.getFrom();
 
         Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
@@ -1365,7 +1370,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#unavailableSession(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void unavailableSession(ClientSession clSession, Presence packet) {
-        Log.debug("unavailableSession "+clSession+":"+packet);
+        Log.debug(getType().toString()+": unavailableSession "+clSession+":"+packet);
         JID from = packet.getFrom();
 
         Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
@@ -1430,7 +1435,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#presencePriorityChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void presencePriorityChanged(ClientSession clSession, Presence packet) {
-        Log.debug("presencePriorityChanged "+clSession+":"+packet);
+        Log.debug(getType().toString()+": presencePriorityChanged "+clSession+":"+packet);
         JID from = packet.getFrom();
 
         Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
@@ -1466,7 +1471,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.user.PresenceEventListener#presenceChanged(org.jivesoftware.wildfire.ClientSession, org.xmpp.packet.Presence)
      */
     public void presenceChanged(ClientSession clSession, Presence packet) {
-        Log.debug("presenceChanged "+clSession+":"+packet);
+        Log.debug(getType().toString()+": presenceChanged "+clSession+":"+packet);
         JID from = packet.getFrom();
 
         Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);

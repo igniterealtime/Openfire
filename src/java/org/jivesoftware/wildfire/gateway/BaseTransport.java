@@ -993,6 +993,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     public void syncLegacyRoster(JID userjid, List<TransportBuddy> legacyitems) throws UserNotFoundException {
         try {
             Roster roster = rosterManager.getRoster(userjid.getNode());
+            boolean hasTransport = false;
 
             // First thing first, we want to build ourselves an easy mapping.
             Map<JID,TransportBuddy> legacymap = new HashMap<JID,TransportBuddy>();
@@ -1009,6 +1010,13 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                 }
                 if (ri.getJid().getNode() == null) {
                     // This is a transport instance, lets leave it alone.
+                    if (ri.getID() == 0) {
+                        hasTransport = true;
+                    }
+                    else {
+                        // This is a persistent roster item for the transport, remove.
+                        this.removeFromRoster(userjid, ri.getJid());
+                    }
                     continue;
                 }
                 JID jid = new JID(ri.getJid().toBareJID());
@@ -1035,6 +1043,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         Log.error("Failed removing roster item", e);
                     }
                 }
+            }
+
+            if (!hasTransport) {
+                // This person doesn't have the transport in their roster, lets put it there.
+                this.addOrUpdateRosterItem(userjid, this.getJID(), this.getDescription(), "Transports");
             }
 
             // Ok, we should now have only new items from the legacy roster

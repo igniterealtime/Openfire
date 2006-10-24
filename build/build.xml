@@ -106,7 +106,7 @@
     <property name="plugin.src.dir" value="${src.dir}/plugins"/>
     <property name="plugin.dev.dir" value=""/> <!-- Set by a developer as alt plugin location -->
     <property name="plugin.dev.dest.dir" value="${target.dir}/plugins-dev"/>
-    <property name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
+    <property name="plugin.dest.dir" value="${target.dir}/plugins"/>
     <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
     <property name="webapp.dest.dir" value="${target.dir}/webapp"/>
     <property name="war.name" value="wildfire.war"/>
@@ -353,8 +353,6 @@
 						<fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
 				</copy>
 
-        <!-- Setup environment -->
-        <antcall target="wildfireHome"/>
     </target>
 
     <!-- run =================================================================================== -->
@@ -417,17 +415,18 @@
         </war>
         
         <!-- Create a Wildfire home -->
-        <copy todir="${war.dest.dir}/wildfireHome">
-            <fileset dir="${target.wildfireHome}">
-                <include name="conf/**/*.*"/>
-                <include name="resources/**/*"/>
-                <include name="plugins/*.*"/>
-            </fileset>
-        </copy>
-        <!-- Force create the logs dir (will be empty) -->
-        <mkdir dir="${war.dest.dir}/wildfireHome/logs"/>
+				<antcall target="-config">
+						<param name="config.dir" value="${war.dest.dir}/wildfireHome" />
+				</antcall>
+
         <!-- Force create the plugins dir (will be empty) -->
         <mkdir dir="${war.dest.dir}/wildfireHome/plugins"/>
+        <copy todir="${war.dest.dir}/wildfireHome/plugins" failonerror="false">
+            <fileset dir="${plugin.dest.dir}" includes="*.*" />
+        </copy>
+        
+        <!-- Force create the logs dir (will be empty) -->
+        <mkdir dir="${war.dest.dir}/wildfireHome/logs"/>
     </target>
 
     <!-- javadoc =============================================================================== -->
@@ -592,19 +591,60 @@
         </junit>
     </target>
     
+    <!-- -config ============================================================================ -->
+    <!--    Creates conf and resources folders in config.dir folder  -->
+    <target name="-config" >
+    		<property name="config.dir" value="${target.dir}" />
+
+				<!-- Copy conf dir -->
+				<copy todir="${config.dir}">
+						<fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
+				</copy>
+
+        <!-- Copy database scripts -->
+        <if>
+            <equals arg1="${copy.dbscripts}" arg2="true"/>
+            <then>
+                <copy todir="${config.dir}/resources">
+                    <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
+                </copy>
+            </then>
+        </if>
+
+        <!-- Copy security resources -->
+        <copy todir="${config.dir}/resources">
+            <fileset dir="${src.dir}">
+                <include name="security/*"/>
+                <include name="security/*.*"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy native authentication files -->
+        <copy todir="${config.dir}/resources">
+            <fileset dir="${src.dir}/resources">
+                <include name="nativeAuth/**"/>
+            </fileset>
+        </copy>
+    </target>
+    
 		<!-- wildfireHome ========================================================================== -->
     <target name="wildfireHome" description="Create a wildfireHome directory in target.wildfireHome.">
 				<!-- Set this to true to enable a pre-setup wildfireHome directory -->
         <property name="wildfireHome.preconfigured" value="false"/>
+        <property name="wildfireHome.no.plugins" value="false"/>
 
         <mkdir dir="${target.wildfireHome}" />
+        
+        <antcall target="-config">
+        		<param name="config.dir" value="${target.wildfireHome}" />
+        </antcall>
 
         <!-- Copy lib dir -->
         <copy todir="${target.wildfireHome}/lib">
             <fileset dir="${jar.dest.dir}" includes="*.*"></fileset>
         </copy>
 
-        <!-- Copy appropriate wildfireHome dir -->
+        <!-- Overwrite config with build/wildfireHome dir, if requested -->
         <if>
             <equals arg1="${wildfireHome.preconfigured}" arg2="true"/>
             <then>
@@ -613,43 +653,22 @@
                     <fileset dir="${basedir}/build/wildfireHome" includes="**/*.*" />
                 </copy>
             </then>
-            <else>
-                <!-- Copy conf dir -->
-                <copy todir="${target.wildfireHome}">
-                    <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
-                </copy>
-            </else>
         </if>
 
-        <!-- Copy database scripts -->
-        <if>
-            <equals arg1="${copy.dbscripts}" arg2="true"/>
-            <then>
-                <copy todir="${target.wildfireHome}/resources">
-                    <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
-                </copy>
-            </then>
-        </if>
-
-        <!-- Copy security resources -->
-        <copy todir="${target.wildfireHome}/resources">
-            <fileset dir="${src.dir}">
-                <include name="security/*"/>
-                <include name="security/*.*"/>
-            </fileset>
-        </copy>
-
-        <!-- Copy native authentication files -->
-        <copy todir="${target.wildfireHome}/resources">
-            <fileset dir="${src.dir}/resources">
-                <include name="nativeAuth/**"/>
-            </fileset>
-        </copy>
-        
         <!-- Copy admin Plugin -->
         <antcall target="adminPlugin">
         		<param name="plugin.dest.dir" value="${target.wildfireHome}/plugins" />
         </antcall>
+        
+        <!-- Copy compiled plugins if we need to -->
+        <if>
+            <equals arg1="${wildfireHome.no.plugins}" arg2="false"/>
+            <then>
+                <copy todir="${target.wildfireHome}/plugins" failonerror="false">
+                    <fileset dir="${plugin.dest.dir}"/>
+                </copy>
+            </then>
+        </if>
 
         <!-- Copy bin dir -->
         <copy todir="${target.wildfireHome}">
@@ -786,7 +805,7 @@
 
 				<!-- Make & copy the search plugin. -->
 				<copy todir="${release.out.dir}">
-						<fileset dir="${target.wildfireHome}">
+						<fileset dir="${target}">
 								<include name="plugins/search.jar"/>
 						</fileset>
 				</copy>
@@ -794,6 +813,7 @@
 				<!-- Copy all prepare dirs to the binary dist -->
 				<antcall target="wildfireHome">
 						<param name="target.wildfireHome" value="${release.out.dir}"/>
+						<param name="wildfireHome.no.plugins" value="true"/>
 				</antcall>
 
 				<!-- Remove the development scripts -->

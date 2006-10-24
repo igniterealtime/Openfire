@@ -786,7 +786,7 @@
 
 				<!-- Make & copy the search plugin. -->
 				<copy todir="${release.out.dir}">
-						<fileset dir="${target.dir}">
+						<fileset dir="${target.wildfireHome}">
 								<include name="plugins/search.jar"/>
 						</fileset>
 				</copy>

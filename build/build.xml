@@ -773,13 +773,14 @@
 		</target>
 
     <!-- dist.bin =============================================================================== -->
-    <target name="dist.bin" depends="plugins,enterprise,javadoc" description="Creates a binary distribution package">
+    <target name="dist.bin" depends="plugins,javadoc" description="Creates a binary distribution package">
 				<!-- ie: wildfire -->
 				<property name="release.name" value="${dist.prefix}"/>
 				<!-- ie: wildfire_2_1_2 -->
 				<property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
 				<property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
 
+				<antcall target="enterprise" />
 
 				<mkdir dir="${release.out.dir}"/>
 

@@ -235,10 +235,10 @@
 					    <fmt:message key="setup.ldap.server.connection_pool_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-						<input type="radio" name="connectionpool" value="yes" <% if (connectionPoolEnabled) { %>checked <% } %>>
+						<input type="radio" name="connectionpool" value="true" <% if (connectionPoolEnabled) { %>checked <% } %>>
 					</td>
 					<td class="jive-advancedBorderBottom" align="center">
-						<input type="radio" name="connectionpool" value="no" <% if (!connectionPoolEnabled) { %>checked <% } %>>
+						<input type="radio" name="connectionpool" value="false" <% if (!connectionPoolEnabled) { %>checked <% } %>>
 					</td>
 				</tr>
 				<tr>
@@ -249,10 +249,10 @@
 						<fmt:message key="setup.ldap.server.ssl_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-						<input type="radio" name="ssl" value="yes" <% if (sslEnabled) { %>checked <% } %>>
+						<input type="radio" name="ssl" value="true" <% if (sslEnabled) { %>checked <% } %>>
 					</td>
 					<td class="jive-advancedBorderBottom" align="center">
-						<input type="radio" name="ssl" value="no" <% if (!sslEnabled) { %>checked <% } %>>
+						<input type="radio" name="ssl" value="false" <% if (!sslEnabled) { %>checked <% } %>>
 					</td>
 				</tr>
 				<tr>
@@ -263,10 +263,10 @@
 						<fmt:message key="setup.ldap.server.debug_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-						<input type="radio" name="debug" value="yes" <% if (debugEnabled) { %>checked <% } %>>
+						<input type="radio" name="debug" value="true" <% if (debugEnabled) { %>checked <% } %>>
 					</td>
 					<td class="jive-advancedBorderBottom" align="center">
-						<input type="radio" name="debug" value="no" <% if (!debugEnabled) { %>checked <% } %>>
+						<input type="radio" name="debug" value="false" <% if (!debugEnabled) { %>checked <% } %>>
 					</td>
 				</tr>
 				<tr>
@@ -277,10 +277,10 @@
 						<fmt:message key="setup.ldap.server.referral_help" />
 					</td>
 					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-						<input type="radio" name="referrals" value="yes" <% if (referralsEnabled) { %>checked <% } %>>
+						<input type="radio" name="referrals" value="true" <% if (referralsEnabled) { %>checked <% } %>>
 					</td>
 					<td class="jive-advancedBorderBottom" align="center">
-						<input type="radio" name="referrals" value="no" <% if (!referralsEnabled) { %>checked <% } %>>
+						<input type="radio" name="referrals" value="false" <% if (!referralsEnabled) { %>checked <% } %>>
 					</td>
 				</tr>
 				</tbody>

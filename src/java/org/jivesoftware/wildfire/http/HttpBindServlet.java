@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * Handles requests to the HTTP Bind service.
@@ -149,7 +150,8 @@ public class HttpBindServlet extends HttpServlet {
 
         try {
             HttpConnection connection = new HttpConnection(rid, request.isSecure());
-            connection.setSession(sessionManager.createSession(rootNode, connection));
+            InetAddress address = InetAddress.getByName(request.getRemoteAddr());
+            connection.setSession(sessionManager.createSession(address, rootNode, connection));
             respond(response, connection);
         }
         catch (UnauthorizedException e) {

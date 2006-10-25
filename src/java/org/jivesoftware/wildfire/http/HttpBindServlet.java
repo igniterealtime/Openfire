@@ -147,7 +147,6 @@ public class HttpBindServlet extends HttpServlet {
             return;
         }
 
-
         try {
             HttpConnection connection = new HttpConnection(rid, request.isSecure());
             connection.setSession(sessionManager.createSession(rootNode, connection));
@@ -157,6 +156,9 @@ public class HttpBindServlet extends HttpServlet {
             // Server wasn't initialized yet.
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Server Not initialized");
+        }
+        catch (HttpBindException e) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
 
     }

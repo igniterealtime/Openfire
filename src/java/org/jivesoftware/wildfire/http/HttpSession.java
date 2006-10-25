@@ -18,6 +18,10 @@ import org.jivesoftware.wildfire.net.VirtualConnection;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Message;
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
+import org.dom4j.QName;
+import org.dom4j.Namespace;
 
 import java.util.*;
 import java.net.InetAddress;
@@ -100,6 +104,46 @@ public class HttpSession extends ClientSession {
             throw new HttpBindException("Too frequent polling", true, 403);
         }
         lastPoll = time;
+    }
+
+    public Collection<Element> getAvailableStreamFeaturesElements() {
+        List<Element> elements = new ArrayList<Element>();
+
+        // Include Stream Compression Mechanism
+        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+                !conn.isCompressed()) {
+            Element compression = DocumentHelper.createElement(new QName("compression",
+                    new Namespace("", "http://jabber.org/features/compress")));
+            Element method = compression.addElement("method");
+            method.setText("zlib");
+
+            elements.add(compression);
+        }
+
+        if (getAuthToken() == null) {
+            // Advertise that the server supports Non-SASL Authentication
+            Element auth = DocumentHelper.createElement(new QName("auth",
+                    new Namespace("", "http://jabber.org/features/iq-auth")));
+            elements.add(auth);
+            // Advertise that the server supports In-Band Registration
+            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
+                Element register = DocumentHelper.createElement(new QName("register",
+                        new Namespace("", "http://jabber.org/features/iq-register")));
+                elements.add(register);
+            }
+        }
+        else {
+            // If the session has been authenticated then offer resource binding
+            // and session establishment
+            Element bind = DocumentHelper.createElement(new QName("bind",
+                    new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind")));
+            elements.add(bind);
+
+            Element session = DocumentHelper.createElement(new QName("session",
+                    new Namespace("", "urn:ietf:params:xml:ns:xmpp-session")));
+            elements.add(session);
+        }
+        return elements;
     }
 
     public String getAvailableStreamFeatures() {

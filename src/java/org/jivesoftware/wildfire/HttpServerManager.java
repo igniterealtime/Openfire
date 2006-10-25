@@ -238,6 +238,7 @@ public class HttpServerManager {
             }
             httpBindServer = null;
         }
+        //noinspection ConstantConditions
         if(adminServer != null && adminServer != httpBindServer) {
             try {
                 adminServer.stop();

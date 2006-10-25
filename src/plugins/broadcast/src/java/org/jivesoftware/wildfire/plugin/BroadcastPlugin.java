@@ -146,6 +146,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 }
             }
             catch (GroupNotFoundException e) {
+                // Ignore.
             }
         }
         if (packet instanceof Message) {
@@ -180,6 +181,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 }
                 error.setError(PacketError.Condition.not_allowed);
                 error.setTo(message.getFrom());
+                error.setFrom(message.getTo());
                 error.setSubject("Error sending broadcast message");
                 error.setBody("Not allowed to send a broadcast message to " +
                         message.getTo());
@@ -207,6 +209,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     error.setID(message.getID());
                 }
                 error.setTo(message.getFrom());
+                error.setFrom(message.getTo());
                 error.setError(PacketError.Condition.not_allowed);
                 error.setSubject("Error sending broadcast message");
                 error.setBody("Address not valid: " +
@@ -239,6 +242,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     error.setID(message.getID());
                 }
                 error.setTo(message.getFrom());
+                error.setFrom(message.getTo());
                 error.setError(PacketError.Condition.not_allowed);
                 error.setSubject("Error sending broadcast message");
                 error.setBody("Not allowed to send a broadcast message to " +
@@ -345,7 +349,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
             if (iq.getTo().getNode() == null) {
                 // Return the list of groups hosted by the service that can be used by the user
-                Collection<Group> groups = null;
+                Collection<Group> groups;
                 JID address = new JID(iq.getFrom().toBareJID());
                 if (allowedUsers.contains(address)) {
                     groups = groupManager.getGroups();

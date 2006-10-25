@@ -8,8 +8,8 @@
     <name>Broadcast</name>
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
-    <version>1.5.1</version>
-    <date>10/06/2006</date>
+    <version>1.5.2</version>
+    <date>10/24/2006</date>
     <url>http://www.jivesoftware.org</url>
     <minServerVersion>3.1.0</minServerVersion>
 </plugin>

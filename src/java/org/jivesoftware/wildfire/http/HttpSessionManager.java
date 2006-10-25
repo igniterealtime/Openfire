@@ -116,9 +116,7 @@ public class HttpSessionManager {
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(new SessionListener() {
             public void connectionOpened(HttpSession session, HttpConnection connection) {
-                if (session instanceof HttpSession) {
                     timer.stop(session);
-                }
             }
 
             public void connectionClosed(HttpSession session, HttpConnection connection) {
@@ -128,7 +126,7 @@ public class HttpSessionManager {
             }
 
             public void sessionClosed(HttpSession session) {
-                sessionMap.remove(session.getStreamID());
+                sessionMap.remove(session.getStreamID().getID());
                 timer.stop(session);
             }
         });
@@ -199,7 +197,7 @@ public class HttpSessionManager {
                 = new HashMap<String, InactivityTimeoutTask>();
 
         public void stop(HttpSession session) {
-            InactivityTimeoutTask task = sessionMap.remove(session.getStreamID());
+            InactivityTimeoutTask task = sessionMap.remove(session.getStreamID().getID());
             if(task != null) {
                 task.cancel();
             }
@@ -225,6 +223,7 @@ public class HttpSessionManager {
 
         public void run() {
             session.close();
+            timer.sessionMap.remove(session.getStreamID().getID());
         }
     }
 }

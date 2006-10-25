@@ -48,9 +48,9 @@ public class HttpSession extends ClientSession {
     private boolean isClosed;
     private int inactivityTimeout;
 
-    public HttpSession(String serverName, StreamID streamID) {
+    public HttpSession(String serverName, InetAddress address, StreamID streamID) {
         super(serverName, null, streamID);
-        conn = new HttpVirtualConnection();
+        conn = new HttpVirtualConnection(address);
     }
 
     void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
@@ -375,12 +375,18 @@ public class HttpSession extends ClientSession {
      */
     public static class HttpVirtualConnection extends VirtualConnection {
 
+        private InetAddress address;
+
+        public HttpVirtualConnection(InetAddress address) {
+            this.address = address;
+        }
+
         public void closeVirtualConnection() {
             ((HttpSession)session).closeConnection();
         }
 
         public InetAddress getInetAddress() {
-            return null;
+            return address;
         }
 
         public void systemShutdown() {

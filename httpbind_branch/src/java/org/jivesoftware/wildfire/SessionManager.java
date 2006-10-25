@@ -542,11 +542,13 @@ public class SessionManager extends BasicModule {
         return session;
     }
 
-    public HttpSession createClientHttpSession(StreamID id) throws UnauthorizedException {
+    public HttpSession createClientHttpSession(InetAddress address, StreamID id)
+            throws UnauthorizedException
+    {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        HttpSession session = new HttpSession(serverName, id);
+        HttpSession session = new HttpSession(serverName, address, id);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);

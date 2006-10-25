@@ -21,6 +21,7 @@ import org.dom4j.*;
 
 import java.util.*;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 
 /**
  *
@@ -75,7 +76,8 @@ public class HttpSessionManager {
         return sessionMap.get(streamID);
     }
 
-    public HttpSession createSession(Element rootNode, HttpConnection connection)
+    public HttpSession createSession(InetAddress address, Element rootNode,
+            HttpConnection connection)
             throws UnauthorizedException, HttpBindException
     {
         // TODO Check if IP address is allowed to connect to the server
@@ -89,7 +91,7 @@ public class HttpSessionManager {
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
 
-        HttpSession session = createSession();
+        HttpSession session = createSession(address);
         session.setWait(wait);
         session.setHold(hold);
         session.setSecure(connection.isSecure());
@@ -112,11 +114,11 @@ public class HttpSessionManager {
         return session;
     }
 
-    private HttpSession createSession() throws UnauthorizedException {
+    private HttpSession createSession(InetAddress address) throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(streamID);
+        HttpSession session = sessionManager.createClientHttpSession(address, streamID);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(new SessionListener() {

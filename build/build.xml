@@ -17,7 +17,7 @@
         * jUnit in your Ant or Java classpath
 -->
 
-<project name="Wildfire XMPP Server" default="all" basedir="..">
+<project name="Wildfire XMPP Server" default="wildfire" basedir="..">
 
     <description>
         Wildfire build script.
@@ -53,10 +53,6 @@
        </classpath>
    </taskdef>
 
-    <!--
-    <taskdef resource="clovertasks" />
-    -->
-
     <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
@@ -84,40 +80,43 @@
     <property name="i18n.basename" value="wildfire_i18n"/>
     <property name="i18n.default.locale" value="en"/>
     
-    <property name="target.dir" value="${basedir}/target"/>
-    <property name="target.wildfireHome" value="${target.dir}/wildfireHome"/>
-    <property name="temp.build.dir" value="${basedir}/target/tempbuild"/>
+    <property name="work.dir" value="${basedir}/work"/>
+    <property name="temp.build.dir" value="${work.dir}/tempbuild"/>
     <property name="target.i18n.dir" value="${temp.build.dir}/i18n"/>
+
+    <property name="target.dir" value="${basedir}/target"/>
+    <property name="target.wildfireHome" value="${target.dir}/wildfire"/>
     
-    <property name="compile.dir" value="${target.dir}/classes"/>
+    <property name="compile.dir" value="${work.dir}/classes"/>
     <property name="jar.name" value="wildfire.jar"/>
     <property name="jar.starter.name" value="startup.jar"/>
-    <property name="jar.dest.dir" value="${target.dir}/lib"/>
+    <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
     <property name="javadoc.src.dir" value="${src.dir}/javadoc"/>
-    <property name="javadoc.dest.dir" value="${target.dir}/javadoc"/>
-    <property name="jspc.dest.dir" value="${target.dir}/jspc"/>
-    <property name="jspc.java.dest.dir" value="${target.dir}/jspc/java"/>
-    <property name="jspc.classes.dest.dir" value="${target.dir}/jspc/classes"/>
+    <property name="javadoc.dest.dir" value="${work.dir}/javadoc"/>
+    <property name="jspc.dest.dir" value="${work.dir}/jspc"/>
+    <property name="jspc.java.dest.dir" value="${work.dir}/jspc/java"/>
+    <property name="jspc.classes.dest.dir" value="${work.dir}/jspc/classes"/>
     <property name="jspc.jar.name" value="admin-jsp.jar"/>
-    <property name="test.dest.dir" value="${target.dir}/test"/>
+
+    <property name="test.dest.dir" value="${work.dir}/test"/>
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes"/>
     <property name="test.results.dest.dir" value="${test.dest.dir}/results"/>
+
     <property name="plugin.src.dir" value="${src.dir}/plugins"/>
     <property name="plugin.dev.dir" value=""/> <!-- Set by a developer as alt plugin location -->
-    <property name="plugin.dev.dest.dir" value="${target.dir}/plugins-dev"/>
-    <property name="plugin.dest.dir" value="${target.dir}/plugins"/>
+    <property name="plugin.dev.dest.dir" value="${work.dir}/plugins-dev"/>
+    <property name="plugin.dest.dir" value="${work.dir}/plugins"/>
     <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
-    <property name="webapp.dest.dir" value="${target.dir}/webapp"/>
-    <property name="war.name" value="wildfire.war"/>
-    <property name="war.dest.dir" value="${target.dir}/war"/>
+    <property name="webapp.dest.dir" value="${work.dir}/webapp"/>
+
     <property name="release.dest.dir" value="${target.dir}/release"/>
     <property name="overwrite" value="false"/>
     <property name="deploy.jar.dir" value="${jar.dest.dir}"/>
     <property name="anttools.src.dir" value="${src.dir}/tools"/>
-    <property name="anttools.target.dir" value="${target.dir}/tools"/>
+    <property name="anttools.target.dir" value="${work.dir}/tools"/>
     <property name="copy.dbscripts" value="true"/>
-    <property name="whack.src" value="${target.dir}/whack"/>
+    <property name="whack.src" value="${work.dir}/whack"/>
     <property name="overwrite" value="true"/>
 
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
@@ -196,7 +195,7 @@
     <!-- ======================================================================================= -->
 
     <!-- all =================================================================================== -->
-    <target name="all" depends="jar, javadoc" description="Calls jar and javadoc targets"/>
+    <target name="wildfire" depends="jar" description="Compiles wildfire and generates target/wildfire folder"/>
 
     <!-- init ================================================================================== -->
     <target name="init">
@@ -223,7 +222,7 @@
             <format property="dailybuild.tstamp" pattern="yyyy-MM-dd" locale="en"/>
         </tstamp>
 
-        <mkdir dir="${target.dir}"/>
+        <mkdir dir="${work.dir}"/>
 
         <!-- Setup the full version property correctly -->
         <if>
@@ -352,13 +351,15 @@
 						<fileset dir="${lib.build.dir}" includes="jasper-runtime.jar"/>
 						<fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
 				</copy>
-
+				
+				<!-- Update/create target/wildfire directory -->
+				<antcall target="wildfireHome"/>
     </target>
 
     <!-- run =================================================================================== -->
     <target name="run"  description="Starts Wildfire inline to the build process.">
-        <available file="${target.wildfireHome}" type="dir" property="wildfireHome.found"/>
-        <fail unless="wildfireHome.found" message="Can't find wildfireHome, run 'ant wildfireHome' or specify with -Dtarget.wildfireHome."/>
+        <available file="${target.wildfireHome}" type="dir" property="wildfire.found"/>
+        <fail unless="wildfire.found" message="Can't find wildfire, run 'ant wildfire' or specify with -Dtarget.wildfireHome."/>
 
         <condition property="run.debug" value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
             <isset property="debug"/>
@@ -382,7 +383,8 @@
     </target>
 
     <!-- run.test ============================================================================== -->
-    <target name="run.test" depends="run.test.init,wildfireHome,run" description="Starts Wildfire inline to the build process, with a clean pre-configured wildfireHome">
+    <!--    Starts Wildfire inline to the build process, with a clean pre-configured wildfireHome -->
+    <target name="run.test" depends="run.test.init,wildfireHome,run" >
         <echo>Wildfire server started.</echo>
     </target>
 
@@ -391,43 +393,6 @@
         <copy todir="${deploy.jar.dir}" overwrite="${overwrite}">
             <fileset dir="${jar.dest.dir}" includes="*.jar"/>
         </copy>
-    </target>
-
-    <!-- war =================================================================================== -->
-    <target name="war" depends="jar,adminPlugin" description="Creates a WAR of Wildfire">
-        <mkdir dir="${war.dest.dir}"/>
-        <mkdir dir="${war.dest.dir}/build"/>
-        <!-- Make a new web.xml file in the build dir -->
-        <copy file="${webapp.dest.dir}/WEB-INF/web.xml" toFile="${war.dest.dir}/build/web.xml" overwrite="${overwrite}"/>
-        <!-- Make the war -->
-        <war destfile="${war.dest.dir}/${war.name}" basedir="${web.dir}"
-            webxml="${war.dest.dir}/build/web.xml">
-            <patternset refid="web.sources"/>
-            <!-- Include sitemesh files-->
-            <include name="**/decorators.xml"/>
-            <include name="**/sitemesh.xml"/>
-            <!-- Include help folders and files -->
-            <fileset dir="${target.dir}/plugins/admin/webapp">
-                <include name="help/**/*.*"/>
-            </fileset>
-            <lib dir="${jar.dest.dir}" excludes="jasper-compiler.jar, servlet.jar, startup.jar"/>
-            <!-- Include compiled pages of the admin console -->
-            <lib dir="${target.dir}/plugins/admin/webapp/WEB-INF/lib"/>
-        </war>
-        
-        <!-- Create a Wildfire home -->
-				<antcall target="-config">
-						<param name="config.dir" value="${war.dest.dir}/wildfireHome" />
-				</antcall>
-
-        <!-- Force create the plugins dir (will be empty) -->
-        <mkdir dir="${war.dest.dir}/wildfireHome/plugins"/>
-        <copy todir="${war.dest.dir}/wildfireHome/plugins" failonerror="false">
-            <fileset dir="${plugin.dest.dir}" includes="*.*" />
-        </copy>
-        
-        <!-- Force create the logs dir (will be empty) -->
-        <mkdir dir="${war.dest.dir}/wildfireHome/logs"/>
     </target>
 
     <!-- javadoc =============================================================================== -->
@@ -534,21 +499,6 @@
 
     </target>
 
-    <!--
-    <target name="with-clover">
-        <clover-setup initString="${target.dir}/test/wildfire-coverage.db" />
-    </target>
-
-    <target name="clover-html" depends="with-clover">
-        <mkdir dir="${test.results.dest.dir}/clover" />
-        <clover-report>
-            <current outfile="${test.results.dest.dir}/clover">
-                <format type="html"/>
-            </current>
-        </clover-report>
-    </target>
-    -->
-
     <!-- test ================================================================================== -->
     <target name="test" depends="jar" description="Compiles and runs test cases">
         <!-- Compile all test code -->
@@ -592,13 +542,16 @@
         </junit>
     </target>
     
-    <!-- -config ============================================================================ -->
-    <!--    Creates conf and resources folders in config.dir folder  -->
-    <target name="-config" >
-    		<property name="config.dir" value="${target.dir}" />
+		<!-- wildfireHome ========================================================================== -->
+    <target name="wildfireHome" unless="wildfireHome.no.update">
+				<!-- Set this to true to enable a pre-setup wildfireHome directory -->
+        <property name="wildfireHome.preconfigured" value="false"/>
+        <property name="wildfireHome.no.plugins" value="false"/>
 
+        <mkdir dir="${target.wildfireHome}" />
+        
 				<!-- Copy conf dir -->
-				<copy todir="${config.dir}">
+				<copy todir="${target.wildfireHome}">
 						<fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
 				</copy>
 
@@ -606,14 +559,14 @@
         <if>
             <equals arg1="${copy.dbscripts}" arg2="true"/>
             <then>
-                <copy todir="${config.dir}/resources">
+                <copy todir="${target.wildfireHome}/resources">
                     <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
                 </copy>
             </then>
         </if>
 
         <!-- Copy security resources -->
-        <copy todir="${config.dir}/resources">
+        <copy todir="${target.wildfireHome}/resources">
             <fileset dir="${src.dir}">
                 <include name="security/*"/>
                 <include name="security/*.*"/>
@@ -621,24 +574,11 @@
         </copy>
 
         <!-- Copy native authentication files -->
-        <copy todir="${config.dir}/resources">
+        <copy todir="${target.wildfireHome}/resources">
             <fileset dir="${src.dir}/resources">
                 <include name="nativeAuth/**"/>
             </fileset>
         </copy>
-    </target>
-    
-		<!-- wildfireHome ========================================================================== -->
-    <target name="wildfireHome" description="Create a wildfireHome directory in target.wildfireHome.">
-				<!-- Set this to true to enable a pre-setup wildfireHome directory -->
-        <property name="wildfireHome.preconfigured" value="false"/>
-        <property name="wildfireHome.no.plugins" value="false"/>
-
-        <mkdir dir="${target.wildfireHome}" />
-        
-        <antcall target="-config">
-        		<param name="config.dir" value="${target.wildfireHome}" />
-        </antcall>
 
         <!-- Copy lib dir -->
         <copy todir="${target.wildfireHome}/lib">
@@ -708,14 +648,14 @@
         </copy>
         
 				<!-- Copy help files -->
-				<available file="${src.dir}/help/help.zip" property="help.exists" />
-				<antcall target="-extract-help" />
+				<if>
+          <available file="${src.dir}/help/help.zip"/>
+					<then>
+					    <unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp" />
+					</then>
+			  </if>
     </target>
-    
-		<target name="-extract-help" if="help.exists">
-				<unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp" />
-		</target>
-		
+    		
 		<!-- dist.src =============================================================================== -->
 		<target name="dist.src" depends="javadoc, -i18n" description="Creates a source distribution package">
         <mkdir dir="${release.dest.dir}"/>
@@ -806,7 +746,7 @@
 
 				<!-- Make & copy the search plugin. -->
 				<copy todir="${release.out.dir}">
-						<fileset dir="${target.dir}">
+						<fileset dir="${work.dir}">
 								<include name="plugins/search.jar"/>
 						</fileset>
 				</copy>
@@ -898,7 +838,7 @@
     <target name="enterprise" if="do.enterprise">
         <!-- Copy enterprise plugins. -->
         <copy todir="${release.out.dir}">
-            <fileset dir="${target.dir}">
+            <fileset dir="${work.dir}">
                 <include name="plugins/enterprise.jar"/>
                 <include name="plugins/fastpath.jar"/>
                 <include name="plugins/webchat.war"/>
@@ -906,18 +846,6 @@
         </copy>
         <!-- Remove GPL libs from distribution -->
         <delete file="${release.out.dir}/lib/mysql.jar.pack"/>
-    </target>
-
-    <!-- quickrelease ========================================================================== -->
-    <target name="quickrelease" description="Makes an unpackaged release without Javadocs">
-        <antcall target="dist.bin">
-            <param name="no.javadoc" value="true"/>
-            <param name="no.package" value="true"/>
-        </antcall>
-        <antcall target="dist.src">
-            <param name="no.javadoc" value="true"/>
-            <param name="no.package" value="true"/>
-        </antcall>
     </target>
 
     <!-- dailybuild ============================================================================ -->
@@ -990,11 +918,10 @@
         <!-- Call jar task, can't do this is as a 'depends' call of this target because
              of the way class loading works for jspc calls.
         -->
-        <ant antfile="${basedir}/build/build.xml" dir="${basedir}"
-            target="jar" inheritAll="false" inheritRefs="false"
-            >
-            <property name="no.jspc" value="true"/>
-        </ant>
+        <antcall target="jar">
+            <param name="no.jspc" value="true"/>
+            <param name="wildfireHome.no.update" value="true"/>
+        </antcall>
 
         <mkdir dir="${plugin.dest.dir}" />
 
@@ -1003,6 +930,9 @@
 
         <antcall target="-plugins-impl-dev"/>
         <antcall target="-plugins-impl"/>
+        
+				<!-- Update/create target/wildfire directory -->
+				<antcall target="wildfireHome"/>
 
     </target>
     <target name="-plugins-impl" if="dirlist">
@@ -1038,6 +968,9 @@
         <delete file="${plugin.dev.dest.dir}/${plugin}.jar"/>
         <delete file="${plugin.dest.dir}/${plugin}.jar"/>
         <buildplugin plugin="${plugin}" pluginsrc="${plugin.src.dir}"/>
+
+				<!-- Update/create target/wildfire directory -->
+				<antcall target="wildfireHome"/>
     </target>
 
     <!-- buildplugin (MACRO) =================================================================== -->
@@ -1289,6 +1222,7 @@
 
     <!-- clean ================================================================================= -->
     <target name="clean" description="Cleans up all build-generated output">
+        <delete dir="${work.dir}"/>
         <delete dir="${target.dir}"/>
     </target>
 
@@ -1331,7 +1265,7 @@
 			<arg line="attach '${basedir}/tmp.dmg' -noautoopen -mountpoint '${mac.dmg.dir}'" />
 		</exec>
 		<copy todir="${mac.pkg.dir}/usr/local/wildfire">
-			<fileset dir="${target.dir}">
+			<fileset dir="${work.dir}">
 				<exclude name="**/wildfired"/>
 				<exclude name="**/embedded-db*"/>
 				<exclude name="**/redhat-postinstall.sh"/>

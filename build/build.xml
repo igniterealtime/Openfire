@@ -385,13 +385,6 @@
         <echo>Wildfire server started.</echo>
     </target>
 
-    <!-- deployjar ============================================================================= -->
-    <target name="deployjar" depends="wildfire" description="Pushes JARs to specified web location.">
-        <copy todir="${deploy.jar.dir}" overwrite="${overwrite}">
-            <fileset dir="${jar.dest.dir}" includes="*.jar"/>
-        </copy>
-    </target>
-
     <!-- javadoc =============================================================================== -->
     <target name="javadoc" depends="init" description="Produces Wildfire Javadocs">
         <mkdir dir="${javadoc.dest.dir}"/>
@@ -1224,17 +1217,20 @@
     </target>
 
     <!-- clean-jspc ============================================================================ -->
-    <target name="clean-jspc" description="Cleans all JSPC output">
+    <!-- Cleans all JSPC output -->
+    <target name="clean-jspc" >
         <delete dir="${jspc.dest.dir}"/>
     </target>
 
     <!-- clean-test ============================================================================ -->
-    <target name="clean-test" description="Cleans all compiled test classes">
+    <!-- Cleans all compiled test classes -->
+    <target name="clean-test" >
         <delete dir="${test.classes.dest.dir}"/>
     </target>
 
     <!-- clean-plugins ========================================================================= -->
-    <target name="clean-plugins" description="Cleans all generated plugins">
+    <!-- Cleans all generated plugins -->
+    <target name="clean-plugins" >
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*" />
         </delete>

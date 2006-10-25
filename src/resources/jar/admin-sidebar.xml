@@ -52,6 +52,11 @@
         <!-- Server Settings -->
         <sidebar id="sidebar-server-settings" name="${sidebar.sidebar-server-settings}">
 
+            <!-- Profile Settings -->
+            <item id="profile-settings" name="${sidebar.profile-settings}"
+                    url="profile-settings.jsp"
+                    description="${sidebar.profile-settings.descr}" />
+
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
                     url="server2server-settings.jsp"

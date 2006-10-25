@@ -279,7 +279,7 @@ html>body .jive-testPanel {
 				</tr>
 				<tr>
 					<td colspan="2" class="jive-testpanel-vcard-next">
-						<a href="setup-ldap-user.jsp?test=true&serverType=<%= ParamUtils.getParameter(request, "serverType")%>&userIndex=<%=userIndex%>"><fmt:message key="setup.ldap.user.vcard.test.random" /></a>
+						<a href="<%= ParamUtils.getParameter(request, "currentPage")%>?test=true&serverType=<%= ParamUtils.getParameter(request, "serverType")%>&userIndex=<%=userIndex%>"><fmt:message key="setup.ldap.user.vcard.test.random" /></a>
 					</td>
 				</tr>
 			</table>

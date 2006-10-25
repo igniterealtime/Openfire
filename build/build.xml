@@ -861,7 +861,7 @@
     </target>
 
     <!-- installer ============================================================================= -->
-    <target name="installer" description="Creates an Install4j installer">
+    <target name="installer" description="Creates Wildfire installers">
 
         <condition property="install4j.not.ok" value="true">
             <not>

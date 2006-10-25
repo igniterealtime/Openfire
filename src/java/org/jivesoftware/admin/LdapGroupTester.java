@@ -41,7 +41,7 @@ public class LdapGroupTester {
 
     /**
      * Returns fist N groups found in LDAP. The returned groups are only able to return their name,
-     * description and count of elements. Count of elements is considering all values that were found
+     * description and count of members. Count of members is considering all values that were found
      * in the member field.
      *
      * @param maxGroups max number of groups to return.
@@ -124,8 +124,8 @@ public class LdapGroupTester {
 
     /**
      * Representation of a group found in LDAP. This representatio is read-only and only provides
-     * some basic information: name, description and number of elements in the group. Note that
-     * group elements are not validated (i.e. checked that they are valid JIDs and that the JID belongs
+     * some basic information: name, description and number of members in the group. Note that
+     * group members are not validated (i.e. checked that they are valid JIDs and that the JID belongs
      * to an existing user).
      */
     public static class Group {
@@ -135,13 +135,13 @@ public class LdapGroupTester {
          * Elements that the group contains. This includes admins, members or anything listed
          * in the <tt>member field</tt>. At this point JIDs are not validated.
          */
-        private int elements;
+        private int members;
 
 
-        public Group(String name, String description, int elements) {
+        public Group(String name, String description, int members) {
             this.name = name;
             this.description = description;
-            this.elements = elements;
+            this.members = members;
         }
 
 
@@ -153,8 +153,8 @@ public class LdapGroupTester {
             return description;
         }
 
-        public int getElements() {
-            return elements;
+        public int getMembers() {
+            return members;
         }
     }
 }

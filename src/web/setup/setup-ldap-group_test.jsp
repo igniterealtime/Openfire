@@ -71,13 +71,13 @@
             <tr>
                 <td width="19%" class="jive-testpanel-vcard-header"><fmt:message key="group.summary.page_name" /></td>
                 <td width="80%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-description" /></td>
-                <td width="1%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-elements" /></td>
+                <td width="1%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-members" /></td>
             </tr>
             <% for (LdapGroupTester.Group group : groups) { %>
             <tr>
                 <td valign="top" class="jive-testpanel-vcard-value"><%= group.getName()%></td>
                 <td valign="top" class="jive-testpanel-vcard-value"><%= group.getDescription()%></td>
-                <td valign="top" class="jive-testpanel-vcard-value"><%= group.getElements()%></td>
+                <td valign="top" class="jive-testpanel-vcard-value"><%= group.getMembers()%></td>
             </tr>
             <% } %>
         </table>

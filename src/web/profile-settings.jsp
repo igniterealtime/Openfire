@@ -120,14 +120,14 @@
                                     <%= adminDN %>
                                 </td>
                             </tr>
-                            <tr>
-                                <td colspan="2" align="center">
-                                    <input type="submit" name="edit" value="<fmt:message key="server.properties.edit" />">
-                                </td>
-                            </tr>
                         </tbody>
                         </table>
                     </td>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input type="submit" name="edit" value="<fmt:message key="server.properties.edit" />">
+                        </td>
+                    </tr>
                 </tr>
                 <% } %>
             </tbody>

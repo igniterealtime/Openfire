@@ -194,9 +194,6 @@
     <!-- TARGETs                                                                                 -->
     <!-- ======================================================================================= -->
 
-    <!-- all =================================================================================== -->
-    <target name="wildfire" depends="jar" description="Compiles wildfire and generates target/wildfire folder"/>
-
     <!-- init ================================================================================== -->
     <target name="init">
 
@@ -272,7 +269,7 @@
 
     <target name="plugins-dev">
         <!-- Setup Wildfire -->
-        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="jar" inheritAll="false" inheritRefs="false"/>
+        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="wildfire" inheritAll="false" inheritRefs="false"/>
 
         <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
         <copy file="${ant.home}/lib/ant.jar" todir="${jar.dest.dir}"></copy>
@@ -306,8 +303,8 @@
 
     </target>
 
-    <!-- jar =================================================================================== -->
-    <target name="jar" depends="compile, jspc, -i18n" description="Produces Wildfires jars and sets up dependencies">
+    <!-- wildfire =================================================================================== -->
+    <target name="wildfire" depends="compile, jspc, -i18n" description="Compiles and generates runnable target/wildfire folder">
         <mkdir dir="${jar.dest.dir}"/>
         <!-- Make main Wildfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
@@ -389,7 +386,7 @@
     </target>
 
     <!-- deployjar ============================================================================= -->
-    <target name="deployjar" depends="jar" description="Pushes JARs to specified web location.">
+    <target name="deployjar" depends="wildfire" description="Pushes JARs to specified web location.">
         <copy todir="${deploy.jar.dir}" overwrite="${overwrite}">
             <fileset dir="${jar.dest.dir}" includes="*.jar"/>
         </copy>
@@ -500,7 +497,7 @@
     </target>
 
     <!-- test ================================================================================== -->
-    <target name="test" depends="jar" description="Compiles and runs test cases">
+    <target name="test" depends="wildfire" description="Compiles and runs test cases">
         <!-- Compile all test code -->
         <mkdir dir="${test.classes.dest.dir}"/>
         <javac
@@ -918,7 +915,7 @@
         <!-- Call jar task, can't do this is as a 'depends' call of this target because
              of the way class loading works for jspc calls.
         -->
-        <antcall target="jar">
+        <antcall target="wildfire">
             <param name="no.jspc" value="true"/>
             <param name="wildfireHome.no.update" value="true"/>
         </antcall>
@@ -1257,7 +1254,7 @@
 		<delete file="${mac.dmg.file}" />
 	</target>
 
-	<target name="mac.prepare" depends="mac.delete,jar">
+	<target name="mac.prepare" depends="mac.delete,wildfire">
 		<unzip src="${basedir}/build/osx/template.dmg.zip" dest="${basedir}/build/osx/" />
 		<copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg" />
 		<mkdir dir="${mac.dmg.dir}" />

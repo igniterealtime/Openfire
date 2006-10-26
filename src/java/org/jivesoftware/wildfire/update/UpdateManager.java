@@ -96,8 +96,10 @@ public class UpdateManager extends BasicModule {
         thread = new Thread("Update Manager") {
             public void run() {
                 try {
-                    // Sleep for 15 seconds before starting to work
-                    Thread.sleep(15000);
+                    // Sleep for 5 seconds before starting to work. This is required because
+                    // this module has a dependency on the PluginManager, which is loaded
+                    // after all other modules.
+                    Thread.sleep(5000);
                     // Load last saved information (if any)
                     loadSavedInfo();
                     while (isServiceEnabled()) {
@@ -141,7 +143,7 @@ public class UpdateManager extends BasicModule {
                 long lastCheck = JiveGlobals.getLongProperty("update.lastCheck", 0);
                 if (lastCheck == 0) {
                     // This is the first time the server is used (since we added this feature)
-                    Thread.sleep(45000);
+                    Thread.sleep(30000);
                 }
                 else {
                     long elapsed = System.currentTimeMillis() - lastCheck;

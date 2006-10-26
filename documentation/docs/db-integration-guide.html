@@ -171,12 +171,16 @@ enable user integration.</p>
 </ul>
 
 <p>
-    Below is a sample config file section:
+    Below is a sample config file section. Note that the single provider section must include
+    all providers that should be configured:
 </p>
 <pre>
 &lt;jive&gt;
   ...
   &lt;provider&gt;
+    &lt;auth&gt;
+      &lt;className&gt;org.jivesoftware.wildfire.auth.JDBCAuthProvider&lt;/className&gt;
+    &lt;/auth&gt;
     &lt;user&gt;
       &lt;className&gt;org.jivesoftware.wildfire.user.JDBCUserProvider&lt;/className&gt;
     &lt;/user&gt;
@@ -220,13 +224,20 @@ integration (see above). Use the following settings to enable group integration.
 </ul>
 
 <p>
-    Below is a sample config file section:
+    Below is a sample config file section. Note that the single provider section must include
+    all providers that should be configured:
 </p>
 <pre>
 &lt;jive&gt;
   ...
   &lt;provider&gt;
-      &lt;group&gt;
+    &lt;auth&gt;
+      &lt;className&gt;org.jivesoftware.wildfire.auth.JDBCAuthProvider&lt;/className&gt;
+    &lt;/auth&gt;
+    &lt;user&gt;
+      &lt;className&gt;org.jivesoftware.wildfire.user.JDBCUserProvider&lt;/className&gt;
+    &lt;/user&gt;
+    &lt;group&gt;
           &lt;className&gt;org.jivesoftware.wildfire.group.JDBCGroupProvider&lt;/className&gt;
       &lt;/group&gt;
   &lt;/provider&gt;

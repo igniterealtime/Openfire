@@ -46,7 +46,7 @@ public class PluginDownloadManager {
     /**
      * Installs a new plugin into Wildfire.
      *
-     * @param url      the url of the plugin to install.
+     * @param url the url of the plugin to install.
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */
@@ -79,7 +79,6 @@ public class PluginDownloadManager {
             // Keep track of the last time we checked for updates
             JiveGlobals.setProperty("update.lastCheck",
                     String.valueOf(System.currentTimeMillis()));
-
 
             return true;
         }

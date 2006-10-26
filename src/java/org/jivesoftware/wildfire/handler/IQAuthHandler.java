@@ -96,7 +96,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             reply.setError(PacketError.Condition.internal_server_error);
             return reply;
         }
-        IQ response = null;
+        IQ response;
         try {
             Element iq = packet.getElement();
             Element query = iq.element("query");
@@ -137,9 +137,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     }
                     else {
                         // it is an auth attempt
-                        response =
-                                login(username, query, packet, response, password, session,
-                                        digest);
+                        response = login(username, query, packet, password, session, digest);
                     }
                 }
             }
@@ -161,10 +159,9 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         return null;
     }
 
-    private IQ login(String username, Element iq, IQ packet, IQ response, String password,
-            ClientSession session, String digest) throws UnauthorizedException,
-            UserNotFoundException
-    {
+    private IQ login(String username, Element iq, IQ packet, String password, ClientSession session, String digest)
+            throws UnauthorizedException, UserNotFoundException {
+        // Verify that specified resource is not violating any string prep rule
         String resource = iq.elementTextTrim("resource");
         if (resource != null) {
             try {
@@ -176,13 +173,27 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         }
         else {
             // Answer a not_acceptable error since a resource was not supplied
-            response = IQ.createResultIQ(packet);
+            IQ response = IQ.createResultIQ(packet);
             response.setChildElement(packet.getChildElement().createCopy());
             response.setError(PacketError.Condition.not_acceptable);
+            return response;
         }
         username = username.toLowerCase();
-        // If a session already exists with the requested JID, then check to see
-        // if we should kick it off or refuse the new connection
+        // Verify that supplied username and password are correct (i.e. user authentication was successful)
+        AuthToken token = null;
+        if (password != null && AuthFactory.isPlainSupported()) {
+            token = AuthFactory.authenticate(username, password);
+        }
+        else if (digest != null && AuthFactory.isDigestSupported()) {
+            token = AuthFactory.authenticate(username, session.getStreamID().toString(),
+                    digest);
+        }
+        if (token == null) {
+            throw new UnauthorizedException();
+        }
+        // Verify if there is a resource conflict between new resource and existing one.
+        // Check if a session already exists with the requested full JID and verify if
+        // we should kick it off or refuse the new connection
         if (sessionManager.isActiveRoute(username, resource)) {
             ClientSession oldSession;
             try {
@@ -193,42 +204,27 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
                     Connection conn = oldSession.getConnection();
                     if (conn != null) {
-                        // Send a stream:error before closing the connection
+                        // Send a stream:error before closing the old connection
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         conn.deliverRawText(error.toXML());
                         conn.close();
                     }
                 }
                 else {
-                    response = IQ.createResultIQ(packet);
+                    IQ response = IQ.createResultIQ(packet);
                     response.setChildElement(packet.getChildElement().createCopy());
                     response.setError(PacketError.Condition.forbidden);
+                    return response;
                 }
             }
             catch (Exception e) {
                 Log.error("Error during login", e);
             }
         }
-        // If the connection was not refused due to conflict, log the user in
-        if (response == null) {
-            AuthToken token = null;
-            if (password != null && AuthFactory.isPlainSupported()) {
-                token = AuthFactory.authenticate(username, password);
-            }
-            else if (digest != null && AuthFactory.isDigestSupported()) {
-                token = AuthFactory.authenticate(username, session.getStreamID().toString(),
-                        digest);
-            }
-            if (token == null) {
-                throw new UnauthorizedException();
-            }
-            else {
-                session.setAuthToken(token, userManager, resource);
-                packet.setFrom(session.getAddress());
-                response = IQ.createResultIQ(packet);
-            }
-        }
-        return response;
+        // Set that the new session has been authenticated successfully
+        session.setAuthToken(token, userManager, resource);
+        packet.setFrom(session.getAddress());
+        return IQ.createResultIQ(packet);
     }
 
     private IQ passwordReset(String password, IQ packet, String username, Session session)

@@ -988,6 +988,25 @@ public class LdapManager {
     }
 
     /**
+     * Sets whether an LDAP connection pool should be used or not.
+     *
+     * @param connectionPoolEnabled true if an LDAP connection pool should be used.
+     */
+    public void setConnectionPoolEnabled(boolean connectionPoolEnabled) {
+        this.connectionPoolEnabled = connectionPoolEnabled;
+        properties.put("ldap.connectionPoolEnabled", Boolean.toString(connectionPoolEnabled));
+    }
+
+    /**
+     * Returns whether an LDAP connection pool should be used or not.
+     *
+     * @return true if an LDAP connection pool should be used.
+     */
+    public boolean isConnectionPoolEnabled() {
+        return connectionPoolEnabled;
+    }
+
+    /**
      * Returns the filter used for searching the directory for users, which includes
      * the default filter (username field search) plus any custom-defined search filter.
      *

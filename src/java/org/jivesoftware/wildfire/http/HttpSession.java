@@ -121,30 +121,13 @@ public class HttpSession extends ClientSession {
 
             elements.add(compression);
         }
+        Element bind = DocumentHelper.createElement(new QName("bind",
+                new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind")));
+        elements.add(bind);
 
-        if (getAuthToken() == null) {
-            // Advertise that the server supports Non-SASL Authentication
-            Element auth = DocumentHelper.createElement(new QName("auth",
-                    new Namespace("", "http://jabber.org/features/iq-auth")));
-            elements.add(auth);
-            // Advertise that the server supports In-Band Registration
-            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
-                Element register = DocumentHelper.createElement(new QName("register",
-                        new Namespace("", "http://jabber.org/features/iq-register")));
-                elements.add(register);
-            }
-        }
-        else {
-            // If the session has been authenticated then offer resource binding
-            // and session establishment
-            Element bind = DocumentHelper.createElement(new QName("bind",
-                    new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind")));
-            elements.add(bind);
-
-            Element session = DocumentHelper.createElement(new QName("session",
-                    new Namespace("", "urn:ietf:params:xml:ns:xmpp-session")));
-            elements.add(session);
-        }
+        Element session = DocumentHelper.createElement(new QName("session",
+                new Namespace("", "urn:ietf:params:xml:ns:xmpp-session")));
+        elements.add(session);
         return elements;
     }
 

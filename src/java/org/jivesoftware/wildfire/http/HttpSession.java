@@ -148,28 +148,8 @@ public class HttpSession extends ClientSession {
 
     public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder(200);
-
-        // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            sb.append(
-                    "<compression xmlns=\"http://jabber.org/features/compress\">" +
-                            "<method>zlib</method></compression>");
-        }
-
-        if (getAuthToken() == null) {
-            // Advertise that the server supports Non-SASL Authentication
-            sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
-            // Advertise that the server supports In-Band Registration
-            if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
-                sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
-            }
-        }
-        else {
-            // If the session has been authenticated then offer resource binding
-            // and session establishment
-            sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
-            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+        for(Element element : getAvailableStreamFeaturesElements()) {
+            sb.append(element.asXML());
         }
         return sb.toString();
     }

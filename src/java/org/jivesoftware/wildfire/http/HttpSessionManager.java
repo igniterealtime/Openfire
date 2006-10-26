@@ -134,6 +134,7 @@ public class HttpSessionManager {
 
             public void sessionClosed(HttpSession session) {
                 sessionMap.remove(session.getStreamID().getID());
+                sessionManager.removeSession(session);
                 timer.stop(session);
             }
         });
@@ -186,6 +187,7 @@ public class HttpSessionManager {
         for (Element packet : elements) {
             try {
                 router.route(packet);
+                session.incrementClientPacketCount();
             }
             catch (UnsupportedEncodingException e) {
                 throw new HttpBindException("Bad auth request, unknown encoding", true, 400);

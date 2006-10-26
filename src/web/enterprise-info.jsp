@@ -244,7 +244,8 @@
         <li><b>Reporting:</b> What manager wouldn't love graphs like the one pictured to the right?</li>
         <li><b>Client Control:</b> Stop the client madness -- take control of versions, features and more.</li>
         <li><b>Archiving:</b> If "compliance" is a word your organization uses, you need this feature.</li>
-        <li><b>Customer Chat:</b> Generate leads, close sales, route questions -- your sales and support people will love this feature.</li>
+        <li><b>Customer Chat:</b> Add click-to-chat to your website to generate leads, close sales,
+            route questions -- your sales and support people will love this feature.</li>
         <li><b>Support.</b> Professional support by the hard-working and friendly Jive Software team.</li>
         <li>Best of all, by using Enterprise, you're directly supporting the Open Source project.</li>
 
@@ -288,8 +289,6 @@
 <%
     for (AvailablePlugin plugin : plugins) {
         String pluginName = plugin.getName();
-        String pluginDescription = plugin.getDescription();
-        String pluginAuthor = plugin.getAuthor();
         String pluginVersion = plugin.getLatestVersion();
         ByteFormat byteFormat = new ByteFormat();
         String fileSize = byteFormat.format(plugin.getFileSize());

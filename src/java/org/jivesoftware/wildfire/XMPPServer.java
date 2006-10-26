@@ -99,7 +99,7 @@ public class XMPPServer {
     /**
      * All modules loaded by this server
      */
-    private Map<Class, Module> modules = new HashMap<Class, Module>();
+    private Map<Class, Module> modules = new LinkedHashMap<Class, Module>();
 
     /**
      * Listeners that will be notified when the server has started or is about to be stopped.

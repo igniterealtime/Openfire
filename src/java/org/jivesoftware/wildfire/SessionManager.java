@@ -1535,12 +1535,14 @@ public class SessionManager extends BasicModule {
             // Remove all the hostnames that were registered for this server session
             String domain = session.getAddress().getDomain();
             List<ConnectionMultiplexerSession> sessions = connnectionManagerSessions.get(domain);
-            sessions.remove(session);
-            if (sessions.isEmpty()) {
-                connnectionManagerSessions.remove(domain);
-                // Terminate ClientSessions originated from this connection manager
-                // that are still active since the connection manager has gone down
-                ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain);
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    connnectionManagerSessions.remove(domain);
+                    // Terminate ClientSessions originated from this connection manager
+                    // that are still active since the connection manager has gone down
+                    ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain);
+                }
             }
         }
     }

@@ -16,6 +16,7 @@ import org.jivesoftware.wildfire.user.UserNotFoundException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 /**
  * Authentication service.
@@ -42,23 +43,52 @@ public class AuthFactory {
     private static Blowfish cipher = null;
 
     static {
-        // Load an auth provider.
-        String className = JiveGlobals.getXMLProperty("provider.auth.className",
-                "org.jivesoftware.wildfire.auth.DefaultAuthProvider");
-        try {
-            Class c = ClassUtils.forName(className);
-            authProvider = (AuthProvider)c.newInstance();
-        }
-        catch (Exception e) {
-            Log.error("Error loading auth provider: " + className, e);
-            authProvider = new DefaultAuthProvider();
-        }
         // Create a message digest instance.
         try {
             digest = MessageDigest.getInstance("SHA");
         }
         catch (NoSuchAlgorithmException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        // Load an auth provider.
+        initProvider();
+
+        // Detect when a new auth provider class is set 
+        PropertyEventListener propListener = new PropertyEventListener() {
+            public void propertySet(String property, Map params) {
+                //Ignore
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+                if ("provider.auth.className".equals(property)) {
+                    initProvider();
+                }
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+                //Ignore
+            }
+        };
+        PropertyEventDispatcher.addListener(propListener);
+    }
+
+    private static void initProvider() {
+        String className = JiveGlobals.getXMLProperty("provider.auth.className",
+                "org.jivesoftware.wildfire.auth.DefaultAuthProvider");
+        // Check if we need to reset the auth provider class 
+        if (authProvider == null || !className.equals(authProvider.getClass().getName())) {
+            try {
+                Class c = ClassUtils.forName(className);
+                authProvider = (AuthProvider)c.newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Error loading auth provider: " + className, e);
+                authProvider = new DefaultAuthProvider();
+            }
         }
     }
 

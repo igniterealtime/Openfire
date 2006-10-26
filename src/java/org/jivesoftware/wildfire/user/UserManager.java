@@ -21,10 +21,7 @@ import org.jivesoftware.wildfire.event.UserEventDispatcher;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Manages users, including loading, creating and deleting.
@@ -53,16 +50,29 @@ public class UserManager implements IQResultListener {
                 512 * 1024, JiveConstants.MINUTE*30);
         CacheManager.initializeCache("Roster", "username2roster", 512 * 1024);
         // Load a user provider.
-        String className = JiveGlobals.getXMLProperty("provider.user.className",
-                "org.jivesoftware.wildfire.user.DefaultUserProvider");
-        try {
-            Class c = ClassUtils.forName(className);
-            provider = (UserProvider)c.newInstance();
-        }
-        catch (Exception e) {
-            Log.error("Error loading user provider: " + className, e);
-            provider = new DefaultUserProvider();
-        }
+        initProvider();
+
+        // Detect when a new auth provider class is set
+        PropertyEventListener propListener = new PropertyEventListener() {
+            public void propertySet(String property, Map params) {
+                //Ignore
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+                if ("provider.user.className".equals(property)) {
+                    initProvider();
+                }
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+                //Ignore
+            }
+        };
+        PropertyEventDispatcher.addListener(propListener);
     }
 
     /**
@@ -96,6 +106,7 @@ public class UserManager implements IQResultListener {
      *
      * @param username the new and unique username for the account.
      * @param password the password for the account (plain text).
+     * @param name the name of the user.
      * @param email the email address to associate with the new account, which can
      *      be <tt>null</tt>.
      * @return a new User.
@@ -385,6 +396,23 @@ public class UserManager implements IQResultListener {
         // Wake up waiting thread
         synchronized (from.toBareJID().intern()) {
             from.toBareJID().intern().notifyAll();
+        }
+    }
+
+
+    private static void initProvider() {
+        String className = JiveGlobals.getXMLProperty("provider.user.className",
+                "org.jivesoftware.wildfire.user.DefaultUserProvider");
+        // Check if we need to reset the provider class
+        if (provider == null || !className.equals(provider.getClass().getName())) {
+            try {
+                Class c = ClassUtils.forName(className);
+                provider = (UserProvider) c.newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Error loading user provider: " + className, e);
+                provider = new DefaultUserProvider();
+            }
         }
     }
 }

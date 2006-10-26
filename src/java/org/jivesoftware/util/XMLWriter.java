@@ -89,9 +89,9 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
-    public XMLWriter() {
+    public XMLWriter() throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
-        this.writer = new BufferedWriter( new OutputStreamWriter( System.out ) );
+        this.writer = new BufferedWriter( new OutputStreamWriter( System.out, "UTF-8" ) );
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }

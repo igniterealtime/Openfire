@@ -53,7 +53,9 @@ public class DefaultVCardProvider implements VCardProvider {
         super();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
-            xmlReaders.add(new SAXReader());
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+            xmlReaders.add(xmlReader);
         }
     }
 

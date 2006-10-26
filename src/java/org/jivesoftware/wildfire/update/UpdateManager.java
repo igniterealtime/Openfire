@@ -481,7 +481,9 @@ public class UpdateManager extends BasicModule {
             throws DocumentException {
         // Reset last known update information
         serverUpdate = null;
-        Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
+        SAXReader xmlReader = new SAXReader();
+        xmlReader.setEncoding("UTF-8");
+        Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
         // Parse response and keep info as Update objects
         Element wildfire = xmlResponse.element("wildfire");
         if (wildfire != null) {
@@ -514,7 +516,9 @@ public class UpdateManager extends BasicModule {
         availablePlugins = new HashMap<String, AvailablePlugin>();
 
         // Parse response and keep info as AvailablePlugin objects
-        Element xmlResponse = new SAXReader().read(new StringReader(response)).getRootElement();
+        SAXReader xmlReader = new SAXReader();
+        xmlReader.setEncoding("UTF-8");
+        Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
         Iterator plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
             Element plugin = (Element) plugins.next();
@@ -606,7 +610,7 @@ public class UpdateManager extends BasicModule {
                 file.delete();
             }
             // Create new version.xml with returned data
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(xmlResponse);
@@ -662,7 +666,7 @@ public class UpdateManager extends BasicModule {
                 file.delete();
             }
             // Create new version.xml with returned data
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(xml);
@@ -711,6 +715,7 @@ public class UpdateManager extends BasicModule {
         try {
             reader = new FileReader(file);
             SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
             xmlResponse = xmlReader.read(reader);
         }
         catch (Exception e) {
@@ -758,6 +763,7 @@ public class UpdateManager extends BasicModule {
         try {
             reader = new FileReader(file);
             SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
             xmlResponse = xmlReader.read(reader);
         }
         catch (Exception e) {

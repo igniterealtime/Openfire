@@ -407,7 +407,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
-            xmlReaders.add(new SAXReader());
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+            xmlReaders.add(xmlReader);
         }
         // Add this module as a user event listener so we can delete
         // all offline messages when a user is deleted

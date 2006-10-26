@@ -15,22 +15,22 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.event.UserEventListener;
-import org.jivesoftware.wildfire.event.UserEventDispatcher;
-import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.event.UserEventDispatcher;
+import org.jivesoftware.wildfire.event.UserEventListener;
+import org.jivesoftware.wildfire.user.User;
 
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.Map;
 
 /**
  * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
@@ -222,7 +222,9 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
-            xmlReaders.add(new SAXReader());
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+            xmlReaders.add(xmlReader);
         }
         // Add this module as a user event listener so we can delete
         // all user properties when a user is deleted

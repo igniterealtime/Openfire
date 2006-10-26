@@ -461,6 +461,7 @@ public class XMLProperties {
     private void buildDoc(Reader in) throws IOException {
         try {
             SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
             document = xmlReader.read(in);
         }
         catch (Exception e) {
@@ -485,7 +486,7 @@ public class XMLProperties {
         Writer writer = null;
         try {
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);

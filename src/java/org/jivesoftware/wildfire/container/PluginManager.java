@@ -215,6 +215,7 @@ public class PluginManager {
             File pluginConfig = new File(pluginDir, "plugin.xml");
             if (pluginConfig.exists()) {
                 SAXReader saxReader = new SAXReader();
+                saxReader.setEncoding("UTF-8");
                 Document pluginXML = saxReader.read(pluginConfig);
 
                 // See if the plugin specifies a version of Wildfire
@@ -716,6 +717,7 @@ public class PluginManager {
             File pluginConfig = new File(pluginDir, "plugin.xml");
             if (pluginConfig.exists()) {
                 SAXReader saxReader = new SAXReader();
+                saxReader.setEncoding("UTF-8");
                 Document pluginXML = saxReader.read(pluginConfig);
                 Element element = (Element)pluginXML.selectSingleNode(xpath);
                 if (element != null) {

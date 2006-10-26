@@ -19,6 +19,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 import org.mortbay.util.ajax.ContinuationSupport;
 
 import javax.servlet.http.HttpServlet;
@@ -132,9 +133,18 @@ public class HttpBindServlet extends HttpServlet {
                 Log.error("Error sending packet to client.", nc);
                 return;
             }
-            connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
-            request.setAttribute("request-connection", connection);
-            respond(response, connection);
+            
+            String type = rootNode.attributeValue("type");
+            if ("terminate".equals(type)) {
+                session.close();
+                respond(response, createEmptyBody().getBytes("utf-8"));
+            }
+            else {
+                connection
+                        .setContinuation(ContinuationSupport.getContinuation(request, connection));
+                request.setAttribute("request-connection", connection);
+                respond(response, connection);
+            }
         }
     }
 
@@ -176,6 +186,10 @@ public class HttpBindServlet extends HttpServlet {
             content = createEmptyBody().getBytes("utf-8");
         }
 
+        respond(response, content);
+    }
+
+    private void respond(HttpServletResponse response, byte [] content) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("text/xml");
         response.setCharacterEncoding("utf-8");
@@ -185,7 +199,9 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     private String createEmptyBody() {
-        return "<body xmlns='http://jabber.org/protocol/httpbind'/>";
+        Element body = DocumentHelper.createElement("body");
+        body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        return body.asXML();
     }
 
     private long getLongAttribue(String value, long defaultValue) {

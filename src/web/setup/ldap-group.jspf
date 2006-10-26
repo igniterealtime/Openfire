@@ -2,6 +2,7 @@
                  org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -14,6 +15,8 @@
     if (serverType == null) {
         serverType = "other";
     }
+
+    LdapManager manager = LdapManager.getInstance();
 
     // Determine the right default values based on the the server type.
     String defaultGroupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField");
@@ -92,17 +95,17 @@
 
         if (save) {
             if (groupNameField != null) {
-                JiveGlobals.setXMLProperty("ldap.groupNameField", groupNameField);
+                manager.setGroupNameField(groupNameField);
             }
             if (groupMemberField != null) {
-                JiveGlobals.setXMLProperty("ldap.groupMemberField", groupMemberField);
+                manager.setGroupMemberField(groupMemberField);
             }
             if (groupDescriptionField != null) {
-                JiveGlobals.setXMLProperty("ldap.groupDescriptionField", groupDescriptionField);
+                manager.setGroupDescriptionField(groupDescriptionField);
             }
-            JiveGlobals.setXMLProperty("ldap.posixMode", Boolean.toString(posixMode));
+            manager.setPosixMode(posixMode);
             if (groupSearchFilter != null) {
-                JiveGlobals.setXMLProperty("ldap.groupSearchFilter", groupSearchFilter);
+                manager.setGroupSearchFilter(groupSearchFilter);
             }
 
             // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.

@@ -1,6 +1,7 @@
-<%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.util.ParamUtils, java.util.HashMap, java.util.Map"%>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager"%>
+<%@ page import="java.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -19,6 +20,7 @@
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
 
+    LdapManager manager = LdapManager.getInstance();
     Map<String, String> errors = new HashMap<String, String>();
 
     if (save || test) {
@@ -62,36 +64,44 @@
 
             if (save) {
                 // Save settings and redirect
-                JiveGlobals.setXMLProperty("ldap.host", host);
-                JiveGlobals.setXMLProperty("ldap.port", Integer.toString(port));
-                JiveGlobals.setXMLProperty("ldap.baseDN", baseDN);
-                JiveGlobals.setXMLProperty("ldap.adminDN", adminDN);
-                JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
-                JiveGlobals.setXMLProperty("ldap.connectionPoolEnabled",
-                        Boolean.toString(connectionPoolEnabled));
-                JiveGlobals.setXMLProperty("ldap.sslEnabled", Boolean.toString(sslEnabled));
-                JiveGlobals.setXMLProperty("ldap.debugEnabled", Boolean.toString(debugEnabled));
-                JiveGlobals.setXMLProperty("ldap.autoFollowReferrals",
-                        Boolean.toString(referralsEnabled));
+                Collection<String> hosts = new ArrayList<String>();
+                StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
+                while (st.hasMoreTokens()) {
+                    hosts.add(st.nextToken());
+                }
+                manager.setHosts(hosts);
+                manager.setPort(port);
+                manager.setBaseDN(baseDN);
+                manager.setAdminDN(adminDN);
+                manager.setAdminPassword(adminPassword);
+                manager.setConnectionPoolEnabled(connectionPoolEnabled);
+                manager.setSslEnabled(sslEnabled);
+                manager.setDebugEnabled(debugEnabled);
+                manager.setFollowReferralsEnabled(referralsEnabled);
 
                 // Redirect to next step.
                 response.sendRedirect(nextPage);
                 return;
             }
         }
-    }
-    else {
+    } else {
         // See if there are already values for the variables defined.
-        host = JiveGlobals.getXMLProperty("ldap.host");
-        port = JiveGlobals.getXMLProperty("ldap.port", port);
-        baseDN = JiveGlobals.getXMLProperty("ldap.baseDN");
-        adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
-        adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
-        connectionPoolEnabled =
-                JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled", connectionPoolEnabled);
-        sslEnabled = JiveGlobals.getXMLProperty("ldap.sslEnabled", sslEnabled);
-        debugEnabled = JiveGlobals.getXMLProperty("ldap.debugEnabled", debugEnabled);
-        referralsEnabled = JiveGlobals.getXMLProperty("ldap.autoFollowReferrals", referralsEnabled);
+        StringBuilder sb = new StringBuilder();
+        for (String aHost : LdapManager.getInstance().getHosts()) {
+            sb.append(aHost).append(", ");
+        }
+        host = sb.toString();
+        if (host.trim().length() > 0) {
+            host = host.substring(0, host.length() - 2);
+        }
+        port = manager.getPort();
+        baseDN = manager.getBaseDN();
+        adminDN = manager.getAdminDN();
+        adminPassword = manager.getAdminPassword();
+        connectionPoolEnabled = manager.isConnectionPoolEnabled();
+        sslEnabled = manager.isSslEnabled();
+        debugEnabled = manager.isDebugEnabled();
+        referralsEnabled = manager.isFollowReferralsEnabled();
     }
 %>
 <html>

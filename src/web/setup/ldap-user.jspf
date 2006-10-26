@@ -5,6 +5,9 @@
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.wildfire.user.UserManager" %>
+<%@ page import="org.jivesoftware.wildfire.ldap.LdapUserProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -17,6 +20,8 @@
     if (serverType == null) {
         serverType = "other";
     }
+
+    LdapManager manager = LdapManager.getInstance();
 
     // Determine the right default values based on the the server type.
     String defaultUsernameField;
@@ -89,12 +94,19 @@
             session.setAttribute("ldapVCardBean", vcardBean);
 
             if (save) {
-                JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
+                manager.setUsernameField(usernameField);
                 if (searchFields != null) {
-                    JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+                    if ("org.jivesoftware.wildfire.ldap.LdapUserProvider"
+                            .equals(JiveGlobals.getXMLProperty("provider.user.className"))) {
+                        // Update current instance being used
+                        ((LdapUserProvider) UserManager.getUserProvider()).setSearchFields(searchFields);
+                    } else {
+                        // Just update the property. It will be later used by LdapUserProvider 
+                        JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+                    }
                 }
                 if (searchFilter != null) {
-                    JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
+                    manager.setSearchFilter(searchFilter);
                 }
                 // Save vCard mappings
                 vcardBean.saveProperties();

@@ -29,9 +29,9 @@ import org.jivesoftware.wildfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.wildfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.disco.ServerItemsProvider;
-import org.jivesoftware.wildfire.filetransfer.proxy.FileTransferProxy;
-import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
 import org.jivesoftware.wildfire.filetransfer.DefaultFileTransferManager;
+import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
+import org.jivesoftware.wildfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.wildfire.handler.*;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
@@ -286,7 +286,7 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(3, 1, 0, Version.ReleaseStatus.Release, 0);
+        version = new Version(3, 1, 1, Version.ReleaseStatus.Release, 0);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

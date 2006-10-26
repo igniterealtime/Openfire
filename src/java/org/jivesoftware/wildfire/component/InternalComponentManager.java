@@ -155,6 +155,10 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void sendPacket(Component component, Packet packet) {
+        if (packet != null && packet.getFrom() == null) {
+            throw new IllegalArgumentException("Packet with no FROM address was received from component.");
+        }
+
         PacketRouter router = XMPPServer.getInstance().getPacketRouter();
         if (router != null) {
             router.route(packet);
@@ -199,7 +203,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void setProperty(String name, String value) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        //Ignore
     }
 
     public String getServerName() {
@@ -211,7 +215,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public boolean isExternalMode() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return false;
     }
 
     public org.xmpp.component.Log getLog() {

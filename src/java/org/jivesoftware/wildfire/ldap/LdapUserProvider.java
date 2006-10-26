@@ -416,6 +416,28 @@ public class LdapUserProvider implements UserProvider {
         return Collections.unmodifiableSet(searchFields.keySet());
     }
 
+    public void setSearchFields(String fieldList) {
+        this.searchFields = new LinkedHashMap<String,String>();
+        // If the value isn't present, default to to username, name, and email.
+        if (fieldList == null) {
+            searchFields.put("Username", manager.getUsernameField());
+            searchFields.put("Name", manager.getNameField());
+            searchFields.put("Email", manager.getEmailField());
+        }
+        else {
+            try {
+                for (StringTokenizer i=new StringTokenizer(fieldList, ","); i.hasMoreTokens(); ) {
+                    String[] field = i.nextToken().split("/");
+                    searchFields.put(field[0], field[1]);
+                }
+            }
+            catch (Exception e) {
+                Log.error("Error parsing LDAP search fields: " + fieldList, e);
+            }
+        }
+        JiveGlobals.setXMLProperty("ldap.searchFields", fieldList);
+    }
+
     public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException
     {

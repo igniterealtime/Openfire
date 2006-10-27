@@ -3,8 +3,9 @@ Name                   |  Version
 cindy.jar              | 2.4.4
 irclib.jar             | 1.04
 jml.jar                | svn-20061021
-joscar-common.jar      | svn-20061016
-joscar-protocol.jar    | svn-20061016
+joscar-client.jar      | svn-20061026
+joscar-common.jar      | svn-20061026
+joscar-protocol.jar    | svn-20061026
 picocontainer.jar      | 1.2.0
 ymsg_network.jar       | 0.61 (patched)
 ymsg_support.jar       | 0.61 (patched)

@@ -723,7 +723,7 @@
 		</target>
 
     <!-- dist.bin =============================================================================== -->
-    <target name="dist.bin" depends="plugins,javadoc" description="Creates a binary distribution package">
+    <target name="dist.bin" depends="wildfire,javadoc" description="Creates a binary distribution package">
 				<!-- ie: wildfire -->
 				<property name="release.name" value="${dist.prefix}"/>
 				<!-- ie: wildfire_2_1_2 -->

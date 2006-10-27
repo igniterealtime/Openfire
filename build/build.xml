@@ -904,7 +904,6 @@
              of the way class loading works for jspc calls.
         -->
         <antcall target="wildfire">
-            <param name="no.jspc" value="true"/>
             <param name="wildfireHome.no.update" value="true"/>
         </antcall>
 

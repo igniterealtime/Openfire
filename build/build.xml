@@ -42,16 +42,16 @@
             <pathelement location="${basedir}/build/lib/xmltask.jar"/>
         </classpath>
     </taskdef>
-   <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
-       <classpath>
-           <pathelement location="${basedir}/build/lib/pack200task.jar"/>
-       </classpath>
-   </taskdef>
-   <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
-     <classpath>
-           <pathelement location="${basedir}/build/lib/pack200task.jar"/>
-       </classpath>
-   </taskdef>
+    <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+        </classpath>
+    </taskdef>
+    <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+        </classpath>
+    </taskdef>
 
     <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
@@ -60,7 +60,8 @@
     <property name="version.major" value="3"/>
     <property name="version.minor" value="1"/>
     <property name="version.revision" value="1"/>
-    <property name="version.extra" value=""/> <!-- For 'beta' or 'alpha' -->
+    <property name="version.extra" value=""/>
+    <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="wildfire"/>
 
     <property file="${basedir}/build/build.properties"/>
@@ -79,14 +80,14 @@
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib"/>
     <property name="i18n.basename" value="wildfire_i18n"/>
     <property name="i18n.default.locale" value="en"/>
-    
+
     <property name="work.dir" value="${basedir}/work"/>
     <property name="temp.build.dir" value="${work.dir}/tempbuild"/>
     <property name="target.i18n.dir" value="${temp.build.dir}/i18n"/>
 
     <property name="target.dir" value="${basedir}/target"/>
     <property name="target.wildfireHome" value="${target.dir}/wildfire"/>
-    
+
     <property name="compile.dir" value="${work.dir}/classes"/>
     <property name="jar.name" value="wildfire.jar"/>
     <property name="jar.starter.name" value="startup.jar"/>
@@ -104,7 +105,8 @@
     <property name="test.results.dest.dir" value="${test.dest.dir}/results"/>
 
     <property name="plugin.src.dir" value="${src.dir}/plugins"/>
-    <property name="plugin.dev.dir" value=""/> <!-- Set by a developer as alt plugin location -->
+    <property name="plugin.dev.dir" value=""/>
+    <!-- Set by a developer as alt plugin location -->
     <property name="plugin.dev.dest.dir" value="${work.dir}/plugins-dev"/>
     <property name="plugin.dest.dir" value="${work.dir}/plugins"/>
     <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
@@ -137,7 +139,7 @@
     <property name="license.file.path" value="${docs.dir}/dist"/>
 
     <!-- For auto-running and debugging -->
-    <property name="debug" value="false" />
+    <property name="debug" value="false"/>
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
@@ -146,7 +148,8 @@
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
         <fileset dir="${lib.merge.dir}" includes="*.jar"/>
-        <fileset dir="${lib.dist.dir}" includes="servlet.jar, mail.jar, activation.jar, jdic.jar, bouncycastle.jar"/>
+        <fileset dir="${lib.dist.dir}"
+                 includes="servlet.jar, mail.jar, activation.jar, jdic.jar, bouncycastle.jar"/>
     </path>
 
     <path id="compile.dependencies">
@@ -225,12 +228,16 @@
         <if>
             <equals arg1="${version.extra}" arg2=""/>
             <then>
-                <property name="version" value="${version.major}.${version.minor}.${version.revision}"/>
-                <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}"/>
+                <property name="version"
+                          value="${version.major}.${version.minor}.${version.revision}"/>
+                <property name="version.filename"
+                          value="${version.major}_${version.minor}_${version.revision}"/>
             </then>
             <else>
-                <property name="version" value="${version.major}.${version.minor}.${version.revision}.${version.extra}"/>
-                <property name="version.filename" value="${version.major}_${version.minor}_${version.revision}_${version.extra}"/>
+                <property name="version"
+                          value="${version.major}.${version.minor}.${version.revision}.${version.extra}"/>
+                <property name="version.filename"
+                          value="${version.major}_${version.minor}_${version.revision}_${version.extra}"/>
             </else>
         </if>
 
@@ -244,11 +251,11 @@
     <target name="compile" depends="init" description="Compiles Wildfire app code">
         <mkdir dir="${compile.dir}"/>
         <javac
-            destdir="${compile.dir}"
-            includeAntRuntime="no"
-            debug="on"
-            source="1.5"
-            >
+                destdir="${compile.dir}"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                >
             <src path="${src.java.dir}"/>
             <patternset refid="compile.sources"/>
             <classpath>
@@ -263,13 +270,14 @@
         <!-- Auto generates a default base i18n file -->
         <mkdir dir="${target.i18n.dir}"/>
         <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
-            tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
+              tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
 
     </target>
 
     <target name="plugins-dev">
         <!-- Setup Wildfire -->
-        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="wildfire" inheritAll="false" inheritRefs="false"/>
+        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="wildfire"
+             inheritAll="false" inheritRefs="false"/>
 
         <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
         <copy file="${ant.home}/lib/ant.jar" todir="${jar.dest.dir}"></copy>
@@ -304,7 +312,8 @@
     </target>
 
     <!-- wildfire =================================================================================== -->
-    <target name="wildfire" depends="compile, jspc, -i18n" description="Compiles and generates runnable target/wildfire folder">
+    <target name="wildfire" depends="compile, jspc, -i18n"
+            description="Compiles and generates runnable target/wildfire folder">
         <mkdir dir="${jar.dest.dir}"/>
         <!-- Make main Wildfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
@@ -329,7 +338,8 @@
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif"/>
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.png"/>
             <manifest>
-                <attribute name="Main-Class" value="org.jivesoftware.wildfire.starter.ServerStarter"/>
+                <attribute name="Main-Class"
+                           value="org.jivesoftware.wildfire.starter.ServerStarter"/>
                 <attribute name="Built-By" value="Jive Software (www.jivesoftware.org)"/>
             </manifest>
         </jar>
@@ -337,34 +347,37 @@
         <copy todir="${jar.dest.dir}">
             <fileset dir="${lib.dist.dir}" includes="*.*"/>
         </copy>
-        
-				<!-- Copy in tag library support -->
-				<copy todir="${jar.dest.dir}">
-						<fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
-				</copy>
 
-				<!-- Copy in jasper runtime jar -->
-				<copy todir="${jar.dest.dir}">
-						<fileset dir="${lib.build.dir}" includes="jasper-runtime.jar"/>
-						<fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
-				</copy>
-				
-				<!-- Update/create target/wildfire directory -->
-				<antcall target="wildfireHome"/>
+        <!-- Copy in tag library support -->
+        <copy todir="${jar.dest.dir}">
+            <fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
+        </copy>
+
+        <!-- Copy in jasper runtime jar -->
+        <copy todir="${jar.dest.dir}">
+            <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar"/>
+            <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
+        </copy>
+
+        <!-- Update/create target/wildfire directory -->
+        <antcall target="wildfireHome"/>
     </target>
 
     <!-- run =================================================================================== -->
-    <target name="run"  description="Starts Wildfire inline to the build process.">
+    <target name="run" description="Starts Wildfire inline to the build process.">
         <available file="${target.wildfireHome}" type="dir" property="wildfire.found"/>
-        <fail unless="wildfire.found" message="Can't find wildfire, run 'ant wildfire' or specify with -Dtarget.wildfireHome."/>
+        <fail unless="wildfire.found"
+              message="Can't find wildfire, run 'ant wildfire' or specify with -Dtarget.wildfireHome."/>
 
-        <condition property="run.debug" value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
+        <condition property="run.debug"
+                   value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
             <isset property="debug"/>
         </condition>
 
         <property name="run.spawn" value="false"/>
 
-        <java jar="${target.wildfireHome}/lib/startup.jar" fork="true" spawn="${run.spawn}" dir="${target.wildfireHome}/bin">
+        <java jar="${target.wildfireHome}/lib/startup.jar" fork="true" spawn="${run.spawn}"
+              dir="${target.wildfireHome}/bin">
             <jvmarg line="${run.debug}"/>
         </java>
     </target>
@@ -372,16 +385,16 @@
 
     <!-- run.test.init ========================================================================= -->
     <target name="run.test.init">
-				<delete dir="${target.wildfireHome}" />
-				
+        <delete dir="${target.wildfireHome}"/>
+
         <property name="wildfireHome.preconfigured" value="true"/>
-        
+
         <property name="run.spawn" value="true"/>
     </target>
 
     <!-- run.test ============================================================================== -->
     <!--    Starts Wildfire inline to the build process, with a clean pre-configured wildfireHome -->
-    <target name="run.test" depends="run.test.init,wildfireHome,run" >
+    <target name="run.test" depends="run.test.init,wildfireHome,run">
         <echo>Wildfire server started.</echo>
     </target>
 
@@ -394,23 +407,25 @@
     <target name="-javadoc-impl" unless="no.javadoc">
         <!-- Run javadoc over all source code -->
         <javadoc
-            packagenames="org.jivesoftware.*, org.xmpp.*"
-            destdir="${javadoc.dest.dir}"
-            windowtitle="Wildfire ${version} Javadoc"
-            overview="${src.java.dir}/overview.html"
-            failonerror="yes"
-            >
+                packagenames="org.jivesoftware.*, org.xmpp.*"
+                destdir="${javadoc.dest.dir}"
+                windowtitle="Wildfire ${version} Javadoc"
+                overview="${src.java.dir}/overview.html"
+                failonerror="yes"
+                >
             <sourcepath>
                 <path location="${src.java.dir}"/>
                 <path location="${whack.src}"/>
             </sourcepath>
-            <doctitle><![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
+            <doctitle>
+                <![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
             <header><![CDATA[<b>Wildfire ${version} Javadoc</b>]]></header>
             <bottom><![CDATA[<i>Copyright &copy; 2003-2006 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies"/>
             </classpath>
-            <link offline="true" href="http://java.sun.com/j2se/1.5.0/docs/api/" packagelistLoc="${javadoc.src.dir}/jdk15"/>
+            <link offline="true" href="http://java.sun.com/j2se/1.5.0/docs/api/"
+                  packagelistLoc="${javadoc.src.dir}/jdk15"/>
         </javadoc>
     </target>
 
@@ -425,26 +440,26 @@
 
     </target>
     <target name="-jspc-impl" unless="no.jspc">
-				<java classname="org.apache.jasper.JspC" fork="true">
+        <java classname="org.apache.jasper.JspC" fork="true">
             <classpath>
                 <pathelement location="${java.home}/../lib/tools.jar"/>
                 <pathelement path="${compile.dir}"/>
                 <path refid="jspc.dependencies"/>
             </classpath>
-						<arg line="-uriroot ${web.dir}" />
-						<arg line="-d ${jspc.java.dest.dir}" />
-						<arg line="-p org.jivesoftware.wildfire.admin" />
-						<arg line="-webinc ${jspc.dest.dir}/web.partial.xml" />
-				</java>
-        
+            <arg line="-uriroot ${web.dir}"/>
+            <arg line="-d ${jspc.java.dest.dir}"/>
+            <arg line="-p org.jivesoftware.wildfire.admin"/>
+            <arg line="-webinc ${jspc.dest.dir}/web.partial.xml"/>
+        </java>
+
         <!-- Compile java source -->
         <javac
-            destdir="${jspc.classes.dest.dir}"
-            includeAntRuntime="no"
-            debug="on"
-            source="1.5"
-            includes="org/jivesoftware/wildfire/admin/**/*.java"
-            >
+                destdir="${jspc.classes.dest.dir}"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                includes="org/jivesoftware/wildfire/admin/**/*.java"
+                >
             <src path="${jspc.java.dest.dir}"/>
             <classpath>
                 <pathelement path="${compile.dir}"/>
@@ -455,8 +470,8 @@
         <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
         <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml"/>
         <copy file="${web.dir}/WEB-INF/web.xml"
-            toFile="${webapp.dest.dir}/WEB-INF/web.xml"
-            overwrite="true">
+              toFile="${webapp.dest.dir}/WEB-INF/web.xml"
+              overwrite="true">
             <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
                 <filter token="JSPC-SERVLETS" value="${servlet-xml}"/>
             </filterset>
@@ -464,16 +479,16 @@
 
         <!-- Copy over Sitemesh files. -->
         <copy file="${web.dir}/WEB-INF/decorators.xml"
-            toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
-            overwrite="true">
+              toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
+              overwrite="true">
         </copy>
         <copy file="${web.dir}/WEB-INF/sitemesh.xml"
-            toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
-            overwrite="true">
+              toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
+              overwrite="true">
         </copy>
-          <copy file="${web.dir}/WEB-INF/dwr.xml"
-            toFile="${webapp.dest.dir}/WEB-INF/dwr.xml"
-            overwrite="true">
+        <copy file="${web.dir}/WEB-INF/dwr.xml"
+              toFile="${webapp.dest.dir}/WEB-INF/dwr.xml"
+              overwrite="true">
         </copy>
 
         <!-- Create a jar of compiled servlets -->
@@ -488,11 +503,11 @@
         <!-- Compile all test code -->
         <mkdir dir="${test.classes.dest.dir}"/>
         <javac
-            destdir="${test.classes.dest.dir}"
-            includeAntRuntime="no"
-            debug="on"
-            source="1.5"
-            >
+                destdir="${test.classes.dest.dir}"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                >
             <src path="${src.test.java.dir}"/>
             <patternset refid="test.sources"/>
             <classpath>
@@ -525,19 +540,19 @@
             </batchtest>
         </junit>
     </target>
-    
-		<!-- wildfireHome ========================================================================== -->
+
+    <!-- wildfireHome ========================================================================== -->
     <target name="wildfireHome" unless="wildfireHome.no.update">
-				<!-- Set this to true to enable a pre-setup wildfireHome directory -->
+        <!-- Set this to true to enable a pre-setup wildfireHome directory -->
         <property name="wildfireHome.preconfigured" value="false"/>
         <property name="wildfireHome.no.plugins" value="false"/>
 
-        <mkdir dir="${target.wildfireHome}" />
-        
-				<!-- Copy conf dir -->
-				<copy todir="${target.wildfireHome}">
-						<fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
-				</copy>
+        <mkdir dir="${target.wildfireHome}"/>
+
+        <!-- Copy conf dir -->
+        <copy todir="${target.wildfireHome}">
+            <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
+        </copy>
 
         <!-- Copy database scripts -->
         <if>
@@ -575,16 +590,16 @@
             <then>
                 <!-- Copy pre-configured wildfireHome dir -->
                 <copy todir="${target.wildfireHome}">
-                    <fileset dir="${basedir}/build/wildfireHome" includes="**/*.*" />
+                    <fileset dir="${basedir}/build/wildfireHome" includes="**/*.*"/>
                 </copy>
             </then>
         </if>
 
         <!-- Copy admin Plugin -->
         <antcall target="adminPlugin">
-        		<param name="plugin.dest.dir" value="${target.wildfireHome}/plugins" />
+            <param name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
         </antcall>
-        
+
         <!-- Copy compiled plugins if we need to -->
         <if>
             <equals arg1="${wildfireHome.no.plugins}" arg2="false"/>
@@ -597,7 +612,7 @@
 
         <!-- Copy bin dir -->
         <copy todir="${target.wildfireHome}">
-            <fileset dir="${src.dir}" includes="bin/**/*" />
+            <fileset dir="${src.dir}" includes="bin/**/*"/>
         </copy>
         <fixcrlf srcdir="${target.wildfireHome}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
 
@@ -605,9 +620,9 @@
         <mkdir dir="${target.wildfireHome}/logs"/>
     </target>
 
-		<!-- adminPlugin =========================================================================== -->
+    <!-- adminPlugin =========================================================================== -->
     <target name="adminPlugin">
-		    <!-- Copy admin plugin source (if any) -->
+        <!-- Copy admin plugin source (if any) -->
         <copy todir="${plugin.dest.dir}">
             <fileset dir="${src.dir}/plugins" includes="admin/*.*"/>
         </copy>
@@ -630,18 +645,19 @@
         <copy todir="${plugin.dest.dir}/admin/webapp/WEB-INF/lib" overwrite="${overwrite}">
             <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}"/>
         </copy>
-        
-				<!-- Copy help files -->
-				<if>
-          <available file="${src.dir}/help/help.zip"/>
-					<then>
-					    <unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp" />
-					</then>
-			  </if>
+
+        <!-- Copy help files -->
+        <if>
+            <available file="${src.dir}/help/help.zip"/>
+            <then>
+                <unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp"/>
+            </then>
+        </if>
     </target>
-    		
-		<!-- dist.src =============================================================================== -->
-		<target name="dist.src" depends="javadoc, -i18n" description="Creates a source distribution package">
+
+    <!-- dist.src =============================================================================== -->
+    <target name="dist.src" depends="javadoc, -i18n"
+            description="Creates a source distribution package">
         <mkdir dir="${release.dest.dir}"/>
 
         <!-- Create a new prop for the final release dirs then create the dirs -->
@@ -693,130 +709,136 @@
         <copy todir="${release.src.out.dir}/build">
             <fileset dir="${basedir}/build"/>
         </copy>
-        
-				<property name="package.dest.dir" value="${release.dest.dir}"/>
 
-				<if>
-					<not> <isset property="no.package"/> </not>
-					<then>
-						<parallel>
-								<!-- Source Packages -->
-								<zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
-										basedir="${release.src.out.dir}/.."
-										includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
-										/>
-								<tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
-										basedir="${release.src.out.dir}/.."
-										includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
-										compression="gzip"
-										longfile="gnu"
-										/>
-						</parallel>
-					</then>
-				</if>
-		</target>
+        <property name="package.dest.dir" value="${release.dest.dir}"/>
+
+        <if>
+            <not>
+                <isset property="no.package"/>
+            </not>
+            <then>
+                <parallel>
+                    <!-- Source Packages -->
+                    <zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
+                         basedir="${release.src.out.dir}/.."
+                         includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
+                            />
+                    <tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
+                         basedir="${release.src.out.dir}/.."
+                         includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
+                         compression="gzip"
+                         longfile="gnu"
+                            />
+                </parallel>
+            </then>
+        </if>
+    </target>
 
     <!-- dist.bin =============================================================================== -->
-    <target name="dist.bin" depends="plugins,javadoc" description="Creates a binary distribution package">
-				<!-- ie: wildfire -->
-				<property name="release.name" value="${dist.prefix}"/>
-				<!-- ie: wildfire_2_1_2 -->
-				<property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
-				<property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
+    <target name="dist.bin" depends="plugins,javadoc"
+            description="Creates a binary distribution package">
+        <!-- ie: wildfire -->
+        <property name="release.name" value="${dist.prefix}"/>
+        <!-- ie: wildfire_2_1_2 -->
+        <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
+        <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
 
-				<antcall target="enterprise" />
+        <antcall target="enterprise"/>
 
-				<mkdir dir="${release.out.dir}"/>
+        <mkdir dir="${release.out.dir}"/>
 
-				<!-- Make & copy the search plugin. -->
-				<copy todir="${release.out.dir}">
-						<fileset dir="${work.dir}">
-								<include name="plugins/search.jar"/>
-						</fileset>
-				</copy>
+        <!-- Make & copy the search plugin. -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${work.dir}">
+                <include name="plugins/search.jar"/>
+            </fileset>
+        </copy>
 
-				<!-- Copy all prepare dirs to the binary dist -->
-				<antcall target="wildfireHome">
-						<param name="target.wildfireHome" value="${release.out.dir}"/>
-						<param name="wildfireHome.no.plugins" value="true"/>
-				</antcall>
+        <!-- Copy all prepare dirs to the binary dist -->
+        <antcall target="wildfireHome">
+            <param name="target.wildfireHome" value="${release.out.dir}"/>
+            <param name="wildfireHome.no.plugins" value="true"/>
+        </antcall>
 
-				<!-- Remove the development scripts -->
-				<delete file="${release.out.dir}/bin/wildfire-dev.bat"/>
-				<delete file="${release.out.dir}/bin/wildfire-dev.sh"/>
+        <!-- Remove the development scripts -->
+        <delete file="${release.out.dir}/bin/wildfire-dev.bat"/>
+        <delete file="${release.out.dir}/bin/wildfire-dev.sh"/>
 
-				<!-- Pack200 processing on JAR files in lib dir -->
+        <!-- Pack200 processing on JAR files in lib dir -->
 
-				<for param="jar">
-						<path>
-								<fileset dir="${release.out.dir}/lib" includes="*.jar" excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar" />
-						</path>
-						<sequential>
-								<delete file="@{jar}.pack" />
-								<pack200 src="@{jar}"
-										destfile="@{jar}.pack"
-										gzipoutput="false"
-								/>
-								<delete file="@{jar}" />
-						</sequential>
-				</for>
+        <for param="jar">
+            <path>
+                <fileset dir="${release.out.dir}/lib" includes="*.jar"
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+            </path>
+            <sequential>
+                <delete file="@{jar}.pack"/>
+                <pack200 src="@{jar}"
+                         destfile="@{jar}.pack"
+                         gzipoutput="false"
+                        />
+                <delete file="@{jar}"/>
+            </sequential>
+        </for>
 
-				<!-- Copy dist docs, use filtering  -->
-				<copy todir="${release.out.dir}">
-						<fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
-						<filterset>
-								<filter token="builddate" value="${builddate}"/>
-								<filter token="version" value="${version}"/>
-						</filterset>
-				</copy>
+        <!-- Copy dist docs, use filtering  -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
+            <filterset>
+                <filter token="builddate" value="${builddate}"/>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
 
-				<!-- Copy the license -->
-				<copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html"/>
-				<mkdir dir="${release.out.dir}/logs" />
-				<touch file="${release.out.dir}/logs/stderr.out" />
+        <!-- Copy the license -->
+        <copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html"/>
+        <mkdir dir="${release.out.dir}/logs"/>
+        <touch file="${release.out.dir}/logs/stderr.out"/>
 
-				<!-- Copy docs -->
-				<copy todir="${release.out.dir}/documentation">
-						<fileset dir="${docs.dir}/docs"/>
-						<filterset>
-								<filter token="version" value="${version}"/>
-						</filterset>
-				</copy>
-				<copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
-						<fileset dir="${docs.dir}/docs/images"/>
-				</copy>
+        <!-- Copy docs -->
+        <copy todir="${release.out.dir}/documentation">
+            <fileset dir="${docs.dir}/docs"/>
+            <filterset>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
+        <copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
+            <fileset dir="${docs.dir}/docs/images"/>
+        </copy>
 
-				<!-- Copy Javadocs -->
-				<copy todir="${release.out.dir}/documentation/javadoc">
-						<fileset dir="${javadoc.dest.dir}"/>
-				</copy>
+        <!-- Copy Javadocs -->
+        <copy todir="${release.out.dir}/documentation/javadoc">
+            <fileset dir="${javadoc.dest.dir}"/>
+        </copy>
 
 
-				<!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
-				<copy todir="${release.out.dir}/resources/i18n">
-						<fileset dir="${target.i18n.dir}" includes="*.properties"/>
-						<fileset dir="${src.i18n.dir}" includes="*.properties"/>
-				</copy>
+        <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
+        <copy todir="${release.out.dir}/resources/i18n">
+            <fileset dir="${target.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+        </copy>
 
         <!-- Package the release -->
-				<property name="package.dest.dir" value="${release.dest.dir}"/>
+        <property name="package.dest.dir" value="${release.dest.dir}"/>
 
-				<if>
-					<not> <isset property="no.package"/> </not>
-					<then>
-						<parallel>
-								<!-- Binary packages -->
-								<zip zipfile="${package.dest.dir}/${release.fullname}.zip"
-									 basedir="${release.out.dir}/.."
-									 includes="${release.fullname}/**/*, ${release.name}/**/*"/>
-								<tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
-									 basedir="${release.out.dir}/.."
-									 includes="${release.fullname}/**/*, ${release.name}/**/*"
-									 compression="gzip"
-									 longfile="gnu"/>
-						</parallel>
-					</then>
-				</if>
+        <if>
+            <not>
+                <isset property="no.package"/>
+            </not>
+            <then>
+                <parallel>
+                    <!-- Binary packages -->
+                    <zip zipfile="${package.dest.dir}/${release.fullname}.zip"
+                         basedir="${release.out.dir}/.."
+                         includes="${release.fullname}/**/*, ${release.name}/**/*"/>
+                    <tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
+                         basedir="${release.out.dir}/.."
+                         includes="${release.fullname}/**/*, ${release.name}/**/*"
+                         compression="gzip"
+                         longfile="gnu"/>
+                </parallel>
+            </then>
+        </if>
     </target>
 
     <target name="enterprise" if="do.enterprise">
@@ -838,8 +860,10 @@
         <property name="release.fullname" value="${release.out.name}"/>
         <property name="release.src.out.name" value="${dist.prefix}_src_${dailybuild.tstamp}"/>
         <property name="release.fullname.src" value="${release.src.out.name}"/>
-        <property name="release.out.dir" value="${release.dest.dir}/dailybuild/${release.out.name}"/>
-        <property name="release.src.out.dir" value="${release.dest.dir}/dailybuild/${release.src.out.name}"/>
+        <property name="release.out.dir"
+                  value="${release.dest.dir}/dailybuild/${release.out.name}"/>
+        <property name="release.src.out.dir"
+                  value="${release.dest.dir}/dailybuild/${release.src.out.name}"/>
         <antcall target="dist.src">
             <param name="release.src.out.name" value="${release.src.out.name}"/>
             <param name="release.src.out.dir" value="${release.src.out.dir}"/>
@@ -850,7 +874,7 @@
             <param name="release.out.dir" value="${release.out.dir}"/>
             <param name="package.dest.dir" value="${release.dest.dir}/dailybuild"/>
             <!-- dist.src above does this already, so don't need to do it twice -->
-	        	<param name="no.javadoc" value="true" />
+            <param name="no.javadoc" value="true"/>
         </antcall>
     </target>
 
@@ -862,20 +886,21 @@
                 <available file="${installer.install4j.home}/bin/install4j.jar"/>
             </not>
         </condition>
-        <fail if="install4j.not.ok" message="Path to Install4j not set, see build.properties.template file."/>
-        
-        <antcall target="dist.src" /> 
+        <fail if="install4j.not.ok"
+              message="Path to Install4j not set, see build.properties.template file."/>
 
-        <antcall target="dist.bin" >
-        	<!-- Don't need package for installer build -->
-        	<param name="no.package" value="true" />
-        	<!-- Already built javadoc with dist.src above -->
-        	<param name="no.javadoc" value="true" />
+        <antcall target="dist.src"/>
+
+        <antcall target="dist.bin">
+            <!-- Don't need package for installer build -->
+            <param name="no.package" value="true"/>
+            <!-- Already built javadoc with dist.src above -->
+            <param name="no.javadoc" value="true"/>
         </antcall>
-        
+
         <taskdef name="install4j"
-            classname="com.install4j.Install4JTask"
-            classpath="${installer.install4j.home}/bin/install4j.jar"/>
+                 classname="com.install4j.Install4JTask"
+                 classpath="${installer.install4j.home}/bin/install4j.jar"/>
 
         <mkdir dir="${installer.dest.dir}"/>
 
@@ -906,16 +931,17 @@
             <param name="wildfireHome.no.update" value="true"/>
         </antcall>
 
-        <mkdir dir="${plugin.dest.dir}" />
+        <mkdir dir="${plugin.dest.dir}"/>
 
         <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. -->
-        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin"/>
+        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml"
+                    except="admin"/>
 
         <antcall target="-plugins-impl-dev"/>
         <antcall target="-plugins-impl"/>
-        
-				<!-- Update/create target/wildfire directory -->
-				<antcall target="wildfireHome"/>
+
+        <!-- Update/create target/wildfire directory -->
+        <antcall target="wildfireHome"/>
 
     </target>
     <target name="-plugins-impl" if="dirlist">
@@ -952,8 +978,8 @@
         <delete file="${plugin.dest.dir}/${plugin}.jar"/>
         <buildplugin plugin="${plugin}" pluginsrc="${plugin.src.dir}"/>
 
-				<!-- Update/create target/wildfire directory -->
-				<antcall target="wildfireHome"/>
+        <!-- Update/create target/wildfire directory -->
+        <antcall target="wildfireHome"/>
     </target>
 
     <!-- buildplugin (MACRO) =================================================================== -->
@@ -970,11 +996,11 @@
             <!-- Compile plugin source code -->
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
             <javac
-                destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
-                includeAntRuntime="no"
-                debug="on"
-                source="1.5"
-                >
+                    destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
+                    includeAntRuntime="no"
+                    debug="on"
+                    source="1.5"
+                    >
                 <src path="@{pluginsrc}/@{plugin}/src/java"/>
                 <classpath>
                     <path refid="plugin.dependencies"/>
@@ -988,42 +1014,46 @@
             <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
             </jar>
-            <available file="@{pluginsrc}/@{plugin}/src/include" type="dir" property="@{plugin}.include.exists"/>
+            <available file="@{pluginsrc}/@{plugin}/src/include" type="dir"
+                       property="@{plugin}.include.exists"/>
             <if>
                 <equals arg1="${@{plugin}.include.exists}" arg2="true"/>
                 <then>
                     <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"
-                        update="true">
+                         update="true">
                         <fileset dir="@{pluginsrc}/@{plugin}/src/include" includes="**/*.*"/>
                     </jar>
                 </then>
             </if>
 
             <!-- Copy anything in the plugin's lib dir to the target lib dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false" overwrite="${overwrite}" >
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false"
+                  overwrite="${overwrite}">
                 <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*"/>
             </copy>
 
             <!-- Copy anything in the plugin's lib dir to the target lib dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false" overwrite="${overwrite}"  >
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false"
+                  overwrite="${overwrite}">
                 <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml"/>
                 <mapper type="glob" from="web.xml" to="web-custom.xml"/>
             </copy>
 
             <!-- Copy the plugin.xml and documentation to the target dir, code below assumes it's there -->
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false" overwrite="${overwrite}" >
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false"
+                  overwrite="${overwrite}">
                 <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html, *.gif, *.png"/>
             </copy>
 
             <!-- Copy the database and i18n file to the target dir, if they exist. -->
             <!--<copy todir="${plugin.dev.dest.dir}/@{plugin}/target/database" failonerror="false">-->
-                <!--<fileset dir="@{pluginsrc}/@{plugin}/src/database"/>-->
+            <!--<fileset dir="@{pluginsrc}/@{plugin}/src/database"/>-->
             <!--</copy>-->
 
             <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
             <available property="plugin.@{plugin}.webdocs.available"
-                type="dir" file="@{pluginsrc}/@{plugin}/src/web"/>
+                       type="dir" file="@{pluginsrc}/@{plugin}/src/web"/>
             <if>
                 <equals arg1="${plugin.@{plugin}.webdocs.available}" arg2="true"/>
                 <then>
@@ -1037,7 +1067,8 @@
                     <!-- Copy jsp's from plugin and web.xml from wildfire to a temp dir. We'll
                          not fail on an error since the web dir might not exist.
                     -->
-                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web" overwrite="${overwrite}">
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web"
+                          overwrite="${overwrite}">
                         <fileset dir="@{pluginsrc}/@{plugin}/src/web">
                             <exclude name="WEB-INF/web.xml"/>
                         </fileset>
@@ -1054,7 +1085,8 @@
                     <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperB">
                         <classpath>
                             <pathelement location="${java.home}/../lib/tools.jar"/>
-                            <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
+                            <pathelement
+                                    location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
                             <path refid="jspc.dependencies"/>
                             <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
                             <pathelement path="${compile.dir}"/>
@@ -1063,16 +1095,16 @@
 
                     <!-- JSP to Java -->
                     <jasper2
-                        validateXml="false"
-                        uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
-                        outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
-                        package="org.jivesoftware.wildfire.plugin.@{plugin}"
-                        webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
-                        />
+                            validateXml="false"
+                            uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
+                            outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
+                            package="org.jivesoftware.wildfire.plugin.@{plugin}"
+                            webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                            />
 
                     <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
                     <available property="plugin.@{plugin}.webxml.available"
-                        type="file" file="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml"/>
+                               type="file" file="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml"/>
 
                     <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF"/>
 
@@ -1087,37 +1119,43 @@
                                 <copy path="//web-app/servlet-mapping[last()]" buffer="foobar2"/>
                             </xmltask>
                             <!-- Add the copied servlet and servlet-mapping elements to the generated web.xml -->
-                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
-                                <insert path="/web-app/servlet[last()]" buffer="foobar" position="after"/>
-                                <insert path="/web-app/servlet-mapping[last()]" buffer="foobar2" position="after"/>
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                                     dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
+                                <insert path="/web-app/servlet[last()]" buffer="foobar"
+                                        position="after"/>
+                                <insert path="/web-app/servlet-mapping[last()]" buffer="foobar2"
+                                        position="after"/>
                             </xmltask>
 
                         </then>
                         <else>
                             <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF"
-                                file="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml" overwrite="${overwrite}"/>
+                                  file="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                                  overwrite="${overwrite}"/>
                         </else>
                     </if>
 
                     <!-- Compile java classes -->
                     <javac
-                        destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
-                        includeAntRuntime="no"
-                        debug="on"
-                        source="1.5"
-                        >
+                            destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
+                            includeAntRuntime="no"
+                            debug="on"
+                            source="1.5"
+                            >
                         <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                         <classpath>
                             <path refid="jspc.dependencies"/>
                             <pathelement path="${compile.dir}"/>
                             <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                            <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
+                            <pathelement
+                                    location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
                         </classpath>
                     </javac>
 
                     <!-- Make a jar of compiled jsp classes -->
-                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar" >
-                        <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes" includes="**/*.class"/>
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar">
+                        <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
+                                 includes="**/*.class"/>
                     </jar>
 
                 </then>
@@ -1126,23 +1164,25 @@
             <!-- Some JAR files don't work well through Pack200. When that's the case, they should
                  be manually added to this list.
             -->
-            <property name="pack200.excludes" value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+            <property name="pack200.excludes"
+                      value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar"/>
 
             <for param="jar">
                 <path>
-                    <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar" excludes="${pack200.excludes}"/>
+                    <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar"
+                             excludes="${pack200.excludes}"/>
                 </path>
                 <sequential>
-                    <delete file="@{jar}.pack" />
+                    <delete file="@{jar}.pack"/>
                     <pack200 src="@{jar}"
-                        destfile="@{jar}.pack"
-                        gzipoutput="false"
-                    />
+                             destfile="@{jar}.pack"
+                             gzipoutput="false"
+                            />
                 </sequential>
             </for>
 
             <!-- Copy everything else to Wildfire's plugin dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true" >
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.pack"/>
                     <include name="web/WEB-INF/web.xml"/>
@@ -1164,8 +1204,9 @@
             </copy>
 
             <!-- Excluded pack files need to be copied over as well -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true" >
-                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="${pack200.excludes}"/>
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"
+                         includes="${pack200.excludes}"/>
             </copy>
 
             <!-- Jar the plugin -->
@@ -1186,11 +1227,11 @@
         <mkdir dir="${anttools.target.dir}/classes"/>
 
         <javac
-            destdir="${anttools.target.dir}/classes"
-            includeAntRuntime="no"
-            debug="on"
-            source="1.4"
-            >
+                destdir="${anttools.target.dir}/classes"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.4"
+                >
             <src path="${anttools.src.dir}"/>
             <patternset refid="compile.sources"/>
             <classpath>
@@ -1211,95 +1252,95 @@
 
     <!-- clean-jspc ============================================================================ -->
     <!-- Cleans all JSPC output -->
-    <target name="clean-jspc" >
+    <target name="clean-jspc">
         <delete dir="${jspc.dest.dir}"/>
     </target>
 
     <!-- clean-test ============================================================================ -->
     <!-- Cleans all compiled test classes -->
-    <target name="clean-test" >
+    <target name="clean-test">
         <delete dir="${test.classes.dest.dir}"/>
     </target>
 
     <!-- clean-plugins ========================================================================= -->
     <!-- Cleans all generated plugins -->
-    <target name="clean-plugins" >
+    <target name="clean-plugins">
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*" />
+            <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*"/>
         </delete>
         <!--<delete dir="${plugin.dest.dir}"/> -->
         <delete dir="${plugin.dev.dest.dir}"/>
     </target>
 
     <!-- Mac installer ========================================================================= -->
-    <property name="mac.pkg.dir" value="${basedir}/macpkg" />
-	<property name="mac.dmg.dir" value="${basedir}/Wildfire" />
-	<property name="mac.dmg.file" value="${basedir}/wildfire.dmg" />
-	<property name="mac.dmg.template" value="${basedir}/build/osx/template.dmg" />
+    <property name="mac.pkg.dir" value="${basedir}/macpkg"/>
+    <property name="mac.dmg.dir" value="${basedir}/Wildfire"/>
+    <property name="mac.dmg.file" value="${basedir}/wildfire.dmg"/>
+    <property name="mac.dmg.template" value="${basedir}/build/osx/template.dmg"/>
 
-	<target name="mac.delete">
-		<delete dir="${mac.pkg.dir}" />
-		<delete dir="${mac.dmg.dir}" />
-		<delete file="${mac.dmg.file}" />
-	</target>
+    <target name="mac.delete">
+        <delete dir="${mac.pkg.dir}"/>
+        <delete dir="${mac.dmg.dir}"/>
+        <delete file="${mac.dmg.file}"/>
+    </target>
 
-	<target name="mac.prepare" depends="mac.delete,wildfire">
-		<unzip src="${basedir}/build/osx/template.dmg.zip" dest="${basedir}/build/osx/" />
-		<copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg" />
-		<mkdir dir="${mac.dmg.dir}" />
-		<exec executable="hdiutil" failonerror="true">
-			<arg line="attach '${basedir}/tmp.dmg' -noautoopen -mountpoint '${mac.dmg.dir}'" />
-		</exec>
-		<copy todir="${mac.pkg.dir}/usr/local/wildfire">
-			<fileset dir="${work.dir}">
-				<exclude name="**/wildfired"/>
-				<exclude name="**/embedded-db*"/>
-				<exclude name="**/redhat-postinstall.sh"/>
-			</fileset>
-		</copy>
-		<mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
-		<copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist"
-			todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
-		<mkdir dir="${mac.dmg.dir}"/>
-		<exec executable="chown">
-			<arg line="-R root:wheel ${mac.pkg.dir}"/>
-		</exec>
-		<chmod perm="ug+x">
-			<fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
-				<include name="wildfire.sh"/>
-				<include name="extra/launchd-wrapper.sh"/>
-			</fileset>
-			<fileset dir="${basedir}/build/osx/resources"/>
-		</chmod>
-	</target>
+    <target name="mac.prepare" depends="mac.delete,wildfire">
+        <unzip src="${basedir}/build/osx/template.dmg.zip" dest="${basedir}/build/osx/"/>
+        <copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg"/>
+        <mkdir dir="${mac.dmg.dir}"/>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="attach '${basedir}/tmp.dmg' -noautoopen -mountpoint '${mac.dmg.dir}'"/>
+        </exec>
+        <copy todir="${mac.pkg.dir}/usr/local/wildfire">
+            <fileset dir="${work.dir}">
+                <exclude name="**/wildfired"/>
+                <exclude name="**/embedded-db*"/>
+                <exclude name="**/redhat-postinstall.sh"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+        <copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist"
+              todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+        <mkdir dir="${mac.dmg.dir}"/>
+        <exec executable="chown">
+            <arg line="-R root:wheel ${mac.pkg.dir}"/>
+        </exec>
+        <chmod perm="ug+x">
+            <fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
+                <include name="wildfire.sh"/>
+                <include name="extra/launchd-wrapper.sh"/>
+            </fileset>
+            <fileset dir="${basedir}/build/osx/resources"/>
+        </chmod>
+    </target>
 
-	<!-- Create a Mac OS X installer -->
-	<target name="mac.pkg" depends="mac.prepare">
-		<exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
-			<arg value="-build"/>
-			<arg value="-proj" />
-			<arg value="${basedir}/build/osx/wildfire.pmproj"/>
-			<arg value="-p"/>
-			<arg value="${mac.dmg.dir}/Wildfire.pkg"/>
-			<arg value="-v"/>
-			<arg value="-ds"/>
-		</exec>
-	</target>
+    <!-- Create a Mac OS X installer -->
+    <target name="mac.pkg" depends="mac.prepare">
+        <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
+            <arg value="-build"/>
+            <arg value="-proj"/>
+            <arg value="${basedir}/build/osx/wildfire.pmproj"/>
+            <arg value="-p"/>
+            <arg value="${mac.dmg.dir}/Wildfire.pkg"/>
+            <arg value="-v"/>
+            <arg value="-ds"/>
+        </exec>
+    </target>
 
-	<target name="installer-mac" depends="mac.pkg" description="Creates a Mac OS X package">
-		<exec executable="hdiutil" failonerror="true">
-			<arg line="detach ${mac.dmg.dir} -quiet -force" />
-		</exec>
+    <target name="installer-mac" depends="mac.pkg" description="Creates a Mac OS X package">
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="detach ${mac.dmg.dir} -quiet -force"/>
+        </exec>
         <exec executable="hdiutil" failonerror="true">
             <arg line="convert ${basedir}/tmp.dmg -format UDZO -o ${mac.dmg.file}"/>
         </exec>
         <delete file="${basedir}/tmp.dmg"/>
-	</target>
+    </target>
 
     <!-- Debian package ========================================================================= -->
-    <property name="debian.dir" value="${basedir}/build/debian" />
-    <property name="debian.release.dir" value="${target.dir}/debian" />
-    <property name="debian.release.install_path" value="${debian.release.dir}/usr/bin" />
+    <property name="debian.dir" value="${basedir}/build/debian"/>
+    <property name="debian.release.dir" value="${target.dir}/debian"/>
+    <property name="debian.release.install_path" value="${debian.release.dir}/usr/bin"/>
     <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
     <tstamp>
         <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
@@ -1314,7 +1355,7 @@
         </copy>
 
         <copy todir="${debian.release.dir}/DEBIAN">
-            <fileset dir="${debian.dir}" includes="**/*" />
+            <fileset dir="${debian.dir}" includes="**/*"/>
             <filterset>
                 <filter token="builddate" value="${debian.builddate}"/>
                 <filter token="version" value="${debian.version}"/>
@@ -1339,7 +1380,7 @@
         <exec executable="dpkg" failonerror="true">
             <arg line="-b ${debian.release.dir} ${dist.prefix}_${debian.version}-i386.deb"/>
         </exec>
-        <move file="${dist.prefix}_${debian.version}-i386.deb" todir="${release.dest.dir}" />
+        <move file="${dist.prefix}_${debian.version}-i386.deb" todir="${release.dest.dir}"/>
         <delete dir="${debian.release.dir}"/>
     </target>
 

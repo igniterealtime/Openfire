@@ -425,23 +425,18 @@
 
     </target>
     <target name="-jspc-impl" unless="no.jspc">
-
-        <!-- Have to use Tomcat 5's JspC task, not the default Ant one -->
-        <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperA">
-            <classpath id="jspc.classpath">
+				<java classname="org.apache.jasper.JspC" fork="true">
+            <classpath>
                 <pathelement location="${java.home}/../lib/tools.jar"/>
                 <pathelement path="${compile.dir}"/>
                 <path refid="jspc.dependencies"/>
             </classpath>
-        </taskdef>
-
-        <!-- JSP to JAVA -->
-        <jasper2
-            validateXml="false"
-            uriroot="${web.dir}"
-            outputDir="${jspc.java.dest.dir}"
-            package="org.jivesoftware.wildfire.admin"
-            webXmlFragment="${jspc.dest.dir}/web.partial.xml"/>
+						<arg line="-compile" />
+						<arg line="-uriroot \jive\scm\wildfire\work\jspc\java" />
+						<arg line="-d \Jive\scm\wildfire\work\jspc\java" />
+						<arg line="-p org.jivesoftware.wildfire.admin" />
+						<arg line="-webinc ${jspc.dest.dir}/web.partial.xml" />
+				</java>
 
         <!-- Compile java source -->
         <javac
@@ -723,7 +718,7 @@
 		</target>
 
     <!-- dist.bin =============================================================================== -->
-    <target name="dist.bin" depends="wildfire,javadoc" description="Creates a binary distribution package">
+    <target name="dist.bin" depends="plugins,javadoc" description="Creates a binary distribution package">
 				<!-- ie: wildfire -->
 				<property name="release.name" value="${dist.prefix}"/>
 				<!-- ie: wildfire_2_1_2 -->

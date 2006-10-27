@@ -115,7 +115,7 @@ public class AdminConsole {
      *
      * @return the name of the application.
      */
-    public static String getAppName() {
+    public static synchronized String getAppName() {
         Element appName = (Element)generatedModel.selectSingleNode("//adminconsole/global/appname");
         if (appName != null) {
             String pluginName = appName.attributeValue("plugin");
@@ -131,7 +131,7 @@ public class AdminConsole {
      *
      * @return the logo image.
      */
-    public static String getLogoImage() {
+    public static synchronized String getLogoImage() {
         Element globalLogoImage = (Element)generatedModel.selectSingleNode(
                 "//adminconsole/global/logo-image");
         if (globalLogoImage != null) {
@@ -148,7 +148,7 @@ public class AdminConsole {
      *
      * @return the login image.
      */
-    public static String getLoginLogoImage() {
+    public static synchronized String getLoginLogoImage() {
         Element globalLoginLogoImage = (Element)generatedModel.selectSingleNode(
                 "//adminconsole/global/login-image");
         if (globalLoginLogoImage != null) {
@@ -165,7 +165,7 @@ public class AdminConsole {
      *
      * @return the version string.
      */
-    public static String getVersionString() {
+    public static synchronized String getVersionString() {
         Element globalVersion = (Element)generatedModel.selectSingleNode(
                 "//adminconsole/global/version");
         if (globalVersion != null) {
@@ -184,7 +184,7 @@ public class AdminConsole {
      *
      * @return the model.
      */
-    public static Element getModel() {
+    public static synchronized Element getModel() {
         return generatedModel;
     }
 
@@ -195,7 +195,7 @@ public class AdminConsole {
      * @param id the ID.
      * @return the element.
      */
-    public static Element getElemnetByID(String id) {
+    public static synchronized Element getElemnetByID(String id) {
         return (Element)generatedModel.selectSingleNode("//*[@id='" + id + "']");
     }
 
@@ -282,7 +282,7 @@ public class AdminConsole {
     /**
      * Rebuilds the generated model.
      */
-    private static void rebuildModel() {
+    private static synchronized void rebuildModel() {
         Document doc = DocumentFactory.getInstance().createDocument();
         generatedModel = coreModel.createCopy();
         doc.add(generatedModel);

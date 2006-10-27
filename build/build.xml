@@ -431,13 +431,12 @@
                 <pathelement path="${compile.dir}"/>
                 <path refid="jspc.dependencies"/>
             </classpath>
-						<arg line="-compile" />
-						<arg line="-uriroot \jive\scm\wildfire\work\jspc\java" />
-						<arg line="-d \Jive\scm\wildfire\work\jspc\java" />
+						<arg line="-uriroot ${web.dir}" />
+						<arg line="-d ${jspc.java.dest.dir}" />
 						<arg line="-p org.jivesoftware.wildfire.admin" />
 						<arg line="-webinc ${jspc.dest.dir}/web.partial.xml" />
 				</java>
-
+        
         <!-- Compile java source -->
         <javac
             destdir="${jspc.classes.dest.dir}"

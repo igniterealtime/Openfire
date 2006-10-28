@@ -781,6 +781,23 @@
             </sequential>
         </for>
 
+        <!-- Pack200 processing on JAR files in admin plugin lib dir -->
+
+        <for param="jar">
+            <path>
+                <fileset dir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib" includes="*.jar"
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+            </path>
+            <sequential>
+                <delete file="@{jar}.pack"/>
+                <pack200 src="@{jar}"
+                         destfile="@{jar}.pack"
+                         gzipoutput="false"
+                        />
+                <delete file="@{jar}"/>
+            </sequential>
+        </for>
+
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>

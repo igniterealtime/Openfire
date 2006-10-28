@@ -78,7 +78,12 @@ public class ServerStarter {
             }
 
             // Unpack any pack files.
-            unpackArchives(libDir);
+            unpackArchives(libDir, true);
+
+            File adminLibDir = new File("../plugins/admin/webapp/WEB-INF/lib");
+            if (adminLibDir.exists()) {
+                unpackArchives(adminLibDir, false);
+            }
 
             ClassLoader loader = new JiveClassLoader(parent, libDir);
 
@@ -114,8 +119,9 @@ public class ServerStarter {
      * pack files are found, this method does nothing.
      *
      * @param libDir the directory containing pack files.
+     * @param printStatus true if status ellipses should be printed when unpacking.
      */
-    private void unpackArchives(File libDir) {
+    private void unpackArchives(File libDir, boolean printStatus) {
         // Get a list of all packed files in the lib directory.
         File [] packedFiles = libDir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
@@ -146,7 +152,9 @@ public class ServerStarter {
                         new FileOutputStream(new File(libDir, jarName))));
                 Pack200.Unpacker unpacker = Pack200.newUnpacker();
                 // Print something so the user knows something is happening.
-                System.out.print(".");
+                if (printStatus) {
+                    System.out.print(".");
+                }
                 // Call the unpacker
                 unpacker.unpack(in, out);
 
@@ -160,7 +168,7 @@ public class ServerStarter {
             }
         }
         // Print newline if unpacking happened.
-        if (unpacked) {
+        if (unpacked && printStatus) {
             System.out.println();
         }
     }

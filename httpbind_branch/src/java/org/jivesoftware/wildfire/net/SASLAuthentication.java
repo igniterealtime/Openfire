@@ -12,6 +12,9 @@
 package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
+import org.dom4j.QName;
+import org.dom4j.Namespace;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
@@ -145,6 +148,43 @@ public class SASLAuthentication {
         }
         sb.append("</mechanisms>");
         return sb.toString();
+    }
+
+    public static Element getSASLMechanismsElement(Session session) {
+        if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
+            return null;
+        }
+
+        Element mechs = DocumentHelper.createElement(new QName("mechanisms",
+                new Namespace("", "urn:ietf:params:xml:ns:xmpp-sasl")));
+        if (session instanceof IncomingServerSession) {
+            // Server connections dont follow the same rules as clients
+            if (session.getConnection().isSecure()) {
+                // Offer SASL EXTERNAL only if TLS has already been negotiated
+                Element mechanism = mechs.addElement("mechanism");
+                mechanism.setText("EXTERNAL");
+            }
+        }
+        else {
+            for (String mech : mechanisms) {
+                if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
+                    // Check if the user provider in use supports passwords retrieval. Accessing
+                    // to the users passwords will be required by the CallbackHandler
+                    if (!AuthFactory.getAuthProvider().supportsPasswordRetrieval()) {
+                        continue;
+                    }
+                }
+                else if (mech.equals("ANONYMOUS")) {
+                    // Check anonymous is supported
+                    if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
+                        continue;
+                    }
+                }
+                Element mechanism = mechs.addElement("mechanism");
+                mechanism.setText(mech);
+            }
+        }
+        return mechs;
     }
 
     /**

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.wildfire.plugin.UserServicePlugin</class>
+    <name>User Service</name>
+    <description>Allows administration of users via HTTP requests.</description>
+    <author>Justin Hunt</author>
+    <version>1.1.1</version>
+    <date>10/06/2006</date>
+    <minServerVersion>3.1.0</minServerVersion>
+    
+    <adminconsole>		
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="user-service" name="User Service" url="user-service.jsp"
+                     description="Click to manage the service that allows remote admin of users" />
+            </sidebar>
+        </tab>
+    </adminconsole>
+
+</plugin>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+   <class>org.jivesoftware.wildfire.plugin.SubscriptionPlugin</class>
+
+   <name>Subscription</name>
+   <description>Automatically accepts or rejects subsription requests</description>
+   <author>Ryan Graham</author>
+   <version>1.0.1</version>
+   <date>10/06/2006</date>
+   <url>http://www.jivesoftware.org</url>
+   <minServerVersion>3.1.0</minServerVersion>
+
+   <adminconsole>
+      <tab id="tab-server">
+         <sidebar id="sidebar-server-settings">
+            <item id="subscription-plugin-properties" 
+                  name="Subscription Properties" 
+                  url="subscription-plugin-properties.jsp" 
+                  description="Edit subscription plugin properties" />
+         </sidebar>
+      </tab>
+   </adminconsole>
+</plugin>

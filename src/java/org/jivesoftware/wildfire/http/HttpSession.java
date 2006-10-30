@@ -15,6 +15,7 @@ import org.jivesoftware.wildfire.StreamID;
 import org.jivesoftware.wildfire.Connection;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.net.VirtualConnection;
+import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Message;
@@ -110,6 +111,11 @@ public class HttpSession extends ClientSession {
 
     public Collection<Element> getAvailableStreamFeaturesElements() {
         List<Element> elements = new ArrayList<Element>();
+
+        Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
+        if(sasl != null) {
+            elements.add(sasl);
+        }
 
         // Include Stream Compression Mechanism
         if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&

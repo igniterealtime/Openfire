@@ -14,20 +14,14 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.*;
+import org.jivesoftware.wildfire.vcard.VCardManager;
 import org.jivesoftware.wildfire.vcard.VCardProvider;
 import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
@@ -103,13 +97,19 @@ import java.util.Set;
  *
  * @author rkelly
  */
-public class LdapVCardProvider implements VCardProvider {
+public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     private LdapManager manager;
     private VCardTemplate template;
 
     public LdapVCardProvider() {
         manager = LdapManager.getInstance();
+        initTemplate();
+        // Listen to property events so that the template is always up to date
+        PropertyEventDispatcher.addListener(this);
+    }
+
+    private void initTemplate() {
         String property = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
         Log.debug("Found vcard mapping: '" + property);
         try {
@@ -143,8 +143,7 @@ public class LdapVCardProvider implements VCardProvider {
                 javax.naming.directory.Attribute attr = attrs.get(attribute);
                 String value;
                 if (attr == null) {
-                    Log.debug("No ldap value found for attribute '" + attribute
-                            + "'");
+                    Log.debug("No ldap value found for attribute '" + attribute + "'");
                     value = "";
                 }
                 else {
@@ -197,6 +196,27 @@ public class LdapVCardProvider implements VCardProvider {
         return true;
     }
 
+
+    public void propertySet(String property, Map params) {
+        //Ignore
+    }
+
+    public void propertyDeleted(String property, Map params) {
+        //Ignore
+    }
+
+    public void xmlPropertySet(String property, Map params) {
+        if ("ldap.vcard-mapping".equals(property)) {
+            initTemplate();
+            // Reset cache of vCards
+            VCardManager.getInstance().reset();
+        }
+    }
+
+    public void xmlPropertyDeleted(String property, Map params) {
+        //Ignore
+    }
+
     /**
      * Class to hold a <code>Document</code> representation of a vcard mapping
      * and unique attribute placeholders. Used by <code>VCard</code> to apply
@@ -231,10 +251,11 @@ public class LdapVCardProvider implements VCardProvider {
                 Node node = element.node(i);
                 if (node instanceof Element) {
                     Element emement = (Element) node;
-                    String[] attrs = emement.getTextTrim().split(",");
-                    for (String string : attrs) {
+
+                    StringTokenizer st = new StringTokenizer(emement.getTextTrim(), ", //{}");
+                    while (st.hasMoreTokens()) {
                         // Remove enclosing {}
-                        string = string.replaceAll("(\\{)([\\d\\D]+)(})", "$2");
+                        String string = st.nextToken().replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2");
                         Log.debug("VCardTemplate: found attribute " + string);
                         set.add(string);
                     }
@@ -267,16 +288,20 @@ public class LdapVCardProvider implements VCardProvider {
                 if (node instanceof Element) {
                     Element emement = (Element) node;
 
-                    String[] attrs = emement.getTextTrim().split(",");
-                    Object[] values = new String[attrs.length];
-                    String format = emement.getStringValue();
-                    for (int j = 0; j < attrs.length; j++) {
-                        // Remove enclosing {}
-                        String attrib = attrs[j].replaceAll("(\\{)([\\d\\D]+)(})", "$2");
-                        values[j] = map.get(attrib);
-                        format = format.replaceFirst("(\\{)([\\d\\D]+)(})", "$1" + j + "$3");
+                    String elementText = emement.getTextTrim();
+                    if (elementText != null && !"".equals(elementText)) {
+                        String format = emement.getStringValue();
+
+                        StringTokenizer st = new StringTokenizer(elementText, ", //{}");
+                        while (st.hasMoreTokens()) {
+                            // Remove enclosing {}
+                            String field = st.nextToken();
+                            String attrib = field.replaceAll("(\\{)(" + field + ")(})", "$2");
+                            String value = map.get(attrib);
+                            format = format.replaceFirst("(\\{)(" + field + ")(})", value);
+                        }
+                        emement.setText(format);
                     }
-                    emement.setText(MessageFormat.format(format, values));
                     treeWalk(emement, map);
                 }
             }

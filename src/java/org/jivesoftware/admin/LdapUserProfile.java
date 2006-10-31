@@ -470,8 +470,8 @@ public class LdapUserProfile {
         JiveGlobals.setXMLProperty("provider.vcard.className", LdapVCardProvider.class.getName());
 
         // Save duplicated fields in LdapManager (should be removed in the future)
-        LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D]+)(})", "$2"));
-        LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D]+)(})", "$2"));
+        LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
+        LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
     }
 
     /**

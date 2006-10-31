@@ -282,10 +282,9 @@ public class LdapUserTester {
         public PropertyMapping(String displayFormat) {
             this.displayFormat = displayFormat;
 
-            for (String field : displayFormat.trim().split(",")) {
-                if (field.trim().startsWith("{")) {
-                    fields.add(field.trim().replaceAll("(\\{)([\\d\\D]+)(})", "$2"));
-                }
+            StringTokenizer st = new StringTokenizer(displayFormat.trim(), ", //{}");
+            while (st.hasMoreTokens()) {
+                fields.add(st.nextToken().replaceFirst("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
             }
         }
 

@@ -286,6 +286,13 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         UserEventDispatcher.removeListener(eventHandler);
     }
 
+    /**
+     * Resets the manager state. The cache where loaded vCards are stored will be flushed.
+     */
+    public void reset() {
+        vcardCache.clear();
+    }
+
     public Iterator<String> getFeatures() {
         ArrayList<String> features = new ArrayList<String>();
         features.add("vcard-temp");

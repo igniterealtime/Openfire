@@ -2,7 +2,7 @@
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="false">
-    <output url="file://$MODULE_DIR$/target/classes" />
+    <output url="file://$MODULE_DIR$/work/classes" />
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
@@ -148,10 +148,10 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/merge/dom4j.jar!/" />
         </CLASSES>
-        <JAVADOC>
-          <root url="http://www.dom4j.org/apidocs/" />
-        </JAVADOC>
-        <SOURCES />
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../../java/dom4j-1.6.1/src/java" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
@@ -329,6 +329,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/merge/commons-httpclient.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../Documents and Settings/gato/.IntelliJIdea60/config/plugins/Clover_for_IDEA_2848.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

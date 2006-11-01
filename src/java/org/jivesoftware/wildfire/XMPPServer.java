@@ -199,10 +199,8 @@ public class XMPPServer {
      * @return true if the given address matches a component service JID.
      */
     public boolean matchesComponent(JID jid) {
-        if (jid != null) {
-            return !name.equals(jid.getDomain()) && componentManager.getComponent(jid) != null;
-        }
-        return false;
+        return jid != null && !name.equals(jid.getDomain()) &&
+                componentManager.getComponent(jid) != null;
     }
 
     /**
@@ -364,6 +362,10 @@ public class XMPPServer {
         try {
             initialize();
 
+            // Create PluginManager now (but don't start it) so that modules may use it
+            File pluginDir = new File(wildfireHome, "plugins");
+            pluginManager = new PluginManager(pluginDir);
+
             // If the server has already been setup then we can start all the server's modules
             if (!setupMode) {
                 verifyDataSource();
@@ -381,8 +383,6 @@ public class XMPPServer {
             ServerTrafficCounter.initStatistics();
 
             // Load plugins (when in setup mode only the admin console will be loaded)
-            File pluginDir = new File(wildfireHome, "plugins");
-            pluginManager = new PluginManager(pluginDir);
             pluginManager.start();
 
             // Log that the server has been started

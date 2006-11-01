@@ -3,7 +3,7 @@ Name                   |  Version
 ant.jar                | Jetty 5.1.10
 ant-contrib.jar        | 1.0b1
 ant-subdirtask.jar     | Revision 1.4 (CVS)
-bouncycastle.jar       | JDK 1.5, 133 (bcprov-jdk15-133.jar)
+bouncycastle.jar       | JDK 1.5, 134 (bcprov-jdk15-134.jar)
 commons-logging.jar    | Jetty 5.1.10
 commons-el.jar         | Jetty 5.1.10
 commons-httpclient.jar | 3.0

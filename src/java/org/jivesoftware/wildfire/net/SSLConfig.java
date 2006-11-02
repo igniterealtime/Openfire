@@ -3,7 +3,7 @@
  * $Revision: 1217 $
  * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -36,13 +36,14 @@ public class SSLConfig {
     private static String trustpass;
     private static String keyStoreLocation;
     private static String trustStoreLocation;
+    private static String storeType;
 
     private SSLConfig() {
     }
 
     static {
         String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-        String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
+        storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
 
         // Get the keystore location. The default location is security/keystore
         keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
@@ -150,5 +151,21 @@ public class SSLConfig {
         else {
             return sslFactory.createServerSocket(port, -1, ifAddress);
         }
+    }
+
+    public static String getKeystoreLocation() {
+        return keyStoreLocation;
+    }
+
+    public static String getTruststoreLocation() {
+        return trustStoreLocation;
+    }
+
+    public static String getStoreType() {
+        return storeType;
+    }
+
+    public static SSLJiveServerSocketFactory getServerSocketFactory() {
+        return sslFactory;
     }
 }

@@ -134,6 +134,11 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jetty-util.jar" />
+      <url>jar://$MODULE_DIR$/build/lib/merge/jetty-util.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/jetty.jar" />
       <url>jar://$MODULE_DIR$/build/lib/merge/jetty.jar!/</url>
     </containerElement>
@@ -141,6 +146,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/jmdns.jar" />
       <url>jar://$MODULE_DIR$/build/lib/merge/jmdns.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="&lt;N/A&gt;" />
+      <url>jar://$MODULE_DIR$/build/lib/merge/jsp-api.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />

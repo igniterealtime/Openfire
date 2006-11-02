@@ -72,6 +72,11 @@
                     url="connection-managers-settings.jsp"
                     description="${sidebar.connection-managers-settings.descr}" />
 
+            <!-- HTTP binding -->
+            <item id="http-bind" name="${sidebar.http-bind}"
+                url="http-bind.jsp"
+                description="${sidebar.http-bind.descr}" />
+
             <!-- Manage updates -->
             <item id="manage-updates" name="${sidebar.manage-updates}"
                     url="manage-updates.jsp"

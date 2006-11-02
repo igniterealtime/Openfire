@@ -15,10 +15,14 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.http.HttpSessionManager;
+import org.jivesoftware.wildfire.http.HttpBindServlet;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.wildfire.net.*;
-
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.servlet.ServletHandler;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -48,10 +52,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private boolean isStarted = false;
     // Used to know if the sockets have been started
     private boolean isSocketStarted = false;
+    private HttpServerManager serverManager;
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
         ports = new ArrayList<ServerPort>(4);
+        serverManager = HttpServerManager.getInstance();
     }
 
     private void createSocket() {
@@ -82,6 +88,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         startClientListeners(localIPAddress);
         // Start the port listener for secured clients
         startClientSSLListeners(localIPAddress);
+        // Start the HTTP client listener
+        startHTTPBindListeners();
     }
 
     private void startServerListener(String localIPAddress) {
@@ -280,6 +288,14 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return new ConnectionMultiplexerSocketReader(router, routingTable, serverName, sock,
                     conn, useBlockingMode);
         }
+    }
+
+    private void startHTTPBindListeners() {
+        serverManager.setHttpBindContext(createServletHandler(), "/http-bind/");
+    }
+
+    private ServletHolder createServletHandler() {
+        return new ServletHolder(new HttpBindServlet(new HttpSessionManager()));
     }
 
     public void initialize(XMPPServer server) {

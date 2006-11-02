@@ -30,6 +30,7 @@ import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.http.HttpSession;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -537,6 +538,21 @@ public class SessionManager extends BasicModule {
         // Add to pre-authenticated sessions.
         preAuthenticatedSessions.put(session.getAddress().getResource(), session);
         // Increment the counter of user sessions
+        usersSessionsCounter.incrementAndGet();
+        return session;
+    }
+
+    public HttpSession createClientHttpSession(InetAddress address, StreamID id)
+            throws UnauthorizedException
+    {
+        if (serverName == null) {
+            throw new UnauthorizedException("Server not initialized");
+        }
+        HttpSession session = new HttpSession(serverName, address, id);
+        Connection conn = session.getConnection();
+        conn.init(session);
+        conn.registerCloseListener(clientSessionListener, session);
+        preAuthenticatedSessions.put(session.getAddress().getResource(), session);
         usersSessionsCounter.incrementAndGet();
         return session;
     }

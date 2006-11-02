@@ -57,7 +57,6 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://J:/whack/source/java" />
           <root url="jar://$MODULE_DIR$/build/lib/merge/whack.jar!/" />
         </SOURCES>
       </library>
@@ -149,9 +148,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/merge/dom4j.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../java/dom4j-1.6.1/src/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
@@ -337,7 +334,16 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../Documents and Settings/gato/.IntelliJIdea60/config/plugins/Clover_for_IDEA_2848.jar!/" />
+          <root url="jar://$MODULE_DIR$/build/lib/merge/jetty-util.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/merge/jsp-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

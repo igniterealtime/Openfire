@@ -41,6 +41,8 @@ public interface ConnectionManager {
      * @param serverPort holds information about the port on which the server is listening for
      *        connections.
      * @param useBlockingMode true means that the server will use a thread per connection.
+     * @return the created socket reader.
+     * @throws java.io.IOException when there is an error creating the socket reader.
      */
     public SocketReader createSocketReader(Socket socket, boolean isSecure, ServerPort serverPort,
             boolean useBlockingMode) throws IOException;

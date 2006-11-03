@@ -130,7 +130,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     private Map<String, String> getLdapAttributes(String username) {
         // Un-escape username
         username = JID.unescapeNode(username);
-        HashMap<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<String, String>();
 
         DirContext ctx = null;
         try {
@@ -156,7 +156,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         }
         catch (Exception e) {
             Log.error(e);
-            return null;
+            return Collections.emptyMap();
         }
         finally {
             try {

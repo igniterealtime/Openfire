@@ -155,6 +155,9 @@ public class PresencePlugin implements Plugin, Component {
      *         does not exist in the local server.
      */
     public Presence getPresence(String sender, String jid) throws UserNotFoundException {
+        if (jid == null) {
+            throw new UserNotFoundException("Target JID not found in request");
+        }
         JID targetJID = new JID(jid);
         // Check that the sender is not requesting information of a remote server entity
         if (targetJID.getDomain() == null || XMPPServer.getInstance().isRemote(targetJID)) {

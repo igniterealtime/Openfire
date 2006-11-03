@@ -300,7 +300,7 @@ public class IQRouter extends BasicModule {
                 }
                 // If a route to the target address was not found then try to answer a
                 // service_unavailable error code to the sender of the IQ packet
-                if (!handlerFound && IQ.Type.result != packet.getType()) {
+                if (!handlerFound && IQ.Type.result != packet.getType() && IQ.Type.error != packet.getType()) {
                     sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                 }
             }
@@ -319,6 +319,10 @@ public class IQRouter extends BasicModule {
 
     private void sendErrorPacket(IQ originalPacket, PacketError.Condition condition)
             throws UnauthorizedException {
+        if (IQ.Type.error == originalPacket.getType()) {
+            Log.error("Cannot reply an IQ error to another IQ error: " + originalPacket);
+            return;
+        }
         IQ reply = IQ.createResultIQ(originalPacket);
         reply.setChildElement(originalPacket.getChildElement().createCopy());
         reply.setError(condition);

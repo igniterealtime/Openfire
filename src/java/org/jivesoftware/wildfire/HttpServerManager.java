@@ -109,14 +109,15 @@ public class HttpServerManager {
         int securePort = JiveGlobals.getXMLProperty(ADMIN_CONOSLE_SECURE_PORT,
                 ADMIN_CONSOLE_SECURE_PORT_DEFAULT);
         boolean loadConnectors = true;
-        if(httpBindServer != null) {
-            if(port == this.port && securePort == this.securePort) {
+        if (httpBindServer != null) {
+            if (port == this.port && securePort == this.securePort) {
                 adminServer = httpBindServer;
                 loadConnectors = false;
             }
-            else if(checkPorts(new int[] { this.port, this.securePort },
-                    new int [] {port, securePort})) {
-                Log.warn("Http bind ports must be either the same or distinct from admin console" +
+            else if (checkPorts(new int[] { this.port, this.securePort },
+                    new int [] {port, securePort}))
+            {
+                Log.warn("HTTP bind ports must be either the same or distinct from admin console" +
                         " ports.");
                 httpBindServer = null;
                 httpBindServer = new Server();
@@ -164,7 +165,7 @@ public class HttpServerManager {
                 httpBindServer.start();
             }
             catch (Exception e) {
-                Log.error("Could not start http bind server", e);
+                Log.error("Could not start HTTP bind server", e);
             }
         }
         if(adminServer != null && adminServer != httpBindServer) {
@@ -182,14 +183,14 @@ public class HttpServerManager {
     }
 
     private void addContexts() {
-        if(httpBindServer == adminServer && httpBindServer != null) {
+        if (httpBindServer == adminServer && httpBindServer != null) {
             adminConsoleContext.addServlet(httpBindContext, httpBindPath);
             if (adminConsoleContext.getServer() == null) {
                 adminServer.addHandler(adminConsoleContext);
             }
             return;
         }
-        if(adminServer != null) {
+        if (adminServer != null) {
             if(adminServer.getHandler() != null) {
                 removeHttpBindServlet(adminConsoleContext);
             }
@@ -197,7 +198,7 @@ public class HttpServerManager {
                 adminServer.addHandler(adminConsoleContext);
             }
         }
-        if(httpBindServer != null) {
+        if (httpBindServer != null) {
             ServletHandler servletHandler = new ServletHandler();
             servletHandler.addServletWithMapping(httpBindContext, httpBindPath);
             httpBindServer.addHandler(servletHandler);
@@ -229,17 +230,17 @@ public class HttpServerManager {
     }
 
     public void shutdown() {
-        if(httpBindServer != null) {
+        if (httpBindServer != null) {
             try {
                 httpBindServer.stop();
             }
             catch (Exception e) {
-                Log.error("Error stopping http bind server", e);
+                Log.error("Error stopping HTTP bind server", e);
             }
             httpBindServer = null;
         }
         //noinspection ConstantConditions
-        if(adminServer != null && adminServer != httpBindServer) {
+        if (adminServer != null && adminServer != httpBindServer) {
             try {
                 adminServer.stop();
             }
@@ -352,10 +353,10 @@ public class HttpServerManager {
     }
 
     private void changeHttpBindPorts(int unsecurePort, int securePort) {
-        if(unsecurePort < 0 && securePort < 0) {
+        if (unsecurePort < 0 && securePort < 0) {
             throw new IllegalArgumentException("At least one port must be greater than zero.");
         }
-        if(unsecurePort == securePort) {
+        if (unsecurePort == securePort) {
             throw new IllegalArgumentException("Ports must be distinct.");
         }
         int adminPort = JiveGlobals.getXMLProperty(ADMIN_CONSOLE_PORT, ADMIN_CONSOLE_PORT_DEFAULT);
@@ -365,7 +366,7 @@ public class HttpServerManager {
                 new int[]{adminPort, adminSecurePort}))
         {
             if(unsecurePort != adminPort || securePort != adminSecurePort) {
-                Log.warn("Http bind ports must be either the same or distinct from admin console" +
+                Log.warn("HTTP bind ports must be either the same or distinct from admin console" +
                         " ports, http binding will run on the admin console ports.");
             }
             if (httpBindServer == adminServer) {
@@ -376,7 +377,7 @@ public class HttpServerManager {
                     httpBindServer.stop();
                 }
                 catch (Exception e) {
-                    Log.error("Error stopping http bind service", e);
+                    Log.error("Error stopping HTTP bind service", e);
                 }
                 httpBindServer = null;
             }
@@ -390,7 +391,7 @@ public class HttpServerManager {
                 httpBindServer.stop();
             }
             catch (Exception e) {
-                Log.error("Error stopping http bind service", e);
+                Log.error("Error stopping HTTP bind service", e);
             }
         }
         createHttpBindServer(unsecurePort, securePort);
@@ -399,7 +400,7 @@ public class HttpServerManager {
             httpBindServer.start();
         }
         catch (Exception e) {
-            Log.error("Error starting http bind service", e);
+            Log.error("Error starting HTTP bind service", e);
         }
     }
 
@@ -424,7 +425,7 @@ public class HttpServerManager {
                     httpBindServer.stop();
                 }
                 catch (Exception e) {
-                    Log.error("Error stopping http bind service", e);
+                    Log.error("Error stopping HTTP bind service", e);
                 }
                 httpBindServer = null;
             }
@@ -445,7 +446,7 @@ public class HttpServerManager {
             port = value;
         }
         catch (Exception ex) {
-            Log.error("Error setting http bind ports", ex);
+            Log.error("Error setting HTTP bind ports", ex);
         }
     }
 
@@ -459,7 +460,7 @@ public class HttpServerManager {
             securePort = value;
         }
         catch (Exception ex) {
-            Log.error("Error setting http bind ports", ex);
+            Log.error("Error setting HTTP bind ports", ex);
         }
     }
 

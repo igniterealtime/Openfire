@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.container;
 
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.HttpServerManager;
@@ -38,24 +37,6 @@ public class AdminConsolePlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
         try {
-            File logDir;
-            String logDirectory = JiveGlobals.getXMLProperty("log.directory");
-            // Check if the "log.directory" was defined
-            if (logDirectory != null) {
-                // Remove last separator character (if any)
-                if (!logDirectory.endsWith(File.separator)) {
-                    logDirectory = logDirectory + File.separator;
-                }
-                logDir = new File(logDirectory);
-            }
-            else {
-                // Create log file in the default directory
-                logDir = new File(JiveGlobals.getHomeDirectory(), "logs");
-            }
-            if (!logDir.exists()) {
-                logDir.mkdirs();
-            }
-            
             serverManager.setAdminConsoleContext(createWebAppContext());
         }
         catch (Exception e) {

@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -49,7 +50,10 @@ public class YahooSession extends TransportSession {
 
         pseudoRoster = pseudoRosterManager.getPseudoRoster(registration);
 
-        yahooSession = new Session();
+        yahooSession = new Session(new DirectConnectionHandler(
+                JiveGlobals.getProperty("plugin.gateway.yahoo.connecthost", "scs.msg.yahoo.com"),
+                JiveGlobals.getIntProperty("plugin.gateway.yahoo.connectport", 5050)
+        ));
         yahooSession.addSessionListener(new YahooSessionListener(this));
     }
 

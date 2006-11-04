@@ -43,13 +43,13 @@ public class LoginConnection extends BaseFlapConnection {
         }
         else if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
             //TODO: Do we need to catch these?
-//            Message m = new Message();
-//            m.setType(Message.Type.error);
-//            m.setFrom(this.getMainSession().getTransport().getJID());
-//            m.setTo(this.getMainSession().getJIDWithHighestPriority());
-//            m.setBody("Connection failed: " + e.getReason());
-//            this.getMainSession().getTransport().sendPacket(m);
-//            this.getMainSession().logOut();
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setFrom(this.getMainSession().getTransport().getJID());
+            m.setTo(this.getMainSession().getJIDWithHighestPriority());
+            m.setBody("Connection failed: " + e.getReason());
+            this.getMainSession().getTransport().sendPacket(m);
+            this.getMainSession().logOut();
         }
         else if (e.getNewState() == ClientFlapConn.STATE_NOT_CONNECTED) {
             //TODO: Do we need to catch these?

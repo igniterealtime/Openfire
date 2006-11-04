@@ -14,6 +14,7 @@ import net.sf.jml.*;
 import net.sf.jml.impl.BasicMessenger;
 import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -83,7 +84,9 @@ public class MSNSession extends TransportSession {
                 msnMessenger.setLogIncoming(false);
                 msnMessenger.setLogOutgoing(false);
                 msnMessenger.addListener(new MSNListener(this));
-                msnMessenger.login();
+                ((BasicMessenger)msnMessenger).login(
+                        JiveGlobals.getProperty("plugin.gateway.msn.connecthost", "messenger.hotmail.com"),
+                        JiveGlobals.getIntProperty("plugin.gateway.msn.connectport", 1863));
             }
             catch (Exception e) {
                 Log.error("MSN user is not able to log in: " + msnMessenger.getOwner().getEmail(), e);                

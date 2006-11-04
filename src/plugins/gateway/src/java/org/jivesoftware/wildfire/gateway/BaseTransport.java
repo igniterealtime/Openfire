@@ -77,9 +77,18 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
 
     /**
      * Sets legacy roster mode for the transport.
+     * @param mode new legacy mode status
      */
     public void setLegacyMode(boolean mode) {
         this.legacyMode = mode;
+    }
+
+    /**
+     * Retrieves the current legacy roster mode for the transport.
+     * @return legacy mode status setting
+     */
+    public boolean getLegacyMode() {
+        return this.legacyMode;
     }
 
     /**

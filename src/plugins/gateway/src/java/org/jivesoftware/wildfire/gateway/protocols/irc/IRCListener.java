@@ -71,10 +71,12 @@ public class IRCListener implements IRCEventListener {
     public void onRegistered() {
         Log.debug("IRC registered");
         getSession().getRegistration().setLastLogin(new Date());
-        Presence p = new Presence();
-        p.setFrom(getSession().getTransport().getJID());
-        p.setTo(getSession().getJID());
-        getSession().getTransport().sendPacket(p);
+        if (getSession().getTransport().getLegacyMode()) {
+            Presence p = new Presence();
+            p.setFrom(getSession().getTransport().getJID());
+            p.setTo(getSession().getJID());
+            getSession().getTransport().sendPacket(p);
+        }
         statusCheck = new StatusCheck();
         timer.schedule(statusCheck, timerInterval, timerInterval);
         getSession().setLoginStatus(TransportLoginStatus.LOGGED_IN);
@@ -82,10 +84,12 @@ public class IRCListener implements IRCEventListener {
 
     public void onDisconnected() {
         Log.debug("IRC disconnected");
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getSession().getJID());
-        p.setFrom(getSession().getTransport().getJID());
-        getSession().getTransport().sendPacket(p);
+        if (getSession().getTransport().getLegacyMode()) {
+            Presence p = new Presence(Presence.Type.unavailable);
+            p.setTo(getSession().getJID());
+            p.setFrom(getSession().getTransport().getJID());
+            getSession().getTransport().sendPacket(p);
+        }
         getSession().getConnection().close();
         timer.cancel();
         getSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
@@ -184,10 +188,12 @@ public class IRCListener implements IRCEventListener {
 
     public void onQuit(IRCUser ircUser, String string) {
         Log.debug("IRC quit: "+ircUser+", "+string);
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getSession().getJID());
-        p.setFrom(getSession().getTransport().getJID());
-        getSession().getTransport().sendPacket(p);
+        if (getSession().getTransport().getLegacyMode()) {
+            Presence p = new Presence(Presence.Type.unavailable);
+            p.setTo(getSession().getJID());
+            p.setFrom(getSession().getTransport().getJID());
+            getSession().getTransport().sendPacket(p);
+        }
         getSession().getConnection().close();
         getSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }

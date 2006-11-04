@@ -13,7 +13,9 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Presence;
 
 import net.kano.joscar.*;
 import net.kano.joscar.flap.*;
@@ -29,8 +31,6 @@ import net.kano.joscar.snaccmd.auth.*;
  * Heavily inspired by joscardemo from the joscar project.
  */
 public class LoginConnection extends BaseFlapConnection {
-    protected boolean loggedin = false;
-
     public LoginConnection(ConnDescriptor cd, OSCARSession mainSession) {
         super(cd, mainSession); // Hand off to BaseFlapConnection
     }
@@ -138,9 +138,18 @@ public class LoginConnection extends BaseFlapConnection {
                 m.setFrom(getMainSession().getTransport().getJID());
                 m.setBody(errormsg);
                 getMainSession().getTransport().sendPacket(m);
+
+                if (getMainSession().getTransport().getLegacyMode()) {
+                    Presence p = new Presence();
+                    p.setTo(getMainSession().getJID());
+                    p.setFrom(getMainSession().getTransport().getJID());
+                    p.setType(Presence.Type.unavailable);
+                    getMainSession().getTransport().sendPacket(p);
+                }
+                getMainSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
             }
             else {
-                loggedin = true;
+                getMainSession().setLoginStatus(TransportLoginStatus.LOGGED_IN);
                 oscarSession.startBosConn(ar.getServer(), ar.getPort(), ar.getCookie());
                 Log.info("OSCAR connection to " + ar.getServer() + ":"
                         + ar.getPort());

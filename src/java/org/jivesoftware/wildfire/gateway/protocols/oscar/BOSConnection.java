@@ -123,10 +123,12 @@ public class BOSConnection extends BasicFlapConnection {
                 request(new ActivateSsiCmd());
                 clientReady();
 
-                Presence p = new Presence();
-                p.setTo(oscarSession.getJID());
-                p.setFrom(oscarSession.getTransport().getJID());
-                oscarSession.getTransport().sendPacket(p);
+                if (oscarSession.getTransport().getLegacyMode()) {
+                    Presence p = new Presence();
+                    p.setTo(oscarSession.getJID());
+                    p.setFrom(oscarSession.getTransport().getJID());
+                    oscarSession.getTransport().sendPacket(p);
+                }
 
                 oscarSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
                 oscarSession.gotCompleteSSI();

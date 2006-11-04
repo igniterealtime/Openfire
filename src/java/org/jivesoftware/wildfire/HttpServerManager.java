@@ -11,10 +11,7 @@
 
 package org.jivesoftware.wildfire;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.net.SSLConfig;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
@@ -143,14 +140,54 @@ public class HttpServerManager {
 
         if (loadConnectors) {
             Collection<Connector> connectors = createAdminConsoleConnectors(port, securePort);
-            if(connectors.size() == 0) {
+            if (connectors.size() == 0) {
                 adminServer = null;
+
+                // Log warning. 
+                String warning = LocaleUtils.getLocalizedString("admin.console.warning");
+                Log.info(warning);
+                System.out.println(warning);
+
                 return;
             }
 
             for (Connector connector : connectors) {
                 adminServer.addConnector(connector);
             }
+        }
+        // Log what ports the admin console is running on.
+        String listening = LocaleUtils.getLocalizedString("admin.console.listening");
+        boolean isPlainStarted = false;
+        boolean isSecureStarted = false;
+        for (Connector connector : adminServer.getConnectors()) {
+            if (connector.getPort() == port) {
+                isPlainStarted = true;
+            }
+            else if (connector.getPort() == securePort) {
+                isSecureStarted = true;
+            }
+        }
+
+        if (isPlainStarted && isSecureStarted) {
+            String msg = listening + ":" + System.getProperty("line.separator") +
+                    "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    port + System.getProperty("line.separator") +
+                    "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    securePort;
+            Log.info(msg);
+            System.out.println(msg);
+        }
+        else if (isSecureStarted) {
+            Log.info(listening + " https://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+            System.out.println(listening + " https://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + securePort);
+        }
+        else if (isPlainStarted) {
+            Log.info(listening + " http://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
+            System.out.println(listening + " http://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + port);
         }
     }
 
@@ -161,10 +198,10 @@ public class HttpServerManager {
     }
 
     public void startup() {
-        if(httpBindContext != null && isHttpBindServiceEnabled()) {
+        if (httpBindContext != null && isHttpBindServiceEnabled()) {
             createHttpBindServer();
         }
-        if(adminConsoleContext != null) {
+        if (adminConsoleContext != null) {
             createAdminConsoleServer();
         }
 

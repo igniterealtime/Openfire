@@ -8,6 +8,7 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire;
 
 import org.jivesoftware.util.JiveGlobals;
@@ -23,6 +24,9 @@ import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletMapping;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.log.Logger;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.LogConfigurationException;
 
 import javax.net.ssl.SSLServerSocketFactory;
 import java.util.Collection;
@@ -74,6 +78,12 @@ public class HttpServerManager {
 
     private HttpServerManager() {
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
+
+        // Configure Jetty logging to a more reasonable default.
+        System.setProperty("org.mortbay.log.class", "org.jivesoftware.wildfire.HttpServerManager$JettyLog");
+        // JSP 2.0 uses commons-logging, so also override that implementation.
+        System.setProperty("org.apache.commons.logging.LogFactory",
+                "org.jivesoftware.wildfire.HttpServerManager$CommonsLogFactory");
     }
 
     public void setAdminConsoleContext(Context context) {
@@ -519,6 +529,162 @@ public class HttpServerManager {
         @Override
         protected SSLServerSocketFactory createFactory() throws Exception {
             return SSLConfig.getServerSocketFactory();
+        }
+    }
+
+    /**
+     * A Logger implementation to override the default Jetty logging behavior. All log statements are
+     * written to the Wildfire logs. Info level logging is sent to debug.
+     */
+    public static class JettyLog implements Logger {
+
+        public boolean isDebugEnabled() {
+            return Log.isDebugEnabled();
+        }
+
+        public void setDebugEnabled(boolean b) {
+            // Do nothing.
+        }
+
+        public void info(String string, Object object, Object object1) {
+            // Send info log messages to debug because they are generally not useful.
+            Log.debug(string);
+        }
+
+        public void debug(String string, Throwable throwable) {
+            Log.debug(string, throwable);
+        }
+
+        public void debug(String string, Object object, Object object1) {
+            Log.debug(string);
+        }
+
+        public void warn(String string, Object object, Object object1) {
+            Log.warn(string);
+        }
+
+        public void warn(String string, Throwable throwable) {
+            Log.warn(string, throwable);
+        }
+
+        public Logger getLogger(String string) {
+            return new JettyLog();
+        }
+    }
+
+    /**
+     * A LogFactory implementation to override the default commons-logging behavior. All log statements are
+     * written to the Wildfire logs. Info level logging is sent to debug.
+     */
+    public static class CommonsLogFactory extends LogFactory {
+
+        private org.apache.commons.logging.Log log;
+
+        public CommonsLogFactory() {
+            log = new org.apache.commons.logging.Log() {
+
+                public boolean isDebugEnabled() {
+                    return Log.isDebugEnabled();
+                }
+
+                public boolean isErrorEnabled() {
+                    return Log.isErrorEnabled();
+                }
+
+                public boolean isFatalEnabled() {
+                    return Log.isErrorEnabled();
+                }
+
+                public boolean isInfoEnabled() {
+                    return Log.isInfoEnabled();
+                }
+
+                public boolean isTraceEnabled() {
+                    return Log.isDebugEnabled();
+                }
+
+                public boolean isWarnEnabled() {
+                    return Log.isWarnEnabled();
+                }
+
+                public void trace(Object object) {
+                    // Ignore.
+                }
+
+                public void trace(Object object, Throwable throwable) {
+                    // Ignore.
+                }
+
+                public void debug(Object object) {
+                    Log.debug(object.toString());
+                }
+
+                public void debug(Object object, Throwable throwable) {
+                    Log.debug(object.toString(), throwable);
+                }
+
+                public void info(Object object) {
+                    // Send info log messages to debug because they are generally not useful.
+                    Log.debug(object.toString());
+                }
+
+                public void info(Object object, Throwable throwable) {
+                    // Send info log messages to debug because they are generally not useful.
+                    Log.debug(object.toString(), throwable);
+                }
+
+                public void warn(Object object) {
+                    Log.warn(object.toString());
+                }
+
+                public void warn(Object object, Throwable throwable) {
+                    Log.warn(object.toString(), throwable);
+                }
+
+                public void error(Object object) {
+                    Log.error(object.toString());
+                }
+
+                public void error(Object object, Throwable throwable) {
+                    Log.error(object.toString(), throwable);
+                }
+
+                public void fatal(Object object) {
+                    Log.error(object.toString());
+                }
+
+                public void fatal(Object object, Throwable throwable) {
+                    Log.error(object.toString(), throwable);
+                }
+            };
+        }
+
+        public Object getAttribute(String string) {
+            return null;
+        }
+
+        public String[] getAttributeNames() {
+            return new String[0];
+        }
+
+        public org.apache.commons.logging.Log getInstance(Class aClass) throws LogConfigurationException {
+            return log;
+        }
+
+        public org.apache.commons.logging.Log getInstance(String string) throws LogConfigurationException {
+            return log;
+        }
+
+        public void release() {
+
+        }
+
+        public void removeAttribute(String string) {
+
+        }
+
+        public void setAttribute(String string, Object object) {
+            
         }
     }
 }

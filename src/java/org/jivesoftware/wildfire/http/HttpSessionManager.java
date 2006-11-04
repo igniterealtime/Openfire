@@ -12,6 +12,7 @@ package org.jivesoftware.wildfire.http;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.StreamID;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketRouter;
@@ -20,6 +21,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.dom4j.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 
@@ -57,9 +59,10 @@ public class HttpSessionManager {
      */
     private static int pollingInterval;
 
-    private InactivityTimer timer = new InactivityTimer();
     private SessionManager sessionManager;
-    private Map<String, HttpSession> sessionMap = new HashMap<String, HttpSession>();
+    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
+    private Timer inactivityTimer = new Timer("HttpSession Inactivity Timer");
+    private TimerTask inactivityThread = new HttpSessionReaper();
 
     static {
         // Set the default read idle timeout. If none was set then assume 30 minutes
@@ -70,6 +73,19 @@ public class HttpSessionManager {
 
     public HttpSessionManager() {
         this.sessionManager = SessionManager.getInstance();
+    }
+
+    public void start() {
+        inactivityTimer.schedule(inactivityThread, 30 * JiveConstants.SECOND,
+                30 * JiveConstants.SECOND);
+    }
+
+    public void stop() {
+        inactivityTimer.cancel();
+        for(HttpSession session : sessionMap.values()) {
+            session.close();
+        }
+        sessionMap.clear();
     }
 
     public HttpSession getSession(String streamID) {
@@ -109,8 +125,6 @@ public class HttpSessionManager {
             Log.error("Error creating document", e);
             throw new HttpBindException("Internal server error", true, 500);
         }
-
-        timer.reset(session);
         return session;
     }
 
@@ -123,19 +137,14 @@ public class HttpSessionManager {
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(new SessionListener() {
             public void connectionOpened(HttpSession session, HttpConnection connection) {
-                    timer.stop(session);
             }
 
             public void connectionClosed(HttpSession session, HttpConnection connection) {
-                if (session.getConnectionCount() <= 0) {
-                    timer.reset(session);
-                }
             }
 
             public void sessionClosed(HttpSession session) {
                 sessionMap.remove(session.getStreamID().getID());
                 sessionManager.removeSession(session);
-                timer.stop(session);
             }
         });
         return session;
@@ -200,38 +209,15 @@ public class HttpSessionManager {
         return connection;
     }
 
-    private class InactivityTimer extends Timer {
-        private Map<String, InactivityTimeoutTask> sessionMap
-                = new HashMap<String, InactivityTimeoutTask>();
-
-        public void stop(HttpSession session) {
-            InactivityTimeoutTask task = sessionMap.remove(session.getStreamID().getID());
-            if(task != null) {
-                task.cancel();
-            }
-        }
-
-        public void reset(HttpSession session) {
-            stop(session);
-            if(session.isClosed()) {
-                return;
-            }
-            InactivityTimeoutTask task = new InactivityTimeoutTask(session);
-            schedule(task, session.getInactivityTimeout() * 1000);
-            sessionMap.put(session.getStreamID().getID(), task);
-        }
-    }
-
-    private class InactivityTimeoutTask extends TimerTask {
-        private HttpSession session;
-
-        public InactivityTimeoutTask(HttpSession session) {
-            this.session = session;
-        }
+    private class HttpSessionReaper extends TimerTask {
 
         public void run() {
-            session.close();
-            timer.sessionMap.remove(session.getStreamID().getID());
+            for(HttpSession session : sessionMap.values()) {
+                long lastActive = (System.currentTimeMillis() - session.getLastActivity()) / 1000;
+                if(lastActive > session.getInactivityTimeout()) {
+                    session.close();
+                }
+            }
         }
     }
 }

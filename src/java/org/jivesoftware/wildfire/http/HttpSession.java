@@ -48,10 +48,12 @@ public class HttpSession extends ClientSession {
     private Set<SessionListener> listeners = new HashSet<SessionListener>();
     private boolean isClosed;
     private int inactivityTimeout;
+    private long lastActivity;
 
     public HttpSession(String serverName, InetAddress address, StreamID streamID) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection(address);
+        this.lastActivity = System.currentTimeMillis();
     }
 
     void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
@@ -92,6 +94,7 @@ public class HttpSession extends ClientSession {
     }
 
     private void fireConnectionOpened(HttpConnection connection) {
+        lastActivity = System.currentTimeMillis();
         Collection<SessionListener> listeners =
                 new HashSet<SessionListener>(this.listeners);
         for(SessionListener listener : listeners) {
@@ -215,6 +218,7 @@ public class HttpSession extends ClientSession {
     }
 
     private void fireConnectionClosed(HttpConnection connection) {
+        lastActivity = System.currentTimeMillis();
         Collection<SessionListener> listeners =
                 new HashSet<SessionListener>(this.listeners);
         for(SessionListener listener : listeners) {
@@ -338,6 +342,10 @@ public class HttpSession extends ClientSession {
 
     public int getConnectionCount() {
         return connectionQueue.size();
+    }
+
+    public synchronized long getLastActivity() {
+        return lastActivity;
     }
 
     /**

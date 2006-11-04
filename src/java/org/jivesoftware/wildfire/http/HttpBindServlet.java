@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
+import javax.servlet.ServletConfig;
 import java.io.IOException;
 import java.net.InetAddress;
 
@@ -50,6 +51,18 @@ public class HttpBindServlet extends HttpServlet {
 
     public HttpBindServlet(HttpSessionManager sessionManager) {
         this.sessionManager = sessionManager;
+    }
+
+
+    @Override public void init(ServletConfig servletConfig) throws ServletException {
+        super.init(servletConfig);
+        sessionManager.start();
+    }
+
+
+    @Override public void destroy() {
+        super.destroy();
+        sessionManager.stop();
     }
 
     @Override

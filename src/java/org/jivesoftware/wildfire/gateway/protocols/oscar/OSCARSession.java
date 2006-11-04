@@ -29,6 +29,7 @@ import net.kano.joscar.snaccmd.CapabilityBlock;
 import net.kano.joscar.ssiitem.BuddyItem;
 import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
@@ -60,6 +61,7 @@ public class OSCARSession extends TransportSession {
      */
     public OSCARSession(Registration registration, JID jid, OSCARTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
+        this.propertyPrefix = "plugin.gateway."+transport.getType().toString();
     }
 
     private BOSConnection bosConn = null;
@@ -67,6 +69,7 @@ public class OSCARSession extends TransportSession {
     private Set<ServiceConnection> services = new HashSet<ServiceConnection>();
     private PresenceType presenceType = null;
     private String verboseStatus = null;
+    private String propertyPrefix;
     
     /**
      * SSI tracking variables.
@@ -79,7 +82,10 @@ public class OSCARSession extends TransportSession {
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!isLoggedIn()) {
             setLoginStatus(TransportLoginStatus.LOGGING_IN);
-            loginConn = new LoginConnection(new ConnDescriptor("login.oscar.aol.com", 5190), this);
+            loginConn = new LoginConnection(new ConnDescriptor(
+                    JiveGlobals.getProperty(propertyPrefix+".connecthost", "login.oscar.aol.com"),
+                    JiveGlobals.getIntProperty(propertyPrefix+".connectport", 5190)),
+                    this);
             loginConn.connect();
 
             this.presenceType = presenceType;
@@ -328,8 +334,11 @@ public class OSCARSession extends TransportSession {
     }
 
     void connectToService(int snacFamily, String host, ByteBlock cookie) {
-        ServiceConnection conn = new ServiceConnection(new ConnDescriptor(host, 5190), this,
-                cookie, snacFamily);
+        ServiceConnection conn = new ServiceConnection(new ConnDescriptor(host,
+                JiveGlobals.getIntProperty(propertyPrefix+".connectport", 5190)),
+                this,
+                cookie,
+                snacFamily);
 
         conn.connect();
     }

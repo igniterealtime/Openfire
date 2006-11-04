@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.gateway.protocols.irc;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.PacketError;
@@ -49,8 +50,8 @@ public class IRCSession extends TransportSession {
             buddyStatuses.put(contact, PresenceType.unavailable);
         }
 
-        String server = "irc.freenode.net";
-        int[] ports = new int[] { 7000, 6667 };
+        String server = JiveGlobals.getProperty("plugin.gateway.irc.connecthost", "irc.freenode.net");
+        int[] ports = new int[] { JiveGlobals.getIntProperty("plugin.gateway.irc.connectport", 7000) };
         String username = registration.getUsername();
         String password = registration.getPassword();
         password = (password == null || password.equals("")) ? null : password;

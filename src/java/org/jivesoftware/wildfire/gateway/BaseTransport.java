@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -71,6 +72,14 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
         this.jid = jid;
         this.componentManager = componentManager;
         sessionManager.startThreadManager(jid);
+        legacyMode = JiveGlobals.getBooleanProperty("plugin.gateway.legacymode", false);
+    }
+
+    /**
+     * Sets legacy roster mode for the transport.
+     */
+    public void setLegacyMode(boolean mode) {
+        this.legacyMode = mode;
     }
 
     /**
@@ -110,6 +119,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.gateway.TransportType
      */
     public TransportType transportType = null;
+
+    /**
+     * Legacy roster mode enabled or disabled.
+     */
+    public boolean legacyMode = false;
 
     private final String DISCO_INFO = "http://jabber.org/protocol/disco#info";
     private final String DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
@@ -1045,9 +1059,16 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                 }
             }
 
-            if (!hasTransport) {
+            if (!hasTransport && legacyMode) {
                 // This person doesn't have the transport in their roster, lets put it there.
+                // We only do this if we are in legacy mode.  Otherwise, no transports in roster.
                 this.addOrUpdateRosterItem(userjid, this.getJID(), this.getDescription(), "Transports");
+            }
+
+            if (hasTransport && !legacyMode) {
+                // We are not in legacy mode but this person has the transport in their roster.
+                // Ditch it.
+                this.removeFromRoster(userjid, this.getJID());
             }
 
             // Ok, we should now have only new items from the legacy roster
@@ -1102,20 +1123,21 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             registrationManager.createRegistration(jid, this.transportType, username, password, nickname);
         }
 
-
         // Clean up any leftover roster items from other transports.
         try {
-            cleanUpRoster(jid, true);
+            cleanUpRoster(jid, false);
         }
         catch (UserNotFoundException ee) {
             throw new UserNotFoundException("Unable to find roster.");
         }
 
-        try {
-            addOrUpdateRosterItem(jid, this.getJID(), this.getDescription(), "Transports");
-        }
-        catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User not registered with server.");
+        // Check if the user is logged in to auto-log them in
+        SessionManager sessionManager = SessionManager.getInstance();
+        String user = jid.getNode();
+        if (sessionManager.getSessionCount(user) > 0) {
+            for (ClientSession cSession : sessionManager.getSessions(user)) {
+                presenceChanged(cSession, cSession.getPresence());
+            }
         }
 
     }
@@ -1246,11 +1268,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactUpdated(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactUpdated(Roster roster, RosterItem item) {
-        Log.debug(getType().toString()+": contactUpdated "+roster.getUsername()+":"+item.getJid());
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
             return;
         }
+        Log.debug(getType().toString()+": contactUpdated "+roster.getUsername()+":"+item.getJid());
         if (item.getJid().getNode() == null) {
             // Gateway itself, don't care.
             return;
@@ -1270,11 +1292,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactAdded(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactAdded(Roster roster, RosterItem item) {
-        Log.debug(getType().toString()+": contactAdded "+roster.getUsername()+":"+item.getJid());
         if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
             // Not ours, not our problem.
             return;
         }
+        Log.debug(getType().toString()+": contactAdded "+roster.getUsername()+":"+item.getJid());
         if (item.getJid().getNode() == null) {
             // Gateway itself, don't care.
             return;
@@ -1294,11 +1316,11 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#contactDeleted(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem)
      */
     public void contactDeleted(Roster roster, RosterItem item) {
+        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
+            // Not ours, not our problem.
+            return;
+        }
         Log.debug(getType().toString()+": contactDeleted "+roster.getUsername()+":"+item.getJid());
-//        if (!item.getJid().getDomain().equals(this.getJID().getDomain())) {
-//            // Not ours, not our problem.
-//            return;
-//        }
 //        if (item.getJid().getNode() == null) {
 //            // TODO: The gateway itself was removed?
 //            return;

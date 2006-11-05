@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
+import org.jivesoftware.wildfire.gateway.TransportType;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
@@ -23,6 +24,8 @@ import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.net.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.auth.*;
+
+import java.util.Locale;
 
 /**
  * Handles the login process with the OSCAR login server.
@@ -38,11 +41,24 @@ public class LoginConnection extends BaseFlapConnection {
     protected void handleStateChange(ClientConnEvent e) {
         Log.debug("OSCAR login service state change from "+e.getOldState()+" to "+e.getNewState());
         if (e.getNewState() == ClientFlapConn.STATE_CONNECTED) {
-            getFlapProcessor().sendFlap(new LoginFlapCmd());
-            request(new KeyRequest(oscarSession.getRegistration().getUsername()));
+//            if (getMainSession().getTransport().getType().equals(TransportType.icq)) {
+//                Log.debug("FINDME: Doing ICQ normal auth.");
+//                ClientVersionInfo version = new ClientVersionInfo(
+//                        "ICQBasic",
+//                        0x010a, 0x0014, 0x0022, 0, 0x0911, 0x0000043d);
+//                String password = oscarSession.getRegistration().getPassword();
+//                // ICQ caps passwords at 8 characters.
+//                if (password.length() > 8) {
+//                    password = password.substring(0, 8);
+//                }
+//                getFlapProcessor().sendFlap(new LoginICQFlapCmd(oscarSession.getRegistration().getUsername(), password, version, Locale.US));
+//            }
+//            else {
+                getFlapProcessor().sendFlap(new LoginFlapCmd());
+                request(new KeyRequest(oscarSession.getRegistration().getUsername()));
+//            }
         }
         else if (e.getNewState() == ClientFlapConn.STATE_FAILED) {
-            //TODO: Do we need to catch these?
             Message m = new Message();
             m.setType(Message.Type.error);
             m.setFrom(this.getMainSession().getTransport().getJID());
@@ -65,7 +81,9 @@ public class LoginConnection extends BaseFlapConnection {
         }
     }
 
-    protected void handleFlapPacket(FlapPacketEvent e) { }
+    protected void handleFlapPacket(FlapPacketEvent e) {
+//        FlapCommand cmd = e.getFlapCommand();
+    }
 
     protected void handleSnacPacket(SnacPacketEvent e) { }
 
@@ -73,17 +91,25 @@ public class LoginConnection extends BaseFlapConnection {
         SnacCommand cmd = e.getSnacCommand();
 
         if (cmd instanceof KeyResponse) {
+            Log.debug("Handling AIM-style auth.");
+
             KeyResponse kr = (KeyResponse) cmd;
             ByteBlock authkey = kr.getKey();
-
             ClientVersionInfo version = new ClientVersionInfo(
-                    "AOL Instant Messenger, version 5.5.3415/WIN32",
-                    -1, 5, 5, 0, 3415, 239);
+                        "AOL Instant Messenger, version 5.5.3415/WIN32",
+                        -1, 5, 5, 0, 3415, 239);
 
-            request(new AuthRequest(oscarSession.getRegistration().getUsername(), oscarSession.getRegistration().getPassword(), version, authkey));
+            String pass = oscarSession.getRegistration().getPassword();
+            if (oscarSession.getTransport().getType().equals(TransportType.icq)) {
+                if (pass.length() > 8) {
+                    pass = pass.substring(0,8);
+                }
+            }
 
+            request(new AuthRequest(oscarSession.getRegistration().getUsername(), pass, version, Locale.US, authkey));
         }
         else if (cmd instanceof AuthResponse) {
+            Log.debug("Got auth response!");
             AuthResponse ar = (AuthResponse) cmd;
 
             int error = ar.getErrorCode();
@@ -149,6 +175,7 @@ public class LoginConnection extends BaseFlapConnection {
                 getMainSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
             }
             else {
+                Log.debug("Got something else?");
                 getMainSession().setLoginStatus(TransportLoginStatus.LOGGED_IN);
                 oscarSession.startBosConn(ar.getServer(), ar.getPort(), ar.getCookie());
                 Log.info("OSCAR connection to " + ar.getServer() + ":"

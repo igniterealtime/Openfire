@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * Manages the instances of Jetty which provide the admin console funtionality and the http binding
+ * Manages the instances of Jetty which provide the admin console funtionality and the HTTP binding
  * functionality.
  *
  * @author Alexander Wenckus
@@ -77,16 +77,29 @@ public class HttpServerManager {
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
 
         // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.mortbay.log.class", "org.jivesoftware.wildfire.HttpServerManager$JettyLog");
+        System.setProperty("org.mortbay.log.class",
+                "org.jivesoftware.wildfire.HttpServerManager$JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory",
                 "org.jivesoftware.wildfire.HttpServerManager$CommonsLogFactory");
     }
 
+    /**
+     * Sets the Jetty context which provides the functionality for the admin console.
+     *
+     * @param context the web-app context which provides functionality for the admin console.
+     */
     public void setAdminConsoleContext(Context context) {
         this.adminConsoleContext = context;
     }
 
+    /**
+     * Sets up the parameters for the HTTP binding servlet.
+     *
+     * @param context the servlet holder context which holds the servlet serving up the HTTP binding
+     * service.
+     * @param httpBindPath the path to which the HTTP binding servlet will be bound.
+     */
     public void setHttpBindContext(ServletHolder context, String httpBindPath) {
         this.httpBindContext = context;
         this.httpBindPath = httpBindPath;
@@ -102,7 +115,7 @@ public class HttpServerManager {
     private void createHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
         Collection<Connector> connectors = createAdminConsoleConnectors(port, securePort);
-        if(connectors.size() == 0) {
+        if (connectors.size() == 0) {
             httpBindServer = null;
             return;
         }
@@ -121,8 +134,8 @@ public class HttpServerManager {
                 adminServer = httpBindServer;
                 loadConnectors = false;
             }
-            else if (checkPorts(new int[] { this.port, this.securePort },
-                    new int [] {port, securePort}))
+            else if (checkPorts(new int[]{this.port, this.securePort},
+                    new int[]{port, securePort}))
             {
                 Log.warn("HTTP bind ports must be either the same or distinct from admin console" +
                         " ports.");
@@ -143,7 +156,7 @@ public class HttpServerManager {
             if (connectors.size() == 0) {
                 adminServer = null;
 
-                // Log warning. 
+                // Log warning.
                 String warning = LocaleUtils.getLocalizedString("admin.console.warning");
                 Log.info(warning);
                 System.out.println(warning);
@@ -155,6 +168,11 @@ public class HttpServerManager {
                 adminServer.addConnector(connector);
             }
         }
+
+        logAdminConsolePorts();
+    }
+
+    private void logAdminConsolePorts() {
         // Log what ports the admin console is running on.
         String listening = LocaleUtils.getLocalizedString("admin.console.listening");
         boolean isPlainStarted = false;
@@ -191,12 +209,17 @@ public class HttpServerManager {
         }
     }
 
-    private boolean checkPorts(int [] httpBindPorts, int [] adminConsolePorts) {
+    private boolean checkPorts(int[] httpBindPorts, int[] adminConsolePorts) {
         return httpBindPorts[0] == adminConsolePorts[0] || httpBindPorts[0] == adminConsolePorts[0]
                 || httpBindPorts[1] == adminConsolePorts[0]
                 || httpBindPorts[1] == adminConsolePorts[1];
     }
 
+    /**
+     * Starts any neccesary Jetty instances. If the admin console and http-binding are running on
+     * seperate ports then two jetty instances are started, if not then only one is started. The
+     * proper contexts are then added to the Jetty servers.
+     */
     public void startup() {
         if (httpBindContext != null && isHttpBindServiceEnabled()) {
             createHttpBindServer();
@@ -207,7 +230,7 @@ public class HttpServerManager {
 
         addContexts();
 
-        if(httpBindServer != null) {
+        if (httpBindServer != null) {
             try {
                 httpBindServer.start();
             }
@@ -215,7 +238,7 @@ public class HttpServerManager {
                 Log.error("Could not start HTTP bind server", e);
             }
         }
-        if(adminServer != null && adminServer != httpBindServer) {
+        if (adminServer != null && adminServer != httpBindServer) {
             try {
                 adminServer.start();
             }
@@ -238,7 +261,7 @@ public class HttpServerManager {
             return;
         }
         if (adminServer != null) {
-            if(adminServer.getHandler() != null) {
+            if (adminServer.getHandler() != null) {
                 removeHttpBindServlet(adminConsoleContext);
             }
             else {
@@ -256,17 +279,17 @@ public class HttpServerManager {
         ServletHandler handler = adminConsoleContext.getServletHandler();
         ServletMapping[] servletMappings = handler.getServletMappings();
         List<ServletMapping> toAdd = new ArrayList<ServletMapping>();
-        for(ServletMapping mapping : servletMappings) {
-            if(mapping.getServletName().equals(httpBindContext.getName())) {
+        for (ServletMapping mapping : servletMappings) {
+            if (mapping.getServletName().equals(httpBindContext.getName())) {
                 continue;
             }
             toAdd.add(mapping);
         }
 
-        ServletHolder [] servletHolder = handler.getServlets();
+        ServletHolder[] servletHolder = handler.getServlets();
         List<ServletHolder> toAddServlets = new ArrayList<ServletHolder>();
-        for(ServletHolder holder : servletHolder) {
-            if(holder.equals(httpBindContext)) {
+        for (ServletHolder holder : servletHolder) {
+            if (holder.equals(httpBindContext)) {
                 continue;
             }
             toAddServlets.add(holder);
@@ -276,6 +299,9 @@ public class HttpServerManager {
         handler.setServlets(toAddServlets.toArray(new ServletHolder[toAddServlets.size()]));
     }
 
+    /**
+     * Shuts down any Jetty servers that are running the admin console and HTTP binding service.
+     */
     public void shutdown() {
         if (httpBindServer != null) {
             try {
@@ -331,9 +357,9 @@ public class HttpServerManager {
     }
 
     /**
-     * Returns true if the HTTP bind server is currently enabled.
+     * Returns true if the HTTP binding server is currently enabled.
      *
-     * @return true if the HTTP bind server is currently enabled.
+     * @return true if the HTTP binding server is currently enabled.
      */
     public boolean isHttpBindEnabled() {
         return httpBindServer != null && httpBindServer.isRunning();
@@ -362,11 +388,11 @@ public class HttpServerManager {
      * console.
      *
      * @return true if the HTTP binding service is running on a seperate server than the admin
-     * console.
+     *         console.
      */
     public boolean isSeperateHttpBindServerConfigured() {
         return (httpBindServer != null && httpBindServer != adminServer) || (httpBindServer == null
-        && (getAdminUnsecurePort() != JiveGlobals.getIntProperty(HTTP_BIND_PORT, 9090)
+                && (getAdminUnsecurePort() != JiveGlobals.getIntProperty(HTTP_BIND_PORT, 9090)
                 || getAdminSecurePort()
                 != JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, 9091)));
     }
@@ -376,7 +402,7 @@ public class HttpServerManager {
     }
 
     /**
-     * Set the ports on which the HTTP bind service will be running.
+     * Set the ports on which the HTTP binding service will be running.
      *
      * @param unsecurePort the unsecured connection port which clients can connect to.
      * @param securePort the secured connection port which clients can connect to.
@@ -412,7 +438,7 @@ public class HttpServerManager {
         if (checkPorts(new int[]{unsecurePort, securePort},
                 new int[]{adminPort, adminSecurePort}))
         {
-            if(unsecurePort != adminPort || securePort != adminSecurePort) {
+            if (unsecurePort != adminPort || securePort != adminSecurePort) {
                 Log.warn("HTTP bind ports must be either the same or distinct from admin console" +
                         " ports, http binding will run on the admin console ports.");
             }
@@ -451,22 +477,32 @@ public class HttpServerManager {
         }
     }
 
+    /**
+     * Returns the non-SSL port on which the admin console is currently operating.
+     *
+     * @return the non-SSL port on which the admin console is currently operating.
+     */
     public int getAdminUnsecurePort() {
         return JiveGlobals.getXMLProperty(ADMIN_CONSOLE_PORT, ADMIN_CONSOLE_PORT_DEFAULT);
     }
 
+    /**
+     * Returns the SSL port on which the admin console is current operating.
+     *
+     * @return the SSL port on which the admin console is current operating.
+     */
     public int getAdminSecurePort() {
         return JiveGlobals.getXMLProperty(ADMIN_CONOSLE_SECURE_PORT,
                 ADMIN_CONSOLE_SECURE_PORT_DEFAULT);
     }
 
     private void doEnableHttpBind(boolean shouldEnable) {
-        if(shouldEnable && httpBindServer == null) {
+        if (shouldEnable && httpBindServer == null) {
             changeHttpBindPorts(JiveGlobals.getIntProperty(HTTP_BIND_PORT,
-                    ADMIN_CONSOLE_PORT_DEFAULT),JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
+                    ADMIN_CONSOLE_PORT_DEFAULT), JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
                     ADMIN_CONSOLE_SECURE_PORT_DEFAULT));
         }
-        else if(!shouldEnable && httpBindServer != null) {
+        else if (!shouldEnable && httpBindServer != null) {
             if (httpBindServer != adminServer) {
                 try {
                     httpBindServer.stop();
@@ -543,7 +579,7 @@ public class HttpServerManager {
         }
 
         public void propertyDeleted(String property, Map params) {
-            if(property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
+            if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
                 doEnableHttpBind(HTTP_BIND_ENABLED_DEFAULT);
             }
             else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
@@ -570,8 +606,8 @@ public class HttpServerManager {
     }
 
     /**
-     * A Logger implementation to override the default Jetty logging behavior. All log statements are
-     * written to the Wildfire logs. Info level logging is sent to debug.
+     * A Logger implementation to override the default Jetty logging behavior. All log statements
+     * are written to the Wildfire logs. Info level logging is sent to debug.
      */
     public static class JettyLog implements Logger {
 
@@ -610,8 +646,8 @@ public class HttpServerManager {
     }
 
     /**
-     * A LogFactory implementation to override the default commons-logging behavior. All log statements are
-     * written to the Wildfire logs. Info level logging is sent to debug.
+     * A LogFactory implementation to override the default commons-logging behavior. All log
+     * statements are written to the Wildfire logs. Info level logging is sent to debug.
      */
     public static class CommonsLogFactory extends LogFactory {
 
@@ -704,11 +740,15 @@ public class HttpServerManager {
             return new String[0];
         }
 
-        public org.apache.commons.logging.Log getInstance(Class aClass) throws LogConfigurationException {
+        public org.apache.commons.logging.Log getInstance(Class aClass)
+                throws LogConfigurationException
+        {
             return log;
         }
 
-        public org.apache.commons.logging.Log getInstance(String string) throws LogConfigurationException {
+        public org.apache.commons.logging.Log getInstance(String string)
+                throws LogConfigurationException
+        {
             return log;
         }
 
@@ -721,7 +761,7 @@ public class HttpServerManager {
         }
 
         public void setAttribute(String string, Object object) {
-            
+
         }
     }
 }

@@ -44,6 +44,9 @@ public interface ProxyTransfer extends Cacheable, FileTransferProgress {
 
     /**
      * Transfers the file from the initiator to the target.
+     *
+     * @throws java.io.IOException when an error occurs either reading from the input stream or
+     * writing to the output stream.
      */
     public void doTransfer() throws IOException;
 }

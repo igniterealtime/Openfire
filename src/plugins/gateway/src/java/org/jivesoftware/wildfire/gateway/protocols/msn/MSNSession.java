@@ -148,10 +148,12 @@ public class MSNSession extends TransportSession {
                 Log.debug("MSN: Found belong group for "+friend+" as "+group);
                 friendGroups.add(group.getGroupName());
             }
-            if (friendGroups.size() < 1) {
-                friendGroups.add("MSN Contacts");
+            if (friendGroups.size() > 0) {
+                legacyusers.add(new TransportBuddy(friend.getEmail().toString(), friend.getFriendlyName(), friendGroups.get(0)));
             }
-            legacyusers.add(new TransportBuddy(friend.getEmail().toString(), friend.getFriendlyName(), friendGroups.get(0)));
+            else {
+                legacyusers.add(new TransportBuddy(friend.getEmail().toString(), friend.getFriendlyName(), null));
+            }
         }
         try {
             getTransport().syncLegacyRoster(getJID(), legacyusers);
@@ -180,6 +182,14 @@ public class MSNSession extends TransportSession {
             nickname = item.getNickname();
         }
         msnMessenger.addFriend(contact, nickname);
+        try {
+            lockRoster();
+            getTransport().addOrUpdateRosterItem(getJID(), item.getJid(), nickname, item.getGroups());
+            unlockRoster();
+        }
+        catch (UserNotFoundException e) {
+            Log.error("MSN: Unable to find roster when adding contact.");
+        }
         syncContactGroups(contact, item.getGroups());
     }
 
@@ -222,9 +232,6 @@ public class MSNSession extends TransportSession {
      * @param groups List of groups contact should be in.
      */
     public void syncContactGroups(Email contact, List<String> groups) {
-        if (groups.isEmpty()) {
-            groups.add("Transport Buddies");
-        }
         MsnContact msnContact = msnContacts.get(contact.toString());
         // Create groups that do not currently exist.
         for (String group : groups) {
@@ -239,14 +246,16 @@ public class MSNSession extends TransportSession {
         // Make sure contact belongs to groups that we want.
         for (String group : groups) {
             MsnGroup msnGroup = msnGroups.get(group);
-            if (!msnContact.belongGroup(msnGroup)) {
+            if (msnContact == null || !msnContact.belongGroup(msnGroup)) {
                 msnMessenger.copyFriend(contact, group);
             }
         }
         // Now we will clean up groups that we should no longer belong to.
-        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
-            if (!groups.contains(msnGroup.getGroupName())) {
-                msnMessenger.removeFriend(contact, msnGroup.getGroupId());
+        if (msnContact != null) {
+            for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
+                if (!groups.contains(msnGroup.getGroupName())) {
+                    msnMessenger.removeFriend(contact, msnGroup.getGroupId());
+                }
             }
         }
     }

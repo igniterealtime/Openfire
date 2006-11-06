@@ -462,7 +462,7 @@
         </javac>
 
         <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
-        <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml"/>
+        <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" failonerror="false" />
         <copy file="${web.dir}/WEB-INF/web.xml"
               toFile="${webapp.dest.dir}/WEB-INF/web.xml"
               overwrite="true">

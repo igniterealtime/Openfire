@@ -58,8 +58,8 @@
     <!-- ======================================================================================= -->
 
     <property name="version.major" value="3"/>
-    <property name="version.minor" value="1"/>
-    <property name="version.revision" value="1"/>
+    <property name="version.minor" value="2"/>
+    <property name="version.revision" value="0"/>
     <property name="version.extra" value=""/>
     <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="wildfire"/>
@@ -118,7 +118,6 @@
     <property name="anttools.src.dir" value="${src.dir}/tools"/>
     <property name="anttools.target.dir" value="${work.dir}/tools"/>
     <property name="copy.dbscripts" value="true"/>
-    <property name="whack.src" value="${work.dir}/whack"/>
     <property name="overwrite" value="true"/>
 
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
@@ -240,11 +239,6 @@
                           value="${version.major}_${version.minor}_${version.revision}_${version.extra}"/>
             </else>
         </if>
-
-        <!-- Extract the source from the whack jar -->
-        <unjar src="${lib.merge.dir}/whack.jar" dest="${whack.src}">
-            <patternset includes="org/xmpp/**/*.java"/>
-        </unjar>
     </target>
 
     <!-- compile =============================================================================== -->

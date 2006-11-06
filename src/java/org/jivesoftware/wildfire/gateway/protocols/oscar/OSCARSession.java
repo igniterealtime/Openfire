@@ -454,8 +454,10 @@ public class OSCARSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        if (bosConn != null) {
-            bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
+        if (isLoggedIn()) {
+            if (bosConn != null) {
+                bosConn.getAndSendStatus(getTransport().convertJIDToID(jid));
+            }
         }
     }
 

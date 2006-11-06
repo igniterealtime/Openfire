@@ -1018,6 +1018,15 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             Roster roster = rosterManager.getRoster(userjid.getNode());
             boolean hasTransport = false;
 
+            // Lets lock down the roster from update notifications if there's an active session.
+            try {
+                TransportSession session = sessionManager.getSession(userjid.getNode());
+                session.lockRoster();
+            }
+            catch (NotFoundException e) {
+                // No active session?  Then no problem.
+            }
+
             // First thing first, we want to build ourselves an easy mapping.
             Map<JID,TransportBuddy> legacymap = new HashMap<JID,TransportBuddy>();
             for (TransportBuddy buddy : legacyitems) {
@@ -1089,6 +1098,15 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                 catch (UserNotFoundException e) {
                     Log.error("Failed adding new roster item", e);
                 }
+            }
+
+            // All done, lets unlock the roster.
+            try {
+                TransportSession session = sessionManager.getSession(userjid.getNode());
+                session.unlockRoster();
+            }
+            catch (NotFoundException e) {
+                // No active session?  Then no problem.
             }
         }
         catch (UserNotFoundException e) {
@@ -1187,6 +1205,16 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     public void cleanUpRoster(JID jid, Boolean leaveDomain) throws UserNotFoundException {
         try {
             Roster roster = rosterManager.getRoster(jid.getNode());
+
+            // Lets lock down the roster from update notifications if there's an active session.
+            try {
+                TransportSession session = sessionManager.getSession(jid.getNode());
+                session.lockRoster();
+            }
+            catch (NotFoundException e) {
+                // No active session?  Then no problem.
+            }
+
             for (RosterItem ri : roster.getRosterItems()) {
                 if (ri.getJid().getDomain().equals(this.jid.getDomain())) {
                     if (ri.isShared()) {
@@ -1206,6 +1234,15 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                         Log.error("Error removing roster item: " + ri.toString(), e);
                     }
                 }
+            }
+
+            // All done, lets unlock the roster.
+            try {
+                TransportSession session = sessionManager.getSession(jid.getNode());
+                session.unlockRoster();
+            }
+            catch (NotFoundException e) {
+                // No active session?  Then no problem.
             }
         }
         catch (UserNotFoundException e) {
@@ -1280,14 +1317,16 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             // Not ours, not our problem.
             return;
         }
-        Log.debug(getType().toString()+": contactUpdated "+roster.getUsername()+":"+item.getJid());
         if (item.getJid().getNode() == null) {
             // Gateway itself, don't care.
             return;
         }
         try {
             TransportSession session = sessionManager.getSession(roster.getUsername());
-            session.updateContact(item);
+            if (!session.isRosterLocked()) {
+                Log.debug(getType().toString()+": contactUpdated "+roster.getUsername()+":"+item.getJid());
+                session.updateContact(item);
+            }
         }
         catch (NotFoundException e) {
             // Well we just don't care then.
@@ -1304,14 +1343,16 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             // Not ours, not our problem.
             return;
         }
-        Log.debug(getType().toString()+": contactAdded "+roster.getUsername()+":"+item.getJid());
         if (item.getJid().getNode() == null) {
             // Gateway itself, don't care.
             return;
         }
         try {
             TransportSession session = sessionManager.getSession(roster.getUsername());
-            session.addContact(item);
+            if (!session.isRosterLocked()) {
+                Log.debug(getType().toString()+": contactAdded "+roster.getUsername()+":"+item.getJid());
+                session.addContact(item);
+            }
         }
         catch (NotFoundException e) {
             // Well we just don't care then.
@@ -1328,18 +1369,20 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             // Not ours, not our problem.
             return;
         }
-        Log.debug(getType().toString()+": contactDeleted "+roster.getUsername()+":"+item.getJid());
-//        if (item.getJid().getNode() == null) {
-//            // TODO: The gateway itself was removed?
-//            return;
-//        }
-//        try {
-//            TransportSession session = sessionManager.getSession(roster.getUsername());
-//            session.removeContact(item);
-//        }
-//        catch (NotFoundException e) {
-//            // TODO: Should maybe do something about this
-//        }
+        if (item.getJid().getNode() == null) {
+            // Gateway itself, don't care.
+            return;
+        }
+        try {
+            TransportSession session = sessionManager.getSession(roster.getUsername());
+            if (!session.isRosterLocked()) {
+                Log.debug(getType().toString()+": contactDeleted "+roster.getUsername()+":"+item.getJid());
+                session.removeContact(item);
+            }
+        }
+        catch (NotFoundException e) {
+            // Well we just don't care then.
+        }
     }
 
     /**
@@ -1350,7 +1393,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
     public void rosterLoaded(Roster roster) {
         Log.debug(getType().toString()+": rosterLoaded "+roster.getUsername());
         // Don't care
-        // TODO: Evaluate if we could use this, maybe an opportunity to clean up.
     }
 
     /**

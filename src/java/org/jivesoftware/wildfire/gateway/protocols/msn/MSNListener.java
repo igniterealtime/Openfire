@@ -115,6 +115,7 @@ public class MSNListener extends MsnAdapter {
             }
         }
         for (MsnGroup msnGroup : messenger.getContactList().getGroups()) {
+            Log.debug("MSN: Got group "+msnGroup);
             msnSession.storeGroup(msnGroup);
         }
         msnSession.syncUsers();        

@@ -368,26 +368,28 @@ public class YahooSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        YahooUser user = yahooSession.getUser(jid.getNode());
-        Presence p = new Presence();
-        p.setTo(getJID());
-        if (user != null) {
-            // User was found so update presence accordingly
-            p.setFrom(getTransport().convertIDToJID(user.getId()));
+        if (isLoggedIn()) {
+            YahooUser user = yahooSession.getUser(jid.getNode());
+            Presence p = new Presence();
+            p.setTo(getJID());
+            if (user != null) {
+                // User was found so update presence accordingly
+                p.setFrom(getTransport().convertIDToJID(user.getId()));
 
-            String custommsg = user.getCustomStatusMessage();
-            if (custommsg != null) {
-                p.setStatus(custommsg);
+                String custommsg = user.getCustomStatusMessage();
+                if (custommsg != null) {
+                    p.setStatus(custommsg);
+                }
+
+                ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
             }
-
-            ((YahooTransport)getTransport()).setUpPresencePacket(p, user.getStatus());
+            else {
+                // User was not found so send an error presence
+                p.setFrom(jid);
+                p.setError(PacketError.Condition.forbidden);
+            }
+            getTransport().sendPacket(p);
         }
-        else {
-            // User was not found so send an error presence
-            p.setFrom(jid);
-            p.setError(PacketError.Condition.forbidden);
-        }
-        getTransport().sendPacket(p);
     }
 
     /**

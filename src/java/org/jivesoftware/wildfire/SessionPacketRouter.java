@@ -8,11 +8,9 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-package org.jivesoftware.wildfire.multiplex;
+package org.jivesoftware.wildfire;
 
-import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
@@ -22,23 +20,29 @@ import org.dom4j.Element;
 import java.io.UnsupportedEncodingException;
 
 /**
- * Handles the routing of packets to a particular session.
+ * Handles the routing of packets to a particular session. It will invoke all of the appropriate
+ * interceptors, before and after having the server process the message.
  *
  * @author Alexander Wenckus
  */
-public class MultiplexerPacketRouter {
+public class SessionPacketRouter implements PacketRouter {
 
     private ClientSession session;
     private PacketRouter router;
+    private SessionManager sessionManager;
 
-    public MultiplexerPacketRouter(ClientSession session) {
+    public SessionPacketRouter() {
+        this(null);
+    }
+
+    public SessionPacketRouter(ClientSession session) {
         this.session = session;
         router = XMPPServer.getInstance().getPacketRouter();
+        sessionManager = SessionManager.getInstance();
     }
 
     public void route(Element wrappedElement)
-            throws UnsupportedEncodingException, UnknownStanzaException
-    {
+            throws UnsupportedEncodingException, UnknownStanzaException {
         String tag = wrappedElement.getName();
         if ("auth".equals(tag) || "response".equals(tag)) {
             SASLAuthentication.handle(session, wrappedElement);
@@ -54,7 +58,6 @@ public class MultiplexerPacketRouter {
         }
         else {
             throw new UnknownStanzaException();
-
         }
     }
 
@@ -68,7 +71,25 @@ public class MultiplexerPacketRouter {
         }
     }
 
+    public void route(Packet packet) {
+        if(packet instanceof IQ) {
+            route((IQ)packet);
+        }
+        else if(packet instanceof Message) {
+            route((Message)packet);
+        }
+        else if(packet instanceof Presence) {
+            route((Presence)packet);
+        }
+    }
+
     public void route(IQ packet) {
+        if(session == null) {
+            session = sessionManager.getSession(packet.getFrom());
+            if(session == null) {
+                router.route(packet);
+            }
+        }
         packet.setFrom(session.getAddress());
         try {
             // Invoke the interceptors before we process the read packet
@@ -102,6 +123,12 @@ public class MultiplexerPacketRouter {
     }
 
     public void route(Message packet) {
+        if(session == null) {
+            session = sessionManager.getSession(packet.getFrom());
+            if(session == null) {
+                router.route(packet);
+            }
+        }
         packet.setFrom(session.getAddress());
         try {
             // Invoke the interceptors before we process the read packet
@@ -130,6 +157,12 @@ public class MultiplexerPacketRouter {
     }
 
     public void route(Presence packet) {
+        if(session == null) {
+            session = sessionManager.getSession(packet.getFrom());
+            if(session == null) {
+                router.route(packet);
+            }
+        }
         packet.setFrom(session.getAddress());
         try {
             // Invoke the interceptors before we process the read packet

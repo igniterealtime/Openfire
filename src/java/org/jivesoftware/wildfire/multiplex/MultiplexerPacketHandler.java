@@ -17,6 +17,7 @@ import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.SessionPacketRouter;
 import org.xmpp.packet.*;
 
 import java.io.UnsupportedEncodingException;
@@ -155,7 +156,7 @@ public class MultiplexerPacketHandler {
             return;
         }
 
-        MultiplexerPacketRouter router = new MultiplexerPacketRouter(session);
+        SessionPacketRouter router = new SessionPacketRouter(session);
         try {
             router.route(route.getChildElement());
         }

@@ -15,7 +15,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.StreamID;
-import org.jivesoftware.wildfire.multiplex.MultiplexerPacketRouter;
+import org.jivesoftware.wildfire.SessionPacketRouter;
 import org.jivesoftware.wildfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.dom4j.*;
@@ -26,7 +26,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 
 /**
- *
+ * Manages sessions for all users connecting to Wildfire using the HTTP binding protocal,
+ * <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  */
 public class HttpSessionManager {
 
@@ -88,10 +89,30 @@ public class HttpSessionManager {
         sessionMap.clear();
     }
 
+    /**
+     * Returns the session related to a stream id.
+     *
+     * @param streamID the stream id to retrieve the session.
+     * @return the session related to the provided stream id.
+     */
     public HttpSession getSession(String streamID) {
         return sessionMap.get(streamID);
     }
 
+    /**
+     * Creates an HTTP binding session which will allow a user to exchnage packets with Wildfire.
+     *
+     * @param address the internet address that was used to bind to Wildfie.
+     * @param rootNode the body element that was sent containing the request for a new session.
+     * @param connection the HTTP connection object which abstracts the individual connections
+     * to Wildfire over the HTTP binding protocol. The initial session creation response is
+     * returned to this connection.
+     * @return the created HTTP session.
+     * @throws UnauthorizedException if the Wildfire server is currently in an uninitialized state.
+     * Either shutting down or starting up.
+     * @throws HttpBindException when there is an internal server error related to the creation of
+     * the initial session creation response.
+     */
     public HttpSession createSession(InetAddress address, Element rootNode,
             HttpConnection connection)
             throws UnauthorizedException, HttpBindException
@@ -182,6 +203,22 @@ public class HttpSessionManager {
         return response.asXML();
     }
 
+    /**
+     * Forwards a client request, which is related to a session, to the server. A connection is
+     * created and queued up in the provided session. When a connection reaches the top of a queue
+     * any pending packets bound for the client will be forwarded to the client through the
+     * connection.
+     *
+     * @param rid the unique, sequential, requestID sent from the client.
+     * @param session the HTTP session of the client that made the request.
+     * @param isSecure true if the request was made over a secure channel, HTTPS, and false if it
+     * was not.
+     * @param rootNode the XML body of the request.
+     * @return the created HTTP connection.
+     * @throws HttpBindException for several reasons: if the encoding inside of an auth packet is
+     * not recognized by the server, or if the packet type is not recognized.
+     * @throws HttpConnectionClosedException if the session is no longer available.
+     */
     public HttpConnection forwardRequest(long rid, HttpSession session, boolean isSecure,
                                          Element rootNode) throws HttpBindException,
             HttpConnectionClosedException
@@ -191,7 +228,7 @@ public class HttpSessionManager {
         boolean isPoll = elements.size() <= 0;
         HttpConnection connection = new HttpConnection(rid, isSecure);
         session.addConnection(connection, isPoll);
-        MultiplexerPacketRouter router = new MultiplexerPacketRouter(session);
+        SessionPacketRouter router = new SessionPacketRouter(session);
 
         for (Element packet : elements) {
             try {

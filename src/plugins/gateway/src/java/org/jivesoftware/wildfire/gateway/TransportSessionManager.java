@@ -100,9 +100,11 @@ public class TransportSessionManager {
      * @return A thread wrapped around the session.
      */
     public Thread startThread(TransportSession session) {
-        Thread sessionThread = new Thread(threadGroup, session);
-        sessionThread.start();
-        return sessionThread;
+        // TODO: This does not work well.  Disabling.
+//        Thread sessionThread = new Thread(threadGroup, session);
+//        sessionThread.start();
+//        return sessionThread;
+        return null;
     }
 
     /**

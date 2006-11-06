@@ -248,19 +248,21 @@ public class IRCSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {
-        String contact = getTransport().convertJIDToID(jid);
-        Presence p = new Presence();
-        if (buddyStatuses.containsKey(contact)) {
-            if (buddyStatuses.get(contact).equals(PresenceType.unavailable)) {
-                p.setType(Presence.Type.unavailable);
+        if (isLoggedIn()) {
+            String contact = getTransport().convertJIDToID(jid);
+            Presence p = new Presence();
+            if (buddyStatuses.containsKey(contact)) {
+                if (buddyStatuses.get(contact).equals(PresenceType.unavailable)) {
+                    p.setType(Presence.Type.unavailable);
+                }
             }
+            else {
+                p.setError(PacketError.Condition.forbidden);
+            }
+            p.setTo(jid);
+            p.setFrom(getTransport().convertIDToJID(contact));
+            getTransport().sendPacket(p);
         }
-        else {
-            p.setError(PacketError.Condition.forbidden);
-        }
-        p.setTo(jid);
-        p.setFrom(getTransport().convertIDToJID(contact));
-        getTransport().sendPacket(p);
     }
 
     /**

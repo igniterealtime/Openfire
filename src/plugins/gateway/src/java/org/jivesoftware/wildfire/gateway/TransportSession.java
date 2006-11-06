@@ -87,6 +87,11 @@ public abstract class TransportSession implements Runnable {
     public boolean validSession = true;
 
     /**
+     * Is the roster locked for sync editing?
+     */
+    public boolean rosterLocked = false;
+
+    /**
      * The current login status on the legacy network.
      */
     public TransportLoginStatus loginStatus = TransportLoginStatus.LOGGED_OUT;
@@ -158,6 +163,29 @@ public abstract class TransportSession implements Runnable {
      */
     public int getResourceCount() {
         return resources.size();
+    }
+
+    /**
+     * Returns if the roster is currently locked.
+     *
+     * @return true or false if the roster is locked.
+     */
+    public boolean isRosterLocked() {
+        return rosterLocked;
+    }
+
+    /**
+     * Locks the roster (typically used for editing during syncing.
+     */
+    public void lockRoster() {
+        rosterLocked = true;
+    }
+
+    /**
+     * Unlocks the roster after sync editing is complete.
+     */
+    public void unlockRoster() {
+        rosterLocked = false;
     }
 
     /**

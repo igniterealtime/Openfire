@@ -11,7 +11,7 @@ commons-codec.jar      | 1.3
 dom4j.jar              | 1.6.1
 hsqldb.jar             | 1.8.0.5
 jetty.jar              | Jetty 6.1.0
-jetty-util.jar		   | Jetty 6.1.0
+jetty-util.jar         | Jetty 6.1.0
 jasper-compiler.jar    | Jetty 6.1.0 (5.5.15)
 jasper-runtime.jar     | Jetty 6.1.0 (5.5.15)
 jaxen.jar              | 1.1 beta 4 (from DOM4J 1.6.1)
@@ -19,7 +19,7 @@ junit.jar              | 3.8.1
 jdic.jar               | 0.9.1 (for windows only)
 jstl.jar               | Jakarta standard taglib 1.1.2
 jmdns.jar              | 1.0 RC1
-jsp-api.jar			   | Jetty 6.1.0 (2.0)
+jsp-api.jar            | Jetty 6.1.0 (2.0)
 jtds.jar               | 1.2
 jzlib.jar              | 1.0.7
 mail.jar               | 1.4.0 (JavaMail)

@@ -248,16 +248,19 @@ public abstract class Packet {
         List extensions = element.elements(QName.get(name, namespace));
         if (!extensions.isEmpty()) {
             Class extensionClass = PacketExtension.getExtensionClass(name, namespace);
+            // If a specific PacketExtension implementation has been registered, use that.
             if (extensionClass != null) {
                 try {
-                    Constructor constructor = extensionClass.getDeclaredConstructor(new Class[]{
-                        Element.class});
-                    return (PacketExtension) constructor.newInstance(new Object[]{
-                        extensions.get(0)});
+                    Constructor constructor = extensionClass.getDeclaredConstructor(Element.class);
+                    return (PacketExtension)constructor.newInstance(extensions.get(0));
                 }
                 catch (Exception e) {
                     // Ignore.
                 }
+            }
+            // Otherwise, use a normal PacketExtension.
+            else {
+                return new PacketExtension((Element)extensions.get(0));
             }
         }
         return null;

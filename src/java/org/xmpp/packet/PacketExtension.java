@@ -32,15 +32,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * PacketExtension acts as a wrapper on a child element the same way Packet does for a whole
  * element. The wrapper provides an easy way to handle the packet extension.<p>
  *
- * Subclasses of this class should be registered in the static variable
- * <tt>registeredExtensions</tt> when loaded. The registration process associates the new subclass
+ * Subclasses of this class can be registered using the static variable
+ * <tt>registeredExtensions</tt>. The registration process associates the new subclass
  * with a given qualified name (ie. element name and namespace). This information will be used by
  * {@link Packet#getExtension(String, String)} for locating the corresponding PacketExtension
- * subclass to return for the requested qualified name.
+ * subclass to return for the requested qualified name. Each PacketExtension must have a public
+ * constructor that takes an Element instance as an argument. 
  *
  * @author Gaston Dombiak
  */
-public abstract class PacketExtension {
+public class PacketExtension {
     
     protected static DocumentFactory docFactory = DocumentFactory.getInstance();
     /**
@@ -99,5 +100,9 @@ public abstract class PacketExtension {
      *
      * @return a deep copy of this packet extension.
      */
-    public abstract PacketExtension createCopy();
+    public PacketExtension createCopy() {
+        Element copy = element.createCopy();
+        docFactory.createDocument().add(copy);
+        return new PacketExtension(element);
+    }
 }

@@ -38,10 +38,11 @@ import java.net.InetAddress;
  */
 public class HttpSession extends ClientSession {
     private int wait;
-    private int hold = -1000;
+    private int hold = 0;
     private String language;
     private final Queue<HttpConnection> connectionQueue = new LinkedList<HttpConnection>();
     private final List<Deliverable> pendingElements = new ArrayList<Deliverable>();
+    private final List<Deliverable> sentElements = new ArrayList<Deliverable>();
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
@@ -49,14 +50,42 @@ public class HttpSession extends ClientSession {
     private boolean isClosed;
     private int inactivityTimeout;
     private long lastActivity;
+    private long lastRequestID;
 
-    public HttpSession(String serverName, InetAddress address, StreamID streamID) {
+    public HttpSession(String serverName, InetAddress address, StreamID streamID, long rid) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection(address);
         this.lastActivity = System.currentTimeMillis();
+        this.lastRequestID = rid;
     }
 
-    void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
+    HttpConnection createConnection(long rid, boolean isPoll, boolean isSecure)
+            throws HttpConnectionClosedException, HttpBindException
+    {
+        HttpConnection connection = new HttpConnection(rid, isSecure);
+        if(rid <= lastRequestID) {
+            Deliverable deliverable = retrieveDeliverable(rid);
+            connection.deliverBody(deliverable.getDeliverable());
+            return connection;
+        }
+        else if (rid > lastRequestID + hold + 1) {
+            throw new HttpBindException("Unexpected RID Error", true, 404);
+        }
+
+        addConnection(connection, isPoll);
+        return connection;
+    }
+
+    private Deliverable retrieveDeliverable(long rid) throws HttpBindException {
+        for(Deliverable delivered : sentElements) {
+            if(delivered.getRequestID() == rid) {
+                return delivered;
+            }
+        }
+        throw new HttpBindException("Unexpected RID Error", true, 404);
+    }
+
+    private void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
             HttpConnectionClosedException
     {
         if(connection == null) {
@@ -77,7 +106,7 @@ public class HttpSession extends ClientSession {
             String deliverable = createDeliverable(pendingElements);
             pendingElements.clear();
             fireConnectionOpened(connection);
-            connection.deliverBody(deliverable);
+            deliver(connection, deliverable);
             fireConnectionClosed(connection);
         }
         else {
@@ -91,6 +120,21 @@ public class HttpSession extends ClientSession {
             connectionQueue.offer(connection);
             fireConnectionOpened(connection);
         }
+        lastRequestID = connection.getRequestId();
+    }
+
+    private void deliver(HttpConnection connection, String deliverable)
+            throws HttpConnectionClosedException
+    {
+        connection.deliverBody(deliverable);
+
+        Deliverable delivered = new Deliverable(deliverable);
+        delivered.setRequestID(connection.getRequestId());
+        while(sentElements.size() > hold) {
+            sentElements.remove(0);
+        }
+
+        sentElements.add(delivered);
     }
 
     private void fireConnectionOpened(HttpConnection connection) {
@@ -203,7 +247,7 @@ public class HttpSession extends ClientSession {
         while(!delivered && connectionQueue.size() > 0) {
             HttpConnection connection = connectionQueue.remove();
             try {
-                connection.deliverBody(deliverable);
+                deliver(connection, deliverable);
                 delivered = true;
                 fireConnectionClosed(connection);
             }
@@ -381,9 +425,10 @@ public class HttpSession extends ClientSession {
         }
     }
 
-    private class Deliverable {
+    private class Deliverable implements Comparable<Deliverable> {
         private final String text;
         private final Packet packet;
+        private long requestID;
 
         public Deliverable(String text) {
             this.text = text;
@@ -402,6 +447,18 @@ public class HttpSession extends ClientSession {
             else {
                 return text;
             }
+        }
+
+        public void setRequestID(long requestID) {
+            this.requestID = requestID;
+        }
+
+        public long getRequestID() {
+            return requestID;
+        }
+
+        public int compareTo(Deliverable o) {
+            return (int) (o.getRequestID() - requestID);
         }
     }
 }

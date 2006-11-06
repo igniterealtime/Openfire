@@ -128,7 +128,7 @@ public class HttpSessionManager {
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
 
-        HttpSession session = createSession(address);
+        HttpSession session = createSession(connection.getRequestId(), address);
         session.setWait(wait);
         session.setHold(hold);
         session.setSecure(connection.isSecure());
@@ -149,11 +149,11 @@ public class HttpSessionManager {
         return session;
     }
 
-    private HttpSession createSession(InetAddress address) throws UnauthorizedException {
+    private HttpSession createSession(long rid, InetAddress address) throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(address, streamID);
+        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(new SessionListener() {
@@ -226,8 +226,7 @@ public class HttpSessionManager {
         //noinspection unchecked
         List<Element> elements = rootNode.elements();
         boolean isPoll = elements.size() <= 0;
-        HttpConnection connection = new HttpConnection(rid, isSecure);
-        session.addConnection(connection, isPoll);
+        HttpConnection connection = session.createConnection(rid, isPoll, isSecure);
         SessionPacketRouter router = new SessionPacketRouter(session);
 
         for (Element packet : elements) {

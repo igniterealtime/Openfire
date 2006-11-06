@@ -17,7 +17,7 @@
 
 <html>
 <head>
-    <title>Jive Wifdfire Web Registration</title>
+    <title>Jive Wildfire Web Registration</title>
     <link rel="stylesheet" type="text/css" href="/style/global.css">
     <style type="text/css">
         .drop-shadow {

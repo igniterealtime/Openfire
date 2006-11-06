@@ -52,7 +52,7 @@ public class AdminConsolePlugin implements Plugin {
         if (Boolean.getBoolean("developmentMode")) {
             System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
             context = new WebAppContext(
-                    pluginDir.getParentFile().getParentFile().getParent() + File.separator +
+                    pluginDir.getParentFile().getParentFile().getParentFile().getParent() + File.separator +
                             "src" + File.separator + "web", "/");
         }
         else {

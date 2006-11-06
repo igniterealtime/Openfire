@@ -842,7 +842,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @param groups List of group the item is to be placed in. (can be null)
      * @throws UserNotFoundException if userjid not found.
      */
-    public void addOrUpdateRosterItem(JID userjid, JID contactjid, String nickname, ArrayList<String> groups) throws UserNotFoundException {
+    public void addOrUpdateRosterItem(JID userjid, JID contactjid, String nickname, List<String> groups) throws UserNotFoundException {
         try {
             Roster roster = rosterManager.getRoster(userjid.getNode());
             try {

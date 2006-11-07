@@ -1297,12 +1297,10 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#addingContact(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem, boolean)
      */
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
-        return !(item.getJid().getDomain().equals(this.getJID()) &&
-                item.getJid().getNode() != null) && persistent;
-//        if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
-//            return false;
-//        }
-//        return persistent;
+        if (item.getJid().getDomain().equals(this.getJID()) && item.getJid().getNode() != null) {
+            return false;
+        }
+        return persistent;
     }
 
     /**

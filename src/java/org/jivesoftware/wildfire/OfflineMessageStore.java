@@ -89,7 +89,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      */
     public OfflineMessageStore() {
         super("Offline Message Store");
-        dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("UTC"));
+        dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
+                TimeZone.getTimeZone("UTC"));
         sizeCache = CacheManager.initializeCache("Offline Message Size", "offlinemessage",
                 1024 * 100, JiveConstants.HOUR * 12);
     }

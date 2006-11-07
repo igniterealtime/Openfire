@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.muc;
 import org.dom4j.Element;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -31,7 +32,7 @@ import java.util.TimeZone;
 public final class MUCRoomHistory {
 
     private static final FastDateFormat UTC_FORMAT = FastDateFormat
-            .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
+            .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 
     private MUCRoom room;
 
@@ -60,7 +61,7 @@ public final class MUCRoomHistory {
             }
         }
 
-        Message packetToAdd = (Message) packet.createCopy();
+        Message packetToAdd = packet.createCopy();
 
         // Check if the room has changed its configuration
         if (isNonAnonymousRoom != room.canAnyoneDiscoverJID()) {
@@ -79,6 +80,7 @@ public final class MUCRoomHistory {
                         delayElement.addAttribute("from", role.getChatUser().getAddress().toString());
                     }
                     catch (UserNotFoundException e) {
+                        // Ignore.
                     }
                 }
                 else {
@@ -101,6 +103,7 @@ public final class MUCRoomHistory {
                         .toString());
             }
             catch (UserNotFoundException e) {
+                // Ignore.
             }
         }
         else {

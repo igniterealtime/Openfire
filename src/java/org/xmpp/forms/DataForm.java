@@ -23,6 +23,7 @@ package org.xmpp.forms;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
 import org.xmpp.packet.PacketExtension;
 
 import java.text.ParseException;
@@ -50,9 +51,11 @@ import java.util.*;
  */
 public class DataForm extends PacketExtension {
 
-    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(
+            JiveConstants.XMPP_DELAY_DATETIME_FORMAT);
     private static final FastDateFormat FAST_UTC_FORMAT =
-            FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("UTC"));
+            FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
+            TimeZone.getTimeZone("UTC"));
 
     /**
      * Element name of the packet extension.
@@ -65,7 +68,7 @@ public class DataForm extends PacketExtension {
     public static final String NAMESPACE = "jabber:x:data";
 
     static {
-        UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+        UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         // Register that DataForms uses the jabber:x:data namespace
         registeredExtensions.put(QName.get(ELEMENT_NAME, NAMESPACE), DataForm.class);
     }

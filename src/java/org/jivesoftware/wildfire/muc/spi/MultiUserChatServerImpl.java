@@ -13,10 +13,7 @@ package org.jivesoftware.wildfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
@@ -62,7 +59,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler {
 
     private static final FastDateFormat dateFormatter = FastDateFormat
-            .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
+            .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 
     /**
      * Statistics keys

@@ -17,6 +17,7 @@ import org.dom4j.QName;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
 import org.xmpp.packet.IQ;
 
 import java.text.DateFormat;
@@ -46,12 +47,13 @@ import java.util.TimeZone;
  */
 public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
 
-     // todo Make display text match the locale of user (xml:lang support)
+    // todo: Make display text match the locale of user (xml:lang support)
     private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
     private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.LONG);
     // UTC and not JEP-0082 time format is used as per the JEP-0090 specification.
-    private static final FastDateFormat UTC_FORMAT = FastDateFormat
-            .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
+    private static final FastDateFormat UTC_FORMAT =
+            FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
+            TimeZone.getTimeZone("UTC"));
 
     private Element responseElement;
     private IQHandlerInfo info;

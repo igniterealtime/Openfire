@@ -451,10 +451,12 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
             IQ result = IQ.createResultIQ(packet);
 
             // Tell the end user the transport went byebye.
-            Presence unavailable = new Presence(Presence.Type.unavailable);
-            unavailable.setTo(from);
-            unavailable.setFrom(to);
-            reply.add(unavailable);
+            if (legacyMode) {
+                Presence unavailable = new Presence(Presence.Type.unavailable);
+                unavailable.setTo(from);
+                unavailable.setFrom(to);
+                reply.add(unavailable);
+            }
 
             try {
                 this.deleteRegistration(from);

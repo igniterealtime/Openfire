@@ -94,15 +94,20 @@ public class HttpConnection {
      * deliverable currently available. Once the deliverable becomes available it is returned.
      *
      * @return the deliverable to send to the client
-     *
      * @throws HttpBindTimeoutException to indicate that the maximum wait time requested by the
      * client has been surpassed and an empty response should be returned.
      */
     public String getDeliverable() throws HttpBindTimeoutException {
         if (body == null && continuation != null) {
-            body = waitForDeliverable();
+            try {
+                body = waitForDeliverable();
+            }
+            catch (HttpBindTimeoutException e) {
+                this.isClosed = true;
+                throw e;
+            }
         }
-        else if (body == null && continuation == null) {
+        else if (body == null) {
             throw new IllegalStateException("Continuation not set, cannot wait for deliverable.");
         }
         return body;

@@ -856,7 +856,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     gwitem.setAskStatus(RosterItem.ASK_NONE);
                     changed = true;
                 }
-                // This could probably be simplified, for not I'm going with brute force logic.
+                // This could probably be simplified, for now I'm going with brute force logic.
                 // gnickname is null, nickname is null, leave
                 // gnickname is not null, nickname is null, set gnickname to null
                 // gnickname is null, nickname is not null, set gnickname to nickname
@@ -886,8 +886,6 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
                     // Create new roster item for the gateway service or legacy contact. Only
                     // roster items related to the gateway service will be persistent. Roster
                     // items of legacy users are never persisted in the DB.
-//                    RosterItem gwitem =
-//                            roster.createRosterItem(contactjid, true, contactjid.getNode() == null);
                     RosterItem gwitem =
                             roster.createRosterItem(contactjid, true, false);
                     gwitem.setSubStatus(RosterItem.SUB_BOTH);

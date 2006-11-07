@@ -170,21 +170,44 @@ public class YahooSession extends TransportSession {
      * Syncs up the yahoo roster with the jabber roster.
      */
     public void syncUsers() {
-        List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
+        // First we need to get a good mapping of users to what groups they are in.
+        HashMap<String,ArrayList<String>> userToGroups = new HashMap<String,ArrayList<String>>();
         for (YahooGroup group : yahooSession.getGroups()) {
             for (Enumeration e = group.getMembers().elements(); e.hasMoreElements();) {
                 YahooUser user = (YahooUser)e.nextElement();
-                PseudoRosterItem rosterItem = pseudoRoster.getItem(user.getId());
-                String nickname = null;
-                if (rosterItem != null) {
-                    nickname = rosterItem.getNickname();
+                ArrayList<String> groups;
+                if (userToGroups.containsKey(user.getId())) {
+                    groups = userToGroups.get(user.getId());
                 }
-                if (nickname == null) {
-                    nickname = user.getId();
+                else {
+                    groups = new ArrayList<String>();
                 }
-                legacyusers.add(new TransportBuddy(user.getId(), nickname, group.getName()));
+                if (!groups.contains(group.getName())) {
+                    groups.add(group.getName());
+                }
+                userToGroups.put(user.getId(), groups);
             }
         }
+        // Now we will run through the entire list of users and set up our sync group.
+        List<TransportBuddy> legacyusers = new ArrayList<TransportBuddy>();
+        for (Object userObj : yahooSession.getUsers().values()) {
+            YahooUser user = (YahooUser)userObj;
+            PseudoRosterItem rosterItem = pseudoRoster.getItem(user.getId());
+            String nickname = null;
+            if (rosterItem != null) {
+                nickname = rosterItem.getNickname();
+            }
+            if (nickname == null) {
+                nickname = user.getId();
+            }
+            if (userToGroups.containsKey(user.getId())) {
+                legacyusers.add(new TransportBuddy(user.getId(), nickname, userToGroups.get(user.getId()).get(0)));
+            }
+            else {
+                legacyusers.add(new TransportBuddy(user.getId(), nickname, null));
+            }
+        }
+        // Lets try the actual sync.
         try {
             getTransport().syncLegacyRoster(getJID(), legacyusers);
         }

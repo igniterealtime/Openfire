@@ -1,8 +1,8 @@
 Name                   |  Version
 ---------------------------------------------
 cindy.jar              | 2.4.4
-irclib.jar             | 1.04
-jml.jar                | svn-20061105
+irclib.jar             | 1.10
+jml.jar                | svn-20061107
 joscar-client.jar      | svn-20061103
 joscar-common.jar      | svn-20061026
 joscar-protocol.jar    | svn-20061103

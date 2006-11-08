@@ -409,7 +409,6 @@
                 >
             <sourcepath>
                 <path location="${src.java.dir}"/>
-                <path location="${whack.src}"/>
             </sourcepath>
             <doctitle>
                 <![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
@@ -688,11 +687,6 @@
         <!-- Copy source -->
         <copy todir="${release.src.out.dir}/src">
             <fileset dir="${src.dir}"/>
-        </copy>
-        <copy todir="${release.src.out.dir}/src/java">
-            <fileset dir="${whack.src}">
-                <exclude name="org/xmpp/packet.*.java"/>
-            </fileset>
         </copy>
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.src.out.dir}/resources/i18n">

@@ -81,12 +81,12 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
     }
 
     protected static Element getChildElement(Element element, String namespace) {
-        List elements = element.elements();
+        //noinspection unchecked
+        List<Element> elements = element.elements();
         if (elements.isEmpty()) {
             return null;
         }
-        for (int i = 0; i < elements.size(); i++) {
-            Element childElement = (Element) elements.get(i);
+        for (Element childElement : elements) {
             String childNamespace = childElement.getNamespaceURI();
             if (namespace.equals(childNamespace)) {
                 return childElement;
@@ -139,7 +139,18 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
                 return null;
             }
             String fileName = fileTransferElement.attributeValue("name");
-            long size = Long.parseLong(fileTransferElement.attributeValue("size"));
+            String sizeString = fileTransferElement.attributeValue("size");
+            if (fileName == null || sizeString == null) {
+                return null;
+            }
+            
+            long size;
+            try {
+                size = Long.parseLong(sizeString);
+            }
+            catch (Exception ex) {
+                return null;
+            }
 
             transfer = new FileTransfer(from.toString(), to.toString(),
                     streamID, fileName, size, mimeType);

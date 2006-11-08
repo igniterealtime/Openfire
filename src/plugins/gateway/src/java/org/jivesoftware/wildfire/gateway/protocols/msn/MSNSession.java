@@ -198,11 +198,7 @@ public class MSNSession extends TransportSession {
      */
     public void removeContact(RosterItem item) {
         Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
-//        MsnContact msnContact = msnContacts.get(contact.toString());
         msnMessenger.removeFriend(contact, false);
-//        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
-//            msnMessenger.removeFriend(contact, msnGroup.getGroupId());
-//        }
     }
 
     /**
@@ -233,9 +229,13 @@ public class MSNSession extends TransportSession {
      */
     public void syncContactGroups(Email contact, List<String> groups) {
         MsnContact msnContact = msnContacts.get(contact.toString());
+        if (msnContact == null) {
+            return;
+        }
         // Create groups that do not currently exist.
         for (String group : groups) {
             if (!msnGroups.containsKey(group)) {
+                Log.debug("MSN: Group "+group+" is a new group, creating.");
                 msnMessenger.addGroup(group);
             }
         }
@@ -245,17 +245,19 @@ public class MSNSession extends TransportSession {
         }
         // Make sure contact belongs to groups that we want.
         for (String group : groups) {
+            Log.debug("MSN: Found "+contact+" should belong to group "+group);
             MsnGroup msnGroup = msnGroups.get(group);
-            if (msnContact == null || !msnContact.belongGroup(msnGroup)) {
-                msnMessenger.copyFriend(contact, group);
+            if (!msnContact.belongGroup(msnGroup)) {
+                Log.debug("MSN: "+contact+" does not belong to "+group+", copying.");
+                msnMessenger.copyFriend(contact, msnGroup.getGroupId());
             }
         }
         // Now we will clean up groups that we should no longer belong to.
-        if (msnContact != null) {
-            for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
-                if (!groups.contains(msnGroup.getGroupName())) {
-                    msnMessenger.removeFriend(contact, msnGroup.getGroupId());
-                }
+        for (MsnGroup msnGroup : msnContact.getBelongGroups()) {
+            Log.debug("MSN: Found "+contact+" belongs to group "+msnGroup.getGroupName());
+            if (!groups.contains(msnGroup.getGroupName())) {
+                Log.debug("MSN: "+contact+" should not belong to "+msnGroup.getGroupName()+", removing.");
+                msnMessenger.removeFriend(contact, msnGroup.getGroupId());
             }
         }
     }

@@ -72,7 +72,7 @@ public abstract class BaseTransport implements Component, RosterEventListener, P
         this.jid = jid;
         this.componentManager = componentManager;
         sessionManager.startThreadManager(jid);
-        legacyMode = JiveGlobals.getBooleanProperty("plugin.gateway.legacymode", false);
+        legacyMode = JiveGlobals.getBooleanProperty("plugin.gateway.legacymode", true);
     }
 
     /**

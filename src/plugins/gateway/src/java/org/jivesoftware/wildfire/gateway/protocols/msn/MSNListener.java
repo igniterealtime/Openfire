@@ -170,13 +170,11 @@ public class MSNListener extends MsnAdapter {
      * Owner status has changed.
      */
     public void ownerStatusChanged(MsnMessenger messenger) {
-        if (msnSession.getTransport().getLegacyMode()) {
-            Presence p = new Presence();
-            p.setTo(msnSession.getJID());
-            p.setFrom(msnSession.getTransport().getJID());
-            ((MSNTransport)msnSession.getTransport()).setUpPresencePacket(p, messenger.getOwner().getStatus());
-            msnSession.getTransport().sendPacket(p);
-        }
+        Presence p = new Presence();
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().getJID());
+        ((MSNTransport)msnSession.getTransport()).setUpPresencePacket(p, messenger.getOwner().getStatus());
+        msnSession.getTransport().sendPacket(p);
     }
 
     /**

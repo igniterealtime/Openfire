@@ -165,13 +165,11 @@ public class LoginConnection extends BaseFlapConnection {
                 m.setBody(errormsg);
                 getMainSession().getTransport().sendPacket(m);
 
-                if (getMainSession().getTransport().getLegacyMode()) {
-                    Presence p = new Presence();
-                    p.setTo(getMainSession().getJID());
-                    p.setFrom(getMainSession().getTransport().getJID());
-                    p.setType(Presence.Type.unavailable);
-                    getMainSession().getTransport().sendPacket(p);
-                }
+                Presence p = new Presence();
+                p.setTo(getMainSession().getJID());
+                p.setFrom(getMainSession().getTransport().getJID());
+                p.setType(Presence.Type.unavailable);
+                getMainSession().getTransport().sendPacket(p);
                 getMainSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
             }
             else {

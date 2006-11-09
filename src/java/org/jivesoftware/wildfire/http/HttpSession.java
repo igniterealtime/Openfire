@@ -65,6 +65,9 @@ public class HttpSession extends ClientSession {
         HttpConnection connection = new HttpConnection(rid, isSecure);
         if(rid <= lastRequestID) {
             Deliverable deliverable = retrieveDeliverable(rid);
+            if (deliverable == null) {
+                throw new HttpBindException("Unexpected RID Error", true, 404);
+            }
             connection.deliverBody(deliverable.getDeliverable());
             return connection;
         }
@@ -82,7 +85,7 @@ public class HttpSession extends ClientSession {
                 return delivered;
             }
         }
-        throw new HttpBindException("Unexpected RID Error", true, 404);
+        return null;
     }
 
     private void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
@@ -104,10 +107,15 @@ public class HttpSession extends ClientSession {
         connection.setSession(this);
         if (pendingElements.size() > 0) {
             String deliverable = createDeliverable(pendingElements);
-            pendingElements.clear();
-            fireConnectionOpened(connection);
-            deliver(connection, deliverable);
-            fireConnectionClosed(connection);
+            try {
+                fireConnectionOpened(connection);
+                deliver(connection, deliverable);
+                fireConnectionClosed(connection);
+                pendingElements.clear();
+            }
+            catch (HttpConnectionClosedException he) {
+                throw he;
+            }
         }
         else {
             // With this connection we need to check if we will have too many connections open,
@@ -190,10 +198,6 @@ public class HttpSession extends ClientSession {
             sb.append(element.asXML());
         }
         return sb.toString();
-    }
-
-    public InetAddress getInetAddress() {
-        return null;
     }
 
     public synchronized void close() {

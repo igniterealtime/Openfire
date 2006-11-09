@@ -162,32 +162,6 @@ public class TransportInstance implements PropertyEventListener {
     }
 
     /**
-     * Enables legacy roster mode on the transport.
-     */
-    public void enableLegacyMode() {
-        if (!running || transport == null) {
-            return;
-        }
-
-        Log.info("Enabling legacy mode: "+type.toString());
-
-        transport.setLegacyMode(true);
-    }
-
-    /**
-     * Disables legacy roster mode on the transport.
-     */
-    public void disableLegacyMode() {
-        if (!running || transport == null) {
-            return;
-        }
-
-        Log.info("Disabling legacy mode: "+type.toString());
-
-        transport.setLegacyMode(false);
-    }
-
-    /**
      * Retrieves actual transport associated with this instance.
      *
      * @return Transport that the instance is associated with.
@@ -221,19 +195,6 @@ public class TransportInstance implements PropertyEventListener {
                     }
                 }
             }
-            else if (property.equals("plugin.gateway.legacymode")) {
-                enabled = Boolean.parseBoolean((String)params.get("value"));
-                if (enabled) {
-                    if (!running) {
-                        enableLegacyMode();
-                    }
-                }
-                else {
-                    if (running) {
-                        disableLegacyMode();
-                    }
-                }
-            }
         }
     }
 
@@ -252,11 +213,6 @@ public class TransportInstance implements PropertyEventListener {
                         this.subDomain = newSubDomain;
                         startInstance();
                     }
-                }
-            }
-            else if (property.equals("plugin.gateway.legacymode")) {
-                if (running) {
-                    disableLegacyMode();
                 }
             }
         }

@@ -94,7 +94,7 @@
                 return;
             }
             try {
-                plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password, nickname);
+                plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password, nickname, false);
                 response.sendRedirect("gateway-registrations.jsp?success=true");
                 return;
             }

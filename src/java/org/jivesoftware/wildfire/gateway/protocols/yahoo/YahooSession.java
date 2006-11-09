@@ -104,12 +104,10 @@ public class YahooSession extends TransportSession {
                         yahooSession.login(registration.getUsername(), registration.getPassword());
                         setLoginStatus(TransportLoginStatus.LOGGED_IN);
 
-                        if (getTransport().getLegacyMode()) {
-                            Presence p = new Presence();
-                            p.setTo(getJID());
-                            p.setFrom(getTransport().getJID());
-                            getTransport().sendPacket(p);
-                        }
+                        Presence p = new Presence();
+                        p.setTo(getJID());
+                        p.setFrom(getTransport().getJID());
+                        getTransport().sendPacket(p);
 
                         yahooSession.setStatus(((YahooTransport)getTransport()).convertJabStatusToYahoo(pType));
 
@@ -158,12 +156,10 @@ public class YahooSession extends TransportSession {
             Log.debug("Failed to log out from Yahoo.");
         }
         yahooSession.reset();
-        if (getTransport().getLegacyMode()) {
-            Presence p = new Presence(Presence.Type.unavailable);
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-        }
+        Presence p = new Presence(Presence.Type.unavailable);
+        p.setTo(getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
     }
 
     /**

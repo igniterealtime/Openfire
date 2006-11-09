@@ -101,12 +101,10 @@ public class MSNSession extends TransportSession {
             setLoginStatus(TransportLoginStatus.LOGGING_OUT);            
             msnMessenger.logout();
         }
-        if (getTransport().getLegacyMode()) {
-            Presence p = new Presence(Presence.Type.unavailable);
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-        }
+        Presence p = new Presence(Presence.Type.unavailable);
+        p.setTo(getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
         setLoginStatus(TransportLoginStatus.LOGGED_OUT);
     }
 

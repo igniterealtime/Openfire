@@ -14,18 +14,15 @@ package org.jivesoftware.wildfire;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Version;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.wildfire.commands.AdHocCommandHandler;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.Module;
-import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.container.PluginListener;
 import org.jivesoftware.wildfire.container.Plugin;
+import org.jivesoftware.wildfire.container.PluginListener;
+import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.wildfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
@@ -37,6 +34,7 @@ import org.jivesoftware.wildfire.handler.*;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.wildfire.net.MulticastDNSService;
+import org.jivesoftware.wildfire.net.SSLConfig;
 import org.jivesoftware.wildfire.net.ServerTrafficCounter;
 import org.jivesoftware.wildfire.pubsub.PubSubModule;
 import org.jivesoftware.wildfire.roster.RosterManager;
@@ -52,6 +50,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.security.KeyStore;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -315,6 +314,29 @@ public class XMPPServer {
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             // Set the new server domain assigned during the setup process
             name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
+
+            // Update certificates (if required)
+            try {
+                // Check if keystore already has certificates for current domain
+                KeyStore ksKeys = SSLConfig.getKeyStore();
+                boolean dsaFound = CertificateManager.isDSACertificate(ksKeys, name);
+                boolean rsaFound = CertificateManager.isRSACertificate(ksKeys, name);
+
+                // No certificates were found so create new self-signed certificates
+                if (!dsaFound) {
+                    CertificateManager.createDSACert(ksKeys, name + "_dsa", "cn=" + name, "cn=" + name, "*." + name);
+                }
+                if (!rsaFound) {
+                    CertificateManager.createRSACert(ksKeys, name + "_rsa", "cn=" + name, "cn=" + name, "*." + name);
+                }
+                // Save new certificates into the key store
+                if (!dsaFound || !rsaFound) {
+                    SSLConfig.saveStores();
+                }
+
+            } catch (Exception e) {
+                Log.error("Error generating self-signed certificates", e);
+            }
 
             Thread finishSetup = new Thread() {
                 public void run() {

@@ -17,10 +17,12 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.Message;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,15 @@ public class MSNSession extends TransportSession {
     public MSNSession(Registration registration, JID jid, MSNTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
 
+        if (Email.parseStr(registration.getUsername()) == null) {
+            Message m = new Message();
+            m.setType(Message.Type.error);
+            m.setTo(getJID());
+            m.setFrom(getTransport().getJID());
+            m.setBody("You are registered with the MSN transport with an illegal account name.\nThe account name should look like an email address.\nYou registered as:"+registration.getUsername());
+            return;
+        }
+
         Log.debug("Creating MSN session for " + registration.getUsername());
         msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
         ((BasicMessenger)msnMessenger).addSessionListener(new MsnSessionListener(this));
@@ -67,6 +78,11 @@ public class MSNSession extends TransportSession {
      * MSN groups.
      */
     private ConcurrentHashMap<String,MsnGroup> msnGroups = new ConcurrentHashMap<String,MsnGroup>();
+
+    /**
+     * Pending MSN groups and contact to be added.
+     */
+    private ConcurrentHashMap<String,ArrayList<Email>> msnPendingGroups = new ConcurrentHashMap<String,ArrayList<Email>>();
 
     /**
      * Log in to MSN.
@@ -136,6 +152,72 @@ public class MSNSession extends TransportSession {
     }
 
     /**
+     * Records a member of a pending new group that will be added later.
+     *
+     * @param groupName Name of group to be stored.
+     * @param member Email address of member to be added.
+     */
+    public void storePendingGroup(String groupName, Email member) {
+        if (!msnPendingGroups.containsKey(groupName)) {
+            ArrayList<Email> newList = new ArrayList<Email>();
+            newList.add(member);
+            msnPendingGroups.put(groupName, newList);
+        }
+        else {
+            ArrayList<Email> list = msnPendingGroups.get(groupName);
+            list.add(member);
+            msnPendingGroups.put(groupName, list);
+        }
+    }
+
+    /**
+     * Completes the addition of groups to a new contact after the contact has been created.
+     *
+     * @param msnContact Contact that was added.
+     */
+    public void completedPendingContactAdd(MsnContact msnContact) {
+        try {
+            Roster roster = getTransport().getRosterManager().getRoster(getJID().getNode());
+            Email contact = msnContact.getEmail();
+            JID contactJID = getTransport().convertIDToJID(contact.toString());
+            RosterItem item = roster.getRosterItem(contactJID);
+            syncContactGroups(contact, item.getGroups());
+            unlockRoster(contactJID.toString());
+        }
+        catch (UserNotFoundException e) {
+            Log.error("MSN: Unable to find roster when adding pendingcontact for "+getJID());
+            Email contact = msnContact.getEmail();
+            JID contactJID = getTransport().convertIDToJID(contact.toString());
+            unlockRoster(contactJID.toString());
+        }
+    }
+
+    /**
+     * Completes the addition of a contact to a new group after the group has been created.
+     *
+     * @param msnGroup Group that was added.
+     */
+    public void completedPendingGroupAdd(MsnGroup msnGroup) {
+        if (!msnPendingGroups.containsKey(msnGroup.getGroupName())) {
+            // Nothing to do, no pending.
+            return;
+        }
+        try {
+            Roster roster = getTransport().getRosterManager().getRoster(getJID().getNode());
+            for (Email contact : msnPendingGroups.get(msnGroup.getGroupName())) {
+                JID contactJID = getTransport().convertIDToJID(contact.toString());
+                RosterItem item = roster.getRosterItem(contactJID);
+                lockRoster(contactJID.toString());
+                syncContactGroups(contact, item.getGroups());
+                unlockRoster(contactJID.toString());
+            }
+        }
+        catch (UserNotFoundException e) {
+            Log.error("MSN: Unable to find roster when adding pending group contacts for "+getJID());
+        }
+    }
+
+    /**
      * Syncs up the MSN roster with the jabber roster.
      */
     public void syncUsers() {
@@ -175,20 +257,23 @@ public class MSNSession extends TransportSession {
      */
     public void addContact(RosterItem item) {
         Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        if (contact == null) {
+            Log.error("MSN: Unable to update illegal contact "+item.getJid());
+            return;
+        }
         String nickname = getTransport().convertJIDToID(item.getJid());
         if (item.getNickname() != null && !item.getNickname().equals("")) {
             nickname = item.getNickname();
         }
+        lockRoster(item.getJid().toString());
         msnMessenger.addFriend(contact, nickname);
         try {
-            lockRoster();
             getTransport().addOrUpdateRosterItem(getJID(), item.getJid(), nickname, item.getGroups());
-            unlockRoster();
         }
         catch (UserNotFoundException e) {
             Log.error("MSN: Unable to find roster when adding contact.");
         }
-        syncContactGroups(contact, item.getGroups());
+//        syncContactGroups(contact, item.getGroups());
     }
 
     /**
@@ -196,7 +281,14 @@ public class MSNSession extends TransportSession {
      */
     public void removeContact(RosterItem item) {
         Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        if (contact == null) {
+            Log.error("MSN: Unable to update illegal contact "+item.getJid());
+            return;
+        }
+        lockRoster(item.getJid().toString());
         msnMessenger.removeFriend(contact, false);
+        unlockRoster(item.getJid().toString());
+        msnContacts.remove(contact.toString());
     }
 
     /**
@@ -204,6 +296,10 @@ public class MSNSession extends TransportSession {
      */
     public void updateContact(RosterItem item) {
         Email contact = Email.parseStr(getTransport().convertJIDToID(item.getJid()));
+        if (contact == null) {
+            Log.error("MSN: Unable to update illegal contact "+item.getJid());
+            return;
+        }
         String nickname = getTransport().convertJIDToID(item.getJid());
         if (item.getNickname() != null && !item.getNickname().equals("")) {
             nickname = item.getNickname();
@@ -212,10 +308,12 @@ public class MSNSession extends TransportSession {
         if (msnContact == null) {
             return;
         }
+        lockRoster(item.getJid().toString());
         if (!msnContact.getFriendlyName().equals(nickname)) {
             msnMessenger.renameFriend(contact, nickname);
         }
         syncContactGroups(contact, item.getGroups());
+        unlockRoster(item.getJid().toString());
     }
 
     /**
@@ -235,17 +333,16 @@ public class MSNSession extends TransportSession {
             if (!msnGroups.containsKey(group)) {
                 Log.debug("MSN: Group "+group+" is a new group, creating.");
                 msnMessenger.addGroup(group);
+                // Ok, short circuit here, we need to wait for this group to be added.  We'll be back.
+                storePendingGroup(group, contact);
+                return;
             }
-        }
-        // Lets update our list of groups.
-        for (MsnGroup msnGroup : msnMessenger.getContactList().getGroups()) {
-            storeGroup(msnGroup);
         }
         // Make sure contact belongs to groups that we want.
         for (String group : groups) {
             Log.debug("MSN: Found "+contact+" should belong to group "+group);
             MsnGroup msnGroup = msnGroups.get(group);
-            if (!msnContact.belongGroup(msnGroup)) {
+            if (msnGroup != null && !msnContact.belongGroup(msnGroup)) {
                 Log.debug("MSN: "+contact+" does not belong to "+group+", copying.");
                 msnMessenger.copyFriend(contact, msnGroup.getGroupId());
             }

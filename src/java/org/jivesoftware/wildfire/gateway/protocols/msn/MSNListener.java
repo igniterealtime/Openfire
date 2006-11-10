@@ -167,6 +167,24 @@ public class MSNListener extends MsnAdapter {
     }
 
     /**
+     * A contact we added has been added to the server.
+     */
+    public void contactAddCompleted(MsnMessenger messenger, MsnContact contact) {
+        Log.debug("MSN: Contact add completed: "+contact);
+        msnSession.storeFriend(contact);
+        msnSession.completedPendingContactAdd(contact);
+    }
+
+    /**
+     * A group we added has been added to the server.
+     */
+    public void groupAddCompleted(MsnMessenger messenger, MsnGroup group) {
+        Log.debug("MSN: Group add completed: "+group);
+        msnSession.storeGroup(group);
+        msnSession.completedPendingGroupAdd(group);
+    }
+
+    /**
      * Owner status has changed.
      */
     public void ownerStatusChanged(MsnMessenger messenger) {

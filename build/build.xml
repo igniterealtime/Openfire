@@ -978,6 +978,8 @@
 
     </target>
     <target name="plugin" description="build one plugin">
+        <mkdir dir="${plugin.dest.dir}"/>
+
         <delete dir="${plugin.dev.dest.dir}/${plugin}"/>
         <delete file="${plugin.dev.dest.dir}/${plugin}.jar"/>
         <delete file="${plugin.dest.dir}/${plugin}.jar"/>

@@ -92,6 +92,11 @@ public abstract class TransportSession implements Runnable {
     public boolean rosterLocked = false;
 
     /**
+     * Contains a list of specific roster items that are locked.
+     */
+    public ArrayList<String> rosterItemsLocked = new ArrayList<String>();
+
+    /**
      * The current login status on the legacy network.
      */
     public TransportLoginStatus loginStatus = TransportLoginStatus.LOGGED_OUT;
@@ -175,10 +180,33 @@ public abstract class TransportSession implements Runnable {
     }
 
     /**
-     * Locks the roster (typically used for editing during syncing.
+     * Returns if a specific roster item is currently locked.
+     *
+     * Also checks global lock.
+     *
+     * @param jid JID to check whether it's locked.
+     * @return true or false if the roster item is locked.
+     */
+    public boolean isRosterLocked(String jid) {
+        return rosterLocked || rosterItemsLocked.contains(jid);
+    }
+
+    /**
+     * Locks the roster (typically used for editing during syncing).
      */
     public void lockRoster() {
         rosterLocked = true;
+    }
+
+    /**
+     * Locks a specific roster item (typically used for direct roster item updates).
+     *
+     * @param jid JID to lock.
+     */
+    public void lockRoster(String jid) {
+        if (!rosterItemsLocked.contains(jid)) {
+            rosterItemsLocked.add(jid);
+        }
     }
 
     /**
@@ -186,6 +214,17 @@ public abstract class TransportSession implements Runnable {
      */
     public void unlockRoster() {
         rosterLocked = false;
+    }
+
+    /**
+     * Unlocks a specific roster item.
+     *
+     * @param jid JID to unlock.
+     */
+    public void unlockRoster(String jid) {
+        if (rosterItemsLocked.contains(jid)) {
+            rosterItemsLocked.remove(jid);
+        }
     }
 
     /**

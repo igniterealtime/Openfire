@@ -8,9 +8,9 @@
     <name>IM Gateway</name>
     <description>Provides gateway connectivity to the other public instant messaging networks</description>
     <author>Daniel Henninger</author>
-    <version>1.0 Beta 4</version>
-    <date>10/20/2006</date>
-    <minServerVersion>3.1.0</minServerVersion>
+    <version>1.0 Beta 5</version>
+    <date>11/10/2006</date>
+    <minServerVersion>3.1.1</minServerVersion>
     <databaseKey>gateway</databaseKey>
     <databaseVersion>1</databaseVersion>
     <licenseType>gpl</licenseType>

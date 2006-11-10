@@ -189,7 +189,10 @@ hr {
     This plugin is configured via the "Gateways" sidebar item located in the Wildfire
     Admin Console.  You can enable individual transports via the "Settings" sidebar
     item, and add new registrations/view existing registrations from the "Registrations"
-    sidebar item.
+    sidebar item.  <b>Please note</b> that the options presented in the admin console
+    interface for the IM Gateway plugin, aside from enabling and disabling the transports,
+    are not yet implemented.  They are only there to demonstrate the look and feel
+    that is coming before version 1.0.
 </p>
 
 <h2>Using the plugin</h2>
@@ -227,10 +230,17 @@ hr {
     <ul>
         <li>AIM: login.oscar.aol.com 5190</li>
         <li>ICQ: login.oscar.aol.com 5190</li>
-        <li>IRC: currently irc.freenode.net 7000</li>
+        <li>IRC: irc.freenode.net 7000</li>
         <li>MSN: messenger.hotmail.com 1863</li>
         <li>Yahoo: scs.msg.yahoo.com 5050</li>
     </ul>
+    Please be aware that these are only the initial connections made.  Many of
+    the services will connect to other servers for difference aspects of your
+    legacy IM session.  All of these connections should stay on the same port
+    though.  There may be ranges of IP addresses or something that you can
+    open up but I do not know those lists.  Also, it is now possible to change
+    the initial connect host and port via
+    <a href="http://wiki.jivesoftware.org/display/WILDFIRE/Wildfire+Properties">Wildfire Properties</a>.
 </p>
 <p>
     There is additional documentation available at:
@@ -244,6 +254,22 @@ hr {
     to register with whatever transports are made available.  Some clients
     do not have the functionality to interact with transports.  In this case,
     a server admin will need to register the user on their behalf. (see above)
+</p>
+<p>
+    When registering with any IM Gateway transports, you will see the transport
+    itself show up in your XMPP roster.  This is normal and is how the transport
+    knows when you are logged in or not, and detects status changes.  Removal of
+    the transport roster items will typically remove your registration with the
+    transport as well.
+</p>
+<p>
+    <b>Special note for Spark:</b> As of this release, and an upcoming release
+    of Spark, you will not have the transports in your roster when you register
+    from Spark.  This is an experimental feature for a smoother user experience.
+    Note that if you register from Spark and then move to another client, you
+    will not automatically log into any transports.  If you plan to dance between
+    clients and not use Spark exclusively, I would recommend you register from
+    another client than Spark.
 </p>
 
 <h2>Trouble shooting</h2>

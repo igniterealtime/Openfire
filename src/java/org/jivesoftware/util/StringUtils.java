@@ -231,7 +231,7 @@ public class StringUtils {
     /**
      * This method takes a string which may contain HTML tags (ie, &lt;b&gt;,
      * &lt;table&gt;, etc) and converts the '&lt'' and '&gt;' characters to
-     * their HTML escape sequences.
+     * their HTML escape sequences. It will also replace LF  with &lt;br&gt;.
      *
      * @param in the text to be converted.
      * @return the input string with the characters '&lt;' and '&gt;' replaced
@@ -264,6 +264,13 @@ public class StringUtils {
                 }
                 last = i + 1;
                 out.append(GT_ENCODE);
+            }
+            else if (ch == '\n') {
+                if (i > last) {
+                    out.append(input, last, i - last);
+                }
+                last = i + 1;
+                out.append("<br>");
             }
         }
         if (last == 0) {

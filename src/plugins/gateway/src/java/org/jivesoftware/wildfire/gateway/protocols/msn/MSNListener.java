@@ -210,12 +210,12 @@ public class MSNListener extends MsnAdapter {
             msnSession.logOut();
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsnProtocolException")) {
-            Message m = new Message();
-            m.setType(Message.Type.error);
-            m.setTo(msnSession.getJIDWithHighestPriority());
-            m.setFrom(msnSession.getTransport().getJID());
-            m.setBody("MSN error: "+throwable.toString());
-            msnSession.getTransport().sendPacket(m);
+//            Message m = new Message();
+//            m.setType(Message.Type.error);
+//            m.setTo(msnSession.getJIDWithHighestPriority());
+//            m.setFrom(msnSession.getTransport().getJID());
+//            m.setBody("MSN error: "+throwable.toString());
+//            msnSession.getTransport().sendPacket(m);
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsgNotSendException")) {
             Message m = new Message();
@@ -234,12 +234,12 @@ public class MSNListener extends MsnAdapter {
             msnSession.getTransport().sendPacket(m);
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.UnsupportedProtocolException")) {
-            Message m = new Message();
-            m.setType(Message.Type.error);
-            m.setTo(msnSession.getJIDWithHighestPriority());
-            m.setFrom(msnSession.getTransport().getJID());
-            m.setBody("MSN protocol error: "+throwable.toString());
-            msnSession.getTransport().sendPacket(m);
+//            Message m = new Message();
+//            m.setType(Message.Type.error);
+//            m.setTo(msnSession.getJIDWithHighestPriority());
+//            m.setFrom(msnSession.getTransport().getJID());
+//            m.setBody("MSN protocol error: "+throwable.toString());
+//            msnSession.getTransport().sendPacket(m);
         }
         else {
             Message m = new Message();

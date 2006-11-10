@@ -589,7 +589,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 else {
                     boolean rosterlessMode = false;
                     Element x = packet.getChildElement().element("x");
-                    if (x.getNamespaceURI().equals(IQ_GATEWAY_REGISTER)) {
+                    if (x != null && x.getNamespaceURI() != null && x.getNamespaceURI().equals(IQ_GATEWAY_REGISTER)) {
                         rosterlessMode = true;
                         Log.info("Registered " + packet.getFrom() + " as " + username + " in rosterless mode.");
                     }

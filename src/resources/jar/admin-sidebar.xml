@@ -112,6 +112,11 @@
                     url="ssl-settings.jsp"
                     description="${sidebar.server-ssl.descr}" />
 
+            <!-- SSL Certificates -->
+            <item id="ssl-certificates" name="${sidebar.ssl-certificates}"
+                    url="ssl-certificates.jsp"
+                    description="${sidebar.ssl-certificates.descr}" />
+
             <!-- Compression Settings -->
             <item id="server-compression" name="${sidebar.server-compression}"
                     url="compression-settings.jsp"

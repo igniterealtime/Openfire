@@ -145,7 +145,7 @@ public class CertificateManager {
      * @throws KeyStoreException
      */
     public static boolean isDSACertificate(X509Certificate certificate) throws KeyStoreException {
-        return certificate.getPublicKey().getAlgorithm().contains("DSA");
+        return certificate.getPublicKey().getAlgorithm().equals("DSA");
     }
 
     /**
@@ -161,7 +161,7 @@ public class CertificateManager {
         for (Enumeration<String> aliases = ksKeys.aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) ksKeys.getCertificate(aliases.nextElement());
             for (String identity : TLSStreamHandler.getPeerIdentities(certificate)) {
-                if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().contains(algorithm)) {
+                if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
                     return true;
                 }
             }
@@ -190,7 +190,7 @@ public class CertificateManager {
 
         PublicKey pubKey = cert.getPublicKey();
 
-        String signatureAlgorithm = cert.getSigAlgName().contains("DSA") ? "SHA1withDSA" : "MD5withRSA";
+        String signatureAlgorithm = "DSA".equals(pubKey.getAlgorithm()) ? "SHA1withDSA" : "MD5withRSA";
 
         PKCS10CertificationRequest csr =
                 new PKCS10CertificationRequest(signatureAlgorithm, xname, pubKey, null, privKey);

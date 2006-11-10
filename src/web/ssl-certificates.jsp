@@ -12,6 +12,8 @@
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.security.PrivateKey" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -148,6 +150,19 @@
       </table>
       </div><br>
 
+  <%  } else if (ParamUtils.getBooleanParameter(request,"issuerUpdated")) { %>
+
+      <div class="jive-success">
+      <table cellpadding="0" cellspacing="0" border="0">
+      <tbody>
+          <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+          <td class="jive-icon-label">
+          <fmt:message key="ssl.certificates.issuer-updated" />
+          </td></tr>
+      </tbody>
+      </table>
+      </div><br>
+
   <%  } else if (ParamUtils.getBooleanParameter(request,"importsuccess")) { %>
 
       <div class="jive-success">
@@ -235,7 +250,8 @@
   <tbody>
 
   <% int i = 0;
-      boolean offerSigningRequest = false;
+      boolean offerUpdateIssuer = false;
+      Map<String, String> signingRequests = new HashMap<String, String>();
       for (Enumeration aliases = keyStore.aliases(); aliases.hasMoreElements();) {
           i++;
           String a = (String) aliases.nextElement();
@@ -252,7 +268,12 @@
           // Signing Request pending = not self signed certs whose chain has only 1 cert (the same cert)
           boolean isSigningPending = !isSelfSigned && keyStore.getCertificateChain(a).length == 1;
 
-          offerSigningRequest = offerSigningRequest || isSelfSigned || isSigningPending;
+          offerUpdateIssuer = offerUpdateIssuer || isSelfSigned || isSigningPending;
+          if (isSigningPending) {
+              // Generate new signing request for certificate
+              PrivateKey privKey = (PrivateKey) keyStore.getKey(a, SSLConfig.getKeyPassword().toCharArray());
+              signingRequests.put(a, CertificateManager.createSigningRequest(c, privKey));
+          }
   %>
       <tr valign="top">
           <td id="rs<%=i%>" width="1" rowspan="1"><%= (i) %>.</td>
@@ -286,7 +307,7 @@
           </td>
           <% } %>
           <td width="2%">
-              <%= c.getSigAlgName() %>
+              <%= c.getPublicKey().getAlgorithm() %>
           </td>
           <td width="1" align="center">
               <a href="ssl-certificates.jsp?alias=<%= a %>&type=server&delete=true"
@@ -318,19 +339,52 @@
   </tbody>
   </table>
   <!-- END 'Installed Certificates' -->
-  <% if (offerSigningRequest) { %>
+  <!-- BEGIN 'Signing request' -->
+  <% if (offerUpdateIssuer || !signingRequests.isEmpty()) { %>
   <br>
   <div class="jive-contentBoxHeader">
       <fmt:message key="ssl.signing-request.title"/>
   </div>
   <div class="jive-contentBox">
+      <% if (offerUpdateIssuer) { %>
       <p>
-          <fmt:message key="ssl.signing-request.introduction">
+          <fmt:message key="ssl.signing-request.offer-issuer-information">
               <fmt:param value="<%= "<a href='ssl-signing-request.jsp'>" %>" />
               <fmt:param value="<%= "</a>" %>" />
           </fmt:message>
       </p>
+      <% } %>
+      <% if (!signingRequests.isEmpty()) { %>
+        <p>
+            <fmt:message key="ssl.signing-request.requests_info"/>
+        </p>
+        <table cellpadding="3" cellspacing="2" border="0">
+            <thead>
+                <tr>
+                    <th>
+                        <fmt:message key="ssl.signing-request.alias" />
+                    </th>
+                    <th>
+                        <fmt:message key="ssl.signing-request.signing-request" />
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <% for (Map.Entry<String, String> entry : signingRequests.entrySet()) { %>
+                <tr>
+                    <td width="1%" valign="top">
+                        <%= entry.getKey() %>
+                    </td>
+                    <td width="99%" >
+                        <%= StringUtils.escapeHTMLTags(entry.getValue()) %>
+                    </td>
+                </tr>
+                <% } %>
+          </tbody>
+          </table>
+      <% } %>
   </div>
   <% } %>
+  <!-- END 'Signing request' -->
   </body>
 </html>

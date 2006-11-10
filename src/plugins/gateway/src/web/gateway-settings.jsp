@@ -150,7 +150,8 @@
 <body>
 
 
-<p><fmt:message key="gateway.web.settings.instructions" /></p>
+<p><fmt:message key="gateway.web.settings.instructions" />
+<b>Note:</b> Please be aware that Tests, Options, and Permissions are not yet functional.  They are only present for demonstration.</p>
 
 
 <form action="" name="gatewayForm">

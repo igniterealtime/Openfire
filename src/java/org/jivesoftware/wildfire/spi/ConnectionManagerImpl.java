@@ -11,25 +11,27 @@
 
 package org.jivesoftware.wildfire.spi;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.http.HttpSessionManager;
-import org.jivesoftware.wildfire.http.HttpBindServlet;
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.http.HttpBindServlet;
+import org.jivesoftware.wildfire.http.HttpSessionManager;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.wildfire.net.*;
 import org.mortbay.jetty.servlet.ServletHolder;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ConnectionManagerImpl extends BasicModule implements ConnectionManager {
+public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener {
 
     private SocketAcceptThread socketThread;
     private SSLSocketAcceptThread sslSocketThread;
@@ -256,6 +258,23 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
+    private void restartClientSSLListeners() {
+        if (!isSocketStarted) {
+            return;
+        }
+        // Setup port info
+        try {
+            localIPAddress = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch (UnknownHostException e) {
+            if (localIPAddress == null) {
+                localIPAddress = "Unknown";
+            }
+        }
+        stopClientSSLListeners();
+        startClientSSLListeners(localIPAddress);
+    }
+
     public Iterator<ServerPort> getPorts() {
         return ports.iterator();
     }
@@ -344,7 +363,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public boolean isClientSSLListenerEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true);
+        try {
+            return JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true) && SSLConfig.getKeyStore().size() > 0;
+        } catch (KeyStoreException e) {
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public void enableComponentListener(boolean enabled) {
@@ -506,6 +531,22 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     // #####################################################################
+    // Certificates events
+    // #####################################################################
+
+    public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+        restartClientSSLListeners();
+    }
+
+    public void certificateDeleted(KeyStore keyStore, String alias) {
+        restartClientSSLListeners();
+    }
+
+    public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
+        restartClientSSLListeners();
+    }
+
+    // #####################################################################
     // Module management
     // #####################################################################
 
@@ -515,6 +556,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         serverName = server.getServerInfo().getName();
         createSocket();
         SocketSendingTracker.getInstance().start();
+        CertificateManager.addListener(this);
     }
 
     public void stop() {
@@ -525,6 +567,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopConnectionManagerListener();
         stopServerListener();
         SocketSendingTracker.getInstance().shutdown();
+        CertificateManager.removeListener(this);
         serverName = null;
     }
 }

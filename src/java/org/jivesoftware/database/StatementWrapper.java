@@ -11,7 +11,10 @@
 
 package org.jivesoftware.database;
 
+import org.jivesoftware.util.Log;
+
 import java.sql.*;
+import java.lang.reflect.Method;
 
 /**
  * An implementation of the Statement interface that wraps an underlying
@@ -26,7 +29,7 @@ public abstract class StatementWrapper implements Statement {
     /**
      * Creates a new StatementWrapper that wraps <tt>stmt</tt>.
      *
-     * @param stmt
+     * @param stmt the Statement.
      */
     public StatementWrapper(Statement stmt) {
         this.stmt = stmt;
@@ -178,5 +181,82 @@ public abstract class StatementWrapper implements Statement {
 
     public int getResultSetHoldability() throws SQLException {
         return stmt.getResultSetHoldability();
+    }
+
+    // JDK 1.6 Methods. We must handle these using reflection so that the code will compile on
+    // both JDK 1.6 and 1.5.
+
+    public boolean isClosed() throws SQLException {
+        try {
+            Method method = stmt.getClass().getMethod("isClosed");
+            return (Boolean)method.invoke(stmt);
+        }
+        catch (Exception e) {
+            if (e instanceof SQLException) {
+                throw (SQLException)e;
+            }
+            // Simply log reflection exceptions.
+            Log.error(e);
+            return false;
+        }
+    }
+
+    public void setPoolable(boolean poolable) throws SQLException {
+        try {
+            Method method = stmt.getClass().getMethod("setPoolable", Boolean.class);
+            method.invoke(stmt, poolable);
+        }
+        catch (Exception e) {
+            if (e instanceof SQLException) {
+                throw (SQLException)e;
+            }
+            // Simply log reflection exceptions.
+            Log.error(e);
+        }
+    }
+
+    public boolean isPoolable() throws SQLException {
+        try {
+            Method method = stmt.getClass().getMethod("isPoolable");
+            return (Boolean)method.invoke(stmt);
+        }
+        catch (Exception e) {
+            if (e instanceof SQLException) {
+                throw (SQLException)e;
+            }
+            // Simply log reflection exceptions.
+            Log.error(e);
+            return false;
+        }
+    }
+
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        try {
+            Method method = stmt.getClass().getMethod("unwrap", Class.class);
+            return (T)method.invoke(stmt, iface);
+        }
+        catch (Exception e) {
+            if (e instanceof SQLException) {
+                throw (SQLException)e;
+            }
+            // Simply log reflection exceptions.
+            Log.error(e);
+            return null;
+        }
+    }
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        try {
+            Method method = stmt.getClass().getMethod("isWrapperFor", Class.class);
+            return (Boolean)method.invoke(stmt, iface);
+        }
+        catch (Exception e) {
+            if (e instanceof SQLException) {
+                throw (SQLException)e;
+            }
+            // Simply log reflection exceptions.
+            Log.error(e);
+            return false;
+        }
     }
 }

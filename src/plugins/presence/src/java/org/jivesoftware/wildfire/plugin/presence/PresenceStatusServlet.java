@@ -61,12 +61,12 @@ public class PresenceStatusServlet extends HttpServlet {
         xmlProvider = new XMLPresenceProvider();
         imageProvider = new ImagePresenceProvider(this);
         textProvider = new TextPresenceProvider();
-        available = loadResource("/images/user-green-16x16.gif");
-        away = loadResource("/images/user-yellow-16x16.gif");
-        chat = loadResource("/images/user-green-16x16.gif");
-        dnd = loadResource("/images/user-red-16x16.gif");
-        offline = loadResource("/images/user-clear-16x16.gif");
-        xa = loadResource("/images/user-yellow-16x16.gif");
+        available = loadResource("/plugins/presence/images/user-green-16x16.gif");
+        away = loadResource("/plugins/presence/images/user-yellow-16x16.gif");
+        chat = loadResource("/plugins/presence/images/user-green-16x16.gif");
+        dnd = loadResource("/plugins/presence/images/user-red-16x16.gif");
+        offline = loadResource("/plugins/presence/images/user-clear-16x16.gif");
+        xa = loadResource("/plugins/presence/images/user-yellow-16x16.gif");
         // Exclude this servlet from requering the user to login
         AuthCheckFilter.addExclude("presence/status");
     }

@@ -73,6 +73,8 @@ presence.jar file over the existing file.</p>
 The presence plugin can be configured via the Wildfire Admin Console.
 Use the configuration page to specify whether presence information should be available 
 to anyone or restricted to authorized users (users which have presence subscriptions).
+The status message for unavailable users can also be changed from the default of
+&quot;Unavailable&quot;.
 
 <h2>Using the Plugin</h2>
 
@@ -161,6 +163,15 @@ custom images that should be used to display the user's presence:</p>
 <ul>
 <form>
 <textarea cols=65 rows=3 wrap=virtual>http://example.com:9090/plugins/presence/status?jid=jsmith@example.com&type=xml
+</textarea>
+</form>
+</ul>
+
+<p>This example requests the status text of the presence of a user in text format:</p>
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>http://example.com:9090/plugins/presence/status?jid=jsmith@example.com&type=text
 </textarea>
 </form>
 </ul>

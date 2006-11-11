@@ -143,6 +143,28 @@ public class PresencePlugin implements Plugin, Component {
     }
 
     /**
+     * Returns the status message for the unavailable presence. This setting allows
+     * a different string to be used for the status on this presence which is
+     * "Unavailable" by default.
+     *
+     * @return the status message for the unavailable presence.
+     */
+    public String getUnavailableStatus() {
+        return JiveGlobals.getProperty("plugin.presence.unavailable.status", "Unavailable");
+    }
+
+    /**
+     * Sets the status message for the unavailable presence. This setting allows
+     * a different string to be used for the status on this presence which is
+     * "Unavailable" by default.
+     *
+     * @param statusMessage the status message for the unavailable presence.
+     */
+    public void setUnavailableStatus(String statusMessage) {
+        JiveGlobals.setProperty("plugin.presence.unavailable.status", statusMessage);
+    }
+
+    /**
      * Returns the presence of the requested user or <tt>null</tt> if the user is offline. If
      * presences are not public then the user presence will be returned if and only if the sender
      * of the request is subscribed to the user presence.

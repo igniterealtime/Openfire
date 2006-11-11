@@ -8,16 +8,23 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%  // Get parameters
+<%
+    PresencePlugin plugin = (PresencePlugin)XMPPServer.getInstance().getPluginManager().getPlugin("presence");
+
+    // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
 	boolean presencePublic = ParamUtils.getBooleanParameter(request, "presencePublic");
+    String unavailableStatus = ParamUtils.getParameter(request, "presenceUnavailableStatus", false);
+    if (unavailableStatus == null) {
+        unavailableStatus = plugin.getUnavailableStatus();
+    }
 
-	PresencePlugin plugin = (PresencePlugin)XMPPServer.getInstance().getPluginManager().getPlugin("presence");
 
     // Handle a save
     if (save) {
         plugin.setPresencePublic(presencePublic);
+        plugin.setUnavailableStatus(unavailableStatus);
         response.sendRedirect("presence-service.jsp?success=true");
         return;
     }
@@ -27,10 +34,28 @@
 
 <html>
     <head>
-        <title>Presence Service Properties</title>
+        <title>Presence Service</title>
         <meta name="pageID" content="presence-service"/>
     </head>
     <body>
+
+<div class="information">
+    <%
+        String serverName = XMPPServer.getInstance().getServerInfo().getName();
+        int port = JiveGlobals.getXMLProperty("adminConsole.port", -1);
+        int securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", -1);
+        boolean secureOnly = (port == -1);
+
+    %>
+
+    Presence Service URL:<br>
+    <tt><%= secureOnly?"https":"http"%>://<%=serverName%>:<%= secureOnly?securePort:port%>/plugins/presence/status</tt>
+    <br><br>
+    Example:<br>
+    <tt><%= secureOnly?"https":"http"%>://<%=serverName%>:<%= secureOnly?securePort:port%>/plugins/presence/status?jid=admin@<%=serverName%></tt>  
+
+
+</div>
 
 <p>
 Use the form below to configure user presence visibility. By default, user
@@ -83,6 +108,21 @@ presence should only be visible to those users that are authorized.<br>
         </tr>
     </tbody>
     </table>
+    </div>
+</fieldset>
+
+<br>
+    
+<fieldset>
+    <legend>Plain Text 'Unavailable' Status Message</legend>
+    <div>
+    <p>
+    In &quot;text&quot; mode the status message for unavailable users is &quot;Unavailable&quot;
+    by default. It is possible to change the unavailable status message by setting this property.
+    </p>
+    <p>
+        <input type="text" name="presenceUnavailableStatus" value="<%= unavailableStatus %>">
+    </p>
     </div>
 </fieldset>
 

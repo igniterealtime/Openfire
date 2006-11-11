@@ -60,6 +60,14 @@ public class HttpSessionManager {
      */
     private static int pollingInterval;
 
+    /**
+     * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
+     * responding to any request during the session. This enables the client to prevent its TCP
+     * connection from expiring due to inactivity, as well as to limit the delay before it
+     * discovers any network failure.
+     */
+    private static int maxWait;
+
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
     private Timer inactivityTimer;
@@ -70,6 +78,8 @@ public class HttpSessionManager {
         inactivityTimeout = JiveGlobals.getIntProperty("xmpp.httpbind.client.idle", 30);
         maxRequests = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.max", 2);
         pollingInterval = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.polling", 5);
+        maxWait = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.wait",
+                Integer.MAX_VALUE);
     }
 
     public HttpSessionManager() {
@@ -133,7 +143,7 @@ public class HttpSessionManager {
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
 
         HttpSession session = createSession(connection.getRequestId(), address);
-        session.setWait(wait);
+        session.setWait(Math.min(wait, maxWait));
         session.setHold(hold);
         session.setSecure(connection.isSecure());
         session.setMaxPollingInterval(pollingInterval);

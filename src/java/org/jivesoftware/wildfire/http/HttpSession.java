@@ -285,7 +285,7 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * This attribute specifies the longest time (in seconds) that the connection manager is allowed
+     * Specifies the longest time (in seconds) that the connection manager is allowed
      * to wait before responding to any request during the session. This enables the client to
      * prevent its TCP connection from expiring due to inactivity, as well as to limit the delay
      * before it discovers any network failure.
@@ -297,7 +297,7 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * This attribute specifies the longest time (in seconds) that the connection manager is allowed
+     * Specifies the longest time (in seconds) that the connection manager is allowed
      * to wait before responding to any request during the session. This enables the client to
      * prevent its TCP connection from expiring due to inactivity, as well as to limit the delay
      * before it discovers any network failure.
@@ -309,7 +309,7 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * This attribute specifies the maximum number of requests the connection manager is allowed
+     * Specifies the maximum number of requests the connection manager is allowed
      * to keep waiting at any one time during the session. (For example, if a constrained client
      * is unable to keep open more than two HTTP connections to the same HTTP server simultaneously,
      * then it SHOULD specify a value of "1".)
@@ -322,7 +322,7 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * This attribute specifies the maximum number of requests the connection manager is allowed
+     * Specifies the maximum number of requests the connection manager is allowed
      * to keep waiting at any one time during the session. (For example, if a constrained client
      * is unable to keep open more than two HTTP connections to the same HTTP server simultaneously,
      * then it SHOULD specify a value of "1".)

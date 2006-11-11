@@ -3,10 +3,10 @@
 <%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.wildfire.net.SSLConfig" %>
 <%@ page import="java.security.KeyStore" %>
-<%@ page import="java.security.PrivateKey" %>
 <%@ page import="java.security.cert.X509Certificate" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.Enumeration" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -72,9 +72,9 @@
                     boolean isSigningPending = !isSelfSigned && keyStore.getCertificateChain(alias).length == 1;
                     if (isSelfSigned || isSigningPending) {
                         if (CertificateManager.isDSACertificate(certificate)) {
-                            CertificateManager.createDSACert(keyStore, alias, issuerDN.toString(), "cn=" + domain, "*." + domain);
+                            CertificateManager.createDSACert(keyStore, SSLConfig.getKeyPassword(), alias, issuerDN.toString(), "cn=" + domain, "*." + domain);
                         } else {
-                            CertificateManager.createRSACert(keyStore, alias, issuerDN.toString(), "cn=" + domain, "*." + domain);
+                            CertificateManager.createRSACert(keyStore, SSLConfig.getKeyPassword(), alias, issuerDN.toString(), "cn=" + domain, "*." + domain);
                         }
                     }
                 }

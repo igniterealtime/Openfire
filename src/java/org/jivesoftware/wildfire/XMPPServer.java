@@ -324,10 +324,12 @@ public class XMPPServer {
 
                 // No certificates were found so create new self-signed certificates
                 if (!dsaFound) {
-                    CertificateManager.createDSACert(ksKeys, name + "_dsa", "cn=" + name, "cn=" + name, "*." + name);
+                    CertificateManager.createDSACert(ksKeys, SSLConfig.getKeyPassword(), name + "_dsa", "cn=" + name,
+                            "cn=" + name, "*." + name);
                 }
                 if (!rsaFound) {
-                    CertificateManager.createRSACert(ksKeys, name + "_rsa", "cn=" + name, "cn=" + name, "*." + name);
+                    CertificateManager.createRSACert(ksKeys, SSLConfig.getKeyPassword(), name + "_rsa", "cn=" + name,
+                            "cn=" + name, "*." + name);
                 }
                 // Save new certificates into the key store
                 if (!dsaFound || !rsaFound) {

@@ -7,6 +7,7 @@
 
 package org.jivesoftware.wildfire.net;
 
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
@@ -80,7 +81,7 @@ class ServerTrustManager implements X509TrustManager {
         if (verify) {
             int nSize = x509Certificates.length;
 
-            List<String> peerIdentities = TLSStreamHandler.getPeerIdentities(x509Certificates[0]);
+            List<String> peerIdentities = CertificateManager.getPeerIdentities(x509Certificates[0]);
 
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true)) {
                 // Working down the chain, for every certificate in the chain,
@@ -163,25 +164,6 @@ class ServerTrustManager implements X509TrustManager {
                 }
             }
         }
-    }
-
-    private boolean isChainTrusted(X509Certificate[] chain) {
-        boolean trusted = false;
-        try {
-            // Start with the root and see if it is in the Keystore.
-            // The root is at the end of the chain.
-            for (int i = chain.length - 1; i >= 0; i--) {
-                if (trustStore.getCertificateAlias(chain[i]) != null) {
-                    trusted = true;
-                    break;
-                }
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-            trusted = false;
-        }
-        return trusted;
     }
 
     public X509Certificate[] getAcceptedIssuers() {

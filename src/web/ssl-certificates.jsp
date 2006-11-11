@@ -1,19 +1,18 @@
 <%@ page import="org.jivesoftware.util.CertificateManager,
                 org.jivesoftware.util.JiveGlobals,
                 org.jivesoftware.util.ParamUtils,
+                org.jivesoftware.util.StringUtils,
                 org.jivesoftware.wildfire.XMPPServer,
                 org.jivesoftware.wildfire.net.SSLConfig,
-                org.jivesoftware.wildfire.net.TLSStreamHandler,
                 java.io.ByteArrayInputStream,
                 java.security.KeyStore,
-                java.security.cert.X509Certificate,
-                java.util.Date"
+                java.security.PrivateKey,
+                java.security.cert.X509Certificate"
          errorPage="error.jsp"%>
+<%@ page import="java.util.Date" %>
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="java.security.PrivateKey" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -40,11 +39,11 @@
         try {
             if (!CertificateManager.isDSACertificate(keyStore, domain)) {
                 CertificateManager
-                        .createDSACert(keyStore, domain + "_dsa", "cn=" + domain, "cn=" + domain, "*." + domain);
+                        .createDSACert(keyStore, SSLConfig.getKeyPassword(), domain + "_dsa", "cn=" + domain, "cn=" + domain, "*." + domain);
             }
             if (!CertificateManager.isRSACertificate(keyStore, domain)) {
                 CertificateManager
-                        .createRSACert(keyStore, domain + "_rsa", "cn=" + domain, "cn=" + domain, "*." + domain);
+                        .createRSACert(keyStore, SSLConfig.getKeyPassword(), domain + "_rsa", "cn=" + domain, "cn=" + domain, "*." + domain);
             }
             // Save new certificates into the key store
             SSLConfig.saveStores();
@@ -57,7 +56,7 @@
     if (delete) {
         if (type != null && alias != null) {
             try {
-                SSLConfig.getKeyStore().deleteEntry(alias);
+                CertificateManager.deleteCertificate(keyStore, alias);
                 SSLConfig.saveStores();
                 response.sendRedirect("ssl-certificates.jsp?deletesuccess=true");
                 return;
@@ -72,7 +71,8 @@
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
             try {
-                CertificateManager.installReply(alias, new ByteArrayInputStream(reply.getBytes()), true, true);
+                CertificateManager.installReply(SSLConfig.getKeyStore(), SSLConfig.getTrustStore(),
+                        SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(reply.getBytes()), true, true);
                 SSLConfig.saveStores();
                 response.sendRedirect("ssl-certificates.jsp?importsuccess=true");
                 return;
@@ -206,19 +206,6 @@
       </tbody>
       </table>
       </div><br>
-
-  <%  } else if (errors.size() > 0) { %>
-
-      <div class="jive-error">
-      <table cellpadding="0" cellspacing="0" border="0">
-      <tbody>
-          <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-          <td class="jive-icon-label">
-          <fmt:message key="ssl.settings.error_certificate" />
-          </td></tr>
-      </tbody>
-      </table>
-      </div><br>
   <% } %>
 
   <!-- BEGIN 'Installed Certificates' -->
@@ -257,7 +244,7 @@
           String a = (String) aliases.nextElement();
           X509Certificate c = (X509Certificate) keyStore.getCertificate(a);
           StringBuffer identities = new StringBuffer();
-          for (String identity : TLSStreamHandler.getPeerIdentities(c)) {
+          for (String identity : CertificateManager.getPeerIdentities(c)) {
               identities.append(identity).append(", ");
           }
           if (identities.length() > 0) {

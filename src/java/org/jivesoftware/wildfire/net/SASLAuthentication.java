@@ -11,10 +11,11 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
-import org.dom4j.QName;
+import org.dom4j.Element;
 import org.dom4j.Namespace;
+import org.dom4j.QName;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
@@ -414,7 +415,7 @@ public class SASLAuthentication {
         SocketConnection connection = (SocketConnection) session.getConnection();
         try {
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                if (TLSStreamHandler.getPeerIdentities((X509Certificate) certificate)
+                if (CertificateManager.getPeerIdentities((X509Certificate) certificate)
                         .contains(hostname)) {
                     authenticationSuccessful(session, hostname, null);
                     return Status.authenticated;

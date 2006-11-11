@@ -24,10 +24,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -36,10 +33,10 @@ import java.util.zip.ZipFile;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
- * new plugins, and they are dynamically loaded.<p>
- * <p/>
- * An instance of this class can be obtained using:
- * <p/>
+ * new plugins, and they are dynamically loaded.<p/>
+ *
+ * An instance of this class can be obtained using:<p/>
+ *
  * <tt>XMPPServer.getInstance().getPluginManager()</tt>
  *
  * @author Matt Tucker
@@ -58,7 +55,7 @@ public class PluginManager {
     private Map<Plugin, String> childPluginMap;
     private Set<String> devPlugins;
     private PluginMonitor pluginMonitor;
-    private Set<PluginListener> pluginListeners = new HashSet<PluginListener>();
+    private Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<PluginListener>();
 
     /**
      * Constructs a new plugin manager.
@@ -471,8 +468,6 @@ public class PluginManager {
     }
 
     private void firePluginCreatedEvent(String name, Plugin plugin) {
-        Collection<PluginListener> pluginListeners
-                = new ArrayList<PluginListener>(this.pluginListeners);
         for(PluginListener listener : pluginListeners) {
             listener.pluginCreated(name, plugin);
         }
@@ -552,8 +547,6 @@ public class PluginManager {
     }
 
     private void firePluginDestroyedEvent(String name, Plugin plugin) {
-        Collection<PluginListener> pluginListeners
-                = new ArrayList<PluginListener>(this.pluginListeners);
         for (PluginListener listener : pluginListeners) {
             listener.pluginDestroyed(name, plugin);
         }
@@ -562,7 +555,7 @@ public class PluginManager {
     /**
      * Loads a class from the classloader of a plugin.
      *
-     * @param plugin    the plugin.
+     * @param plugin the plugin.
      * @param className the name of the class to load.
      * @return the class.
      * @throws ClassNotFoundException if the class was not found.

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Jive Software - Wildfire: Installation Guide</title>
+<title>Wildfire: Installation Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -23,8 +23,7 @@
 
 <p>Wildfire is a powerful instant messaging (IM) and chat
 server that implements the XMPP protocol. This document will guide 
-you through installing Wildfire as a standalone
-application. For a full list of features and more information, please
+you through installing Wildfire. For a full list of features and more information, please
 visit the Wildfire website: <a href="http://www.jivesoftware.org/wildfire"
  target="_top">http://www.jivesoftware.org/wildfire</a></p>
 
@@ -112,8 +111,7 @@ documentation.</li>
 <h2><a name="database">Setup the Database</a></h2>
 <p>Wildfire can store its data in an embedded database or you can choose to use
 an external database such as MySQL or Oracle. If you would like to use an external database,
-you must prepare it before proceeding with installation by running the appropriate database
-schema. View the <a href="database.html">database
+you must prepare it before proceeding with installation. View the <a href="database.html">database
 setup</a> documentation for more information.</p>
 
 <h2><a name="config"></a>Setup the Server</h2>
@@ -219,11 +217,13 @@ the script for additional details.</li>
 Plugins add additional features and protocol support to Wildfire. After setting up your
 Wildfire installation, you may want to download and install plugins to enhance your
 server. Plugins can be downloaded from the
-<a href="http://www.jivesoftware.org/wildfire/plugins.jsp">plugins page</a> on jivesoftware.org.
+<a href="http://www.jivesoftware.org/wildfire/plugins.jsp">plugins page</a> on jivesoftware.org
+or directly inside the administration console.
 
 <h3>Installing Plugins</h3>
 
-Each plugin comes packaged as a .jar (JAR) file. After download the plugin, you can deploy it
+If you download a plugin from inside the Wildfire administration console, it will automatically
+be installed. If you manually download the plugin (packaged as a .jar file), you can deploy it
 by copying the plugin file to the <tt>plugins/</tt> directory of your Wildfire installation. A
 plugin monitor will automatically extract the plugin into a directory and install the plugin in Wildfire.
 

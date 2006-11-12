@@ -50,29 +50,4 @@
         <interface></interface>
     </network>
     -->
-
-    <!-- Example LDAP settings -->
-    <!-- Note, for Active Directory, try usernameField=sAMAccountName, nameField=displayName,
-         emailField=mail -->
-    <!--
-    <ldap>
-        <host></host>
-        <port>389</port>
-        <usernameField>uid</usernameField>
-        <nameField>cn</nameField>
-        <emailField>mail</emailField>
-        <baseDN></baseDN>
-        <adminDN></adminDN>
-        <adminPassword></adminPassword>
-    </ldap>
-    <provider>
-        <user>
-            <className>org.jivesoftware.wildfire.ldap.LdapUserProvider</className>
-        </user>
-        <auth>
-            <className>org.jivesoftware.wildfire.ldap.LdapAuthProvider</className>
-        </auth>
-    </provider>
-    -->
-    <!-- End example LDAP settings -->
 </jive>

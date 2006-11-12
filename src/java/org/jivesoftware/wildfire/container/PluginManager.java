@@ -82,10 +82,10 @@ public class PluginManager {
         // See if we're in development mode. If so, check for new plugins once every 5 seconds.
         // Otherwise, default to every 20 seconds.
         if (Boolean.getBoolean("developmentMode")) {
-            executor.scheduleWithFixedDelay(pluginMonitor, 1, 5, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(pluginMonitor, 0, 5, TimeUnit.SECONDS);
         }
         else {
-            executor.scheduleWithFixedDelay(pluginMonitor, 1, 20, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(pluginMonitor, 0, 20, TimeUnit.SECONDS);
         }
     }
 

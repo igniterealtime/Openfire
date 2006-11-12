@@ -272,7 +272,7 @@
                   if (expired) { %>
                   <font color="red">
               <% } %>
-              <%= JiveGlobals.formatDateTime(c.getNotAfter()) %>
+              <%= JiveGlobals.formatDate(c.getNotAfter()) %>
               <% if (expired) { %>
                   </font>
               <% } %>

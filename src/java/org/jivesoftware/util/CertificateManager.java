@@ -300,7 +300,7 @@ public class CertificateManager {
      * requests are required by Certificate Authorities as part of their signing process. The signing request
      * contains information about the certificate issuer, subject DN, subject alternative names and public key.
      * Private keys are not included. After the Certificate Authority verified and signed the certificate a new
-     * certificate is going to be returned. Use {@link #installReply(String, java.io.InputStream, boolean, boolean)}
+     * certificate is going to be returned. Use {@link #installReply(java.security.KeyStore, java.security.KeyStore, String, String, java.io.InputStream, boolean, boolean)}
      * to import the CA reply.
      *
      * @param cert the certificate to create a signing request.
@@ -628,6 +628,7 @@ public class CertificateManager {
                             break;
                         }
                         catch (Exception e) {
+                            // Ignore
                         }
                     }
                 }

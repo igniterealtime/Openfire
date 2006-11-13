@@ -13,12 +13,13 @@ package org.jivesoftware.wildfire.server;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
+import org.jivesoftware.wildfire.net.SSLConfig;
 import org.jivesoftware.wildfire.net.SocketConnection;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Packet;
@@ -152,8 +153,22 @@ public class IncomingServerSession extends Session {
         connection.deliverRawText(openingStream.toString());
 
         // Indicate the TLS policy to use for this connection
-        connection.setTlsPolicy(ServerDialback.isEnabled() ? Connection.TLSPolicy.optional :
-                Connection.TLSPolicy.required);
+        Connection.TLSPolicy tlsPolicy =
+                ServerDialback.isEnabled() ? Connection.TLSPolicy.optional :
+                        Connection.TLSPolicy.required;
+        boolean hasCertificates = false;
+        try {
+            hasCertificates = SSLConfig.getKeyStore().size() > 0;
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
+            Log.error("Server session rejected. TLS is required but no certificates " +
+                    "were created.");
+            return null;
+        }
+        connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
 
         // Indicate the compression policy to use for this connection
         String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy",

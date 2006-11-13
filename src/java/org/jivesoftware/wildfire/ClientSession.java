@@ -18,6 +18,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
+import org.jivesoftware.wildfire.net.SSLConfig;
 import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
@@ -235,8 +236,20 @@ public class ClientSession extends Session {
 
         // Indicate the TLS policy to use for this connection
         if (!connection.isSecure()) {
+            boolean hasCertificates = false;
+            try {
+                hasCertificates = SSLConfig.getKeyStore().size() > 0;
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
+                Log.error("Client session rejected. TLS is required but no certificates " +
+                        "were created.");
+                return null;
+            }
             // Set default TLS policy
-            connection.setTlsPolicy(tlsPolicy);
+            connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
         } else {
             // Set default TLS policy
             connection.setTlsPolicy(Connection.TLSPolicy.disabled);

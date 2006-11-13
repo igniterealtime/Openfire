@@ -344,19 +344,16 @@ public class XMPPServer {
                 public void run() {
                     try {
                         if (isStandAlone()) {
-                            // If the user selected different ports for the admin console to run on,
-                            // we need to restart the embedded Jetty instance to listen on the
-                            // new ports.
-                            if (!JiveGlobals.getXMLProperty("adminConsole.port").equals("9090") ||
-                                    !JiveGlobals.getXMLProperty("adminConsole.securePort")
-                                            .equals("9091")) {
-                                // Wait a short period before shutting down the admin console.
-                                // Otherwise, the page that requested the setup finish won't
-                                // render properly!
-                                Thread.sleep(1000);
-                                httpServerManager.shutdown();
-                                httpServerManager.startup();
-                            }
+                            // Always restart the HTTP server manager. This covers the case
+                            // of changing the ports, as well as generating self-signed certificates.
+                        
+                            // Wait a short period before shutting down the admin console.
+                            // Otherwise, the page that requested the setup finish won't
+                            // render properly!
+                            Thread.sleep(1000);
+                            httpServerManager.shutdown();
+                            httpServerManager.startup();
+
                         }
 
                         verifyDataSource();

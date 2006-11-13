@@ -11,6 +11,8 @@
 
 package org.jivesoftware.wildfire.net;
 
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
@@ -21,6 +23,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
  * Configuration of Wildfire's SSL settings.
@@ -84,6 +88,36 @@ public class SSLConfig {
             trustStore = null;
             sslFactory = null;
         }
+        // Reset ssl factoty when certificates are modified
+        CertificateManager.addListener(new CertificateEventListener() {
+            public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+                // Reset ssl factory since keystores have changed
+                resetFactory(keyStore);
+            }
+
+            public void certificateDeleted(KeyStore keyStore, String alias) {
+                // Reset ssl factory since keystores have changed
+                resetFactory(keyStore);
+            }
+
+            public void certificateSigned(KeyStore keyStore, String alias,
+                    List<X509Certificate> certificates) {
+                // Reset ssl factory since keystores have changed
+                resetFactory(keyStore);
+            }
+
+            private void resetFactory(KeyStore keyStore) {
+                try {
+                    String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+                    sslFactory = (SSLJiveServerSocketFactory)SSLJiveServerSocketFactory.getInstance(
+                            algorithm, keyStore, trustStore);
+                }
+                catch (IOException e) {
+                    Log.error("Error while resetting ssl factory", e);
+                    sslFactory = null;
+                }
+            }
+        });
     }
 
     public static String getKeyPassword() {

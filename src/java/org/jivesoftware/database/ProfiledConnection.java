@@ -12,13 +12,14 @@
 package org.jivesoftware.database;
 
 import java.sql.*;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 
 /**
  * Wraps a Connection object and collects statistics about the database queries
- * that are performed.<p>
- * <p/>
+ * that are performed.<p/>
+ * 
  * Statistics of the profiled Connections can be obtained from the static
  * methods of this class. Instances of this class are the actual wrappers that
  * perform profiling.
@@ -27,25 +28,28 @@ import java.util.Hashtable;
  */
 public class ProfiledConnection extends AbstractConnection {
 
-    /**
-     * Constant for SELECT database queries.
-     */
-    public static final int SELECT = 0;
+    public enum Type {
 
-    /**
-     * Constant for UPDATE database queries.
-     */
-    public static final int UPDATE = 1;
+        /**
+         * SELECT database queries.
+         */
+        select,
 
-    /**
-     * Constant for INSERT database queries.
-     */
-    public static final int INSERT = 2;
+        /**
+         * UPDATE database queries.
+         */
+        update,
 
-    /**
-     * Constant for DELETE database queries.
-     */
-    public static final int DELETE = 3;
+        /**
+         * INSERT database queries.
+         */
+        insert,
+
+        /**
+         * DLETE database queries.
+         */
+        delete
+    }
 
     private static long startInsertTime = 0;
     private static long startUpdateTime = 0;
@@ -67,10 +71,14 @@ public class ProfiledConnection extends AbstractConnection {
     private static long totalSelectTime = 0;
     private static long totalDeleteTime = 0;
 
-    private static Hashtable insertQueries = new Hashtable();
-    private static Hashtable updateQueries = new Hashtable();
-    private static Hashtable selectQueries = new Hashtable();
-    private static Hashtable deleteQueries = new Hashtable();
+    private static Map<String, ProfiledConnectionEntry> insertQueries = 
+            new Hashtable<String, ProfiledConnectionEntry>();
+    private static Map<String, ProfiledConnectionEntry> updateQueries =
+            new Hashtable<String, ProfiledConnectionEntry>();
+    private static Map<String, ProfiledConnectionEntry> selectQueries =
+            new Hashtable<String, ProfiledConnectionEntry>();
+    private static Map<String, ProfiledConnectionEntry> deleteQueries =
+            new Hashtable<String, ProfiledConnectionEntry>();
 
     /**
      * Start profiling.
@@ -89,21 +97,22 @@ public class ProfiledConnection extends AbstractConnection {
 
     /**
      * Returns the total number database queries of a particular type performed.
-     * Valid types are ProfiledConnection.SELECT, ProfiledConnection.UPDATE,
-     * ProfiledConnection.INSERT, and ProfiledConnection.DELETE.
+     * Valid types are {@link ProfiledConnection.Type#select},
+     * {@link ProfiledConnection.Type#update},  {@link ProfiledConnection.Type#insert},
+     * and {@link ProfiledConnection.Type#delete}
      *
      * @param type the type of query to get the count for.
      * @return the number queries of type <tt>type</tt> performed.
      */
-    public static long getQueryCount(int type) {
+    public static long getQueryCount(Type type) {
         switch (type) {
-            case SELECT:
+            case select:
                 return selectCount;
-            case UPDATE:
+            case update:
                 return updateCount;
-            case INSERT:
+            case insert:
                 return insertCount;
-            case DELETE:
+            case delete:
                 return deleteCount;
             default:
                 throw new IllegalArgumentException("Invalid type");
@@ -111,10 +120,13 @@ public class ProfiledConnection extends AbstractConnection {
     }
 
     /**
-     * @param sql  the insert sql string.
+     * Adds a query to the list of those that have been run.
+     *
+     * @param type the query type.
+     * @param sql the insert sql string.
      * @param time the length of time the query took in milliseconds
      */
-    public static void addQuery(int type, String sql, long time) {
+    public static void addQuery(Type type, String sql, long time) {
         // Do nothing if we didn't receive a sql statement
         if (sql == null || sql.equals("")) {
             return;
@@ -126,39 +138,39 @@ public class ProfiledConnection extends AbstractConnection {
         // remove values from query
         sql = removeQueryValues(sql);
 
-        ProfiledConnectionEntry entry = null;
+        ProfiledConnectionEntry entry;
         switch (type) {
-            case SELECT:
+            case select:
                 selectCount++;
                 totalSelectTime += time;
-                entry = (ProfiledConnectionEntry)selectQueries.get(sql);
+                entry = selectQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
                     selectQueries.put(sql, entry);
                 }
                 break;
-            case UPDATE:
+            case update:
                 updateCount++;
                 totalUpdateTime += time;
-                entry = (ProfiledConnectionEntry)updateQueries.get(sql);
+                entry = updateQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
                     updateQueries.put(sql, entry);
                 }
                 break;
-            case INSERT:
+            case insert:
                 insertCount++;
                 totalInsertTime += time;
-                entry = (ProfiledConnectionEntry)insertQueries.get(sql);
+                entry = insertQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
                     insertQueries.put(sql, entry);
                 }
                 break;
-            case DELETE:
+            case delete:
                 deleteCount++;
                 totalDeleteTime += time;
-                entry = (ProfiledConnectionEntry)deleteQueries.get(sql);
+                entry = deleteQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
                     deleteQueries.put(sql, entry);
@@ -182,26 +194,26 @@ public class ProfiledConnection extends AbstractConnection {
      * @return the average number of queries of a certain typed performed per
      *         second.
      */
-    public static double getQueriesPerSecond(int type) {
+    public static double getQueriesPerSecond(Type type) {
         long count, start, end;
 
         switch (type) {
-            case SELECT:
+            case select:
                 count = selectCount;
                 start = startSelectTime;
                 end = endSelectTime;
                 break;
-            case UPDATE:
+            case update:
                 count = updateCount;
                 start = startUpdateTime;
                 end = endUpdateTime;
                 break;
-            case INSERT:
+            case insert:
                 count = insertCount;
                 start = startInsertTime;
                 end = endInsertTime;
                 break;
-            case DELETE:
+            case delete:
                 count = deleteCount;
                 start = startDeleteTime;
                 end = endDeleteTime;
@@ -232,23 +244,23 @@ public class ProfiledConnection extends AbstractConnection {
      * @return a double representing the average time spent executing the type
      *         of query.
      */
-    public static double getAverageQueryTime(int type) {
+    public static double getAverageQueryTime(Type type) {
         long time, count;
 
         switch (type) {
-            case SELECT:
+            case select:
                 count = selectCount;
                 time = totalSelectTime;
                 break;
-            case UPDATE:
+            case update:
                 count = updateCount;
                 time = totalUpdateTime;
                 break;
-            case INSERT:
+            case insert:
                 count = insertCount;
                 time = totalInsertTime;
                 break;
-            case DELETE:
+            case delete:
                 count = deleteCount;
                 time = totalDeleteTime;
                 break;
@@ -273,15 +285,15 @@ public class ProfiledConnection extends AbstractConnection {
      * @return the number of milliseconds spent executing the specified type of
      *         query.
      */
-    public static long getTotalQueryTime(int type) {
+    public static long getTotalQueryTime(Type type) {
         switch (type) {
-            case SELECT:
+            case select:
                 return totalSelectTime;
-            case UPDATE:
+            case update:
                 return totalUpdateTime;
-            case INSERT:
+            case insert:
                 return totalInsertTime;
-            case DELETE:
+            case delete:
                 return totalDeleteTime;
             default:
                 throw new IllegalArgumentException("Invalid type");
@@ -291,46 +303,38 @@ public class ProfiledConnection extends AbstractConnection {
     /**
      * Returns an array of sorted queries (as ProfiledConnectionEntry objects) by type
      *
-     * @param type       the type of query to check
+     * @param type the type of query to check
      * @param sortByTime sort the resulting list by Time if true,
-     *                   otherwise sort by count if false (default)
+     *      otherwise sort by count if false (default)
      * @return an array of ProfiledConnectionEntry objects
      */
-    public static ProfiledConnectionEntry[] getSortedQueries(int type, boolean sortByTime) {
-        Hashtable queries;
+    public static ProfiledConnectionEntry[] getSortedQueries(Type type, boolean sortByTime) {
+        Map<String, ProfiledConnectionEntry> queries;
 
         switch (type) {
-            case SELECT:
+            case select:
                 queries = selectQueries;
                 break;
-            case UPDATE:
+            case update:
                 queries = updateQueries;
                 break;
-            case INSERT:
+            case insert:
                 queries = insertQueries;
                 break;
-            case DELETE:
+            case delete:
                 queries = deleteQueries;
                 break;
             default:
                 throw new IllegalArgumentException("Invalid type");
         }
 
-        ProfiledConnectionEntry[] result = new ProfiledConnectionEntry[queries.size()];
-
-        // no queries, return null set
-        if (queries.size() < 1) {
+        // No queries, return null
+        if (queries.isEmpty()) {
             return null;
         }
 
-        // since the values of the hashtable contain everything that
-        // we need (including the sql statement), ignore the keys
-        Enumeration e = queries.elements();
-
-        int c = 0;
-        while (e.hasMoreElements()) {
-            result[c++] = (ProfiledConnectionEntry)e.nextElement();
-        }
+        ProfiledConnectionEntry [] result = queries.values().toArray(
+                new ProfiledConnectionEntry[queries.size()]);
 
         quickSort(result, sortByTime, 0, result.length - 1);
         return result;
@@ -352,10 +356,10 @@ public class ProfiledConnection extends AbstractConnection {
     }
 
     /**
-     * @param entries    entries
+     * @param entries entries
      * @param sortByTime sort by time if true, otherwise sort by count
-     * @param first      first index to sort on. Normally 0
-     * @param last       last index to sort on. Normally length -1
+     * @param first first index to sort on. Normally 0
+     * @param last last index to sort on. Normally length -1
      */
     private static void quickSort(ProfiledConnectionEntry[] entries, boolean sortByTime, int first, int last) {
 
@@ -596,528 +600,350 @@ public class ProfiledConnection extends AbstractConnection {
 
     public Statement createStatement() throws SQLException {
         // Returned a TimedStatement so that we can do db timings.
-        return new TimedStatement(connection.createStatement());
+        return (Statement)TimedStatement.newInstance(connection.createStatement());
     }
 
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         // Returned a TimedPreparedStatement so that we can do db timings.
-        return new TimedPreparedStatement(connection.prepareStatement(sql), sql);
+        return (PreparedStatement)TimedPreparedStatement.newInstance(
+                connection.prepareStatement(sql), sql);
     }
 
     public Statement createStatement(int resultSetType, int resultSetConcurrency)
-            throws SQLException {
-        return new TimedStatement(connection.createStatement(resultSetType,
+            throws SQLException
+     {
+         return (Statement)TimedStatement.newInstance(connection.createStatement(resultSetType,
                 resultSetConcurrency));
     }
 
     public PreparedStatement prepareStatement(String sql, int resultSetType,
                                               int resultSetConcurrency) throws SQLException {
-        return new TimedPreparedStatement(connection.prepareStatement(sql, resultSetType, resultSetConcurrency), sql);
+        return (PreparedStatement)TimedPreparedStatement.newInstance(
+                connection.prepareStatement(sql, resultSetType, resultSetConcurrency), sql);
     }
 
     public CallableStatement prepareCall(String sql) throws SQLException {
-        return new TimedCallableStatement(connection.prepareCall(sql), sql);
+        return (CallableStatement)TimedCallableStatement.newInstance(
+                connection.prepareCall(sql), sql);
     }
 
-    public CallableStatement prepareCall(String sql, int i, int i1) throws SQLException {
-        return new TimedCallableStatement(connection.prepareCall(sql, i, i1), sql);
+    public CallableStatement prepareCall(String sql, int resultSetType,
+                                              int resultSetConcurrency) throws SQLException {
+        return (CallableStatement)TimedCallableStatement.newInstance(
+                connection.prepareCall(sql, resultSetType, resultSetConcurrency), sql);
     }
 
     /**
-     * An implementation of the Statement interface that wraps an underlying
-     * Statement object and performs timings of the database queries. The class
+     * A dynamic proxy for the Statement interface that times usage. The class
      * does not handle batch queries but should generally work otherwise.
      */
-    class TimedStatement extends StatementWrapper {
+    public static class TimedStatement implements InvocationHandler {
+
+        // Preloaded Method objects that we override.
+        private static Method execute;
+        private static Method executeQuery;
+        private static Method executeUpdate;
+
+        static {
+            try {
+                execute = Statement.class.getMethod("execute", String.class);
+                executeQuery = Statement.class.getMethod("executeQuery", String.class);
+                executeUpdate = Statement.class.getMethod("executeUpdate", String.class);
+            }
+            catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(e.getMessage());
+            }
+        }
+
+        public static Object newInstance(Statement stmt) {
+            return java.lang.reflect.Proxy.newProxyInstance(
+                stmt.getClass().getClassLoader(),
+                stmt.getClass().getInterfaces(),
+                new TimedStatement(stmt));
+        }
 
         private Statement stmt;
 
         /**
-         * Creates a new TimedStatement that wraps <tt>stmt</tt>.
+         * Creates a new TimedStatement dynamic proxy.
+         *
+         * @param stmt the Statement to proxy.
          */
-        public TimedStatement(Statement stmt) {
-            super(stmt);
+        private TimedStatement(Statement stmt) {
             this.stmt = stmt;
         }
 
-        public boolean execute(String sql) throws SQLException {
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.equals(execute) || method.equals(executeQuery) || method.equals(executeUpdate))
+            {
+                long t1 = System.currentTimeMillis();
+                Object result = method.invoke(stmt, args);
+                long t2 = System.currentTimeMillis();
 
-            long t1 = System.currentTimeMillis();
-            boolean result = stmt.execute(sql);
-            long t2 = System.currentTimeMillis();
+                String sql = ((String)args[0]).toLowerCase().trim();
 
-            // determine the type of query
-            String sqlL = sql.toLowerCase().trim();
+                if (sql.startsWith("insert")) {
+                    addQuery(Type.insert, sql, t2 - t1);
+                }
+                else if (sql.startsWith("update")) {
+                    addQuery(Type.update, sql, t2 - t1);
+                }
+                else if (sql.startsWith("delete")) {
+                    addQuery(Type.delete, sql, t2 - t1);
+                }
+                else {
+                    addQuery(Type.select, sql, t2 - t1);
+                }
 
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, sql, t2 - t1);
+                return result;
             }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, sql, t2 - t1);
-            }
-            return result;
-        }
 
-        public ResultSet executeQuery(String sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            ResultSet result = stmt.executeQuery(sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, sql, t2 - t1);
-            }
-            return result;
-        }
-
-        public int executeUpdate(String sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            int result = stmt.executeUpdate(sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, sql, t2 - t1);
-            }
-            return result;
+            // Invoke the method normally if all else fails.
+            return method.invoke(stmt, args);
         }
     }
 
     /**
-     * An implementation of the PreparedStatement interface that wraps an
-     * underlying PreparedStatement object and performs timings of the database
-     * queries.
+     * A dynamic proxy for the PreparedStatement interface that times usage.
      */
-    class TimedPreparedStatement extends PreparedStatementWrapper {
+    public static class TimedPreparedStatement implements InvocationHandler {
 
+        // Preloaded Method objects that we override.
+        private static Method execute;
+        private static Method executeWithParam;
+        private static Method executeQuery;
+        private static Method executeQueryWithParam;
+        private static Method executeUpdate;
+        private static Method executeUpdateWithParam;
+        private static Method executeBatch;
+
+        static {
+            try {
+                execute = PreparedStatement.class.getMethod("execute");
+                executeWithParam = PreparedStatement.class.getMethod("execute", String.class);
+                executeQuery = PreparedStatement.class.getMethod("executeQuery");
+                executeQueryWithParam = PreparedStatement.class.getMethod("executeQuery", String.class);
+                executeUpdate = PreparedStatement.class.getMethod("executeUpdate");
+                executeUpdateWithParam = PreparedStatement.class.getMethod("executeUpdate", String.class);
+                executeBatch = PreparedStatement.class.getMethod("executeBatch");
+            }
+            catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(e.getMessage());
+            }
+        }
+
+        public static Object newInstance(PreparedStatement pstmt, String sql) {
+            return java.lang.reflect.Proxy.newProxyInstance(
+                pstmt.getClass().getClassLoader(),
+                pstmt.getClass().getInterfaces(),
+                new TimedPreparedStatement(pstmt, sql));
+        }
+
+        private PreparedStatement pstmt;
         private String sql;
-        private int type = SELECT;
+        private Type type = Type.select;
 
-        public TimedPreparedStatement(PreparedStatement pstmt, String sql) {
-            super(pstmt);
+        /**
+         * Creates a new TimedStatement dynamic proxy.
+         *
+         * @param pstmt the PreparedStatement to proxy.
+         * @param sql the SQL.
+         */
+        private TimedPreparedStatement(PreparedStatement pstmt, String sql) {
+            this.pstmt = pstmt;
             this.sql = sql;
 
-            // determine the type of query
+            // Determine the type of query
             String sqlL = sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                type = INSERT;
+                type = Type.insert;
             }
             else if (sqlL.startsWith("update")) {
-                type = UPDATE;
+                type = Type.update;
             }
             else if (sqlL.startsWith("delete")) {
-                type = DELETE;
+                type = Type.delete;
             }
             else {
-                type = SELECT;
+                type = Type.select;
             }
         }
 
-        public boolean execute() throws SQLException {
-            // Perform timing of this method.
-            long t1 = System.currentTimeMillis();
-            boolean result = pstmt.execute();
-            long t2 = System.currentTimeMillis();
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.equals(execute) || method.equals(executeQuery) ||
+                    method.equals(executeUpdate) || method.equals(executeBatch))
+            {
+                long t1 = System.currentTimeMillis();
+                Object result = method.invoke(pstmt, args);
+                long t2 = System.currentTimeMillis();
 
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
+                switch (type) {
+                    case select:
+                        addQuery(Type.select, sql, t2 - t1);
+                        break;
+                    case update:
+                        addQuery(Type.update, sql, t2 - t1);
+                        break;
+                    case insert:
+                        addQuery(Type.insert, sql, t2 - t1);
+                        break;
+                    case delete:
+                        addQuery(Type.delete, sql, t2 - t1);
+                        break;
+                }
+
+                return result;
             }
-            return result;
-        }
+            else if (method.equals(executeWithParam) || method.equals(executeQueryWithParam) ||
+                    method.equals(executeUpdateWithParam))
+            {
+                long t1 = System.currentTimeMillis();
+                Object result = method.invoke(pstmt, args);
+                long t2 = System.currentTimeMillis();
 
-        /*
-         * This is one of the methods that we wish to time
-         */
-        public ResultSet executeQuery() throws SQLException {
+                String sql = ((String)args[0]).toLowerCase().trim();
 
-            long t1 = System.currentTimeMillis();
-            ResultSet result = pstmt.executeQuery();
-            long t2 = System.currentTimeMillis();
+                if (sql.startsWith("insert")) {
+                    addQuery(Type.insert, sql, t2 - t1);
+                }
+                else if (sql.startsWith("update")) {
+                    addQuery(Type.update, sql, t2 - t1);
+                }
+                else if (sql.startsWith("delete")) {
+                    addQuery(Type.delete, sql, t2 - t1);
+                }
+                else {
+                    addQuery(Type.select, sql, t2 - t1);
+                }
 
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
+                return result;
             }
-            return result;
-        }
 
-        /*
-         * This is one of the methods that we wish to time
-         */
-        public int executeUpdate() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = pstmt.executeUpdate();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
-            }
-            return result;
-        }
-
-        // The following methods are from the Statement class - the
-        // SuperInterface of PreparedStatement
-        // without these this class won't compile
-
-        public boolean execute(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            boolean result = pstmt.execute(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, _sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, _sql, t2 - t1);
-            }
-            return result;
-        }
-
-        public int[] executeBatch() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int[] result = pstmt.executeBatch();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
-            }
-            return result;
-        }
-
-        public ResultSet executeQuery(String _sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            ResultSet result = pstmt.executeQuery(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, _sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, _sql, t2 - t1);
-            }
-            return result;
-        }
-
-        public int executeUpdate(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = pstmt.executeUpdate(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, _sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, _sql, t2 - t1);
-            }
-            return result;
+            // Invoke the method normally if all else fails.
+            return method.invoke(pstmt, args);
         }
     }
 
     /**
-     * An implementation of the CallableStatement interface that wraps an
-     * underlying CallableStatement object and performs timings of the database
-     * queries.
+     * A dynamic proxy for the CallableStatement interface that times usage.
      */
-    class TimedCallableStatement extends CallableStatementWrapper {
+    public static class TimedCallableStatement implements InvocationHandler {
 
+        // Preloaded Method objects that we override.
+        private static Method execute;
+        private static Method executeWithParam;
+        private static Method executeQuery;
+        private static Method executeQueryWithParam;
+        private static Method executeUpdate;
+        private static Method executeUpdateWithParam;
+        private static Method executeBatch;
+
+        static {
+            try {
+                execute = CallableStatement.class.getMethod("execute");
+                executeWithParam = CallableStatement.class.getMethod("execute", String.class);
+                executeQuery = CallableStatement.class.getMethod("executeQuery");
+                executeQueryWithParam = CallableStatement.class.getMethod("executeQuery", String.class);
+                executeUpdate = CallableStatement.class.getMethod("executeUpdate");
+                executeUpdateWithParam = CallableStatement.class.getMethod("executeUpdate", String.class);
+                executeBatch = CallableStatement.class.getMethod("executeBatch");
+            }
+            catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(e.getMessage());
+            }
+        }
+
+        public static Object newInstance(CallableStatement cstmt, String sql) {
+            return java.lang.reflect.Proxy.newProxyInstance(
+                cstmt.getClass().getClassLoader(),
+                cstmt.getClass().getInterfaces(),
+                new TimedCallableStatement(cstmt, sql));
+        }
+
+        private CallableStatement cstmt;
         private String sql;
-        private int type = SELECT;
+        private Type type = Type.select;
 
-        public TimedCallableStatement(CallableStatement cstmt, String sql) {
-            super(cstmt);
+        /**
+         * Creates a new TimedStatement dynamic proxy.
+         *
+         * @param cstmt the CallableStatement to proxy.
+         * @param sql the SQL.
+         */
+        private TimedCallableStatement(CallableStatement cstmt, String sql) {
+            this.cstmt = cstmt;
             this.sql = sql;
 
-            // determine the type of query
+            // Determine the type of query
             String sqlL = sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                type = INSERT;
+                type = Type.insert;
             }
             else if (sqlL.startsWith("update")) {
-                type = UPDATE;
+                type = Type.update;
             }
             else if (sqlL.startsWith("delete")) {
-                type = DELETE;
+                type = Type.delete;
             }
             else {
-                type = SELECT;
+                type = Type.select;
             }
         }
 
-        public boolean execute() throws SQLException {
-            // Perform timing of this method.
-            long t1 = System.currentTimeMillis();
-            boolean result = cstmt.execute();
-            long t2 = System.currentTimeMillis();
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.equals(execute) || method.equals(executeQuery) ||
+                    method.equals(executeUpdate) || method.equals(executeBatch))
+            {
+                long t1 = System.currentTimeMillis();
+                Object result = method.invoke(cstmt, args);
+                long t2 = System.currentTimeMillis();
 
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
+                switch (type) {
+                    case select:
+                        addQuery(Type.select, sql, t2 - t1);
+                        break;
+                    case update:
+                        addQuery(Type.update, sql, t2 - t1);
+                        break;
+                    case insert:
+                        addQuery(Type.insert, sql, t2 - t1);
+                        break;
+                    case delete:
+                        addQuery(Type.delete, sql, t2 - t1);
+                        break;
+                }
+
+                return result;
             }
-            return result;
-        }
+            else if (method.equals(executeWithParam) || method.equals(executeQueryWithParam) ||
+                    method.equals(executeUpdateWithParam))
+            {
+                long t1 = System.currentTimeMillis();
+                Object result = method.invoke(cstmt, args);
+                long t2 = System.currentTimeMillis();
 
-        /*
-         * This is one of the methods that we wish to time
-         */
-        public ResultSet executeQuery() throws SQLException {
+                String sql = ((String)args[0]).toLowerCase().trim();
 
-            long t1 = System.currentTimeMillis();
-            ResultSet result = cstmt.executeQuery();
-            long t2 = System.currentTimeMillis();
+                if (sql.startsWith("insert")) {
+                    addQuery(Type.insert, sql, t2 - t1);
+                }
+                else if (sql.startsWith("update")) {
+                    addQuery(Type.update, sql, t2 - t1);
+                }
+                else if (sql.startsWith("delete")) {
+                    addQuery(Type.delete, sql, t2 - t1);
+                }
+                else {
+                    addQuery(Type.select, sql, t2 - t1);
+                }
 
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
+                return result;
             }
-            return result;
-        }
 
-        /*
-         * This is one of the methods that we wish to time
-         */
-        public int executeUpdate() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = cstmt.executeUpdate();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
-            }
-            return result;
-        }
-
-        // The following methods are from the Statement class - the
-        // SuperInterface of PreparedStatement
-        // without these this class won't compile
-
-        public boolean execute(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            boolean result = cstmt.execute(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, _sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, _sql, t2 - t1);
-            }
-            return result;
-        }
-
-        public int[] executeBatch() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int[] result = cstmt.executeBatch();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case SELECT:
-                    addQuery(SELECT, sql, t2 - t1);
-                    break;
-                case UPDATE:
-                    addQuery(UPDATE, sql, t2 - t1);
-                    break;
-                case INSERT:
-                    addQuery(INSERT, sql, t2 - t1);
-                    break;
-                case DELETE:
-                    addQuery(DELETE, sql, t2 - t1);
-                    break;
-            }
-            return result;
-        }
-
-        public ResultSet executeQuery(String _sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            ResultSet result = cstmt.executeQuery(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, _sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, _sql, t2 - t1);
-            }
-            return result;
-        }
-
-        public int executeUpdate(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = cstmt.executeUpdate(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(INSERT, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(UPDATE, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(DELETE, _sql, t2 - t1);
-            }
-            else {
-                addQuery(SELECT, _sql, t2 - t1);
-            }
-            return result;
+            // Invoke the method normally if all else fails.
+            return method.invoke(cstmt, args);
         }
     }
 }

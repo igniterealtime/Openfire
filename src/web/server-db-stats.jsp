@@ -105,7 +105,7 @@
 	<h3><fmt:message key="server.db_stats.settings" /></h3>
 
     <form action="server-db-stats.jsp">
-        <table cellpadding="3" cellspacing="1" border="0" width="730">
+        <table cellpadding="3" cellspacing="5" border="0">
         <tr>
             <td>
                 <fmt:message key="server.db_stats.refresh" />:
@@ -139,33 +139,33 @@
 </div>
 
 
-    <h3><fmt:message key="server.db_stats.select_stats" /></h3>
+    <b><fmt:message key="server.db_stats.select_stats" /></b>
 
+    <ul>
 
-
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="730">
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
     <tr><td>
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.SELECT)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.select)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.SELECT)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.SELECT)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.SELECT)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.queries" /></td>
         <td bgcolor="#ffffff"><%
-                    ProfiledConnectionEntry[] list = ProfiledConnection.getSortedQueries(ProfiledConnection.SELECT, doSortByTime);
+                    ProfiledConnectionEntry[] list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.select, doSortByTime);
 
                     if (list == null || list.length < 1) {
                         out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
@@ -180,7 +180,7 @@
 
     <br />
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="730">
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
     <tr><td>
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
     <tr bgcolor="#ffffff"><td>
@@ -204,7 +204,7 @@
     </td></tr>
     </table>
 
-
+    </ul>
 
     <b><fmt:message key="server.db_stats.insert_stats" /></b>
 
@@ -215,24 +215,24 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.INSERT)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.insert)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.INSERT)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.insert)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.INSERT)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.insert)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.INSERT)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.insert)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.queries" /></td>
         <td bgcolor="#ffffff"><%
-                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.INSERT, doSortByTime);
+                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.insert, doSortByTime);
 
                     if (list == null || list.length < 1) {
                         out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
@@ -282,24 +282,24 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.UPDATE)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.update)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.UPDATE)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.update)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.UPDATE)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.update)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.UPDATE)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.update)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.queries" /></td>
         <td bgcolor="#ffffff"><%
-                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.UPDATE, doSortByTime);
+                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.update, doSortByTime);
 
                     if (list == null || list.length < 1) {
                         out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
@@ -349,24 +349,24 @@
     <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.DELETE)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.delete)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.DELETE)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.delete)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.DELETE)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.delete)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.DELETE)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.delete)) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.queries" /></td>
         <td bgcolor="#ffffff"><%
-                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.DELETE, doSortByTime);
+                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.delete, doSortByTime);
 
                     if (list == null || list.length < 1) {
                         out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));

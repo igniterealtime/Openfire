@@ -13,6 +13,7 @@
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.wildfire.HttpServerManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -92,7 +93,21 @@
   </head>
   <body>
 
-  <%  if (keyStore.size() < 2 ) { %>
+  <% if (HttpServerManager.getInstance().isRestartNeeded()) { %>
+      <div class="warning">
+      <table cellpadding="0" cellspacing="0" border="0">
+      <tbody>
+          <tr>
+          <td class="jive-icon-label">
+              <fmt:message key="ssl.certificates.restart_server">
+                  <fmt:param value="<%= "<a href='server-restart.jsp?page=ssl-certificates.jsp'>" %>" />
+                  <fmt:param value="<%= "</a>" %>" />
+              </fmt:message>
+          </td></tr>
+      </tbody>
+      </table>
+      </div><br>
+  <% } else if (keyStore.size() < 2 ) { %>
       <div class="warning">
       <table cellpadding="0" cellspacing="0" border="0">
       <tbody>

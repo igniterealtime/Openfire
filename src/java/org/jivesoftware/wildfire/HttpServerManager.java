@@ -11,24 +11,25 @@
 
 package org.jivesoftware.wildfire;
 
+import org.apache.commons.logging.LogConfigurationException;
+import org.apache.commons.logging.LogFactory;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.net.SSLConfig;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.servlet.ServletMapping;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.servlet.ServletMapping;
 import org.mortbay.log.Logger;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.LogConfigurationException;
 
 import javax.net.ssl.SSLServerSocketFactory;
-import java.util.Collection;
-import java.util.List;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,6 +80,8 @@ public class HttpServerManager {
     private Context adminConsoleContext;
     private ServletHolder httpBindContext;
     private String httpBindPath;
+    private CertificateEventListener certificateListener;
+    private boolean restartNeeded = false;
 
     /**
      * Constructs a new HTTP server manager.
@@ -121,6 +124,11 @@ public class HttpServerManager {
      * proper contexts are then added to the Jetty servers.
      */
     public void startup() {
+        restartNeeded = false;
+        // Add listener for certificate events
+        certificateListener = new CertificateListener();
+        CertificateManager.addListener(certificateListener);
+
         if (httpBindContext != null && isHttpBindServiceEnabled()) {
             bindPort = JiveGlobals.getIntProperty(HTTP_BIND_PORT, ADMIN_CONSOLE_PORT_DEFAULT);
             bindSecurePort = JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
@@ -155,25 +163,36 @@ public class HttpServerManager {
      * Shuts down any Jetty servers that are running the admin console and HTTP binding service.
      */
     public void shutdown() {
-        if (httpBindServer != null) {
-            try {
+        // Remove listener for certificate events
+        if (certificateListener != null) {
+            CertificateManager.removeListener(certificateListener);
+        }
+
+        try {
+            if (httpBindServer != null && httpBindServer.isRunning()) {
                 httpBindServer.stop();
             }
-            catch (Exception e) {
-                Log.error("Error stopping HTTP bind server", e);
+            if (httpBindContext != null && httpBindContext.isRunning()) {
+                httpBindContext.stop();
             }
-            httpBindServer = null;
         }
+        catch (Exception e) {
+            Log.error("Error stopping HTTP bind server", e);
+        }
+        httpBindServer = null;
         //noinspection ConstantConditions
-        if (adminServer != null && adminServer != httpBindServer) {
-            try {
+        try {
+            if (adminServer != null && adminServer.isRunning()) {
                 adminServer.stop();
             }
-            catch (Exception e) {
-                Log.error("Error stopping admin console server", e);
+            if (adminConsoleContext != null && adminConsoleContext.isRunning()) {
+                adminConsoleContext.stop();
             }
-            adminServer = null;
         }
+        catch (Exception e) {
+            Log.error("Error stopping admin console server", e);
+        }
+        adminServer = null;
     }
 
 
@@ -184,6 +203,16 @@ public class HttpServerManager {
      */
     public boolean isHttpBindEnabled() {
         return httpBindServer != null && httpBindServer.isRunning();
+    }
+
+    /**
+     * Returns true if the Jetty server needs to be restarted. This is usually required when
+     * certificates are added, deleted or modified or when server ports were modified.
+     *
+     * @return true if the Jetty server needs to be restarted.
+     */
+    public boolean isRestartNeeded() {
+        return restartNeeded;
     }
 
     /**
@@ -273,13 +302,17 @@ public class HttpServerManager {
      */
     private void startHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
-        Collection<Connector> connectors = createAdminConsoleConnectors(port, securePort);
-        if (connectors.size() == 0) {
+        Connector httpConnector = createConnector(port);
+        Connector httpsConnector = createSSLConnector(securePort);
+        if (httpConnector == null && httpsConnector == null) {
             httpBindServer = null;
             return;
         }
-        for (Connector connector : connectors) {
-            httpBindServer.addConnector(connector);
+        if (httpConnector != null) {
+            httpBindServer.addConnector(httpConnector);
+        }
+        if (httpsConnector != null) {
+            httpBindServer.addConnector(httpsConnector);
         }
     }
 
@@ -311,8 +344,9 @@ public class HttpServerManager {
         }
 
         if (loadConnectors) {
-            Collection<Connector> connectors = createAdminConsoleConnectors(adminPort, adminSecurePort);
-            if (connectors.size() == 0) {
+            Connector httpConnector = createConnector(adminPort);
+            Connector httpsConnector = createSSLConnector(adminSecurePort);
+            if (httpConnector == null && httpsConnector == null) {
                 adminServer = null;
 
                 // Log warning.
@@ -322,9 +356,11 @@ public class HttpServerManager {
 
                 return;
             }
-
-            for (Connector connector : connectors) {
-                adminServer.addConnector(connector);
+            if (httpConnector != null) {
+                adminServer.addConnector(httpConnector);
+            }
+            if (httpsConnector != null) {
+                adminServer.addConnector(httpsConnector);
             }
         }
 
@@ -381,7 +417,7 @@ public class HttpServerManager {
     private void addContexts() {
         if (httpBindServer == adminServer && httpBindServer != null) {
             adminConsoleContext.addServlet(httpBindContext, httpBindPath);
-            if (adminConsoleContext.getServer() == null) {
+            if (adminServer.getHandler() == null) {
                 adminServer.addHandler(adminConsoleContext);
             }
             return;
@@ -425,17 +461,19 @@ public class HttpServerManager {
         handler.setServlets(toAddServlets.toArray(new ServletHolder[toAddServlets.size()]));
     }
 
-    private Collection<Connector> createAdminConsoleConnectors(int port, int securePort) {
-        List<Connector> connectorList = new ArrayList<Connector>();
-
+    private Connector createConnector(int port) {
         if (port > 0) {
             SelectChannelConnector connector = new SelectChannelConnector();
             connector.setPort(port);
-            connectorList.add(connector);
+            return connector;
         }
+        return null;
+    }
 
+    private Connector createSSLConnector(int securePort) {
         try {
-            if (securePort > 0) {
+            if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
+                    XMPPServer.getInstance().getServerInfo().getName())) {
                 SslSocketConnector sslConnector = new JiveSslConnector();
                 sslConnector.setPort(securePort);
 
@@ -448,13 +486,13 @@ public class HttpServerManager {
                 sslConnector.setKeyPassword(SSLConfig.getKeyPassword());
                 sslConnector.setKeystoreType(SSLConfig.getStoreType());
                 sslConnector.setKeystore(SSLConfig.getKeystoreLocation());
-                connectorList.add(sslConnector);
+                return sslConnector;
             }
         }
         catch (Exception e) {
             Log.error(e);
         }
-        return connectorList;
+        return null;
     }
 
     private void changeHttpBindPorts(int unsecurePort, int securePort) {
@@ -558,6 +596,62 @@ public class HttpServerManager {
         catch (Exception ex) {
             Log.error("Error setting HTTP bind ports", ex);
         }
+    }
+
+    private class CertificateListener implements CertificateEventListener {
+
+        public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+            // If new certificate is RSA then (re)start the HTTPS service
+            if ("RSA".equals(cert.getPublicKey().getAlgorithm())) {
+                restartNeeded = true;
+            }
+        }
+
+        public void certificateDeleted(KeyStore keyStore, String alias) {
+            restartNeeded = true;
+        }
+
+        public void certificateSigned(KeyStore keyStore, String alias,
+                List<X509Certificate> certificates) {
+            // If new certificate is RSA then (re)start the HTTPS service
+            if ("RSA".equals(certificates.get(0).getPublicKey().getAlgorithm())) {
+                restartNeeded = true;
+            }
+        }
+
+        /*private void stopSSLService() throws Exception {
+            if (adminServer != null && adminSSLConnector != null) {
+                adminSSLConnector.stop();
+                adminServer.removeConnector(adminSSLConnector);
+                adminSSLConnector = null;
+            }
+            // HTTP binding SSL service
+            if (httpBindServer != null && httpBindServer != adminServer &&
+                    bindSSLConnector != null) {
+                bindSSLConnector.stop();
+                httpBindServer.removeConnector(bindSSLConnector);
+                bindSSLConnector = null;
+            }
+        }
+
+        private void startSSLService() throws Exception {
+            if (adminServer != null && adminSecurePort > 0) {
+                adminSSLConnector = createSSLConnector(adminSecurePort);
+                adminServer.addConnector(adminSSLConnector);
+                adminServer.setHandlers(adminServer.getHandlers());
+                adminSSLConnector.start();
+                /*adminServer.stop();
+                adminServer.start();
+            }
+            // HTTP binding SSL service
+            if (httpBindServer != null && httpBindServer != adminServer && bindSecurePort > 0) {
+                bindSSLConnector = createSSLConnector(bindSecurePort);
+                httpBindServer.addConnector(bindSSLConnector);
+                adminServer.setHandlers(adminServer.getHandlers());
+                bindSSLConnector.start();
+                /*httpBindServer.stop();
+                httpBindServer.start();             }
+        }*/
     }
 
     /**

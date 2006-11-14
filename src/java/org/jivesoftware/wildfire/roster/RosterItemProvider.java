@@ -80,12 +80,10 @@ public class RosterItemProvider {
      * (for example, a RosterItem that directly accesses the backend storage, or one that is an
      * object in an object database).<p>
      *
-     * If you don't want roster items edited through wildfire, throw
-     * UnsupportedOperationException.
-     *
-     * @param username the username of the user/chatbot that owns the roster item
-     * @param item the settings for the roster item to create
-     * @return The created roster item
+     * @param username the username of the user/chatbot that owns the roster item.
+     * @param item the settings for the roster item to create.
+     * @return the new roster item.
+     * @throws UserAlreadyExistsException if a roster item with the username already exists. 
      */
     public RosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException
@@ -113,10 +111,7 @@ public class RosterItemProvider {
             throw new UserAlreadyExistsException(item.getJid().toBareJID());
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return item;
     }
@@ -154,16 +149,12 @@ public class RosterItemProvider {
             pstmt.executeUpdate();
 
             insertGroups(rosterID, item.getGroups().iterator(), con);
-
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -200,10 +191,7 @@ public class RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -217,11 +205,12 @@ public class RosterItemProvider {
         List<String> answer = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_USERNAMES);
             pstmt.setString(1, jid);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 answer.add(rs.getString(1));
             }
@@ -230,10 +219,7 @@ public class RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return answer.iterator();
     }
@@ -248,11 +234,12 @@ public class RosterItemProvider {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(COUNT_ROSTER_ITEMS);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
@@ -261,10 +248,7 @@ public class RosterItemProvider {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return count;
     }
@@ -283,12 +267,13 @@ public class RosterItemProvider {
         LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 // Create a new RosterItem (ie. user contact) from the stored information
                 RosterItem item = new RosterItem(rs.getLong(2),
@@ -302,10 +287,10 @@ public class RosterItemProvider {
                 itemList.add(item);
             }
             // Close the statement and result set
-            pstmt.close();
             rs.close();
+            pstmt.close();
             // Set null to pstmt to be sure that it's not closed twice. It seems that
-            // Sybase driver is raising an error when trying to close an alrady closed statement.
+            // Sybase driver is raising an error when trying to close an already closed statement.
             pstmt = null;
 
             // Load the groups for the loaded contact
@@ -316,21 +301,13 @@ public class RosterItemProvider {
                 while (rs.next()) {
                     item.getGroups().add(rs.getString(1));
                 }
-                // Close the result set
-                rs.close();
-                // Close the prepared statement
-                pstmt.close();
-                pstmt = null;
             }
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return itemList.iterator();
     }
@@ -338,19 +315,20 @@ public class RosterItemProvider {
     /**
      * Insert the groups into the given roster item.
      *
-     * @param rosterID The roster ID of the item the groups belong to
-     * @param iter     An iterator over the group names to insert
+     * @param rosterID the roster ID of the item the groups belong to
+     * @param iter an iterator over the group names to insert
+     * @param con the database connection to use for the operation.
+     * @throws SQLException if an SQL exception occurs.
      */
     private void insertGroups(long rosterID, Iterator<String> iter, Connection con) throws SQLException
     {
         PreparedStatement pstmt = null;
-        String groupName = null;
         try {
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM_GROUPS);
             pstmt.setLong(1, rosterID);
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);
-                groupName = iter.next();
+                String groupName = iter.next();
                 pstmt.setString(3, groupName);
                 try {
                     pstmt.executeUpdate();
@@ -361,14 +339,7 @@ public class RosterItemProvider {
             }
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error("Error inserting group: " + groupName + " for rosterID: " + rosterID, e);
-            }
+            DbConnectionManager.closeStatement(pstmt);
         }
     }
 }

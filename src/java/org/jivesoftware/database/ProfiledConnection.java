@@ -26,8 +26,11 @@ import java.lang.reflect.Method;
  *
  * @author Jive Software
  */
-public class ProfiledConnection extends AbstractConnection {
+public class ProfiledConnection implements InvocationHandler {
 
+    /**
+     * The type of the database operation.
+     */
     public enum Type {
 
         /**
@@ -581,56 +584,90 @@ public class ProfiledConnection extends AbstractConnection {
 
     //--------------------- Connection Wrapping Code ---------------------//
 
+    // Preloaded Method objects that we override.
+    private static Method close;
+    private static Method createStatement;
+    private static Method createStatementWithParams;
+    private static Method prepareStatement;
+    private static Method prepareStatementWithParams;
+    private static Method prepareCall;
+    private static Method prepareCallWithParams;
+
+
+    static {
+        try {
+            close = Connection.class.getMethod("close");
+            createStatement = Connection.class.getMethod("createStatement");
+            createStatementWithParams = Connection.class.getMethod("createStatement",
+                    int.class, int.class);
+            prepareStatement = Connection.class.getMethod("prepareStatement", String.class);
+            prepareStatementWithParams = Connection.class.getMethod("prepareStatement",
+                    String.class, int.class, int.class);
+            prepareCall = Connection.class.getMethod("prepareCall", String.class);
+            prepareCallWithParams = Connection.class.getMethod("prepareCall",
+                    String.class, int.class, int.class);
+
+        }
+        catch (NoSuchMethodException e) {
+            throw new NoSuchMethodError(e.getMessage());
+        }
+    }
+
+    public static Object newInstance(Connection con) {
+        return java.lang.reflect.Proxy.newProxyInstance(
+            con.getClass().getClassLoader(),
+            con.getClass().getInterfaces(),
+            new ProfiledConnection(con));
+    }
+
+    private Connection connection;
 
     /**
      * Creates a new ProfiledConnection that wraps the specified connection.
      *
      * @param connection the Connection to wrap and collect stats for.
      */
-    public ProfiledConnection(Connection connection) {
-        super(connection);
+    private ProfiledConnection(Connection connection) {
+        this.connection = connection;
     }
 
-    public void close() throws SQLException {
-        // Close underlying connection.
-        if (connection != null) {
-            connection.close();
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.equals(close)) {
+            // Close underlying connection.
+            if (connection != null) {
+                connection.close();
+            }
+            return null;
         }
-    }
-
-    public Statement createStatement() throws SQLException {
-        // Returned a TimedStatement so that we can do db timings.
-        return (Statement)TimedStatement.newInstance(connection.createStatement());
-    }
-
-    public PreparedStatement prepareStatement(String sql) throws SQLException {
-        // Returned a TimedPreparedStatement so that we can do db timings.
-        return (PreparedStatement)TimedPreparedStatement.newInstance(
-                connection.prepareStatement(sql), sql);
-    }
-
-    public Statement createStatement(int resultSetType, int resultSetConcurrency)
-            throws SQLException
-     {
-         return (Statement)TimedStatement.newInstance(connection.createStatement(resultSetType,
-                resultSetConcurrency));
-    }
-
-    public PreparedStatement prepareStatement(String sql, int resultSetType,
-                                              int resultSetConcurrency) throws SQLException {
-        return (PreparedStatement)TimedPreparedStatement.newInstance(
-                connection.prepareStatement(sql, resultSetType, resultSetConcurrency), sql);
-    }
-
-    public CallableStatement prepareCall(String sql) throws SQLException {
-        return (CallableStatement)TimedCallableStatement.newInstance(
-                connection.prepareCall(sql), sql);
-    }
-
-    public CallableStatement prepareCall(String sql, int resultSetType,
-                                              int resultSetConcurrency) throws SQLException {
-        return (CallableStatement)TimedCallableStatement.newInstance(
-                connection.prepareCall(sql, resultSetType, resultSetConcurrency), sql);
+        else if (method.equals(prepareStatement)) {
+            return TimedPreparedStatement.newInstance(
+                connection.prepareStatement((String)args[0]), (String)args[0]);    
+        }
+        else if (method.equals(prepareStatementWithParams)) {
+             return TimedPreparedStatement.newInstance(
+                connection.prepareStatement((String)args[0], (Integer)args[1], (Integer)args[2]), 
+                        (String)args[0]);
+        }
+        else if (method.equals(createStatement)) {
+             return TimedStatement.newInstance(connection.createStatement());
+        }
+        else if (method.equals(createStatementWithParams)) {
+            return TimedStatement.newInstance(connection.createStatement(
+                    (Integer)args[0], (Integer)args[1]));
+        }
+        else if (method.equals(prepareCall)) {
+            return TimedCallableStatement.newInstance(
+                connection.prepareCall((String)args[0]), (String)args[0]);
+        }
+        else if (method.equals(prepareCallWithParams)) {
+            return TimedCallableStatement.newInstance(
+                connection.prepareCall((String)args[0], (Integer)args[1], (Integer)args[2]),
+                        (String)args[0]);
+        }
+        else {
+            // Invoke the method normally if all else fails.
+            return method.invoke(connection, args);
+        }
     }
 
     /**

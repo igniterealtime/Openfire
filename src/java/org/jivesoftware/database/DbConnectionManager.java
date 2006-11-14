@@ -59,6 +59,9 @@ public class DbConnectionManager {
     /**
      * Returns a database connection from the currently active connection
      * provider. (auto commit is set to true).
+     *
+     * @return a connection.
+     * @throws SQLException if a SQL exception occurs.
      */
     public static Connection getConnection() throws SQLException {
         if (connectionProvider == null) {
@@ -95,7 +98,7 @@ public class DbConnectionManager {
         // See if profiling is enabled. If yes, wrap the connection with a
         // profiled connection.
         if (profilingEnabled) {
-            return new ProfiledConnection(con);
+            return (Connection)ProfiledConnection.newInstance(con);
         }
         else {
             return con;
@@ -105,6 +108,9 @@ public class DbConnectionManager {
     /**
      * Returns a Connection from the currently active connection provider that
      * is ready to participate in transactions (auto commit is set to false).
+     *
+     * @return a connection with transactions enabled.
+     * @throws SQLException if a SQL exception occurs.
      */
     public static Connection getTransactionConnection() throws SQLException {
         Connection con = getConnection();
@@ -117,6 +123,10 @@ public class DbConnectionManager {
     /**
      * Closes a PreparedStatement and Connection. However, it first rolls back the transaction or
      * commits it depending on the value of <code>abortTransaction</code>.
+     *
+     * @param pstmt the prepared statement to close.
+     * @param con the connection to close.
+     * @param abortTransaction true if the transaction should be rolled back.
      */
     public static void closeTransactionConnection(PreparedStatement pstmt, Connection con,
             boolean abortTransaction)
@@ -135,6 +145,9 @@ public class DbConnectionManager {
     /**
      * Closes a Connection. However, it first rolls back the transaction or
      * commits it depending on the value of <code>abortTransaction</code>.
+     *
+     * @param con the connection to close.
+     * @param abortTransaction true if the transaction should be rolled back.
      */
     public static void closeTransactionConnection(Connection con, boolean abortTransaction) {
         // test to see if the connection passed in is null
@@ -195,6 +208,8 @@ public class DbConnectionManager {
      *          ConnectionManager.closePreparedStatement(pstmt);
      *      }
      * } </pre>
+     *
+     * @param rs the result set to close.
      */
     public static void closeResultSet(ResultSet rs) {
         try {
@@ -261,6 +276,7 @@ public class DbConnectionManager {
      *     ConnectionManager.closeConnection(rs, pstmt, con);
      * }</pre>
      *
+     * @param rs the result set.
      * @param stmt the statement.
      * @param con the connection.
      */
@@ -417,6 +433,8 @@ public class DbConnectionManager {
      * method should be called is if more information about the current
      * connection provider is needed. Database connections should always be
      * obtained by calling the getConnection method of this class.
+     *
+     * @return the connection provider.
      */
     public static ConnectionProvider getConnectionProvider() {
         return connectionProvider;
@@ -487,9 +505,10 @@ public class DbConnectionManager {
      * different JDBC drivers have different capabilities and methods for
      * retrieving large text values.
      *
-     * @param rs          the ResultSet to retrieve the text field from.
+     * @param rs the ResultSet to retrieve the text field from.
      * @param columnIndex the column in the ResultSet of the text field.
      * @return the String value of the text field.
+     * @throws SQLException if an SQL exception occurs.
      */
     public static String getLargeTextField(ResultSet rs, int columnIndex) throws SQLException {
         if (isStreamTextRequired()) {
@@ -539,6 +558,7 @@ public class DbConnectionManager {
      * @param pstmt the PreparedStatement to set the text field in.
      * @param parameterIndex the index corresponding to the text field.
      * @param value the String to set.
+     * @throws SQLException if an SQL exception occurs.
      */
     public static void setLargeTextField(PreparedStatement pstmt, int parameterIndex,
                                          String value) throws SQLException {
@@ -621,6 +641,9 @@ public class DbConnectionManager {
     /**
      * Uses a connection from the database to set meta data information about
      * what different JDBC drivers and databases support.
+     *
+     * @param con the connection.
+     * @throws SQLException if an SQL exception occurs.
      */
     private static void setMetaData(Connection con) throws SQLException {
         DatabaseMetaData metaData = con.getMetaData();

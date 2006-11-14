@@ -134,29 +134,29 @@ public class ConnectionPool implements Runnable {
 
         // Check to see if there are any connections available. If not, then enter wait-based
         // retry loop
-        ConnectionWrapper con = getCon();
+        ConnectionWrapper wrapper = getCon();
 
-        if (con != null) {
-            synchronized (con) {
-                con.checkedout = true;
-                con.lockTime = System.currentTimeMillis();
+        if (wrapper != null) {
+            synchronized (wrapper) {
+                wrapper.checkedout = true;
+                wrapper.lockTime = System.currentTimeMillis();
             }
-            return con;
+            return wrapper.getConnection();
         }
         else {
             synchronized (waitLock) {
                 try {
                     waitingForCon++;
                     while (true) {
-                        con = getCon();
+                        wrapper = getCon();
 
-                        if (con != null) {
+                        if (wrapper != null) {
                             --waitingForCon;
-                            synchronized (con) {
-                                con.checkedout = true;
-                                con.lockTime = System.currentTimeMillis();
+                            synchronized (wrapper) {
+                                wrapper.checkedout = true;
+                                wrapper.lockTime = System.currentTimeMillis();
                             }
-                            return con;
+                            return wrapper.getConnection();
                         }
                         else {
                             waitLock.wait();
@@ -482,5 +482,4 @@ public class ConnectionPool implements Runnable {
             throw new SQLException(e.getMessage());
         }
     }
-
 }

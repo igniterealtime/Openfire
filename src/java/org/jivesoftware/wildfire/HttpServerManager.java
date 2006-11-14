@@ -322,10 +322,13 @@ public class HttpServerManager {
                 ADMIN_CONSOLE_SECURE_PORT_DEFAULT);
         boolean loadConnectors = true;
         if (httpBindServer != null) {
+            // Admin console and HTTP binding running on the same ports
             if (adminPort == bindPort && adminSecurePort == bindSecurePort) {
                 adminServer = httpBindServer;
                 loadConnectors = false;
             }
+            // Only one of the two ports is shared between the servers, we will start them both
+            // on the Admin console ports and log a warning saying that you can't do that.
             else if (checkPorts(new int[]{adminPort, adminSecurePort},
                     new int[]{bindPort, bindSecurePort}))
             {
@@ -335,6 +338,8 @@ public class HttpServerManager {
                 httpBindServer = new Server();
                 adminServer = httpBindServer;
             }
+            // The admin server ports are distinct from the HTTP ports so we can start the admin
+            // console seperatly
             else {
                 adminServer = new Server();
             }
@@ -348,12 +353,8 @@ public class HttpServerManager {
             Connector httpsConnector = createSSLConnector(adminSecurePort);
             if (httpConnector == null && httpsConnector == null) {
                 adminServer = null;
-
                 // Log warning.
-                String warning = LocaleUtils.getLocalizedString("admin.console.warning");
-                Log.info(warning);
-                System.out.println(warning);
-
+                log(LocaleUtils.getLocalizedString("admin.console.warning"));
                 return;
             }
             if (httpConnector != null) {
@@ -365,6 +366,11 @@ public class HttpServerManager {
         }
 
         logAdminConsolePorts();
+    }
+
+    private void log(String string) {
+        Log.info(string);
+        System.out.println(string);
     }
 
     private void logAdminConsolePorts() {
@@ -382,24 +388,18 @@ public class HttpServerManager {
         }
 
         if (isPlainStarted && isSecureStarted) {
-            String msg = listening + ":" + System.getProperty("line.separator") +
+            log(listening + ":" + System.getProperty("line.separator") +
                     "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
                     adminPort + System.getProperty("line.separator") +
                     "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
-                    adminSecurePort;
-            Log.info(msg);
-            System.out.println(msg);
+                    adminSecurePort);
         }
         else if (isSecureStarted) {
-            Log.info(listening + " https://" +
-                    XMPPServer.getInstance().getServerInfo().getName() + ":" + adminSecurePort);
-            System.out.println(listening + " https://" +
+            log(listening + " https://" +
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + adminSecurePort);
         }
         else if (isPlainStarted) {
-            Log.info(listening + " http://" +
-                    XMPPServer.getInstance().getServerInfo().getName() + ":" + adminPort);
-            System.out.println(listening + " http://" +
+            log(listening + " http://" +
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + adminPort);
         }
     }
@@ -437,6 +437,11 @@ public class HttpServerManager {
         }
     }
 
+    /**
+     * Removes the HTTP-bind servlet from the Admin console servlet mappings.
+     *
+     * @param adminConsoleContext The admin console context.
+     */
     private void removeHttpBindServlet(Context adminConsoleContext) {
         ServletHandler handler = adminConsoleContext.getServletHandler();
         ServletMapping[] servletMappings = handler.getServletMappings();

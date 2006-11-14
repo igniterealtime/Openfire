@@ -320,6 +320,7 @@ public class RosterItemProvider {
                 rs.close();
                 // Close the prepared statement
                 pstmt.close();
+                pstmt = null;
             }
         }
         catch (SQLException e) {

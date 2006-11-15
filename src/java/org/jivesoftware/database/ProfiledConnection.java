@@ -15,6 +15,7 @@ import java.sql.*;
 import java.util.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Wraps a Connection object and collects statistics about the database queries
@@ -666,7 +667,12 @@ public class ProfiledConnection implements InvocationHandler {
         }
         else {
             // Invoke the method normally if all else fails.
-            return method.invoke(connection, args);
+            try {
+                return method.invoke(connection, args);
+            }
+            catch (InvocationTargetException ite) {
+                throw ite.getCause();
+            }
         }
     }
 
@@ -736,7 +742,12 @@ public class ProfiledConnection implements InvocationHandler {
             }
 
             // Invoke the method normally if all else fails.
-            return method.invoke(stmt, args);
+            try {
+                return method.invoke(stmt, args);
+            }
+            catch (InvocationTargetException ite) {
+                throw ite.getCause();
+            }
         }
     }
 
@@ -858,7 +869,12 @@ public class ProfiledConnection implements InvocationHandler {
             }
 
             // Invoke the method normally if all else fails.
-            return method.invoke(pstmt, args);
+            try {
+                return method.invoke(pstmt, args);
+            }
+            catch (InvocationTargetException ite) {
+                throw ite.getCause();
+            }
         }
     }
 
@@ -980,7 +996,12 @@ public class ProfiledConnection implements InvocationHandler {
             }
 
             // Invoke the method normally if all else fails.
-            return method.invoke(cstmt, args);
+            try {
+                return method.invoke(cstmt, args);
+            }
+            catch (InvocationTargetException ite) {
+                throw ite.getCause();
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * An implementation of the Connection interface that wraps an underlying
@@ -102,7 +103,12 @@ public class ConnectionWrapper {
             }
             else {
                 // Invoke the method normally if all else fails.
-                return method.invoke(connection, args);
+                try {
+                    return method.invoke(connection, args);
+                }
+                catch (InvocationTargetException ite) {
+                    throw ite.getCause();
+                }
             }
         }
 

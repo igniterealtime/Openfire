@@ -114,7 +114,7 @@ public class HttpSessionManager {
     }
 
     /**
-     * Creates an HTTP binding session which will allow a user to exchnage packets with Wildfire.
+     * Creates an HTTP binding session which will allow a user to exchange packets with Wildfire.
      *
      * @param address the internet address that was used to bind to Wildfie.
      * @param rootNode the body element that was sent containing the request for a new session.

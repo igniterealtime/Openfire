@@ -510,12 +510,13 @@ public class HttpServerManager {
         int adminPort = JiveGlobals.getXMLProperty(ADMIN_CONSOLE_PORT, ADMIN_CONSOLE_PORT_DEFAULT);
         int adminSecurePort = JiveGlobals.getXMLProperty(ADMIN_CONOSLE_SECURE_PORT,
                 ADMIN_CONSOLE_SECURE_PORT_DEFAULT);
+        // Check to see if any of the ports are the same.
         if (checkPorts(new int[]{unsecurePort, securePort},
                 new int[]{adminPort, adminSecurePort}))
         {
             if (unsecurePort != adminPort || securePort != adminSecurePort) {
                 Log.warn("HTTP bind ports must be either the same or distinct from admin console" +
-                        " ports, http binding will run on the admin console ports.");
+                        " ports, HTTP binding will run on the admin console ports.");
             }
             if (httpBindServer == adminServer) {
                 return;

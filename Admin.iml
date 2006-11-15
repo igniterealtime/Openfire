@@ -10,6 +10,15 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Wildfire" exported="" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/src/web/WEB-INF/lib/dwr.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
   <component name="WebModuleBuildComponent">
@@ -179,6 +188,11 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/stringprep.jar" />
+      <url>jar://$MODULE_DIR$/build/lib/merge/stringprep.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/whack.jar" />
       <url>jar://$MODULE_DIR$/build/lib/merge/whack.jar!/</url>
     </containerElement>
@@ -196,6 +210,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/classes" />
       <url>file://$MODULE_DIR$/src/resources/jar</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="1" />
+      <attribute name="URI" value="/WEB-INF/lib/dwr.jar" />
+      <url>jar://$MODULE_DIR$/src/web/WEB-INF/lib/dwr.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />

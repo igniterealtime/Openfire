@@ -43,9 +43,12 @@
 %>
 
 <%-- Check if in setup mode --%>
-<c:if test="${admin.setupMode}">
-  <c:redirect url="setup/index.jsp" />
-</c:if>
+<% 
+    if (admin.isSetupMode()) {
+        response.sendRedirect("setup/index.jsp");
+        return;
+    }
+%>
 
 <%	// get parameters
     String username = ParamUtils.getParameter(request,"username");

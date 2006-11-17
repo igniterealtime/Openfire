@@ -288,6 +288,9 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * @return the component with the specified id.
      */
     public Component getComponent(JID componentJID) {
+        if (componentJID.getNode() != null) {
+            return null;
+        }
         Component component = components.get(componentJID.getDomain());
         if (component != null) {
             return component;

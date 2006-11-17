@@ -15,8 +15,10 @@ import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.commands.AdHocCommand;
 import org.jivesoftware.wildfire.commands.SessionData;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.packet.JID;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -112,5 +114,17 @@ public class GetUsersPresence extends AdHocCommand {
 
     public int getMaxStages(SessionData data) {
         return 1;
+    }
+
+    /**
+     * Returns if the requester can access this command. Admins and components are allowed to
+     * execute this command.
+     *
+     * @param requester the JID of the entity requesting to execute this command.
+     * @return true if the requester can access this command.
+     */
+    public boolean hasPermission(JID requester) {
+        return super.hasPermission(requester) ||
+                InternalComponentManager.getInstance().getComponent(requester) != null;
     }
 }

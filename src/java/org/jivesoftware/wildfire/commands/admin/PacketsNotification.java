@@ -14,7 +14,7 @@ import org.dom4j.Element;
 import org.jivesoftware.wildfire.commands.AdHocCommand;
 import org.jivesoftware.wildfire.commands.SessionData;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.interceptor.PacketNotificator;
+import org.jivesoftware.wildfire.interceptor.PacketCopier;
 import org.xmpp.component.Component;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -94,7 +94,7 @@ public class PacketsNotification extends AdHocCommand {
         JID componentJID = data.getOwner();
         Component component = InternalComponentManager.getInstance().getComponent(componentJID);
         // Create or update subscription of the component to receive packet notifications
-        PacketNotificator.getInstance().addSubscriber(componentJID, component, iqEnabled,
+        PacketCopier.getInstance().addSubscriber(componentJID, component, iqEnabled,
                 messageEnabled, presenceEnabled, incoming, processed);
 
         // Inform that everything went fine

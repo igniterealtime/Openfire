@@ -862,6 +862,9 @@ public class XMPPServer {
         for (XMPPServerListener listener : listeners) {
             listener.serverStopping();
         }
+        // Shutdown the task engine.
+        TaskEngine.getInstance().shutdown();
+
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;

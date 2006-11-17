@@ -15,6 +15,7 @@ import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -49,7 +50,20 @@ public class AuthenticateUser extends AdHocCommand {
             note.setText("Users are read only. Changing password is not allowed.");
             return;
         }
-        JID account = new JID(data.getData().get("accountjid").get(0));
+        JID account;
+        try {
+            account = new JID(data.getData().get("accountjid").get(0));
+        }
+        catch (NullPointerException ne) {
+            note.addAttribute("type", "error");
+            note.setText("JID required parameter.");
+            return;
+        }
+        if (!XMPPServer.getInstance().isLocal(account)) {
+            note.addAttribute("type", "error");
+            note.setText("Cannot authenticate remote user.");
+            return;
+        }
         String password = data.getData().get("password").get(0);
         // Get requested user
         User user;

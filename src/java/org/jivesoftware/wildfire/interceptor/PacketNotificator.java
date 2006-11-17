@@ -175,6 +175,8 @@ public class PacketNotificator implements PacketInterceptor, ComponentEventListe
                         childElement.addAttribute("processed", subscription.isProcessed() ? "true" : "false");
                         childElement.addAttribute("date", dateFormat.format(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
+                        // Sent message notification to subscribed component
+                        subscription.getComponent().processPacket(message);
                     }
                     catch (Exception e) {
                         Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

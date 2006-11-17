@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Arrays;
 
 /**
+ *  An adhoc command to retrieve the properties of the user.
  *
+ * @author Alexander Wenckus
  */
 public class UserProperties extends AdHocCommand {
     public String getCode() {

@@ -18,6 +18,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.packet.JID;
 
 import java.util.List;
 import java.util.Arrays;
@@ -48,12 +49,12 @@ public class AuthenticateUser extends AdHocCommand {
             note.setText("Users are read only. Changing password is not allowed.");
             return;
         }
-        String account = data.getData().get("username").get(0);
+        JID account = new JID(data.getData().get("accountjid").get(0));
         String password = data.getData().get("password").get(0);
         // Get requested user
         User user;
         try {
-            user = UserManager.getInstance().getUser(account);
+            user = UserManager.getInstance().getUser(account.getNode());
         }
         catch (UserNotFoundException e) {
             // User not found

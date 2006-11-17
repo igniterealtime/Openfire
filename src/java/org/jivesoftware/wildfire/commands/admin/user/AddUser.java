@@ -6,7 +6,7 @@
  * Copyright (C) 2006 Jive Software. All rights reserved.
  * This software is the proprietary information of Jive Software. Use is subject to license terms.
  */
-package org.jivesoftware.wildfire.commands.admin;
+package org.jivesoftware.wildfire.commands.admin.user;
 
 import org.jivesoftware.wildfire.commands.AdHocCommand;
 import org.jivesoftware.wildfire.commands.SessionData;

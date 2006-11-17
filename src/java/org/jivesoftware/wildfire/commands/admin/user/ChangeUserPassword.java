@@ -1,41 +1,43 @@
 /**
- * $RCSfile:  $
- * $Revision:  $
- * $Date:  $
+ * $Revision: $
+ * $Date: $
  *
  * Copyright (C) 2006 Jive Software. All rights reserved.
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
-package org.jivesoftware.wildfire.commands.admin;
 
+package org.jivesoftware.wildfire.commands.admin.user;
+
+import org.dom4j.Element;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.commands.AdHocCommand;
 import org.jivesoftware.wildfire.commands.SessionData;
-import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.auth.AuthFactory;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
- * Takes a user's username and password to authenticate them against the Wildfire authprovider.
+ * Command that allows to change password of existing users.
  *
- * @author Alexander Wenckus
+ * @author Gaston Dombiak
+ *
+ * TODO Use i18n
  */
-public class AuthenticateUser extends AdHocCommand {
+public class ChangeUserPassword extends AdHocCommand {
     public String getCode() {
-        return "http://jabber.org/protocol/admin#authenticate-user";
+        return "http://jabber.org/protocol/admin#change-user-password";
     }
 
     public String getDefaultLabel() {
-        return "Authenticate User";
+        return "Change User Password";
     }
 
     public int getMaxStages(SessionData data) {
@@ -50,51 +52,34 @@ public class AuthenticateUser extends AdHocCommand {
             note.setText("Users are read only. Changing password is not allowed.");
             return;
         }
-        JID account;
-        try {
-            account = new JID(data.getData().get("accountjid").get(0));
-        }
-        catch (NullPointerException ne) {
-            note.addAttribute("type", "error");
-            note.setText("JID required parameter.");
-            return;
-        }
+        JID account = new JID(data.getData().get("accountjid").get(0));
+        String newPassword = data.getData().get("password").get(0);
         if (!XMPPServer.getInstance().isLocal(account)) {
             note.addAttribute("type", "error");
-            note.setText("Cannot authenticate remote user.");
+            note.setText("Cannot change password of remote user.");
             return;
         }
-        String password = data.getData().get("password").get(0);
-        // Get requested user
+        // Get requested group
         User user;
         try {
             user = UserManager.getInstance().getUser(account.getNode());
-        }
-        catch (UserNotFoundException e) {
-            // User not found
+        } catch (UserNotFoundException e) {
+            // Group not found
             note.addAttribute("type", "error");
             note.setText("User does not exists.");
             return;
         }
-
-        try {
-            AuthFactory.getAuthProvider().authenticate(user.getUsername(), password);
-        }
-        catch (UnauthorizedException e) {
-            // Auth failed
-            note.addAttribute("type", "error");
-            note.setText("Authentication failed.");
-            return;
-        }
+        // Set the new passowrd of the user
+        user.setPassword(newPassword);
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully.");
+        note.setText("Operation finished successfully");
     }
 
     protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Authenticating a user");
-        form.addInstruction("Fill out this form to authenticate a user.");
+        form.setTitle("Changing a User Password");
+        form.addInstruction("Fill out this form to change a user\u2019s password.");
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -102,9 +87,9 @@ public class AuthenticateUser extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
-        field.setType(FormField.Type.text_single);
-        field.setLabel("The username for this account");
-        field.setVariable("username");
+        field.setType(FormField.Type.jid_single);
+        field.setLabel("The Jabber ID for this account");
+        field.setVariable("accountjid");
         field.setRequired(true);
 
         field = form.addField();
@@ -121,7 +106,12 @@ public class AuthenticateUser extends AdHocCommand {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
+    }
+
+
+    public boolean hasPermission(JID requester) {
+        return super.hasPermission(requester) && !UserManager.getUserProvider().isReadOnly();
     }
 }

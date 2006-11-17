@@ -16,6 +16,7 @@ import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.commands.admin.*;
+import org.jivesoftware.wildfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.wildfire.commands.admin.group.*;
 import org.jivesoftware.wildfire.disco.*;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;

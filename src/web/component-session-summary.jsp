@@ -198,7 +198,7 @@
              <% }
                }
                else if ("component".equals(componentSession.getExternalComponent().getCategory())) {
-                if ("clearspace".equals(componentSession.getExternalComponent().getType())) { %>
+                if ("clearspace".equals(componentSession.getExternalComponent().getType().toLowerCase())) { %>
                 <img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace">&nbsp;
              <% }
                }

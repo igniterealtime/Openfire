@@ -180,30 +180,33 @@
             <%= componentSession.getExternalComponent().getCategory() %>
         </td>
         <td align="center" width="10%" nowrap>
+            <table border="0">
+            <tr valign="center">
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
                 if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
+                <td><img src="images/msn.gif" width="16" height="16" border="0" alt="MSN"></td>
              <% }
                 else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
+                <td><img src="images/aim.gif" width="16" height="16" border="0" alt="AIM"></td>
              <% }
                 else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
+                <td><img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!"></td>
              <% }
                 else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
+                <td><img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ"></td>
              <% }
                 else if ("irc".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/irc.gif" width="16" height="16" border="0" alt="IRC">&nbsp;
+                <td><img src="images/irc.gif" width="16" height="16" border="0" alt="IRC"></td>
              <% }
                }
                else if ("component".equals(componentSession.getExternalComponent().getCategory())) {
                 if ("clearspace".equals(componentSession.getExternalComponent().getType().toLowerCase())) { %>
-                <img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace">&nbsp;
+                <td><img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace"></td> 
              <% }
                }
             %>
-            <%= componentSession.getExternalComponent().getType() %>
+            <td><%= componentSession.getExternalComponent().getType() %></td>
+            </tr></table>
         </td>
         <%  Date creationDate = componentSession.getCreationDate();
             Calendar creationCal = Calendar.getInstance();

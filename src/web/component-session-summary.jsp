@@ -196,7 +196,12 @@
                 else if ("irc".equals(componentSession.getExternalComponent().getType())) { %>
                 <img src="images/irc.gif" width="16" height="16" border="0" alt="IRC">&nbsp;
              <% }
-            }
+               }
+               else if ("component".equals(componentSession.getExternalComponent().getCategory())) {
+                if ("clearspace".equals(componentSession.getExternalComponent().getType())) { %>
+                <img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace">&nbsp;
+             <% }
+               }
             %>
             <%= componentSession.getExternalComponent().getType() %>
         </td>

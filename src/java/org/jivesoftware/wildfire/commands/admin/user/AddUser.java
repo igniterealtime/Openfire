@@ -99,7 +99,7 @@ public class AddUser extends AdHocCommand {
     protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Adding a user");
-        form.addInstruction("Fill out this form to change a user\u2019s password.");
+        form.addInstruction("Fill out this form to add a user.");
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);

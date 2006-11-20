@@ -1039,7 +1039,7 @@ public class PubSubEngine {
         LeafNode leafNode = (LeafNode) node;
         // Get list of items to send to the user
         boolean forceToIncludePayload = false;
-        List<PublishedItem> items = null;
+        List<PublishedItem> items;
         String max_items = itemsElement.attributeValue("max_items");
         int recentItems = 0;
         if (max_items != null) {
@@ -1125,6 +1125,7 @@ public class PubSubEngine {
             }
             while (service.getNode(newNodeID) != null);
         }
+        boolean collectionType = false;
         // Check if user requested to configure the node (using a data form)
         Element configureElement = childElement.element("configure");
         if (configureElement != null) {
@@ -1156,6 +1157,14 @@ public class PubSubEngine {
                         }
                     }
                 }
+                field = completedForm.getField("pubsub#node_type");
+                if (field != null) {
+                    // Check if user requested to create a new collection node
+                    List<String> values = field.getValues();
+                    if (!values.isEmpty()) {
+                        collectionType = "collection".equals(values.get(0));
+                    }
+                }
             }
         }
         // If no parent was defined then use the root collection node
@@ -1173,9 +1182,6 @@ public class PubSubEngine {
             sendErrorPacket(iq, PacketError.Condition.conflict, null);
             return;
         }
-
-        // Check if user requested to create a new collection node
-        boolean collectionType = "collection".equals(createElement.attributeValue("type"));
 
         if (collectionType && !service.isCollectionNodesSupported()) {
             // Cannot create a collection node since the service doesn't support it

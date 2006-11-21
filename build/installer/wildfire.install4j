@@ -31,7 +31,7 @@
       <variable name="PUBLISHER_URL" value="www.jivesoftware.org" />
       <variable name="RELEASE_DIR" value="${compiler:APP_SHORT_NAME}" />
       <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
-      <variable name="RELEASE_FULL_PATH" value="${compiler:RELEASE_ROOT_PATH}\${compiler:RELEASE_DIR}" />
+      <variable name="RELEASE_FULL_PATH" value="${compiler:RELEASE_ROOT_PATH}/${compiler:RELEASE_DIR}" />
       <variable name="FILE_PREFIX" value="${compiler:APP_SHORT_NAME}" />
       <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
       <variable name="UNIX_INSTALL_DIR" value="wildfire" />

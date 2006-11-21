@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="3.2.4">
-  <directoryPresets config="../../target/release/wildfire/lib" />
-  <application name="%APP_NAME%" distributionSourceDir="" applicationId="%APPLICATION_ID%" mediaDir="../../target/release" mediaFilePattern="%FILE_PREFIX%_%VERSION_MAJOR%_%VERSION_MINOR%_%VERSION_REVISION%" compression="9" lzmaCompression="true" keepModificationTimes="true" shortName="%APP_SHORT_NAME%" publisher="%PUBLISHER%" publisherWeb="%PUBLISHER_URL%" version="%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%" allPathsRelative="true" backupOnSave="false" autoSave="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+<install4j version="4.0.3" transformSequenceNumber="1">
+  <directoryPresets config="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" />
+  <application name="${compiler:APP_NAME}" distributionSourceDir="" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/release" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}" compression="9" lzmaCompression="true" pack200Compression="false" keepModificationTimes="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:VERSION_MAJOR}.${compiler:VERSION_MINOR}.${compiler:VERSION_REVISION}" allPathsRelative="true" backupOnSave="false" autoSave="true" convertDotsToUnderscores="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="true">
+    <languages skipLanguageSelection="false">
+      <principalLanguage id="en" customLocalizationFile="" />
+      <additionalLanguages>
+        <language id="zh_CN" customLocalizationFile="" />
+        <language id="cs" customLocalizationFile="" />
+        <language id="nl" customLocalizationFile="" />
+        <language id="fr" customLocalizationFile="" />
+        <language id="de" customLocalizationFile="" />
+        <language id="pl" customLocalizationFile="" />
+        <language id="pt" customLocalizationFile="" />
+        <language id="es" customLocalizationFile="" />
+      </additionalLanguages>
+    </languages>
     <searchSequence>
       <registry />
       <envVar name="JAVA_HOME" />
@@ -9,34 +22,35 @@
     </searchSequence>
     <variables>
       <variable name="VERSION_MAJOR" value="3" />
-      <variable name="VERSION_MINOR" value="0" />
+      <variable name="VERSION_MINOR" value="2" />
       <variable name="VERSION_REVISION" value="0" />
       <variable name="APP_NAME" value="Wildfire" />
       <variable name="APP_SHORT_NAME" value="wildfire" />
       <variable name="PRODUCT_NAME" value="wildfire" />
       <variable name="PUBLISHER" value="Jive Software" />
       <variable name="PUBLISHER_URL" value="www.jivesoftware.org" />
-      <variable name="RELEASE_DIR" value="%APP_SHORT_NAME%" />
+      <variable name="RELEASE_DIR" value="${compiler:APP_SHORT_NAME}" />
       <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
-      <variable name="RELEASE_FULL_PATH" value="%RELEASE_ROOT_PATH%/%RELEASE_DIR%" />
-      <variable name="FILE_PREFIX" value="%APP_SHORT_NAME%" />
+      <variable name="RELEASE_FULL_PATH" value="${compiler:RELEASE_ROOT_PATH}\${compiler:RELEASE_DIR}" />
+      <variable name="FILE_PREFIX" value="${compiler:APP_SHORT_NAME}" />
       <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
       <variable name="UNIX_INSTALL_DIR" value="wildfire" />
       <variable name="WINDOWS_INSTALL_DIR" value="Wildfire" />
     </variables>
   </application>
   <files>
+    <roots />
     <mountPoints>
-      <mountPoint name="" id="33" location="resources" mode="755" />
-      <mountPoint name="" id="34" location="resources/security" mode="755" />
-      <mountPoint name="" id="46" location="conf" mode="755" />
-      <mountPoint name="" id="1" location="" mode="755" />
+      <mountPoint id="33" root="" location="resources" mode="755" />
+      <mountPoint id="34" root="" location="resources/security" mode="755" />
+      <mountPoint id="46" root="" location="conf" mode="755" />
+      <mountPoint id="1" root="" location="" mode="755" />
     </mountPoints>
     <entries>
-      <fileEntry mountPoint="34" file="%RELEASE_FULL_PATH%/resources/security/truststore" overwrite="0" shared="false" mode="644" dontUninstall="true" />
-      <fileEntry mountPoint="34" file="%RELEASE_FULL_PATH%/resources/security/keystore" overwrite="0" shared="false" mode="644" dontUninstall="true" />
-      <fileEntry mountPoint="46" file="%RELEASE_FULL_PATH%/conf/wildfire.xml" overwrite="0" shared="false" mode="644" dontUninstall="true" />
-      <dirEntry mountPoint="1" file="%RELEASE_FULL_PATH%" overwrite="4" shared="false" mode="644" dontUninstall="false" excludeSuffixes="" dirMode="755">
+      <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
+      <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/keystore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
+      <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/wildfire.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
+      <dirEntry mountPoint="1" file="${compiler:RELEASE_FULL_PATH}" overwrite="4" shared="false" mode="644" uninstallMode="0" excludeSuffixes="" dirMode="755">
         <exclude>
           <entry location="conf/wildfire.xml" launcher="false" />
           <entry location="resources/security/keystore" launcher="false" />
@@ -47,136 +61,381 @@
     <components />
   </files>
   <launchers>
-    <launcher name="Wildfire" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="%PRODUCT_NAME%-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="%APP_NAME%" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME%" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+    <launcher name="Wildfire" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" swtApp="false">
+      <executable name="${compiler:PRODUCT_NAME}-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="${compiler:APP_NAME}" jreLocation="" executionLevel="asInvoker">
+        <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME}" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
           <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
-          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
-        <searchSequence>
-          <registry />
-          <envVar name="JAVA_HOME" />
-          <envVar name="JDK_HOME" />
-        </searchSequence>
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
         <nativeLibraryDirectories />
       </java>
       <includedFiles />
+      <unextractableFiles />
+      <customScript mode="1" file="">
+        <scriptLines />
+      </customScript>
     </launcher>
-    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="%APP_NAME% Server" icnsFile="" pngIcon16File="./images/wildfire-16x16.png" pngIcon32File="./images/wildfire-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="%PRODUCT_NAME%" type="1" iconSet="true" iconFile="./images/wildfire.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Launcher" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="${compiler:APP_NAME} Server" icnsFile="" pngIcon16File="./images/wildfire-16x16.png" pngIcon32File="./images/wildfire-32x32.png" macServiceDependencies="" swtApp="false">
+      <executable name="${compiler:PRODUCT_NAME}" type="1" iconSet="true" iconFile="./images/wildfire.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
+        <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME} Launcher" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
           <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
-          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.launcher.Launcher" vmParameters="&quot;-Dappdir=%INSTALL4J_EXEDIR%&quot;" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="" allowBetaVM="false" jdkOnly="false">
-        <searchSequence>
-          <registry />
-          <envVar name="JAVA_HOME" />
-          <envVar name="JDK_HOME" />
-        </searchSequence>
+      <java mainClass="org.jivesoftware.wildfire.launcher.Launcher" vmParameters="&quot;-Dappdir=${launcher:sys.launcherDirectory}&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
         <nativeLibraryDirectories />
       </java>
       <includedFiles />
+      <unextractableFiles />
+      <customScript mode="1" file="">
+        <scriptLines />
+      </customScript>
     </launcher>
-    <launcher name="wildfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/wildfired-16x16.png" pngIcon32File="./images/wildfired-32x32.png" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="%PRODUCT_NAME%d" type="1" iconSet="true" iconFile="./images/wildfired.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
-        <versionInfo include="true" fileVersion="" companyName="" fileDescription="%APP_NAME% Server" legalCopyright="%PUBLISHER%" productVersion="" internalName="%APP_NAME%" />
+    <launcher name="wildfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/wildfired-16x16.png" pngIcon32File="./images/wildfired-32x32.png" macServiceDependencies="" swtApp="false">
+      <executable name="${compiler:PRODUCT_NAME}d" type="1" iconSet="true" iconFile="./images/wildfired.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
+        <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME} Server" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
           <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
-          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
-        <searchSequence>
-          <registry />
-          <envVar name="JAVA_HOME" />
-          <envVar name="JDK_HOME" />
-        </searchSequence>
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
         <nativeLibraryDirectories />
       </java>
       <includedFiles />
+      <unextractableFiles />
+      <customScript mode="1" file="">
+        <scriptLines />
+      </customScript>
     </launcher>
-    <launcher name="wildfire" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" allowUserChangeServiceStartType="true">
-      <executable name="%PRODUCT_NAME%" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="">
-        <versionInfo include="false" fileVersion="" companyName="" fileDescription="" legalCopyright="" productVersion="" internalName="" />
+    <launcher name="wildfire" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" swtApp="false">
+      <executable name="${compiler:PRODUCT_NAME}" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
+        <versionInfo include="false" fileVersion="" fileDescription="" legalCopyright="" internalName="" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
         <text>
           <statusLine x="20" y="20" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
-          <versionLine x="20" y="40" text="version %VERSION%" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
+          <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="-DwildfireHome=$app_home -Dwildfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" minVersion="" maxVersion="" preferredVM="server" allowBetaVM="false" jdkOnly="false">
-        <searchSequence>
-          <registry />
-          <envVar name="JAVA_HOME" />
-          <envVar name="JDK_HOME" />
-        </searchSequence>
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="-DwildfireHome=$app_home -Dwildfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="true" />
         </classPath>
         <nativeLibraryDirectories />
       </java>
       <includedFiles />
+      <unextractableFiles />
+      <customScript mode="1" file="">
+        <scriptLines />
+      </customScript>
     </launcher>
   </launchers>
-  <installerGui installerType="1" runUninstallerOnUpdate="true" addOnAppId="" suggestPreviousLocations="true" allowUnattendedInstall="true" useCustomHeaderImage="true" customHeaderImage="./images/wildfire_logo_small.png" customSize="false" customWidth="500" customHeight="390">
-    <customCode preAction="false" preActionClass="" postAction="false" postActionClass="" preUninstallAction="false" preUninstallActionClass="" postUninstallAction="true" postUninstallActionClass="org.jivesoftware.wildfire.launcher.Uninstaller" initHandler="false" initHandlerClass="" directoryValidator="false" directoryValidatorClass="" installationHandler="false" installationHandlerClass="">
-      <archive location="%RELEASE_FULL_PATH%/lib/startup.jar" />
+  <installerGui installerType="1" suggestPreviousProgramGroup="true" addOnAppId="" suggestPreviousLocations="true" allowUnattended="true" allowConsole="true" useCustomInstallerHeaderImage="true" customInstallerHeaderImage="./images/wildfire_logo_small.png" useCustomUninstallerHeaderImage="true" customUninstallerHeaderImage="./images/wildfire_logo_small.png" customSize="false" customWidth="500" customHeight="390" useCustomIcon="false" customIcnsFile="" customPngIcon16File="" customPngIcon32File="" customIcoFile="" vmParameters="" watermark="false" resizable="true">
+    <customCode useInstalledFiles="false">
+      <archive location="${compiler:RELEASE_FULL_PATH}/lib/startup.jar" />
     </customCode>
-    <standardScreens>
-      <screen id="welcome" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
-      <screen id="license" enabled="true" file="%RELEASE_FULL_PATH%/LICENSE.html" />
-      <screen id="location" enabled="true" showSpace="true" suggestAppDir="true" />
-      <screen id="components" enabled="true" allSelected="true" firstMandatory="true">
-        <selectedComponents />
-        <mandatoryComponents />
+    <installerScreens>
+      <screen name="" id="54" beanClass="com.install4j.runtime.beans.screens.WelcomeScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.WelcomeScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
       </screen>
-      <screen id="programGroup" enabled="true" />
-      <screen id="fileAssociations" enabled="true">
-        <associations />
+      <screen name="" id="55" beanClass="com.install4j.runtime.beans.screens.LicenseScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.LicenseScreen">
+              <void property="displayedTextFile">
+                <object class="com.install4j.api.beans.ExternalFile">
+                  <string>${compiler:RELEASE_FULL_PATH}/LICENSE.html</string>
+                </object>
+              </void>
+            </object>
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
       </screen>
-      <screen id="services" enabled="false" allSelected="false">
-        <selectedServiceLaunchers />
+      <screen name="" id="56" beanClass="com.install4j.runtime.beans.screens.InstallationDirectoryScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.InstallationDirectoryScreen">
+              <void property="showRequiredDiskSpace">
+                <boolean>false</boolean>
+              </void>
+            </object>
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
       </screen>
-      <screen id="additionalTasks" enabled="false" customTasksPlacement="1">
-        <customTasks />
+      <screen name="" id="57" beanClass="com.install4j.runtime.beans.screens.ComponentsScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.ComponentsScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
       </screen>
-      <screen id="preInfo" enabled="false" file="" />
-      <screen id="install" enabled="true" />
-      <screen id="postInfo" enabled="false" file="" />
-      <screen id="finished" enabled="true" useCustomBanner="false" bannerImageFile="" background="255,255,255" />
-    </standardScreens>
-    <customScreens />
+      <screen name="" id="58" beanClass="com.install4j.runtime.beans.screens.StandardProgramGroupScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.StandardProgramGroupScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
+      </screen>
+      <screen name="" id="59" beanClass="com.install4j.runtime.beans.screens.FileAssociationsScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.FileAssociationsScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
+      </screen>
+      <screen name="" id="60" beanClass="com.install4j.runtime.beans.screens.InstallationScreen" rollbackBarrier="true" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.InstallationScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions>
+          <action name="" id="61" beanClass="com.install4j.runtime.beans.actions.UninstallPreviousAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.UninstallPreviousAction" />
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+          <action name="" id="62" beanClass="com.install4j.runtime.beans.actions.InstallFilesAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.InstallFilesAction" />
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+          <action name="" id="1264" beanClass="com.install4j.runtime.beans.actions.files.SetModeAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.files.SetModeAction">
+                  <void property="file">
+                    <object class="java.io.File">
+                      <string>bin/wildfire.sh</string>
+                    </object>
+                  </void>
+                  <void property="mode">
+                    <string>755</string>
+                  </void>
+                </object>
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+          <action name="" id="63" beanClass="com.install4j.runtime.beans.actions.desktop.CreateProgramGroupAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.desktop.CreateProgramGroupAction">
+                  <void property="programGroupName">
+                    <string>${compiler:sys.fullName}</string>
+                  </void>
+                </object>
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+          <action name="" id="64" beanClass="com.install4j.runtime.beans.actions.desktop.RegisterAddRemoveAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.desktop.RegisterAddRemoveAction">
+                  <void property="itemName">
+                    <string>${compiler:sys.fullName} ${compiler:sys.version}</string>
+                  </void>
+                </object>
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+        </actions>
+        <formComponents />
+      </screen>
+      <screen name="" id="1280" beanClass="com.install4j.runtime.beans.screens.FinishedScreen" rollbackBarrier="false" backButton="2" finishScreen="true">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.FinishedScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
+      </screen>
+    </installerScreens>
+    <uninstallerScreens>
+      <screen name="" id="70" beanClass="com.install4j.runtime.beans.screens.UninstallWelcomeScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.UninstallWelcomeScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
+      </screen>
+      <screen name="" id="71" beanClass="com.install4j.runtime.beans.screens.UninstallationScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.UninstallationScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions>
+          <action name="" id="72" beanClass="com.install4j.runtime.beans.actions.UninstallFilesAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.UninstallFilesAction" />
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+          <action name="Delete lib directory" id="1263" beanClass="com.install4j.runtime.beans.actions.files.DeleteFileAction" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.files.DeleteFileAction">
+                  <void property="file">
+                    <object class="java.io.File">
+                      <string>lib</string>
+                    </object>
+                  </void>
+                  <void property="recurse">
+                    <boolean>true</boolean>
+                  </void>
+                </object>
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+        </actions>
+        <formComponents />
+      </screen>
+      <screen name="" id="73" beanClass="com.install4j.runtime.beans.screens.UninstallFailureScreen" rollbackBarrier="false" backButton="2" finishScreen="true">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.UninstallFailureScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
+      </screen>
+      <screen name="" id="74" beanClass="com.install4j.runtime.beans.screens.UninstallSuccessScreen" rollbackBarrier="false" backButton="2" finishScreen="true">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.UninstallSuccessScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions />
+        <formComponents />
+      </screen>
+    </uninstallerScreens>
+    <installerStartup>
+      <screen name="" id="15" beanClass="com.install4j.runtime.beans.screens.StartupScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.StartupScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions>
+          <action name="" id="52" beanClass="com.install4j.runtime.beans.actions.misc.RequireAdminAction" rollbackBarrier="false" multiExec="false" failureStrategy="2" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.misc.RequireAdminAction" />
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+        </actions>
+        <formComponents />
+      </screen>
+    </installerStartup>
+    <uninstallerStartup>
+      <screen name="" id="16" beanClass="com.install4j.runtime.beans.screens.StartupScreen" rollbackBarrier="false" backButton="2" finishScreen="false">
+        <serializedBean>
+          <java class="java.beans.XMLDecoder">
+            <object class="com.install4j.runtime.beans.screens.StartupScreen" />
+          </java>
+        </serializedBean>
+        <condition />
+        <validation />
+        <actions>
+          <action name="" id="53" beanClass="com.install4j.runtime.beans.actions.misc.RequireAdminAction" rollbackBarrier="false" multiExec="false" failureStrategy="2" errorMessage="">
+            <serializedBean>
+              <java class="java.beans.XMLDecoder">
+                <object class="com.install4j.runtime.beans.actions.misc.RequireAdminAction" />
+              </java>
+            </serializedBean>
+            <condition />
+          </action>
+        </actions>
+        <formComponents />
+      </screen>
+    </uninstallerStartup>
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="%WINDOWS_INSTALL_DIR%" allLaunchers="false" includedJRE="windows-x86-1.5.0_08_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" allowUserStartAfterFinish="true" launchExecutableId="12" createUninstallIcon="true" overrideLicenseFile="false" licenseFile="" overridePreInformationFile="false" preInformationFile="" overridePostInformationFile="false" postInformationFile="" adminRequired="true" languageID="en" modeDesktopIcon="1" desktopLauncherId="12" programGroup="%APP_NAME%" allowUserDisableStartMenuCreation="true" reboot="false" rebootUninstaller="false" modeQuickLaunchIon="1">
-      <selectedLaunchers>
-        <launcher id="2" />
-        <launcher id="12" />
-        <launcher id="15" />
-      </selectedLaunchers>
-      <messageSet language="English" />
+    <win32 name="Windows" id="3" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="windows-x86-1.6.0_beta" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="false">
+      <excludedLaunchers>
+        <launcher id="22" />
+      </excludedLaunchers>
+      <excludedComponents />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
         <entry location="bin/extra/wildfired" launcher="false" />
@@ -185,46 +444,59 @@
         <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
-      <excludedScreenIds />
-      <additionalStartMenuEntries>
-        <entry name="Readme" target="README.html" icon="" />
-      </additionalStartMenuEntries>
+      <excludedInstallerScreens />
+      <excludedUninstallerScreens />
     </win32>
-    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/%UNIX_INSTALL_DIR%" allLaunchers="false" includedJRE="linux-x86-1.5.0_08" manualJREEntry="false" customScriptMode="1" customScriptFile="" os="linux" arch="i386">
-      <selectedLaunchers>
-        <launcher id="22" />
-      </selectedLaunchers>
-      <messageSet language="English" />
-      <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
-        <entry location="documentation/javadoc" launcher="false" />
-      </exclude>
-      <variables />
-      <customScriptLines />
-    </linuxRPM>
-    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="%PRODUCT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false" customScriptMode="1" customScriptFile="">
-      <selectedLaunchers>
-        <launcher id="22" />
-      </selectedLaunchers>
-      <messageSet language="English" />
-      <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
-        <entry location="documentation/javadoc" launcher="false" />
-      </exclude>
-      <variables />
-      <customScriptLines />
-    </unixArchive>
-    <win32Archive name="Windows Archive" id="31" mediaFileName="" installDir="%APP_SHORT_NAME%" allLaunchers="false" includedJRE="" manualJREEntry="false">
-      <selectedLaunchers>
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="linux-x86-1.5.0_09" manualJREEntry="false" os="linux" arch="i386">
+      <excludedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
         <launcher id="15" />
-      </selectedLaunchers>
-      <messageSet language="English" />
+      </excludedLaunchers>
+      <excludedComponents />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
+      <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
+        <entry location="bin/wildfire.bat" launcher="false" />
+        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
+      </exclude>
+      <variables />
+      <preInstallScript mode="1" file="">
+        <scriptLines />
+      </preInstallScript>
+      <postInstallScript mode="1" file="">
+        <scriptLines />
+      </postInstallScript>
+      <preUninstallScript mode="1" file="">
+        <scriptLines />
+      </preUninstallScript>
+      <postUninstallScript mode="1" file="">
+        <scriptLines />
+      </postUninstallScript>
+    </linuxRPM>
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="${compiler:PRODUCT_NAME}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="" manualJREEntry="false">
+      <excludedLaunchers>
+        <launcher id="2" />
+        <launcher id="12" />
+        <launcher id="15" />
+      </excludedLaunchers>
+      <excludedComponents />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
+      <exclude>
+        <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
+        <entry location="bin/wildfire.bat" launcher="false" />
+        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="documentation/javadoc" launcher="false" />
+      </exclude>
+      <variables />
+    </unixArchive>
+    <win32Archive name="Windows Archive" id="31" mediaFileName="" installDir="${compiler:APP_SHORT_NAME}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="" manualJREEntry="false">
+      <excludedLaunchers>
+        <launcher id="22" />
+      </excludedLaunchers>
+      <excludedComponents />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
         <entry location="bin/extra/wildfired" launcher="false" />
@@ -236,7 +508,7 @@
     </win32Archive>
   </mediaSets>
   <buildIds buildAll="false">
-    <mediaSet refId="31" />
+    <mediaSet refId="3" />
   </buildIds>
 </install4j>
 

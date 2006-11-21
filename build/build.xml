@@ -905,7 +905,7 @@
 
         <taskdef name="install4j"
                  classname="com.install4j.Install4JTask"
-                 classpath="${installer.install4j.home}/bin/install4j.jar"/>
+                 classpath="${installer.install4j.home}/bin/ant.jar"/>
 
         <mkdir dir="${installer.dest.dir}"/>
 

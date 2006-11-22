@@ -13,15 +13,14 @@ package org.jivesoftware.wildfire.multiplex;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.event.SessionEventListener;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -96,28 +95,22 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         sessionManager = XMPPServer.getInstance().getSessionManager();
         // Start thread that will send heartbeats to Connection Managers every 30 seconds
         // to keep connections open.
-        Thread hearbeatThread = new Thread() {
+        TimerTask heartbeatTask = new TimerTask() {
             public void run() {
-                while (true) {
-                    try {
-                        Thread.sleep(30000);
-                        for (ConnectionMultiplexerSession session : sessionManager
-                                .getConnectionMultiplexerSessions()) {
-                            session.getConnection().deliverRawText(" ");
-                        }
+                try {
+                    for (ConnectionMultiplexerSession session : sessionManager
+                            .getConnectionMultiplexerSessions())
+                    {
+                        session.getConnection().deliverRawText(" ");
                     }
-                    catch (InterruptedException e) {
-                        // Do nothing
-                    }
-                    catch(Exception e) {
-                        Log.error(e);
-                    }
+                }
+                catch(Exception e) {
+                    Log.error(e);
                 }
             }
         };
-        hearbeatThread.setDaemon(true);
-        hearbeatThread.setPriority(Thread.NORM_PRIORITY);
-        hearbeatThread.start();
+        TaskEngine.getInstance().schedule(heartbeatTask, 30*JiveConstants.SECOND,
+                30*JiveConstants.SECOND);
     }
 
     /**

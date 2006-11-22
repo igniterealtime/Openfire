@@ -14,9 +14,6 @@ package org.jivesoftware.util;
 import java.security.Security;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.mail.Address;
 import javax.mail.*;
@@ -79,16 +76,12 @@ public class EmailService {
     private boolean sslEnabled;
     private boolean debugEnabled;
 
-    private ThreadPoolExecutor executor;
     private Session session = null;
 
     /**
      * Constructs a new EmailService instance.
      */
     private EmailService() {
-        executor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60,
-            TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
-
         host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
         port = JiveGlobals.getIntProperty("mail.smtp.port", 25);
         username = JiveGlobals.getProperty("mail.smtp.username");
@@ -137,7 +130,7 @@ public class EmailService {
         if (messages.size() == 0) {
             return;
         }
-        executor.execute(new EmailTask(messages));
+        TaskEngine.getInstance().submit(new EmailTask(messages));
     }
 
     /**
@@ -257,8 +250,8 @@ public class EmailService {
      * {@link #sendMessages(Collection)} in that messages are sent
      * before this method returns rather than queueing the messages to be sent later.
      *
-     * @param messages
-     * @throws MessagingException
+     * @param messages the messages to send.
+     * @throws MessagingException if an error occurs.
      */
     public void sendMessagesImmediately(Collection<MimeMessage> messages)
             throws MessagingException

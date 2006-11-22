@@ -115,7 +115,6 @@ public class GroupManager {
 
         // Pre-load shared groups. This will provide a faster response
         // time to the first client that logs in.
-        // TODO: use a task engine instead of creating a thread directly.
         Runnable task = new Runnable() {
             public void run() {
                 Collection<Group> groups = getSharedGroups();
@@ -135,9 +134,7 @@ public class GroupManager {
                 }
             }
         };
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        TaskEngine.getInstance().submit(task);
     }
 
     /**

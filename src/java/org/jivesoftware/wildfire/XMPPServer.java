@@ -571,9 +571,10 @@ public class XMPPServer {
     }
 
     /**
-     * Restarts the HTTP server only when running in stand alone mode. The restart process will be done
-     * in another thread that will wait 1 second before doing the actual restart. The delay will give time
-     * to the page that requested the restart to fully render its content.
+     * Restarts the HTTP server only when running in stand alone mode. The restart
+     * process will be done in another thread that will wait 1 second before doing
+     * the actual restart. The delay will give time to the page that requested the
+     * restart to fully render its content.
      */
     public void restartHTTPServer() {
         Thread restartThread = new Thread() {

@@ -49,7 +49,7 @@ public class TaskEngine {
      * Constructs a new task engine.
      */
     private TaskEngine() {
-        timer = new Timer("timer-enterprise", true);
+        timer = new Timer("timer-wildfire", true);
         executor = Executors.newCachedThreadPool(new ThreadFactory() {
 
             final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -57,7 +57,7 @@ public class TaskEngine {
             public Thread newThread(Runnable runnable) {
                 // Use our own naming scheme for the threads.
                 Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "pool-enterprise" + threadNumber.getAndIncrement(), 0);
+                                      "pool-wildfire" + threadNumber.getAndIncrement(), 0);
                 // Make workers daemon threads.
                 thread.setDaemon(true);
                 if (thread.getPriority() != Thread.NORM_PRIORITY) {
@@ -134,7 +134,7 @@ public class TaskEngine {
      * input, such as automatically repeating a character as long as a key
      * is held down.
      *
-     * @param task   task to be scheduled.
+     * @param task task to be scheduled.
      * @param delay  delay in milliseconds before task is to be executed.
      * @param period time in milliseconds between successive task executions.
      * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
@@ -168,7 +168,7 @@ public class TaskEngine {
      * input, such as automatically repeating a character as long as a key
      * is held down.
      *
-     * @param task   task to be scheduled.
+     * @param task task to be scheduled.
      * @param firstTime First time at which task is to be executed.
      * @param period time in milliseconds between successive task executions.
      * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
@@ -202,7 +202,7 @@ public class TaskEngine {
      * scheduling multiple repeating timer tasks that must remain synchronized
      * with respect to one another.
      *
-     * @param task   task to be scheduled.
+     * @param task task to be scheduled.
      * @param delay  delay in milliseconds before task is to be executed.
      * @param period time in milliseconds between successive task executions.
      * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
@@ -237,7 +237,7 @@ public class TaskEngine {
      * scheduling multiple repeating timer tasks that must remain synchronized
      * with respect to one another.
      *
-     * @param task   task to be scheduled.
+     * @param task task to be scheduled.
      * @param firstTime First time at which task is to be executed.
      * @param period time in milliseconds between successive task executions.
      * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.

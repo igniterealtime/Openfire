@@ -14,11 +14,9 @@ package org.jivesoftware.wildfire.spi;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.http.HttpBindServlet;
-import org.jivesoftware.wildfire.http.HttpSessionManager;
+import org.jivesoftware.wildfire.http.HttpBindManager;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.wildfire.net.*;
-import org.mortbay.jetty.servlet.ServletHolder;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -308,11 +306,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void startHTTPBindListeners() {
-        serverManager.setHttpBindContext(createServletHandler(), "/http-bind/");
-    }
-
-    private ServletHolder createServletHandler() {
-        return new ServletHolder(new HttpBindServlet(new HttpSessionManager()));
+        serverManager.setHttpBindContext(HttpBindManager.getInstance().getServlets());
     }
 
     public void initialize(XMPPServer server) {

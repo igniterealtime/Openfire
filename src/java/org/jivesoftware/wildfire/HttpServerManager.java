@@ -31,6 +31,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 /**
  * Manages the instances of Jetty which provide the admin console funtionality and the HTTP binding
@@ -62,6 +63,7 @@ public class HttpServerManager {
 
     public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 8483;
 
+
     /**
      * Returns an HTTP server manager instance (singleton).
      *
@@ -78,8 +80,7 @@ public class HttpServerManager {
     private Server adminServer;
     private Server httpBindServer;
     private Context adminConsoleContext;
-    private ServletHolder httpBindContext;
-    private String httpBindPath;
+    private Map<ServletHolder, String> httpBindContexts;
     private CertificateEventListener certificateListener;
     private boolean restartNeeded = false;
 
@@ -107,15 +108,12 @@ public class HttpServerManager {
     }
 
     /**
-     * Sets up the parameters for the HTTP binding servlet.
+     * Sets up the parameters for the HTTP binding service.
      *
-     * @param context the servlet holder context which holds the servlet serving up the HTTP binding
-     * service.
-     * @param httpBindPath the path to which the HTTP binding servlet will be bound.
+     * @param contexts a collection of servlets utilized by the HTTP binding service.
      */
-    public void setHttpBindContext(ServletHolder context, String httpBindPath) {
-        this.httpBindContext = context;
-        this.httpBindPath = httpBindPath;
+    public void setHttpBindContext(Map<ServletHolder,String> contexts) {
+        this.httpBindContexts = contexts;
     }
 
     /**
@@ -129,7 +127,7 @@ public class HttpServerManager {
         certificateListener = new CertificateListener();
         CertificateManager.addListener(certificateListener);
 
-        if (httpBindContext != null && isHttpBindServiceEnabled()) {
+        if (httpBindContexts != null && isHttpBindServiceEnabled()) {
             bindPort = JiveGlobals.getIntProperty(HTTP_BIND_PORT, ADMIN_CONSOLE_PORT_DEFAULT);
             bindSecurePort = JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
                     ADMIN_CONSOLE_SECURE_PORT_DEFAULT);
@@ -172,8 +170,10 @@ public class HttpServerManager {
             if (httpBindServer != null && httpBindServer.isRunning()) {
                 httpBindServer.stop();
             }
-            if (httpBindContext != null && httpBindContext.isRunning()) {
-                httpBindContext.stop();
+            if (httpBindContexts != null) {
+                for(ServletHolder httpBindContext : httpBindContexts.keySet()) {
+                    httpBindContext.stop();
+                }
             }
         }
         catch (Exception e) {
@@ -416,7 +416,10 @@ public class HttpServerManager {
 
     private void addContexts() {
         if (httpBindServer == adminServer && httpBindServer != null) {
-            adminConsoleContext.addServlet(httpBindContext, httpBindPath);
+            for (Map.Entry<ServletHolder, String> httpBindContext : httpBindContexts.entrySet()) {
+                adminConsoleContext.addServlet(httpBindContext.getKey(),
+                        httpBindContext.getValue());
+            }
             if (adminServer.getHandler() == null) {
                 adminServer.addHandler(adminConsoleContext);
             }
@@ -432,7 +435,10 @@ public class HttpServerManager {
         }
         if (httpBindServer != null) {
             ServletHandler servletHandler = new ServletHandler();
-            servletHandler.addServletWithMapping(httpBindContext, httpBindPath);
+            for (Map.Entry<ServletHolder, String> httpBindContext : httpBindContexts.entrySet()) {
+                servletHandler.addServletWithMapping(httpBindContext.getKey(),
+                        httpBindContext.getValue());
+            }
             httpBindServer.addHandler(servletHandler);
         }
     }
@@ -446,21 +452,19 @@ public class HttpServerManager {
         ServletHandler handler = adminConsoleContext.getServletHandler();
         ServletMapping[] servletMappings = handler.getServletMappings();
         List<ServletMapping> toAdd = new ArrayList<ServletMapping>();
+        List<String> servletNames = new ArrayList<String>();
+        for(ServletHolder holder : httpBindContexts.keySet()) {
+            servletNames.add(holder.getName());
+        }
         for (ServletMapping mapping : servletMappings) {
-            if (mapping.getServletName().equals(httpBindContext.getName())) {
+            if (servletNames.contains(mapping.getServletName())) {
                 continue;
             }
             toAdd.add(mapping);
         }
 
-        ServletHolder[] servletHolder = handler.getServlets();
-        List<ServletHolder> toAddServlets = new ArrayList<ServletHolder>();
-        for (ServletHolder holder : servletHolder) {
-            if (holder.equals(httpBindContext)) {
-                continue;
-            }
-            toAddServlets.add(holder);
-        }
+        List<ServletHolder> toAddServlets = Arrays.asList(handler.getServlets());
+        toAddServlets.removeAll(httpBindContexts.keySet());
 
         handler.setServletMappings(toAdd.toArray(new ServletMapping[toAdd.size()]));
         handler.setServlets(toAddServlets.toArray(new ServletHolder[toAddServlets.size()]));

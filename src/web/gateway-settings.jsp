@@ -32,7 +32,7 @@
 	<!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
 	<div <%= ((!this.gwEnabled) ? " class='jive-gateway jive-gatewayDisabled'" : "class='jive-gateway'") %> id="jive<%= this.gatewayType.toString().toUpperCase() %>">
 		<label for="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox">
-			<input type="checkbox" name="gateway" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="toggleGW('<%= this.gatewayType.toString().toLowerCase() %>','jive<%= this.gatewayType.toString().toUpperCase() %>checkbox'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true"> 
+			<input type="checkbox" name="gateway" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="TransportInstanceManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true"> 
 			<img src="images/<%= this.gatewayType.toString().toLowerCase() %>.gif" alt="" border="0">
 			<strong><%= this.description %></strong>
 		</label>
@@ -145,6 +145,16 @@
 </style>
 
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
+<script src="dwr/engine.js" type="text/javascript"></script>
+<script src="dwr/util.js" type="text/javascript"></script>
+<script src="dwr/interface/TransportInstanceManager.js" type="text/javascript"></script>
+
+<script type="text/javascript" >
+    DWREngine.setErrorHandler(handleError);
+
+    function handleError(error) {
+    }
+</script>
 
 </head>
 <body>

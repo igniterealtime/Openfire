@@ -43,7 +43,7 @@ public class GatewayDWR extends DWRServlet {
             document.appendChild(root);
             Element allowElement = document.createElement("allow");
 
-            Element timElement = buildCreator("TransportInstanceManager", "org.jivesoftware.wildfire.gateway.TransportInstanceManager");
+            Element timElement = buildCreator("TransportInstanceManager", "org.jivesoftware.wildfire.gateway.web.TransportInstanceManager");
             allowElement.appendChild(timElement);
 
             //allowElement.appendChild(buildCreator("TransportInstanceManager", "org.jivesoftware.wildfire.gateway.web.TransportInstanceManager"));

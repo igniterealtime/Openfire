@@ -31,7 +31,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 /**
  * Manages the instances of Jetty which provide the admin console funtionality and the HTTP binding
@@ -463,7 +462,10 @@ public class HttpServerManager {
             toAdd.add(mapping);
         }
 
-        List<ServletHolder> toAddServlets = Arrays.asList(handler.getServlets());
+        List<ServletHolder> toAddServlets = new ArrayList<ServletHolder>();
+        for(ServletHolder holder : handler.getServlets()) {
+            toAddServlets.add(holder);
+        }
         toAddServlets.removeAll(httpBindContexts.keySet());
 
         handler.setServletMappings(toAdd.toArray(new ServletMapping[toAdd.size()]));

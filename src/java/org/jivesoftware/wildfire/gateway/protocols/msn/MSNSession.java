@@ -143,12 +143,30 @@ public class MSNSession extends TransportSession {
     }
 
     /**
+     * Removes information about a person from the user's contact list.
+     *
+     * @param msnContact MSN contact we are removing a copy of.
+     */
+    public void unstoreFriend(MsnContact msnContact) {
+        msnContacts.remove(msnContact.getEmail().toString());
+    }
+
+    /**
      * Records information about a group on the user's contact list.
      *
      * @param msnGroup MSN group we are storing a copy of.
      */
     public void storeGroup(MsnGroup msnGroup) {
         msnGroups.put(msnGroup.getGroupName(), msnGroup);
+    }
+
+    /**
+     * Removes information about a group from the user's contact list.
+     *
+     * @param msnGroup MSN group we are removing a copy of.
+     */
+    public void unstoreGroup(MsnGroup msnGroup) {
+        msnGroups.remove(msnGroup.getGroupName());
     }
 
     /**

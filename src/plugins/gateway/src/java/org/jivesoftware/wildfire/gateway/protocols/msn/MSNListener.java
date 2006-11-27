@@ -171,8 +171,26 @@ public class MSNListener extends MsnAdapter {
      */
     public void contactAddCompleted(MsnMessenger messenger, MsnContact contact) {
         Log.debug("MSN: Contact add completed: "+contact);
+        Presence p = new Presence();
+        p.setType(Presence.Type.subscribed);
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().convertIDToJID(contact.getEmail().toString()));
+        msnSession.getTransport().sendPacket(p);
         msnSession.storeFriend(contact);
         msnSession.completedPendingContactAdd(contact);
+    }
+
+    /**
+     * A contact we removed has been removed from the server.
+     */
+    public void contactRemoveCompleted(MsnMessenger messenger, MsnContact contact) {
+        Log.debug("MSN: Contact remove completed: "+contact);
+        Presence p = new Presence();
+        p.setType(Presence.Type.unsubscribed);
+        p.setTo(msnSession.getJID());
+        p.setFrom(msnSession.getTransport().convertIDToJID(contact.getEmail().toString()));
+        msnSession.getTransport().sendPacket(p);
+        msnSession.unstoreFriend(contact);
     }
 
     /**
@@ -182,6 +200,14 @@ public class MSNListener extends MsnAdapter {
         Log.debug("MSN: Group add completed: "+group);
         msnSession.storeGroup(group);
         msnSession.completedPendingGroupAdd(group);
+    }
+
+    /**
+     * A group we removed has been removed from the server.
+     */
+    public void groupRemoveCompleted(MsnMessenger messenger, MsnGroup group) {
+        Log.debug("MSN: Group remove completed: "+group);
+        msnSession.unstoreGroup(group);
     }
 
     /**

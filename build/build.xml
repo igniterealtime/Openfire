@@ -1291,15 +1291,15 @@
         <delete file="${mac.dmg.file}"/>
     </target>
 
-    <target name="mac.prepare" depends="mac.delete,wildfire">
+    <target name="mac.prepare" > <!-- depends="mac.delete,wildfire"> -->
         <unzip src="${basedir}/build/osx/template.dmg.zip" dest="${basedir}/build/osx/"/>
         <copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg"/>
-        <mkdir dir="${mac.dmg.dir}"/>
+        <mkdir dir="${mac.dmg.dir}/usr/local/wildfire"/>
         <exec executable="hdiutil" failonerror="true">
             <arg line="attach '${basedir}/tmp.dmg' -noautoopen -mountpoint '${mac.dmg.dir}'"/>
         </exec>
         <copy todir="${mac.pkg.dir}/usr/local/wildfire">
-            <fileset dir="${work.dir}">
+            <fileset dir="${target.dir}/wildfire">
                 <exclude name="**/wildfired"/>
                 <exclude name="**/embedded-db*"/>
                 <exclude name="**/redhat-postinstall.sh"/>

@@ -1235,7 +1235,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
 
         // Clean up the user's contact list.
         try {
-            cleanUpRoster(jid, false);
+            cleanUpRoster(jid, false, true);
         }
         catch (UserNotFoundException e) {
             throw new UserNotFoundException("Unable to find roster.");
@@ -1243,17 +1243,18 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
-     * Cleans a roster of entries related to this transport that are not shared.
+     * Cleans a roster of entries related to this transport.
      *
      * This function will run through the roster of the specified user and clean up any
-     * entries that share the domain of this transport.  This is primarily used during registration
-     * to clean up leftovers from other transports.
+     * entries that share the domain of this transport.  Depending on the removeNonPersistent
+     * option, it will either leave or keep the non-persistent 'contact' entries.
      *
-     * @param jid JID of user whose roster we want to clean up.
+     * @param jid JID of the user whose roster we want to clean up.
      * @param leaveDomain If set, we do not touch the roster item associated with the domain itself.
+     * @param removeNonPersistent If set, we will also remove non-persistent items.
      * @throws UserNotFoundException if the user is not found.
      */
-    public void cleanUpRoster(JID jid, Boolean leaveDomain) throws UserNotFoundException {
+    public void cleanUpRoster(JID jid, Boolean leaveDomain, Boolean removeNonPersistent) throws UserNotFoundException {
         try {
             Roster roster = rosterManager.getRoster(jid.getNode());
 
@@ -1268,13 +1269,13 @@ public abstract class BaseTransport implements Component, RosterEventListener {
 
             for (RosterItem ri : roster.getRosterItems()) {
                 if (ri.getJid().getDomain().equals(this.jid.getDomain())) {
-                    if (ri.isShared()) {
+                    if (ri.isShared()) { // Is a shared item we can't really touch.
                         continue;
                     }
-                    if (ri.getID() == 0) { // Is a non-persistent roster item.
+                    if (!removeNonPersistent && ri.getID() == 0) { // Is a non-persistent roster item.
                         continue;
                     }
-                    if (leaveDomain && ri.getJid().getNode() == null) {
+                    if (leaveDomain && ri.getJid().getNode() == null) { // The actual transport domain item.
                         continue;
                     }
                     try {
@@ -1295,6 +1296,26 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             catch (NotFoundException e) {
                 // No active session?  Then no problem.
             }
+        }
+        catch (UserNotFoundException e) {
+            throw new UserNotFoundException("Unable to find roster.");
+        }
+    }
+
+    /**
+     * Cleans a roster of entries related to this transport that are not shared.
+     *
+     * This function will run through the roster of the specified user and clean up any
+     * entries that share the domain of this transport.  This is primarily used during registration
+     * to clean up leftovers from other transports.
+     *
+     * @param jid JID of user whose roster we want to clean up.
+     * @param leaveDomain If set, we do not touch the roster item associated with the domain itself.
+     * @throws UserNotFoundException if the user is not found.
+     */
+    public void cleanUpRoster(JID jid, Boolean leaveDomain) throws UserNotFoundException {
+        try {
+            cleanUpRoster(jid, leaveDomain, false);
         }
         catch (UserNotFoundException e) {
             throw new UserNotFoundException("Unable to find roster.");

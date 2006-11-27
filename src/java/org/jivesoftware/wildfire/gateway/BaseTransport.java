@@ -742,7 +742,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @return The legacy username as a JID.
      */
     public JID convertIDToJID(String username) {
-        return new JID(username.replace('@', '%').replace(" ", ""), this.jid.getDomain(), null);
+        return new JID(JID.escapeNode(username), this.jid.getDomain(), null);
     }
 
     /**
@@ -752,7 +752,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @return THe legacy username as a String.
      */
     public String convertJIDToID(JID jid) {
-        return jid.getNode().replace('%', '@');
+        return JID.unescapeNode(jid.getNode());
     }
 
     /**

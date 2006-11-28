@@ -108,6 +108,8 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
             component.start();
         }
         catch (ComponentException e) {
+            // Unregister the componet's domain
+            components.remove(subdomain);
             // Remove the route
             XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
             // Rethrow the exception

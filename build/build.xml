@@ -439,10 +439,10 @@
                 <pathelement path="${compile.dir}"/>
                 <path refid="jspc.dependencies"/>
             </classpath>
-            <arg line="-uriroot ${web.dir}"/>
-            <arg line="-d ${jspc.java.dest.dir}"/>
+            <arg line="-uriroot '${web.dir}'"/>
+            <arg line="-d '${jspc.java.dest.dir}'"/>
             <arg line="-p org.jivesoftware.wildfire.admin"/>
-            <arg line="-webinc ${jspc.dest.dir}/web.partial.xml"/>
+            <arg line="-webinc '${jspc.dest.dir}/web.partial.xml'"/>
         </java>
 
         <!-- Compile java source -->

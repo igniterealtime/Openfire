@@ -1283,21 +1283,16 @@
     <property name="mac.pkg.dir" value="${basedir}/macpkg"/>
     <property name="mac.dmg.dir" value="${basedir}/Wildfire"/>
     <property name="mac.dmg.file" value="${basedir}/wildfire.dmg"/>
-    <property name="mac.dmg.template" value="${basedir}/build/osx/template.dmg"/>
+    <property name="mac.template" value="${basedir}/build/osx/template"/>
 
     <target name="mac.delete">
         <delete dir="${mac.pkg.dir}"/>
         <delete dir="${mac.dmg.dir}"/>
         <delete file="${mac.dmg.file}"/>
+        <delete dir="${mac.template}"/>
     </target>
 
-    <target name="mac.prepare" > <!-- depends="mac.delete,wildfire"> -->
-        <unzip src="${basedir}/build/osx/template.dmg.zip" dest="${basedir}/build/osx/"/>
-        <copy file="${mac.dmg.template}" tofile="${basedir}/tmp.dmg"/>
-        <mkdir dir="${mac.dmg.dir}/usr/local/wildfire"/>
-        <exec executable="hdiutil" failonerror="true">
-            <arg line="attach '${basedir}/tmp.dmg' -noautoopen -mountpoint '${mac.dmg.dir}'"/>
-        </exec>
+    <target name="mac.prepare" depends="mac.delete,wildfire">
         <copy todir="${mac.pkg.dir}/usr/local/wildfire">
             <fileset dir="${target.dir}/wildfire">
                 <exclude name="**/wildfired"/>
@@ -1305,9 +1300,9 @@
                 <exclude name="**/redhat-postinstall.sh"/>
             </fileset>
         </copy>
-        <mkdir dir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+        <mkdir dir="${mac.pkg.dir}/Library/LaunchDaemons"/>
         <copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist"
-              todir="${mac.pkg.dir}/System/Library/LaunchDaemons"/>
+              todir="${mac.pkg.dir}/Library/LaunchDaemons"/>
         <mkdir dir="${mac.dmg.dir}"/>
         <exec executable="chown">
             <arg line="-R root:wheel ${mac.pkg.dir}"/>
@@ -1319,6 +1314,10 @@
             </fileset>
             <fileset dir="${basedir}/build/osx/resources"/>
         </chmod>
+        <mkdir dir="${mac.template}/.background"/>
+        <copy todir="${mac.template}/.background">
+            <fileset file="${basedir}/build/osx/dmgBackground.png"/>
+        </copy>
     </target>
 
     <!-- Create a Mac OS X installer -->
@@ -1328,18 +1327,33 @@
             <arg value="-proj"/>
             <arg value="${basedir}/build/osx/wildfire.pmproj"/>
             <arg value="-p"/>
-            <arg value="${mac.dmg.dir}/Wildfire.pkg"/>
+            <arg value="${mac.template}/Wildfire.pkg"/>
             <arg value="-v"/>
-            <arg value="-ds"/>
         </exec>
     </target>
 
-    <target name="installer-mac" depends="mac.pkg" description="Creates a Mac OS X package">
+    <target name="installer.mac" depends="mac.pkg" description="Creates a Mac OS X package">
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="create -srcfolder '${mac.template}' -volname 'Wildfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${basedir}/tmp.dmg'"/>
+        </exec>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="attach '${basedir}/tmp.dmg' -readwrite -noverify -noautoopen -mountpoint '${mac.dmg.dir}'"/>
+        </exec>
+        <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
+            <arg value="dmg_wildfire.scpt"/>
+            <arg value="Wildfire"/>
+            <arg value="images"/>
+            <arg value="660"/>
+            <arg value="660"/>
+            <arg value="300"/>
+            <arg value="150"/>
+            <arg value="128"/>
+        </exec>
         <exec executable="hdiutil" failonerror="true">
             <arg line="detach ${mac.dmg.dir} -quiet -force"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="convert ${basedir}/tmp.dmg -format UDZO -o ${mac.dmg.file}"/>
+            <arg line="convert ${basedir}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${mac.dmg.file}"/>
         </exec>
         <delete file="${basedir}/tmp.dmg"/>
     </target>

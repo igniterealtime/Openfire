@@ -237,10 +237,11 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 item = roster.getRosterItem(target);
             }
             else {
-                if (Presence.Type.unsubscribed == type || Presence.Type.unsubscribe == type) {
+                if (Presence.Type.unsubscribed == type || Presence.Type.unsubscribe == type ||
+                        Presence.Type.subscribed == type) {
                     // Do not create a roster item when processing a confirmation of
-                    // an unsubscription or receiving an unsubscription request from
-                    // an unknown user
+                    // an unsubscription or receiving an unsubscription request or a
+                    // subscription approval from an unknown user
                     return false;
                 }
                 item = roster.createRosterItem(target, false, true);

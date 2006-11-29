@@ -36,7 +36,7 @@ if [ -z "$WILDFIRE_HOME" -o ! -d "$WILDFIRE_HOME" ]; then
 	fi
 
 	#resolve links - $0 may be a link in wildfire's home
-	PRG="0"
+	PRG="$0"
 	progname=`basename "$0$"`
 
 	# need this for relative symlinks

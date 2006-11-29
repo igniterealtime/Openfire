@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.http;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.StreamID;
 import org.jivesoftware.wildfire.SessionPacketRouter;
@@ -71,8 +72,7 @@ public class HttpSessionManager {
 
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
-    private Timer inactivityTimer;
-    private TimerTask inactivityThread;
+    private TimerTask inactivityTask;
 
     static {
         // Set the default read idle timeout. If none was set then assume 30 minutes
@@ -88,16 +88,13 @@ public class HttpSessionManager {
     }
 
     public void start() {
-        inactivityThread = new HttpSessionReaper();
-        inactivityTimer = new Timer("HttpSession Inactivity Timer");
-        inactivityTimer.schedule(inactivityThread, 30 * JiveConstants.SECOND,
+        inactivityTask = new HttpSessionReaper();
+        TaskEngine.getInstance().schedule(inactivityTask, 30 * JiveConstants.SECOND,
                 30 * JiveConstants.SECOND);
     }
 
     public void stop() {
-        inactivityTimer.cancel();
-        inactivityTimer = null;
-        inactivityThread = null;
+        inactivityTask.cancel();
         for(HttpSession session : sessionMap.values()) {
             session.close();
         }
@@ -265,7 +262,7 @@ public class HttpSessionManager {
         public void run() {
             for(HttpSession session : sessionMap.values()) {
                 long lastActive = (System.currentTimeMillis() - session.getLastActivity()) / 1000;
-                if(lastActive > session.getInactivityTimeout()) {
+                if (lastActive > session.getInactivityTimeout()) {
                     session.close();
                 }
             }

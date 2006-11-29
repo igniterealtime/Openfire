@@ -1,16 +1,18 @@
 /**
- * $RCSfile:  $
- * $Revision:  $
- * $Date:  $
+ * $RCSfile$
+ * $Revision: $
+ * $Date: $
  *
  * Copyright (C) 2006 Jive Software. All rights reserved.
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.http;
 
 import org.jivesoftware.wildfire.Connection;
 import org.mortbay.util.ajax.Continuation;
-
 
 /**
  * A connection to a client. The client will wait on getDeliverable() until the server forwards a

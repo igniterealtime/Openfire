@@ -8,6 +8,7 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.http;
 
 /**

@@ -732,8 +732,14 @@ public class HttpServerManager {
      */
     public static class JettyLog implements Logger {
 
+        /**
+         * Only enable Jetty debug logging if it's specifically enabled. Otherwise, Jetty debug logs
+         * pollute the Wildfire debug log with too much data.
+         */
+        private boolean debugEnabled = JiveGlobals.getBooleanProperty("jetty.debugEnabled");
+
         public boolean isDebugEnabled() {
-            return Log.isDebugEnabled();
+            return debugEnabled && Log.isDebugEnabled();
         }
 
         public void setDebugEnabled(boolean b) {

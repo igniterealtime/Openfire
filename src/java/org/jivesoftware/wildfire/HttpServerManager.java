@@ -26,6 +26,7 @@ import org.mortbay.jetty.servlet.ServletMapping;
 import org.mortbay.log.Logger;
 
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.servlet.http.HttpServlet;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -79,7 +80,8 @@ public class HttpServerManager {
     private Server adminServer;
     private Server httpBindServer;
     private Context adminConsoleContext;
-    private Map<ServletHolder, String> httpBindContexts;
+    private Map<HttpServlet, String> httpBindServlets;
+    private List<ServletHolder> httpBindContexts = new ArrayList<ServletHolder>();
     private CertificateEventListener certificateListener;
     private boolean restartNeeded = false;
 
@@ -111,8 +113,8 @@ public class HttpServerManager {
      *
      * @param contexts a collection of servlets utilized by the HTTP binding service.
      */
-    public void setHttpBindContext(Map<ServletHolder,String> contexts) {
-        this.httpBindContexts = contexts;
+    public void setHttpBindContext(Map<HttpServlet, String> contexts) {
+        this.httpBindServlets = contexts;
     }
 
     /**
@@ -126,11 +128,11 @@ public class HttpServerManager {
         certificateListener = new CertificateListener();
         CertificateManager.addListener(certificateListener);
 
-        if (httpBindContexts != null && isHttpBindServiceEnabled()) {
+        if (httpBindServlets != null && isHttpBindServiceEnabled()) {
             bindPort = JiveGlobals.getIntProperty(HTTP_BIND_PORT, ADMIN_CONSOLE_PORT_DEFAULT);
             bindSecurePort = JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
                     ADMIN_CONSOLE_SECURE_PORT_DEFAULT);
-            startHttpBindServer(bindPort, bindSecurePort);
+            configureHttpBindServer(bindPort, bindSecurePort);
         }
         if (adminConsoleContext != null) {
             createAdminConsoleServer();
@@ -169,8 +171,8 @@ public class HttpServerManager {
             if (httpBindServer != null && httpBindServer.isRunning()) {
                 httpBindServer.stop();
             }
-            if (httpBindContexts != null) {
-                for(ServletHolder httpBindContext : httpBindContexts.keySet()) {
+            if (httpBindServlets != null) {
+                for(ServletHolder httpBindContext : httpBindContexts) {
                     httpBindContext.stop();
                 }
             }
@@ -255,8 +257,9 @@ public class HttpServerManager {
      *
      * @param unsecurePort the unsecured connection port which clients can connect to.
      * @param securePort the secured connection port which clients can connect to.
+     * @throws Exception when there is an error configuring the HTTP binding ports.
      */
-    public void setHttpBindPorts(int unsecurePort, int securePort) {
+    public void setHttpBindPorts(int unsecurePort, int securePort) throws Exception {
         changeHttpBindPorts(unsecurePort, securePort);
         bindPort = unsecurePort;
         bindSecurePort = securePort;
@@ -299,7 +302,7 @@ public class HttpServerManager {
      * @param port the port to start the normal (unsecured) HTTP Bind service on.
      * @param securePort the port to start the TLS (secure) HTTP Bind service on.
      */
-    private void startHttpBindServer(int port, int securePort) {
+    private void configureHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
         Connector httpConnector = createConnector(port);
         Connector httpsConnector = createSSLConnector(securePort);
@@ -415,9 +418,10 @@ public class HttpServerManager {
 
     private void addContexts() {
         if (httpBindServer == adminServer && httpBindServer != null) {
-            for (Map.Entry<ServletHolder, String> httpBindContext : httpBindContexts.entrySet()) {
-                adminConsoleContext.addServlet(httpBindContext.getKey(),
-                        httpBindContext.getValue());
+            for (Map.Entry<HttpServlet, String> httpBindContext : httpBindServlets.entrySet()) {
+                ServletHolder holder = new ServletHolder(httpBindContext.getKey());
+                httpBindContexts.add(holder);
+                adminConsoleContext.addServlet(holder, httpBindContext.getValue());
             }
             if (adminServer.getHandler() == null) {
                 adminServer.addHandler(adminConsoleContext);
@@ -434,9 +438,10 @@ public class HttpServerManager {
         }
         if (httpBindServer != null) {
             ServletHandler servletHandler = new ServletHandler();
-            for (Map.Entry<ServletHolder, String> httpBindContext : httpBindContexts.entrySet()) {
-                servletHandler.addServletWithMapping(httpBindContext.getKey(),
-                        httpBindContext.getValue());
+            for (Map.Entry<HttpServlet, String> httpBindContext : httpBindServlets.entrySet()) {
+                ServletHolder holder = new ServletHolder(httpBindContext.getKey());
+                httpBindContexts.add(holder);
+                servletHandler.addServletWithMapping(holder, httpBindContext.getValue());
             }
             httpBindServer.addHandler(servletHandler);
         }
@@ -452,9 +457,10 @@ public class HttpServerManager {
         ServletMapping[] servletMappings = handler.getServletMappings();
         List<ServletMapping> toAdd = new ArrayList<ServletMapping>();
         List<String> servletNames = new ArrayList<String>();
-        for(ServletHolder holder : httpBindContexts.keySet()) {
+        for(ServletHolder holder : httpBindContexts) {
             servletNames.add(holder.getName());
         }
+
         for (ServletMapping mapping : servletMappings) {
             if (servletNames.contains(mapping.getServletName())) {
                 continue;
@@ -466,7 +472,8 @@ public class HttpServerManager {
         for(ServletHolder holder : handler.getServlets()) {
             toAddServlets.add(holder);
         }
-        toAddServlets.removeAll(httpBindContexts.keySet());
+        toAddServlets.removeAll(httpBindContexts);
+        httpBindContexts.clear();
 
         handler.setServletMappings(toAdd.toArray(new ServletMapping[toAdd.size()]));
         handler.setServlets(toAddServlets.toArray(new ServletHolder[toAddServlets.size()]));
@@ -506,7 +513,7 @@ public class HttpServerManager {
         return null;
     }
 
-    private void changeHttpBindPorts(int unsecurePort, int securePort) {
+    private void changeHttpBindPorts(int unsecurePort, int securePort) throws Exception {
         if (unsecurePort < 0 && securePort < 0) {
             throw new IllegalArgumentException("At least one port must be greater than zero.");
         }
@@ -542,28 +549,23 @@ public class HttpServerManager {
         }
 
         if (httpBindServer != adminServer) {
-            try {
-                httpBindServer.stop();
-            }
-            catch (Exception e) {
-                Log.error("Error stopping HTTP bind service", e);
-            }
+            httpBindServer.stop();
         }
-        startHttpBindServer(unsecurePort, securePort);
+        configureHttpBindServer(unsecurePort, securePort);
         addContexts();
-        try {
-            httpBindServer.start();
-        }
-        catch (Exception e) {
-            Log.error("Error starting HTTP bind service", e);
-        }
+        httpBindServer.start();
     }
 
     private void doEnableHttpBind(boolean shouldEnable) {
         if (shouldEnable && httpBindServer == null) {
-            changeHttpBindPorts(JiveGlobals.getIntProperty(HTTP_BIND_PORT,
+            try {
+                changeHttpBindPorts(JiveGlobals.getIntProperty(HTTP_BIND_PORT,
                     ADMIN_CONSOLE_PORT_DEFAULT), JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
-                    ADMIN_CONSOLE_SECURE_PORT_DEFAULT));
+                        ADMIN_CONSOLE_SECURE_PORT_DEFAULT));
+            }
+            catch (Exception e) {
+                Log.error("Error configuring HTTP binding ports", e);
+            }
         }
         else if (!shouldEnable && httpBindServer != null) {
             if (httpBindServer != adminServer) {

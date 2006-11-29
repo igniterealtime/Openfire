@@ -11,8 +11,7 @@
 
 package org.jivesoftware.wildfire.http;
 
-import org.mortbay.jetty.servlet.ServletHolder;
-
+import javax.servlet.http.HttpServlet;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -31,9 +30,9 @@ public class HttpBindManager {
      *
      * @return all the servlets that are part of the http-bind service.
      */
-    public Map<ServletHolder, String> getServlets() {
-        Map<ServletHolder, String> servlets = new HashMap<ServletHolder, String>();
-        servlets.put(new ServletHolder(new HttpBindServlet(new HttpSessionManager())),
+    public Map<HttpServlet, String> getServlets() {
+        Map<HttpServlet, String> servlets = new HashMap<HttpServlet, String>();
+        servlets.put(new HttpBindServlet(new HttpSessionManager()),
                 "/http-bind/");
 
         return servlets;

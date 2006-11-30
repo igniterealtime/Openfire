@@ -129,6 +129,20 @@ public class XMPPPacketReader {
     }
 
     /**
+     * <p>Reads a Document from the given stream</p>
+     *
+     * @param charSet the charSet that the input is encoded in
+     * @param in <code>InputStream</code> to read from.
+     * @return the newly created Document instance
+     * @throws DocumentException if an error occurs during parsing.
+     */
+    public Document read(String charSet, InputStream in)
+            throws DocumentException, IOException, XmlPullParserException
+    {
+        return read(createReader(in, charSet));
+    }
+
+    /**
      * <p>Reads a Document from the given <code>Reader</code></p>
      *
      * @param reader is the reader for the input
@@ -436,6 +450,10 @@ public class XMPPPacketReader {
      */
     protected Reader createReader(InputStream in) throws IOException {
         return new BufferedReader(new InputStreamReader(in));
+    }
+
+    private Reader createReader(InputStream in, String charSet) throws UnsupportedEncodingException {
+        return new BufferedReader(new InputStreamReader(in, charSet));
     }
 }
 

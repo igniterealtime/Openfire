@@ -238,6 +238,6 @@ public class HttpBindServlet extends HttpServlet {
         XMPPPacketReader reader = new XMPPPacketReader();
         reader.setXPPFactory(factory);
 
-        return reader.read(request.getInputStream());
+        return reader.read("utf-8", request.getInputStream());
     }
 }

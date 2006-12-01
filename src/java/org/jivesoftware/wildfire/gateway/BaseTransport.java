@@ -1383,7 +1383,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
-     * Sends a simple message throught he component manager.
+     * Sends a simple message through the component manager.
      *
      * @param to Who the message is for.
      * @param from Who the message is from.
@@ -1391,6 +1391,25 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public void sendMessage(JID to, JID from, String msg) {
         sendMessage(to, from, msg, Message.Type.chat);
+    }
+
+    /**
+     * Sends a typing notification the component manager.
+     *
+     * This will check whether the person supports typing notifications before sending.
+     *
+     * @param to Who the notification is for.
+     * @param from Who the notification is from.
+     */
+    public void sendTypingNotification(JID to, JID from) {
+        Message m = new Message();
+
+        m.setTo(to);
+        m.setFrom(from);
+        Element xEvent = m.addChildElement("x", "jabber:x:event");
+        xEvent.addElement("id");
+        xEvent.addElement("composing");
+        sendPacket(m);
     }
 
     /**

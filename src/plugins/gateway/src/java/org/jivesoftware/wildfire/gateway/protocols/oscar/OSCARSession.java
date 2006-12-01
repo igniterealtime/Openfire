@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.kano.joscar.ByteBlock;
+import net.kano.joscar.OscarTools;
 import net.kano.joscar.net.ConnDescriptor;
 import net.kano.joscar.flapcmd.SnacCommand;
 import net.kano.joscar.snac.SnacRequest;
@@ -62,6 +63,7 @@ public class OSCARSession extends TransportSession {
     public OSCARSession(Registration registration, JID jid, OSCARTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
         this.propertyPrefix = "plugin.gateway."+transport.getType().toString();
+        OscarTools.setDefaultCharset(JiveGlobals.getProperty(this.propertyPrefix+".encoding", "ISO8859-1"));
     }
 
     private BOSConnection bosConn = null;

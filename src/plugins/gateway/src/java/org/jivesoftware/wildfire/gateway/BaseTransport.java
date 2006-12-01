@@ -1366,6 +1366,34 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
+     * Sends a simple message throught he component manager.
+     *
+     * @param to Who the message is for.
+     * @param from Who the message is from.
+     * @param msg Message to be send.
+     * @param type Type of message to be sent.
+     */
+    public void sendMessage(JID to, JID from, String msg, Message.Type type) {
+        Message m = new Message();
+        m.setType(type);
+        m.setFrom(from);
+        m.setTo(to);
+        m.setBody(msg);
+        sendPacket(m);
+    }
+
+    /**
+     * Sends a simple message throught he component manager.
+     *
+     * @param to Who the message is for.
+     * @param from Who the message is from.
+     * @param msg Message to be send.
+     */
+    public void sendMessage(JID to, JID from, String msg) {
+        sendMessage(to, from, msg, Message.Type.chat);
+    }
+
+    /**
      * Intercepts roster additions related to the gateway and flags them as non-persistent.
      *
      * @see org.jivesoftware.wildfire.roster.RosterEventListener#addingContact(org.jivesoftware.wildfire.roster.Roster, org.jivesoftware.wildfire.roster.RosterItem, boolean)

@@ -22,6 +22,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.dom4j.Element;
 import net.kano.joscar.ByteBlock;
 import net.kano.joscar.OscarTools;
 import net.kano.joscar.BinaryTools;
@@ -38,6 +39,7 @@ import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.*;
 import net.kano.joscar.snaccmd.icbm.RecvImIcbm;
 import net.kano.joscar.snaccmd.icbm.InstantMessage;
+import net.kano.joscar.snaccmd.icbm.TypingCmd;
 import net.kano.joscar.snaccmd.buddy.BuddyStatusCmd;
 import net.kano.joscar.snaccmd.buddy.BuddyOfflineCmd;
 import net.kano.joscar.ratelim.RateLimitingQueueMgr;
@@ -166,6 +168,24 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             p.setTo(oscarSession.getJID());
             p.setFrom(oscarSession.getTransport().convertIDToJID(boc.getScreenname()));
             oscarSession.getTransport().sendPacket(p);
+        }
+        else if (cmd instanceof TypingCmd) {
+            TypingCmd tc = (TypingCmd) cmd;
+            String sn = tc.getScreenname();
+            Message mTypingEvent = new Message();
+
+            mTypingEvent.setTo(oscarSession.getJIDWithHighestPriority());
+            mTypingEvent.setFrom(
+                oscarSession.getTransport().convertIDToJID(sn));
+            Element eEvent =
+                mTypingEvent.addChildElement("x", "jabber:x:event");
+            eEvent.addElement("id");
+
+            if (tc.getTypingState() == TypingCmd.STATE_TYPING) {
+                eEvent.addElement("composing");
+            }
+
+            oscarSession.getTransport().sendPacket(mTypingEvent);
         }
     }
 

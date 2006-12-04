@@ -21,6 +21,13 @@ CREATE TABLE gatewayPseudoRoster (
 CREATE INDEX gatewayPsRs_regid_idx ON gatewayPseudoRoster (registrationID);
 CREATE INDEX gatewayPsRs_uname_idx ON gatewayPseudoRoster (username);
 
-INSERT INTO jiveVersion (name, version) VALUES ('gateway', 1);
+CREATE TABLE gatewayRestrictions (
+   transportType     VARCHAR2(15)   NOT NULL,
+   username          VARCHAR2(255),
+   groupname         VARCHAR2(50)
+);
+CREATE INDEX gatewayRstr_ttype_idx ON gatewayRestrictions (transportType);
+
+INSERT INTO jiveVersion (name, version) VALUES ('gateway', 2);
 
 commit;

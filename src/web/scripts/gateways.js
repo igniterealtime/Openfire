@@ -7,19 +7,18 @@ This toggles toggles an individual panel (slides up and down), or switches
 between the two if one's already open.
 */
 
-lastID = "";
+var lastID = "";
 
 function togglePanel(thisID) {
 
-    activeLink = thisID.id+"Link";
-    if (lastID != "") {
-        thatID = lastID;
-        oldLink = thatID.id+"Link";
-        if ($(thisID).style.display != 'none' && $(thatID).style.display == 'none') {
+    var activeLink = thisID.id+"Link";
+    if (lastID != "" && lastID != thisID) {
+        var oldLink = lastID.id+"Link";
+        if ($(thisID).style.display != 'none' && $(lastID).style.display == 'none') {
             Effect.toggle($(thisID),'slide', {duration: .4});
             $(activeLink).className = "";
-        } else if ($(thisID).style.display == 'none' && $(thatID).style.display != 'none') {
-            $(thatID).style.display = 'none';
+        } else if ($(thisID).style.display == 'none' && $(lastID).style.display != 'none') {
+            $(lastID).style.display = 'none';
             $(thisID).style.display = 'block';
             $(oldLink).className = "";
             $(activeLink).className = "jive-gatewayButtonOn";
@@ -50,13 +49,13 @@ unchecks a gateway the box goes grey panels aren't accessible.
 */
 function checkToggle(theID) {
 
-    theCheckbox = theID.id+"checkbox";
-    testLink = theID.id+"testsLink";
-    optsLink = theID.id+"optionsLink";
-    permLink = theID.id+"permsLink";
-    testPanel = theID.id+"tests";
-    optsPanel = theID.id+"options";
-    permPanel = theID.id+"perms";
+    var theCheckbox = theID.id+"checkbox";
+    var testLink = theID.id+"testsLink";
+    var optsLink = theID.id+"optionsLink";
+    var permLink = theID.id+"permsLink";
+    var testPanel = theID.id+"tests";
+    var optsPanel = theID.id+"options";
+    var permPanel = theID.id+"perms";
 
 	if ($(theCheckbox).checked) {
 		$(theID).className = "jive-gateway";
@@ -97,7 +96,10 @@ toggleAdd function
 This is the function that shows / hides the add registration form
 */
 function toggleAdd(theID) {
-	if ($(jiveAddRegPanel).style.display != 'none') {
+    var jiveAddRegPanel = document.getElementById("jiveAddRegPanel");
+    var jiveAddRegButton = document.getElementById("jiveAddRegButton");
+    var jiveAddRegLink = document.getElementById("jiveAddRegLink");
+    if ($(jiveAddRegPanel).style.display != 'none') {
 		Effect.SlideUp($(jiveAddRegPanel), {duration: .2})
 		$(jiveAddRegButton).className = "jive-gateway-addregBtn";
 		$(jiveAddRegLink).innerHTML = "Add a new registration";
@@ -115,8 +117,8 @@ toggleEdit function
 This is the function that shows / hides the edit fields for an existing registration
 */
 function toggleEdit(theNum) {
-normalRow = "jiveRegistration"+theNum;
-editRow = "jiveRegistrationEdit"+theNum;
+    var normalRow = "jiveRegistration"+theNum;
+    var editRow = "jiveRegistrationEdit"+theNum;
 	if ($(editRow).style.display != 'none') {
 		$(editRow).className = "jive-registrations-edit";
 		$(editRow).style.display = 'none';
@@ -136,6 +138,7 @@ this is for a future feature, to replace the row of filter options with a
 dynamic pulldown menu.
 */
 
+/*
 function toggleFilters() {
 	if ($(jiveFilterDrop).style.display != 'none') {
 		Effect.toggle($(jiveFilterDrop),'slide', {duration: .4});
@@ -143,6 +146,7 @@ function toggleFilters() {
 		Effect.toggle($(jiveFilterDrop),'slide', {duration: .4});
 	}
 }
+*/
 
 
 /*
@@ -150,6 +154,8 @@ toggleGW function
 this performs the actual work for enabling or disabling the gateway in
 question.
 */
+/*
+retiring in favor of DWR
 function toggleGW(gwType,gwSetting) {
 	if (document.getElementById(gwSetting)) {
 		var url = 'gateway-setting-handler.jsp?gwType=' + gwType + '&gwEnabled=';
@@ -159,7 +165,8 @@ function toggleGW(gwType,gwSetting) {
 		else {
 			url = url + "false";
 		}
-		if (window.XMLHttpRequest) {
+        var req;
+        if (window.XMLHttpRequest) {
 			req = new XMLHttpRequest();
 		} else if (window.ActiveXObject) {
 			req = new ActiveXObject("Microsoft.XMLHTTP");
@@ -168,3 +175,4 @@ function toggleGW(gwType,gwSetting) {
 		req.send(null);
 	}
 }
+*/

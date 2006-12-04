@@ -83,6 +83,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     public final RegistrationManager registrationManager = new RegistrationManager();
 
     /**
+     * Manages permission information.
+     * @see org.jivesoftware.wildfire.gateway.PermissionManager
+     */
+    public final PermissionManager permissionManager = new PermissionManager();
+
+    /**
      * JID of the transport in question.
      */
     public JID jid = null;
@@ -259,7 +265,6 @@ public abstract class BaseTransport implements Component, RosterEventListener {
 
                         session = this.registrationLoggedIn(registration, from, getPresenceType(packet), packet.getStatus(), packet.getPriority());
                         sessionManager.storeSession(from, session);
-
                     }
                 }
                 else if (packet.getType() == Presence.Type.unavailable) {
@@ -558,6 +563,21 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             }
 
             if (packet.getType() == IQ.Type.set) {
+                Boolean registered = false;
+                Collection<Registration> registrations = registrationManager.getRegistrations(from, this.transportType);
+                if (registrations.iterator().hasNext()) {
+                    registered = true;
+                }
+
+                if (!registered && !permissionManager.hasAccess(this.transportType, from)) {
+                    // User does not have permission to register with transport.
+                    // We want to allow them to change settings if they are already registered.
+                    IQ result = IQ.createResultIQ(packet);
+                    result.setError(Condition.bad_request);
+                    reply.add(result);
+                    return reply;
+                }
+
                 Element userEl = packet.getChildElement().element("username");
                 Element passEl = packet.getChildElement().element("password");
                 Element nickEl = packet.getChildElement().element("nick");
@@ -640,6 +660,14 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     curPassword = registration.getPassword();
                     curNickname = registration.getNickname();
                     registered = true;
+                }
+
+                if (!registered && !permissionManager.hasAccess(this.transportType, from)) {
+                    // User does not have permission to register with transport.
+                    // We want to allow them to change settings if they are already registered.
+                    result.setError(Condition.bad_request);
+                    reply.add(result);
+                    return reply;
                 }
 
                 DataForm form = new DataForm(DataForm.Type.form);

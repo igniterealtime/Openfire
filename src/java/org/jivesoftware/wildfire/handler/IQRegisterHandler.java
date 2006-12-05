@@ -228,6 +228,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
                             reply = IQ.createResultIQ(packet);
                             session.process(reply);
+                            // Take a quick nap so that the client can process the result
+                            Thread.sleep(200);
                             // Close the user's connection
                             session.getConnection().close();
                             // The reply has been sent so clean up the variable

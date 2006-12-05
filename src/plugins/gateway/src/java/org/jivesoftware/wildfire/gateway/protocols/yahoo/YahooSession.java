@@ -119,24 +119,24 @@ public class YahooSession extends TransportSession {
                         yahooSession.reset();
                         Log.warn("Yahoo login failed for " + getJID());
 
-                        Message m = new Message();
-                        m.setType(Message.Type.error);
-                        m.setTo(getJID());
-                        m.setFrom(getTransport().getJID());
-                        m.setBody("Failed to log into Yahoo! messenger account.  (login refused)");
-                        getTransport().sendPacket(m);
+                        getTransport().sendMessage(
+                                getJID(),
+                                getTransport().getJID(),
+                                "Failed to log into Yahoo! messenger account.  (login refused)",
+                                Message.Type.error
+                        );
                         setLoginStatus(TransportLoginStatus.LOGGED_OUT);
                     }
                     catch (IOException e) {
                         Log.error("Yahoo login caused IO exception:", e);
 
-                        Message m = new Message();
-                        m.setType(Message.Type.error);
-                        m.setTo(getJID());
-                        m.setFrom(getTransport().getJID());
-                        m.setBody("Failed to log into Yahoo! messenger account.  (unknown error)");
-                        getTransport().sendPacket(m);
-                        setLoginStatus(TransportLoginStatus.LOGGED_OUT);                        
+                        getTransport().sendMessage(
+                                getJID(),
+                                getTransport().getJID(),
+                                "Failed to log into Yahoo! messenger account.  (unknown error)",
+                                Message.Type.error
+                        );
+                        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
                     }
                 }
             }.run();
@@ -346,6 +346,13 @@ public class YahooSession extends TransportSession {
      */
     public void sendServerMessage(String message) {
         // We don't care.
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendChatState(org.xmpp.packet.JID, org.jivesoftware.wildfire.gateway.ChatStateType)
+     */
+    public void sendChatState(JID jid, ChatStateType chatState) {
+        // TODO: Handle this
     }
 
     /**

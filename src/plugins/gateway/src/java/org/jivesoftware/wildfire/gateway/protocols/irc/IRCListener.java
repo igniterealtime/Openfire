@@ -94,23 +94,23 @@ public class IRCListener implements IRCEventListener {
     public void onError(String string) {
         Log.debug("IRC error: "+string);
         if (silenced) { return; }
-        Message m = new Message();
-        m.setType(Message.Type.error);
-        m.setFrom(getSession().getTransport().getJID());
-        m.setTo(getSession().getJID());
-        m.setBody("IRC error received: "+string);
-        getSession().getTransport().sendPacket(m);
+        getSession().getTransport().sendMessage(
+                getSession().getJID(),
+                getSession().getTransport().getJID(),
+                "IRC error received: "+string,
+                Message.Type.error
+        );
     }
 
     public void onError(int i, String string) {
         Log.debug("IRC error: "+i+", "+string);
         if (silenced) { return; }
-        Message m = new Message();
-        m.setType(Message.Type.error);
-        m.setFrom(getSession().getTransport().getJID());
-        m.setTo(getSession().getJID());
-        m.setBody("IRC error received: (code "+i+") "+string);
-        getSession().getTransport().sendPacket(m);
+        getSession().getTransport().sendMessage(
+                getSession().getJID(),
+                getSession().getTransport().getJID(),
+                "IRC error received: (code "+i+") "+string,
+                Message.Type.error
+        );
     }
 
     public void onInvite(String string, IRCUser ircUser, String string1) {
@@ -151,12 +151,11 @@ public class IRCListener implements IRCEventListener {
         else {
             from = getSession().getTransport().convertIDToJID(username);
         }
-        Message m = new Message();
-        m.setType(Message.Type.chat);
-        m.setFrom(from);
-        m.setTo(getSession().getJIDWithHighestPriority());
-        m.setBody(string1);
-        getSession().getTransport().sendPacket(m);
+        getSession().getTransport().sendMessage(
+                getSession().getJIDWithHighestPriority(),
+                from,
+                string1
+        );
     }
 
     public void onPart(String string, IRCUser ircUser, String string1) {
@@ -174,12 +173,11 @@ public class IRCListener implements IRCEventListener {
             // TODO: Investigate if I should respond to this.  What do other clients do?
             return;
         }
-        Message m = new Message();
-        m.setType(Message.Type.chat);
-        m.setFrom(getSession().getTransport().convertIDToJID(ircUser.getNick()));
-        m.setTo(getSession().getJIDWithHighestPriority());
-        m.setBody(msg);
-        getSession().getTransport().sendPacket(m);
+        getSession().getTransport().sendMessage(
+                getSession().getJIDWithHighestPriority(),
+                getSession().getTransport().convertIDToJID(ircUser.getNick()),
+                msg
+        );
     }
 
     public void onQuit(IRCUser ircUser, String string) {
@@ -211,12 +209,11 @@ public class IRCListener implements IRCEventListener {
             }
         }
         else {
-            Message m = new Message();
-            m.setType(Message.Type.chat);
-            m.setFrom(getSession().getTransport().getJID());
-            m.setTo(getSession().getJIDWithHighestPriority());
-            m.setBody(string1);
-            getSession().getTransport().sendPacket(m);
+            getSession().getTransport().sendMessage(
+                    getSession().getJIDWithHighestPriority(),
+                    getSession().getTransport().getJID(),
+                    string1
+            );
         }
     }
 

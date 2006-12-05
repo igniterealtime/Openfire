@@ -22,7 +22,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.dom4j.Element;
 import net.kano.joscar.ByteBlock;
 import net.kano.joscar.OscarTools;
 import net.kano.joscar.BinaryTools;
@@ -105,33 +104,32 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
             InstantMessage message = icbm.getMessage();
             String msg = OscarTools.stripHtml(message.getMessage());
 
-            Message m = new Message();
-            m.setTo(oscarSession.getJIDWithHighestPriority());
-            m.setBody(msg);
-            m.setType(Message.Type.chat);
-            m.setFrom(this.oscarSession.getTransport().convertIDToJID(sn));
-            oscarSession.getTransport().sendPacket(m);
+            oscarSession.getTransport().sendMessage(
+                    oscarSession.getJIDWithHighestPriority(),
+                    oscarSession.getTransport().convertIDToJID(sn),
+                    msg
+            );
         }
         else if (cmd instanceof WarningNotification) {
             WarningNotification wn = (WarningNotification) cmd;
             MiniUserInfo warner = wn.getWarner();
             if (warner == null) {
-                Message m = new Message();
-                m.setTo(oscarSession.getJIDWithHighestPriority());
-                m.setBody("You have received an anonymous AIM warning.  Your warning level is now "+wn.getNewLevel()+"%.");
-                m.setType(Message.Type.headline);
-                m.setFrom(this.oscarSession.getTransport().getJID());
-                oscarSession.getTransport().sendPacket(m);
+                oscarSession.getTransport().sendMessage(
+                        oscarSession.getJIDWithHighestPriority(),
+                        oscarSession.getTransport().getJID(),
+                        "You have received an anonymous AIM warning.  Your warning level is now "+wn.getNewLevel()+"%.",
+                        Message.Type.headline
+                );
             }
             else {
                 Log.debug("*** " + warner.getScreenname()
                         + " warned you up to " + wn.getNewLevel() + "%");
-                Message m = new Message();
-                m.setTo(oscarSession.getJIDWithHighestPriority());
-                m.setBody("You have received an AIM warning from "+warner.getScreenname()+".  Your warning level is now "+wn.getNewLevel()+"%.");
-                m.setType(Message.Type.headline);
-                m.setFrom(this.oscarSession.getTransport().getJID());
-                oscarSession.getTransport().sendPacket(m);
+                oscarSession.getTransport().sendMessage(
+                        oscarSession.getJIDWithHighestPriority(),
+                        oscarSession.getTransport().getJID(),
+                        "You have received an AIM warning from "+warner.getScreenname()+".  Your warning level is now "+wn.getNewLevel()+"%.",
+                        Message.Type.headline
+                );
             }
         }
         else if (cmd instanceof BuddyStatusCmd) {
@@ -172,20 +170,25 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
         else if (cmd instanceof TypingCmd) {
             TypingCmd tc = (TypingCmd) cmd;
             String sn = tc.getScreenname();
-            Message mTypingEvent = new Message();
-
-            mTypingEvent.setTo(oscarSession.getJIDWithHighestPriority());
-            mTypingEvent.setFrom(
-                oscarSession.getTransport().convertIDToJID(sn));
-            Element eEvent =
-                mTypingEvent.addChildElement("x", "jabber:x:event");
-            eEvent.addElement("id");
 
             if (tc.getTypingState() == TypingCmd.STATE_TYPING) {
-                eEvent.addElement("composing");
+                oscarSession.getTransport().sendComposingNotification(
+                        oscarSession.getJIDWithHighestPriority(),
+                        oscarSession.getTransport().convertIDToJID(sn)
+                );
             }
-
-            oscarSession.getTransport().sendPacket(mTypingEvent);
+            else if (tc.getTypingState() == TypingCmd.STATE_PAUSED) {
+                oscarSession.getTransport().sendComposingPausedNotification(
+                        oscarSession.getJIDWithHighestPriority(),
+                        oscarSession.getTransport().convertIDToJID(sn)
+                );
+            }
+            else if (tc.getTypingState() == TypingCmd.STATE_NO_TEXT) {
+                oscarSession.getTransport().sendChatInactiveNotification(
+                        oscarSession.getJIDWithHighestPriority(),
+                        oscarSession.getTransport().convertIDToJID(sn)
+                );
+            }
         }
     }
 

@@ -60,24 +60,22 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#messageReceived(ymsg.network.event.SessionEvent)
      */
     public void messageReceived(SessionEvent event) {
-        Message m = new Message();
-        m.setType(Message.Type.chat);
-        m.setTo(yahooSession.getJIDWithHighestPriority());
-        m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
-        m.setBody(messageDecoder.decodeToText(event.getMessage()));
-        yahooSession.getTransport().sendPacket(m);
+        yahooSession.getTransport().sendMessage(
+                yahooSession.getJIDWithHighestPriority(),
+                yahooSession.getTransport().convertIDToJID(event.getFrom()),
+                messageDecoder.decodeToText(event.getMessage())
+        );
     }
 
     /**
      * @see ymsg.network.event.SessionListener#offlineMessageReceived(ymsg.network.event.SessionEvent)
      */
     public void offlineMessageReceived(SessionEvent event) {
-        Message m = new Message();
-        m.setType(Message.Type.chat);
-        m.setTo(yahooSession.getJIDWithHighestPriority());
-        m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
-        m.setBody(messageDecoder.decodeToText(event.getMessage()));
-        yahooSession.getTransport().sendPacket(m);
+        yahooSession.getTransport().sendMessage(
+                yahooSession.getJIDWithHighestPriority(),
+                yahooSession.getTransport().convertIDToJID(event.getFrom()),
+                messageDecoder.decodeToText(event.getMessage())
+        );
     }
 
     /**
@@ -85,12 +83,12 @@ public class YahooSessionListener implements SessionListener {
      */
     public void newMailReceived(SessionNewMailEvent event) {
         if (event.getMailCount() > 0) {
-            Message m = new Message();
-            m.setType(Message.Type.headline);
-            m.setTo(yahooSession.getJIDWithHighestPriority());
-            m.setFrom(yahooSession.getTransport().getJID());
-            m.setBody("You have "+event.getMailCount()+" message(s) waiting in your Yahoo! mail.");
-            yahooSession.getTransport().sendPacket(m);
+            yahooSession.getTransport().sendMessage(
+                    yahooSession.getJIDWithHighestPriority(),
+                    yahooSession.getTransport().getJID(),
+                    "You have "+event.getMailCount()+" message(s) waiting in your Yahoo! mail.",
+                    Message.Type.headline
+            );
         }
     }
 
@@ -163,12 +161,11 @@ public class YahooSessionListener implements SessionListener {
      * @see ymsg.network.event.SessionListener#buzzReceived(ymsg.network.event.SessionEvent)
      */
     public void buzzReceived(SessionEvent event) {
-        Message m = new Message();
-        m.setType(Message.Type.chat);
-        m.setTo(yahooSession.getJIDWithHighestPriority());
-        m.setFrom(yahooSession.getTransport().convertIDToJID(event.getFrom()));
-        m.setBody(messageDecoder.decodeToText(event.getMessage()));
-        yahooSession.getTransport().sendPacket(m);
+        yahooSession.getTransport().sendMessage(
+                yahooSession.getJIDWithHighestPriority(),
+                yahooSession.getTransport().convertIDToJID(event.getFrom()),
+                messageDecoder.decodeToText(event.getMessage())
+        );
     }
 
     /**
@@ -176,12 +173,12 @@ public class YahooSessionListener implements SessionListener {
      */
     public void errorPacketReceived(SessionErrorEvent event) {
         Log.error("Error from yahoo: "+event.getMessage()+", Code:"+event.getCode());
-        Message m = new Message();
-        m.setType(Message.Type.error);
-        m.setTo(yahooSession.getJIDWithHighestPriority());
-        m.setFrom(yahooSession.getTransport().getJID());
-        m.setBody("Error from yahoo: "+event.getMessage());
-        yahooSession.getTransport().sendPacket(m);
+        yahooSession.getTransport().sendMessage(
+                yahooSession.getJIDWithHighestPriority(),
+                yahooSession.getTransport().getJID(),
+                "Error from yahoo: "+event.getMessage(),
+                Message.Type.error
+        );
     }
 
     /**
@@ -189,12 +186,12 @@ public class YahooSessionListener implements SessionListener {
      */
     public void inputExceptionThrown(SessionExceptionEvent event) {
         Log.error("Input error from yahoo: "+event.getMessage(), event.getException());
-        Message m = new Message();
-        m.setType(Message.Type.error);
-        m.setTo(yahooSession.getJIDWithHighestPriority());
-        m.setFrom(yahooSession.getTransport().getJID());
-        m.setBody("Input error from yahoo: "+event.getMessage());
-        yahooSession.getTransport().sendPacket(m);
+        yahooSession.getTransport().sendMessage(
+                yahooSession.getJIDWithHighestPriority(),
+                yahooSession.getTransport().getJID(),
+                "Input error from yahoo: "+event.getMessage(),
+                Message.Type.error
+        );
     }
 
     /**
@@ -203,7 +200,10 @@ public class YahooSessionListener implements SessionListener {
     public void notifyReceived(SessionNotifyEvent event) {
         Log.debug(event.toString());
         if (event.getType().equals(StatusConstants.NOTIFY_TYPING)) {
-            // Ooh, a typing notification.  We'll use this in the future.
+            yahooSession.getTransport().sendComposingNotification(
+                    yahooSession.getJIDWithHighestPriority(),
+                    yahooSession.getTransport().convertIDToJID(event.getFrom())
+            );
         }
     }
 

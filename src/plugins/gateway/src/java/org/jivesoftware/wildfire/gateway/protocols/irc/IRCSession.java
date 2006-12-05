@@ -241,6 +241,13 @@ public class IRCSession extends TransportSession {
     }
 
     /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendChatState(org.xmpp.packet.JID, org.jivesoftware.wildfire.gateway.ChatStateType)
+     */
+    public void sendChatState(JID jid, ChatStateType chatState) {
+        // IRC doesn't support this
+    }
+
+    /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#retrieveContactStatus(org.xmpp.packet.JID)
      */
     public void retrieveContactStatus(JID jid) {

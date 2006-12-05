@@ -13,6 +13,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.text.SimpleDateFormat"%>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -21,15 +22,15 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<%	// Get paramters
+<% // Get paramters
     boolean doTest = request.getParameter("test") != null;
     boolean cancel = request.getParameter("cancel") != null;
-    boolean sent = ParamUtils.getBooleanParameter(request,"sent");
-    boolean success = ParamUtils.getBooleanParameter(request,"success");
-    String from = ParamUtils.getParameter(request,"from");
-    String to = ParamUtils.getParameter(request,"to");
-    String subject = ParamUtils.getParameter(request,"subject");
-    String body = ParamUtils.getParameter(request,"body");
+    boolean sent = ParamUtils.getBooleanParameter(request, "sent");
+    boolean success = ParamUtils.getBooleanParameter(request, "success");
+    String from = ParamUtils.getParameter(request, "from");
+    String to = ParamUtils.getParameter(request, "to");
+    String subject = ParamUtils.getParameter(request, "subject");
+    String body = ParamUtils.getParameter(request, "body");
 
     // Cancel if requested
     if (cancel) {
@@ -43,17 +44,25 @@
     // Validate input
     Map<String, String> errors = new HashMap<String, String>();
     if (doTest) {
-        if (from == null) { errors.put("from",""); }
-        if (to == null) { errors.put("to",""); }
-        if (subject == null) { errors.put("subject",""); }
-        if (body == null) { errors.put("body",""); }
+        if (from == null) {
+            errors.put("from", "");
+        }
+        if (to == null) {
+            errors.put("to", "");
+        }
+        if (subject == null) {
+            errors.put("subject", "");
+        }
+        if (body == null) {
+            errors.put("body", "");
+        }
 
         EmailService service = EmailService.getInstance();
 
         // Validate host - at a minimum, it needs to be set:
         String host = service.getHost();
         if (host == null) {
-            errors.put("host","");
+            errors.put("host", "");
         }
 
         // if no errors, continue
@@ -86,7 +95,18 @@
     }
 
     // Set var defaults
-    User user = webManager.getUserManager().getUser("admin");
+    Collection<JID> jids = webManager.getXMPPServer().getAdmins();
+    User user = null;
+    if (!jids.isEmpty()) {
+        for (JID jid : jids) {
+            if (webManager.getXMPPServer().isLocal(jid)) {
+                user = webManager.getUserManager().getUser(jid.getNode());
+                if (user.getEmail() != null) {
+                    break;
+                }
+            }
+        }
+    }
     if (from == null) {
         from = user.getEmail();
     }
@@ -218,7 +238,7 @@ function checkClick(el) {
             <input type="hidden" name="from" value="<%= from %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=admin">Update Address</a>)
+            (<a href="user-edit-form.jsp?username=<%=user.getUsername()%>">Update Address</a>)
             </span>
         </td>
     </tr>

@@ -431,7 +431,7 @@ public abstract class TransportSession implements Runnable {
     public abstract void updateContact(RosterItem item);
 
     /**
-     * Sends an outgoing message through the legacy serivce.
+     * Sends an outgoing message through the legacy service.
      *
      * @param jid JID associated with the target contact.
      * @param message Message to be sent.
@@ -439,13 +439,24 @@ public abstract class TransportSession implements Runnable {
     public abstract void sendMessage(JID jid, String message);
 
     /**
-     * Sends an outgoing message directly to the legacy serivce.
+     * Sends an outgoing message directly to the legacy service.
      *
      * Doesn't -have- to do anything.  Only occasionally useful.
      *
      * @param message Message to be sent.
      */
     public abstract void sendServerMessage(String message);
+
+    /**
+     * Sends a chat state message through the legacy service.
+     *
+     * Not all chat states have to be handled.  Note that composing message event
+     * is sent through this as well.  (XEP-0022)  Primarily this is used with XEP-0085.
+     *
+     * @param jid JID associated with the target contact.
+     * @param chatState Chat state to be reflected in the legacy service.
+     */
+    public abstract void sendChatState(JID jid, ChatStateType chatState);
 
     /**
      * Asks the legacy service to send a presence packet for a contact.

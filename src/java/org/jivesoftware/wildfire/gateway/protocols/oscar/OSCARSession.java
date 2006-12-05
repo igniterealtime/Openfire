@@ -23,6 +23,7 @@ import net.kano.joscar.snaccmd.ssi.CreateItemsCmd;
 import net.kano.joscar.snaccmd.ssi.DeleteItemsCmd;
 import net.kano.joscar.snaccmd.ssi.ModifyItemsCmd;
 import net.kano.joscar.snaccmd.icbm.SendImIcbm;
+import net.kano.joscar.snaccmd.icbm.SendTypingNotification;
 import net.kano.joscar.snaccmd.conn.ServiceRequest;
 import net.kano.joscar.snaccmd.loc.SetInfoCmd;
 import net.kano.joscar.snaccmd.InfoData;
@@ -269,6 +270,30 @@ public class OSCARSession extends TransportSession {
      */
     public void sendServerMessage(String message) {
         // We don't care.
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.TransportSession#sendChatState(org.xmpp.packet.JID, org.jivesoftware.wildfire.gateway.ChatStateType)
+     */
+    public void sendChatState(JID jid, ChatStateType chatState) {
+        if (chatState.equals(ChatStateType.composing)) {
+            request(new SendTypingNotification(
+                    getTransport().convertJIDToID(jid),
+                    SendTypingNotification.STATE_TYPING
+            ));
+        }
+        else if (chatState.equals(ChatStateType.paused)) {
+            request(new SendTypingNotification(
+                    getTransport().convertJIDToID(jid),
+                    SendTypingNotification.STATE_PAUSED
+            ));
+        }
+        else if (chatState.equals(ChatStateType.inactive)) {
+            request(new SendTypingNotification(
+                    getTransport().convertJIDToID(jid),
+                    SendTypingNotification.STATE_NO_TEXT
+            ));
+        }
     }
 
     /**

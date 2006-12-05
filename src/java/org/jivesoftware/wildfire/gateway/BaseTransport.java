@@ -121,6 +121,8 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     private final String IQ_REGISTER = "jabber:iq:register";
     private final String IQ_REGISTERED = "jabber:iq:registered";
     private final String IQ_VERSION = "jabber:iq:version";
+    private final String CHATSTATES = "http://jabber.org/protocol/chatstates";
+    private final String XEVENT = "jabber:x:event";
 
     /**
      * Handles all incoming XMPP stanzas, passing them to individual
@@ -186,6 +188,36 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             else {
                 if (packet.getBody() != null) {
                     session.sendMessage(to, packet.getBody());
+                }
+                else {
+                    // Checking for XEP-0022 message events
+                    Element eEvent = packet.getChildElement("x", XEVENT);
+                    if (eEvent != null) {
+                        if (eEvent.element("composing") != null) {
+                            session.sendChatState(to, ChatStateType.composing);
+                        }
+                        else {
+                            session.sendChatState(to, ChatStateType.paused);
+                        }
+                    }
+                    else {
+                        // Ok then, lets check for XEP-0085 chat states
+                        if (packet.getChildElement("composing", CHATSTATES) != null) {
+                            session.sendChatState(to, ChatStateType.composing);
+                        }
+                        else if (packet.getChildElement("active", CHATSTATES) != null) {
+                            session.sendChatState(to, ChatStateType.active);
+                        }
+                        else if (packet.getChildElement("inactive", CHATSTATES) != null) {
+                            session.sendChatState(to, ChatStateType.inactive);
+                        }
+                        else if (packet.getChildElement("paused", CHATSTATES) != null) {
+                            session.sendChatState(to, ChatStateType.paused);
+                        }
+                        else if (packet.getChildElement("gone", CHATSTATES) != null) {
+                            session.sendChatState(to, ChatStateType.gone);
+                        }
+                    }
                 }
             }
         }
@@ -1407,6 +1439,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         m.setFrom(from);
         m.setTo(to);
         m.setBody(msg);
+        if (type.equals(Message.Type.chat) || type.equals(Message.Type.normal)) {
+            Element xEvent = m.addChildElement("x", "jabber:x:event");
+            xEvent.addElement("id");
+            xEvent.addElement("composing");
+            m.addChildElement("active", CHATSTATES);
+        }
         sendPacket(m);
     }
 
@@ -1425,18 +1463,70 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * Sends a typing notification the component manager.
      *
      * This will check whether the person supports typing notifications before sending.
+     * TODO: actually check for typing notification support
      *
      * @param to Who the notification is for.
      * @param from Who the notification is from.
      */
-    public void sendTypingNotification(JID to, JID from) {
+    public void sendComposingNotification(JID to, JID from) {
         Message m = new Message();
-
         m.setTo(to);
         m.setFrom(from);
         Element xEvent = m.addChildElement("x", "jabber:x:event");
         xEvent.addElement("id");
         xEvent.addElement("composing");
+        m.addChildElement("composing", CHATSTATES);
+        sendPacket(m);
+    }
+
+    /**
+     * Sends a typing paused notification the component manager.
+     *
+     * This will check whether the person supports typing notifications before sending.
+     * TODO: actually check for typing notification support
+     *
+     * @param to Who the notification is for.
+     * @param from Who the notification is from.
+     */
+    public void sendComposingPausedNotification(JID to, JID from) {
+        Message m = new Message();
+        m.setTo(to);
+        m.setFrom(from);
+        m.addChildElement("paused", CHATSTATES);
+        sendPacket(m);
+    }
+
+    /**
+     * Sends an inactive chat session notification the component manager.
+     *
+     * This will check whether the person supports typing notifications before sending.
+     * TODO: actually check for typing notification support
+     *
+     * @param to Who the notification is for.
+     * @param from Who the notification is from.
+     */
+    public void sendChatInactiveNotification(JID to, JID from) {
+        Message m = new Message();
+        m.setTo(to);
+        m.setFrom(from);
+        m.addChildElement("inactive", CHATSTATES);
+        sendPacket(m);
+    }
+
+    /**
+     * Sends a gone chat session notification the component manager.
+     *
+     * This will check whether the person supports typing notifications before sending.
+     * TODO: actually check for typing notification support
+     *
+     * @param to Who the notification is for.
+     * @param from Who the notification is from.
+     */
+    public void sendChatGoneNotification(JID to, JID from) {
+        Message m = new Message();
+        m.setTo(to);
+        m.setFrom(from);
+        m.addChildElement("gone", CHATSTATES);
         sendPacket(m);
     }
 

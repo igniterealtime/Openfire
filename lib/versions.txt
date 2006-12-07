@@ -1,7 +1,7 @@
 Name                   |  Version
 -------------------------------------------------------
 cindy.jar              | 2.4.4
-dwr.jar                | 1.1.3
+dwr.jar                | 1.1.1
 irclib.jar             | 1.10
 jml.jar                | svn-20061201
 joscar-client.jar      | svn-20061201 (patched)

@@ -147,32 +147,3 @@ function toggleFilters() {
 	}
 }
 */
-
-
-/*
-toggleGW function
-this performs the actual work for enabling or disabling the gateway in
-question.
-*/
-/*
-retiring in favor of DWR
-function toggleGW(gwType,gwSetting) {
-	if (document.getElementById(gwSetting)) {
-		var url = 'gateway-setting-handler.jsp?gwType=' + gwType + '&gwEnabled=';
-		if (document.getElementById(gwSetting).checked) {
-			url = url + "true";
-		}
-		else {
-			url = url + "false";
-		}
-        var req;
-        if (window.XMLHttpRequest) {
-			req = new XMLHttpRequest();
-		} else if (window.ActiveXObject) {
-			req = new ActiveXObject("Microsoft.XMLHTTP");
-		}
-		req.open("GET", url, true);
-		req.send(null);
-	}
-}
-*/

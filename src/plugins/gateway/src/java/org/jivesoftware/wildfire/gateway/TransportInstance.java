@@ -15,8 +15,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.xmpp.component.ComponentManager;
-import org.dom4j.Element;
-
 import java.util.Map;
 
 /**
@@ -225,10 +223,6 @@ public class TransportInstance implements PropertyEventListener {
 
     public void xmlPropertyDeleted(String property, Map params) {
         propertyDeleted(property, params);
-    }
-
-    public Element getOptionsConfig() {
-        return transport.getOptionsConfig(this.type);
     }
 
 }

@@ -5,10 +5,10 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.wildfire.gateway.TransportInstance" %>
 <%@ page import="org.dom4j.Element" %>
 <%@ page import="org.dom4j.Attribute" %>
 <%@ page import="org.jivesoftware.util.Log" %>
+<%@ page import="org.dom4j.Document" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -32,34 +32,64 @@
             this.out = out;
         }
 
-        void printConfigNode(Element node) {
-            try {
-                Log.debug("WHEE: " + node);
-                Attribute type = node.attribute("type");
-                if (type.equals("text")) {
-                    Attribute desc = node.attribute("desc");
-                    out.println("<tr valign='middle'>");
-                    out.println("<td align='right' width='1%'>" + desc + ":</td>");
-                    out.println("<td><input type='text' name='var' value='blar'/></td>");
-                    out.println("</tr>");
+//    <tr valign = "middle" >
+//    <td width = "1%" ><input type = "checkbox"
+//    name = "filetransfer"
+//    value = "enabled" ></td >
+//    <td > Enable
+//    file transfer</td >
+//    </tr >
+//    <tr valign = "middle" >
+//    <td width = "1%" ><input type = "checkbox"
+//    name = "reconnect"
+//    value = "enabled" ></td >
+//    <td > Reconnect
+//    on disconnect</td >
+//    </tr >
+//    <tr valign = "middle" >
+//    <td width = "1%" > & nbsp;</td >
+//    <td > Reconnect
+//    Attemps:<input type = "text"
+//    style = "margin: 0.0px; padding: 0.0px"
+//    name = "reconnect_attempts"
+//    size = "4"
+//    maxlength = "4"
+//    value = "10" / ></td >
+//    </tr >
+
 //                            <tr valign="middle">
 //                                <td align="right" width="1%">Host:</td>
 //                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
 //                            </tr>
+//                            <tr valign="middle">
+//                                <td align="right" width="1%">Port:</td>
+//                                <td><input type="text" name="host" value="1234" onChange="getElementById('testport').innerHTML = this.value" /></td>
+//                            </tr>
 
+        void printConfigNode(Element node) {
+            Log.debug("HI!");
+            try {
+                Attribute type = node.attribute("type");
+                if (type.getText().equals("text")) {
+                    Attribute desc = node.attribute("desc");
+                    out.println("<tr valign='middle'>");
+                    out.println("<td align='right' width='1%'>" + (desc != null ? desc.getText() : "&nbsp;") + ":</td>");
+                    out.println("<td><input type='text' name='var' value='blar'/></td>");
+                    out.println("</tr>");
                 }
             }
             catch (Exception e) {
                 // Uhm, yeah, that sucks.
+                Log.error("Error printing config node:", e);
             }
         }
 
         void printSettingsDialog() {
             try {
-                TransportInstance trInstance = plugin.getTransportInstance(gatewayType.toString());
-                Element optConfig = trInstance.getOptionsConfig();
-                Element leftPanel = optConfig.element("leftpanel");
-                Element rightPanel = optConfig.element("rightpanel");
+                Document optConfig = plugin.getOptionsConfig(gatewayType);
+                Log.debug("Options config is " + optConfig.asXML());
+                Element leftPanel = optConfig.getRootElement().element("leftpanel");
+                Element rightPanel = optConfig.getRootElement().element("rightpanel");
 %>
 
 	<!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
@@ -91,62 +121,34 @@
                 <tr valign="top">
                     <td align="left" width="50%">
 <%
-    if (leftPanel != null && leftPanel.nodeCount() > 0) {
-        Log.debug("left WTF?");
-        out.println("<table border='0' cellpadding='1' cellspacing='2'");
-        for (Object nodeObj : leftPanel.elements()) {
-            Log.debug("more left WTF?"+nodeObj);
-            Element node = (Element)nodeObj;
-            printConfigNode(node);
-        }
-        out.println("</table");
-    }
-//    <tr valign = "middle" >
-//    <td width = "1%" ><input type = "checkbox"
-//    name = "filetransfer"
-//    value = "enabled" ></td >
-//    <td > Enable
-//    file transfer</td >
-//    </tr >
-//    <tr valign = "middle" >
-//    <td width = "1%" ><input type = "checkbox"
-//    name = "reconnect"
-//    value = "enabled" ></td >
-//    <td > Reconnect
-//    on disconnect</td >
-//    </tr >
-//    <tr valign = "middle" >
-//    <td width = "1%" > & nbsp;</td >
-//    <td > Reconnect
-//    Attemps:<input type = "text"
-//    style = "margin: 0.0px; padding: 0.0px"
-//    name = "reconnect_attempts"
-//    size = "4"
-//    maxlength = "4"
-//    value = "10" / ></td >
-//    </tr >
+                if (leftPanel != null && leftPanel.nodeCount() > 0) {
+                    out.println("<table border='0' cellpadding='1' cellspacing='2'>");
+                    for (Object nodeObj : leftPanel.elements("item")) {
+                        Log.debug("whee!");
+                        Element node = (Element)nodeObj;
+                        printConfigNode(node);
+                    }
+                    out.println("</table");
+                }
+                else {
+                    out.println("&nbsp;");
+                }
 %>
                     </td>
                     <td align="left" width="50%">
 <%
-    if (rightPanel != null && rightPanel.nodeCount() > 0) {
-        Log.debug("right WTF?");
-        out.println("<table border='0' cellpadding='1' cellspacing='2'");
-        for (Object nodeObj : rightPanel.elements()) {
-            Log.debug("more right WTF?"+nodeObj);
-            Element node = (Element)nodeObj;
-            printConfigNode(node);
-        }
-        out.println("</table");
-    }
-//                            <tr valign="middle">
-//                                <td align="right" width="1%">Host:</td>
-//                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
-//                            </tr>
-//                            <tr valign="middle">
-//                                <td align="right" width="1%">Port:</td>
-//                                <td><input type="text" name="host" value="1234" onChange="getElementById('testport').innerHTML = this.value" /></td>
-//                            </tr>
+                if (rightPanel != null && rightPanel.nodeCount() > 0) {
+                    out.println("<table border='0' cellpadding='1' cellspacing='2'>");
+                    for (Object nodeObj : rightPanel.elements("item")) {
+                        Log.debug("whee!");
+                        Element node = (Element)nodeObj;
+                        printConfigNode(node);
+                    }
+                    out.println("</table");
+                }
+                else {
+                    out.println("&nbsp;");
+                }
 %>
                     </td>
                 </tr>
@@ -187,6 +189,7 @@
             }
             catch (Exception e) {
                 // Uhm, yeah, that sucks.
+                Log.error("Error printing settings section:", e);                
             }
         }
     }
@@ -199,35 +202,31 @@
 %>
 
 
+
+
 <html>
+
 <head>
 <title>Gateway Settings</title>
-
 <meta name="pageID" content="gateway-settings">
-
 <style type="text/css">
 <!--	@import url("style/gateways.css");    -->
 </style>
-
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/TransportInstanceManager.js" type="text/javascript"></script>
-
 <script type="text/javascript" >
     DWREngine.setErrorHandler(handleError);
 
     function handleError(error) {
     }
 </script>
-
 </head>
+
 <body>
-
-
 <p><fmt:message key="gateway.web.settings.instructions" />
 <b>Note:</b> Please be aware that Tests, Options, and Permissions are not yet functional.  They are only present for demonstration.</p>
-
 
 <form action="" name="gatewayForm">
 
@@ -238,10 +237,7 @@
 <% yahooSettings.printSettingsDialog(); %>
 
 </form>
-
-
 <br clear="all">
-
-
 </body>
+
 </html>

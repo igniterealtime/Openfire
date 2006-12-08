@@ -1705,15 +1705,4 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public abstract Boolean isUsernameValid(String username);
 
-    /**
-     * Return an xml config for the options panel in the admin interface.
-     *
-     * Return nothing for no options.  This is not officially documented anywhere yet.
-     * TODO: like.. document it somewhere.  =)
-     *
-     * @param type The transport type to distinguish if needed.
-     * @return XML document describing the options interface.
-     */
-    public static Element getOptionsConfig(TransportType type) { return DocumentHelper.createElement("optionconfig"); }
-
 }

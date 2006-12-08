@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel></leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.icq.connecthost" var="host" desc="Host"/>
+        <item type="text" sysprop="plugin.gateway.icq.connectport" var="port" desc="Port"/>
+        <item type="text" sysprop="plugin.gateway.icq.encoding" var="encoding" desc="Encoding"/>
+    </rightpanel>
+</optionsconfig>

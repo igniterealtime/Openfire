@@ -9,6 +9,7 @@
 <%@ page import="org.dom4j.Attribute" %>
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.dom4j.Document" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -23,6 +24,7 @@
         TransportType gatewayType = null;
         boolean gwEnabled = false;
         JspWriter out = null;
+        Integer jsID = 0; // Javascript incrementable id
 
         GatewaySettings(JspWriter out, GatewayPlugin plugin, TransportType gatewayType,
                 String desc) {
@@ -32,49 +34,71 @@
             this.out = out;
         }
 
-//    <tr valign = "middle" >
-//    <td width = "1%" ><input type = "checkbox"
-//    name = "filetransfer"
-//    value = "enabled" ></td >
-//    <td > Enable
-//    file transfer</td >
-//    </tr >
-//    <tr valign = "middle" >
-//    <td width = "1%" ><input type = "checkbox"
-//    name = "reconnect"
-//    value = "enabled" ></td >
-//    <td > Reconnect
-//    on disconnect</td >
-//    </tr >
-//    <tr valign = "middle" >
-//    <td width = "1%" > & nbsp;</td >
-//    <td > Reconnect
-//    Attemps:<input type = "text"
-//    style = "margin: 0.0px; padding: 0.0px"
-//    name = "reconnect_attempts"
-//    size = "4"
-//    maxlength = "4"
-//    value = "10" / ></td >
-//    </tr >
-
-//                            <tr valign="middle">
-//                                <td align="right" width="1%">Host:</td>
-//                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
-//                            </tr>
-//                            <tr valign="middle">
-//                                <td align="right" width="1%">Port:</td>
-//                                <td><input type="text" name="host" value="1234" onChange="getElementById('testport').innerHTML = this.value" /></td>
-//                            </tr>
-
         void printConfigNode(Element node) {
-            Log.debug("HI!");
             try {
                 Attribute type = node.attribute("type");
                 if (type.getText().equals("text")) {
+                    // Required fields
                     Attribute desc = node.attribute("desc");
+                    Attribute var = node.attribute("var");
+                    Attribute sysprop = node.attribute("sysprop");
+
+                    // Optional fields
+                    Attribute def = node.attribute("default");
+                    Attribute size = node.attribute("size");
+                    Attribute maxlen = node.attribute("maxlength");
+
+                    if (desc == null || var == null || sysprop == null) {
+                        Log.error("Missing variable from options config.");
+                        return;
+                    }
+
+                    String defStr = "";
+                    if (def != null) {
+                        defStr = def.getText();
+                    }
+
+                    String setting = JiveGlobals.getProperty(sysprop.getText(), defStr);
+
+                    String checkId = gatewayType.toString()+var.getText();
                     out.println("<tr valign='middle'>");
-                    out.println("<td align='right' width='1%'>" + (desc != null ? desc.getText() : "&nbsp;") + ":</td>");
-                    out.println("<td><input type='text' name='var' value='blar'/></td>");
+                    out.println("<td align='right' width='1%'><label for='" + checkId + "'>" + desc.getText() + "</label>:</td>");
+                    out.println("<td><input type='text' id='" + checkId + "' name='" + var.getText() + "'"+(size != null ? " size='"+size.getText()+"'" : "")+(size != null ? " maxlength='"+maxlen.getText()+"'" : "")+" value='"+setting+"'/></td>");
+                    out.println("</tr>");
+                }
+                else if (type.getText().equals("toggle")) {
+                    // Required fields
+                    Attribute desc = node.attribute("desc");
+                    Attribute var = node.attribute("var");
+                    Attribute sysprop = node.attribute("sysprop");
+
+                    // Optional fields
+                    Attribute def = node.attribute("default");
+
+                    if (desc == null || var == null || sysprop == null) {
+                        Log.error("Missing variable from options config.");
+                        return;
+                    }
+
+                    boolean defBool = false;
+                    if (def != null && (def.getText().equals("1") || def.getText().equals("true") || def.getText().equals("enabled") || def.getText().equals("yes"))) {
+                        defBool = true;
+                    }
+
+                    boolean setting = JiveGlobals.getBooleanProperty(sysprop.getText(), defBool);
+
+                    String jsStr = gatewayType.toString()+(++jsID);
+                    String checkId = gatewayType.toString()+var.getText();
+                    out.println("<tr valign='top'>");
+                    out.println("<td align='right' width='1%'><input type='checkbox' id='" + checkId +"' name='" + var.getText() + "' value='true' "+(setting ? " checked='checked'" : "")+" onClick='elem = document.getElementById(\""+jsStr+"\"); if (elem) { if (this.checked) { elem.style.display=\"table\"} else { elem.style.display=\"none\"} }'/></td>");                    
+                    out.print("<td><label for='" + checkId + "'>" + desc.getText() + "</label>");
+                    for (Object itemObj : node.elements("item")) {
+                        Element item = (Element)itemObj;
+                        out.println("<table id='"+jsStr+"' width='100%' style='display: "+(defBool ? "table" : "none")+"'>");
+                        printConfigNode(item);
+                        out.println("</table>");
+                    }
+                    out.println("</td>");
                     out.println("</tr>");
                 }
             }
@@ -124,7 +148,6 @@
                 if (leftPanel != null && leftPanel.nodeCount() > 0) {
                     out.println("<table border='0' cellpadding='1' cellspacing='2'>");
                     for (Object nodeObj : leftPanel.elements("item")) {
-                        Log.debug("whee!");
                         Element node = (Element)nodeObj;
                         printConfigNode(node);
                     }
@@ -140,11 +163,10 @@
                 if (rightPanel != null && rightPanel.nodeCount() > 0) {
                     out.println("<table border='0' cellpadding='1' cellspacing='2'>");
                     for (Object nodeObj : rightPanel.elements("item")) {
-                        Log.debug("whee!");
                         Element node = (Element)nodeObj;
                         printConfigNode(node);
                     }
-                    out.println("</table");
+                    out.println("</table>");
                 }
                 else {
                     out.println("&nbsp;");

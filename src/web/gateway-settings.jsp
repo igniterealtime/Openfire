@@ -5,28 +5,61 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.wildfire.gateway.TransportInstance" %>
+<%@ page import="org.dom4j.Element" %>
+<%@ page import="org.dom4j.Attribute" %>
+<%@ page import="org.jivesoftware.util.Log" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%
-    GatewayPlugin plugin = (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
+    final GatewayPlugin plugin =
+            (GatewayPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
 
     class GatewaySettings {
+
         String description = null;
         TransportType gatewayType = null;
         boolean gwEnabled = false;
         JspWriter out = null;
 
-        GatewaySettings(JspWriter out, GatewayPlugin plugin, TransportType gatewayType, String desc) {
+        GatewaySettings(JspWriter out, GatewayPlugin plugin, TransportType gatewayType,
+                String desc) {
             this.description = desc;
             this.gatewayType = gatewayType;
             this.gwEnabled = plugin.serviceEnabled(gatewayType.toString());
             this.out = out;
         }
 
+        void printConfigNode(Element node) {
+            try {
+                Log.debug("WHEE: " + node);
+                Attribute type = node.attribute("type");
+                if (type.equals("text")) {
+                    Attribute desc = node.attribute("desc");
+                    out.println("<tr valign='middle'>");
+                    out.println("<td align='right' width='1%'>" + desc + ":</td>");
+                    out.println("<td><input type='text' name='var' value='blar'/></td>");
+                    out.println("</tr>");
+//                            <tr valign="middle">
+//                                <td align="right" width="1%">Host:</td>
+//                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
+//                            </tr>
+
+                }
+            }
+            catch (Exception e) {
+                // Uhm, yeah, that sucks.
+            }
+        }
+
         void printSettingsDialog() {
             try {
+                TransportInstance trInstance = plugin.getTransportInstance(gatewayType.toString());
+                Element optConfig = trInstance.getOptionsConfig();
+                Element leftPanel = optConfig.element("leftpanel");
+                Element rightPanel = optConfig.element("rightpanel");
 %>
 
 	<!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
@@ -57,32 +90,64 @@
             <table border="0" cellpadding="0" cellspacing="0">
                 <tr valign="top">
                     <td align="left" width="50%">
-                        <table border="0" cellpadding="1" cellspacing="2">
-                            <tr valign="middle">
-                                <td width="1%"><input type="checkbox" name="filetransfer" value="enabled"></td>
-                                <td>Enable file transfer</td>
-                            </tr>
-                            <tr valign="middle">
-                                <td width="1%"><input type="checkbox" name="reconnect" value="enabled"></td>
-                                <td>Reconnect on disconnect</td>
-                            </tr>
-                            <tr valign="middle">
-                                <td width="1%">&nbsp;</td>
-                                <td>Reconnect Attemps: <input type="text" style="margin: 0.0px; padding: 0.0px" name="reconnect_attempts" size="4" maxlength="4" value="10" /></td>
-                            </tr>
-                        </table>
+<%
+    if (leftPanel != null && leftPanel.nodeCount() > 0) {
+        Log.debug("left WTF?");
+        out.println("<table border='0' cellpadding='1' cellspacing='2'");
+        for (Object nodeObj : leftPanel.elements()) {
+            Log.debug("more left WTF?"+nodeObj);
+            Element node = (Element)nodeObj;
+            printConfigNode(node);
+        }
+        out.println("</table");
+    }
+//    <tr valign = "middle" >
+//    <td width = "1%" ><input type = "checkbox"
+//    name = "filetransfer"
+//    value = "enabled" ></td >
+//    <td > Enable
+//    file transfer</td >
+//    </tr >
+//    <tr valign = "middle" >
+//    <td width = "1%" ><input type = "checkbox"
+//    name = "reconnect"
+//    value = "enabled" ></td >
+//    <td > Reconnect
+//    on disconnect</td >
+//    </tr >
+//    <tr valign = "middle" >
+//    <td width = "1%" > & nbsp;</td >
+//    <td > Reconnect
+//    Attemps:<input type = "text"
+//    style = "margin: 0.0px; padding: 0.0px"
+//    name = "reconnect_attempts"
+//    size = "4"
+//    maxlength = "4"
+//    value = "10" / ></td >
+//    </tr >
+%>
                     </td>
                     <td align="left" width="50%">
-                        <table border="0">
-                            <tr valign="middle">
-                                <td align="right" width="1%">Host:</td>
-                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
-                            </tr>
-                            <tr valign="middle">
-                                <td align="right" width="1%">Port:</td>
-                                <td><input type="text" name="host" value="1234" onChange="getElementById('testport').innerHTML = this.value" /></td>
-                            </tr>
-                        </table>
+<%
+    if (rightPanel != null && rightPanel.nodeCount() > 0) {
+        Log.debug("right WTF?");
+        out.println("<table border='0' cellpadding='1' cellspacing='2'");
+        for (Object nodeObj : rightPanel.elements()) {
+            Log.debug("more right WTF?"+nodeObj);
+            Element node = (Element)nodeObj;
+            printConfigNode(node);
+        }
+        out.println("</table");
+    }
+//                            <tr valign="middle">
+//                                <td align="right" width="1%">Host:</td>
+//                                <td><input type="text" name="host" value="blar" onChange="getElementById('testhost').innerHTML = this.value" /></td>
+//                            </tr>
+//                            <tr valign="middle">
+//                                <td align="right" width="1%">Port:</td>
+//                                <td><input type="text" name="host" value="1234" onChange="getElementById('testport').innerHTML = this.value" /></td>
+//                            </tr>
+%>
                     </td>
                 </tr>
             </table>
@@ -121,7 +186,7 @@
 <%
             }
             catch (Exception e) {
-                // hrm
+                // Uhm, yeah, that sucks.
             }
         }
     }

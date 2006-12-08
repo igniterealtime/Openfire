@@ -15,6 +15,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.*;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 import net.sf.jml.MsnUserStatus;
 
 /**
@@ -70,6 +72,26 @@ public class MSNTransport extends BaseTransport {
      */
     public Boolean isUsernameValid(String username) {
         return username.matches("[^ \\p{Cntrl}()@,;:\\\\\"\\[\\]]+@[^ \\p{Cntrl}()@,;:\\\\\"\\[\\]]+");
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getOptionsConfig(org.jivesoftware.wildfire.gateway.TransportType)
+     * @param type The transport type to distinguish if needed.
+     * @return XML document describing the options interface.
+     */
+    public static Element getOptionsConfig(TransportType type) {
+        Element optConfig = DocumentHelper.createElement("optionconfig");
+        Element leftPanel = optConfig.addElement("leftpanel");
+        Element rightPanel = optConfig.addElement("rightpanel");
+        rightPanel.addElement("item")
+                  .addAttribute("type", "text")
+                  .addAttribute("sysprop", "plugin.gateway.msn.connecthost")
+                  .addAttribute("desc", "Host");
+        rightPanel.addElement("item")
+                  .addAttribute("type", "text")
+                  .addAttribute("sysprop", "plugin.gateway.msn.connectport")
+                  .addAttribute("desc", "Port");
+        return optConfig;
     }
 
     /**

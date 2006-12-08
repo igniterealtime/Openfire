@@ -17,7 +17,8 @@ import org.jivesoftware.wildfire.gateway.GatewayPlugin;
 /**
  * Transport Instance Manager
  *
- * Handles web interface interactions with the transport instances.
+ * Handles web interface interactions with the transport instances, such as enabling or
+ * disabling them, configuring options, etc.
  *
  * @author Daniel Henninger
  */

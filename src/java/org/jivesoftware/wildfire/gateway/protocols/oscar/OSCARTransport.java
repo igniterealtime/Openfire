@@ -13,6 +13,8 @@ package org.jivesoftware.wildfire.gateway.protocols.oscar;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.*;
 import org.xmpp.packet.JID;
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 
 /**
  * OSCAR Transport Interface.
@@ -72,6 +74,32 @@ public class OSCARTransport extends BaseTransport {
         else {
             return username.matches("\\w+") || username.matches("\\w+@[\\w\\.]+");
         }
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getOptionsConfig(org.jivesoftware.wildfire.gateway.TransportType)
+     * @param type The transport type to distinguish if needed.
+     * @return XML document describing the options interface.
+     */
+    public static Element getOptionsConfig(TransportType type) {
+        Element optConfig = DocumentHelper.createElement("optionconfig");
+        Element leftPanel = optConfig.addElement("leftpanel");
+        Element rightPanel = optConfig.addElement("rightpanel");
+        rightPanel.addElement("item")
+                  .addAttribute("type", "text")
+                  .addAttribute("sysprop", "plugin.gateway."+type.toString()+".connecthost")
+                  .addAttribute("desc", "Host");
+        rightPanel.addElement("item")
+                  .addAttribute("type", "text")
+                  .addAttribute("sysprop", "plugin.gateway."+type.toString()+".connectport")
+                  .addAttribute("desc", "Port");
+        if (type == TransportType.icq) {
+            rightPanel.addElement("item")
+                      .addAttribute("type", "text")
+                      .addAttribute("sysprop", "plugin.gateway.icq.encoding")
+                      .addAttribute("desc", "Encoding");
+        }
+        return optConfig;
     }
 
     /**

@@ -14,6 +14,8 @@ import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 
 /***
  * IRC Transport Interface.
@@ -68,6 +70,26 @@ public class IRCTransport extends BaseTransport {
      */
     public Boolean isUsernameValid(String username) {
         return username.matches("\\w+");
+    }
+
+    /**
+     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getOptionsConfig(org.jivesoftware.wildfire.gateway.TransportType)
+     * @param type The transport type to distinguish if needed.
+     * @return XML document describing the options interface.
+     */
+    public static Element getOptionsConfig(TransportType type) {
+        Element optConfig = DocumentHelper.createElement("optionconfig");
+        Element leftPanel = optConfig.addElement("leftpanel");
+        Element rightPanel = optConfig.addElement("rightpanel");
+        rightPanel.addElement("item")
+                  .addAttribute("type", "text")
+                  .addAttribute("sysprop", "plugin.gateway.irc.connecthost")
+                  .addAttribute("desc", "Host");
+        rightPanel.addElement("item")
+                  .addAttribute("type", "text")
+                  .addAttribute("sysprop", "plugin.gateway.irc.connectport")
+                  .addAttribute("desc", "Port");
+        return optConfig;
     }
 
     /**

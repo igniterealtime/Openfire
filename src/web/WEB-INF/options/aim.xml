@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <optionsconfig>
-    <leftpanel></leftpanel>
+    <leftpanel>
+        <item type="toggle" sysprop="plugin.gateway.aim.filetransfer" var="filetransfer" desc="File Transfer Enabled"/>
+        <item type="toggle" sysprop="plugin.gateway.aim.reconnect" var="reconnect" desc="Reconnect Automatically">
+            <item type="text" sysprop="plugin.gateway.aim.reconnectattempts" var="reconnectattempts" desc="Attempts" size="4" maxlength="4"/>
+        </item>
+    </leftpanel>
     <rightpanel>
-        <item type="text" sysprop="plugin.gateway.aim.connecthost" var="host" desc="Host"/>
-        <item type="text" sysprop="plugin.gateway.aim.connectport" var="port" desc="Port"/>
+        <item type="text" sysprop="plugin.gateway.aim.connecthost" var="host" desc="Host" default="login.oscar.aol.com"/>
+        <item type="text" sysprop="plugin.gateway.aim.connectport" var="port" desc="Port" default="5190"/>
     </rightpanel>
 </optionsconfig>

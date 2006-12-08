@@ -95,7 +95,7 @@ a.jive-gatewayButtonOn {
 .jive-gatewayPanel div form {
 	margin: 0px;
 	padding: 0px;
-	}
+    }
 .jive-formButton {
 	margin: 10px 5px 5px 0px;
 	}
@@ -348,7 +348,7 @@ tr.jive-registrations-edit, tr.jive-registrations-editVisible td {
 
 
 /* *************************** */
-/* add a gateway registrations */
+/* add a gateway registration  */
 /* *************************** */
 .jive-gateway-addregBtn {
 	display: block;

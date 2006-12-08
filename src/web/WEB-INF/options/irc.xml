@@ -2,7 +2,7 @@
 <optionsconfig>
     <leftpanel></leftpanel>
     <rightpanel>
-        <item type="text" sysprop="plugin.gateway.irc.connecthost" var="host" desc="Host"/>
-        <item type="text" sysprop="plugin.gateway.irc.connectport" var="port" desc="Port"/>
+        <item type="text" sysprop="plugin.gateway.irc.connecthost" var="host" desc="Host" default="irc.freenode.net"/>
+        <item type="text" sysprop="plugin.gateway.irc.connectport" var="port" desc="Port" default="7000"/>
     </rightpanel>
 </optionsconfig>

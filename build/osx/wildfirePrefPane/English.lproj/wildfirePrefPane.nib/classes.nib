@@ -1,0 +1,38 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            CLASS = NSPreferencePane; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "_firstKeyView" = id; 
+                "_initialKeyView" = id; 
+                "_lastKeyView" = id; 
+                "_window" = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = WilfireStartStop; LANGUAGE = ObjC; SUPERCLASS = NSButton; }, 
+        {
+            ACTIONS = {
+                openAdminInterface = id; 
+                openAdminInterfaceSSL = id; 
+                toggleAutoStart = id; 
+                toggleServer = id; 
+            }; 
+            CLASS = wildfirePrefPane; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                autoStartCheckbox = NSButton; 
+                startButton = NSButton; 
+                statusDescription = NSTextField; 
+                statusMessage = NSTextField; 
+                statusProgress = NSProgressIndicator; 
+                viewAdminButton = NSButton; 
+                viewAdminButtonSSL = NSButton; 
+            }; 
+            SUPERCLASS = NSPreferencePane; 
+        }
+    ); 
+    IBVersion = 1; 
+}

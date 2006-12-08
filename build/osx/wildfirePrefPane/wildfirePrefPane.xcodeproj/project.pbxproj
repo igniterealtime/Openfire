@@ -1,0 +1,421 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6387AE500B29E3FF00E98223 /* autostartsetter.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6387AE4F0B29E3FF00E98223 /* autostartsetter.sh */; };
+		650096350A60403400B6046A /* jivesoftware_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 650096340A60403400B6046A /* jivesoftware_logo.png */; };
+		65E2E73A0A5E8F2900DFFC2E /* wildfire-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 65E2E7390A5E8F2900DFFC2E /* wildfire-logo.png */; };
+		65E2E74C0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 65E2E74B0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff */; };
+		65E2E7C90A5EF1F200DFFC2E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 65E2E7C80A5EF1F200DFFC2E /* Security.framework */; };
+		8D202CEA0486D31800D8A456 /* wildfirePrefPane_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32DBCFA20370C41700C91783 /* wildfirePrefPane_Prefix.pch */; };
+		8D202CEB0486D31800D8A456 /* wildfirePrefPane.h in Headers */ = {isa = PBXBuildFile; fileRef = F506C03C013D9D7901CA16C8 /* wildfirePrefPane.h */; };
+		8D202CED0486D31800D8A456 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
+		8D202CEF0486D31800D8A456 /* wildfirePrefPane.nib in Resources */ = {isa = PBXBuildFile; fileRef = F506C042013D9D8C01CA16C8 /* wildfirePrefPane.nib */; };
+		8D202CF10486D31800D8A456 /* wildfirePrefPane.m in Sources */ = {isa = PBXBuildFile; fileRef = F506C03D013D9D7901CA16C8 /* wildfirePrefPane.m */; };
+		8D202CF30486D31800D8A456 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */; };
+		8D202CF40486D31800D8A456 /* PreferencePanes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F506C035013D953901CA16C8 /* PreferencePanes.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		089C1672FE841209C02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		32DBCFA20370C41700C91783 /* wildfirePrefPane_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wildfirePrefPane_Prefix.pch; sourceTree = "<group>"; };
+		6387AE4F0B29E3FF00E98223 /* autostartsetter.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = autostartsetter.sh; sourceTree = "<group>"; };
+		650096340A60403400B6046A /* jivesoftware_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = jivesoftware_logo.png; sourceTree = "<group>"; };
+		65E2E7390A5E8F2900DFFC2E /* wildfire-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wildfire-logo.png"; sourceTree = "<group>"; };
+		65E2E74B0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = wildfirePrefPaneLogo.tiff; sourceTree = "<group>"; };
+		65E2E7C80A5EF1F200DFFC2E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		8D202CF70486D31800D8A456 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D202CF80486D31800D8A456 /* Wildfire.prefPane */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Wildfire.prefPane; sourceTree = BUILT_PRODUCTS_DIR; };
+		F506C035013D953901CA16C8 /* PreferencePanes.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PreferencePanes.framework; path = /System/Library/Frameworks/PreferencePanes.framework; sourceTree = "<absolute>"; };
+		F506C03C013D9D7901CA16C8 /* wildfirePrefPane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wildfirePrefPane.h; sourceTree = "<group>"; };
+		F506C03D013D9D7901CA16C8 /* wildfirePrefPane.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = wildfirePrefPane.m; sourceTree = "<group>"; };
+		F506C043013D9D8C01CA16C8 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/wildfirePrefPane.nib; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D202CF20486D31800D8A456 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D202CF30486D31800D8A456 /* Cocoa.framework in Frameworks */,
+				8D202CF40486D31800D8A456 /* PreferencePanes.framework in Frameworks */,
+				65E2E7C90A5EF1F200DFFC2E /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		089C166AFE841209C02AAC07 /* wildfirePrefPane */ = {
+			isa = PBXGroup;
+			children = (
+				08FB77AFFE84173DC02AAC07 /* Classes */,
+				32DBCFA10370C40200C91783 /* Other Sources */,
+				089C167CFE841241C02AAC07 /* Resources */,
+				089C1671FE841209C02AAC07 /* Frameworks and Libraries */,
+				19C28FB8FE9D52D311CA2CBB /* Products */,
+			);
+			name = wildfirePrefPane;
+			sourceTree = "<group>";
+		};
+		089C1671FE841209C02AAC07 /* Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				65E2E7C80A5EF1F200DFFC2E /* Security.framework */,
+				1058C7ACFEA557BF11CA2CBB /* Linked Frameworks */,
+				1058C7AEFEA557BF11CA2CBB /* Other Frameworks */,
+			);
+			name = "Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		089C167CFE841241C02AAC07 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				65E2E74B0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff */,
+				6387AE4F0B29E3FF00E98223 /* autostartsetter.sh */,
+				8D202CF70486D31800D8A456 /* Info.plist */,
+				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
+				65E2E7380A5E8F1600DFFC2E /* Images */,
+				F506C042013D9D8C01CA16C8 /* wildfirePrefPane.nib */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		08FB77AFFE84173DC02AAC07 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				F506C03C013D9D7901CA16C8 /* wildfirePrefPane.h */,
+				F506C03D013D9D7901CA16C8 /* wildfirePrefPane.m */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		1058C7ACFEA557BF11CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */,
+				F506C035013D953901CA16C8 /* PreferencePanes.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7AEFEA557BF11CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				089C1672FE841209C02AAC07 /* Foundation.framework */,
+				089C167FFE841241C02AAC07 /* AppKit.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FB8FE9D52D311CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D202CF80486D31800D8A456 /* Wildfire.prefPane */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		32DBCFA10370C40200C91783 /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				32DBCFA20370C41700C91783 /* wildfirePrefPane_Prefix.pch */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		65E2E7380A5E8F1600DFFC2E /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				65E2E7390A5E8F2900DFFC2E /* wildfire-logo.png */,
+				650096340A60403400B6046A /* jivesoftware_logo.png */,
+			);
+			name = Images;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8D202CE90486D31800D8A456 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D202CEA0486D31800D8A456 /* wildfirePrefPane_Prefix.pch in Headers */,
+				8D202CEB0486D31800D8A456 /* wildfirePrefPane.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8D202CE80486D31800D8A456 /* Wildfire */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 65E2E7290A5E8C0F00DFFC2E /* Build configuration list for PBXNativeTarget "Wildfire" */;
+			buildPhases = (
+				8D202CE90486D31800D8A456 /* Headers */,
+				8D202CEC0486D31800D8A456 /* Resources */,
+				8D202CF00486D31800D8A456 /* Sources */,
+				8D202CF20486D31800D8A456 /* Frameworks */,
+				8D202CF50486D31800D8A456 /* Rez */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Wildfire;
+			productInstallPath = "$(HOME)/Library/PreferencePanes";
+			productName = wildfirePrefPane;
+			productReference = 8D202CF80486D31800D8A456 /* Wildfire.prefPane */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		089C1669FE841209C02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 65E2E72D0A5E8C0F00DFFC2E /* Build configuration list for PBXProject "wildfirePrefPane" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 089C166AFE841209C02AAC07 /* wildfirePrefPane */;
+			projectDirPath = "";
+			targets = (
+				8D202CE80486D31800D8A456 /* Wildfire */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D202CEC0486D31800D8A456 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D202CED0486D31800D8A456 /* InfoPlist.strings in Resources */,
+				8D202CEF0486D31800D8A456 /* wildfirePrefPane.nib in Resources */,
+				65E2E73A0A5E8F2900DFFC2E /* wildfire-logo.png in Resources */,
+				65E2E74C0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff in Resources */,
+				650096350A60403400B6046A /* jivesoftware_logo.png in Resources */,
+				6387AE500B29E3FF00E98223 /* autostartsetter.sh in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		8D202CF50486D31800D8A456 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D202CF00486D31800D8A456 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D202CF10486D31800D8A456 /* wildfirePrefPane.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C167EFE841241C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		F506C042013D9D8C01CA16C8 /* wildfirePrefPane.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F506C043013D9D8C01CA16C8 /* English */,
+			);
+			name = wildfirePrefPane.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		65E2E72A0A5E8C0F00DFFC2E /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DSTROOT = "$(PROJECT_DIR)/../../../macpkg";
+				FRAMEWORK_SEARCH_PATHS = "\"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks\"";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = wildfirePrefPane_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = /Library/PreferencePanes;
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-twolevel_namespace",
+				);
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = Wildfire;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "$(PROJECT_DIR)/build";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = prefPane;
+				ZERO_LINK = NO;
+			};
+			name = Development;
+		};
+		65E2E72B0A5E8C0F00DFFC2E /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DSTROOT = "$(PROJECT_DIR)/../../../macpkg";
+				FRAMEWORK_SEARCH_PATHS = "\"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks\"";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = wildfirePrefPane_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = /Library/PreferencePanes;
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-twolevel_namespace",
+				);
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = Wildfire;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "$(PROJECT_DIR)/build";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = prefPane;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		65E2E72C0A5E8C0F00DFFC2E /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DSTROOT = "$(PROJECT_DIR)/../../../macpkg";
+				FRAMEWORK_SEARCH_PATHS = "\"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks\"";
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = wildfirePrefPane_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = /Library/PreferencePanes;
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-twolevel_namespace",
+				);
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = Wildfire;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "$(PROJECT_DIR)/build";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = prefPane;
+				ZERO_LINK = NO;
+			};
+			name = Default;
+		};
+		65E2E72E0A5E8C0F00DFFC2E /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		65E2E72F0A5E8C0F00DFFC2E /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Deployment;
+		};
+		65E2E7300A5E8C0F00DFFC2E /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		65E2E7290A5E8C0F00DFFC2E /* Build configuration list for PBXNativeTarget "Wildfire" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				65E2E72A0A5E8C0F00DFFC2E /* Development */,
+				65E2E72B0A5E8C0F00DFFC2E /* Deployment */,
+				65E2E72C0A5E8C0F00DFFC2E /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		65E2E72D0A5E8C0F00DFFC2E /* Build configuration list for PBXProject "wildfirePrefPane" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				65E2E72E0A5E8C0F00DFFC2E /* Development */,
+				65E2E72F0A5E8C0F00DFFC2E /* Deployment */,
+				65E2E7300A5E8C0F00DFFC2E /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 089C1669FE841209C02AAC07 /* Project object */;
+}

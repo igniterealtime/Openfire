@@ -1291,8 +1291,20 @@
         <delete file="${mac.dmg.file}"/>
         <delete dir="${mac.template}"/>
     </target>
+    
+    <target name="mac.prefpane">
+    <!-- install will put it in macpkg/Library/PreferencePanes/ as specified in the target settings -->
+        <exec executable="/usr/bin/xcodebuild" dir="${basedir}/build/osx/wildfirePrefPane/" failonerror="true">
+            <arg value="-configuration"/>
+            <arg value="Deployment"/>
+            <arg value="-target"/>
+            <arg value="Wildfire"/>
+            <arg value="clean"/>
+            <arg value="install"/>
+        </exec>
+    </target>
 
-    <target name="mac.prepare" depends="mac.delete,wildfire">
+    <target name="mac.prepare" depends="mac.delete,wildfire, mac.prefpane">
         <copy todir="${mac.pkg.dir}/usr/local/wildfire">
             <fileset dir="${target.dir}/wildfire">
                 <exclude name="**/wildfired"/>

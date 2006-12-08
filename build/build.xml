@@ -1304,13 +1304,9 @@
         <copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist"
               todir="${mac.pkg.dir}/Library/LaunchDaemons"/>
         <mkdir dir="${mac.dmg.dir}"/>
-        <exec executable="chown">
-            <arg line="-R root:wheel ${mac.pkg.dir}"/>
-        </exec>
         <chmod perm="ug+x">
             <fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
-                <include name="wildfire.sh"/>
-                <include name="extra/launchd-wrapper.sh"/>
+                <include name="extra/wildfire-launchd-wrapper.sh"/>
             </fileset>
             <fileset dir="${basedir}/build/osx/resources"/>
         </chmod>
@@ -1343,10 +1339,10 @@
             <arg value="dmg_wildfire.scpt"/>
             <arg value="Wildfire"/>
             <arg value="images"/>
-            <arg value="660"/>
-            <arg value="660"/>
-            <arg value="300"/>
-            <arg value="150"/>
+            <arg value="360"/>
+            <arg value="200"/>
+            <arg value="450"/>
+            <arg value="220"/>
             <arg value="128"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">

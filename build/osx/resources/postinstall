@@ -1,4 +1,9 @@
 #!/bin/sh
+WILDFIRE_HOME=/usr/local/wildfire/
+WILDFIRE_GID=`cat /private/tmp/wildfiregid`
+rm /private/tmp/wildfiregid
 
-/bin/launchctl load /System/Library/LaunchDaemons/org.jivesoftware.wildfire.plist
-/bin/launchctl start org.jivesoftware.wildfire
+chown -R wildfire $WILDFIRE_HOME
+chgrp -R $WILDFIRE_GID $WILDFIRE_HOME
+
+/bin/launchctl load /Library/LaunchDaemons/org.jivesoftware.wildfire.plist

@@ -3,6 +3,6 @@
     <leftpanel></leftpanel>
     <rightpanel>
         <item type="text" sysprop="plugin.gateway.yahoo.connecthost" var="host" desc="Host" default="scs.msg.yahoo.com"/>
-        <item type="text" sysprop="plugin.gateway.yahoo.connectport" var="port" desc="Port" port="5050"/>
+        <item type="text" sysprop="plugin.gateway.yahoo.connectport" var="port" desc="Port" default="5050"/>
     </rightpanel>
 </optionsconfig>

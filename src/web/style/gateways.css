@@ -88,17 +88,23 @@ a.jive-gatewayButtonOn {
 	padding: 0px;
 	overflow: hidden;
 	-moz-border-radius: 0px 0px 4px 4px;
-	}
+}
 .jive-gatewayPanel div {
 	padding: 14px 15px 5px 15px;
-	}
+}
 .jive-gatewayPanel div form {
 	margin: 0px;
 	padding: 0px;
-    }
+}
 .jive-formButton {
 	margin: 10px 5px 5px 0px;
-	}
+}
+.saveResultsMsg {
+    margin-left: 5px;
+    vertical-align: middle;
+    font-weight: bold;
+    color: #009900;
+}
 
 
 
@@ -407,5 +413,5 @@ tr.jive-registrations-edit, tr.jive-registrations-editVisible td {
 	margin: 0px 5px 0px 10px;
 	white-space: nowrap;
 	}
-	
+
 

@@ -25,12 +25,73 @@
         boolean gwEnabled = false;
         JspWriter out = null;
         Integer jsID = 0; // Javascript incrementable id
+        String connectHost = null;
+        String connectPort = null;
 
         GatewaySettings(JspWriter out, GatewayPlugin plugin, TransportType gatewayType, String desc) {
             this.description = desc;
             this.gatewayType = gatewayType;
             this.gwEnabled = plugin.serviceEnabled(gatewayType.toString());
             this.out = out;
+            getConnectHostAndPort();
+        }
+
+        void getConnectHostAndPort() {
+            // This assumes that you've chosen to keep the connect host and port in a standard
+            // location ... as a "root level" option in the left or right panel.
+            Document optConfig = plugin.getOptionsConfig(gatewayType);
+            if (optConfig == null) {
+                Log.debug("No options config present for transport.");
+                return;
+            }
+            Element leftPanel = optConfig.getRootElement().element("leftpanel");
+            Element rightPanel = optConfig.getRootElement().element("rightpanel");
+            if (leftPanel != null && leftPanel.nodeCount() > 0) {
+                for (Object nodeObj : leftPanel.elements("item")) {
+                    Element node = (Element)nodeObj;
+                    Attribute type = node.attribute("type");
+                    Attribute var = node.attribute("var");
+                    Attribute sysprop = node.attribute("sysprop");
+                    if (type == null || var == null || sysprop == null) {
+                        Log.error("Missing variable from options config.");
+                        continue;
+                    }
+                    Attribute def = node.attribute("default");
+                    String defStr = "";
+                    if (def != null) {
+                        defStr = def.getText();
+                    }
+                    if (type.getText().equals("text") && var.getText().equals("host")) {
+                        this.connectHost = JiveGlobals.getProperty(sysprop.getText(), defStr);
+                    }
+                    if (type.getText().equals("text") && var.getText().equals("port")) {
+                        this.connectPort = JiveGlobals.getProperty(sysprop.getText(), defStr);
+                    }
+                }
+            }
+            if (rightPanel != null && rightPanel.nodeCount() > 0) {
+                for (Object nodeObj : rightPanel.elements("item")) {
+                    Element node = (Element)nodeObj;
+                    Attribute type = node.attribute("type");
+                    Attribute var = node.attribute("var");
+                    Attribute sysprop = node.attribute("sysprop");
+                    if (type == null || var == null || sysprop == null) {
+                        Log.error("Missing variable from options config.");
+                        continue;
+                    }
+                    Attribute def = node.attribute("default");
+                    String defStr = "";
+                    if (def != null) {
+                        defStr = def.getText();
+                    }
+                    if (type.getText().equals("text") && var.getText().equals("host")) {
+                        this.connectHost = JiveGlobals.getProperty(sysprop.getText(), defStr);
+                    }
+                    if (type.getText().equals("text") && var.getText().equals("port")) {
+                        this.connectPort = JiveGlobals.getProperty(sysprop.getText(), defStr);
+                    }
+                }
+            }
         }
 
         void printConfigNode(Element node) {
@@ -62,7 +123,14 @@
                     String inputId = gatewayType.toString()+var.getText();
                     out.println("<tr valign='middle'>");
                     out.println("<td align='right' width='1%'><label for='" + inputId + "'>" + desc.getText() + "</label>:</td>");
-                    out.println("<td><input type='text' id='" + inputId + "' name='" + inputId + "'"+(size != null ? " size='"+size.getText()+"'" : "")+(size != null ? " maxlength='"+maxlen.getText()+"'" : "")+" value='"+setting+"'/></td>");
+                    out.print("<td><input type='text' id='" + inputId + "' name='" + inputId + "'"+(size != null ? " size='"+size.getText()+"'" : "")+(size != null ? " maxlength='"+maxlen.getText()+"'" : "")+" value='"+setting+"'");
+                    if (var.getText().equals("host")) {
+                        out.print(" onChange='document.getElementById(\""+gatewayType.toString()+"testhost\").innerHTML = this.value'");
+                    }
+                    if (var.getText().equals("port")) {
+                        out.print(" onChange='document.getElementById(\""+gatewayType.toString()+"testport\").innerHTML = this.value'");
+                    }
+                    out.println("/></td>");
                     out.println("</tr>");
                 }
                 else if (type.getText().equals("toggle")) {
@@ -117,7 +185,7 @@
 	<!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
     <div <%= ((!this.gwEnabled) ? " class='jive-gateway jive-gatewayDisabled'" : "class='jive-gateway'") %> id="jive<%= this.gatewayType.toString().toUpperCase() %>">
 		<label for="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox">
-			<input type="checkbox" name="gateway" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="ConfigManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true"> 
+			<input type="checkbox" name="gateway" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="ConfigManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle('jive<%= this.gatewayType.toString().toUpperCase() %>'); return true">
 			<img src="images/<%= this.gatewayType.toString().toLowerCase() %>.gif" alt="" border="0">
 			<strong><%= this.description %></strong>
 		</label>
@@ -131,9 +199,11 @@
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>tests" style="display: none;">
         <div>
             <form id="jive<%= this.gatewayType.toString().toUpperCase() %>testsform" action="">
-                <span style="font-weight: bold">Connect to host:</span> <span id="testhost">[reading]</span><br />
-                <span style="font-weight: bold">Connect to port:</span> <span id="testport">[reading]</span><br />
-                <input type="submit" name="submit" value="Test Connection" onclick="return false" class="jive-formButton">
+                <span style="font-weight: bold">Connect to host:</span> <span id="<%= this.gatewayType.toString() %>testhost"><%= connectHost %></span><br />
+                <span style="font-weight: bold">Connect to port:</span> <span id="<%= this.gatewayType.toString() %>testport"><%= connectPort %></span><br />
+
+                <input type="submit" name="submit" value="Test Connection" onclick="testConnect('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
+                <span id="<%= this.gatewayType.toString() %>testsresults" class="saveResultsMsg"></span>
             </form>
         </div>
     </div>
@@ -175,8 +245,9 @@
                         </td>
                     </tr>
                 </table>
-                <input type="button" name="submit" value="Save Options" onclick="saveOptions('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
+                <input type="submit" name="submit" value="Save Options" onclick="saveOptions('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
                 <input type="reset" name="cancel" value="Cancel Changes" class="jive-formButton">
+                <span id="<%= this.gatewayType.toString() %>optionsresults" class="saveResultsMsg"></span>
             </form>
 		</div>
 	</div>
@@ -204,6 +275,7 @@
 
                 <input type="submit" name="submit" value="Save Permissions" onclick="return false" class="jive-formButton">
                 <input type="reset" name="cancel" value="Cancel Changes" class="jive-formButton">
+                <span id="<%= this.gatewayType.toString() %>permsresults" class="saveResultsMsg"></span>
             </form>
 		</div>
 	</div>
@@ -239,6 +311,7 @@
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/ConfigManager.js" type="text/javascript"></script>
+<script src="dwr/interface/ConnectionTester.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
 <script type="text/javascript" >
     DWREngine.setErrorHandler(handleError);
@@ -256,11 +329,11 @@
         "port",
         "encoding"
     );
+    var testTransportID = null;
 
     function saveOptions(transportID) {
         var transportSettings = new Object();
-        var x;
-        for (x in optionTypes) {
+        for (var x in optionTypes) {
             var optType = optionTypes[x];
             var optionId = transportID+optType;
             var testoption = document.getElementById(optionId);
@@ -269,6 +342,33 @@
             }
         }
         ConfigManager.saveSettings(transportID, transportSettings);
+        document.getElementById(transportID+"optionsresults").innerHTML = "Settings Saved!";
+        setTimeout("to_saveOptions('"+transportID+"')", 5000);
+    }
+
+    function to_saveOptions(transportID) {
+        document.getElementById(transportID+"optionsresults").innerHTML = "";
+    }
+
+    function testConnect(transportID) {
+        testTransportID = transportID;
+        ConnectionTester.testConnection(DWRUtil.getValue(transportID+"testhost"),
+                DWRUtil.getValue(transportID+"testport"), cb_testConnect);
+    }
+
+    function cb_testConnect(result) {
+        if (result) {
+            document.getElementById(testTransportID+"testsresults").innerHTML = "Success!";
+        }
+        else {
+            document.getElementById(testTransportID+"testsresults").innerHTML = "<span style='color: #ff0000'>Failed.</span>";
+        }
+        setTimeout("to_testConnect('"+testTransportID+"')", 5000);
+        testTransportID = null;
+    }
+
+    function to_testConnect(transportID) {
+        document.getElementById(transportID+"testsresults").innerHTML = "";
     }
 </script>
 </head>

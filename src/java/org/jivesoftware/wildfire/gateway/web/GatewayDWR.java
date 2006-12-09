@@ -43,8 +43,8 @@ public class GatewayDWR extends DWRServlet {
             document.appendChild(root);
             Element allowElement = document.createElement("allow");
 
-            Element timElement = buildCreator("ConfigManager", "org.jivesoftware.wildfire.gateway.web.ConfigManager");
-            allowElement.appendChild(timElement);
+            allowElement.appendChild(buildCreator("ConfigManager", "org.jivesoftware.wildfire.gateway.web.ConfigManager"));
+            allowElement.appendChild(buildCreator("ConnectionTester", "org.jivesoftware.wildfire.gateway.web.ConnectionTester"));
 
             root.appendChild(allowElement);
         }

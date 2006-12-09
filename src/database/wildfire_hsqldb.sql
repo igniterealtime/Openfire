@@ -40,6 +40,12 @@ CREATE TABLE jiveOffline (
   CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
+CREATE TABLE jivePresence (
+  username              VARCHAR(64)     NOT NULL,
+  offlinePresence       LONGVARCHAR,
+  lastActivity          VARCHAR(15),
+  CONSTRAINT jivePresence_pk PRIMARY KEY (username)
+);
 
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,

@@ -16,6 +16,8 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
@@ -57,6 +59,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private PresenceUpdateHandler presenceUpdateHandler;
 
     private InternalComponentManager componentManager;
+
+    private Cache lastActivityCache;
+    private Cache offlinePresenceCache;
 
     public PresenceManagerImpl() {
         super("Presence manager");
@@ -378,11 +383,21 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
+
+        offlinePresenceCache = CacheManager.initializeCache("Offline Presence Cache", "offlinePresence", 512*1024);
+        lastActivityCache = CacheManager.initializeCache("Last Activity Cache", "lastActivity", 128*1024);
+
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();
         userManager = server.getUserManager();
         presenceUpdateHandler = server.getPresenceUpdateHandler();
         rosterManager = server.getRosterManager();
+    }
+
+    public void stop() {
+        // Clear the caches when stopping the module.
+        offlinePresenceCache.clear();
+        lastActivityCache.clear();
     }
 
     private Component getComponent(JID probee) {

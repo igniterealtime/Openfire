@@ -59,10 +59,10 @@
 
                     String setting = JiveGlobals.getProperty(sysprop.getText(), defStr);
 
-                    String checkId = gatewayType.toString()+var.getText();
+                    String inputId = gatewayType.toString()+var.getText();
                     out.println("<tr valign='middle'>");
-                    out.println("<td align='right' width='1%'><label for='" + checkId + "'>" + desc.getText() + "</label>:</td>");
-                    out.println("<td><input type='text' id='" + checkId + "' name='" + var.getText() + "'"+(size != null ? " size='"+size.getText()+"'" : "")+(size != null ? " maxlength='"+maxlen.getText()+"'" : "")+" value='"+setting+"'/></td>");
+                    out.println("<td align='right' width='1%'><label for='" + inputId + "'>" + desc.getText() + "</label>:</td>");
+                    out.println("<td><input type='text' id='" + inputId + "' name='" + inputId + "'"+(size != null ? " size='"+size.getText()+"'" : "")+(size != null ? " maxlength='"+maxlen.getText()+"'" : "")+" value='"+setting+"'/></td>");
                     out.println("</tr>");
                 }
                 else if (type.getText().equals("toggle")) {
@@ -89,7 +89,7 @@
                     String jsStr = gatewayType.toString()+(++jsID);
                     String checkId = gatewayType.toString()+var.getText();
                     out.println("<tr valign='top'>");
-                    out.println("<td align='right' width='1%'><input type='checkbox' id='" + checkId +"' name='" + var.getText() + "' value='true' "+(setting ? " checked='checked'" : "")+" onClick='elem = document.getElementById(\""+jsStr+"\"); if (elem) { if (this.checked) { elem.style.display=\"table\"} else { elem.style.display=\"none\"} }'/></td>");                    
+                    out.println("<td align='right' width='1%'><input type='checkbox' id='" + checkId +"' name='" + checkId + "' value='true' "+(setting ? " checked='checked'" : "")+" onClick='elem = document.getElementById(\""+jsStr+"\"); if (elem) { if (this.checked) { elem.style.display=\"table\"} else { elem.style.display=\"none\"} }'/></td>");
                     out.print("<td><label for='" + checkId + "'>" + desc.getText() + "</label>");
                     for (Object itemObj : node.elements("item")) {
                         Element item = (Element)itemObj;
@@ -117,7 +117,7 @@
 	<!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
     <div <%= ((!this.gwEnabled) ? " class='jive-gateway jive-gatewayDisabled'" : "class='jive-gateway'") %> id="jive<%= this.gatewayType.toString().toUpperCase() %>">
 		<label for="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox">
-			<input type="checkbox" name="gateway" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="TransportInstanceManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true"> 
+			<input type="checkbox" name="gateway" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="ConfigManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true"> 
 			<img src="images/<%= this.gatewayType.toString().toLowerCase() %>.gif" alt="" border="0">
 			<strong><%= this.description %></strong>
 		</label>
@@ -133,7 +133,7 @@
             <form id="jive<%= this.gatewayType.toString().toUpperCase() %>testsform" action="">
                 <span style="font-weight: bold">Connect to host:</span> <span id="testhost">[reading]</span><br />
                 <span style="font-weight: bold">Connect to port:</span> <span id="testport">[reading]</span><br />
-                <input type="submit" name="submit" value="Test Connection" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>tests,jive<%= this.gatewayType.toString().toUpperCase() %>tests); return false" class="jive-formButton">
+                <input type="submit" name="submit" value="Test Connection" onclick="return false" class="jive-formButton">
             </form>
         </div>
     </div>
@@ -176,7 +176,7 @@
                     </tr>
                 </table>
                 <input type="button" name="submit" value="Save Options" onclick="saveOptions('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
-                <input type="reset" name="cancel" value="Cancel" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options,jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" class="jive-formButton">
+                <input type="reset" name="cancel" value="Cancel Changes" class="jive-formButton">
             </form>
 		</div>
 	</div>
@@ -202,8 +202,8 @@
                 </div>
                 <input type="radio" name="userreg" value="manual" onClick="getElementById('userreg_specific').style.display = 'none'"> Manual registration only (see the Registrations section to manage)<br>
 
-                <input type="submit" name="submit" value="Save Permissions" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms,jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" class="jive-formButton">
-                <input type="reset" name="cancel" value="Cancel" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms,jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" class="jive-formButton">
+                <input type="submit" name="submit" value="Save Permissions" onclick="return false" class="jive-formButton">
+                <input type="reset" name="cancel" value="Cancel Changes" class="jive-formButton">
             </form>
 		</div>
 	</div>
@@ -234,27 +234,41 @@
 <title>Gateway Settings</title>
 <meta name="pageID" content="gateway-settings">
 <style type="text/css">
-<!--	@import url("style/gateways.css");    -->
+<!-- @import url("style/gateways.css"); -->
 </style>
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
-<script src="dwr/interface/TransportInstanceManager.js" type="text/javascript"></script>
+<script src="dwr/interface/ConfigManager.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
 <script type="text/javascript" >
     DWREngine.setErrorHandler(handleError);
+    window.onerror = handleError;
 
     function handleError(error) {
-        alert(error);
+        // swallow errors
     }
 
     var settings;
+    // If you add new option types, you to the transport option configs, you will also need
+    // to add the option 'var' ids here.
+    var optionTypes = new Array(
+        "host",
+        "port",
+        "encoding"
+    );
 
     function saveOptions(transportID) {
-        var transportSettings = new Array();
-        transportSettings["host"] = DWRUtil.getValue(transportID+"host");
-        transportSettings["port"] = DWRUtil.getValue(transportID+"port");
-        transportSettings["encoding"] = DWRUtil.getValue(transportID+"encoding");
-        TransportInstanceManager.saveSettings(null, transportID, transportSettings);
+        var transportSettings = new Object();
+        var x;
+        for (x in optionTypes) {
+            var optType = optionTypes[x];
+            var optionId = transportID+optType;
+            var testoption = document.getElementById(optionId);
+            if (testoption != null) {
+                transportSettings[optType] = DWRUtil.getValue(optionId);
+            }
+        }
+        ConfigManager.saveSettings(transportID, transportSettings);
     }
 </script>
 </head>

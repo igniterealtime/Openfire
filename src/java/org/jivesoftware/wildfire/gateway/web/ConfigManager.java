@@ -7,7 +7,6 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-
 package org.jivesoftware.wildfire.gateway.web;
 
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -20,15 +19,17 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Attribute;
 
+import java.util.HashMap;
+
 /**
- * Transport Instance Manager
+ * Transport Configuration Manager (for web interface)
  *
  * Handles web interface interactions with the transport instances, such as enabling or
  * disabling them, configuring options, etc.
  *
  * @author Daniel Henninger
  */
-public class TransportInstanceManager {
+public class ConfigManager {
 
     /**
      * Toggles whether a transport is enabled or disabled.
@@ -55,7 +56,7 @@ public class TransportInstanceManager {
      * @param transportName Name of the transport to have it's options saved (type of transport)
      * @param options Options passed from options form.
      */
-    public void saveSettings(String transportName, TransportOptions options) {
+    public void saveSettings(String transportName, HashMap<String,String> options) {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         GatewayPlugin plugin = (GatewayPlugin)pluginManager.getPlugin("gateway");
         Document optConfig = plugin.getOptionsConfig(TransportType.valueOf(transportName));
@@ -83,7 +84,7 @@ public class TransportInstanceManager {
      * @param node Node describing the configuration item.
      * @param options Options passed from form.
      */
-    private void saveOptionSetting(Element node, TransportOptions options) {
+    private void saveOptionSetting(Element node, HashMap<String,String> options) {
         Attribute type = node.attribute("type");
         if (type.getText().equals("text")) {
             // Required fields
@@ -98,13 +99,13 @@ public class TransportInstanceManager {
 
             // Process any variables that we are setting.
             if (var.getText().equals("host")) {
-                JiveGlobals.setProperty(sysprop.getText(), options.host);
+                JiveGlobals.setProperty(sysprop.getText(), options.get("host"));
             }
             else if (var.getText().equals("port")) {
-                JiveGlobals.setProperty(sysprop.getText(), options.port);
+                JiveGlobals.setProperty(sysprop.getText(), options.get("port"));
             }
             else if (var.getText().equals("encoding")) {
-                JiveGlobals.setProperty(sysprop.getText(), options.encoding);
+                JiveGlobals.setProperty(sysprop.getText(), options.get("encoding"));
             }
         }
         else if (type.getText().equals("toggle")) {
@@ -127,5 +128,5 @@ public class TransportInstanceManager {
             }
         }
     }
-    
+
 }

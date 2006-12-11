@@ -232,6 +232,18 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             // Keep track of the time when the user went offline
             java.util.Date offlinePresenceDate = new java.util.Date();
 
+            boolean addedToCache;
+            if (offlinePresence == null) {
+                addedToCache = !NULL_STRING.equals(offlinePresenceCache.put(username, NULL_STRING));
+            }
+            else {
+                addedToCache = !offlinePresence.equals(offlinePresenceCache.put(username, offlinePresence));
+            }
+            if (!addedToCache) {
+                return;
+            }
+            lastActivityCache.put(username, offlinePresenceDate.getTime());
+
             // Insert data into the database.
             Connection con = null;
             PreparedStatement pstmt = null;

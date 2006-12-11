@@ -10,6 +10,10 @@
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.dom4j.Document" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="org.jivesoftware.wildfire.gateway.PermissionManager" %>
+<%@ page import="java.util.Collection" %>
+<%@ page import="java.util.Iterator" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -27,13 +31,52 @@
         Integer jsID = 0; // Javascript incrementable id
         String connectHost = null;
         String connectPort = null;
+        String userPermText = "[none selected]";
+        String groupPermText = "[none selected]";
+        String userPermEntry = "";
+        String groupPermEntry = "";
+        Integer globalPermSetting = 1;
 
-        GatewaySettings(JspWriter out, GatewayPlugin plugin, TransportType gatewayType, String desc) {
+        GatewaySettings(JspWriter out, GatewayPlugin plugin, TransportType gatewayType,
+                String desc) {
             this.description = desc;
             this.gatewayType = gatewayType;
             this.gwEnabled = plugin.serviceEnabled(gatewayType.toString());
             this.out = out;
             getConnectHostAndPort();
+            getPermissionsList();
+        }
+
+        /**
+         * Borrowed from http://www.bigbold.com/snippets/posts/show/91
+         */
+        public String join(Collection s, String delimiter) {
+            StringBuffer buffer = new StringBuffer();
+            Iterator iter = s.iterator();
+            while (iter.hasNext()) {
+                buffer.append(iter.next());
+                if (iter.hasNext()) {
+                    buffer.append(delimiter);
+                }
+            }
+            return buffer.toString();
+        }
+
+        void getPermissionsList() {
+            PermissionManager permissionManager = new PermissionManager(this.gatewayType);
+            ArrayList<String> userList = permissionManager.getAllUsers();
+            if (userList.size() > 0) {
+                String joinedString = join(userList, " ");
+                userPermText = joinedString;
+                userPermEntry = joinedString;
+            }
+            ArrayList<String> groupList = permissionManager.getAllGroups();
+            if (groupList.size() > 0) {
+                String joinedString = join(groupList, " ");
+                groupPermText = joinedString;
+                groupPermEntry = joinedString;
+            }
+            globalPermSetting = JiveGlobals.getIntProperty("plugin.gateway."+this.gatewayType.toString()+".registration", 1);
         }
 
         void getConnectHostAndPort() {
@@ -48,7 +91,7 @@
             Element rightPanel = optConfig.getRootElement().element("rightpanel");
             if (leftPanel != null && leftPanel.nodeCount() > 0) {
                 for (Object nodeObj : leftPanel.elements("item")) {
-                    Element node = (Element)nodeObj;
+                    Element node = (Element) nodeObj;
                     Attribute type = node.attribute("type");
                     Attribute var = node.attribute("var");
                     Attribute sysprop = node.attribute("sysprop");
@@ -71,7 +114,7 @@
             }
             if (rightPanel != null && rightPanel.nodeCount() > 0) {
                 for (Object nodeObj : rightPanel.elements("item")) {
-                    Element node = (Element)nodeObj;
+                    Element node = (Element) nodeObj;
                     Attribute type = node.attribute("type");
                     Attribute var = node.attribute("var");
                     Attribute sysprop = node.attribute("sysprop");
@@ -120,15 +163,21 @@
 
                     String setting = JiveGlobals.getProperty(sysprop.getText(), defStr);
 
-                    String inputId = gatewayType.toString()+var.getText();
+                    String inputId = gatewayType.toString() + var.getText();
                     out.println("<tr valign='middle'>");
-                    out.println("<td align='right' width='1%'><label for='" + inputId + "'>" + desc.getText() + "</label>:</td>");
-                    out.print("<td><input type='text' id='" + inputId + "' name='" + inputId + "'"+(size != null ? " size='"+size.getText()+"'" : "")+(size != null ? " maxlength='"+maxlen.getText()+"'" : "")+" value='"+setting+"'");
+                    out.println("<td align='right' width='1%'><label for='" + inputId + "'>" +
+                            desc.getText() + "</label>:</td>");
+                    out.print("<td><input type='text' id='" + inputId + "' name='" + inputId + "'" +
+                            (size != null ? " size='" + size.getText() + "'" : "") +
+                            (size != null ? " maxlength='" + maxlen.getText() + "'" : "") +
+                            " value='" + setting + "'");
                     if (var.getText().equals("host")) {
-                        out.print(" onChange='document.getElementById(\""+gatewayType.toString()+"testhost\").innerHTML = this.value'");
+                        out.print(" onChange='document.getElementById(\"" + gatewayType.toString() +
+                                "testhost\").innerHTML = this.value'");
                     }
                     if (var.getText().equals("port")) {
-                        out.print(" onChange='document.getElementById(\""+gatewayType.toString()+"testport\").innerHTML = this.value'");
+                        out.print(" onChange='document.getElementById(\"" + gatewayType.toString() +
+                                "testport\").innerHTML = this.value'");
                     }
                     out.println("/></td>");
                     out.println("</tr>");
@@ -148,20 +197,26 @@
                     }
 
                     boolean defBool = false;
-                    if (def != null && (def.getText().equals("1") || def.getText().equals("true") || def.getText().equals("enabled") || def.getText().equals("yes"))) {
+                    if (def != null && (def.getText().equals("1") || def.getText().equals("true") ||
+                            def.getText().equals("enabled") || def.getText().equals("yes"))) {
                         defBool = true;
                     }
 
                     boolean setting = JiveGlobals.getBooleanProperty(sysprop.getText(), defBool);
 
-                    String jsStr = gatewayType.toString()+(++jsID);
-                    String checkId = gatewayType.toString()+var.getText();
+                    String jsStr = gatewayType.toString() + (++jsID);
+                    String checkId = gatewayType.toString() + var.getText();
                     out.println("<tr valign='top'>");
-                    out.println("<td align='right' width='1%'><input type='checkbox' id='" + checkId +"' name='" + checkId + "' value='true' "+(setting ? " checked='checked'" : "")+" onClick='elem = document.getElementById(\""+jsStr+"\"); if (elem) { if (this.checked) { elem.style.display=\"table\"} else { elem.style.display=\"none\"} }'/></td>");
+                    out.println("<td align='right' width='1%'><input type='checkbox' id='" +
+                            checkId + "' name='" + checkId + "' value='true' " +
+                            (setting ? " checked='checked'" : "") +
+                            " onClick='elem = document.getElementById(\"" + jsStr +
+                            "\"); if (elem) { if (this.checked) { elem.style.display=\"table\"} else { elem.style.display=\"none\"} }'/></td>");
                     out.print("<td><label for='" + checkId + "'>" + desc.getText() + "</label>");
                     for (Object itemObj : node.elements("item")) {
-                        Element item = (Element)itemObj;
-                        out.println("<table id='"+jsStr+"' width='100%' style='display: "+(defBool ? "table" : "none")+"'>");
+                        Element item = (Element) itemObj;
+                        out.println("<table id='" + jsStr + "' width='100%' style='display: " +
+                                (defBool ? "table" : "none") + "'>");
                         printConfigNode(item);
                         out.println("</table>");
                     }
@@ -198,7 +253,7 @@
     <!-- Tests Window -->
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>tests" style="display: none;">
         <div>
-            <form id="jive<%= this.gatewayType.toString().toUpperCase() %>testsform" action="">
+            <form id="jive<%= this.gatewayType.toString().toUpperCase() %>testsform" action="" onSubmit="return false">
                 <span style="font-weight: bold">Connect to host:</span> <span id="<%= this.gatewayType.toString() %>testhost"><%= connectHost %></span><br />
                 <span style="font-weight: bold">Connect to port:</span> <span id="<%= this.gatewayType.toString() %>testport"><%= connectPort %></span><br />
 
@@ -210,7 +265,7 @@
     <!-- Options Window -->
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>options" style="display: none;">
 		<div>
-            <form id="jive<%= this.gatewayType.toString().toUpperCase() %>optionsform" action="">
+            <form id="jive<%= this.gatewayType.toString().toUpperCase() %>optionsform" action="" onSubmit="return false">
                 <table border="0" cellpadding="0" cellspacing="0">
                     <tr valign="top">
                         <td align="left" width="50%">
@@ -252,29 +307,31 @@
 		</div>
 	</div>
     <!-- Permissions Window -->
-    <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>perms" style="display: none;">
+    <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>perms" style="display: none;" onSubmit="return false">
 		<div>
             <form id="jive<%= this.gatewayType.toString().toUpperCase() %>permsform" action="">
-                <input type="radio" name="userreg" value="all" onClick="getElementById('userreg_specific').style.display = 'none'" checked> All users can register<br>
-                <input type="radio" name="userreg" value="specific" onClick="getElementById('userreg_specific').style.display = 'block'"> These users and/or groups can register<br>
-                <div id="userreg_specific" style="display: none; margin: 0; padding: 0; font-size: 80%">
+                <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="all" onClick="hideSpecificChoices('<%= this.gatewayType.toString() %>')" <%= (this.globalPermSetting == 1 ? "checked='checked'" : "") %> /> All users can register<br>
+                <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="specific" onClick="showSpecificChoices('<%= this.gatewayType.toString() %>')"  <%= (this.globalPermSetting == 2 ? "checked='checked'" : "") %> /> These users and/or groups can register<br>
+                <div id="<%= this.gatewayType.toString() %>userreg_specific" style="<%= (this.globalPermSetting == 2 ? "" : "display: none; ") %>margin: 0; padding: 0; font-size: 80%">
                     <table border="0" cellpadding="0" cellspacing="0" style="padding-left: 30.0px">
                         <tr valign="top">
                             <td align="left">
-                                <span style="font-weight: bold">Users</span> <a href="">(Modify Users)</a><br />
-                                (none selected)
+                                <span style="font-weight: bold">Users</span> <a href="javascript:noop()" onClick="activateModifyUsers('<%= this.gatewayType.toString() %>'); return false">(Modify Users)</a><br />
+                                <span id="<%= this.gatewayType.toString() %>userpermtext"><%= this.userPermText %></span>
+                                <div id="<%= this.gatewayType.toString() %>userpermentrydiv" style="display:none"><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>userpermentry" name="<%= this.gatewayType.toString() %>userpermentry"><%= this.userPermEntry %></textarea></div>
                             </td>
                             <td align="left" style="padding-left: 30.0px">
-                                <span style="font-weight: bold">Groups</span> <a href="">(Modify Groups)</a><br />
-                                (none selected)
+                                <span style="font-weight: bold">Groups</span> <a href="javascript:noop()" onClick="activateModifyGroups('<%= this.gatewayType.toString() %>'); return false">(Modify Groups)</a><br />
+                                <span id="<%= this.gatewayType.toString() %>grouppermtext"><%= this.groupPermText %></span>
+                                <div id="<%= this.gatewayType.toString() %>grouppermentrydiv" style="display:none"><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>grouppermentry" name="<%= this.gatewayType.toString() %>grouppermentry"><%= this.groupPermEntry %></textarea></div>
                             </td>
                         </tr>
                     </table>
                 </div>
-                <input type="radio" name="userreg" value="manual" onClick="getElementById('userreg_specific').style.display = 'none'"> Manual registration only (see the Registrations section to manage)<br>
+                <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="manual" onClick="hideSpecificChoices('<%= this.gatewayType.toString() %>')" <%= (this.globalPermSetting == 3 ? "checked='checked'" : "") %> /> Manual registration only (see the Registrations section to manage)<br>
 
-                <input type="submit" name="submit" value="Save Permissions" onclick="return false" class="jive-formButton">
-                <input type="reset" name="cancel" value="Cancel Changes" class="jive-formButton">
+                <input type="submit" name="submit" value="Save Permissions" onclick="savePermissions('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
+                <input type="reset" name="cancel" value="Cancel Changes" onclick="cancelPermissions('<%= this.gatewayType.toString() %>'); return true" class="jive-formButton">
                 <span id="<%= this.gatewayType.toString() %>permsresults" class="saveResultsMsg"></span>
             </form>
 		</div>
@@ -372,12 +429,79 @@
     function to_testConnect(transportID) {
         Effect.Fade(transportID+"testsresults");
     }
+
+    function savePermissions(transportID) {
+        var userEntry = DWRUtil.getValue(transportID+"userpermentry");
+        var groupEntry = DWRUtil.getValue(transportID+"grouppermentry");
+        var globalSettingStr = DWRUtil.getValue(transportID+"userreg");
+        var globalSetting = 1; // Allow all as default
+        if (globalSettingStr == "all") {
+            globalSetting = 1;
+        }
+        else if (globalSettingStr == "specific") {
+            globalSetting = 2;
+        }
+        else if (globalSettingStr == "manual") {
+            globalSetting = 3;
+        }
+        var userList = userEntry.split(/\s+/);
+        var groupList = groupEntry.split(/\s+/);
+        ConfigManager.savePermissions(transportID, globalSetting, userList, groupList);
+        document.getElementById(transportID+"permsresults").style.display = "";
+        document.getElementById(transportID+"permsresults").innerHTML = "<span class='successresults'><img src='images/success-16x16.gif' align='absmiddle' />Permissions Saved!</span>";
+        setTimeout("to_savePermissions('"+transportID+"')", 5000);
+    }
+
+    function cancelPermissions(transportID) {
+        deactivateModifyUsers(transportID);
+        deactivateModifyGroups(transportID);
+        document.getElementById(transportID+"permsresults").style.display = "";
+        document.getElementById(transportID+"permsresults").innerHTML = "<span class='warningresults'><img src='images/warning-16x16.gif' align='absmiddle' />Changes Cancelled!</span>";
+        setTimeout("to_savePermissions('"+transportID+"')", 5000);
+    }
+
+    function to_savePermissions(transportID) {
+        Effect.Fade(transportID+"permsresults");
+    }
+
+    function activateModifyUsers(transportID) {
+        document.getElementById(transportID+"userpermtext").style.display = "none";
+        document.getElementById(transportID+"userpermentrydiv").style.display = "block";
+    }
+
+    function deactivateModifyUsers(transportID) {
+        document.getElementById(transportID+"userpermtext").style.display = "inline";
+        document.getElementById(transportID+"userpermentrydiv").style.display = "none";
+    }
+
+    function activateModifyGroups(transportID) {
+        document.getElementById(transportID+"grouppermtext").style.display = "none";
+        document.getElementById(transportID+"grouppermentrydiv").style.display = "block";
+    }
+
+    function deactivateModifyGroups(transportID) {
+        document.getElementById(transportID+"grouppermtext").style.display = "inline";
+        document.getElementById(transportID+"grouppermentrydiv").style.display = "none";
+    }
+
+    function hideSpecificChoices(transportID) {
+        var targElement = document.getElementById(transportID+"userreg_specific");
+        if (targElement.style.display != "none") {
+            Effect.toggle(targElement,'slide', {duration: .4});
+        }
+    }
+
+    function showSpecificChoices(transportID) {
+        var targElement = document.getElementById(transportID+"userreg_specific");
+        if (targElement.style.display == "none") {
+            Effect.toggle(targElement,'slide', {duration: .4});
+        }
+    }
 </script>
 </head>
 
 <body>
 <p><fmt:message key="gateway.web.settings.instructions" />
-<b>Note:</b> Please be aware that Tests, Options, and Permissions are not yet functional.  They are only present for demonstration.</p>
 
 <form action="" name="gatewayForm">
 

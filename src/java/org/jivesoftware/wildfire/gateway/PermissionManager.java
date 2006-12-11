@@ -16,6 +16,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.user.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,24 +40,60 @@ public class PermissionManager {
             "SELECT count(*) FROM gatewayRestrictions WHERE transportType=? AND username=?";
     private static final String GROUPS_LISTED =
             "SELECT groupname FROM gatewayRestrictions WHERE transportType=?";
+    private static final String DELETE_ALL_USERS =
+            "DELETE FROM gatewayRestrictions WHERE transportType=?";
+    private static final String DELETE_ALL_GROUPS =
+            "DELETE FROM gatewayRestrictions WHERE transportType=?";
+    private static final String ADD_NEW_USER =
+            "INSERT INTO gatewayRestrictions(transportType,username) VALUES(?,?)";
+    private static final String ADD_NEW_GROUP =
+            "INSERT INTO gatewayRestrictions(transportType,groupname) VALUES(?,?)";
+    private static final String GET_ALL_USERS =
+            "SELECT username FROM gatewayRestrictions WHERE transportType=? AND username IS NOT NULL ORDER BY username";
+    private static final String GET_ALL_GROUPS =
+            "SELECT groupname FROM gatewayRestrictions WHERE transportType=? AND groupname IS NOT NULL ORDER BY groupname";
 
-    public boolean hasAccess(TransportType type, JID jid) {
-        int setting = JiveGlobals.getIntProperty("plugin.gateway."+type.toString()+".registration", 1);
+    private TransportType transportType = null;
+
+    /**
+     * Create a permissionManager instance.
+     *
+     * @param type Type of the transport that this permission manager serves.
+     */
+    public PermissionManager(TransportType type) {
+        this.transportType = type;
+    }
+
+
+    /**
+     * Checks if a user has access to the transport, via a number of methods.
+     *
+     * @param jid JID of the user who may or may not have access.
+     * @return True or false if the user has access.
+     */
+    public boolean hasAccess(JID jid) {
+        int setting = JiveGlobals.getIntProperty("plugin.gateway."+transportType.toString()+".registration", 1);
         if (setting == 1) { return true; }
         if (setting == 3) { return false; }
-        if (isUserAllowed(type, jid)) { return true; }
-        if (isUserInAllowedGroup(type, jid)) { return true; }
+        if (isUserAllowed(jid)) { return true; }
+        if (isUserInAllowedGroup(jid)) { return true; }
         return false;
     }
 
-    public boolean isUserAllowed(TransportType type, JID jid) {
+    /**
+     * Checks if a user has specific access to the transport.
+     *
+     * @param jid JID of the user who may or may not have access.
+     * @return True or false of the user has access.
+     */
+    public boolean isUserAllowed(JID jid) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(IS_USER_LISTED);
-            pstmt.setString(1, type.toString());
+            pstmt.setString(1, transportType.toString());
             pstmt.setString(2, jid.getNode());
             rs = pstmt.executeQuery();
             rs.next();
@@ -71,7 +108,13 @@ public class PermissionManager {
         return false;
     }
 
-    public boolean isUserInAllowedGroup(TransportType type, JID jid) {
+    /**
+     * Checks if a user is in a group that has access to the transport.
+     *
+     * @param jid JID of the user who may or may not have access.
+     * @return True or false of the user is in a group that has access.
+     */
+    public boolean isUserInAllowedGroup(JID jid) {
         ArrayList<String> allowedGroups = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -79,7 +122,7 @@ public class PermissionManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(GROUPS_LISTED);
-            pstmt.setString(1, type.toString());
+            pstmt.setString(1, transportType.toString());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 allowedGroups.add(rs.getString(1));
@@ -98,6 +141,123 @@ public class PermissionManager {
             }
         }
         return false;
+    }
+
+    /**
+     * Stores a list of users as having access to the transport in question.
+     *
+     * @param users list of users who should have access.
+     */
+    public void storeUserList(ArrayList<User> users) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_ALL_USERS);
+            pstmt.setString(1, transportType.toString());
+            pstmt.executeUpdate();
+
+            for (User user : users) {
+                pstmt = con.prepareStatement(ADD_NEW_USER);
+                pstmt.setString(1, transportType.toString());
+                pstmt.setString(2, user.getUsername());
+                pstmt.executeUpdate();
+            }
+
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+
+    /**
+     * Stores a list of groups as having access to the transport in question.
+     *
+     * @param groups list of groups who should have access.
+     */
+    public void storeGroupList(ArrayList<Group> groups) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_ALL_GROUPS);
+            pstmt.setString(1, transportType.toString());
+            pstmt.executeUpdate();
+
+            for (Group group : groups) {
+                pstmt = con.prepareStatement(ADD_NEW_GROUP);
+                pstmt.setString(1, transportType.toString());
+                pstmt.setString(2, group.getName());
+                pstmt.executeUpdate();
+            }
+
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    /**
+     * Retrieves a list of all of the users permitted to access this transport.
+     *
+     * @return List of users (as strings)
+     */
+    public ArrayList<String> getAllUsers() {
+        ArrayList<String> userList = new ArrayList<String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GET_ALL_USERS);
+            pstmt.setString(1, transportType.toString());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                userList.add(rs.getString(1));
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return userList;
+    }
+
+    /**
+     * Retrieves a list of all of the groups permitted to access this transport.
+     *
+     * @return List of groups (as strings)
+     */
+    public ArrayList<String> getAllGroups() {
+        ArrayList<String> groupList = new ArrayList<String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GET_ALL_GROUPS);
+            pstmt.setString(1, transportType.toString());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                groupList.add(rs.getString(1));
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return groupList;
     }
 
 }

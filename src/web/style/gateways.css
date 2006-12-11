@@ -125,8 +125,19 @@ a.jive-gatewayButtonOn {
     margin-right: 3px;
     margin-bottom: 2px;
 }
-
-
+.saveResultsMsg .warningresults {
+    border: 1.0px solid #550000;
+    background-color: #ffff00;
+    color: #550000;
+    padding: 3.0px;
+}
+.saveResultsMsg .warningresults img {
+    margin-right: 3px;
+    margin-bottom: 2px;
+}
+.permissionListTextArea {
+    font-size: 70%;
+}
 
 
 /* ******************************************** */

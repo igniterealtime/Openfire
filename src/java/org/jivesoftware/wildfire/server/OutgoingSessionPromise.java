@@ -20,10 +20,10 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.*;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.*;
 
 /**
  * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
@@ -51,6 +51,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      * the queued packets.
      */
     private ThreadPoolExecutor threadPool;
+
+    private Map<String, PacketsProcessor> packetsProcessors = new HashMap<String, PacketsProcessor>();
 
     /**
      * Flag that indicates if the process that consumed the queued packets should stop.
@@ -88,20 +90,25 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         if (threadPool.getActiveCount() < threadPool.getMaximumPoolSize()) {
                             // Wait until a packet is available
                             final Packet packet = packets.take();
-                            // Process the packet in another thread
-                            threadPool.execute(new Runnable() {
-                                public void run() {
-                                    try {
-                                        createSessionAndSendPacket(packet);
-                                    }
-                                    catch (Exception e) {
-                                        returnErrorToSender(packet);
-                                        Log.debug(
-                                                "Error sending packet to remote server: " + packet,
-                                                e);
-                                    }
+
+                            boolean newProcessor = false;
+                            PacketsProcessor packetsProcessor;
+                            String domain = packet.getTo().getDomain();
+                            synchronized (domain.intern()) {
+                                packetsProcessor = packetsProcessors.get(domain);
+                                if (packetsProcessor == null) {
+                                    packetsProcessor =
+                                            new PacketsProcessor(OutgoingSessionPromise.this, domain, routingTable);
+                                    packetsProcessors.put(domain, packetsProcessor);
+                                    newProcessor = true;
                                 }
-                            });
+                                packetsProcessor.addPacket(packet);
+                            }
+
+                            if (newProcessor) {
+                                // Process the packet in another thread
+                                threadPool.execute(packetsProcessor);
+                            }
                         }
                         else {
                             // No threads are available so take a nap :)
@@ -125,83 +132,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         return instance;
     }
 
-    private void createSessionAndSendPacket(Packet packet) throws Exception {
-        // Create a connection to the remote server from the domain where the packet has been sent
-        boolean created = OutgoingServerSession
-                .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
-        if (created) {
-            // A connection to the remote server was created so get the route and send the packet
-            ChannelHandler route = routingTable.getRoute(packet.getTo());
-            if (route != null) {
-                route.process(packet);
-            }
-            else {
-                throw new Exception("Failed to create connection to remote server");
-            }
-        }
-        else {
-            throw new Exception("Failed to create connection to remote server");
-        }
-    }
-
-    private void returnErrorToSender(Packet packet) {
-        XMPPServer server = XMPPServer.getInstance();
-        JID from = packet.getFrom();
-        JID to = packet.getTo();
-        if (!server.isLocal(from) && !XMPPServer.getInstance().matchesComponent(from) &&
-                !server.isLocal(to) && !XMPPServer.getInstance().matchesComponent(to)) {
-            // Do nothing since the sender and receiver of the packet that failed to reach a remote
-            // server are not local users. This prevents endless loops if the FROM or TO address
-            // are non-existen addresses
-            return;
-        }
-
-        // TODO Send correct error condition: timeout or not_found depending on the real error
-        try {
-            if (packet instanceof IQ) {
-                IQ reply = new IQ();
-                reply.setID(((IQ) packet).getID());
-                reply.setTo(from);
-                reply.setFrom(to);
-                reply.setChildElement(((IQ) packet).getChildElement().createCopy());
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                ChannelHandler route = routingTable.getRoute(reply.getTo());
-                if (route != null) {
-                    route.process(reply);
-                }
-            }
-            else if (packet instanceof Presence) {
-                Presence reply = new Presence();
-                reply.setID(packet.getID());
-                reply.setTo(from);
-                reply.setFrom(to);
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                ChannelHandler route = routingTable.getRoute(reply.getTo());
-                if (route != null) {
-                    route.process(reply);
-                }
-            }
-            else if (packet instanceof Message) {
-                Message reply = new Message();
-                reply.setID(packet.getID());
-                reply.setTo(from);
-                reply.setFrom(to);
-                reply.setType(((Message)packet).getType());
-                reply.setThread(((Message)packet).getThread());
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                ChannelHandler route = routingTable.getRoute(reply.getTo());
-                if (route != null) {
-                    route.process(reply);
-                }
-            }
-        }
-        catch (UnauthorizedException e) {
-        }
-        catch (Exception e) {
-            Log.warn("Error returning error to sender. Original packet: " + packet, e);
-        }
-    }
-
     /**
      * Shuts down the thread that consumes the queued packets and also stops the pool
      * of threads that actually send the packets to the remote servers.
@@ -219,5 +149,137 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     public void process(Packet packet) {
         // Queue the packet. Another process will process the queued packets.
         packets.add(packet.createCopy());
+    }
+
+    private void processorDone(PacketsProcessor packetsProcessor) {
+        synchronized(packetsProcessor.getDomain().intern()) {
+            if (packetsProcessor.isDone()) {
+                packetsProcessors.remove(packetsProcessor.getDomain());
+            }
+            else {
+                threadPool.execute(packetsProcessor);
+            }
+        }
+    }
+
+    private static class PacketsProcessor implements Runnable {
+
+        private OutgoingSessionPromise promise;
+        private String domain;
+        private RoutingTable routingTable;
+        private Queue<Packet> packets = new ConcurrentLinkedQueue<Packet>();
+
+        public PacketsProcessor(OutgoingSessionPromise promise, String domain, RoutingTable routingTable) {
+            this.promise = promise;
+            this.domain = domain;
+            this.routingTable = routingTable;
+        }
+
+        public void run() {
+            while (!isDone()) {
+                Packet packet = packets.poll();
+                if (packet != null) {
+                    try {
+                        sendPacket(packet);
+                    }
+                    catch (Exception e) {
+                        returnErrorToSender(packet);
+                        Log.debug(
+                                "Error sending packet to remote server: " + packet,
+                                e);
+                    }
+                }
+            }
+            promise.processorDone(this);
+        }
+
+        private void sendPacket(Packet packet) throws Exception {
+            // Create a connection to the remote server from the domain where the packet has been sent
+            boolean created = OutgoingServerSession
+                    .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
+            if (created) {
+                // A connection to the remote server was created so get the route and send the packet
+                ChannelHandler route = routingTable.getRoute(packet.getTo());
+                if (route != null) {
+                    route.process(packet);
+                }
+                else {
+                    throw new Exception("Failed to create connection to remote server");
+                }
+            }
+            else {
+                throw new Exception("Failed to create connection to remote server");
+            }
+        }
+
+        private void returnErrorToSender(Packet packet) {
+            XMPPServer server = XMPPServer.getInstance();
+            JID from = packet.getFrom();
+            JID to = packet.getTo();
+            if (!server.isLocal(from) && !XMPPServer.getInstance().matchesComponent(from) &&
+                    !server.isLocal(to) && !XMPPServer.getInstance().matchesComponent(to)) {
+                // Do nothing since the sender and receiver of the packet that failed to reach a remote
+                // server are not local users. This prevents endless loops if the FROM or TO address
+                // are non-existen addresses
+                return;
+            }
+
+            // TODO Send correct error condition: timeout or not_found depending on the real error
+            try {
+                if (packet instanceof IQ) {
+                    IQ reply = new IQ();
+                    reply.setID(((IQ) packet).getID());
+                    reply.setTo(from);
+                    reply.setFrom(to);
+                    reply.setChildElement(((IQ) packet).getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    ChannelHandler route = routingTable.getRoute(reply.getTo());
+                    if (route != null) {
+                        route.process(reply);
+                    }
+                }
+                else if (packet instanceof Presence) {
+                    Presence reply = new Presence();
+                    reply.setID(packet.getID());
+                    reply.setTo(from);
+                    reply.setFrom(to);
+                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    ChannelHandler route = routingTable.getRoute(reply.getTo());
+                    if (route != null) {
+                        route.process(reply);
+                    }
+                }
+                else if (packet instanceof Message) {
+                    Message reply = new Message();
+                    reply.setID(packet.getID());
+                    reply.setTo(from);
+                    reply.setFrom(to);
+                    reply.setType(((Message)packet).getType());
+                    reply.setThread(((Message)packet).getThread());
+                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    ChannelHandler route = routingTable.getRoute(reply.getTo());
+                    if (route != null) {
+                        route.process(reply);
+                    }
+                }
+            }
+            catch (UnauthorizedException e) {
+            }
+            catch (Exception e) {
+                Log.warn("Error returning error to sender. Original packet: " + packet, e);
+            }
+        }
+
+        public void addPacket(Packet packet) {
+            packets.add(packet);
+        }
+
+        public String getDomain() {
+            return domain;
+        }
+
+        public boolean isDone() {
+            return packets.isEmpty();
+        }
     }
 }

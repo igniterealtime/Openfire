@@ -94,7 +94,7 @@ public class OutgoingServerSession extends Session {
      * @param hostname the hostname of the remote server.
      * @return True if the domain was authenticated by the remote server.
      */
-    public static boolean authenticateDomain(String domain, String hostname) {
+    static boolean authenticateDomain(String domain, String hostname) {
         if (hostname == null || hostname.length() == 0 || hostname.trim().indexOf(' ') > -1) {
             // Do nothing if the target hostname is empty, null or contains whitespaces
             return false;
@@ -105,11 +105,12 @@ public class OutgoingServerSession extends Session {
                 return false;
             }
 
+            OutgoingServerSession session;
             // Check if a session, that is using server dialback, already exists to the desired
             // hostname (i.e. remote server). If no one exists then create a new session. The same
             // session will be used for the same hostname for all the domains to authenticate
             SessionManager sessionManager = SessionManager.getInstance();
-            OutgoingServerSession session = sessionManager.getOutgoingServerSession(hostname);
+            session = sessionManager.getOutgoingServerSession(hostname);
             if (session == null) {
                 // Try locating if the remote server has previously authenticated with this server
                 for (IncomingServerSession incomingSession : sessionManager
@@ -123,8 +124,7 @@ public class OutgoingServerSession extends Session {
                                 // session
                                 session.addHostname(hostname);
                                 break;
-                            }
-                            else {
+                            } else {
                                 session = null;
                             }
                         }
@@ -134,70 +134,66 @@ public class OutgoingServerSession extends Session {
             if (session == null) {
                 int port = RemoteServerManager.getPortForServer(hostname);
                 // No session was found to the remote server so make sure that only one is created
-                synchronized (hostname.intern()) {
-                    session = sessionManager.getOutgoingServerSession(hostname);
-                    if (session == null) {
-                        session = createOutgoingSession(domain, hostname, port);
-                        if (session != null) {
-                            // Add the new hostname to the list of names that the server may have
-                            session.addHostname(hostname);
-                            // Add the validated domain as an authenticated domain
-                            session.addAuthenticatedDomain(domain);
-                            // Notify the SessionManager that a new session has been created
-                            sessionManager.outgoingServerSessionCreated(session);
-                            return true;
-                        }
-                        else {
-                            // Ensure that the hostname is not an IP address (i.e. contains chars)
-                            if (!pattern.matcher(hostname).find()) {
-                                return false;
-                            }
-                            // Check if hostname is a subdomain of an existing outgoing session
-                            for (String otherHost : sessionManager.getOutgoingServers()) {
-                                if (hostname.contains(otherHost)) {
-                                    session = sessionManager.getOutgoingServerSession(otherHost);
-                                    // Add the new hostname to the found session
-                                    session.addHostname(hostname);
-                                    return true;
-                                }
-                            }
-                            // Try to establish a connection to candidate hostnames. Iterate on the
-                            // substring after the . and try to establish a connection. If a
-                            // connection is established then the same session will be used for
-                            // sending packets to the "candidate hostname" as well as for the
-                            // requested hostname (i.e. the subdomain of the candidate hostname)
-                            // This trick is useful when remote servers haven't registered in their
-                            // DNSs an entry for their subdomains
-                            int index = hostname.indexOf('.');
-                            while (index > -1 && index < hostname.length()) {
-                                String newHostname = hostname.substring(index + 1);
-                                String serverName = XMPPServer.getInstance().getServerInfo()
-                                        .getName();
-                                if ("com".equals(newHostname) || "net".equals(newHostname) ||
-                                        "org".equals(newHostname) ||
-                                        "gov".equals(newHostname) ||
-                                        "edu".equals(newHostname) ||
-                                        serverName.equals(newHostname)) {
-                                    return false;
-                                }
-                                session = createOutgoingSession(domain, newHostname, port);
-                                if (session != null) {
-                                    // Add the new hostname to the list of names that the server may have
-                                    session.addHostname(hostname);
-                                    // Add the validated domain as an authenticated domain
-                                    session.addAuthenticatedDomain(domain);
-                                    // Notify the SessionManager that a new session has been created
-                                    sessionManager.outgoingServerSessionCreated(session);
-                                    // Add the new hostname to the found session
-                                    session.addHostname(newHostname);
-                                    return true;
-                                }
-                                else {
-                                    index = hostname.indexOf('.', index + 1);
-                                }
-                            }
+                session = sessionManager.getOutgoingServerSession(hostname);
+                if (session == null) {
+                    session = createOutgoingSession(domain, hostname, port);
+                    if (session != null) {
+                        // Add the new hostname to the list of names that the server may have
+                        session.addHostname(hostname);
+                        // Add the validated domain as an authenticated domain
+                        session.addAuthenticatedDomain(domain);
+                        // Notify the SessionManager that a new session has been created
+                        sessionManager.outgoingServerSessionCreated(session);
+                        return true;
+                    } else {
+                        // Ensure that the hostname is not an IP address (i.e. contains chars)
+                        if (!pattern.matcher(hostname).find()) {
                             return false;
                         }
+                        // Check if hostname is a subdomain of an existing outgoing session
+                        for (String otherHost : sessionManager.getOutgoingServers()) {
+                            if (hostname.contains(otherHost)) {
+                                session = sessionManager.getOutgoingServerSession(otherHost);
+                                // Add the new hostname to the found session
+                                session.addHostname(hostname);
+                                return true;
+                            }
+                        }
+                        // Try to establish a connection to candidate hostnames. Iterate on the
+                        // substring after the . and try to establish a connection. If a
+                        // connection is established then the same session will be used for
+                        // sending packets to the "candidate hostname" as well as for the
+                        // requested hostname (i.e. the subdomain of the candidate hostname)
+                        // This trick is useful when remote servers haven't registered in their
+                        // DNSs an entry for their subdomains
+                        int index = hostname.indexOf('.');
+                        while (index > -1 && index < hostname.length()) {
+                            String newHostname = hostname.substring(index + 1);
+                            String serverName = XMPPServer.getInstance().getServerInfo()
+                                    .getName();
+                            if ("com".equals(newHostname) || "net".equals(newHostname) ||
+                                    "org".equals(newHostname) ||
+                                    "gov".equals(newHostname) ||
+                                    "edu".equals(newHostname) ||
+                                    serverName.equals(newHostname)) {
+                                return false;
+                            }
+                            session = createOutgoingSession(domain, newHostname, port);
+                            if (session != null) {
+                                // Add the new hostname to the list of names that the server may have
+                                session.addHostname(hostname);
+                                // Add the validated domain as an authenticated domain
+                                session.addAuthenticatedDomain(domain);
+                                // Notify the SessionManager that a new session has been created
+                                sessionManager.outgoingServerSessionCreated(session);
+                                // Add the new hostname to the found session
+                                session.addHostname(newHostname);
+                                return true;
+                            } else {
+                                index = hostname.indexOf('.', index + 1);
+                            }
+                        }
+                        return false;
                     }
                 }
             }

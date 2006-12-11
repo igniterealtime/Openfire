@@ -321,7 +321,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                         loadOfflinePresence(probee.getNode());
                     }
                     presenceXML = offlinePresenceCache.get(probee.getNode());
-                    if (presenceXML != null) {
+                    if (presenceXML != null && !NULL_STRING.equals(presenceXML)) {
                         try {
                             // Parse the element
                             Document element = DocumentHelper.parseText(presenceXML);

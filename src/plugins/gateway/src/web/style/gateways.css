@@ -98,12 +98,32 @@ a.jive-gatewayButtonOn {
 }
 .jive-formButton {
 	margin: 10px 5px 5px 0px;
+    vertical-align: middle;
 }
 .saveResultsMsg {
-    margin-left: 5px;
-    vertical-align: middle;
+    margin: 10px 5px 5px 0px;
+    padding: 0px;
     font-weight: bold;
+}
+.saveResultsMsg .successresults {
+    border: 1.0px solid #009900;
+    background-color: #aaffaa;
     color: #009900;
+    padding: 3.0px;
+}
+.saveResultsMsg .successresults img {
+    margin-right: 3px;
+    margin-bottom: 2px;
+}
+.saveResultsMsg .failureresults {
+    border: 1.0px solid #ff0000;
+    background-color: #ffaaaa;
+    color: #ff0000;
+    padding: 3.0px;
+}
+.saveResultsMsg .failureresults img {
+    margin-right: 3px;
+    margin-bottom: 2px;
 }
 
 

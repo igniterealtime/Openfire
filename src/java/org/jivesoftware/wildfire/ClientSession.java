@@ -23,8 +23,6 @@ import org.jivesoftware.wildfire.net.SocketConnection;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.user.PresenceEventDispatcher;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -526,20 +524,16 @@ public class ClientSession extends Session {
      *
      * @param auth the authentication token obtained from the AuthFactory.
      * @param resource the resource this session authenticated under.
-     * @param userManager the user manager this authentication occured under.
      */
-    public void setAuthToken(AuthToken auth, UserManager userManager, String resource)
-            throws UserNotFoundException
-    {
-        User user = userManager.getUser(auth.getUsername());
-        setAddress(new JID(user.getUsername(), getServerName(), resource));
+    public void setAuthToken(AuthToken auth, String resource) {
+        setAddress(new JID(auth.getUsername(), getServerName(), resource));
         authToken = auth;
 
         sessionManager.addSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
 
         // Set default privacy list for this session
-        setDefaultList(PrivacyListManager.getInstance().getDefaultPrivacyList(user.getUsername()));
+        setDefaultList(PrivacyListManager.getInstance().getDefaultPrivacyList(auth.getUsername()));
     }
 
     /**

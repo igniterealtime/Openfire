@@ -222,7 +222,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             }
         }
         // Set that the new session has been authenticated successfully
-        session.setAuthToken(token, userManager, resource);
+        session.setAuthToken(token, resource);
         packet.setFrom(session.getAddress());
         return IQ.createResultIQ(packet);
     }

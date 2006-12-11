@@ -18,8 +18,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
@@ -39,7 +37,6 @@ import org.xmpp.packet.StreamError;
 public class IQBindHandler extends IQHandler {
 
     private IQHandlerInfo info;
-    private UserManager userManager;
     private XMPPServer localServer;
 
     public IQBindHandler() {
@@ -83,58 +80,48 @@ public class IQBindHandler extends IQHandler {
                 return null;
             }
         }
-        try {
-            // Get the token that was generated during the SASL authentication
-            AuthToken authToken = session.getAuthToken();
-            if (authToken.isAnonymous()) {
-                // User used ANONYMOUS SASL so initialize the session as an anonymous login
-                session.setAnonymousAuth();
-            }
-            else {
-                String username = authToken.getUsername().toLowerCase();
-                // If a session already exists with the requested JID, then check to see
-                // if we should kick it off or refuse the new connection
-                if (sessionManager.isActiveRoute(username, resource)) {
-                    ClientSession oldSession;
-                    try {
-                        String domain = localServer.getServerInfo().getName();
-                        oldSession = sessionManager.getSession(username, domain, resource);
-                        oldSession.incrementConflictCount();
-                        int conflictLimit = sessionManager.getConflictKickLimit();
-                        if (conflictLimit != SessionManager.NEVER_KICK &&
-                                oldSession.getConflictCount() > conflictLimit) {
-                            Connection conn = oldSession.getConnection();
-                            if (conn != null) {
-                                // Kick out the old connection that is conflicting with the new one
-                                StreamError error = new StreamError(StreamError.Condition.conflict);
-                                conn.deliverRawText(error.toXML());
-                                conn.close();
-                            }
-                        }
-                        else {
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.conflict);
-                            // Send the error directly since a route does not exist at this point.
-                            session.process(reply);
-                            return null;
+        // Get the token that was generated during the SASL authentication
+        AuthToken authToken = session.getAuthToken();
+        if (authToken.isAnonymous()) {
+            // User used ANONYMOUS SASL so initialize the session as an anonymous login
+            session.setAnonymousAuth();
+        }
+        else {
+            String username = authToken.getUsername().toLowerCase();
+            // If a session already exists with the requested JID, then check to see
+            // if we should kick it off or refuse the new connection
+            if (sessionManager.isActiveRoute(username, resource)) {
+                ClientSession oldSession;
+                try {
+                    String domain = localServer.getServerInfo().getName();
+                    oldSession = sessionManager.getSession(username, domain, resource);
+                    oldSession.incrementConflictCount();
+                    int conflictLimit = sessionManager.getConflictKickLimit();
+                    if (conflictLimit != SessionManager.NEVER_KICK &&
+                            oldSession.getConflictCount() > conflictLimit) {
+                        Connection conn = oldSession.getConnection();
+                        if (conn != null) {
+                            // Kick out the old connection that is conflicting with the new one
+                            StreamError error = new StreamError(StreamError.Condition.conflict);
+                            conn.deliverRawText(error.toXML());
+                            conn.close();
                         }
                     }
-                    catch (Exception e) {
-                        Log.error("Error during login", e);
+                    else {
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.conflict);
+                        // Send the error directly since a route does not exist at this point.
+                        session.process(reply);
+                        return null;
                     }
                 }
-                // If the connection was not refused due to conflict, log the user in
-                session.setAuthToken(authToken, userManager, resource);
+                catch (Exception e) {
+                    Log.error("Error during login", e);
+                }
             }
+            // If the connection was not refused due to conflict, log the user in
+            session.setAuthToken(authToken, resource);
         }
-        catch (UserNotFoundException e) {
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.not_authorized);
-            // Send the error directly since a route does not exist at this point.
-            session.process(reply);
-            return null;
-        }
-
 
         child.addElement("jid").setText(session.getAddress().toString());
         // Send the response directly since a route does not exist at this point.
@@ -145,7 +132,6 @@ public class IQBindHandler extends IQHandler {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
-        userManager = server.getUserManager();
     }
 
     public IQHandlerInfo getInfo() {

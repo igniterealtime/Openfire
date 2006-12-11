@@ -200,6 +200,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
+
+            // Remove data from cache.
+            offlinePresenceCache.remove(username);
+            lastActivityCache.remove(username);
         }
     }
 

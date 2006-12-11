@@ -21,6 +21,7 @@ import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.wildfire.http.HttpSession;
 import org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerSession;
 import org.jivesoftware.wildfire.net.SocketConnection;
@@ -30,7 +31,6 @@ import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.http.HttpSession;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -1282,12 +1282,15 @@ public class SessionManager extends BasicModule {
             return 0;
         }
         int sessionCount = 0;
-        for (Session session: sessions.get(username).getSessions()) {
-            if (session.getStatus() != Session.STATUS_CLOSED) {
-                sessionCount++;
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            for (ClientSession session: sessionMap.getSessions()) {
+                if (session.getPresence().isAvailable()) {
+                    sessionCount++;
+                }
             }
         }
-        return sessionCount;    
+        return sessionCount;
     }
 
     public int getSessionCount(String username) {

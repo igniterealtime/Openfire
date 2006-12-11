@@ -115,7 +115,7 @@ public class Cache<K, V> implements Map<K, V> {
 
     public synchronized V put(K key, V value) {
         // Delete an old entry if it exists.
-        remove(key);
+        V answer = remove(key);
 
         int objectSize = calculateSize(value);
 
@@ -144,7 +144,7 @@ public class Cache<K, V> implements Map<K, V> {
         // not too full.
         cullCache();
 
-        return value;
+        return answer;
     }
 
     public synchronized V get(Object key) {
@@ -514,6 +514,9 @@ public class Cache<K, V> implements Map<K, V> {
             return ((Cacheable)object).getCachedSize();
         }
         // Check for other common types of objects put into cache.
+        else if (object instanceof String) {
+            return CacheSizes.sizeOfString((String)object);
+        }
         else if (object instanceof Long) {
             return CacheSizes.sizeOfLong();
         }

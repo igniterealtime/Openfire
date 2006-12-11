@@ -59,6 +59,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     public void setup(TransportType type, String description) {
         this.description = description;
         this.transportType = type;
+        permissionManager = new PermissionManager(transportType);
     }
 
     /**
@@ -86,7 +87,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * Manages permission information.
      * @see org.jivesoftware.wildfire.gateway.PermissionManager
      */
-    public final PermissionManager permissionManager = new PermissionManager();
+    public PermissionManager permissionManager = null;
 
     /**
      * JID of the transport in question.
@@ -601,7 +602,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     registered = true;
                 }
 
-                if (!registered && !permissionManager.hasAccess(this.transportType, from)) {
+                if (!registered && !permissionManager.hasAccess(from)) {
                     // User does not have permission to register with transport.
                     // We want to allow them to change settings if they are already registered.
                     IQ result = IQ.createResultIQ(packet);
@@ -694,7 +695,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     registered = true;
                 }
 
-                if (!registered && !permissionManager.hasAccess(this.transportType, from)) {
+                if (!registered && !permissionManager.hasAccess(from)) {
                     // User does not have permission to register with transport.
                     // We want to allow them to change settings if they are already registered.
                     result.setError(Condition.bad_request);

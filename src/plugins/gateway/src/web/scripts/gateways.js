@@ -18,9 +18,9 @@ function togglePanel(thisID) {
             Effect.toggle($(thisID),'slide', {duration: .4});
             $(activeLink).className = "";
         } else if ($(thisID).style.display == 'none' && $(lastID).style.display != 'none') {
-            $(lastID).style.display = 'none';
-            $(thisID).style.display = 'block';
-            $(oldLink).className = "";
+            Effect.toggle($(lastID),'slide', {duration: .4});
+            $(oldLink).className = "";            
+            Effect.toggle($(thisID),'slide', {duration: .4, delay: .5});
             $(activeLink).className = "jive-gatewayButtonOn";
         } else {
             Effect.toggle($(thisID),'slide', {duration: .4});

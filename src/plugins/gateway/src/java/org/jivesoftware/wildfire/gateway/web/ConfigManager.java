@@ -11,8 +11,15 @@ package org.jivesoftware.wildfire.gateway.web;
 
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.wildfire.group.GroupManager;
+import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.gateway.GatewayPlugin;
 import org.jivesoftware.wildfire.gateway.TransportType;
+import org.jivesoftware.wildfire.gateway.PermissionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.dom4j.Document;
@@ -20,6 +27,7 @@ import org.dom4j.Element;
 import org.dom4j.Attribute;
 
 import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * Transport Configuration Manager (for web interface)
@@ -127,6 +135,45 @@ public class ConfigManager {
                 saveOptionSetting(item, options);
             }
         }
+    }
+
+    /**
+     * Saves permissions settings from web interface.
+     *
+     * We validate all of the groups before actually adding them.
+     *
+     * @param transportName Name of the transport to have it's options saved (type of transport)
+     * @param overallSetting The general "all(1), some(2), or none(3)" setting for the permissions.
+     * @param users List of specific users that have access.
+     * @param groups List of specific groups that have access.
+     */
+    public void savePermissions(String transportName, Integer overallSetting, ArrayList<String> users, ArrayList<String> groups) {
+        JiveGlobals.setProperty("plugin.gateway."+transportName+".registration", overallSetting.toString());
+        PermissionManager permissionManager = new PermissionManager(TransportType.valueOf(transportName));
+        ArrayList<User> userList = new ArrayList<User>();
+        UserManager userManager = UserManager.getInstance();
+        for (String username : users) {
+            try {
+                User user = userManager.getUser(username);
+                userList.add(user);
+            }
+            catch (UserNotFoundException e) {
+                Log.error("User "+username+" not found while adding access rules.");
+            }
+        }
+        permissionManager.storeUserList(userList);
+        ArrayList<Group> groupList = new ArrayList<Group>();
+        GroupManager groupManager = GroupManager.getInstance();
+        for (String grpname : groups) {
+            try {
+                Group group = groupManager.getGroup(grpname);
+                groupList.add(group);
+            }
+            catch (GroupNotFoundException e) {
+                Log.error("Group "+grpname+" not found while adding access rules.");
+            }
+        }
+        permissionManager.storeGroupList(groupList);
     }
 
 }

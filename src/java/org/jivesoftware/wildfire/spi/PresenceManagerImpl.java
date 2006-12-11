@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.spi;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
+import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
@@ -28,18 +29,17 @@ import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.database.DbConnectionManager;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import java.sql.Connection;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.sql.*;
-import java.sql.Connection;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -208,8 +208,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public void userUnavailable(Presence presence) {
-        // TODO: test to see if presence data preserved when system is shut down.
-
         // Only save the last presence status and keep track of the time when the user went
         // offline if this is an unavailable presence sent to THE SERVER and the presence belongs
         // to a local user.
@@ -220,11 +218,10 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 return;
             }
 
-            // TODO: this check won't current work: getActiveSessionCount returns 1 when it shouldn't.
             // If the user has any remaining sessions, don't record the offline info.
-//            if (sessionManager.getActiveSessionCount(username) > 0) {
-//                return;
-//            }
+            if (sessionManager.getActiveSessionCount(username) > 0) {
+                return;
+            }
 
             String offlinePresence = null;
             // Save the last unavailable presence of this user if the presence contains any

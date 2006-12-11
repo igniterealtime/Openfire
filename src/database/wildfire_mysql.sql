@@ -57,6 +57,13 @@ CREATE TABLE jiveOffline (
   PRIMARY KEY (username, messageID)
 );
 
+CREATE TABLE jivePresence (
+  username              VARCHAR(64)     NOT NULL,
+  offlinePresence       TEXT,
+  offlineDate           CHAR(15)     NOT NULL,
+  PRIMARY KEY (username)
+);
+
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
   username              VARCHAR(64)     NOT NULL,
@@ -311,7 +318,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 10);
+INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 11);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

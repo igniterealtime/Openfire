@@ -40,6 +40,12 @@ CREATE TABLE jiveOffline (
   CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
+CREATE TABLE jivePresence (
+  username              VARCHAR(64)     NOT NULL,
+  offlinePresence       VARCHAR(2000),
+  offlineDate           CHAR(15)     NOT NULL,
+  CONSTRAINT jivePresence_pk PRIMARY KEY (username)
+);
 
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
@@ -336,7 +342,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 10);
+INSERT INTO jiveVersion (name, version) VALUES ('wildfire', 11;
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

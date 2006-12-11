@@ -682,8 +682,8 @@ public class ClientSession extends Session {
             wasAvailable = true;
             // Notify listeners that the session is now available
             PresenceEventDispatcher.availableSession(this, presence);
-        } else
-        if (this.presence.isAvailable() && oldPresence.getPriority() != this.presence.getPriority())
+        }
+        else if (this.presence.isAvailable() && oldPresence.getPriority() != this.presence.getPriority())
         {
             // The client has changed the priority of his presence
             sessionManager.changePriority(getAddress(), this.presence.getPriority());

@@ -274,28 +274,6 @@ public class UserManager implements IQResultListener {
     }
 
     /**
-     * Returns the value of the specified property for the given username. If the user
-     * has been loaded into memory then the ask the user to return the value of the
-     * property. However, if the user is not present in memory then try to get the property
-     * value directly from the database as a way to optimize the performance.
-     *
-     * @param username the username of the user to get a specific property value.
-     * @param propertyName the name of the property to return its value.
-     * @return the value of the specified property for the given username.
-     */
-    public String getUserProperty(String username, String propertyName) {
-        username = username.trim().toLowerCase();
-        User user = userCache.get(username);
-        if (user == null) {
-            return User.getPropertyValue(username, propertyName);
-        }
-        else {
-            // User is in memory so ask the user for the specified property value
-            return user.getProperties().get(propertyName);
-        }
-    }
-
-    /**
      * Returns true if the specified local username belongs to a registered local user.
      *
      * @param username to username of the user to check it it's a registered user.

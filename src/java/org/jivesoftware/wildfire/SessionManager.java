@@ -1269,6 +1269,27 @@ public class SessionManager extends BasicModule {
         return anonymousSessions.size();
     }
 
+    /**
+     * Returns the number of sessions for a user that are available. For the count
+     * of all sessions for the user, including sessions that are just starting
+     * or closed, see {@see #getSessionCount(String)}.
+     *
+     * @param username the user.
+     * @return number of available sessions for a user.
+     */
+    public int getActiveSessionCount(String username) {
+        if (username == null || !userManager.isRegisteredUser(username)) {
+            return 0;
+        }
+        int sessionCount = 0;
+        for (Session session: sessions.get(username).getSessions()) {
+            if (session.getStatus() != Session.STATUS_CLOSED) {
+                sessionCount++;
+            }
+        }
+        return sessionCount;    
+    }
+
     public int getSessionCount(String username) {
         if (username == null || !userManager.isRegisteredUser(username)) {
             return 0;

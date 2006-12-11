@@ -3,7 +3,7 @@
  * $Revision: 3128 $
  * $Date: 2005-11-30 15:31:54 -0300 (Wed, 30 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -14,10 +14,7 @@ package org.jivesoftware.wildfire.spi;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
@@ -31,6 +28,7 @@ import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.database.DbConnectionManager;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -40,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.sql.*;
+import java.sql.Connection;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -48,8 +48,15 @@ import java.util.List;
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager {
 
-    private static final String LAST_PRESENCE_PROP = "lastUnavailablePresence";
-    private static final String LAST_ACTIVITY_PROP = "lastActivity";
+    private static final String LOAD_OFFLINE_PRESENCE =
+            "SELECT offlinePresence, offlineDate FROM jivePresence WHERE username=?";
+    private static final String INSERT_OFFLINE_PRESENCE =
+            "INSERT INTO jivePresence(username, offlinePresence, offlineDate) VALUES(?,?,?)";
+    private static final String DELETE_OFFLINE_PRESENCE =
+            "DELETE FROM jivePresence WHERE username=?";
+
+    private static final String NULL_STRING = "NULL";
+    private static final long NULL_LONG = -1L;
 
     private SessionManager sessionManager;
     private UserManager userManager;
@@ -60,8 +67,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     private InternalComponentManager componentManager;
 
-    private Cache lastActivityCache;
-    private Cache offlinePresenceCache;
+    private Cache<String, Long> lastActivityCache;
+    private Cache<String, String> offlinePresenceCache;
 
     public PresenceManagerImpl() {
         super("Presence manager");
@@ -71,7 +78,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public boolean isAvailable(User user) {
-        return sessionManager.getSessionCount(user.getUsername()) > 0;
+        return sessionManager.getActiveSessionCount(user.getUsername()) > 0;
     }
 
     public Presence getPresence(User user) {
@@ -112,33 +119,54 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public String getLastPresenceStatus(User user) {
-        String answer = null;
-        String presenceXML = user.getProperties().get(LAST_PRESENCE_PROP);
+        String username = user.getUsername();
+        String presenceStatus = null;
+        String presenceXML = offlinePresenceCache.get(username);
+        if (presenceXML == null) {
+            loadOfflinePresence(username);
+        }
+        presenceXML = offlinePresenceCache.get(username);
         if (presenceXML != null) {
+            // If the cached answer is no data, return null.
+            if (presenceXML.equals(NULL_STRING)) {
+                return null;
+            }
+            // Otherwise, parse out the status from the XML.
             try {
                 // Parse the element
                 Document element = DocumentHelper.parseText(presenceXML);
-                answer = element.getRootElement().elementTextTrim("status");
+                presenceStatus = element.getRootElement().elementTextTrim("status");
             }
             catch (DocumentException e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
-        return answer;
+        return presenceStatus;
     }
 
     public long getLastActivity(User user) {
-        long answer = -1;
-        String offline = user.getProperties().get(LAST_ACTIVITY_PROP);
-        if (offline != null) {
-            try {
-                answer = (System.currentTimeMillis() - Long.parseLong(offline));
+        String username = user.getUsername();
+        long lastActivity = NULL_LONG;
+        Long offlineDate = lastActivityCache.get(username);
+        if (offlineDate == null) {
+            loadOfflinePresence(username);
+        }
+        offlineDate = lastActivityCache.get(username);
+        if (offlineDate != null) {
+            // If the cached answer is no data, return -1.
+            if (offlineDate == NULL_LONG) {
+                return NULL_LONG;
             }
-            catch (NumberFormatException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            else {
+                try {
+                    lastActivity = (System.currentTimeMillis() - offlineDate);
+                }
+                catch (NumberFormatException e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
             }
         }
-        return answer;
+        return lastActivity;
     }
 
     public void userAvailable(Presence presence) {
@@ -151,16 +179,33 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 // Ignore anonymous users
                 return;
             }
-            try {
-                User probeeUser = userManager.getUser(username);
-                probeeUser.getProperties().remove(LAST_PRESENCE_PROP);
+
+            // Optimization: only delete the unavailable presence information if this
+            // is the first session created on the server.
+            if (sessionManager.getSessionCount(username) > 1) {
+                return;
             }
-            catch (UserNotFoundException e) {
+
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(DELETE_OFFLINE_PRESENCE);
+                pstmt.setString(1, username);
+                pstmt.execute();
+            }
+            catch (SQLException sqle) {
+                Log.error(sqle);
+            }
+            finally {
+                DbConnectionManager.closeConnection(pstmt, con);
             }
         }
     }
 
     public void userUnavailable(Presence presence) {
+        // TODO: test to see if presence data preserved when system is shut down.
+
         // Only save the last presence status and keep track of the time when the user went
         // offline if this is an unavailable presence sent to THE SERVER and the presence belongs
         // to a local user.
@@ -170,18 +215,43 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 // Ignore anonymous users
                 return;
             }
-            try {
-                User probeeUser = userManager.getUser(username);
-                if (!presence.getElement().elements().isEmpty()) {
-                    // Save the last unavailable presence of this user if the presence contains any
-                    // child element such as <status>
-                    probeeUser.getProperties().put(LAST_PRESENCE_PROP, presence.toXML());
-                }
-                // Keep track of the time when the user went offline
-                probeeUser.getProperties().put(LAST_ACTIVITY_PROP,
-                        String.valueOf(System.currentTimeMillis()));
+
+            // TODO: this check won't current work: getActiveSessionCount returns 1 when it shouldn't.
+            // If the user has any remaining sessions, don't record the offline info.
+//            if (sessionManager.getActiveSessionCount(username) > 0) {
+//                return;
+//            }
+
+            String offlinePresence = null;
+            // Save the last unavailable presence of this user if the presence contains any
+            // child element such as <status>.
+            if (!presence.getElement().elements().isEmpty()) {
+                offlinePresence = presence.toXML();
             }
-            catch (UserNotFoundException e) {
+            // Keep track of the time when the user went offline
+            java.util.Date offlinePresenceDate = new java.util.Date();
+
+            // Insert data into the database.
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(INSERT_OFFLINE_PRESENCE);
+                pstmt.setString(1, username);
+                if (offlinePresence != null) {
+                    DbConnectionManager.setLargeTextField(pstmt, 2, offlinePresence);
+                }
+                else {
+                    pstmt.setNull(2, Types.VARCHAR);
+                }
+                pstmt.setString(3, StringUtils.dateToMillis(offlinePresenceDate));
+                pstmt.execute();
+            }
+            catch (SQLException sqle) {
+                Log.error(sqle);
+            }
+            finally {
+                DbConnectionManager.closeConnection(pstmt, con);
             }
         }
     }
@@ -221,11 +291,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException {
         RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
-        if (item.getSubStatus() == RosterItem.SUB_FROM
-                || item.getSubStatus() == RosterItem.SUB_BOTH) {
-            return true;
-        }
-        return false;
+        return item.getSubStatus() == RosterItem.SUB_FROM
+                || item.getSubStatus() == RosterItem.SUB_BOTH;
     }
 
     public void probePresence(JID prober, JID probee) {
@@ -248,8 +315,11 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     // If the probee is not online then try to retrieve his last unavailable
                     // presence which may contain particular information and send it to the
                     // prober
-                    String presenceXML =
-                            userManager.getUserProperty(probee.getNode(), LAST_PRESENCE_PROP);
+                    String presenceXML = offlinePresenceCache.get(probee.getNode());
+                    if (presenceXML == null) {
+                        loadOfflinePresence(probee.getNode());
+                    }
+                    presenceXML = offlinePresenceCache.get(probee.getNode());
                     if (presenceXML != null) {
                         try {
                             // Parse the element
@@ -407,5 +477,41 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
             return component;
         }
         return null;
+    }
+
+    /**
+     * Loads offline presence data for the user into cache.
+     *
+     * @param username the username.
+     */
+    private void loadOfflinePresence(String username) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_OFFLINE_PRESENCE);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                String offlinePresence = DbConnectionManager.getLargeTextField(rs, 1);
+                if (rs.wasNull()) {
+                    offlinePresence = NULL_STRING;    
+                }
+                long offlineDate = Long.parseLong(rs.getString(2).trim());
+                offlinePresenceCache.put(username, offlinePresence);
+                lastActivityCache.put(username, offlineDate);
+            }
+            else {
+                offlinePresenceCache.put(username, NULL_STRING);
+                lastActivityCache.put(username, NULL_LONG);
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
     }
 }

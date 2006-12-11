@@ -342,12 +342,13 @@
             }
         }
         ConfigManager.saveSettings(transportID, transportSettings);
-        document.getElementById(transportID+"optionsresults").innerHTML = "Settings Saved!";
+        document.getElementById(transportID+"optionsresults").style.display = "";
+        document.getElementById(transportID+"optionsresults").innerHTML = "<span class='successresults'><img src='images/success-16x16.gif' align='absmiddle' />Settings Saved!</span>";
         setTimeout("to_saveOptions('"+transportID+"')", 5000);
     }
 
     function to_saveOptions(transportID) {
-        document.getElementById(transportID+"optionsresults").innerHTML = "";
+        Effect.Fade(transportID+"optionsresults");
     }
 
     function testConnect(transportID) {
@@ -357,18 +358,19 @@
     }
 
     function cb_testConnect(result) {
+        document.getElementById(testTransportID+"testsresults").style.display = "";
         if (result) {
-            document.getElementById(testTransportID+"testsresults").innerHTML = "Success!";
+            document.getElementById(testTransportID+"testsresults").innerHTML = "<span class='successresults'><img src='images/success-16x16.gif' alt='' align='absmiddle' />Success!</span>";
         }
         else {
-            document.getElementById(testTransportID+"testsresults").innerHTML = "<span style='color: #ff0000'>Failed.</span>";
+            document.getElementById(testTransportID+"testsresults").innerHTML = "<span class='failureresults'><img src='images/failure-16x16.gif' alt='' align='absmiddle' />Failed.</span>";
         }
         setTimeout("to_testConnect('"+testTransportID+"')", 5000);
         testTransportID = null;
     }
 
     function to_testConnect(transportID) {
-        document.getElementById(transportID+"testsresults").innerHTML = "";
+        Effect.Fade(transportID+"testsresults");
     }
 </script>
 </head>

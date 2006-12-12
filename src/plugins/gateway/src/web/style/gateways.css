@@ -110,6 +110,7 @@ a.jive-gatewayButtonOn {
     background-color: #aaffaa;
     color: #009900;
     padding: 3.0px;
+    float: right;
 }
 .saveResultsMsg .successresults img {
     margin-right: 3px;
@@ -120,6 +121,7 @@ a.jive-gatewayButtonOn {
     background-color: #ffaaaa;
     color: #ff0000;
     padding: 3.0px;
+    float: right;
 }
 .saveResultsMsg .failureresults img {
     margin-right: 3px;
@@ -130,6 +132,7 @@ a.jive-gatewayButtonOn {
     background-color: #FFE9B2;
     color: #915a15;
     padding: 3.0px;
+    float: right;
 }
 .saveResultsMsg .warningresults img {
     margin-right: 3px;

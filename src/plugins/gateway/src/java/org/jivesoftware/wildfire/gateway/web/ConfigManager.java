@@ -150,9 +150,11 @@ public class ConfigManager {
     public void savePermissions(String transportName, Integer overallSetting, ArrayList<String> users, ArrayList<String> groups) {
         JiveGlobals.setProperty("plugin.gateway."+transportName+".registration", overallSetting.toString());
         PermissionManager permissionManager = new PermissionManager(TransportType.valueOf(transportName));
+
         ArrayList<User> userList = new ArrayList<User>();
         UserManager userManager = UserManager.getInstance();
         for (String username : users) {
+            if (username.matches("\\s+")) { continue; }
             try {
                 User user = userManager.getUser(username);
                 userList.add(user);
@@ -162,9 +164,11 @@ public class ConfigManager {
             }
         }
         permissionManager.storeUserList(userList);
+        
         ArrayList<Group> groupList = new ArrayList<Group>();
         GroupManager groupManager = GroupManager.getInstance();
         for (String grpname : groups) {
+            if (grpname.matches("\\s+")) { continue; }
             try {
                 Group group = groupManager.getGroup(grpname);
                 groupList.add(group);

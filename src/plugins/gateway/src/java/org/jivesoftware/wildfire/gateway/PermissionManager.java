@@ -152,12 +152,14 @@ public class PermissionManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
+            Log.warn("clearing users for "+transportType.toString());
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_ALL_USERS);
             pstmt.setString(1, transportType.toString());
             pstmt.executeUpdate();
 
             for (User user : users) {
+                Log.warn("saving user "+user.getUsername());
                 pstmt = con.prepareStatement(ADD_NEW_USER);
                 pstmt.setString(1, transportType.toString());
                 pstmt.setString(2, user.getUsername());

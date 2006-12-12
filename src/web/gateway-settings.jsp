@@ -318,12 +318,12 @@
                             <td align="left">
                                 <span style="font-weight: bold">Users</span> <a href="javascript:noop()" onClick="activateModifyUsers('<%= this.gatewayType.toString() %>'); return false">(Modify Users)</a><br />
                                 <span id="<%= this.gatewayType.toString() %>userpermtext"><%= this.userPermText %></span>
-                                <div id="<%= this.gatewayType.toString() %>userpermentrydiv" style="display:none"><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>userpermentry" name="<%= this.gatewayType.toString() %>userpermentry"><%= this.userPermEntry %></textarea></div>
+                                <div id="<%= this.gatewayType.toString() %>userpermentrydiv" style="display:none" class='permissionListDiv'><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>userpermentry" name="<%= this.gatewayType.toString() %>userpermentry"><%= this.userPermEntry %></textarea></div>
                             </td>
                             <td align="left" style="padding-left: 30.0px">
                                 <span style="font-weight: bold">Groups</span> <a href="javascript:noop()" onClick="activateModifyGroups('<%= this.gatewayType.toString() %>'); return false">(Modify Groups)</a><br />
                                 <span id="<%= this.gatewayType.toString() %>grouppermtext"><%= this.groupPermText %></span>
-                                <div id="<%= this.gatewayType.toString() %>grouppermentrydiv" style="display:none"><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>grouppermentry" name="<%= this.gatewayType.toString() %>grouppermentry"><%= this.groupPermEntry %></textarea></div>
+                                <div id="<%= this.gatewayType.toString() %>grouppermentrydiv" style="display:none" class='permissionListDiv'><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>grouppermentry" name="<%= this.gatewayType.toString() %>grouppermentry"><%= this.groupPermEntry %></textarea></div>
                             </td>
                         </tr>
                     </table>
@@ -466,7 +466,7 @@
 
     function activateModifyUsers(transportID) {
         document.getElementById(transportID+"userpermtext").style.display = "none";
-        document.getElementById(transportID+"userpermentrydiv").style.display = "block";
+        document.getElementById(transportID+"userpermentrydiv").style.display = "inline";
     }
 
     function deactivateModifyUsers(transportID) {
@@ -476,7 +476,7 @@
 
     function activateModifyGroups(transportID) {
         document.getElementById(transportID+"grouppermtext").style.display = "none";
-        document.getElementById(transportID+"grouppermentrydiv").style.display = "block";
+        document.getElementById(transportID+"grouppermentrydiv").style.display = "inline";
     }
 
     function deactivateModifyGroups(transportID) {

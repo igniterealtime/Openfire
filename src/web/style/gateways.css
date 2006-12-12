@@ -137,6 +137,12 @@ a.jive-gatewayButtonOn {
 }
 .permissionListTextArea {
     font-size: 70%;
+    margin: 0px;
+    padding: 1px;
+}
+.permissionListDiv {
+    padding: 0px;
+    margin: 0px;
 }
 
 
@@ -396,13 +402,13 @@ tr.jive-registrations-edit, tr.jive-registrations-editVisible td {
 .jive-gateway-addregBtn a {
 	display: block;
 	float: left;
-	background: url('/images/add-16x16.gif') no-repeat left;
+	background: url('../images/add-16x16.gif') no-repeat left;
 	padding-left: 20px;
 	color: #34679a;
 	font-weight: bold;
 	}
 .jive-gateway-cancelAdd a {
-	background: url('/images/forbidden-16x16.gif') no-repeat left;
+	background: url('../images/forbidden-16x16.gif') no-repeat left;
 	}
 
 .jive-gateway-addreg {

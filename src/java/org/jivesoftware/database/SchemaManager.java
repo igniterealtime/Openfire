@@ -181,7 +181,7 @@ public class SchemaManager {
             DbConnectionManager.closeStatement(pstmt);
         }
         // If already up to date, return.
-        if (currentVersion == requiredVersion) {
+        if (currentVersion >= requiredVersion) {
             return true;
         }
         // If the database schema isn't installed at all, we need to install it.

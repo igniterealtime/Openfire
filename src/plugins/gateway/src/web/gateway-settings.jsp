@@ -313,17 +313,17 @@
                 <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="all" onClick="hideSpecificChoices('<%= this.gatewayType.toString() %>')" <%= (this.globalPermSetting == 1 ? "checked='checked'" : "") %> /> All users can register<br>
                 <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="specific" onClick="showSpecificChoices('<%= this.gatewayType.toString() %>')"  <%= (this.globalPermSetting == 2 ? "checked='checked'" : "") %> /> These users and/or groups can register<br>
                 <div id="<%= this.gatewayType.toString() %>userreg_specific" style="<%= (this.globalPermSetting == 2 ? "" : "display: none; ") %>margin: 0; padding: 0; font-size: 80%">
-                    <table border="0" cellpadding="0" cellspacing="0" style="padding-left: 30.0px">
+                    <table border="0" cellpadding="0" cellspacing="0" style="margin-left: 30.0px" width='100%'>
                         <tr valign="top">
-                            <td align="left">
+                            <td align="left" style="padding-right: 15.0px" width='50%'>
                                 <span style="font-weight: bold">Users</span> <a href="javascript:noop()" onClick="activateModifyUsers('<%= this.gatewayType.toString() %>'); return false">(Modify Users)</a><br />
-                                <span id="<%= this.gatewayType.toString() %>userpermtext"><%= this.userPermText %></span>
-                                <div id="<%= this.gatewayType.toString() %>userpermentrydiv" style="display:none" class='permissionListDiv'><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>userpermentry" name="<%= this.gatewayType.toString() %>userpermentry"><%= this.userPermEntry %></textarea></div>
+                                <div id="<%= this.gatewayType.toString() %>userpermtextdiv" style="margin: 0px; padding: 0px" class='permissionListDiv'><span id="<%= this.gatewayType.toString() %>userpermtext"><%= this.userPermText %></span></div>
+                                <div id="<%= this.gatewayType.toString() %>userpermentrydiv" style="margin: 0px; padding: 0px; display:none" class='permissionListDiv'><textarea style="margin: 0px" class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>userpermentry" name="<%= this.gatewayType.toString() %>userpermentry"><%= this.userPermEntry %></textarea></div>
                             </td>
-                            <td align="left" style="padding-left: 30.0px">
+                            <td align="left" style="margin-left: 15.0px" width='50%'>
                                 <span style="font-weight: bold">Groups</span> <a href="javascript:noop()" onClick="activateModifyGroups('<%= this.gatewayType.toString() %>'); return false">(Modify Groups)</a><br />
-                                <span id="<%= this.gatewayType.toString() %>grouppermtext"><%= this.groupPermText %></span>
-                                <div id="<%= this.gatewayType.toString() %>grouppermentrydiv" style="display:none" class='permissionListDiv'><textarea class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>grouppermentry" name="<%= this.gatewayType.toString() %>grouppermentry"><%= this.groupPermEntry %></textarea></div>
+                                <div id="<%= this.gatewayType.toString() %>grouppermtextdiv" style="margin: 0px; padding: 0px" class='permissionListDiv'><span id="<%= this.gatewayType.toString() %>grouppermtext"><%= this.groupPermText %></span></div>
+                                <div id="<%= this.gatewayType.toString() %>grouppermentrydiv" style="margin: 0px; padding: 0px; display:none" class='permissionListDiv'><textarea style="margin: 0px" class='permissionListTextArea' rows="5" cols="20" id="<%= this.gatewayType.toString() %>grouppermentry" name="<%= this.gatewayType.toString() %>grouppermentry"><%= this.groupPermEntry %></textarea></div>
                             </td>
                         </tr>
                     </table>
@@ -447,6 +447,10 @@
         var userList = userEntry.split(/\s+/);
         var groupList = groupEntry.split(/\s+/);
         ConfigManager.savePermissions(transportID, globalSetting, userList, groupList);
+        document.getElementById(transportID+"userpermtext").innerHTML = userList.join(" ");
+        document.getElementById(transportID+"grouppermtext").innerHTML = groupList.join(" ");
+        deactivateModifyUsers(transportID);
+        deactivateModifyGroups(transportID);
         document.getElementById(transportID+"permsresults").style.display = "";
         document.getElementById(transportID+"permsresults").innerHTML = "<span class='successresults'><img src='images/success-16x16.gif' align='absmiddle' />Permissions Saved!</span>";
         setTimeout("to_savePermissions('"+transportID+"')", 5000);
@@ -465,23 +469,47 @@
     }
 
     function activateModifyUsers(transportID) {
-        document.getElementById(transportID+"userpermtext").style.display = "none";
-        document.getElementById(transportID+"userpermentrydiv").style.display = "inline";
+        var textElem = document.getElementById(transportID+"userpermtextdiv");
+        var entryElem = document.getElementById(transportID+"userpermentrydiv");
+        if (textElem.style.display != "none") {
+            Effect.SlideUp(textElem,{duration: .4});
+        }
+        if (entryElem.style.display == "none") {
+            Effect.SlideDown(entryElem, {duration: .4, delay: .5});
+        }
     }
 
     function deactivateModifyUsers(transportID) {
-        document.getElementById(transportID+"userpermtext").style.display = "inline";
-        document.getElementById(transportID+"userpermentrydiv").style.display = "none";
+        var textElem = document.getElementById(transportID+"userpermtextdiv");
+        var entryElem = document.getElementById(transportID+"userpermentrydiv");
+        if (entryElem.style.display != "none") {
+            Effect.SlideUp(entryElem,{duration: .4});
+        }
+        if (textElem.style.display == "none") {
+            Effect.SlideDown(textElem, {duration: .4, delay: .5});
+        }
     }
 
     function activateModifyGroups(transportID) {
-        document.getElementById(transportID+"grouppermtext").style.display = "none";
-        document.getElementById(transportID+"grouppermentrydiv").style.display = "inline";
+        var textElem = document.getElementById(transportID+"grouppermtextdiv");
+        var entryElem = document.getElementById(transportID+"grouppermentrydiv");
+        if (textElem.style.display != "none") {
+            Effect.SlideUp(textElem,{duration: .4});
+        }
+        if (entryElem.style.display == "none") {
+            Effect.SlideDown(entryElem, {duration: .4, delay: .5});
+        }
     }
 
     function deactivateModifyGroups(transportID) {
-        document.getElementById(transportID+"grouppermtext").style.display = "inline";
-        document.getElementById(transportID+"grouppermentrydiv").style.display = "none";
+        var textElem = document.getElementById(transportID+"grouppermtextdiv");
+        var entryElem = document.getElementById(transportID+"grouppermentrydiv");
+        if (entryElem.style.display != "none") {
+            Effect.SlideUp(entryElem,{duration: .4});
+        }
+        if (textElem.style.display == "none") {
+            Effect.SlideDown(textElem, {duration: .4, delay: .5});
+        }
     }
 
     function hideSpecificChoices(transportID) {

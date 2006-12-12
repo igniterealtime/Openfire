@@ -126,9 +126,9 @@ a.jive-gatewayButtonOn {
     margin-bottom: 2px;
 }
 .saveResultsMsg .warningresults {
-    border: 1.0px solid #550000;
-    background-color: #ffff00;
-    color: #550000;
+    border: 1.0px solid #D9B04C;
+    background-color: #FFE9B2;
+    color: #915a15;
     padding: 3.0px;
 }
 .saveResultsMsg .warningresults img {
@@ -141,6 +141,10 @@ a.jive-gatewayButtonOn {
     padding: 1px;
 }
 .permissionListDiv {
+    padding: 0px;
+    margin: 0px;
+}
+.permissionListDiv span {
     padding: 0px;
     margin: 0px;
 }

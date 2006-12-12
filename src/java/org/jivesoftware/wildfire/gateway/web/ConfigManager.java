@@ -157,10 +157,11 @@ public class ConfigManager {
             if (username.matches("\\s+")) { continue; }
             try {
                 User user = userManager.getUser(username);
+                if (user == null || user.getUsername() == null) { throw new UserNotFoundException(); }
                 userList.add(user);
             }
             catch (UserNotFoundException e) {
-                Log.error("User "+username+" not found while adding access rules.");
+                Log.warn("User "+username+" not found while adding access rules.");
             }
         }
         permissionManager.storeUserList(userList);
@@ -171,10 +172,11 @@ public class ConfigManager {
             if (grpname.matches("\\s+")) { continue; }
             try {
                 Group group = groupManager.getGroup(grpname);
+                if (group == null || group.getName() == null) { throw new GroupNotFoundException(); }
                 groupList.add(group);
             }
             catch (GroupNotFoundException e) {
-                Log.error("Group "+grpname+" not found while adding access rules.");
+                Log.warn("Group "+grpname+" not found while adding access rules.");
             }
         }
         permissionManager.storeGroupList(groupList);

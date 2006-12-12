@@ -41,9 +41,9 @@ public class PermissionManager {
     private static final String GROUPS_LISTED =
             "SELECT groupname FROM gatewayRestrictions WHERE transportType=?";
     private static final String DELETE_ALL_USERS =
-            "DELETE FROM gatewayRestrictions WHERE transportType=?";
+            "DELETE FROM gatewayRestrictions WHERE transportType=? AND username IS NOT NULL";
     private static final String DELETE_ALL_GROUPS =
-            "DELETE FROM gatewayRestrictions WHERE transportType=?";
+            "DELETE FROM gatewayRestrictions WHERE transportType=? AND groupname IS NOT NULL";
     private static final String ADD_NEW_USER =
             "INSERT INTO gatewayRestrictions(transportType,username) VALUES(?,?)";
     private static final String ADD_NEW_GROUP =
@@ -152,20 +152,19 @@ public class PermissionManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            Log.warn("clearing users for "+transportType.toString());
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_ALL_USERS);
             pstmt.setString(1, transportType.toString());
             pstmt.executeUpdate();
+            pstmt.close();
 
+            pstmt = con.prepareStatement(ADD_NEW_USER);
+            pstmt.setString(1, transportType.toString());
             for (User user : users) {
-                Log.warn("saving user "+user.getUsername());
-                pstmt = con.prepareStatement(ADD_NEW_USER);
-                pstmt.setString(1, transportType.toString());
                 pstmt.setString(2, user.getUsername());
                 pstmt.executeUpdate();
             }
-
+            pstmt.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -189,14 +188,15 @@ public class PermissionManager {
             pstmt = con.prepareStatement(DELETE_ALL_GROUPS);
             pstmt.setString(1, transportType.toString());
             pstmt.executeUpdate();
+            pstmt.close();
 
+            pstmt = con.prepareStatement(ADD_NEW_GROUP);
+            pstmt.setString(1, transportType.toString());
             for (Group group : groups) {
-                pstmt = con.prepareStatement(ADD_NEW_GROUP);
-                pstmt.setString(1, transportType.toString());
                 pstmt.setString(2, group.getName());
                 pstmt.executeUpdate();
             }
-
+            pstmt.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);

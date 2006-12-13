@@ -10,13 +10,13 @@
 
 package org.jivesoftware.util;
 
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Date;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -252,11 +252,15 @@ public class TaskEngine {
      * Shuts down the task engine service.
      */
     public void shutdown() {
-        executor.shutdownNow();
-        executor = null;
+        if (executor != null) {
+            executor.shutdownNow();
+            executor = null;
+        }
 
-        timer.cancel();
-        timer = null;
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
     /**

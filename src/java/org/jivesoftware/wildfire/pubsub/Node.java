@@ -1068,7 +1068,7 @@ public abstract class Node {
      * @return true if a user may have more than one subscription with the node.
      */
     public boolean isMultipleSubscriptionsEnabled() {
-        return true;
+        return service.isMultipleSubscriptionsEnabled();
     }
 
     /**

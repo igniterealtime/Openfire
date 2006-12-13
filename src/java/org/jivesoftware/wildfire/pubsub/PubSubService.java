@@ -53,6 +53,7 @@ public interface PubSubService {
     /**
      * Returns true if the pubsub service allows the specified user to create nodes.
      *
+     * @param creator the JID of the entity trying to create a new node.
      * @return true if the pubsub service allows the specified user to create nodes.
      */
     boolean canCreateNode(JID creator);
@@ -212,4 +213,13 @@ public interface PubSubService {
      * @param user the JID of the affiliate to unsubscribe from his presence.
      */
     void presenceSubscriptionNotRequired(Node node, JID user);
+
+    /**
+     * Returns true if a user may have more than one subscription with the node. When
+     * multiple subscriptions is enabled each subscription request, event notification and
+     * unsubscription request should include a <tt>subid</tt> attribute.
+     *
+     * @return true if a user may have more than one subscription with the node.
+     */
+    boolean isMultipleSubscriptionsEnabled();
 }

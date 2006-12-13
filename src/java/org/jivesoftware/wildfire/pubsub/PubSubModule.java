@@ -69,6 +69,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     private boolean nodeCreationRestricted = false;
 
     /**
+     * Flag that indicates if a user may have more than one subscription with the node. When multiple
+     * subscriptions is enabled each subscription request, event notification and unsubscription request
+     * should include a subid attribute.
+     */
+    private boolean multipleSubscriptionsEnabled = true;
+
+    /**
      * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
      * create nodes.
      */
@@ -267,6 +274,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return nodeCreationRestricted;
     }
 
+    public boolean isMultipleSubscriptionsEnabled() {
+        return multipleSubscriptionsEnabled;
+    }
+
     public void setNodeCreationRestricted(boolean nodeCreationRestricted) {
         this.nodeCreationRestricted = nodeCreationRestricted;
         JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(nodeCreationRestricted));
@@ -306,8 +317,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 sysadmins.add(jid.trim().toLowerCase());
             }
         }
-        nodeCreationRestricted =
-                Boolean.parseBoolean(JiveGlobals.getProperty("xmpp.pubsub.create.anyone", "false"));
+        nodeCreationRestricted = JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", false);
         // Load the list of JIDs that are allowed to create nodes
         property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
         if (property != null) {
@@ -316,6 +326,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 allowedToCreate.add(jid.trim().toLowerCase());
             }
         }
+
+        multipleSubscriptionsEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.multiple-subscriptions", true);
 
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();

@@ -482,6 +482,15 @@ public class HttpServerManager {
     private Connector createConnector(int port) {
         if (port > 0) {
             SelectChannelConnector connector = new SelectChannelConnector();
+            // Listen on a specific network interface if it has been set.
+            String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+            String bindInterface = null;
+            if (interfaceName != null) {
+                if (interfaceName.trim().length() > 0) {
+                    bindInterface = interfaceName;
+                }
+            }
+            connector.setHost(bindInterface);
             connector.setPort(port);
             return connector;
         }
@@ -493,6 +502,14 @@ public class HttpServerManager {
             if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
                     XMPPServer.getInstance().getServerInfo().getName())) {
                 SslSocketConnector sslConnector = new JiveSslConnector();
+                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+                String bindInterface = null;
+                if (interfaceName != null) {
+                    if (interfaceName.trim().length() > 0) {
+                        bindInterface = interfaceName;
+                    }
+                }
+                sslConnector.setHost(bindInterface);
                 sslConnector.setPort(securePort);
 
                 sslConnector.setTrustPassword(SSLConfig.getTrustPassword());

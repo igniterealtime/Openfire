@@ -16,6 +16,7 @@ import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -123,5 +124,11 @@ public class AuthenticateUser extends AdHocCommand {
 
     protected Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
+    }
+
+    @Override
+    public boolean hasPermission(JID requester) {
+        return super.hasPermission(requester) ||
+                InternalComponentManager.getInstance().getComponent(requester) != null;
     }
 }

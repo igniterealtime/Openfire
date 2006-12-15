@@ -629,6 +629,16 @@ public class HttpServerManager {
         }
     }
 
+    public String getHttpBindUnsecureAddress() {
+        return "http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    bindPort + "/http-bind/";
+    }
+
+    public String getHttpBindSecureAddress() {
+        return "https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    bindSecurePort + "/http-bind/";
+    }
+
     private class CertificateListener implements CertificateEventListener {
 
         public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {

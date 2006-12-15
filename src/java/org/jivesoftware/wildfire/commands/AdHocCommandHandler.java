@@ -203,6 +203,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new UserProperties());
         addCommand(new PacketsNotification());
         addCommand(new GetServerStats());
+        addCommand(new HttpBindStatus());
     }
 
     private void startCommand(AdHocCommand command) {

@@ -11,9 +11,11 @@ package org.jivesoftware.wildfire.commands.admin;
 import org.jivesoftware.wildfire.commands.AdHocCommand;
 import org.jivesoftware.wildfire.commands.SessionData;
 import org.jivesoftware.wildfire.HttpServerManager;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.packet.JID;
 
 import java.util.List;
 import java.util.Collections;
@@ -51,7 +53,7 @@ public class HttpBindStatus extends AdHocCommand {
         field = form.addField();
         field.setLabel("Http Bind Enabled");
         field.setVariable("httpbindenabled");
-        field.addValue(isEnabled);
+        field.addValue(String.valueOf(isEnabled));
 
         if(isEnabled) {
             field = form.addField();
@@ -78,5 +80,12 @@ public class HttpBindStatus extends AdHocCommand {
 
     protected Action getExecuteAction(SessionData data) {
         return null;
+    }
+
+
+    @Override
+    public boolean hasPermission(JID requester) {
+        return super.hasPermission(requester) ||
+                InternalComponentManager.getInstance().getComponent(requester) != null;
     }
 }

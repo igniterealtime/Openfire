@@ -374,7 +374,8 @@ public class XMPPPacketReader {
                     if ("jabber:client".equals(qname.getNamespaceURI()) ||
                             "jabber:server".equals(qname.getNamespaceURI()) ||
                             "jabber:connectionmanager".equals(qname.getNamespaceURI()) ||
-                            "jabber:component:accept".equals(qname.getNamespaceURI())) {
+                            "jabber:component:accept".equals(qname.getNamespaceURI()) ||
+                            "http://jabber.org/protocol/httpbind".equals(qname.getNamespaceURI())) {
                         newElement = df.createElement(pp.getName());
                     }
                     else {

@@ -16,11 +16,11 @@ import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.commands.admin.*;
-import org.jivesoftware.wildfire.commands.admin.user.ChangeUserPassword;
+import org.jivesoftware.wildfire.commands.admin.group.*;
 import org.jivesoftware.wildfire.commands.admin.user.AddUser;
 import org.jivesoftware.wildfire.commands.admin.user.AuthenticateUser;
+import org.jivesoftware.wildfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.wildfire.commands.admin.user.UserProperties;
-import org.jivesoftware.wildfire.commands.admin.group.*;
 import org.jivesoftware.wildfire.disco.*;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.handler.IQHandler;
@@ -202,6 +202,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new ChangeUserPassword());
         addCommand(new UserProperties());
         addCommand(new PacketsNotification());
+        addCommand(new GetServerStats());
     }
 
     private void startCommand(AdHocCommand command) {

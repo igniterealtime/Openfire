@@ -96,11 +96,11 @@ public class ConfigManager {
         Attribute type = node.attribute("type");
         if (type.getText().equals("text")) {
             // Required fields
-            Attribute desc = node.attribute("desc");
+            Attribute desckey = node.attribute("desckey");
             Attribute var = node.attribute("var");
             Attribute sysprop = node.attribute("sysprop");
 
-            if (desc == null || var == null || sysprop == null) {
+            if (desckey == null || var == null || sysprop == null) {
                 Log.error("Missing variable from options config.");
                 return;
             }
@@ -118,11 +118,11 @@ public class ConfigManager {
         }
         else if (type.getText().equals("toggle")) {
             // Required fields
-            Attribute desc = node.attribute("desc");
+            Attribute desckey = node.attribute("desckey");
             Attribute var = node.attribute("var");
             Attribute sysprop = node.attribute("sysprop");
 
-            if (desc == null || var == null || sysprop == null) {
+            if (desckey == null || var == null || sysprop == null) {
                 Log.error("Missing variable from options config.");
                 return;
             }

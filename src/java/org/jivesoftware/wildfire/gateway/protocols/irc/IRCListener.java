@@ -76,9 +76,16 @@ public class IRCListener implements IRCEventListener {
         p.setFrom(getSession().getTransport().getJID());
         p.setTo(getSession().getJID());
         getSession().getTransport().sendPacket(p);
+        getSession().setLoginStatus(TransportLoginStatus.LOGGED_IN);
+        String buddyList = "";
+        for (String buddy : getSession().getBuddyStatuses().keySet()) {
+            buddyList = buddyList + " " + buddy;
+        }
+        if (!buddyList.equals("")) {
+            getSession().getConnection().doIson(buddyList);
+        }
         statusCheck = new StatusCheck();
         timer.schedule(statusCheck, timerInterval, timerInterval);
-        getSession().setLoginStatus(TransportLoginStatus.LOGGED_IN);
     }
 
     public void onDisconnected() {
@@ -171,7 +178,9 @@ public class IRCListener implements IRCEventListener {
         Log.debug("IRC privmsg: "+chan+", "+ircUser+", "+msg);
         if (silenced) { return; }
         if (msg.equals("VERSION")) {
-            // TODO: Investigate if I should respond to this.  What do other clients do?
+            // This is actually a CTCP VERSION request.  Why is it showing as a Privmsg?
+            // TODO: Should figure out a proper way to handle this.
+            //getSession().getConnection().send("CTCP REPLY "+ircUser.getNick()+" VERSION IM Gateway Plugin for Wildfire");
             return;
         }
         getSession().getTransport().sendMessage(
@@ -195,7 +204,7 @@ public class IRCListener implements IRCEventListener {
         Log.debug("IRC reply: "+i+", "+string+", "+string1);
         if (silenced) { return; }
         if (i == IRCUtil.RPL_ISON) {
-            String[] onlineContacts = string.split(" ");
+            String[] onlineContacts = string1.split(" ");
             ArrayList<String> onlineContactList = new ArrayList<String>();
             // Lets see who all is on
             for (String contact : onlineContacts) {

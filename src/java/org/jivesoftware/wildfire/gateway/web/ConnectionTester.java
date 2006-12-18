@@ -39,4 +39,11 @@ public class ConnectionTester {
         }
     }
 
+    /**
+     * Cheesy DWR 'ping' to make sure session stays alive.
+     * Literally does nothing.
+     */
+    public void pingSession() {
+    }
+
 }

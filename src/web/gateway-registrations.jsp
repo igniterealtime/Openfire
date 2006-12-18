@@ -256,6 +256,7 @@
 </style>
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
+<script src="dwr/interface/ConnectionTester.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
 <script type="text/javascript" >
     DWREngine.setErrorHandler(handleError);
@@ -264,6 +265,13 @@
     function handleError(error) {
         // swallow errors
     }
+
+    function pingSession() {
+        ConnectionTester.pingSession();
+        setTimeout("pingSession()", 60000); // Every minute
+    }
+
+    setTimeout("pingSession()", 60000); // One minute after first load
 </script>
 </head>
 

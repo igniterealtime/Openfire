@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Stores statistics being tracked by the server.
  */
 public class StatisticsManager {
+
     private static StatisticsManager instance = new StatisticsManager();
 
     public static StatisticsManager getInstance() {
@@ -24,17 +25,18 @@ public class StatisticsManager {
     }
 
     private final Map<String, Statistic> statistics = new ConcurrentHashMap<String, Statistic>();
-
     private final Map<String, List<String>> multiStatGroups = new ConcurrentHashMap<String, List<String>>();
-
     private final Map<String, String> keyToGroupMap = new ConcurrentHashMap<String, String>();
 
-    private StatisticsManager() {}
+    private StatisticsManager() {
+        
+    }
 
     /**
      * Adds a stat to be tracked to the StatManager.
      *
-     * @param definition The statistic to be tracked.
+     * @param statKey the statistic key.
+     * @param definition the statistic to be tracked.
      */
     public void addStatistic(String statKey, Statistic definition) {
         statistics.put(statKey, definition);

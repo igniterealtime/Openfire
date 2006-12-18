@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -177,7 +178,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 m.setError(Condition.service_unavailable);
                 m.setTo(from);
                 m.setFrom(getJID());
-                m.setBody("You are not currently logged into the transport.");
+                m.setBody(LocaleUtils.getLocalizedString("gateway.base.notloggedin", "gateway", Arrays.asList(transportType.toString().toUpperCase())));
                 reply.add(m);
             }
             else if (to.getNode() == null) {
@@ -228,7 +229,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             m.setError(Condition.service_unavailable);
             m.setTo(from);
             m.setFrom(getJID());
-            m.setBody("You are not currently logged into the transport.");
+            m.setBody(LocaleUtils.getLocalizedString("gateway.base.notloggedin", "gateway", Arrays.asList(transportType.toString().toUpperCase())));
             reply.add(m);
         }
 
@@ -505,7 +506,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         if (packet.getType() == IQ.Type.get) {
             IQ result = IQ.createResultIQ(packet);
             Element query = DocumentHelper.createElement(QName.get("query", IQ_GATEWAY));
-            query.addElement("desc").addText("Please enter the person's "+this.getName()+" username.");
+            query.addElement("desc").addText(LocaleUtils.getLocalizedString("gateway.base.enterusername", "gateway", Arrays.asList(transportType.toString().toUpperCase())));
             query.addElement("prompt");
             result.setChildElement(query);
             reply.add(result);

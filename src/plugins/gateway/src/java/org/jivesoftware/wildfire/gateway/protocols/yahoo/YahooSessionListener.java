@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import ymsg.network.YahooUser;
@@ -26,6 +27,8 @@ import ymsg.network.event.SessionListener;
 import ymsg.network.event.SessionNewMailEvent;
 import ymsg.network.event.SessionNotifyEvent;
 import ymsg.support.MessageDecoder;
+
+import java.util.Arrays;
 
 /**
  * Handles incoming packets from Yahoo.
@@ -86,7 +89,7 @@ public class YahooSessionListener implements SessionListener {
             yahooSession.getTransport().sendMessage(
                     yahooSession.getJIDWithHighestPriority(),
                     yahooSession.getTransport().getJID(),
-                    "You have "+event.getMailCount()+" message(s) waiting in your Yahoo! mail.",
+                    LocaleUtils.getLocalizedString("gateway.yahoo.mail", "gateway", Arrays.asList(Integer.toString(event.getMailCount()))),
                     Message.Type.headline
             );
         }
@@ -176,7 +179,7 @@ public class YahooSessionListener implements SessionListener {
         yahooSession.getTransport().sendMessage(
                 yahooSession.getJIDWithHighestPriority(),
                 yahooSession.getTransport().getJID(),
-                "Error from yahoo: "+event.getMessage(),
+                LocaleUtils.getLocalizedString("gateway.yahoo.error", "gateway")+" "+event.getMessage(),
                 Message.Type.error
         );
     }
@@ -186,12 +189,13 @@ public class YahooSessionListener implements SessionListener {
      */
     public void inputExceptionThrown(SessionExceptionEvent event) {
         Log.error("Input error from yahoo: "+event.getMessage(), event.getException());
-        yahooSession.getTransport().sendMessage(
-                yahooSession.getJIDWithHighestPriority(),
-                yahooSession.getTransport().getJID(),
-                "Input error from yahoo: "+event.getMessage(),
-                Message.Type.error
-        );
+        // Lets keep this silent for now.  Not bother the end user with it.
+//        yahooSession.getTransport().sendMessage(
+//                yahooSession.getJIDWithHighestPriority(),
+//                yahooSession.getTransport().getJID(),
+//                "Input error from yahoo: "+event.getMessage(),
+//                Message.Type.error
+//        );
     }
 
     /**

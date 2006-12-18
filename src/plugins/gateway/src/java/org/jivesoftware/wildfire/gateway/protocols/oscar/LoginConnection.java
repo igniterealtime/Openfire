@@ -13,6 +13,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.oscar;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 import org.jivesoftware.wildfire.gateway.TransportType;
 import org.xmpp.packet.Message;
@@ -26,6 +27,7 @@ import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.auth.*;
 
 import java.util.Locale;
+import java.util.Arrays;
 
 /**
  * Handles the login process with the OSCAR login server.
@@ -63,7 +65,7 @@ public class LoginConnection extends BaseFlapConnection {
             m.setType(Message.Type.error);
             m.setFrom(this.getMainSession().getTransport().getJID());
             m.setTo(this.getMainSession().getJIDWithHighestPriority());
-            m.setBody("Connection failed: " + e.getReason());
+            m.setBody(LocaleUtils.getLocalizedString("gateway.oscar.connectionfailed", "gateway")+" " + e.getReason());
             this.getMainSession().getTransport().sendPacket(m);
             this.getMainSession().logOut();
         }
@@ -117,44 +119,44 @@ public class LoginConnection extends BaseFlapConnection {
                 String errormsg;
                 switch (error) {
                     case (AuthResponse.ERROR_ACCOUNT_DELETED): {
-                        errormsg = "This account has been deleted.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.accountdeleted", "gateway");
                         break;
                     }
 
                     case (AuthResponse.ERROR_BAD_INPUT): {
-                        errormsg = "Illegal screen name/uin specified.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.badinput", "gateway");
                         break;
                     }
 
                     case (AuthResponse.ERROR_BAD_PASSWORD): {
-                        errormsg = "Incorrect password specified.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.badpassword", "gateway");
                         break;
                     }
 
                     case (AuthResponse.ERROR_CLIENT_TOO_OLD): {
-                        errormsg = "Plugin is identifying itself as too old of a client.  Please contact the develop.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.oldclient", "gateway");
                         break;
                     }
 
                     case (AuthResponse.ERROR_CONNECTING_TOO_MUCH_A):
                     case (AuthResponse.ERROR_CONNECTING_TOO_MUCH_B): {
-                        errormsg = "You have connected too many times in too short of a time frame.  Please wait around 15 minutes before trying again.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.connectedtoomuch", "gateway");
                         break;
                     }
 
                     case (AuthResponse.ERROR_INVALID_SN_OR_PASS_A):
                     case (AuthResponse.ERROR_INVALID_SN_OR_PASS_B): {
-                        errormsg = "Invalid screen name or password specified.  Please re-register with a valid screen name and password.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.baduserorpass", "gateway");
                         break;
                     }
 
                     case (AuthResponse.ERROR_SIGNON_BLOCKED): {
-                        errormsg = "Your account has been temporarily suspended.";
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.accountsuspended", "gateway");
                         break;
                     }
 
                     default: {
-                        errormsg = "Unknown error code returned from AIM: "+error+"\nURL: "+ar.getErrorUrl();
+                        errormsg = LocaleUtils.getLocalizedString("gateway.oscar.unknownerror", "gateway", Arrays.asList(error, ar.getErrorUrl()));
                     }
                 }
 

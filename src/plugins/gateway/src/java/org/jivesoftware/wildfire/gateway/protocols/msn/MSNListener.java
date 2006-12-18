@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
@@ -103,6 +104,13 @@ public class MSNListener extends MsnAdapter {
     }
 
     /**
+     * Contact list has been synced.
+     */
+    public void contactListSyncCompleted(MsnMessenger messenger) {
+        Log.debug("MSN: Contact list sync for "+messenger.getOwner().getEmail());
+    }
+    
+    /**
      * Contact list initialization has completed.
      */
     public void contactListInitCompleted(MsnMessenger messenger) {
@@ -117,13 +125,6 @@ public class MSNListener extends MsnAdapter {
             msnSession.storeGroup(msnGroup);
         }
         msnSession.syncUsers();        
-    }
-
-    /**
-     * Contact list has been synced.
-     */
-    public void contactListSyncCompleted(MsnMessenger messenger) {
-        Log.debug("MSN: Contact list sync for "+messenger.getOwner().getEmail());        
     }
 
     /**
@@ -228,7 +229,7 @@ public class MSNListener extends MsnAdapter {
             msnSession.getTransport().sendMessage(
                     msnSession.getJIDWithHighestPriority(),
                     msnSession.getTransport().getJID(),
-                    "The password you registered with is incorrect.  Please re-register with the correct password.",
+                    LocaleUtils.getLocalizedString("gateway.msn.passwordincorrect", "gateway"),
                     Message.Type.error
             );
             msnSession.logOut();
@@ -246,7 +247,7 @@ public class MSNListener extends MsnAdapter {
             msnSession.getTransport().sendMessage(
                     msnSession.getJIDWithHighestPriority(),
                     msnSession.getTransport().getJID(),
-                    "Unable to send MSN message.  Reason: "+throwable.toString(),
+                    LocaleUtils.getLocalizedString("gateway.msn.sendmsgfailed", "gateway")+" "+throwable.toString(),
                     Message.Type.error
             );
         }

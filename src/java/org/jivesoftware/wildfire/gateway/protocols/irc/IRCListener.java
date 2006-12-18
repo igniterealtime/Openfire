@@ -18,6 +18,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 
@@ -97,7 +98,7 @@ public class IRCListener implements IRCEventListener {
         getSession().getTransport().sendMessage(
                 getSession().getJID(),
                 getSession().getTransport().getJID(),
-                "IRC error received: "+string,
+                LocaleUtils.getLocalizedString("gateway.irc.errorreceived", "gateway")+" "+string,
                 Message.Type.error
         );
     }
@@ -108,7 +109,7 @@ public class IRCListener implements IRCEventListener {
         getSession().getTransport().sendMessage(
                 getSession().getJID(),
                 getSession().getTransport().getJID(),
-                "IRC error received: (code "+i+") "+string,
+                LocaleUtils.getLocalizedString("gateway.irc.errorreceivedwithcode", "gateway", Arrays.asList(Integer.toString(i)))+" "+string,
                 Message.Type.error
         );
     }

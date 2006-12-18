@@ -18,7 +18,8 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%
-    GatewayPlugin plugin = (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
+    final GatewayPlugin plugin =
+            (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
     HashMap<String,Boolean> trEnabled = new HashMap<String,Boolean>();
     trEnabled.put("aim", plugin.getTransportInstance("aim").isEnabled());
     trEnabled.put("icq", plugin.getTransportInstance("icq").isEnabled());
@@ -242,19 +243,31 @@
     int topRange = ((start+range) < resCount) ? (start+range) : resCount;
 %>
 
+
+
+
 <html>
 
 <head>
-<title>Gateway Registrations</title>
+<title><fmt:message key="gateway.web.registrations.title" /></title>
 <meta name="pageID" content="gateway-registrations">
 <style type="text/css">
 <!--	@import url("style/gateways.css");    -->
 </style>
+<script src="dwr/engine.js" type="text/javascript"></script>
+<script src="dwr/util.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
+<script type="text/javascript" >
+    DWREngine.setErrorHandler(handleError);
+    window.onerror = handleError;
+
+    function handleError(error) {
+        // swallow errors
+    }
+</script>
 </head>
 
 <body>
-
 <p><fmt:message key="gateway.web.registrations.instructions" /></p>
 
 <%
@@ -339,7 +352,6 @@
 	</div>
 </div>
 <!-- END add registration -->
-
 
 
 
@@ -439,10 +451,9 @@
 	</div>
 	</form>
 	<!-- END gateway filter -->
-	
-	
 
-	<!-- BEGIN registrations table -->
+
+    <!-- BEGIN registrations table -->
 	<table cellpadding="0" cellspacing="0">
 	<thead>
 		<tr>
@@ -540,8 +551,7 @@
 <!-- END registrations table -->
 
 
-<br clear="all">
-
-
+<br clear="all" />
 </body>
+
 </html>

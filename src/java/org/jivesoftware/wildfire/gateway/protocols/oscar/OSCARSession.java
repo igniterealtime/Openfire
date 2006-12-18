@@ -32,6 +32,7 @@ import net.kano.joscar.ssiitem.BuddyItem;
 import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.wildfire.roster.RosterItem;
@@ -404,7 +405,7 @@ public class OSCARSession extends TransportSession {
         m.setError(PacketError.Condition.internal_server_error);
         m.setTo(getJID());
         m.setFrom(getTransport().getJID());
-        m.setBody("You have been disconnected automatically by the server.");
+        m.setBody(LocaleUtils.getLocalizedString("gateway.oscar.disconnected", "gateway"));
         getTransport().sendPacket(m);
         logOut();
     }
@@ -495,7 +496,7 @@ public class OSCARSession extends TransportSession {
      */
     public void updateStatus(PresenceType presenceType, String verboseStatus) {
         if (presenceType != PresenceType.available && presenceType != PresenceType.chat) {
-            String awayMsg = "Away";
+            String awayMsg = LocaleUtils.getLocalizedString("gateway.oscar.away", "gateway");
             if (verboseStatus != null) {
                 awayMsg = verboseStatus;
             }

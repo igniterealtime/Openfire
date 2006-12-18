@@ -2,7 +2,7 @@
 <optionsconfig>
     <leftpanel></leftpanel>
     <rightpanel>
-        <item type="text" sysprop="plugin.gateway.msn.connecthost" var="host" desc="Host" default="messenger.hotmail.com"/>
-        <item type="text" sysprop="plugin.gateway.msn.connectport" var="port" desc="Port" default="1863"/>
+        <item type="text" sysprop="plugin.gateway.msn.connecthost" var="host" desckey="gateway.web.settings.host" default="messenger.hotmail.com"/>
+        <item type="text" sysprop="plugin.gateway.msn.connectport" var="port" desckey="gateway.web.settings.port" default="1863"/>
     </rightpanel>
 </optionsconfig>

@@ -1,7 +1,7 @@
 Name                   |  Version
 -------------------------------------------------------
 cindy.jar              | 2.4.4
-dwr.jar                | 1.1.1 (patched)
+dwr.jar                | 1.1.1 (patched [#3])
 irclib.jar             | 1.10
 jml.jar                | svn-20061216
 joscar-client.jar      | svn-20061201 (patched [#2])
@@ -25,3 +25,6 @@ Patch Descriptions
 2) joscar patches
 - applied patches from nikitine to provide support for setting default encoding
   http://groups.google.com/group/joscar-discuss/browse_thread/thread/96fade8cc1fc220e/97d042138818c3d9#97d042138818c3d9
+
+3) dwr patches
+- Derek did something to DWR itself to make it work, I don't have details

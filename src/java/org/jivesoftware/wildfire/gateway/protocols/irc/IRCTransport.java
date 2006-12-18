@@ -14,8 +14,6 @@ import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
-import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
 
 /***
  * IRC Transport Interface.
@@ -73,26 +71,6 @@ public class IRCTransport extends BaseTransport {
     }
 
     /**
-     * @see org.jivesoftware.wildfire.gateway.BaseTransport#getOptionsConfig(org.jivesoftware.wildfire.gateway.TransportType)
-     * @param type The transport type to distinguish if needed.
-     * @return XML document describing the options interface.
-     */
-    public static Element getOptionsConfig(TransportType type) {
-        Element optConfig = DocumentHelper.createElement("optionconfig");
-        Element leftPanel = optConfig.addElement("leftpanel");
-        Element rightPanel = optConfig.addElement("rightpanel");
-        rightPanel.addElement("item")
-                  .addAttribute("type", "text")
-                  .addAttribute("sysprop", "plugin.gateway.irc.connecthost")
-                  .addAttribute("desc", "Host");
-        rightPanel.addElement("item")
-                  .addAttribute("type", "text")
-                  .addAttribute("sysprop", "plugin.gateway.irc.connectport")
-                  .addAttribute("desc", "Port");
-        return optConfig;
-    }
-
-    /**
      * Handles creating a IRC session and triggering a login.
      *
      * @param registration Registration information to be used to log in.
@@ -133,13 +111,13 @@ public class IRCTransport extends BaseTransport {
             return null;
         }
         else if (jabStatus == PresenceType.away) {
-            return verboseStatus.equals("") ? "Away" : "Away: "+verboseStatus;
+            return verboseStatus.equals("") ? LocaleUtils.getLocalizedString("gateway.irc.away", "gateway") : LocaleUtils.getLocalizedString("gateway.irc.away", "gateway")+": "+verboseStatus;
         }
         else if (jabStatus == PresenceType.xa) {
-            return verboseStatus.equals("") ? "Extended Away" : "Extended Away: "+verboseStatus;
+            return verboseStatus.equals("") ? LocaleUtils.getLocalizedString("gateway.irc.extendedaway", "gateway") : LocaleUtils.getLocalizedString("gateway.irc.extendedaway", "gateway")+": "+verboseStatus;
         }
         else if (jabStatus == PresenceType.dnd) {
-            return verboseStatus.equals("") ? "Do Not Disturb" : "Do Not Disturb: "+verboseStatus;
+            return verboseStatus.equals("") ? LocaleUtils.getLocalizedString("gateway.irc.donotdisturb", "gateway") : LocaleUtils.getLocalizedString("gateway.irc.donotdisturb", "gateway")+": "+verboseStatus;
         }
         else if (jabStatus == PresenceType.chat) {
             return null;

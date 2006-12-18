@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
@@ -117,7 +118,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 oscarSession.getTransport().sendMessage(
                         oscarSession.getJIDWithHighestPriority(),
                         oscarSession.getTransport().getJID(),
-                        "You have received an anonymous AIM warning.  Your warning level is now "+wn.getNewLevel()+"%.",
+                        LocaleUtils.getLocalizedString("gateway.aim.warninganon", "gateway", Arrays.asList(wn.getNewLevel().toString())),
                         Message.Type.headline
                 );
             }
@@ -127,7 +128,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                 oscarSession.getTransport().sendMessage(
                         oscarSession.getJIDWithHighestPriority(),
                         oscarSession.getTransport().getJID(),
-                        "You have received an AIM warning from "+warner.getScreenname()+".  Your warning level is now "+wn.getNewLevel()+"%.",
+                        LocaleUtils.getLocalizedString("gateway.aim.warningdirect", "gateway", Arrays.asList(warner.getScreenname(), wn.getNewLevel().toString())),
                         Message.Type.headline
                 );
             }

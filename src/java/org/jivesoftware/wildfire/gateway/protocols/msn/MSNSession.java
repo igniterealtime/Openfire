@@ -15,6 +15,7 @@ import net.sf.jml.impl.BasicMessenger;
 import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.Roster;
@@ -54,7 +55,7 @@ public class MSNSession extends TransportSession {
             m.setType(Message.Type.error);
             m.setTo(getJID());
             m.setFrom(getTransport().getJID());
-            m.setBody("You are registered with the MSN transport with an illegal account name.\nThe account name should look like an email address.\nYou registered as:"+registration.getUsername());
+            m.setBody(LocaleUtils.getLocalizedString("gateway.msn.illegalaccount", "gateway")+" "+registration.getUsername());
             return;
         }
 

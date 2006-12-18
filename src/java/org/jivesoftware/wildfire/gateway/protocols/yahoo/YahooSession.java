@@ -12,6 +12,7 @@ package org.jivesoftware.wildfire.gateway.protocols.yahoo;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.wildfire.gateway.*;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -117,12 +118,31 @@ public class YahooSession extends TransportSession {
                     }
                     catch (LoginRefusedException e) {
                         yahooSession.reset();
-                        Log.warn("Yahoo login failed for " + getJID());
+                        String reason = LocaleUtils.getLocalizedString("gateway.yahoo.loginrefused", "gateway");
+                        switch((int)e.getStatus()) {
+                            case (int)StatusConstants.STATUS_BADUSERNAME:
+                                reason = LocaleUtils.getLocalizedString("gateway.yahoo.unknownuser", "gateway");
+                                break;
+                            case (int)StatusConstants.STATUS_BAD:
+                                reason = LocaleUtils.getLocalizedString("gateway.yahoo.badpassword", "gateway");
+                                break;
+                            case (int)StatusConstants.STATUS_LOCKED:
+                                AccountLockedException e2 = (AccountLockedException)e;
+                                if(e2.getWebPage() != null) {
+                                    reason = LocaleUtils.getLocalizedString("gateway.yahoo.accountlockedwithurl", "gateway", Arrays.asList(e2.getWebPage().toString()));
+                                }
+                                else {
+                                    reason = LocaleUtils.getLocalizedString("gateway.yahoo.accountlocked", "gateway");
+                                }
+                                break;
+                        }
+
+                        Log.warn("Yahoo login failed for "+getJID()+": "+reason);
 
                         getTransport().sendMessage(
                                 getJID(),
                                 getTransport().getJID(),
-                                "Failed to log into Yahoo! messenger account.  (login refused)",
+                                reason,
                                 Message.Type.error
                         );
                         setLoginStatus(TransportLoginStatus.LOGGED_OUT);
@@ -133,7 +153,7 @@ public class YahooSession extends TransportSession {
                         getTransport().sendMessage(
                                 getJID(),
                                 getTransport().getJID(),
-                                "Failed to log into Yahoo! messenger account.  (unknown error)",
+                                LocaleUtils.getLocalizedString("gateway.yahoo.unknownerror", "gateway"),
                                 Message.Type.error
                         );
                         setLoginStatus(TransportLoginStatus.LOGGED_OUT);

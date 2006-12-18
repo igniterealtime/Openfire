@@ -71,7 +71,7 @@ public interface Statistic {
          * recorded since the last invocation. The values will be totalled over the relevant
          * time interval (by minute, hourly, daily, etc.).
          */
-        rate_total,
+        // TODO: rate_total,
 
         /**
          * The average count over a time period. An example would be the
@@ -88,6 +88,6 @@ public interface Statistic {
          * previous reads of the data. The max value read will be stored for each time interval
          * (by minute, hourly, daily, etc.).
          */
-        count_max
+        // TODO: count_max
     }
 }

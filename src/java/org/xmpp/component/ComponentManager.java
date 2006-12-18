@@ -20,6 +20,8 @@
 
 package org.xmpp.component;
 
+import org.jivesoftware.wildfire.IQResultListener;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 /**
@@ -60,6 +62,35 @@ public interface ComponentManager {
      * @param packet the packet to send.
      */
     public void sendPacket(Component component, Packet packet) throws ComponentException;
+
+    /**
+     * Sends an IQ packet to the XMPP server and waits to get an IQ of type result or error.
+     * The "from" value of the packet must not be null. An <tt>IllegalArgumentException</tt>
+     * will be thrown when the "from" value is null.<p>
+     *
+     * If no answer is received from the server before the specified timeout then an IQ
+     * of type error will be returned.
+     *
+     * Components are trusted by the server and may use any value in from address. Usually
+     * the from address uses the component's address as the domain but this is not required.
+     *
+     * @param component the component sending the packet.
+     * @param packet the IQ packet to send.
+     * @param timeout the number of milliseconds to wait before returning an IQ error.
+     * @return the answer sent by the server. The answer could be an IQ of type result or
+     *         error.
+     */
+    public IQ query(Component component, IQ packet, int timeout) throws ComponentException;
+
+    /**
+     * Sends an IQ packet to the server and returns immediately. The specified IQResultListener
+     * will be invoked when an answer is received.
+     *
+     * @param component the component sending the packet.
+     * @param packet the IQ packet to send.
+     * @param listener the listener that will be invoked when an answer is received.
+     */
+    public void query(Component component, IQ packet, IQResultListener listener) throws ComponentException;
 
     /**
      * Returns a property value specified by name. Properties can be used by

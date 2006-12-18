@@ -14,18 +14,12 @@ package org.jivesoftware.wildfire.component;
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.PacketException;
-import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.RoutableChannelHandler;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.*;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the registration and delegation of Components. The ComponentManager
@@ -165,6 +161,32 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         if (router != null) {
             router.route(packet);
         }
+    }
+
+    public IQ query(Component component, IQ packet, int timeout) throws ComponentException {
+        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
+        XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), new IQResultListener() {
+            public void receivedAnswer(IQ packet) {
+                answer.offer(packet);
+            }
+        });
+        sendPacket(component, packet);
+        IQ reply = null;
+        try {
+            reply = answer.poll(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+        if (reply == null) {
+            reply = IQ.createResultIQ(packet);
+            reply.setError(PacketError.Condition.item_not_found);
+        }
+        return reply;
+    }
+
+    public void query(Component component, IQ packet, IQResultListener listener) throws ComponentException {
+        XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), listener);
+        sendPacket(component, packet);
     }
 
     /**

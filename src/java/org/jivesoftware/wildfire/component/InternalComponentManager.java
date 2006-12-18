@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Derek DeMoro
  */
-public class InternalComponentManager implements ComponentManager, RoutableChannelHandler {
+public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
 
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
     private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
@@ -53,7 +54,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     private List<ComponentEventListener> listeners =
             new CopyOnWriteArrayList<ComponentEventListener>();
 
-    private static InternalComponentManager instance = new InternalComponentManager();
+    private static InternalComponentManager instance;
     /**
      * XMPP address of this internal service. The address is of the form: component.[domain]
      */
@@ -63,6 +64,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * in many methods.
      */
     private String serverDomain;
+
+    public InternalComponentManager() {
+        super("Internal Component Manager");
+        instance = this;
+    }
 
     public static InternalComponentManager getInstance() {
         return instance;
@@ -79,6 +85,14 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         if (!server.isSetupMode()) {
             // Add a route to this service
             server.getRoutingTable().addRoute(getAddress(), this);
+        }
+    }
+
+    public void stop() {
+        super.stop();
+        if (getAddress() != null) {
+            // Remove the route to this service
+            XMPPServer.getInstance().getRoutingTable().removeRoute(getAddress());
         }
     }
 
@@ -102,26 +116,31 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         try {
             component.initialize(componentJID, this);
             component.start();
+
+            // Notify listeners that a new component has been registered
+            for (ComponentEventListener listener : listeners) {
+                listener.componentRegistered(component, componentJID);
+            }
+
+            // Check for potential interested users.
+            checkPresences();
+            // Send a disco#info request to the new component. If the component provides information
+            // then it will be added to the list of discoverable server items.
+            checkDiscoSupport(component, componentJID);
         }
-        catch (ComponentException e) {
+        catch (Exception e) {
             // Unregister the componet's domain
             components.remove(subdomain);
             // Remove the route
             XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
+            if (e instanceof ComponentException) {
+                // Rethrow the exception
+                throw (ComponentException)e;
+            }
             // Rethrow the exception
-            throw e;
+            throw new ComponentException(e);
         }
 
-        // Notify listeners that a new component has been registered
-        for (ComponentEventListener listener : listeners) {
-            listener.componentRegistered(component, componentJID);
-        }
-
-        // Check for potential interested users.
-        checkPresences();
-        // Send a disco#info request to the new component. If the component provides information
-        // then it will be added to the list of discoverable server items.
-        checkDiscoSupport(component, componentJID);
     }
 
     public void removeComponent(String subdomain) {

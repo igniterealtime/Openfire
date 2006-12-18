@@ -364,8 +364,6 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
-                        // Initialize component manager (initialize before plugins get loaded)
-                        InternalComponentManager.getInstance().start();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -400,8 +398,6 @@ public class XMPPServer {
                 initModules();
                 // Start all the modules
                 startModules();
-                // Initialize component manager (initialize before plugins get loaded)
-                InternalComponentManager.getInstance().start();
             }
             // Initialize statistics
             ServerTrafficCounter.initStatistics();
@@ -490,6 +486,7 @@ public class XMPPServer {
         loadModule(FileTransferProxy.class.getName());
         loadModule(PubSubModule.class.getName());
         loadModule(UpdateManager.class.getName());
+        loadModule(InternalComponentManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());

@@ -8,6 +8,7 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.stats;
 
 import org.jivesoftware.util.LocaleUtils;
@@ -18,6 +19,7 @@ import org.jivesoftware.util.LocaleUtils;
  * @author Alexander Wenckus
  */
 public abstract class i18nStatistic implements Statistic {
+
     private String resourceKey;
     private String pluginName;
     private Type statisticType;
@@ -50,7 +52,7 @@ public abstract class i18nStatistic implements Statistic {
 
     private String retrieveValue(String key) {
         String wholeKey = "stat." + resourceKey + "." + key;
-        if(pluginName != null) {
+        if (pluginName != null) {
             return LocaleUtils.getLocalizedString(wholeKey, pluginName);
         }
         else {

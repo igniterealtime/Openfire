@@ -8,57 +8,86 @@
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.wildfire.stats;
 
 /**
- * A statistic being tracked by the server
+ * A statistic being tracked by the server.
+ *
+ * @see StatisticsManager
  */
 public interface Statistic {
 
     /**
      * Returns the name of a stat.
      *
-     * @return Returns the name of a stat.
+     * @return the name of a stat.
      */
     public String getName();
 
     /**
      * Returns the type of a stat.
      *
-     * @return Returns the type of a stat.
+     * @return the type of a stat.
      */
     public Type getStatType();
 
     /**
      * Returns a description of the stat.
      *
-     * @return Returns a description of the stat.
+     * @return a description of the stat.
      */
     public String getDescription();
 
     /**
      * Returns the units that relate to the stat.
      *
-     * @return Returns the units that relate to the stat.
+     * @return the name of the units that relate to the stat.
      */
     public String getUnits();
 
     /**
-     * @return Returns the sample of data.
+     * Returns the current sample of data.
+     *
+     * @return a sample of the data.
      */
     public double sample();
 
+    /**
+     * The type of statistic.
+     */
     public enum Type {
 
         /**
-         * Specifies a rate over time.
-         * For example, the averave of kb/s in file transfers.
+         * The average rate over time. For example, the averave kb/s in bandwidth used for
+         * file transfers. Each time the {@link Statistic#sample()} method is invoked, it should
+         * return the "amount" of data recorded since the last invocation.
          */
         rate,
+
         /**
-         * Specifies a count at a specific time period. An example would be the
-         * number of users in MultiUserChat at this second.
+         * The total rate over time. For example, the number of users created. Each time the
+         * {@link Statistic#sample()} method is invoked, it should return the "amount" of data
+         * recorded since the last invocation. The values will be totalled over the relevant
+         * time interval (by minute, hourly, daily, etc.).
          */
-        count
+        rate_total,
+
+        /**
+         * The average count over a time period. An example would be the
+         * number of users in multi-user chats. Each time the {@link Statistic#sample()}
+         * method is invoked, it should return the current measurement of the data, irrelevant of
+         * previous reads of the data.   
+         */
+        count,
+
+        /**
+         * The max count over a time period. An example would be the maximum number of users
+         * connected to the server. Each time the {@link Statistic#sample()}
+         * method is invoked, it should return the current measurement of the data, irrelevant of
+         * previous reads of the data. The max value read will be stored for each time interval
+         * (by minute, hourly, daily, etc.).
+         */
+        count_max
     }
 }

@@ -62,14 +62,8 @@ function checkToggle(theID) {
         $(testLink).style.display = 'block';
         $(optsLink).style.display = 'block';
 		$(permLink).style.display = 'block';
-		/* the below doesn't work right in IE, work on later */
-		//$(optsLink).setAttribute('onclick',"togglePanel($(optsPanel),$(permPanel))");
-		//$(permLink).setAttribute('onclick',"togglePanel($(permPanel),$(optsPanel))");
 	} else {
 		$(theID).className = "jive-gateway jive-gatewayDisabled";
-		/* the below doesn't work right in IE, work on later */
-		//$(optsLink).removeAttribute('onclick');
-		//$(permLink).removeAttribute('onclick');
         $(testLink).style.display = 'none';
         $(optsLink).style.display = 'none';
 		$(permLink).style.display = 'none';

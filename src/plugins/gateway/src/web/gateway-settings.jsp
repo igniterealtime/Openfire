@@ -534,6 +534,13 @@
             Effect.toggle(targElement,'slide', {duration: .4});
         }
     }
+
+    function pingSession() {
+        ConnectionTester.pingSession();
+        setTimeout("pingSession()", 60000); // Every minute
+    }
+
+    setTimeout("pingSession()", 60000); // One minute after first load
 </script>
 </head>
 

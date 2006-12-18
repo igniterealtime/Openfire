@@ -17,11 +17,15 @@ import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.IQResultListener;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.stats.StatisticsManager;
+import org.jivesoftware.wildfire.stats.i18nStatistic;
+import org.jivesoftware.wildfire.stats.Statistic;
 import org.jivesoftware.wildfire.event.UserEventDispatcher;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages users, including loading, creating and deleting.
@@ -41,6 +45,8 @@ public class UserManager implements IQResultListener {
     private static Cache<String, Boolean> remoteUsersCache;
     private static UserProvider provider;
     private static UserManager instance = new UserManager();
+
+    private static final String USERS_CREATED_STAT = "users_created";
 
     static {
         // Initialize caches.
@@ -96,8 +102,18 @@ public class UserManager implements IQResultListener {
         return instance;
     }
 
+    private AtomicInteger usersCreated = new AtomicInteger(0);
+
     private UserManager() {
 
+        // Add a statistic to record users being created.
+        StatisticsManager.getInstance().addStatistic(USERS_CREATED_STAT, new i18nStatistic(USERS_CREATED_STAT,
+                Statistic.Type.rate_total)
+        {
+            public double sample() {
+                return usersCreated.getAndSet(0);
+            }
+        });
     }
 
     /**
@@ -133,6 +149,9 @@ public class UserManager implements IQResultListener {
         // Fire event.
         UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_created,
                 Collections.emptyMap());
+
+        // Increment users created statistic.
+        usersCreated.getAndIncrement();
 
         return user;
     }
@@ -376,7 +395,6 @@ public class UserManager implements IQResultListener {
             from.toBareJID().intern().notifyAll();
         }
     }
-
 
     private static void initProvider() {
         String className = JiveGlobals.getXMLProperty("provider.user.className",

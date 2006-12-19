@@ -216,7 +216,7 @@ public class YahooSession extends TransportSession {
             if (nickname == null) {
                 nickname = user.getId();
             }
-            if (userToGroups.containsKey(user.getId())) {
+            if (userToGroups.containsKey(user.getId()) && !userToGroups.get(user.getId()).get(0).equals("Transport Buddies")) {
                 legacyusers.add(new TransportBuddy(user.getId(), nickname, userToGroups.get(user.getId()).get(0)));
             }
             else {
@@ -254,6 +254,7 @@ public class YahooSession extends TransportSession {
     public void addContact(RosterItem item) {
         // Syncing will take are of add.
         String contact = getTransport().convertJIDToID(item.getJid());
+        lockRoster(item.getJid().toString());
         syncContactGroups(contact, item.getGroups());
         if (pseudoRoster.hasItem(contact)) {
             PseudoRosterItem rosterItem = pseudoRoster.getItem(contact);
@@ -262,6 +263,7 @@ public class YahooSession extends TransportSession {
         else {
             pseudoRoster.createItem(contact, item.getNickname(), null);
         }
+        unlockRoster(item.getJid().toString());
     }
 
     /**
@@ -269,6 +271,7 @@ public class YahooSession extends TransportSession {
      */
     public void removeContact(RosterItem item) {
         String contact = getTransport().convertJIDToID(item.getJid());
+        lockRoster(item.getJid().toString());
         for (YahooGroup yahooGroup : yahooSession.getGroups()) {
             if (yahooGroup.getIndexOfFriend(contact) != -1) {
                 try {
@@ -280,6 +283,7 @@ public class YahooSession extends TransportSession {
                 }
             }
         }
+        unlockRoster(item.getJid().toString());
     }
 
     /**
@@ -287,6 +291,7 @@ public class YahooSession extends TransportSession {
      */
     public void updateContact(RosterItem item) {
         String contact = getTransport().convertJIDToID(item.getJid());
+        lockRoster(item.getJid().toString());
         syncContactGroups(contact, item.getGroups());
         if (pseudoRoster.hasItem(contact)) {
             PseudoRosterItem rosterItem = pseudoRoster.getItem(contact);
@@ -295,6 +300,7 @@ public class YahooSession extends TransportSession {
         else {
             pseudoRoster.createItem(contact, item.getNickname(), null);
         }
+        unlockRoster(item.getJid().toString());
     }
 
     /**
@@ -305,7 +311,7 @@ public class YahooSession extends TransportSession {
      * @param groups List of groups contact should be in.
      */
     public void syncContactGroups(String contact, List<String> groups) {
-        if (groups.isEmpty()) {
+        if (groups.size() == 0) {
             groups.add("Transport Buddies");
         }
         HashMap<String,YahooGroup> yahooGroups = new HashMap<String,YahooGroup>();
@@ -317,6 +323,7 @@ public class YahooSession extends TransportSession {
         for (String group : groups) {
             if (!yahooGroups.containsKey(group)) {
                 try {
+                    Log.debug("Yahoo: Adding contact "+contact+" to non-existent group "+group);
                     yahooSession.addFriend(contact, group);
                 }
                 catch (IOException e) {
@@ -329,6 +336,7 @@ public class YahooSession extends TransportSession {
             if (groups.contains(yahooGroup.getName())) {
                 if (yahooGroup.getIndexOfFriend(contact) == -1) {
                     try {
+                        Log.debug("Yahoo: Adding contact "+contact+" to existing group "+yahooGroup.getName());
                         yahooSession.addFriend(contact, yahooGroup.getName());
                     }
                     catch (IOException e) {
@@ -339,6 +347,7 @@ public class YahooSession extends TransportSession {
             else {
                 if (yahooGroup.getIndexOfFriend(contact) != -1) {
                     try {
+                        Log.debug("Yahoo: Removing contact "+contact+" from group "+yahooGroup.getName());
                         yahooSession.removeFriend(contact, yahooGroup.getName());
                     }
                     catch (IOException e) {

@@ -295,7 +295,6 @@ public class XMPPServer {
         }
 
         loader = Thread.currentThread().getContextClassLoader();
-        componentManager = InternalComponentManager.getInstance();
         httpServerManager = HttpServerManager.getInstance();
 
         initialized = true;
@@ -364,6 +363,8 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
+                        // Keep a reference to the internal component manager
+                        componentManager = getComponentManager();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -398,6 +399,8 @@ public class XMPPServer {
                 initModules();
                 // Start all the modules
                 startModules();
+                // Keep a reference to the internal component manager
+                componentManager = getComponentManager();
             }
             // Initialize statistics
             ServerTrafficCounter.initStatistics();
@@ -1257,4 +1260,16 @@ public class XMPPServer {
     public FileTransferManager getFileTransferManager() {
         return (FileTransferManager) modules.get(DefaultFileTransferManager.class);
     }
+
+    /**
+     * Returns the <code>InternalComponentManager</code> registered with this server. The
+     * <code>InternalComponentManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>InternalComponentManager</code> registered with this server.
+     */
+    private InternalComponentManager getComponentManager() {
+        return (InternalComponentManager) modules.get(InternalComponentManager.class);
+    }
+
 }

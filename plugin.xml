@@ -9,7 +9,7 @@
     <description>Provides gateway connectivity to the other public instant messaging networks</description>
     <author>Daniel Henninger</author>
     <version>1.0 Beta 6</version>
-    <date>11/10/2006</date>
+    <date>12/18/2006</date>
     <minServerVersion>3.1.1</minServerVersion>
     <databaseKey>gateway</databaseKey>
     <databaseVersion>2</databaseVersion>

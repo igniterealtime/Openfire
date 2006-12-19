@@ -66,7 +66,6 @@ public class OSCARSession extends TransportSession {
         super(registration, jid, transport, priority);
         this.propertyPrefix = "plugin.gateway."+transport.getType().toString();
         OscarTools.setDefaultCharset(JiveGlobals.getProperty(this.propertyPrefix+".encoding", "ISO8859-1"));
-        groups.put(0, null); // Main group
         highestBuddyIdPerGroup.put(0, 0); // Main group highest id
     }
 
@@ -465,11 +464,10 @@ public class OSCARSession extends TransportSession {
             
             int groupid = buddy.getGroupId();
             String groupname = null;
-            if (groups.containsKey(groupid) && groups.get(groupid) != null) {
+            if (groupid != 0 && groups.containsKey(groupid)) {
                 String newgroupname = groups.get(groupid).getGroupName();
-                if (groupname.length() > 0) {
+                if (newgroupname.length() > 0) {
                     groupname = newgroupname;
-                    groupname = "Transport Buddies";
                 }
             }
 

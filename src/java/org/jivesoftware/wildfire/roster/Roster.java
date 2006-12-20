@@ -680,7 +680,10 @@ public class Roster implements Cacheable {
         // Set the groups to broadcast (include personal and shared groups)
         List<String> groups = new ArrayList<String>(item.getGroups());
         for (Group sharedGroup : item.getSharedGroups()) {
-            groups.add(sharedGroup.getProperties().get("sharedRoster.displayName"));
+            String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
+            if (displayName != null) {
+                groups.add(displayName);
+            }
         }
 
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();

@@ -163,6 +163,11 @@
         installation is "(objectClass=organizationalPerson)". When combined with the default
         filter, the actual search executed would be
         "(&(sAMAccountName={0})(objectClass=organizationalPerson))".</li>
+    <li>ldap.subTreeSearch -- by default, Wildfire will search the entire LDAP sub-tree (starting
+        at the base DN) when trying to load users. If this property is set to <tt>false</tt>, then
+        sub-tree searching is disabled and users will only be loaded directly from the base DN.
+        Disabling sub-tree can improve performance, but it will fail to find users if your directory
+        is setup to use sub-folders under the base DN.</li>
 
     <br><br>
     <b>Group Settings</b><br><br>

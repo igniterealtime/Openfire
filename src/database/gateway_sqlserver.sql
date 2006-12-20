@@ -1,19 +1,19 @@
 CREATE TABLE gatewayRegistration (
-   registrationID    BIGINT          NOT NULL,
+   registrationID    INTEGER         NOT NULL,
    jid               NVARCHAR(255)   NOT NULL,
    transportType     NVARCHAR(15)    NOT NULL,
    username          NVARCHAR(255)   NOT NULL,
    password          NVARCHAR(255),
    nickname          NVARCHAR(255),
-   registrationDate  BIGINT          NOT NULL,
-   lastLogin         BIGINT,
+   registrationDate  INTEGER         NOT NULL,
+   lastLogin         INTEGER,
    CONSTRAINT gatewayReg_pk PRIMARY KEY (registrationID)
 );
 CREATE INDEX gatewayReg_jid_idx ON gatewayRegistration (jid);
 CREATE INDEX gatewayReg_type_idx ON gatewayRegistration (transportType);
 
 CREATE TABLE gatewayPseudoRoster (
-   registrationID    BIGINT         NOT NULL,
+   registrationID    INTEGER        NOT NULL,
    username          NVARCHAR(255)  NOT NULL,
    nickname          NVARCHAR(255),
    groups            NVARCHAR(255)

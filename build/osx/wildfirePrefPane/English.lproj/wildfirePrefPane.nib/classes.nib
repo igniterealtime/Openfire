@@ -1,6 +1,7 @@
 {
     IBClasses = (
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
             CLASS = NSPreferencePane; 
             LANGUAGE = ObjC; 
@@ -12,24 +13,20 @@
             }; 
             SUPERCLASS = NSObject; 
         }, 
+        {CLASS = SFAuthorizationView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
         {CLASS = WilfireStartStop; LANGUAGE = ObjC; SUPERCLASS = NSButton; }, 
         {
-            ACTIONS = {
-                openAdminInterface = id; 
-                openAdminInterfaceSSL = id; 
-                toggleAutoStart = id; 
-                toggleServer = id; 
-            }; 
+            ACTIONS = {openAdminInterface = id; toggleAutoStart = id; toggleServer = id; }; 
             CLASS = wildfirePrefPane; 
             LANGUAGE = ObjC; 
             OUTLETS = {
+                authView = SFAuthorizationView; 
                 autoStartCheckbox = NSButton; 
                 startButton = NSButton; 
                 statusDescription = NSTextField; 
                 statusMessage = NSTextField; 
                 statusProgress = NSProgressIndicator; 
                 viewAdminButton = NSButton; 
-                viewAdminButtonSSL = NSButton; 
             }; 
             SUPERCLASS = NSPreferencePane; 
         }

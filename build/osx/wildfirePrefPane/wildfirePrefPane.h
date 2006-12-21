@@ -9,8 +9,8 @@
 //
 
 #import <PreferencePanes/PreferencePanes.h>
-#import <Security/Authorization.h>
-#import <Security/AuthorizationTags.h>
+#import <Security/Security.h>
+#import <SecurityInterface/SFAuthorizationView.h>
 #include <unistd.h>
 
 // 'ps' command to use to check for running wildfire daemon
@@ -25,16 +25,10 @@ NSString *plistPath = @"/Library/LaunchDaemons/org.jivesoftware.wildfire.plist";
 	IBOutlet NSButton *startButton;
 	IBOutlet NSButton *autoStartCheckbox;
 	IBOutlet NSButton *viewAdminButton;
-	IBOutlet NSButton *viewAdminButtonSSL;
 	IBOutlet NSTextField *statusMessage;
 	IBOutlet NSTextField *statusDescription;
 	IBOutlet NSProgressIndicator *statusProgress;
-	
-	AuthorizationRef authorizationRef;
-	AuthorizationRights authRights;
-	AuthorizationRights *authorizedRights;
-	AuthorizationFlags authFlags;
-	OSStatus ourStatus;
+	IBOutlet SFAuthorizationView *authView;
 	
 	NSTimer *statusTimer;
 }
@@ -42,7 +36,6 @@ NSString *plistPath = @"/Library/LaunchDaemons/org.jivesoftware.wildfire.plist";
 - (IBAction)toggleServer:(id)sender;
 - (IBAction)toggleAutoStart:(id)sender;
 - (IBAction)openAdminInterface:(id)sender;
-- (IBAction)openAdminInterfaceSSL:(id)sender;
 - (void)mainViewDidLoad;
 - (void)updateStatus;
 - (void)startServer;

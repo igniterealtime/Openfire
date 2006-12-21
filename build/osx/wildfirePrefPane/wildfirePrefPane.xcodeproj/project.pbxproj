@@ -7,7 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6387AE500B29E3FF00E98223 /* autostartsetter.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6387AE4F0B29E3FF00E98223 /* autostartsetter.sh */; };
+		633BEA0B0B39DF03003AD355 /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */; };
+		633BEA7A0B39EB60003AD355 /* authTool.c in Sources */ = {isa = PBXBuildFile; fileRef = 633BEA790B39EB60003AD355 /* authTool.c */; };
+		633BEAAD0B39EEF8003AD355 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 633BEAAC0B39EEF8003AD355 /* CoreFoundation.framework */; };
+		6358CFF40B39F6B800BFA7DC /* HelperTool in CopyFiles */ = {isa = PBXBuildFile; fileRef = 633BEA760B39EB2B003AD355 /* HelperTool */; };
 		650096350A60403400B6046A /* jivesoftware_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 650096340A60403400B6046A /* jivesoftware_logo.png */; };
 		65E2E73A0A5E8F2900DFFC2E /* wildfire-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 65E2E7390A5E8F2900DFFC2E /* wildfire-logo.png */; };
 		65E2E74C0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 65E2E74B0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff */; };
@@ -21,17 +24,43 @@
 		8D202CF40486D31800D8A456 /* PreferencePanes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F506C035013D953901CA16C8 /* PreferencePanes.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		633BEA860B39ED7D003AD355 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 633BEA750B39EB2B003AD355;
+			remoteInfo = HelperTool;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6358CFDD0B39F5F700BFA7DC /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				6358CFF40B39F6B800BFA7DC /* HelperTool in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		089C1672FE841209C02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		32DBCFA20370C41700C91783 /* wildfirePrefPane_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wildfirePrefPane_Prefix.pch; sourceTree = "<group>"; };
-		6387AE4F0B29E3FF00E98223 /* autostartsetter.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = autostartsetter.sh; sourceTree = "<group>"; };
+		633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = /System/Library/Frameworks/SecurityInterface.framework; sourceTree = "<absolute>"; };
+		633BEA760B39EB2B003AD355 /* HelperTool */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HelperTool; sourceTree = BUILT_PRODUCTS_DIR; };
+		633BEA790B39EB60003AD355 /* authTool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = authTool.c; sourceTree = "<group>"; };
+		633BEAAC0B39EEF8003AD355 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		650096340A60403400B6046A /* jivesoftware_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = jivesoftware_logo.png; sourceTree = "<group>"; };
 		65E2E7390A5E8F2900DFFC2E /* wildfire-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wildfire-logo.png"; sourceTree = "<group>"; };
 		65E2E74B0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = wildfirePrefPaneLogo.tiff; sourceTree = "<group>"; };
-		65E2E7C80A5EF1F200DFFC2E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		65E2E7C80A5EF1F200DFFC2E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
 		8D202CF70486D31800D8A456 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D202CF80486D31800D8A456 /* Wildfire.prefPane */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Wildfire.prefPane; sourceTree = BUILT_PRODUCTS_DIR; };
 		F506C035013D953901CA16C8 /* PreferencePanes.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PreferencePanes.framework; path = /System/Library/Frameworks/PreferencePanes.framework; sourceTree = "<absolute>"; };
@@ -41,6 +70,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		633BEA740B39EB2B003AD355 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				633BEAAD0B39EEF8003AD355 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D202CF20486D31800D8A456 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -48,6 +85,7 @@
 				8D202CF30486D31800D8A456 /* Cocoa.framework in Frameworks */,
 				8D202CF40486D31800D8A456 /* PreferencePanes.framework in Frameworks */,
 				65E2E7C90A5EF1F200DFFC2E /* Security.framework in Frameworks */,
+				633BEA0B0B39DF03003AD355 /* SecurityInterface.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,7 +107,6 @@
 		089C1671FE841209C02AAC07 /* Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				65E2E7C80A5EF1F200DFFC2E /* Security.framework */,
 				1058C7ACFEA557BF11CA2CBB /* Linked Frameworks */,
 				1058C7AEFEA557BF11CA2CBB /* Other Frameworks */,
 			);
@@ -80,7 +117,6 @@
 			isa = PBXGroup;
 			children = (
 				65E2E74B0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff */,
-				6387AE4F0B29E3FF00E98223 /* autostartsetter.sh */,
 				8D202CF70486D31800D8A456 /* Info.plist */,
 				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				65E2E7380A5E8F1600DFFC2E /* Images */,
@@ -101,8 +137,11 @@
 		1058C7ACFEA557BF11CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */,
+				633BEAAC0B39EEF8003AD355 /* CoreFoundation.framework */,
+				633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */,
 				F506C035013D953901CA16C8 /* PreferencePanes.framework */,
+				65E2E7C80A5EF1F200DFFC2E /* Security.framework */,
+				1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
 			sourceTree = "<group>";
@@ -120,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				8D202CF80486D31800D8A456 /* Wildfire.prefPane */,
+				633BEA760B39EB2B003AD355 /* HelperTool */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -128,6 +168,7 @@
 			isa = PBXGroup;
 			children = (
 				32DBCFA20370C41700C91783 /* wildfirePrefPane_Prefix.pch */,
+				633BEA790B39EB60003AD355 /* authTool.c */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -156,6 +197,22 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		633BEA750B39EB2B003AD355 /* HelperTool */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 633BEA7B0B39EB60003AD355 /* Build configuration list for PBXNativeTarget "HelperTool" */;
+			buildPhases = (
+				633BEA730B39EB2B003AD355 /* Sources */,
+				633BEA740B39EB2B003AD355 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HelperTool;
+			productName = HelperTool;
+			productReference = 633BEA760B39EB2B003AD355 /* HelperTool */;
+			productType = "com.apple.product-type.tool";
+		};
 		8D202CE80486D31800D8A456 /* Wildfire */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 65E2E7290A5E8C0F00DFFC2E /* Build configuration list for PBXNativeTarget "Wildfire" */;
@@ -165,10 +222,12 @@
 				8D202CF00486D31800D8A456 /* Sources */,
 				8D202CF20486D31800D8A456 /* Frameworks */,
 				8D202CF50486D31800D8A456 /* Rez */,
+				6358CFDD0B39F5F700BFA7DC /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				633BEA870B39ED7D003AD355 /* PBXTargetDependency */,
 			);
 			name = Wildfire;
 			productInstallPath = "$(HOME)/Library/PreferencePanes";
@@ -185,8 +244,10 @@
 			hasScannedForEncodings = 1;
 			mainGroup = 089C166AFE841209C02AAC07 /* wildfirePrefPane */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8D202CE80486D31800D8A456 /* Wildfire */,
+				633BEA750B39EB2B003AD355 /* HelperTool */,
 			);
 		};
 /* End PBXProject section */
@@ -201,7 +262,6 @@
 				65E2E73A0A5E8F2900DFFC2E /* wildfire-logo.png in Resources */,
 				65E2E74C0A5EAE6600DFFC2E /* wildfirePrefPaneLogo.tiff in Resources */,
 				650096350A60403400B6046A /* jivesoftware_logo.png in Resources */,
-				6387AE500B29E3FF00E98223 /* autostartsetter.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,6 +278,14 @@
 /* End PBXRezBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		633BEA730B39EB2B003AD355 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				633BEA7A0B39EB60003AD355 /* authTool.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D202CF00486D31800D8A456 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -227,6 +295,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		633BEA870B39ED7D003AD355 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 633BEA750B39EB2B003AD355 /* HelperTool */;
+			targetProxy = 633BEA860B39ED7D003AD355 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
@@ -248,6 +324,125 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		633BEA7C0B39EB60003AD355 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = HelperTool;
+				SYMROOT = "$(PROJECT_DIR)/build";
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		633BEA7D0B39EB60003AD355 /* Development copy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = HelperTool;
+				SYMROOT = "$(PROJECT_DIR)/build";
+				ZERO_LINK = YES;
+			};
+			name = "Development copy";
+		};
+		633BEA7E0B39EB60003AD355 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = HelperTool;
+				SYMROOT = "$(PROJECT_DIR)/build";
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		633BEA7F0B39EB60003AD355 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = HelperTool;
+				SYMROOT = "$(PROJECT_DIR)/build";
+				ZERO_LINK = YES;
+			};
+			name = Default;
+		};
+		63707F330B2F3E94001D44AE /* Development copy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = "Development copy";
+		};
+		63707F340B2F3E94001D44AE /* Development copy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DSTROOT = "$(PROJECT_DIR)/../../../macpkg";
+				FRAMEWORK_SEARCH_PATHS = "\"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks\"";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = wildfirePrefPane_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = /Library/PreferencePanes;
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-twolevel_namespace",
+				);
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = Wildfire;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "$(PROJECT_DIR)/build";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = prefPane;
+				ZERO_LINK = NO;
+			};
+			name = "Development copy";
+		};
 		65E2E72A0A5E8C0F00DFFC2E /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -377,28 +572,47 @@
 		65E2E72E0A5E8C0F00DFFC2E /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 			};
 			name = Development;
 		};
 		65E2E72F0A5E8C0F00DFFC2E /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Deployment;
 		};
 		65E2E7300A5E8C0F00DFFC2E /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 			};
 			name = Default;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		633BEA7B0B39EB60003AD355 /* Build configuration list for PBXNativeTarget "HelperTool" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				633BEA7C0B39EB60003AD355 /* Development */,
+				633BEA7D0B39EB60003AD355 /* Development copy */,
+				633BEA7E0B39EB60003AD355 /* Deployment */,
+				633BEA7F0B39EB60003AD355 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
 		65E2E7290A5E8C0F00DFFC2E /* Build configuration list for PBXNativeTarget "Wildfire" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				65E2E72A0A5E8C0F00DFFC2E /* Development */,
+				63707F340B2F3E94001D44AE /* Development copy */,
 				65E2E72B0A5E8C0F00DFFC2E /* Deployment */,
 				65E2E72C0A5E8C0F00DFFC2E /* Default */,
 			);
@@ -409,6 +623,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				65E2E72E0A5E8C0F00DFFC2E /* Development */,
+				63707F330B2F3E94001D44AE /* Development copy */,
 				65E2E72F0A5E8C0F00DFFC2E /* Deployment */,
 				65E2E7300A5E8C0F00DFFC2E /* Default */,
 			);

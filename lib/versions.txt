@@ -4,9 +4,9 @@ cindy.jar              | 2.4.4
 dwr.jar                | 1.1.1 (patched [#3])
 irclib.jar             | 1.10
 jml.jar                | svn-20061216
-joscar-client.jar      | svn-20061201 (patched [#2])
-joscar-common.jar      | svn-20061026
-joscar-protocol.jar    | svn-20061201 (patched [#2])
+joscar-client.jar      | svn-20061110 (patched [#2])
+joscar-common.jar      | svn-20061110
+joscar-protocol.jar    | svn-20061110 (patched [#2])
 picocontainer.jar      | 1.2.0
 ymsg_network.jar       | 0.61 (patched [#1])
 ymsg_support.jar       | 0.61 (patched [#1])

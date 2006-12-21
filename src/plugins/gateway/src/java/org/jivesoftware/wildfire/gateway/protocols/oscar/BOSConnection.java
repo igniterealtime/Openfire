@@ -56,7 +56,7 @@ public class BOSConnection extends BasicFlapConnection {
     }
 
     protected void handleFlapPacket(FlapPacketEvent e) {
-        Log.debug("OSCAR bps flap packet received: "+e);
+        Log.debug("OSCAR bos flap packet received: "+e);
         super.handleFlapPacket(e);
     }
 

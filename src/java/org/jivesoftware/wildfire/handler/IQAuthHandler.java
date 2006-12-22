@@ -54,7 +54,7 @@ import java.util.List;
  */
 public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
-    private static boolean anonymousAllowed;
+    private boolean anonymousAllowed;
 
     private Element probeResponse;
     private IQHandlerInfo info;
@@ -79,7 +79,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             probeResponse.addElement("digest");
         }
         probeResponse.addElement("resource");
-        anonymousAllowed = "true".equals(JiveGlobals.getProperty("xmpp.auth.anonymous"));
+        anonymousAllowed = JiveGlobals.getBooleanProperty("xmpp.auth.anonymous");
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {

@@ -3,7 +3,7 @@
  * $Revision: 2814 $
  * $Date: 2005-09-13 16:41:10 -0300 (Tue, 13 Sep 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -19,19 +19,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 /**
- * Authentication service.
- *
- * Users of Jive that wish to change the AuthProvider implementation used to authenticate users
- * can set the <code>AuthProvider.className</code> Jive property. For example, if
- * you have altered Jive to use LDAP for user information, you'd want to send a custom
- * implementation of AuthFactory to make LDAP authToken queries. After changing the
- * <code>AuthProvider.className</code> Jive property, you must restart your application
- * server.<p>
- * <p/>
- * The getAuthToken method that takes servlet request and response objects as arguments can be
- * used to implement single sign-on. Additionally, two helper methods are provided for securely
- * encrypting and decrypting login information so that it can be stored as a cookie value to
- * implement auto-login.<p>
+ * Pluggable authentication service. Users of Wildfire that wish to change the AuthProvider
+ * implementation used to authenticate users can set the <code>AuthProvider.className</code>
+ * XML property. For example, if you have configured Wildfire to use LDAP for user information,
+ * you'd want to send a custom implementation of AuthFactory to make LDAP auth queries.
+ * After changing the <code>AuthProvider.className</code> XML property, you must restart your
+ * application server.
  *
  * @author Matt Tucker
  */

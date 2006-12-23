@@ -41,10 +41,14 @@ import java.util.*;
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
  * actually performing the SASL authentication.<p>
  *
- * The list of available SASL mechanisms is determined by 1) the type of
- * {@link org.jivesoftware.wildfire.user.UserProvider} being used since some SASL mechanisms
- * require the server to be able to retrieve user passwords; 2) whether anonymous logins are
- * enabled or not and 3) whether the underlying connection has been secured or not.
+ * The list of available SASL mechanisms is determined by:
+ * <ol>
+ *      <li>The type of {@link org.jivesoftware.wildfire.user.UserProvider} being used since
+ *      some SASL mechanisms require the server to be able to retrieve user passwords</li>
+ *      <li>Whether anonymous logins are enabled or not.</li>
+ *      <li>Whether shared secret authentication is enabled or not.</li>
+ *      <li>Whether the underlying connection has been secured or not.</li>
+ * </ol>
  *
  * @author Hao Chen
  * @author Gaston Dombiak
@@ -142,6 +146,12 @@ public class SASLAuthentication {
                         continue;
                     }
                 }
+                else if (mech.equals("JIVE-SHAREDSECRET")) {
+                    // Check anonymous is supported
+                    if (!isSharedSecretAllowed()) {
+                        continue;
+                    }
+                }
                 sb.append("<mechanism>");
                 sb.append(mech);
                 sb.append("</mechanism>");
@@ -178,6 +188,12 @@ public class SASLAuthentication {
                 else if (mech.equals("ANONYMOUS")) {
                     // Check anonymous is supported
                     if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
+                        continue;
+                    }
+                }
+                else if (mech.equals("JIVE-SHAREDSECRET")) {
+                    // Check shared secret is supported
+                    if (!isSharedSecretAllowed()) {
                         continue;
                     }
                 }
@@ -273,6 +289,9 @@ public class SASLAuthentication {
                     else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
                         status = doExternalAuthentication(session, doc);
                     }
+                    else if (mechanism.equalsIgnoreCase("JIVE-SHAREDSECRET")) {
+                        status = doSharedSecretAuthentication(session, doc);
+                    }
                     else if (mechanisms.contains(mechanism)) {
                         SaslServer ss = (SaslServer) session.getSessionData("SaslServer");
                         if (ss != null) {
@@ -342,6 +361,67 @@ public class SASLAuthentication {
         }
         return status;
     }
+
+    /**
+     * Returns true if shared secret authentication is enabled. Shared secret
+     * authentication creates an anonymous session, but requires that the authenticating
+     * entity know a shared secret key. The client sends a digest of the secret key,
+     * which is compared against a digest of the local shared key.
+     *
+     * @return true if shared secret authentication is enabled.
+     */
+    public static boolean isSharedSecretAllowed() {
+        return JiveGlobals.getBooleanProperty("xmpp.auth.sharedSecretEnabled");
+    }
+
+    /**
+     * Sets whether shared secret authentication is enabled. Shared secret
+     * authentication creates an anonymous session, but requires that the authenticating
+     * entity know a shared secret key. The client sends a digest of the secret key,
+     * which is compared against a digest of the local shared key.
+     *
+     * @param sharedSecretAllowed true if shared secret authentication should be enabled.
+     */
+    public static void setSharedSecretAllowed(boolean sharedSecretAllowed) {
+        JiveGlobals.setProperty("xmpp.auth.sharedSecretEnabled", sharedSecretAllowed ? "true" : "false");
+    }
+
+    /**
+     * Returns the shared secret value, or <tt>null</tt> if shared secret authentication is
+     * disabled. If this is the first time the shared secret value has been requested (and
+     * shared secret auth is enabled), the key will be randomly generated and stored in the
+     * property <tt>xmpp.auth.sharedSecret</tt>.
+     *
+     * @return the shared secret value.
+     */
+    public static String getSharedSecret() {
+        if (!isSharedSecretAllowed()) {
+            return null;
+        }
+        String sharedSecret = JiveGlobals.getProperty("xmpp.auth.sharedSecret");
+        if (sharedSecret == null) {
+            sharedSecret = StringUtils.randomString(8);
+            JiveGlobals.setProperty("xmpp.auth.sharedSecret", sharedSecret);
+        }
+        return sharedSecret;
+    }
+
+    /**
+     * Returns true if the supplied digest matches the shared secret value. The digest
+     * must be an MD5 hash of the secret key, encoded as hex. This value is supplied
+     * by clients attempting shared secret authentication.
+     *
+     * @param digest the MD5 hash of the secret key, encoded as hex.
+     * @return true if authentication succeeds.
+     */
+    public static boolean authenticateSharedSecret(String digest) {
+        if (!isSharedSecretAllowed()) {
+            return false;
+        }
+        String sharedSecert = getSharedSecret();
+        return StringUtils.hash(sharedSecert).equals(digest);
+    }
+
 
     private static Status doAnonymousAuthentication(Session session) {
         if (XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
@@ -429,9 +509,34 @@ public class SASLAuthentication {
         return Status.failed;
     }
 
+    private static Status doSharedSecretAuthentication(Session session, Element doc)
+            throws UnsupportedEncodingException
+    {
+        String secretDigest;
+        String response = doc.getTextTrim();
+        if (response == null || response.length() == 0) {
+            // No info was provided so send a challenge to get it
+            sendChallenge(session, new byte[0]);
+            return Status.needResponse;
+        }
+
+        // Parse data and obtain username & password
+        String data = new String(StringUtils.decodeBase64(response), CHARSET);
+        StringTokenizer tokens = new StringTokenizer(data, "\0");
+        tokens.nextToken();
+        secretDigest = tokens.nextToken();
+        if (authenticateSharedSecret(secretDigest)) {
+            authenticationSuccessful(session, null, null);
+            return Status.authenticated;
+        }
+        // Otherwise, authentication failed.
+        authenticationFailed(session);
+        return Status.failed;
+    }
+
     private static void sendChallenge(Session session, byte[] challenge) {
         StringBuilder reply = new StringBuilder(250);
-        if(challenge == null) {
+        if (challenge == null) {
             challenge = new byte[0];
         }
         String challenge_b64 = StringUtils.encodeBase64(challenge).trim();
@@ -493,7 +598,11 @@ public class SASLAuthentication {
 
     /**
      * Adds a new SASL mechanism to the list of supported SASL mechanisms by the server. The
-     * new mechanism will be offered to clients and connection managers as stream features.
+     * new mechanism will be offered to clients and connection managers as stream features.<p>
+     *
+     * Note: this method simply registers the SASL mechanism to be advertised as a supported
+     * mechanism by Wildfire. Actual SASL handling is done by Java itself, so you must add
+     * the provider to Java.
      *
      * @param mechanism the new SASL mechanism.
      */
@@ -530,7 +639,9 @@ public class SASLAuthentication {
             mechanisms.add("PLAIN");
             mechanisms.add("DIGEST-MD5");
             mechanisms.add("CRAM-MD5");
-        } else {
+            mechanisms.add("JIVE-SHAREDSECRET");
+        }
+        else {
             StringTokenizer st = new StringTokenizer(available, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String mech = st.nextToken().toUpperCase();
@@ -539,7 +650,9 @@ public class SASLAuthentication {
                         mech.equals("PLAIN") ||
                         mech.equals("DIGEST-MD5") ||
                         mech.equals("CRAM-MD5") ||
-                        mech.equals("GSSAPI")) {
+                        mech.equals("GSSAPI") ||
+                        mech.equals("JIVE-SHAREDSECRET")) 
+                {
                     Log.debug("SASLAuthentication: Added " + mech + " to mech list");
                     mechanisms.add(mech);
                 }
@@ -553,7 +666,8 @@ public class SASLAuthentication {
                             JiveGlobals.getXMLProperty("sasl.gssapi.config"));
                     System.setProperty("javax.security.auth.useSubjectCredsOnly",
                             JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
-                } else {
+                }
+                else {
                     //Not configured, remove the option.
                     Log.debug("SASLAuthentication: Removed GSSAPI from mech list");
                     mechanisms.remove("GSSAPI");

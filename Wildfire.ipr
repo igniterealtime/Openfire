@@ -3,11 +3,14 @@
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
     <buildFile url="file://$PROJECT_DIR$/build/build.xml">
-      <additionalClassPath />
+      <additionalClassPath>
+        <entry dir="file://$PROJECT_DIR$/../../jive/apache-ant-1.6.5/lib" />
+      </additionalClassPath>
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
       <properties />
+      <executeOn event="beforeRun" target="wildfire" runConfigurationType="Application" runConfigurationName="Wildfire" />
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
@@ -54,11 +57,14 @@
         <option name="ENUM_CONSTANTS_WRAP" value="1" />
       </value>
     </option>
-    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
+    <option name="USE_PER_PROJECT_SETTINGS" value="false" />
   </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
     <option name="DEPLOY_AFTER_MAKE" value="0" />
+    <excludeFromCompile>
+      <file url="file://$PROJECT_DIR$/src/plugins/gateway/src/java/org/jivesoftware/wildfire/gateway/web/GatewayDWR.java" />
+    </excludeFromCompile>
     <resourceExtensions>
       <entry name=".+\.(properties|xml|html|dtd|tld)" />
       <entry name=".+\.(gif|png|jpeg|jpg)" />
@@ -73,6 +79,7 @@
       <entry name="?*.png" />
       <entry name="?*.jpeg" />
       <entry name="?*.jpg" />
+      <entry name="*.js" />
     </wildcardResourcePatterns>
   </component>
   <component name="DataSourceManagerImpl" />
@@ -297,6 +304,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Admin.iml" filepath="$PROJECT_DIR$/Admin.iml" />
       <module fileurl="file://$PROJECT_DIR$/Plugins.iml" filepath="$PROJECT_DIR$/Plugins.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Spank.iml" filepath="$PROJECT_DIR$/Spank.iml" />
       <module fileurl="file://$PROJECT_DIR$/Wildfire.iml" filepath="$PROJECT_DIR$/Wildfire.iml" />
     </modules>
   </component>

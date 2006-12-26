@@ -73,6 +73,7 @@
     <property name="src.test.java.dir" value="${src.test.dir}/java"/>
     <property name="docs.dir" value="${basedir}/documentation"/>
     <property name="web.dir" value="${src.dir}/web"/>
+    <property name="spank.dir" value="${src.dir}/spank"/>
     <property name="lib.build.dir" value="${basedir}/build/lib"/>
     <property name="lib.build.installer.dir" value="${basedir}/build/installer"/>
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
@@ -593,6 +594,10 @@
             <param name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
         </antcall>
 
+        <antcall target="spank">
+            <param name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
+        </antcall>
+
         <!-- Copy compiled plugins if we need to -->
         <if>
             <equals arg1="${wildfireHome.no.plugins}" arg2="false"/>
@@ -646,6 +651,20 @@
                 <unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp"/>
             </then>
         </if>
+    </target>
+
+    <target name="spank">
+        <mkdir dir="${target.wildfireHome}/resources/spank"/>
+        <copy todir="${target.wildfireHome}/resources/spank">
+            <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+            <fileset dir="${spank.dir}">
+                <patternset refid="web.sources"/>
+                <exclude name="**/*.jsp"/>
+                <exclude name="**/*.jspf"/>
+                <include name="**/*.xml"/>
+                <include name="**/*.swf"/>
+            </fileset>
+        </copy>
     </target>
 
     <!-- dist.src =============================================================================== -->

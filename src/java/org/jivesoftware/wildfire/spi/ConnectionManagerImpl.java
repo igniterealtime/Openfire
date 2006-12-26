@@ -13,8 +13,8 @@ package org.jivesoftware.wildfire.spi;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.http.HttpBindManager;
+import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.wildfire.net.*;
 
@@ -50,12 +50,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private boolean isStarted = false;
     // Used to know if the sockets have been started
     private boolean isSocketStarted = false;
-    private HttpServerManager serverManager;
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
         ports = new ArrayList<ServerPort>(4);
-        serverManager = HttpServerManager.getInstance();
     }
 
     private void createSocket() {
@@ -306,7 +304,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void startHTTPBindListeners() {
-        serverManager.setHttpBindContext(HttpBindManager.getInstance().getServlets());
+        HttpBindManager.getInstance().start();
     }
 
     public void initialize(XMPPServer server) {
@@ -560,6 +558,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopComponentListener();
         stopConnectionManagerListener();
         stopServerListener();
+        HttpBindManager.getInstance().stop();
         SocketSendingTracker.getInstance().shutdown();
         CertificateManager.removeListener(this);
         serverName = null;

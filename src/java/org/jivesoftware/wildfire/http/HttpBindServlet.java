@@ -50,13 +50,13 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    public HttpBindServlet(HttpSessionManager sessionManager) {
-        this.sessionManager = sessionManager;
+    public HttpBindServlet() {
     }
 
 
     @Override public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
+        sessionManager = HttpBindManager.getInstance().getSessionManager();
         sessionManager.start();
     }
 

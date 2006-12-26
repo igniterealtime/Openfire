@@ -10,7 +10,7 @@ package org.jivesoftware.wildfire.commands.admin;
 
 import org.jivesoftware.wildfire.commands.AdHocCommand;
 import org.jivesoftware.wildfire.commands.SessionData;
-import org.jivesoftware.wildfire.HttpServerManager;
+import org.jivesoftware.wildfire.http.HttpBindManager;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
@@ -48,14 +48,14 @@ public class HttpBindStatus extends AdHocCommand {
         field.setVariable("FORM_TYPE");
         field.addValue("http://jabber.org/protocol/admin");
 
-        HttpServerManager manager = HttpServerManager.getInstance();
+        HttpBindManager manager = HttpBindManager.getInstance();
         boolean isEnabled = manager.isHttpBindEnabled();
         field = form.addField();
         field.setLabel("Http Bind Enabled");
         field.setVariable("httpbindenabled");
         field.addValue(String.valueOf(isEnabled));
 
-        if(isEnabled) {
+        if (isEnabled) {
             field = form.addField();
             field.setLabel("Http Bind Address");
             field.setVariable("httpbindaddress");
@@ -65,6 +65,14 @@ public class HttpBindStatus extends AdHocCommand {
             field.setLabel("Http Bind Secure Address");
             field.setVariable("httpbindsecureaddress");
             field.addValue(manager.getHttpBindSecureAddress());
+
+            String jsUrl = manager.getJavaScriptUrl();
+            if (jsUrl != null) {
+                field = form.addField();
+                field.setLabel("Http Bind JavaScript Address");
+                field.setVariable("javascriptaddress");
+                field.addValue(jsUrl);
+            }
         }
 
         command.add(form.getElement());

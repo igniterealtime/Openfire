@@ -1335,6 +1335,11 @@
         <copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist"
               todir="${mac.pkg.dir}/Library/LaunchDaemons"/>
         <mkdir dir="${mac.dmg.dir}"/>
+        <mkdir dir="${mac.pkg.dir}/Library/PreferencePanes"/>
+        <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
+            <fileset dir="${basedir}/build/osx/wildfirePrefPane/build/Deployment/Wildfire.prefPane">
+            </fileset>
+        </copy>
         <chmod perm="ug+x">
             <fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
                 <include name="extra/wildfire-launchd-wrapper.sh"/>

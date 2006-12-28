@@ -1366,10 +1366,10 @@
 
     <target name="installer.mac" depends="mac.pkg" description="Creates a Mac OS X package">
         <exec executable="hdiutil" failonerror="true">
-            <arg line="create -debug -verbose -srcfolder '${mac.template}' -volname 'Wildfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${basedir}/tmp.dmg'"/>
+            <arg line="create -srcfolder '${mac.template}' -volname 'Wildfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${basedir}/tmp.dmg'"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="attach -debug -verbose '${basedir}/tmp.dmg' -readwrite -noverify -noautoopen -mountpoint '${mac.dmg.dir}'"/>
+            <arg line="attach '${basedir}/tmp.dmg' -readwrite -noverify -noautoopen -mountpoint '${mac.dmg.dir}'"/>
         </exec>
         <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
             <arg value="dmg_wildfire.scpt"/>
@@ -1382,10 +1382,10 @@
             <arg value="128"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="detach -debug -verbose ${mac.dmg.dir} -quiet -force"/>
+            <arg line="detach ${mac.dmg.dir} -quiet -force"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="convert -debug -verbose ${basedir}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${mac.dmg.file}"/>
+            <arg line="convert ${basedir}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${mac.dmg.file}"/>
         </exec>
         <delete file="${basedir}/tmp.dmg"/>
     </target>

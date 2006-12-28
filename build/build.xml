@@ -1337,8 +1337,7 @@
         <mkdir dir="${mac.dmg.dir}"/>
         <mkdir dir="${mac.pkg.dir}/Library/PreferencePanes"/>
         <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
-            <fileset dir="${basedir}/build/osx/wildfirePrefPane/build/Deployment/Wildfire.prefPane">
-            </fileset>
+            <fileset dir="${basedir}/build/osx/wildfirePrefPane/build/UninstalledProducts/"/>
         </copy>
         <chmod perm="ug+x">
             <fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">

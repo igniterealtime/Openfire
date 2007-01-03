@@ -26,6 +26,7 @@ import org.dom4j.QName;
 import org.dom4j.Namespace;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.net.InetAddress;
 
 /**
@@ -47,7 +48,7 @@ public class HttpSession extends ClientSession {
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private Set<SessionListener> listeners = new HashSet<SessionListener>();
+    private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
     private boolean isClosed;
     private int inactivityTimeout;
     private long lastActivity;
@@ -150,8 +151,6 @@ public class HttpSession extends ClientSession {
 
     private void fireConnectionOpened(HttpConnection connection) {
         lastActivity = System.currentTimeMillis();
-        Collection<SessionListener> listeners =
-                new HashSet<SessionListener>(this.listeners);
         for(SessionListener listener : listeners) {
             listener.connectionOpened(this, connection);
         }
@@ -270,8 +269,6 @@ public class HttpSession extends ClientSession {
 
     private void fireConnectionClosed(HttpConnection connection) {
         lastActivity = System.currentTimeMillis();
-        Collection<SessionListener> listeners =
-                new HashSet<SessionListener>(this.listeners);
         for(SessionListener listener : listeners) {
             listener.connectionClosed(this, connection);
         }

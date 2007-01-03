@@ -216,12 +216,10 @@ public class HttpSession extends ClientSession {
             failDelivery();
         }
 
-        Collection<SessionListener> listeners =
-                new HashSet<SessionListener>(this.listeners);
-        this.listeners.clear();
         for(SessionListener listener : listeners) {
             listener.sessionClosed(this);
         }
+        this.listeners.clear();
     }
 
     private void failDelivery() {

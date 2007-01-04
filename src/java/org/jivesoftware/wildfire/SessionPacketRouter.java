@@ -3,19 +3,18 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 package org.jivesoftware.wildfire;
 
-import org.jivesoftware.wildfire.multiplex.UnknownStanzaException;
-import org.jivesoftware.wildfire.interceptor.InterceptorManager;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
-import org.jivesoftware.wildfire.net.SASLAuthentication;
-import org.xmpp.packet.*;
 import org.dom4j.Element;
+import org.jivesoftware.wildfire.multiplex.UnknownStanzaException;
+import org.jivesoftware.wildfire.net.SASLAuthentication;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.xmpp.packet.*;
 
 import java.io.UnsupportedEncodingException;
 
@@ -30,6 +29,7 @@ public class SessionPacketRouter implements PacketRouter {
     private ClientSession session;
     private PacketRouter router;
     private SessionManager sessionManager;
+    private boolean skipJIDValidation = false;
 
     public SessionPacketRouter() {
         this(null);
@@ -39,6 +39,22 @@ public class SessionPacketRouter implements PacketRouter {
         this.session = session;
         router = XMPPServer.getInstance().getPacketRouter();
         sessionManager = SessionManager.getInstance();
+    }
+
+
+    /**
+     * Sets if TO addresses of Elements being routed should be validated. Doing stringprep operations
+     * is very expensive and sometimes we already validated the TO address so there is no need to
+     * validate again the address. For instance, when using Connection Managers the validation
+     * is done by the Connection Manager so we can just trust the TO address. On the other hand,
+     * the FROM address is set by the server so there is no need to validate it.<p>
+     *
+     * By default validation is enabled.
+     *
+     * @param skipJIDValidation true if validation of TO address is enabled.
+     */
+    public void setSkipJIDValidation(boolean skipJIDValidation) {
+        this.skipJIDValidation = skipJIDValidation;
     }
 
     public void route(Element wrappedElement)
@@ -51,10 +67,10 @@ public class SessionPacketRouter implements PacketRouter {
             route(getIQ(wrappedElement));
         }
         else if ("message".equals(tag)) {
-            route(new Message(wrappedElement));
+            route(new Message(wrappedElement, skipJIDValidation));
         }
         else if ("presence".equals(tag)) {
-            route(new Presence(wrappedElement));
+            route(new Presence(wrappedElement, skipJIDValidation));
         }
         else {
             throw new UnknownStanzaException();
@@ -67,7 +83,7 @@ public class SessionPacketRouter implements PacketRouter {
             return new Roster(doc);
         }
         else {
-            return new IQ(doc);
+            return new IQ(doc, skipJIDValidation);
         }
     }
 
@@ -91,35 +107,8 @@ public class SessionPacketRouter implements PacketRouter {
             }
         }
         packet.setFrom(session.getAddress());
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            IQ reply = new IQ();
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
-            // Check if a message notifying the rejection should be sent
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message notification = new Message();
-                notification.setTo(session.getAddress());
-                notification.setFrom(packet.getTo());
-                notification.setBody(e.getRejectionMessage());
-                session.process(notification);
-            }
-        }
+        router.route(packet);
+        session.incrementClientPacketCount();
     }
 
     public void route(Message packet) {
@@ -130,30 +119,8 @@ public class SessionPacketRouter implements PacketRouter {
             }
         }
         packet.setFrom(session.getAddress());
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message reply = new Message();
-                reply.setID(packet.getID());
-                reply.setTo(session.getAddress());
-                reply.setFrom(packet.getTo());
-                reply.setType(packet.getType());
-                reply.setThread(packet.getThread());
-                reply.setBody(e.getRejectionMessage());
-                session.process(reply);
-            }
-        }
+        router.route(packet);
+        session.incrementClientPacketCount();
     }
 
     public void route(Presence packet) {
@@ -164,33 +131,7 @@ public class SessionPacketRouter implements PacketRouter {
             }
         }
         packet.setFrom(session.getAddress());
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            Presence reply = new Presence();
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
-            // Check if a message notifying the rejection should be sent
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message notification = new Message();
-                notification.setTo(session.getAddress());
-                notification.setFrom(packet.getTo());
-                notification.setBody(e.getRejectionMessage());
-                session.process(notification);
-            }
-        }
+        router.route(packet);
+        session.incrementClientPacketCount();
     }
 }

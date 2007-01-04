@@ -43,6 +43,7 @@ import org.jivesoftware.wildfire.transport.TransportHandler;
 import org.jivesoftware.wildfire.update.UpdateManager;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.vcard.VCardManager;
+import org.jivesoftware.wildfire.mediaproxy.MediaProxyService;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -487,6 +488,7 @@ public class XMPPServer {
         loadModule(IQPrivacyHandler.class.getName());
         loadModule(DefaultFileTransferManager.class.getName());
         loadModule(FileTransferProxy.class.getName());
+        loadModule(MediaProxyService.class.getName());
         loadModule(PubSubModule.class.getName());
         loadModule(UpdateManager.class.getName());
         loadModule(InternalComponentManager.class.getName());
@@ -1259,6 +1261,17 @@ public class XMPPServer {
      */
     public FileTransferManager getFileTransferManager() {
         return (FileTransferManager) modules.get(DefaultFileTransferManager.class);
+    }
+
+    /**
+     * Returns the <code>MediaProxyService</code> registered with this server. The
+     * <code>MediaProxyService</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>FileTransferProxy</code> registered with this server.
+     */
+    public MediaProxyService getMediaProxyService() {
+        return (MediaProxyService) modules.get(MediaProxyService.class);
     }
 
     /**

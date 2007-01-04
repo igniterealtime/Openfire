@@ -70,6 +70,19 @@ public class IQ extends Packet {
     }
 
     /**
+     * Constructs a new IQ using an existing Element. This is useful
+     * for parsing incoming IQ Elements into IQ objects. Stringprep validation
+     * on the TO address can be disabled. The FROM address will not be validated since the
+     * server is the one that sets that value.
+     *
+     * @param element the IQ Element.
+     * @param skipValidation true if stringprep should not be applied to the TO address.
+     */
+    public IQ(Element element, boolean skipValidation) {
+        super(element, skipValidation);
+    }
+
+    /**
      * Constructs a new IQ that is a copy of an existing IQ.
      *
      * @param iq the iq packet.

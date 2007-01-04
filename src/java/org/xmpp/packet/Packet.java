@@ -56,21 +56,40 @@ public abstract class Packet {
     protected JID fromJID;
 
     /**
-     * Constructs a new Packet.
+     * Constructs a new Packet. The TO address contained in the XML Element will only be
+     * validated. In other words, stringprep operations will only be performed on the TO JID to
+     * verify that it is well-formed. The FROM address is assigned by the server so there is no
+     * need to verify it.
      *
      * @param element the XML Element that contains the packet contents.
      */
     public Packet(Element element) {
+        this(element, false);
+    }
+
+    /**
+     * Constructs a new Packet. The JID address contained in the XML Element may not be
+     * validated. When validation can be skipped then stringprep operations will not be performed
+     * on the JIDs to verify that addresses are well-formed. However, when validation cannot be
+     * skipped then <tt>only</tt> the TO address will be verified. The FROM address is assigned by
+     * the server so there is no need to verify it. 
+     *
+     * @param element the XML Element that contains the packet contents.
+     * @param skipValidation true if stringprep should not be applied to the TO address.
+     */
+    public Packet(Element element, boolean skipValidation) {
         this.element = element;
         // Apply stringprep profiles to the "to" and "from" values.
         String to = element.attributeValue("to");
         if (to != null) {
-            toJID = new JID(to);
+            String[] parts = JID.getParts(to);
+            toJID = new JID(parts[0], parts[1], parts[2], skipValidation);
             element.addAttribute("to",  toJID.toString());
         }
         String from = element.attributeValue("from");
         if (from != null) {
-            fromJID = new JID(from);
+            String[] parts = JID.getParts(from);
+            fromJID = new JID(parts[0], parts[1], parts[2], true);
             element.addAttribute("from",  fromJID.toString());
         }
     }
@@ -125,7 +144,8 @@ public abstract class Packet {
                 // This improves speed and is safe as long as the user doesn't
                 // directly manipulate the attributes of the underlying Element
                 // that represent JID's.
-                toJID = new JID(to, null);
+                String[] parts = JID.getParts(to);
+                toJID = new JID(parts[0], parts[1], parts[2], true);
                 return toJID;
             }
         }
@@ -184,7 +204,8 @@ public abstract class Packet {
                 // This improves speed and is safe as long as the user doesn't
                 // directly manipulate the attributes of the underlying Element
                 // that represent JID's.
-                fromJID = new JID(from, null);
+                String[] parts = JID.getParts(from);
+                fromJID = new JID(parts[0], parts[1], parts[2], true);
                 return fromJID;
             }
         }

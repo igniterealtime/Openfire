@@ -22,6 +22,7 @@ package org.xmpp.packet;
 
 import org.jivesoftware.stringprep.IDNA;
 import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -53,7 +54,7 @@ public class JID implements Comparable, Serializable {
     // Stringprep operations are very expensive. Therefore, we cache node, domain and
     // resource values that have already had stringprep applied so that we can check
     // incoming values against the cache.
-    private static Map stringprepCache = Collections.synchronizedMap(new Cache(1000));
+    private static Map stringprepCache = Collections.synchronizedMap(new Cache(10000));
 
     private String node;
     private String domain;
@@ -203,6 +204,19 @@ public class JID implements Comparable, Serializable {
         return buf.toString();
     }
 
+    public static String resourceprep(String resource) throws StringprepException {
+        String answer = resource;
+        if (!stringprepCache.containsKey(resource)) {
+            answer = Stringprep.resourceprep(resource);
+            // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
+            if (answer != null && answer.length()*2 > 1023) {
+                return answer;
+            }
+            stringprepCache.put(answer, null);
+        }
+        return answer;
+    }
+
     /**
      * Constructs a JID from it's String representation.
      *
@@ -213,48 +227,9 @@ public class JID implements Comparable, Serializable {
         if (jid == null) {
             throw new NullPointerException("JID cannot be null");
         }
-        String node = null;
-        String domain = null;
-        String resource = null;
+        String[] parts = getParts(jid);
 
-        int atIndex = jid.indexOf("@");
-        int slashIndex = jid.indexOf("/");
-
-        // Node
-        if (atIndex > 0) {
-            node = jid.substring(0, atIndex);
-        }
-
-        // Domain
-        if (atIndex + 1 > jid.length()) {
-            throw new IllegalArgumentException("JID with empty domain not valid");
-        }
-        if (atIndex < 0) {
-            if (slashIndex > 0) {
-                domain = jid.substring(0, slashIndex);
-            }
-            else {
-                domain = jid;
-            }
-        }
-        else {
-            if (slashIndex > 0) {
-                domain = jid.substring(atIndex + 1, slashIndex);
-            }
-            else {
-                domain = jid.substring(atIndex + 1);
-            }
-        }
-
-        // Resource
-        if (slashIndex + 1 > jid.length() || slashIndex < 0) {
-            resource = null;
-        }
-        else {
-            resource = jid.substring(slashIndex + 1);
-        }
-
-        init(node, domain,resource);
+        init(parts[0], parts[1], parts[2]);
     }
 
     /**
@@ -273,18 +248,43 @@ public class JID implements Comparable, Serializable {
     }
 
     /**
-     * Constructs a new JID, bypassing all stringprep profiles. This
-     * is useful for constructing a JID object when it's already known
-     * that the String representation is well-formed.
+     * Constructs a JID given a node, domain, and resource being able to specify if stringprep
+     * should be applied or not.
      *
-     * @param jid the JID.
-     * @param fake an extra param to create a different method signature.
-     *      The value <tt>null</tt> should be passed in as this argument.
+     * @param node the node.
+     * @param domain the domain, which must not be <tt>null</tt>.
+     * @param resource the resource.
+     * @param skipStringprep true if stringprep should not be applied.
+     * @throws IllegalArgumentException if the JID is not valid.
      */
-    JID(String jid, Object fake) {
-        fake = null; // Workaround IDE warnings for unused param.
+    public JID(String node, String domain, String resource, boolean skipStringprep) {
+        if (domain == null) {
+            throw new NullPointerException("Domain cannot be null");
+        }
+        if (skipStringprep) {
+            this.node = node;
+            this.domain = domain;
+            this.resource = resource;
+            // Cache the bare and full JID String representation
+            updateCache();
+        }
+        else {
+            init(node, domain, resource);
+        }
+    }
+
+    /**
+     * Returns a String array with the parsed node, domain and resource.
+     * No Stringprep is performed while parsing the textual representation.
+     *
+     * @param jid the textual JID representation.
+     * @return a string array with the parsed node, domain and resource.
+     */
+    static String[] getParts(String jid) {
+        String[] parts = new String[3];
+        String node = null , domain, resource;
         if (jid == null) {
-            throw new NullPointerException("JID cannot be null");
+            return parts;
         }
 
         int atIndex = jid.indexOf("@");
@@ -323,8 +323,10 @@ public class JID implements Comparable, Serializable {
         else {
             resource = jid.substring(slashIndex + 1);
         }
-        // Cache the bare and full JID String representation
-        updateCache();
+        parts[0] = node;
+        parts[1] = domain;
+        parts[2] = resource;
+        return parts;
     }
 
     /**
@@ -349,7 +351,7 @@ public class JID implements Comparable, Serializable {
             if (!stringprepCache.containsKey(node)) {
                 this.node = Stringprep.nodeprep(node);
                 // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
-                if (node != null && node.length()*2 > 1023) {
+                if (this.node != null && this.node.length()*2 > 1023) {
                     throw new IllegalArgumentException("Node cannot be larger than 1023 bytes. " +
                             "Size is " + (node.length() * 2) + " bytes.");
                 }
@@ -365,26 +367,20 @@ public class JID implements Comparable, Serializable {
             if (!stringprepCache.containsKey(domain)) {
                 this.domain = Stringprep.nameprep(IDNA.toASCII(domain), false);
                 // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
-                if (domain.length()*2 > 1023) {
+                if (this.domain.length()*2 > 1023) {
                     throw new IllegalArgumentException("Domain cannot be larger than 1023 bytes. " +
-                            "Size is " + (domain.length() * 2) + " bytes.");
+                            "Size is " + (this.domain.length() * 2) + " bytes.");
                 }
                 stringprepCache.put(this.domain, null);
             }
             else {
                 this.domain = domain;
             }
-            if (!stringprepCache.containsKey(resource)) {
-                this.resource = Stringprep.resourceprep(resource);
-                // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
-                if (resource != null && resource.length()*2 > 1023) {
-                    throw new IllegalArgumentException("Resource cannot be larger than 1023 bytes. " +
-                            "Size is " + (resource.length() * 2) + " bytes.");
-                }
-                stringprepCache.put(this.resource, null);
-            }
-            else {
-                this.resource = resource;
+            this.resource = resourceprep(resource);
+            // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
+            if (resource != null && resource.length()*2 > 1023) {
+                throw new IllegalArgumentException("Resource cannot be larger than 1023 bytes. " +
+                        "Size is " + (resource.length() * 2) + " bytes.");
             }
             // Cache the bare and full JID String representation
             updateCache();

@@ -60,6 +60,19 @@ public class Message extends Packet {
     }
 
     /**
+     * Constructs a new Message using an existing Element. This is useful
+     * for parsing incoming message Elements into Message objects. Stringprep validation
+     * on the TO address can be disabled. The FROM address will not be validated since the
+     * server is the one that sets that value.
+     *
+     * @param element the message Element.
+     * @param skipValidation true if stringprep should not be applied to the TO address.
+     */
+    public Message(Element element, boolean skipValidation) {
+        super(element, skipValidation);
+    }
+
+    /**
      * Constructs a new Message that is a copy of an existing Message.
      *
      * @param message the message packet.

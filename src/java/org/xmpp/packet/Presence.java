@@ -64,6 +64,19 @@ public class Presence extends Packet {
     }
 
     /**
+     * Constructs a new Presence using an existing Element. This is useful
+     * for parsing incoming Presence Elements into Presence objects. Stringprep validation
+     * on the TO address can be disabled. The FROM address will not be validated since the
+     * server is the one that sets that value.
+     *
+     * @param element the Presence Element.
+     * @param skipValidation true if stringprep should not be applied to the TO address.
+     */
+    public Presence(Element element, boolean skipValidation) {
+        super(element, skipValidation);
+    }
+
+    /**
      * Constructs a new Presence that is a copy of an existing Presence.
      *
      * @param presence the presence packet.

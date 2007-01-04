@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,23 +11,23 @@
 
 package org.jivesoftware.wildfire.http;
 
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.StreamID;
-import org.jivesoftware.wildfire.Connection;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.net.VirtualConnection;
-import org.jivesoftware.wildfire.net.SASLAuthentication;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Message;
-import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
-import org.dom4j.QName;
+import org.dom4j.Element;
 import org.dom4j.Namespace;
+import org.dom4j.QName;
+import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.StreamID;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.net.SASLAuthentication;
+import org.jivesoftware.wildfire.net.VirtualConnection;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.net.InetAddress;
 
 /**
  * A session represents a serious of interactions with an XMPP client sending packets using the HTTP

@@ -3,7 +3,7 @@
  * $Revision: 3138 $
  * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,10 +12,14 @@
 package org.jivesoftware.wildfire.spi;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.ChannelHandler;
+import org.jivesoftware.wildfire.RoutableChannelHandler;
+import org.jivesoftware.wildfire.RoutingTable;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
+import org.jivesoftware.wildfire.session.ClientSession;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -41,7 +45,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public RoutingTableImpl() {
         super("Routing table");
-        componentManager = InternalComponentManager.getInstance();
     }
 
     public void addRoute(JID node, RoutableChannelHandler destination) {
@@ -260,5 +263,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getName();
+    }
+
+    public void start() throws IllegalStateException {
+        super.start();
+        componentManager = InternalComponentManager.getInstance();
     }
 }

@@ -3,7 +3,7 @@
  * $Revision: 3128 $
  * $Date: 2005-11-30 15:31:54 -0300 (Wed, 30 Nov 2005) $
  *
- * Copyright (C) 2004-2006 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -16,7 +16,10 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.PacketDeliverer;
+import org.jivesoftware.wildfire.PresenceManager;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
@@ -26,6 +29,7 @@ import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.session.ClientSession;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -34,7 +38,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
-import java.sql.Connection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,9 +75,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
 
     public PresenceManagerImpl() {
         super("Presence manager");
-
-        // Use component manager for Presence Updates.
-        componentManager = InternalComponentManager.getInstance();
     }
 
     public boolean isAvailable(User user) {
@@ -261,7 +261,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 pstmt.execute();
             }
             catch (SQLException sqle) {
-                Log.error(sqle);
+                Log.error("Error storing offline presence of user: " + username, sqle);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
@@ -475,6 +475,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         userManager = server.getUserManager();
         presenceUpdateHandler = server.getPresenceUpdateHandler();
         rosterManager = server.getRosterManager();
+    }
+
+    public void start() throws IllegalStateException {
+        super.start();
+        // Use component manager for Presence Updates.
+        componentManager = InternalComponentManager.getInstance();
+
     }
 
     public void stop() {

@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision$
- * $Date$
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,11 +11,11 @@
 
 package org.jivesoftware.database;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * An implementation of the Connection interface that wraps an underlying
@@ -27,10 +27,14 @@ import java.lang.reflect.InvocationTargetException;
 public class ConnectionWrapper {
 
     private static Method close;
+    private static Method metaData;
+    private static Method prepareStatement;
 
     static {
         try {
             close = Connection.class.getMethod("close");
+            metaData = Connection.class.getMethod("getMetaData");
+            prepareStatement = Connection.class.getMethod("prepareStatement", String.class);
         }
         catch (NoSuchMethodException e) {
             throw new NoSuchMethodError(e.getMessage());
@@ -97,11 +101,14 @@ public class ConnectionWrapper {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.equals(close)) {
+            if (method.equals(prepareStatement)) {
+                return connection.prepareStatement((String) args[0]);
+            } else if (method.equals(metaData)) {
+                return connection.getMetaData();
+            } else if (method.equals(close)) {
                 close();
                 return null;
-            }
-            else {
+            } else {
                 // Invoke the method normally if all else fails.
                 try {
                     return method.invoke(connection, args);

@@ -3,7 +3,7 @@
  * $Revision: 3187 $
  * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,9 +12,11 @@
 package org.jivesoftware.wildfire;
 
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.Packet;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Represents a connection on the server.
@@ -44,8 +46,9 @@ public interface Connection {
      * Returns the InetAddress describing the connection.
      *
      * @return the InetAddress describing the underlying connection properties.
+     * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
-    public InetAddress getInetAddress();
+    public InetAddress getInetAddress() throws UnknownHostException;
 
     /**
      * Close this session including associated socket connection. The order of
@@ -89,10 +92,8 @@ public interface Connection {
      *
      * @param listener the listener to register for events.
      * @param handbackMessage the object to send in the event notification.
-     * @return the message previously registered for this channel or <tt>null</tt>
-     *      if no registration existed
      */
-    public Object registerCloseListener(ConnectionCloseListener listener, Object handbackMessage);
+    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage);
 
     /**
      * Removes a registered close event listener. Registered listeners must
@@ -101,16 +102,15 @@ public interface Connection {
      * and then have the unregister call return.)
      *
      * @param listener the listener to deregister for close events.
-     * @return the Message registered with this listener or <tt>null</tt> if the
-     *      channel was never registered.
      */
-    public Object removeCloseListener(ConnectionCloseListener listener);
+    public void removeCloseListener(ConnectionCloseListener listener);
 
     /**
      * Delivers the packet to this connection without checking the recipient.
      * The method essentially calls <code>socket.send(packet.getWriteBuffer())</code>.
      *
      * @param packet the packet to deliver.
+     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException if a permission error was detected.
      */
     public void deliver(Packet packet) throws UnauthorizedException;
 
@@ -138,6 +138,16 @@ public interface Connection {
     public boolean isFlashClient();
 
     /**
+     * Sets whether the connected client is a flash client. Flash clients need to
+     * receive a special character (i.e. \0) at the end of each xml packet. Flash
+     * clients may send the character \0 in incoming packets and may start a
+     * connection using another openning tag such as: "flash:client".
+     *
+     * @param flashClient true if the if the connection is a flash client.
+     */
+    public void setFlashClient(boolean flashClient);
+
+    /**
      * Returns the major version of XMPP being used by this connection
      * (major_version.minor_version. In most cases, the version should be
      * "1.0". However, older clients using the "Jabber" protocol do not set a
@@ -158,12 +168,29 @@ public interface Connection {
     public int getMinorXMPPVersion();
 
     /**
+     * Sets the XMPP version information. In most cases, the version should be "1.0".
+     * However, older clients using the "Jabber" protocol do not set a version. In that
+     * case, the version is "0.0".
+     *
+     * @param majorVersion the major version.
+     * @param minorVersion the minor version.
+     */
+    public void setXMPPVersion(int majorVersion, int minorVersion);
+
+    /**
      * Returns the language code that should be used for this connection
      * (e.g. "en").
      *
      * @return the language code for the connection.
      */
     public String getLanguage();
+
+    /**
+     * Sets the language code that should be used for this connection (e.g. "en").
+     *
+     * @param language the language code.
+     */
+    public void setLanaguage(String language);
 
     /**
      * Returns true if the connection is using compression.
@@ -180,6 +207,13 @@ public interface Connection {
     CompressionPolicy getCompressionPolicy();
 
     /**
+     * Sets whether compression is enabled or is disabled.
+     *
+     * @param compressionPolicy whether Compression is enabled or is disabled.
+     */
+    void setCompressionPolicy(CompressionPolicy compressionPolicy);
+
+    /**
      * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
      * are required to secure their connections or otherwise their connections will be closed.
      * On the other hand, when TLS is disabled clients are not allowed to secure their connections
@@ -189,6 +223,46 @@ public interface Connection {
      * @return whether TLS is mandatory, optional or is disabled.
      */
     TLSPolicy getTlsPolicy();
+
+    /**
+     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
+     * are required to secure their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
+     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * last case.
+     *
+     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
+     */
+    void setTlsPolicy(TLSPolicy tlsPolicy);
+
+    /**
+     * Returns the packet deliverer to use when delivering a packet over the socket fails. The
+     * packet deliverer will retry to send the packet using some other connection, will store
+     * the packet offline for later retrieval or will just drop it.
+     *
+     * @return the packet deliverer to use when delivering a packet over the socket fails.
+     */
+    PacketDeliverer getPacketDeliverer();
+
+    /**
+     * Secures the plain connection by negotiating TLS with the client. When connecting
+     * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
+     * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
+     * will be <code>false</code> and  <tt>remoteServer</tt> null.
+     *
+     * @param clientMode boolean indicating if this entity is a client or a server.
+     * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
+     *        when not in client mode.
+     * @throws Exception if an error occured while securing the connection.
+     */
+    void startTLS(boolean clientMode, String remoteServer) throws Exception;
+
+    /**
+     * Start using compression for this connection. Compression will only be available after TLS
+     * has been negotiated. This means that a connection can never be using compression before
+     * TLS. However, it is possible to use compression without TLS.
+     */
+    void startCompression();
 
     /**
      * Enumeration of possible compression policies required to interact with the server.

@@ -3,7 +3,7 @@
  * $Revision: 2674 $
  * $Date: 2005-08-17 13:36:11 -0300 (Wed, 17 Aug 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,8 +11,8 @@
 
 package org.jivesoftware.wildfire;
 
-import org.xmpp.packet.Message;
 import org.dom4j.Element;
+import org.xmpp.packet.Message;
 
 import java.util.Date;
 
@@ -27,7 +27,7 @@ public class OfflineMessage extends Message {
     private Date creationDate;
 
     public OfflineMessage(Date creationDate, Element element) {
-        super(element);
+        super(element, true);
         this.creationDate = creationDate;
     }
 

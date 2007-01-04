@@ -3,7 +3,7 @@
  * $Revision: 3138 $
  * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -16,7 +16,12 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.handler.PresenceSubscribeHandler;
 import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
@@ -57,14 +62,40 @@ public class PresenceRouter extends BasicModule {
             throw new NullPointerException();
         }
         ClientSession session = sessionManager.getSession(packet.getFrom());
-        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
-            handle(packet);
+        try {
+            // Invoke the interceptors before we process the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
+            if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                handle(packet);
+            }
+            else {
+                packet.setTo(session.getAddress());
+                packet.setFrom((JID)null);
+                packet.setError(PacketError.Condition.not_authorized);
+                session.process(packet);
+            }
+            // Invoke the interceptors after we have processed the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
         }
-        else {
-            packet.setTo(session.getAddress());
-            packet.setFrom((JID)null);
-            packet.setError(PacketError.Condition.not_authorized);
-            session.process(packet);
+        catch (PacketRejectedException e) {
+            if (session != null) {
+                // An interceptor rejected this packet so answer a not_allowed error
+                Presence reply = new Presence();
+                reply.setID(packet.getID());
+                reply.setTo(session.getAddress());
+                reply.setFrom(packet.getTo());
+                reply.setError(PacketError.Condition.not_allowed);
+                session.process(reply);
+                // Check if a message notifying the rejection should be sent
+                if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                    // A message for the rejection will be sent to the sender of the rejected packet
+                    Message notification = new Message();
+                    notification.setTo(session.getAddress());
+                    notification.setFrom(packet.getTo());
+                    notification.setBody(e.getRejectionMessage());
+                    session.process(notification);
+                }
+            }
         }
     }
 
@@ -119,7 +150,17 @@ public class PresenceRouter extends BasicModule {
             }
             else if (Presence.Type.probe == type) {
                 // Handle a presence probe sent by a remote server
-                presenceManager.handleProbe(packet);
+                if (!XMPPServer.getInstance().isLocal(recipientJID)) {
+                    // Target is a component of the server so forward it
+                    ChannelHandler route = routingTable.getRoute(recipientJID);
+                    if (route != null) {
+                        route.process(packet);
+                    }
+                }
+                else {
+                    // Handle probe to a local user
+                    presenceManager.handleProbe(packet);
+                }
             }
             else {
                 // It's an unknown or ERROR type, just deliver it because there's nothing

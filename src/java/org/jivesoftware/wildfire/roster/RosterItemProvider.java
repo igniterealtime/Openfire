@@ -3,7 +3,7 @@
  * $Revision: 1751 $
  * $Date: 2005-08-07 20:08:47 -0300 (Sun, 07 Aug 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -24,10 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Defines the provider methods required for creating, reading, updating and deleting roster
@@ -61,7 +58,7 @@ public class RosterItemProvider {
      private static final String LOAD_ROSTER =
              "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
-            "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
+            "SELECT rosterID,groupName FROM jiveRosterGroups";
 
 
     private static RosterItemProvider instance = new RosterItemProvider();
@@ -265,9 +262,10 @@ public class RosterItemProvider {
      */
     public Iterator<RosterItem> getItems(String username) {
         LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
+        Map<Long, RosterItem> itemsByID = new HashMap<Long, RosterItem>();
         Connection con = null;
         PreparedStatement pstmt = null;
-        ResultSet rs = null;
+        ResultSet rs;
         try {
             // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
@@ -285,6 +283,7 @@ public class RosterItemProvider {
                         null);
                 // Add the loaded RosterItem (ie. user contact) to the result
                 itemList.add(item);
+                itemsByID.put(item.getID(), item);
             }
             // Close the statement and result set
             rs.close();
@@ -294,20 +293,27 @@ public class RosterItemProvider {
             pstmt = null;
 
             // Load the groups for the loaded contact
-            for (RosterItem item : itemList) {
-                pstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
-                pstmt.setLong(1, item.getID());
+            if (!itemList.isEmpty()) {
+                StringBuilder sb = new StringBuilder(100);
+                sb.append(LOAD_ROSTER_ITEM_GROUPS).append(" WHERE rosterID IN (");
+                for (RosterItem item : itemList) {
+                    sb.append(item.getID()).append(",");
+                }
+                sb.setLength(sb.length()-1);
+                sb.append(") ORDER BY rosterID, rank");
+                pstmt = con.prepareStatement(sb.toString());
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    item.getGroups().add(rs.getString(1));
+                    itemsByID.get(rs.getLong(1)).getGroups().add(rs.getString(2));
                 }
+                rs.close();
             }
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return itemList.iterator();
     }

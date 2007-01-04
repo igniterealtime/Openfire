@@ -3,7 +3,7 @@
  * $Revision: 3170 $
  * $Date: 2005-12-07 14:00:58 -0300 (Wed, 07 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -16,18 +16,14 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.component.ComponentSession;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.wildfire.http.HttpSession;
 import org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerManager;
-import org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerSession;
-import org.jivesoftware.wildfire.net.SocketConnection;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
-import org.jivesoftware.wildfire.server.OutgoingServerSession;
 import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
+import org.jivesoftware.wildfire.session.*;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
@@ -37,6 +33,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -257,7 +254,12 @@ public class SessionManager extends BasicModule {
         if (sessions == null || sessions.isEmpty()) {
             return null;
         }
-        return sessions.get(0).getConnection().getInetAddress();
+        try {
+            return sessions.get(0).getConnection().getInetAddress();
+        } catch (UnknownHostException e) {
+            Log.error(e);
+            return null;
+        }
     }
 
     /**
@@ -266,12 +268,10 @@ public class SessionManager extends BasicModule {
      * @param conn the connection to create the session from.
      * @param address the JID (may include a resource) of the connection manager's session. 
      * @return a newly created session.
-     * @throws UnauthorizedException
      */
-    public ConnectionMultiplexerSession createMultiplexerSession(SocketConnection conn, JID address)
-            throws UnauthorizedException {
+    public ConnectionMultiplexerSession createMultiplexerSession(Connection conn, JID address) {
         if (serverName == null) {
-            throw new UnauthorizedException("Server not initialized");
+            throw new IllegalStateException("Server not initialized");
         }
         StreamID id = nextStreamID();
         ConnectionMultiplexerSession session = new ConnectionMultiplexerSession(serverName, conn, id);
@@ -1491,7 +1491,7 @@ public class SessionManager extends BasicModule {
                         Presence presence = new Presence();
                         presence.setType(Presence.Type.unavailable);
                         presence.setFrom(session.getAddress());
-                        presenceHandler.process(presence);
+                        presenceHandler.process(presence, session);
                     }
                 }
                 finally {

@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -18,6 +18,7 @@ import org.jivesoftware.wildfire.RoutableChannelHandler;
 import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.OutgoingServerSession;
 import org.xmpp.packet.*;
 
 import java.util.HashMap;

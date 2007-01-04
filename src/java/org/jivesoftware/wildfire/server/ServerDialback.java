@@ -3,7 +3,7 @@
  * $Revision: 3188 $
  * $Date: 2005-12-12 00:28:19 -0300 (Mon, 12 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -23,6 +23,8 @@ import org.jivesoftware.wildfire.net.DNSUtil;
 import org.jivesoftware.wildfire.net.MXParser;
 import org.jivesoftware.wildfire.net.ServerTrafficCounter;
 import org.jivesoftware.wildfire.net.SocketConnection;
+import org.jivesoftware.wildfire.session.IncomingServerSession;
+import org.jivesoftware.wildfire.session.OutgoingServerSession;
 import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -56,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Gaston Dombiak
  */
-class ServerDialback {
+public class ServerDialback {
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
@@ -118,12 +120,12 @@ class ServerDialback {
      * @param connection the connection created by the remote server.
      * @param serverName the name of the local server.
      */
-    ServerDialback(Connection connection, String serverName) {
+    public ServerDialback(Connection connection, String serverName) {
         this.connection = connection;
         this.serverName = serverName;
     }
 
-    ServerDialback() {
+    public ServerDialback() {
     }
 
     /**

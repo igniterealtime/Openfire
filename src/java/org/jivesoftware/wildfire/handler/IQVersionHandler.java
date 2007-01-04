@@ -3,7 +3,7 @@
  * $Revision: 684 $
  * $Date: 2004-12-11 23:30:40 -0300 (Sat, 11 Dec 2004) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,17 +11,17 @@
 
 package org.jivesoftware.wildfire.handler;
 
-import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.PacketException;
-import org.jivesoftware.admin.AdminConsole;
-
-import java.util.ArrayList;
-import java.util.Iterator;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.admin.AdminConsole;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.PacketException;
+import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.xmpp.packet.IQ;
+
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Implements the TYPE_IQ jabber:iq:version protocol (version info). Allows
@@ -41,7 +41,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         if (bodyElement == null) {
             bodyElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:version"));
             bodyElement.addElement("name").setText(AdminConsole.getAppName());
-            bodyElement.addElement("os").setText("Java 5");
+            bodyElement.addElement("os").setText("Java " + System.getProperty("java.version"));
             bodyElement.addElement("version");
         }
     }

@@ -11,9 +11,9 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.Session,
                  org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.component.ComponentSession,
+                 org.jivesoftware.wildfire.session.ComponentSession,
+                 org.jivesoftware.wildfire.session.Session,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
@@ -32,11 +32,12 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",admin.getRowsPerPage("component-session-summary", DEFAULT_RANGE));
-    boolean close = ParamUtils.getBooleanParameter(request,"close");
-    String jid = ParamUtils.getParameter(request,"jid");
+<% // Get parameters
+    int start = ParamUtils.getIntParameter(request, "start", 0);
+    int range = ParamUtils
+            .getIntParameter(request, "range", admin.getRowsPerPage("component-session-summary", DEFAULT_RANGE));
+    boolean close = ParamUtils.getBooleanParameter(request, "close");
+    String jid = ParamUtils.getParameter(request, "jid");
 
     if (request.getParameter("range") != null) {
         admin.setRowsPerPage("component-session-summary", range);
@@ -68,9 +69,9 @@
         return;
     }
     // paginator vars
-    int numPages = (int)Math.ceil((double)sessionCount/(double)range);
-    int curPage = (start/range) + 1;
-    int maxIndex = (start+range <= sessionCount ? start+range : sessionCount);
+    int numPages = (int) Math.ceil((double) sessionCount / (double) range);
+    int curPage = (start / range) + 1;
+    int maxIndex = (start + range <= sessionCount ? start + range : sessionCount);
 %>
 
 <html>

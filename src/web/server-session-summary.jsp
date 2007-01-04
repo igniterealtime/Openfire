@@ -9,9 +9,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.Session,
                  org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.server.OutgoingServerSession,
+                 org.jivesoftware.wildfire.session.OutgoingServerSession,
+                 org.jivesoftware.wildfire.session.Session,
                  java.util.*"
     errorPage="error.jsp"
 %>
@@ -166,7 +166,7 @@
 
     <%  } %>
 
-    <%  int count = 0;
+    <% int count = 0;
         hostnames = new ArrayList<String>(hostnames).subList(start, maxIndex);
         for (String host : hostnames) {
             count++;

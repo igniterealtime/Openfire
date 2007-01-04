@@ -4,7 +4,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.wildfire.server.IncomingServerSession,
+                 org.jivesoftware.wildfire.session.IncomingServerSession,
                  java.net.URLEncoder,
                  java.util.Calendar,
                  java.util.Date"%>
@@ -17,10 +17,10 @@
    -     * 'count', an int representing the row number we're on.
  --%>
 
-<%  // Show the secured icon only if ALL sessions are secure
+<% // Show the secured icon only if ALL sessions are secure
     boolean isSecured = true;
     // Check if all incoming sessions are secured
-    for (IncomingServerSession inSession : inSessions) {
+    for (org.jivesoftware.wildfire.session.IncomingServerSession inSession : inSessions) {
         if (!inSession.getConnection().isSecure()) {
             isSecured = false;
             break;

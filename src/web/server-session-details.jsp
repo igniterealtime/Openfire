@@ -8,14 +8,17 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.text.NumberFormat,
-                 org.jivesoftware.wildfire.server.IncomingServerSession,
-                 org.jivesoftware.wildfire.server.OutgoingServerSession"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.session.IncomingServerSession,
+                 org.jivesoftware.wildfire.session.OutgoingServerSession,
+                java.text.NumberFormat"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Calendar" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -23,7 +26,7 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
-<%  // Get parameters
+<% // Get parameters
     String hostname = ParamUtils.getParameter(request, "hostname");
 
     // Handle a "go back" click:

@@ -8,13 +8,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.util.Date,
-                 org.xmpp.packet.JID"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.SessionResultFilter,
+                 org.jivesoftware.wildfire.session.ClientSession,
+                 java.util.Collection"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Date" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -159,13 +161,13 @@
 </table>
 <br>
 
- <%  // Get the iterator of sessions, print out session info if any exist.
-    SessionResultFilter filter = SessionResultFilter.createDefaultSessionFilter();
-    filter.setSortOrder(order);
-    filter.setStartIndex(start);
-    filter.setNumResults(range);
-    Collection<ClientSession> sessions = sessionManager.getSessions(filter);
-%>
+ <% // Get the iterator of sessions, print out session info if any exist.
+     SessionResultFilter filter = SessionResultFilter.createDefaultSessionFilter();
+     filter.setSortOrder(order);
+     filter.setStartIndex(start);
+     filter.setNumResults(range);
+     Collection<org.jivesoftware.wildfire.session.ClientSession> sessions = sessionManager.getSessions(filter);
+ %>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

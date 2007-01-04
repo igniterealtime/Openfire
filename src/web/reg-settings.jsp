@@ -9,9 +9,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.ClientSession,
                  org.jivesoftware.wildfire.handler.IQAuthHandler,
                  org.jivesoftware.wildfire.handler.IQRegisterHandler,
+                 org.jivesoftware.wildfire.session.ClientSession,
                  java.util.HashMap"
     errorPage="error.jsp"
 %>
@@ -31,11 +31,11 @@
 </head>
 <body>
 
-<%  // Get parameters
+<% // Get parameters
     boolean save = request.getParameter("save") != null;
-    boolean inbandEnabled = ParamUtils.getBooleanParameter(request,"inbandEnabled");
-    boolean canChangePassword = ParamUtils.getBooleanParameter(request,"canChangePassword");
-    boolean anonLogin = ParamUtils.getBooleanParameter(request,"anonLogin");
+    boolean inbandEnabled = ParamUtils.getBooleanParameter(request, "inbandEnabled");
+    boolean canChangePassword = ParamUtils.getBooleanParameter(request, "canChangePassword");
+    boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     String allowedIPs = request.getParameter("allowedIPs");
 
     // Get an IQRegisterHandler:
@@ -51,7 +51,7 @@
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
                 "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
                 "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        Map<String,String> newMap = new HashMap<String,String>();
+        Map<String, String> newMap = new HashMap<String, String>();
         StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
@@ -68,12 +68,12 @@
     anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = ClientSession.getAllowedIPs().keySet().iterator();
+    Iterator<String> iter = org.jivesoftware.wildfire.session.ClientSession.getAllowedIPs().keySet().iterator();
     if (iter.hasNext()) {
         buf.append(iter.next());
     }
     while (iter.hasNext()) {
-        buf.append(", ").append((String)iter.next());
+        buf.append(", ").append((String) iter.next());
     }
     allowedIPs = buf.toString();
 %>

@@ -9,12 +9,13 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.text.NumberFormat,
-                 org.jivesoftware.wildfire.component.ComponentSession"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.session.ComponentSession"
     errorPage="error.jsp"
 %>
+<%@ page import="java.text.NumberFormat" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

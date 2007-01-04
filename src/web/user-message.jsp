@@ -1,3 +1,4 @@
+
 <%--
   -	$Revision$
   -	$Date$
@@ -8,17 +9,19 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 org.jivesoftware.admin.*,
-                 java.util.HashMap,
-                 org.jivesoftware.wildfire.user.*,
-                 java.util.Map,
+<%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.session.ClientSession,
+                 org.jivesoftware.wildfire.session.Session,
+                 org.jivesoftware.wildfire.user.User,
                  org.xmpp.packet.JID,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                 java.util.Collection,
+                 java.util.HashMap,
+                 java.util.Iterator"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

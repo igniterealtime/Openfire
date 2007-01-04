@@ -3,20 +3,21 @@
   -	$Date$
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.Session,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.StringUtils"%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.wildfire.session.Session,
+                 org.xmpp.packet.JID,
+                 org.xmpp.packet.Presence"%>
+ <%@ page import="java.net.URLEncoder"%>
 
-<%--
-  - This page is meant to be included in other pages. It assumes 2 variables:
-  -     * 'sess', a org.jivesoftware.xmpp.Session object
-  -     * 'count', an int representing the row number we're on.
-  -     * 'current', a boolean which indicates the current row the user is looking (pass in
-  -       false if there is no current row.
-  -     * 'linkURL', a String representing the JSP page to link to
---%>
+ <%--
+   - This page is meant to be included in other pages. It assumes 2 variables:
+   -     * 'sess', a org.jivesoftware.xmpp.Session object
+   -     * 'count', an int representing the row number we're on.
+   -     * 'current', a boolean which indicates the current row the user is looking (pass in
+   -       false if there is no current row.
+   -     * 'linkURL', a String representing the JSP page to link to
+ --%>
 
 <%  if (current) { %>
 
@@ -51,7 +52,7 @@
 
             <fmt:message key="session.details.streaming" />
 
-        <%  } else if (_status == Session.STATUS_AUTHENTICATED) { %>
+        <% } else if (_status == org.jivesoftware.wildfire.session.Session.STATUS_AUTHENTICATED) { %>
 
             <fmt:message key="session.details.authenticated" />
 

@@ -10,16 +10,15 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.ClientSession,
                  org.jivesoftware.wildfire.PresenceManager,
                  org.jivesoftware.wildfire.SessionManager,
+                 org.jivesoftware.wildfire.session.ClientSession,
                  org.jivesoftware.wildfire.user.User,
                  org.jivesoftware.wildfire.user.UserManager,
-                 org.xmpp.packet.JID,
-                 java.text.NumberFormat"
+                 java.text.NumberFormat,
+                 java.util.Collection"
     errorPage="error.jsp"
 %>
-<%@ page import="java.util.Collection"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -27,7 +26,7 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
-<%  // Get parameters
+<% // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
 
     // Handle a "go back" click:
@@ -39,7 +38,7 @@
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
-    ClientSession currentSess = sessionManager.getSession(address);
+    org.jivesoftware.wildfire.session.ClientSession currentSess = sessionManager.getSession(address);
     boolean isAnonymous = !UserManager.getInstance().isRegisteredUser(address);
 
     // Get a presence manager

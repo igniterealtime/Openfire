@@ -10,10 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.ClientSession,
                  org.jivesoftware.wildfire.Connection,
                  org.jivesoftware.wildfire.ConnectionManager,
-                 org.jivesoftware.wildfire.XMPPServer"
+                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.wildfire.session.ClientSession"
     errorPage="error.jsp"
 %>
 
@@ -21,15 +21,15 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%  try { %>
 
-<%  // Get parameters:
+<% // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean success = ParamUtils.getBooleanParameter(request, "success");
     // Client configuration parameters
-    String clientSecurityRequired = ParamUtils.getParameter(request,"clientSecurityRequired");
+    String clientSecurityRequired = ParamUtils.getParameter(request, "clientSecurityRequired");
     String ssl = ParamUtils.getParameter(request, "ssl");
     String tls = ParamUtils.getParameter(request, "tls");
     // Server configuration parameters
-    String serverSecurityRequired = ParamUtils.getParameter(request,"serverSecurityRequired");
+    String serverSecurityRequired = ParamUtils.getParameter(request, "serverSecurityRequired");
     String dialback = ParamUtils.getParameter(request, "dialback");
     String server_tls = ParamUtils.getParameter(request, "server_tls");
 
@@ -42,8 +42,7 @@
             ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             // Enable 5223 port (old SSL port)
             XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
-        }
-        else if ("notreq".equals(clientSecurityRequired)) {
+        } else if ("notreq".equals(clientSecurityRequired)) {
             // User selected that security is NOT required
 
             // Enable 5222 port and make TLS optional
@@ -51,8 +50,7 @@
             ClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
             // Enable 5223 port (old SSL port)
             XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
-        }
-        else if ("custom".equals(clientSecurityRequired)) {
+        } else if ("custom".equals(clientSecurityRequired)) {
             // User selected custom client authentication
 
             // Enable or disable 5223 port (old SSL port)
@@ -62,11 +60,9 @@
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
             if ("notavailable".equals(tls)) {
                 ClientSession.setTLSPolicy(Connection.TLSPolicy.disabled);
-            }
-            else if ("optional".equals(tls)) {
+            } else if ("optional".equals(tls)) {
                 ClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
-            }
-            else {
+            } else {
                 ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             }
         }
@@ -78,16 +74,14 @@
             XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
             JiveGlobals.setProperty("xmpp.server.tls.enabled", "true");
             JiveGlobals.setProperty("xmpp.server.dialback.enabled", "false");
-        }
-        else if ("notreq".equals(serverSecurityRequired)) {
+        } else if ("notreq".equals(serverSecurityRequired)) {
             // User selected that security for s2s is NOT required
 
             // Enable TLS and enable server dialback
             XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
             JiveGlobals.setProperty("xmpp.server.tls.enabled", "true");
             JiveGlobals.setProperty("xmpp.server.dialback.enabled", "true");
-        }
-        else if ("custom".equals(serverSecurityRequired)) {
+        } else if ("custom".equals(serverSecurityRequired)) {
             // User selected custom server authentication
 
             boolean dialbackEnabled = "available".equals(dialback);
@@ -101,8 +95,7 @@
 
                 // Enable or disable TLS for s2s connections
                 JiveGlobals.setProperty("xmpp.server.tls.enabled", tlsEnabled ? "true" : "false");
-            }
-            else {
+            } else {
                 XMPPServer.getInstance().getConnectionManager().enableServerListener(false);
                 // Disable server dialback
                 JiveGlobals.setProperty("xmpp.server.dialback.enabled", "false");
@@ -117,26 +110,24 @@
     // Set page vars
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     if (connectionManager.isClientListenerEnabled() && connectionManager.isClientSSLListenerEnabled()) {
-        if (Connection.TLSPolicy.required.equals(ClientSession.getTLSPolicy())) {
+        if (Connection.TLSPolicy.required.equals(org.jivesoftware.wildfire.session.ClientSession.getTLSPolicy())) {
             clientSecurityRequired = "req";
             ssl = "available";
             tls = "required";
-        }
-        else if (Connection.TLSPolicy.optional.equals(ClientSession.getTLSPolicy())) {
+        } else if (Connection.TLSPolicy.optional.equals(ClientSession.getTLSPolicy())) {
             clientSecurityRequired = "notreq";
             ssl = "available";
             tls = "optional";
-        }
-        else {
+        } else {
             clientSecurityRequired = "custom";
             ssl = "available";
             tls = "notavailable";
         }
-    }
-    else {
+    } else {
         clientSecurityRequired = "custom";
         ssl = connectionManager.isClientSSLListenerEnabled() ? "available" : "notavailable";
-        tls = Connection.TLSPolicy.disabled.equals(ClientSession.getTLSPolicy()) ? "notavailable" : ClientSession.getTLSPolicy().toString();
+        tls = Connection.TLSPolicy.disabled.equals(ClientSession.getTLSPolicy()) ? "notavailable" :
+                ClientSession.getTLSPolicy().toString();
     }
 
     boolean tlsEnabled = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);
@@ -146,14 +137,12 @@
             serverSecurityRequired = "notreq";
             dialback = "available";
             server_tls = "optional";
-        }
-        else {
+        } else {
             serverSecurityRequired = "req";
             dialback = "notavailable";
             server_tls = "optional";
         }
-    }
-    else {
+    } else {
         serverSecurityRequired = "custom";
         dialback = dialbackEnabled ? "available" : "notavailable";
         server_tls = "notavailable";

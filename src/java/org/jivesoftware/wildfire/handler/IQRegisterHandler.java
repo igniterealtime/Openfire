@@ -3,7 +3,7 @@
  * $Revision: 1634 $
  * $Date: 2005-07-15 22:37:54 -0300 (Fri, 15 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -16,7 +16,10 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.PacketException;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.wildfire.forms.DataForm;
@@ -25,6 +28,8 @@ import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.wildfire.group.GroupManager;
 import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
 import org.jivesoftware.wildfire.user.UserManager;
@@ -229,7 +234,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             reply = IQ.createResultIQ(packet);
                             session.process(reply);
                             // Take a quick nap so that the client can process the result
-                            Thread.sleep(200);
+                            Thread.sleep(10);
                             // Close the user's connection
                             session.getConnection().close();
                             // The reply has been sent so clean up the variable

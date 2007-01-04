@@ -3,7 +3,7 @@
  * $Revision: 1632 $
  * $Date: 2005-07-15 02:49:00 -0300 (Fri, 15 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,13 +12,13 @@
 package org.jivesoftware.wildfire.audit.spi;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.Auditor;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 

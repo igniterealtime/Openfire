@@ -1,12 +1,23 @@
+/**
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.component;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.component.ExternalComponentConfiguration.Permission;
+import org.jivesoftware.wildfire.session.ComponentSession;
+import org.jivesoftware.wildfire.session.Session;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

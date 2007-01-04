@@ -3,7 +3,7 @@
  * $Revision: 3186 $
  * $Date: 2005-12-11 00:07:52 -0300 (Sun, 11 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -14,9 +14,9 @@ package org.jivesoftware.wildfire.audit.spi;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.Auditor;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -198,9 +198,9 @@ public class AuditorImpl implements Auditor {
         if (totalLength > maxTotalSize) {
             // Sort files by name (chronological order)
             List<File> sortedFiles = new ArrayList<File>(Arrays.asList(files));
-            Collections.sort(sortedFiles, new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    return ((File)o1).getName().compareTo(((File)o2).getName());
+            Collections.sort(sortedFiles, new Comparator<File>() {
+                public int compare(File o1, File o2) {
+                    return o1.getName().compareTo(o2.getName());
                 }
             });
             // Delete as many old files as required to be under the limit

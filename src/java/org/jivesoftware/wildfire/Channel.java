@@ -3,7 +3,7 @@
  * $Revision: 617 $
  * $Date: 2004-12-03 05:59:50 -0300 (Fri, 03 Dec 2004) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,12 +11,14 @@
 
 package org.jivesoftware.wildfire;
 
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.session.Session;
+import org.xmpp.packet.Packet;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Packet;
 
 /**
  * A channel provides a mechanism to queue work units for processing. Each work unit is

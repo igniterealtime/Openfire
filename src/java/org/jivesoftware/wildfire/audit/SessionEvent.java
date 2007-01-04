@@ -3,7 +3,7 @@
  * $Revision: 38 $
  * $Date: 2004-10-21 03:30:10 -0300 (Thu, 21 Oct 2004) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,7 +11,8 @@
 
 package org.jivesoftware.wildfire.audit;
 
-import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.session.Session;
+
 import java.util.Date;
 
 /**
@@ -72,6 +73,8 @@ public class SessionEvent extends AuditEvent {
      * Create an event associated with the failure of a session to authenticate.
      *
      * @param session the session that made the attempt
+     * @param user the user that made the attempt
+     * @param resource the resource used for the attempt
      * @return an event representing the connection event
      */
     public static SessionEvent createAuthFailureEvent(Session session, String user,

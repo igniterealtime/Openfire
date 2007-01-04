@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,14 +11,20 @@
 
 package org.jivesoftware.wildfire.multiplex;
 
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.StreamID;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.event.SessionEventListener;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.wildfire.session.Session;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

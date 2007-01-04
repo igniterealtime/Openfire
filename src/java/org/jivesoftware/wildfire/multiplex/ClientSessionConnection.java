@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -14,16 +14,18 @@ package org.jivesoftware.wildfire.multiplex;
 import org.dom4j.Element;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.net.VirtualConnection;
+import org.jivesoftware.wildfire.session.ConnectionMultiplexerSession;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Represents a connection of a Client Session that was established to a Connection Manager.
  * Connection Managers have their own physical connections to the server that are multiplexed
- * among connected clients. Each created {@link org.jivesoftware.wildfire.ClientSession} will
- * use an instance of this class as its connection.
+ * among connected clients. Each created {@link org.jivesoftware.wildfire.session.ClientSession}
+ * will use an instance of this class as its connection.
  *
  * @author Gaston Dombiak
  */
@@ -62,7 +64,7 @@ public class ClientSessionConnection extends VirtualConnection {
             wrapper.setTo(connectionManagerName);
             wrapper.setChildElement(packet.getElement().createCopy());
             // Deliver wrapper
-            multiplexerSession.deliver(wrapper);
+            multiplexerSession.process(wrapper);
             session.incrementServerPacketCount();
         }
     }
@@ -94,7 +96,7 @@ public class ClientSessionConnection extends VirtualConnection {
         }
     }
 
-    public InetAddress getInetAddress() {
+    public InetAddress getInetAddress() throws UnknownHostException {
         //TODO Future version may return actual IP client address. We would need to pass this info
         // Return IP address of the connection manager that the client used to log in
         ConnectionMultiplexerSession multiplexerSession =
@@ -137,7 +139,7 @@ public class ClientSessionConnection extends VirtualConnection {
                         "http://jabber.org/protocol/connectionmanager");
                 child.addAttribute("id", streamID);
                 child.addElement("close");
-                multiplexerSession.deliver(closeRequest);
+                multiplexerSession.process(closeRequest);
             }
         }
     }

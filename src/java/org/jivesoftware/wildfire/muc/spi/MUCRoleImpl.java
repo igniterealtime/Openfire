@@ -3,7 +3,7 @@
  * $Revision: 3168 $
  * $Date: 2005-12-07 13:55:47 -0300 (Wed, 07 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,11 +15,11 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.ElementUtil;
-import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.muc.*;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;

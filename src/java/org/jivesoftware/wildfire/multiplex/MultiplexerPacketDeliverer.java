@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -19,6 +19,7 @@ import org.jivesoftware.wildfire.PacketDeliverer;
 import org.jivesoftware.wildfire.PacketException;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.ConnectionMultiplexerSession;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -48,7 +49,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
         multiplexerManager = ConnectionMultiplexerManager.getInstance();
     }
 
-    void setConnectionManagerDomain(String connectionManagerDomain) {
+    public void setConnectionManagerDomain(String connectionManagerDomain) {
         this.connectionManagerDomain = connectionManagerDomain;
     }
 
@@ -68,7 +69,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
             }
             else {
                 // Send the packet using this other session to the same connection manager
-                session.deliver(packet);
+                session.process(packet);
             }
         }
     }

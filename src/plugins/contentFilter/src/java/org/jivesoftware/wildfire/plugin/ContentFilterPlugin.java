@@ -15,13 +15,13 @@ import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.MessageRouter;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.session.Session;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.JID;
@@ -565,7 +565,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         String subject = "Content filter notification! ("
                 + originalPacket.getFrom().getNode() + ")";
 
-        String body = null;
+        String body;
         if (originalPacket instanceof Message) {
             Message originalMsg = (Message) originalPacket;
             body = "Disallowed content detected in message from:"

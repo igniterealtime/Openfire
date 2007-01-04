@@ -7,26 +7,22 @@
 
 package org.jivesoftware.wildfire.plugin;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.PresenceRouter;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Presence.Type;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * This plugin can be configuured to automatically accept or reject subscription

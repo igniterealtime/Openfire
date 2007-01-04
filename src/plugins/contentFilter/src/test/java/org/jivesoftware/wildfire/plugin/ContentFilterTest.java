@@ -1,17 +1,16 @@
 package org.jivesoftware.wildfire.plugin;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.regex.PatternSyntaxException;
-
 import junit.framework.TestCase;
-
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
-import org.dom4j.io.XPPPacketReader;
+import org.dom4j.io.XPPReader;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Basic unit tests for ContentFilter.
@@ -181,7 +180,7 @@ public class ContentFilterTest extends TestCase {
         
         
         
-        XPPPacketReader packetReader = new XPPPacketReader();
+        XPPReader packetReader = new XPPReader();
         Document doc = packetReader.read(new StringReader(chatXML));
         Message m = new Message(doc.getRootElement());
         
@@ -232,7 +231,7 @@ public class ContentFilterTest extends TestCase {
             "</presence>";
         
         
-        XPPPacketReader packetReader = new XPPPacketReader();
+        XPPReader packetReader = new XPPReader();
         Document doc = packetReader.read(new StringReader(presenceXML));
         Presence p = new Presence(doc.getRootElement());
         

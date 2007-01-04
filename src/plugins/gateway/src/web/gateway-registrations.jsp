@@ -1,16 +1,21 @@
-<%@ page import="java.util.*,
-                 org.xmpp.packet.Presence,
-                 org.jivesoftware.wildfire.ClientSession,
+<%@ page import="org.jivesoftware.util.Log,
+                 org.jivesoftware.util.NotFoundException,
+                 org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.user.UserNotFoundException,
-                 org.jivesoftware.util.*,
                  org.jivesoftware.wildfire.gateway.GatewayPlugin,
                  org.jivesoftware.wildfire.gateway.Registration,
                  org.jivesoftware.wildfire.gateway.RegistrationManager,
+                 org.jivesoftware.wildfire.session.ClientSession,
+                 org.jivesoftware.wildfire.user.UserNotFoundException,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
+<%@ page import="org.xmpp.packet.Presence" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collection" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.HashMap" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

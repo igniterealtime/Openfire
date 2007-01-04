@@ -3,31 +3,31 @@
  * $Revision: 1217 $
  * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
- * Copyright (C) 1999-2006 Jive Software. All rights reserved.
+ * Copyright (C) 1999-2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 package org.jivesoftware.wildfire.filetransfer;
 
-import org.jivesoftware.util.JiveGlobals;
+import org.dom4j.Element;
 import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.filetransfer.proxy.ProxyConnectionManager;
+import org.jivesoftware.wildfire.filetransfer.proxy.ProxyTransfer;
 import org.jivesoftware.wildfire.interceptor.InterceptorManager;
 import org.jivesoftware.wildfire.interceptor.PacketInterceptor;
 import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
-import org.jivesoftware.wildfire.Session;
-import org.jivesoftware.wildfire.filetransfer.proxy.ProxyConnectionManager;
-import org.jivesoftware.wildfire.filetransfer.proxy.ProxyTransfer;
-import org.dom4j.Element;
-import org.xmpp.packet.Packet;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides several utility methods for file transfer manager implementaions to utilize.

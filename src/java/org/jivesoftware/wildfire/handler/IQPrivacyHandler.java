@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,7 +12,6 @@
 package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
@@ -22,6 +21,7 @@ import org.jivesoftware.wildfire.event.UserEventListener;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
 import org.jivesoftware.wildfire.privacy.PrivacyListProvider;
+import org.jivesoftware.wildfire.session.ClientSession;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.IQ;

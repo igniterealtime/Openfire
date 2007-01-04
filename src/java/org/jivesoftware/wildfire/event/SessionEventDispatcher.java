@@ -3,7 +3,7 @@
  * $Revision: 1.1 $
  * $Date: 2005/04/10 18:21:58 $
  *
- * Copyright 2004 Jive Software.
+ * Copyright 2007 Jive Software.
  *
  * All rights reserved. Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@
 
 package org.jivesoftware.wildfire.event;
 
+import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.session.Session;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.jivesoftware.wildfire.Session;
-import org.jivesoftware.util.Log;
 
 /**
  * Dispatches session events. Each event has a {@link EventType type}

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2004-2005 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -7,7 +7,7 @@
 
 package org.jivesoftware.wildfire.event;
 
-import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.session.Session;
 
 /**
  * Interface to listen for session events. Use the

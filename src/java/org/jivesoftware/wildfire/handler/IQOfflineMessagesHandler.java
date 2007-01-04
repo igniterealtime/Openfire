@@ -3,7 +3,7 @@
  * $Revision: 1761 $
  * $Date: 2005-08-09 19:34:09 -0300 (Tue, 09 Aug 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -22,6 +22,7 @@ import org.jivesoftware.wildfire.forms.DataForm;
 import org.jivesoftware.wildfire.forms.FormField;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.wildfire.session.ClientSession;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;

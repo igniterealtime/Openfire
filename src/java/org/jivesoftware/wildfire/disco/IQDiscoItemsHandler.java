@@ -3,7 +3,7 @@
  * $Revision: 1701 $
  * $Date: 2005-07-26 02:23:45 -0300 (Tue, 26 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,12 +15,12 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.wildfire.roster.RosterItem;
+import org.jivesoftware.wildfire.session.Session;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;

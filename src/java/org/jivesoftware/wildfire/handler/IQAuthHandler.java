@@ -3,7 +3,7 @@
  * $Revision: 2747 $
  * $Date: 2005-08-31 15:12:28 -0300 (Wed, 31 Aug 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -14,7 +14,6 @@ package org.jivesoftware.wildfire.handler;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -23,6 +22,8 @@ import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
@@ -165,7 +166,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         String resource = iq.elementTextTrim("resource");
         if (resource != null) {
             try {
-                resource = Stringprep.resourceprep(resource);
+                resource = JID.resourceprep(resource);
             }
             catch (StringprepException e) {
                 throw new IllegalArgumentException("Invalid resource: " + resource);

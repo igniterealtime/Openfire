@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,13 +12,17 @@
 package org.jivesoftware.wildfire.handler;
 
 import org.dom4j.Element;
-import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.IQHandlerInfo;
+import org.jivesoftware.wildfire.SessionManager;
+import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.ClientSession;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
@@ -70,7 +74,7 @@ public class IQBindHandler extends IQHandler {
         else {
             // Check that the desired resource is valid
             try {
-                resource = Stringprep.resourceprep(resource);
+                resource = JID.resourceprep(resource);
             }
             catch (StringprepException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());

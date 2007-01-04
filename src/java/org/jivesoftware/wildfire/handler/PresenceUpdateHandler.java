@@ -3,7 +3,7 @@
  * $Revision: 3125 $
  * $Date: 2005-11-30 15:14:14 -0300 (Wed, 30 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -20,6 +20,8 @@ import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.RosterManager;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.*;
@@ -82,10 +84,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         directedPresences = new ConcurrentHashMap<String, WeakHashMap<ChannelHandler, Set<String>>>();
     }
 
-    public void process(Packet xmppPacket) throws UnauthorizedException, PacketException {
-        Presence presence = (Presence)xmppPacket;
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
+        process((Presence) packet, sessionManager.getSession(packet.getFrom()));
+    }
+
+    public void process(Presence presence, ClientSession session) throws UnauthorizedException, PacketException {
         try {
-            ClientSession session = sessionManager.getSession(presence.getFrom());
             Presence.Type type = presence.getType();
             // Available
             if (type == null) {
@@ -108,11 +112,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             else if (Presence.Type.unavailable == type) {
                 broadcastUpdate(presence.createCopy());
                 broadcastUnavailableForDirectedPresences(presence);
-                if (session == null) {
-                    // Recovery logic. Check if a session can be found in the routing table.
-                    session = (ClientSession) XMPPServer.getInstance().getRoutingTable()
-                            .getRoute(presence.getFrom());
-                }
                 if (session != null) {
                     session.setPresence(presence);
                 }
@@ -138,8 +137,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error") + ". Triggered by packet: " +
-                    xmppPacket, e);
+            Log.error(LocaleUtils.getLocalizedString("admin.error") + ". Triggered by packet: " + presence, e);
         }
     }
 

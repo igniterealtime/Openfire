@@ -3,7 +3,7 @@
  * $Revision: 3187 $
  * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -16,11 +16,13 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.PacketRouter;
+import org.jivesoftware.wildfire.RoutableChannelHandler;
+import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.interceptor.InterceptorManager;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -107,12 +109,7 @@ public abstract class SocketReader implements Runnable {
         reader.setXPPFactory(factory);
 
         // Set the blocking reading mode to use
-        if (useBlockingMode) {
-            readingMode = new BlockingReadingMode(socket, this);
-        }
-        else {
-            readingMode = new NonBlockingReadingMode(socket, this);
-        }
+        readingMode = new BlockingReadingMode(socket, this);
     }
 
     /**
@@ -243,35 +240,8 @@ public abstract class SocketReader implements Runnable {
             closeNeverSecuredConnection();
             return;
         }
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            IQ reply = new IQ();
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
-            // Check if a message notifying the rejection should be sent
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message notification = new Message();
-                notification.setTo(session.getAddress());
-                notification.setFrom(packet.getTo());
-                notification.setBody(e.getRejectionMessage());
-                session.process(notification);
-            }
-        }
+        router.route(packet);
+        session.incrementClientPacketCount();
     }
 
     /**
@@ -292,34 +262,8 @@ public abstract class SocketReader implements Runnable {
             closeNeverSecuredConnection();
             return;
         }
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet so answer a not_allowed error
-            Presence reply = new Presence();
-            reply.setID(packet.getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(packet.getTo());
-            reply.setError(PacketError.Condition.not_allowed);
-            session.process(reply);
-            // Check if a message notifying the rejection should be sent
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message notification = new Message();
-                notification.setTo(session.getAddress());
-                notification.setFrom(packet.getTo());
-                notification.setBody(e.getRejectionMessage());
-                session.process(notification);
-            }
-        }
+        router.route(packet);
+        session.incrementClientPacketCount();
     }
 
     /**
@@ -340,30 +284,8 @@ public abstract class SocketReader implements Runnable {
             closeNeverSecuredConnection();
             return;
         }
-        try {
-            // Invoke the interceptors before we process the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    false);
-            router.route(packet);
-            // Invoke the interceptors after we have processed the read packet
-            InterceptorManager.getInstance().invokeInterceptors(packet, session, true,
-                    true);
-            session.incrementClientPacketCount();
-        }
-        catch (PacketRejectedException e) {
-            // An interceptor rejected this packet
-            if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
-                // A message for the rejection will be sent to the sender of the rejected packet
-                Message reply = new Message();
-                reply.setID(packet.getID());
-                reply.setTo(session.getAddress());
-                reply.setFrom(packet.getTo());
-                reply.setType(packet.getType());
-                reply.setThread(packet.getThread());
-                reply.setBody(e.getRejectionMessage());
-                session.process(reply);
-            }
-        }
+        router.route(packet);
+        session.incrementClientPacketCount();
     }
 
     /**
@@ -538,7 +460,7 @@ public abstract class SocketReader implements Runnable {
     }
 
     /**
-     * Creates the appropriate {@link Session} subclass based on the specified namespace.
+     * Creates the appropriate {@link org.jivesoftware.wildfire.session.Session} subclass based on the specified namespace.
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
      * @return the created session or null.

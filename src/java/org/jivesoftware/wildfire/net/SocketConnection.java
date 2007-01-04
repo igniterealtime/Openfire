@@ -3,7 +3,7 @@
  * $Revision: 3187 $
  * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -16,11 +16,13 @@ import com.jcraft.jzlib.ZOutputStream;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.ConnectionCloseListener;
+import org.jivesoftware.wildfire.PacketDeliverer;
+import org.jivesoftware.wildfire.PacketException;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.interceptor.InterceptorManager;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
+import org.jivesoftware.wildfire.session.IncomingServerSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.Packet;
 
 import javax.net.ssl.SSLSession;
@@ -113,7 +115,7 @@ public class SocketConnection implements Connection {
      * @param backupDeliverer the packet deliverer this connection will use when socket is closed.
      * @param socket the socket to represent.
      * @param isSecure true if this is a secure connection.
-     * @throws NullPointerException if the socket is null.
+     * @throws java.io.IOException if there was a socket error while sending the packet.
      */
     public SocketConnection(PacketDeliverer backupDeliverer, Socket socket, boolean isSecure)
             throws IOException {
@@ -149,17 +151,6 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    /**
-     * Secures the plain connection by negotiating TLS with the client. When connecting
-     * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
-     * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
-     * will be <code>false</code> and  <tt>remoteServer</tt> null.
-     *
-     * @param clientMode boolean indicating if this entity is a client or a server.
-     * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
-     *        when not in client mode.
-     * @throws IOException if an error occured while securing the connection.
-     */
     public void startTLS(boolean clientMode, String remoteServer) throws IOException {
         if (!secure) {
             secure = true;
@@ -177,29 +168,28 @@ public class SocketConnection implements Connection {
         }
     }
 
-    /**
-     * Start using compression for this connection. Compression will only be available after TLS
-     * has been negotiated. This means that a connection can never be using compression before
-     * TLS. However, it is possible to use compression without TLS.
-     *
-     * @throws IOException if an error occured while starting compression.
-     */
-    public void startCompression() throws IOException {
+    public void startCompression() {
         compressed = true;
 
-        if (tlsStreamHandler == null) {
-            ZOutputStream out = new ZOutputStream(
-                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()),
-                    JZlib.Z_BEST_COMPRESSION);
-            out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-            writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
-            xmlSerializer = new XMLSocketWriter(writer, this);
-        }
-        else {
-            ZOutputStream out = new ZOutputStream(tlsStreamHandler.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
-            out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-            writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
-            xmlSerializer = new XMLSocketWriter(writer, this);
+        try {
+            if (tlsStreamHandler == null) {
+                ZOutputStream out = new ZOutputStream(
+                        ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()),
+                        JZlib.Z_BEST_COMPRESSION);
+                out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+                writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+                xmlSerializer = new XMLSocketWriter(writer, this);
+            }
+            else {
+                ZOutputStream out = new ZOutputStream(tlsStreamHandler.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
+                out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
+                writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+                xmlSerializer = new XMLSocketWriter(writer, this);
+            }
+        } catch (IOException e) {
+            // TODO Would be nice to still be able to throw the exception and not catch it here
+            Log.error("Error while starting compression", e);
+            compressed = false;
         }
     }
 
@@ -234,19 +224,17 @@ public class SocketConnection implements Connection {
         session = owner;
     }
 
-    public Object registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
-        Object status = null;
+    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
         if (isClosed()) {
             listener.onConnectionClose(handbackMessage);
         }
         else {
-            status = listeners.put(listener, handbackMessage);
+            listeners.put(listener, handbackMessage);
         }
-        return status;
     }
 
-    public Object removeCloseListener(ConnectionCloseListener listener) {
-        return listeners.remove(listener);
+    public void removeCloseListener(ConnectionCloseListener listener) {
+        listeners.remove(listener);
     }
 
     public InetAddress getInetAddress() {
@@ -399,13 +387,6 @@ public class SocketConnection implements Connection {
         return null;
     }
 
-    /**
-     * Returns the packet deliverer to use when delivering a packet over the socket fails. The
-     * packet deliverer will retry to send the packet using some other connection, will store
-     * the packet offline for later retrieval or will just drop it.
-     *
-     * @return the packet deliverer to use when delivering a packet over the socket fails.
-     */
     public PacketDeliverer getPacketDeliverer() {
         return backupDeliverer;
     }
@@ -553,43 +534,34 @@ public class SocketConnection implements Connection {
             backupDeliverer.deliver(packet);
         }
         else {
+            boolean errorDelivering = false;
+            boolean allowedToWrite = false;
             try {
-                // Invoke the interceptors before we send the packet
-                InterceptorManager.getInstance().invokeInterceptors(packet, session, false, false);
-                boolean errorDelivering = false;
-                boolean allowedToWrite = false;
-                try {
-                    requestWriting();
-                    allowedToWrite = true;
-                    xmlSerializer.write(packet.getElement());
-                    if (flashClient) {
-                        writer.write('\0');
-                    }
-                    xmlSerializer.flush();
+                requestWriting();
+                allowedToWrite = true;
+                xmlSerializer.write(packet.getElement());
+                if (flashClient) {
+                    writer.write('\0');
                 }
-                catch (Exception e) {
-                    Log.debug("Error delivering packet" + "\n" + this.toString(), e);
-                    errorDelivering = true;
-                }
-                finally {
-                    if (allowedToWrite) {
-                        releaseWriting();
-                    }
-                }
-                if (errorDelivering) {
-                    close();
-                    // Retry sending the packet again. Most probably if the packet is a
-                    // Message it will be stored offline
-                    backupDeliverer.deliver(packet);
-                }
-                else {
-                    // Invoke the interceptors after we have sent the packet
-                    InterceptorManager.getInstance().invokeInterceptors(packet, session, false, true);
-                    session.incrementServerPacketCount();
+                xmlSerializer.flush();
+            }
+            catch (Exception e) {
+                Log.debug("Error delivering packet" + "\n" + this.toString(), e);
+                errorDelivering = true;
+            }
+            finally {
+                if (allowedToWrite) {
+                    releaseWriting();
                 }
             }
-            catch (PacketRejectedException e) {
-                // An interceptor rejected the packet so do nothing
+            if (errorDelivering) {
+                close();
+                // Retry sending the packet again. Most probably if the packet is a
+                // Message it will be stored offline
+                backupDeliverer.deliver(packet);
+            }
+            else {
+                session.incrementServerPacketCount();
             }
         }
     }

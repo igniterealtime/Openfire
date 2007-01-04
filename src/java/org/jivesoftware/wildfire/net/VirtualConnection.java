@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,7 +15,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Connection;
 import org.jivesoftware.wildfire.ConnectionCloseListener;
-import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.PacketDeliverer;
+import org.jivesoftware.wildfire.session.Session;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,6 +82,39 @@ public abstract class VirtualConnection implements Connection {
         return false;
     }
 
+    public void setFlashClient(boolean flashClient) {
+        //Ignore
+    }
+
+    public void setXMPPVersion(int majorVersion, int minorVersion) {
+        //Ignore
+    }
+
+    public void setLanaguage(String language) {
+        //Ignore
+    }
+
+    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
+        //Ignore
+    }
+
+    public void setTlsPolicy(TLSPolicy tlsPolicy) {
+        //Ignore
+    }
+
+    public PacketDeliverer getPacketDeliverer() {
+        //Ignore
+        return null;
+    }
+
+    public void startTLS(boolean clientMode, String remoteServer) throws Exception {
+        //Ignore
+    }
+
+    public void startCompression() {
+        //Ignore
+    }
+
     public boolean isSecure() {
         // Return false since TLS is not used for virtual connections
         return false;
@@ -122,19 +156,17 @@ public abstract class VirtualConnection implements Connection {
         }
     }
 
-    public Object registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
-        Object status = null;
+    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
         if (isClosed()) {
             listener.onConnectionClose(handbackMessage);
         }
         else {
-            status = listeners.put(listener, handbackMessage);
+            listeners.put(listener, handbackMessage);
         }
-        return status;
     }
 
-    public Object removeCloseListener(ConnectionCloseListener listener) {
-        return listeners.remove(listener);
+    public void removeCloseListener(ConnectionCloseListener listener) {
+        listeners.remove(listener);
     }
 
     /**

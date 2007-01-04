@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,19 +15,21 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.SessionPacketRouter;
-import org.xmpp.packet.*;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.ConnectionMultiplexerSession;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 /**
  * IQ packets sent from Connection Managers themselves to the server will be handled by
- * instances of this class. Each instance of
- * {@link org.jivesoftware.wildfire.net.ConnectionMultiplexerSocketReader} will have an instance
- * of this class so that IQ packets can be routed to this handler.<p>
+ * instances of this class.<p>
  * <p/>
  * This class will interact with {@link ConnectionMultiplexerManager} to create, close or
  * get client sessions.
@@ -157,6 +159,8 @@ public class MultiplexerPacketHandler {
         }
 
         SessionPacketRouter router = new SessionPacketRouter(session);
+        // Connection Manager already validate JIDs so just skip this expensive operation
+        router.setSkipJIDValidation(true);
         try {
             router.route(route.getChildElement());
         }
@@ -228,7 +232,7 @@ public class MultiplexerPacketHandler {
         ConnectionMultiplexerSession session =
                 multiplexerManager.getMultiplexerSession(connectionManagerDomain);
         if (session != null) {
-            session.deliver(reply);
+            session.process(reply);
         }
         else {
             Log.warn("No multiplexer session found. Packet not delivered: " + reply.toXML());

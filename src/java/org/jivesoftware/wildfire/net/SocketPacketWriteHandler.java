@@ -3,7 +3,7 @@
  * $Revision: 3137 $
  * $Date: 2005-12-01 02:11:05 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,10 +11,12 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.*;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -61,9 +63,9 @@ public class SocketPacketWriteHandler implements ChannelHandler {
             // The target domain belongs to the local server
             if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
                 // no TO was found so send back the packet to the sender
-                Session senderSession = sessionManager.getSession(packet.getFrom());
-                if (senderSession != null && !senderSession.getConnection().isClosed()) {
-                    senderSession.getConnection().deliver(packet);
+                ClientSession senderSession = sessionManager.getSession(packet.getFrom());
+                if (senderSession != null) {
+                    senderSession.process(packet);
                 }
                 else {
                     // The sender is no longer available so drop the packet
@@ -77,7 +79,7 @@ public class SocketPacketWriteHandler implements ChannelHandler {
                 }
                 else {
                     try {
-                        session.getConnection().deliver(packet);
+                        session.process(packet);
                     }
                     catch (Exception e) {
                         // do nothing

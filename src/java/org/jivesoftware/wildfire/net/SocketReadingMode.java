@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,7 +15,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Connection;
-import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.StreamError;
 
@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 /**
- * Abstract class for {@link BlockingReadingMode} and {@link NonBlockingReadingMode}.
+ * Abstract class for {@link BlockingReadingMode}.
  *
  * @author Gaston Dombiak
  */

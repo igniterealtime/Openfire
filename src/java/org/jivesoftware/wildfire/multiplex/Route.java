@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -44,7 +44,7 @@ public class Route extends Packet {
      * @param element the route Element.
      */
     public Route(Element element) {
-        super(element);
+        super(element, true);
     }
 
     public Route(Route route) {

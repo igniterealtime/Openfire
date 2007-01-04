@@ -3,7 +3,7 @@
  * $Revision: 3135 $
  * $Date: 2005-12-01 02:03:04 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -17,11 +17,16 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.handler.IQHandler;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
 import org.jivesoftware.wildfire.privacy.PrivacyList;
 import org.jivesoftware.wildfire.privacy.PrivacyListManager;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
@@ -73,33 +78,60 @@ public class IQRouter extends BasicModule {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = sessionManager.getSession(packet.getFrom());
-        JID to = packet.getTo();
-        if (session != null && to != null && session.getStatus() == Session.STATUS_CONNECTED &&
-                !serverName.equals(to.toString())) {
-            // User is requesting this server to authenticate for another server. Return
-            // a bad-request error
-            IQ reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.bad_request);
-            sessionManager.getSession(packet.getFrom()).process(reply);
-            Log.warn("User tried to authenticate with this server using an unknown receipient: " +
-                    packet);
+        ClientSession session = sessionManager.getSession(packet.getFrom());
+        try {
+            // Invoke the interceptors before we process the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
+            JID to = packet.getTo();
+            if (session != null && to != null && session.getStatus() == Session.STATUS_CONNECTED &&
+                    !serverName.equals(to.toString())) {
+                // User is requesting this server to authenticate for another server. Return
+                // a bad-request error
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.bad_request);
+                sessionManager.getSession(packet.getFrom()).process(reply);
+                Log.warn("User tried to authenticate with this server using an unknown receipient: " +
+                        packet);
+            }
+            else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
+                    isLocalServer(to) && (
+                            "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
+                                    "jabber:iq:register"
+                                            .equals(packet.getChildElement().getNamespaceURI()) ||
+                                    "urn:ietf:params:xml:ns:xmpp-bind"
+                                            .equals(packet.getChildElement().getNamespaceURI())))) {
+                handle(packet);
+            }
+            else {
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.not_authorized);
+                sessionManager.getSession(packet.getFrom()).process(reply);
+            }
+            // Invoke the interceptors after we have processed the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
         }
-        else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
-                isLocalServer(to) && (
-                        "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
-                                "jabber:iq:register"
-                                        .equals(packet.getChildElement().getNamespaceURI()) ||
-                                "urn:ietf:params:xml:ns:xmpp-bind"
-                                        .equals(packet.getChildElement().getNamespaceURI())))) {
-            handle(packet);
-        }
-        else {
-            IQ reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.not_authorized);
-            sessionManager.getSession(packet.getFrom()).process(reply);
+        catch (PacketRejectedException e) {
+            if (session != null) {
+                // An interceptor rejected this packet so answer a not_allowed error
+                IQ reply = new IQ();
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setID(packet.getID());
+                reply.setTo(session.getAddress());
+                reply.setFrom(packet.getTo());
+                reply.setError(PacketError.Condition.not_allowed);
+                session.process(reply);
+                // Check if a message notifying the rejection should be sent
+                if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                    // A message for the rejection will be sent to the sender of the rejected packet
+                    Message notification = new Message();
+                    notification.setTo(session.getAddress());
+                    notification.setFrom(packet.getTo());
+                    notification.setBody(e.getRejectionMessage());
+                    session.process(notification);
+                }
+            }
         }
     }
 
@@ -279,7 +311,7 @@ public class IQRouter extends BasicModule {
                 if (XMPPServer.getInstance().isLocal(recipientJID)) {
                     ClientSession session = sessionManager.getBestRoute(recipientJID);
                     if (session != null) {
-                        if (!session.shouldBlockPacket(packet)) {
+                        if (session.canProcess(packet)) {
                             session.process(packet);
                             handlerFound = true;
                         }

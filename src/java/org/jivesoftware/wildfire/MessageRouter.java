@@ -3,7 +3,7 @@
  * $Revision: 3007 $
  * $Date: 2005-10-31 13:29:25 -0300 (Mon, 31 Oct 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,10 +11,13 @@
 
 package org.jivesoftware.wildfire;
 
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.interceptor.InterceptorManager;
+import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
@@ -63,51 +66,65 @@ public class MessageRouter extends BasicModule {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = sessionManager.getSession(packet.getFrom());
-        if (session == null
-                || session.getStatus() == Session.STATUS_AUTHENTICATED)
-        {
-            JID recipientJID = packet.getTo();
+        ClientSession session = sessionManager.getSession(packet.getFrom());
+        try {
+            // Invoke the interceptors before we process the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
+            if (session == null
+                    || session.getStatus() == Session.STATUS_AUTHENTICATED)
+            {
+                JID recipientJID = packet.getTo();
 
-            // Check if the message was sent to the server hostname
-            if (recipientJID != null && recipientJID.getNode() == null &&
-                    recipientJID.getResource() == null &&
-                    serverName.equals(recipientJID.getDomain())) {
-                if (packet.getElement().element("addresses") != null) {
-                    // Message includes multicast processing instructions. Ask the multicastRouter
-                    // to route this packet
-                    multicastRouter.route(packet);
+                // Check if the message was sent to the server hostname
+                if (recipientJID != null && recipientJID.getNode() == null &&
+                        recipientJID.getResource() == null &&
+                        serverName.equals(recipientJID.getDomain())) {
+                    if (packet.getElement().element("addresses") != null) {
+                        // Message includes multicast processing instructions. Ask the multicastRouter
+                        // to route this packet
+                        multicastRouter.route(packet);
+                    }
+                    else {
+                        // Message was sent to the server hostname so forward it to a configurable
+                        // set of JID's (probably admin users)
+                        sendMessageToAdmins(packet);
+                    }
+                    return;
                 }
-                else {
-                    // Message was sent to the server hostname so forward it to a configurable
-                    // set of JID's (probably admin users)
-                    sendMessageToAdmins(packet);
-                }
-                return;
-            }
 
-            try {
-                routingTable.getBestRoute(recipientJID).process(packet);
-            }
-            catch (Exception e) {
                 try {
-                    messageStrategy.storeOffline(packet);
+                    routingTable.getBestRoute(recipientJID).process(packet);
                 }
-                catch (Exception e1) {
-                    Log.error(e1);
+                catch (Exception e) {
+                    try {
+                        messageStrategy.storeOffline(packet);
+                    }
+                    catch (Exception e1) {
+                        Log.error(e1);
+                    }
                 }
-            }
 
-        }
-        else {
-            packet.setTo(session.getAddress());
-            packet.setFrom((JID)null);
-            packet.setError(PacketError.Condition.not_authorized);
-            try {
+            }
+            else {
+                packet.setTo(session.getAddress());
+                packet.setFrom((JID)null);
+                packet.setError(PacketError.Condition.not_authorized);
                 session.process(packet);
             }
-            catch (UnauthorizedException ue) {
-                Log.error(ue);
+            // Invoke the interceptors after we have processed the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
+        } catch (PacketRejectedException e) {
+            // An interceptor rejected this packet
+            if (session != null && e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                // A message for the rejection will be sent to the sender of the rejected packet
+                Message reply = new Message();
+                reply.setID(packet.getID());
+                reply.setTo(session.getAddress());
+                reply.setFrom(packet.getTo());
+                reply.setType(packet.getType());
+                reply.setThread(packet.getThread());
+                reply.setBody(e.getRejectionMessage());
+                session.process(reply);
             }
         }
     }

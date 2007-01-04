@@ -3,7 +3,7 @@
  * $Revision: 3174 $
  * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -13,10 +13,10 @@ package org.jivesoftware.wildfire.net;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.session.ClientSession;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;

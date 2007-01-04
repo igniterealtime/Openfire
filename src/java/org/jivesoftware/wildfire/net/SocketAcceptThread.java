@@ -3,7 +3,7 @@
  * $Revision: 1583 $
  * $Date: 2005-07-03 17:55:39 -0300 (Sun, 03 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -73,13 +73,7 @@ public class SocketAcceptThread extends Thread {
         }
         this.serverPort = serverPort;
         // Set the blocking reading mode to use
-        boolean useBlockingMode = JiveGlobals.getBooleanProperty("xmpp.socket.blocking", true);
-        if (useBlockingMode) {
-            acceptingMode = new BlockingAcceptingMode(connManager, serverPort, bindInterface);
-        }
-        else {
-            acceptingMode = new NonBlockingAcceptingMode(connManager, serverPort, bindInterface);
-        }
+        acceptingMode = new BlockingAcceptingMode(connManager, serverPort, bindInterface);
     }
 
     /**

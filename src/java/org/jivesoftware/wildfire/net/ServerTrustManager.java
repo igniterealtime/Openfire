@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author Gaston Dombiak
  */
-class ServerTrustManager implements X509TrustManager {
+public class ServerTrustManager implements X509TrustManager {
 
     /**
      * KeyStore that holds the trusted CA

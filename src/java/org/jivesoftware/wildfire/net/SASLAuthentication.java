@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -19,13 +19,13 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.AuthToken;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
+import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.wildfire.session.IncomingServerSession;
+import org.jivesoftware.wildfire.session.Session;
 import org.xmpp.packet.JID;
 
 import javax.net.ssl.SSLPeerUnverifiedException;

@@ -127,6 +127,11 @@ public abstract class StanzaHandler {
             return;
         }
 
+        // Verify if end of stream was requested
+        if (stanza.equals("</stream:stream>")) {
+            session.getConnection().close();
+            return;
+        }
         // Create DOM object from received stanza
         Element doc;
         try {

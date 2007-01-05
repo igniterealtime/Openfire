@@ -25,11 +25,14 @@ import java.util.Iterator;
 public interface ConnectionManager {
 
     /**
-     * The default XMPP port for clients.
+     * The default XMPP port for clients. This port can be used with secured
+     * and unsecured connections. Clients will initially connect using an unsecure
+     * connection and may secure it by using StartTLS.
      */
     final int DEFAULT_PORT = 5222;
     /**
-     * The default Jabber socket
+     * The default legacy Jabber port for SSL traffic. This old method, and soon
+     * to be deprecated, uses encrypted connections as soon as they are created.
      */
     final int DEFAULT_SSL_PORT = 5223;
     /**

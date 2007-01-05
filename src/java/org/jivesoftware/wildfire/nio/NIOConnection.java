@@ -39,8 +39,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.security.KeyStore;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of {@link Connection} inteface specific for NIO connections when using
@@ -61,8 +61,8 @@ public class NIOConnection implements Connection {
     private IoSession ioSession;
 
     final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<ConnectionCloseListener, Object>();
-    
+            new ConcurrentHashMap<ConnectionCloseListener, Object>();
+
     /**
      * Deliverer to use when the connection is closed or was closed when delivering
      * a packet.
@@ -167,14 +167,12 @@ public class NIOConnection implements Connection {
      * Used by subclasses to properly finish closing the connection.
      */
     private void notifyCloseListeners() {
-        synchronized (listeners) {
-            for (ConnectionCloseListener listener : listeners.keySet()) {
-                try {
-                    listener.onConnectionClose(listeners.get(listener));
-                }
-                catch (Exception e) {
-                    Log.error("Error notifying listener: " + listener, e);
-                }
+        for (Map.Entry<ConnectionCloseListener,Object> entry : listeners.entrySet()) {
+            try {
+                entry.getKey().onConnectionClose(entry.getValue());
+            }
+            catch (Exception e) {
+                Log.error("Error notifying listener: " + entry.getKey(), e);
             }
         }
     }

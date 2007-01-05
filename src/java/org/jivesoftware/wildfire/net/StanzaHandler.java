@@ -53,6 +53,10 @@ public abstract class StanzaHandler {
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
     private boolean startedSASL = false;
+    /**
+     * SASL status based on the last SASL interaction
+     */
+    private SASLAuthentication.Status saslStatus;
 
     // DANIELE: Indicate if a stream:stream is arrived to complete compression
     private boolean waitingCompressionACK = false;
@@ -113,7 +117,7 @@ public abstract class StanzaHandler {
                 MXParser parser = (MXParser) factory.newPullParser();
                 parser.setInput(new StringReader(stanza));
                 createSession(parser);
-            } else if (startedSASL && session.getStatus() == Session.STATUS_AUTHENTICATED) {
+            } else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
                 startedSASL = false;
                 saslSuccessful();
             } else if (waitingCompressionACK) {
@@ -151,8 +155,11 @@ public abstract class StanzaHandler {
         } else if ("auth".equals(tag)) {
             // User is trying to authenticate using SASL
             startedSASL = true;
-            // Forward packet to the server
-            process(doc);
+            // Process authentication stanza
+            saslStatus = SASLAuthentication.handle(session, doc);
+        } else if (startedSASL && "response".equals(tag)) {
+            // User is responding to SASL challenge. Process response
+            saslStatus = SASLAuthentication.handle(session, doc);
         } else if ("compress".equals(tag)) {
             // Client is trying to initiate compression
             if (compressClient(doc)) {

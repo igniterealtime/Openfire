@@ -509,9 +509,8 @@ public class SessionManager extends BasicModule {
      *
      * @param conn the connection to create the session from.
      * @return a newly created session.
-     * @throws UnauthorizedException
      */
-    public ClientSession createClientSession(Connection conn) throws UnauthorizedException {
+    public ClientSession createClientSession(Connection conn) {
         return createClientSession(conn, nextStreamID());
     }
 
@@ -523,10 +522,9 @@ public class SessionManager extends BasicModule {
      * @return a newly created session.
      * @throws UnauthorizedException
      */
-    public ClientSession createClientSession(Connection conn, StreamID id)
-            throws UnauthorizedException {
+    public ClientSession createClientSession(Connection conn, StreamID id) {
         if (serverName == null) {
-            throw new UnauthorizedException("Server not initialized");
+            throw new IllegalStateException("Server not initialized");
         }
         ClientSession session = new ClientSession(serverName, conn, id);
         conn.init(session);

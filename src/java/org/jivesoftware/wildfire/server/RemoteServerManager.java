@@ -13,8 +13,8 @@ package org.jivesoftware.wildfire.server;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.ConnectionManager;
 import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.net.SocketAcceptThread;
 import org.jivesoftware.wildfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.wildfire.session.Session;
 
@@ -283,15 +283,13 @@ public class RemoteServerManager {
      * @return the remote port to connect for the specified remote server.
      */
     public static int getPortForServer(String domain) {
-        int port = JiveGlobals.getIntProperty("xmpp.server.socket.remotePort",
-                SocketAcceptThread.DEFAULT_SERVER_PORT);
+        int port = JiveGlobals.getIntProperty("xmpp.server.socket.remotePort", ConnectionManager.DEFAULT_SERVER_PORT);
         RemoteServerConfiguration config = getConfiguration(domain);
         if (config != null) {
             port = config.getRemotePort();
             if (port == 0) {
-                port =
-                        JiveGlobals.getIntProperty("xmpp.server.socket.remotePort",
-                                SocketAcceptThread.DEFAULT_SERVER_PORT);
+                port = JiveGlobals
+                        .getIntProperty("xmpp.server.socket.remotePort", ConnectionManager.DEFAULT_SERVER_PORT);
             }
         }
         return port;

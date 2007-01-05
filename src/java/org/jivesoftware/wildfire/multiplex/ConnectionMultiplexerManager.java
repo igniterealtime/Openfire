@@ -19,7 +19,6 @@ import org.jivesoftware.wildfire.Connection;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.StreamID;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.event.SessionEventDispatcher;
 import org.jivesoftware.wildfire.event.SessionEventListener;
 import org.jivesoftware.wildfire.session.ClientSession;
@@ -128,28 +127,24 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * @param streamID the stream ID created by the connection manager for the new session.
      */
     public void createClientSession(String connectionManagerDomain, String streamID) {
-        try {
-            Connection connection = new ClientSessionConnection(connectionManagerDomain);
-            ClientSession session = SessionManager.getInstance()
-                    .createClientSession(connection, new BasicStreamID(streamID));
-            // Register that this streamID belongs to the specified connection manager
-            streamIDs.put(streamID, connectionManagerDomain);
-            // Register which sessions are being hosted by the speicifed connection manager
-            Map<String, ClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
-            if (sessions == null) {
-                synchronized (connectionManagerDomain.intern()) {
-                    sessions = sessionsByManager.get(connectionManagerDomain);
-                    if (sessions == null) {
-                        sessions = new ConcurrentHashMap<String, ClientSession>();
-                        sessionsByManager.put(connectionManagerDomain, sessions);
-                    }
+        // TODO Consider that client session may return null when IP address is forbidden
+        Connection connection = new ClientSessionConnection(connectionManagerDomain);
+        ClientSession session = SessionManager.getInstance()
+                .createClientSession(connection, new BasicStreamID(streamID));
+        // Register that this streamID belongs to the specified connection manager
+        streamIDs.put(streamID, connectionManagerDomain);
+        // Register which sessions are being hosted by the speicifed connection manager
+        Map<String, ClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
+        if (sessions == null) {
+            synchronized (connectionManagerDomain.intern()) {
+                sessions = sessionsByManager.get(connectionManagerDomain);
+                if (sessions == null) {
+                    sessions = new ConcurrentHashMap<String, ClientSession>();
+                    sessionsByManager.put(connectionManagerDomain, sessions);
                 }
             }
-            sessions.put(streamID, session);
         }
-        catch (UnauthorizedException e) {
-            Log.error("Error creating virtual client session", e);
-        }
+        sessions.put(streamID, session);
     }
 
     /**

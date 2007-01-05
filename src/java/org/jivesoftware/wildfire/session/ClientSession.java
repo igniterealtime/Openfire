@@ -11,7 +11,6 @@
 
 package org.jivesoftware.wildfire.session;
 
-import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -35,8 +34,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
-import java.io.IOException;
-import java.io.Writer;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -63,16 +61,6 @@ public class ClientSession extends Session {
 
     private static Connection.TLSPolicy tlsPolicy;
 	private static Connection.CompressionPolicy compressionPolicy;
-
-    /**
-     * Milliseconds a connection has to be idle to be closed. Default is 30 minutes. Sending
-     * stanzas to the client is not considered as activity. We are only considering the connection
-     * active when the client sends some data or hearbeats (i.e. whitespaces) to the server.
-     * The reason for this is that sending data will fail if the connection is closed. And if
-     * the thread is blocked while sending data (because the socket is closed) then the clean up
-     * thread will close the socket anyway.
-     */
-    private static long idleTimeout;
 
     /**
      * The authentication token for this session.
@@ -130,9 +118,16 @@ public class ClientSession extends Session {
         policyName = JiveGlobals.getProperty("xmpp.client.compression.policy",
                 Connection.CompressionPolicy.optional.toString());
         compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+    }
 
-        // Set the default read idle timeout. If none was set then assume 30 minutes
-        idleTimeout = JiveGlobals.getIntProperty("xmpp.client.idle", 30 * 60 * 1000);
+    /**
+     * Returns the list of IP address that are allowed to connect to the server. If the list is
+     * empty then anyone is allowed to connect to the server.
+     *
+     * @return the list of IP address that are allowed to connect to the server.
+     */
+    public static Map<String, String> getAllowedIPs() {
+        return allowedIPs;
     }
 
     /**
@@ -141,16 +136,13 @@ public class ClientSession extends Session {
      * and namespace were provided by the client.
      *
      * @param serverName the name of the server where the session is connecting to.
-     * @param reader the reader that is reading the provided XML through the connection.
+     * @param xpp the parser that is reading the provided XML through the connection.
      * @param connection the connection with the client.
      * @return a newly created session between the server and a client.
+     * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing incoming data. 
      */
-    public static Session createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection) throws XmlPullParserException, UnauthorizedException,
-            IOException
-    {
-        XmlPullParser xpp = reader.getXPPParser();
-
+    public static Session createSession(String serverName, XmlPullParser xpp, Connection connection)
+            throws XmlPullParserException {
         boolean isFlashClient = xpp.getPrefix().equals("flash");
         connection.setFlashClient(isFlashClient);
 
@@ -169,28 +161,37 @@ public class ClientSession extends Session {
         }
 
         if (!allowedIPs.isEmpty()) {
+            boolean forbidAccess = false;
+            String hostAddress = "Unknown";
             // The server is using a whitelist so check that the IP address of the client
             // is authorized to connect to the server
-            if (!allowedIPs.containsKey(connection.getInetAddress().getHostAddress())) {
-                byte[] address = connection.getInetAddress().getAddress();
-                String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
-                        (address[2] & 0xff) +
-                        ".*";
-                String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
-                String range3 = (address[0] & 0xff) + ".*.*.*";
-                if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
-                        !allowedIPs.containsKey(range3)) {
-                    // Client cannot connect from this IP address so end the stream and
-                    // TCP connection
-                    Log.debug("Closed connection to client attempting to connect from: " +
-                            connection.getInetAddress().getHostAddress());
-                    // Include the not-authorized error in the response
-                    StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                    connection.deliverRawText(error.toXML());
-                    // Close the underlying connection
-                    connection.close();
-                    return null;
+            try {
+               hostAddress = connection.getInetAddress().getHostAddress();
+                if (!allowedIPs.containsKey(hostAddress)) {
+                    byte[] address = connection.getInetAddress().getAddress();
+                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
+                            (address[2] & 0xff) +
+                            ".*";
+                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+                    String range3 = (address[0] & 0xff) + ".*.*.*";
+                    if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
+                            !allowedIPs.containsKey(range3)) {
+                        forbidAccess = true;
+                    }
                 }
+            } catch (UnknownHostException e) {
+                forbidAccess = true;
+            }
+            if (forbidAccess) {
+                // Client cannot connect from this IP address so end the stream and
+                // TCP connection
+                Log.debug("Closed connection to client attempting to connect from: " + hostAddress);
+                // Include the not-authorized error in the response
+                StreamError error = new StreamError(StreamError.Condition.not_authorized);
+                connection.deliverRawText(error.toXML());
+                // Close the underlying connection
+                connection.close();
+                return null;
             }
         }
 
@@ -260,14 +261,9 @@ public class ClientSession extends Session {
         // Indicate the compression policy to use for this connection
         connection.setCompressionPolicy(compressionPolicy);
 
-        // Set the max number of milliseconds the connection may not receive data from the
-        // client before closing the connection
-        connection.setIdleTimeout(idleTimeout);
-
         // Create a ClientSession for this user.
         Session session = SessionManager.getInstance().createClientSession(connection);
 
-        Writer writer = connection.getWriter();
         // Build the start packet response
         StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
@@ -291,17 +287,11 @@ public class ClientSession extends Session {
             sb.append(majorVersion).append(".").append(minorVersion);
         }
         sb.append("\">");
-        writer.write(sb.toString());
+        connection.deliverRawText(sb.toString());
 
         // If this is a "Jabber" connection, the session is now initialized and we can
         // return to allow normal packet parsing.
         if (majorVersion == 0) {
-            // If this is a flash client append a special caracter to the response.
-            if (isFlashClient) {
-                writer.write('\0');
-            }
-            writer.flush();
-
             return session;
         }
         // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
@@ -324,24 +314,8 @@ public class ClientSession extends Session {
         }
         sb.append("</stream:features>");
 
-        writer.write(sb.toString());
-
-        if (isFlashClient) {
-            writer.write('\0');
-        }
-        writer.flush();
-
+        connection.deliverRawText(sb.toString());
         return session;
-    }
-
-    /**
-     * Returns the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server.
-     *
-     * @return the list of IP address that are allowed to connect to the server.
-     */
-    public static Map<String, String> getAllowedIPs() {
-        return allowedIPs;
     }
 
     /**
@@ -457,34 +431,11 @@ public class ClientSession extends Session {
     }
 
     /**
-     * Returns the number of milliseconds a connection has to be idle to be closed. Default is
-     * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
-     * considering the connection active when the client sends some data or hearbeats
-     * (i.e. whitespaces) to the server.
-     *
-     * @return the number of milliseconds a connection has to be idle to be closed.
-     */
-    public static long getIdleTimeout() {
-        return idleTimeout;
-    }
-
-    /**
-     * Sets the number of milliseconds a connection has to be idle to be closed. Default is
-     * 30 minutes. Sending stanzas to the client is not considered as activity. We are only
-     * considering the connection active when the client sends some data or hearbeats
-     * (i.e. whitespaces) to the server.
-     *
-     * @param timeout the number of milliseconds a connection has to be idle to be closed.
-     */
-    public static void setIdleTimeout(long timeout) {
-        idleTimeout = timeout;
-        JiveGlobals.setProperty("xmpp.client.idle", Long.toString(idleTimeout));
-    }
-
-    /**
      * Creates a session with an underlying connection and permission protection.
      *
-     * @param connection The connection we are proxying
+     * @param serverName name of the server.
+     * @param connection The connection we are proxying.
+     * @param streamID unique identifier of this session.
      */
     public ClientSession(String serverName, Connection connection, StreamID streamID) {
         super(serverName, connection, streamID);
@@ -720,11 +671,12 @@ public class ClientSession extends Session {
         StringBuilder sb = new StringBuilder(200);
 
         // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+        // TODO Fix stream compression when using MINA and then enable this code
+        /*if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
             sb.append(
                     "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
-        }
+        }*/
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication

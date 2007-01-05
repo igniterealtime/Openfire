@@ -8,16 +8,14 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.admin.AdminPageBean,
-                 java.util.*,
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.wildfire.ConnectionManager,
                  org.jivesoftware.wildfire.XMPPServer,
                  java.net.InetAddress,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.wildfire.net.SSLSocketAcceptThread,
-                 org.jivesoftware.wildfire.net.SocketAcceptThread,
-                 org.jivesoftware.wildfire.ConnectionManager"
+                 java.util.HashMap"
 %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -30,14 +28,14 @@
 
 <%
     // Get parameters
-    String serverName = ParamUtils.getParameter(request,"serverName");
-    int port = ParamUtils.getIntParameter(request,"port",-1);
-    int sslPort = ParamUtils.getIntParameter(request,"sslPort",-1);
-    int embeddedPort = ParamUtils.getIntParameter(request,"embeddedPort",-1);
-    int embeddedSecurePort = ParamUtils.getIntParameter(request,"embeddedSecurePort",-1);
-    boolean sslEnabled = ParamUtils.getBooleanParameter(request,"sslEnabled");
-    int componentPort = ParamUtils.getIntParameter(request,"componentPort",-1);
-    int serverPort = ParamUtils.getIntParameter(request,"serverPort",-1);
+    String serverName = ParamUtils.getParameter(request, "serverName");
+    int port = ParamUtils.getIntParameter(request, "port", -1);
+    int sslPort = ParamUtils.getIntParameter(request, "sslPort", -1);
+    int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", -1);
+    int embeddedSecurePort = ParamUtils.getIntParameter(request, "embeddedSecurePort", -1);
+    boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled");
+    int componentPort = ParamUtils.getIntParameter(request, "componentPort", -1);
+    int serverPort = ParamUtils.getIntParameter(request, "serverPort", -1);
     boolean save = request.getParameter("save") != null;
     boolean defaults = request.getParameter("defaults") != null;
     boolean cancel = request.getParameter("cancel") != null;
@@ -49,10 +47,10 @@
 
     if (defaults) {
         serverName = InetAddress.getLocalHost().getHostName();
-        port = SocketAcceptThread.DEFAULT_PORT;
-        sslPort = SSLSocketAcceptThread.DEFAULT_PORT;
-        componentPort = SocketAcceptThread.DEFAULT_COMPONENT_PORT;
-        serverPort = SocketAcceptThread.DEFAULT_SERVER_PORT;
+        port = ConnectionManager.DEFAULT_PORT;
+        sslPort = ConnectionManager.DEFAULT_SSL_PORT;
+        componentPort = ConnectionManager.DEFAULT_COMPONENT_PORT;
+        serverPort = ConnectionManager.DEFAULT_SERVER_PORT;
         embeddedPort = 9090;
         embeddedSecurePort = 9091;
         sslEnabled = true;
@@ -64,40 +62,39 @@
     Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (serverName == null) {
-            errors.put("serverName","");
+            errors.put("serverName", "");
         }
         if (port < 1) {
-            errors.put("port","");
+            errors.put("port", "");
         }
         if (sslPort < 1 && sslEnabled) {
-            errors.put("sslPort","");
+            errors.put("sslPort", "");
         }
         if (componentPort < 1) {
-            errors.put("componentPort","");
+            errors.put("componentPort", "");
         }
         if (serverPort < 1) {
-            errors.put("serverPort","");
+            errors.put("serverPort", "");
         }
         if (XMPPServer.getInstance().isStandAlone()) {
             if (embeddedPort < 1) {
-                errors.put("embeddedPort","");
+                errors.put("embeddedPort", "");
             }
             if (embeddedSecurePort < 1) {
-                errors.put("embeddedSecurePort","");
+                errors.put("embeddedSecurePort", "");
             }
             if (embeddedPort > 0 && embeddedSecurePort > 0) {
                 if (embeddedPort == embeddedSecurePort) {
-                    errors.put("embeddedPortsEqual","");
+                    errors.put("embeddedPortsEqual", "");
                 }
             }
-        }
-        else {
+        } else {
             embeddedPort = -1;
             embeddedSecurePort = -1;
         }
         if (port > 0 && sslPort > 0) {
             if (port == sslPort) {
-                errors.put("portsEqual","");
+                errors.put("portsEqual", "");
             }
         }
         if (errors.size() == 0) {
@@ -121,22 +118,26 @@
             }
             if (needRestart) {
                 response.sendRedirect("server-props.jsp?success=true&restart=true");
-            }
-            else {
+            } else {
                 response.sendRedirect("server-props.jsp?success=true");
             }
             return;
         }
-    }
-    else {
+    } else {
         serverName = server.getServerInfo().getName();
         sslEnabled = connectionManager.isClientSSLListenerEnabled();
         port = connectionManager.getClientListenerPort();
         sslPort = connectionManager.getClientSSLListenerPort();
         componentPort = connectionManager.getComponentListenerPort();
         serverPort = connectionManager.getServerListenerPort();
-        try { embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port")); } catch (Exception ignored) {}
-        try { embeddedSecurePort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.securePort")); } catch (Exception ignored) {}
+        try {
+            embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port"));
+        } catch (Exception ignored) {
+        }
+        try {
+            embeddedSecurePort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.securePort"));
+        } catch (Exception ignored) {
+        }
     }
 %>
 
@@ -216,7 +217,7 @@
                 <br>
                 <span class="jive-error-text">
                 <fmt:message key="server.props.valid_port" />
-                <a href="#" onclick="document.editform.serverPort.value='<%=SocketAcceptThread.DEFAULT_SERVER_PORT%>';"
+                <a href="#" onclick="document.editform.serverPort.value='<%=ConnectionManager.DEFAULT_SERVER_PORT%>';"
                  ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } %>
@@ -233,7 +234,7 @@
                 <br>
                 <span class="jive-error-text">
                 <fmt:message key="server.props.valid_port" />
-                <a href="#" onclick="document.editform.componentPort.value='<%=SocketAcceptThread.DEFAULT_COMPONENT_PORT%>';"
+                <a href="#" onclick="document.editform.componentPort.value='<%=ConnectionManager.DEFAULT_COMPONENT_PORT%>';"
                  ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } %>
@@ -250,7 +251,7 @@
                 <br>
                 <span class="jive-error-text">
                 <fmt:message key="server.props.valid_port" />
-                <a href="#" onclick="document.editform.port.value='<%=SocketAcceptThread.DEFAULT_PORT%>';"
+                <a href="#" onclick="document.editform.port.value='<%=ConnectionManager.DEFAULT_PORT%>';"
                  ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } else if (errors.containsKey("portsEqual")) { %>
@@ -297,7 +298,7 @@
                 <br>
                 <span class="jive-error-text">
                 <fmt:message key="server.props.ssl_valid" />
-                <a href="#" onclick="document.editform.sslPort.value='<%=SSLSocketAcceptThread.DEFAULT_PORT%>';"
+                <a href="#" onclick="document.editform.sslPort.value='<%=ConnectionManager.DEFAULT_SSL_PORT%>';"
                  ><fmt:message key="server.props.ssl_valid1" /></a>.
                 </span>
             <%  } %>

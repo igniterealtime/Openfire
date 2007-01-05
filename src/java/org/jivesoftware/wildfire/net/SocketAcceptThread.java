@@ -30,26 +30,6 @@ import java.net.InetAddress;
 public class SocketAcceptThread extends Thread {
 
     /**
-     * The default XMPP port for clients.
-     */
-    public static final int DEFAULT_PORT = 5222;
-
-    /**
-     * The default XMPP port for external components.
-     */
-    public static final int DEFAULT_COMPONENT_PORT = 10015;
-
-    /**
-     * The default XMPP port for server2server communication.
-     */
-    public static final int DEFAULT_SERVER_PORT = 5269;
-
-    /**
-     * The default XMPP port for connection multiplex.
-     */
-    public static final int DEFAULT_MULTIPLEX_PORT = 5262;
-
-    /**
      * Holds information about the port on which the server will listen for connections.
      */
     private ServerPort serverPort;

@@ -25,6 +25,27 @@ import java.util.Iterator;
 public interface ConnectionManager {
 
     /**
+     * The default XMPP port for clients.
+     */
+    final int DEFAULT_PORT = 5222;
+    /**
+     * The default Jabber socket
+     */
+    final int DEFAULT_SSL_PORT = 5223;
+    /**
+     * The default XMPP port for external components.
+     */
+    final int DEFAULT_COMPONENT_PORT = 5275;
+    /**
+     * The default XMPP port for server2server communication.
+     */
+    final int DEFAULT_SERVER_PORT = 5269;
+    /**
+     * The default XMPP port for connection multiplex.
+     */
+    final int DEFAULT_MULTIPLEX_PORT = 5262;
+
+    /**
      * Returns an array of the ports managed by this connection manager.
      *
      * @return an iterator of the ports managed by this connection manager

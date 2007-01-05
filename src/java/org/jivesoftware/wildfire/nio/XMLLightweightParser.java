@@ -26,6 +26,7 @@ import java.util.List;
  * an message is presents.
  *
  * @author Daniele Piras
+ * @author Gaston Dombiak
  */
 class XMLLightweightParser {
     // Chars that rappresent CDATA section start
@@ -228,6 +229,10 @@ class XMLLightweightParser {
                             ("stream:stream>".equals(head.toString()) || ("?xml>".equals(head.toString())))) {
                         // Found closing stream:stream
                         int end = buffer.length() - readByte + (i + 1);
+                        // Skip LF, CR and other "weird" characters that could appear
+                        while (startLastMsg < end && '<' != buffer.charAt(startLastMsg)) {
+                            startLastMsg++;
+                        }
                         String msg = buffer.substring(startLastMsg, end);
                         foundMsg(msg);
                         startLastMsg = end;

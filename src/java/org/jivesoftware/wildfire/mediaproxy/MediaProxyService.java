@@ -251,7 +251,6 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
                             //componentManager.getLog().debug(session.getLocalPortB() + "->" + session.getPortB());
 
                         } else {
-                            Log.debug("WRONG PASS " + session.getPass() + " " + pass.getValue());
                             reply.setError(PacketError.Condition.forbidden);
                         }
 
@@ -354,7 +353,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
     /**
      * Return the list of active Agents
      *
-     * @return
+     * @return list of active agents
      */
     public List<MediaProxySession> getAgents() {
         return mediaProxy.getAgents();
@@ -381,18 +380,18 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
     }
 
     /**
-     * Set Minimal port value to listen from incoming packets.
+     * Set Minimal port value to listen for incoming packets.
      *
-     * @param minPort
+     * @param minPort port value to listen for incoming packets
      */
     public void setMinPort(int minPort) {
         mediaProxy.setMinPort(minPort);
     }
 
     /**
-     * Set Maximum port value to listen from incoming packets.
+     * Set Maximum port value to listen for incoming packets.
      *
-     * @param maxPort
+     * @param maxPort port value to listen for incoming packets
      */
     public void setMaxPort(int maxPort) {
         mediaProxy.setMaxPort(maxPort);
@@ -428,7 +427,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
     /**
      * Set the service enable status.
      *
-     * @param enabled
+     * @param enabled boolean value setting enabled or disabled
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;

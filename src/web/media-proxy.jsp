@@ -84,7 +84,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
             <tr>
-                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16"
+                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" alt="Success"
                                            border="0"></td>
                 <td class="jive-icon-label">Settings updated successfully.</td>
             </tr>

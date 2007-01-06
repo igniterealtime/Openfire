@@ -12,9 +12,8 @@ package org.jivesoftware.wildfire.mediaproxy;
 
 import org.jivesoftware.util.Log;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.net.InetAddress;
+import java.util.List;
 
 /**
  * MediaProxy create and bind relay channels between IP pairs.
@@ -72,7 +71,7 @@ public class MediaProxy implements SessionListener {
         return idleTime;
     }
 
-     /**
+    /**
      * Returns the maximum amount of time (in milleseconds) that a session can
      * be idle before it's closed.
      *
@@ -94,7 +93,7 @@ public class MediaProxy implements SessionListener {
     /**
      * Get Minimal port value to listen from incoming packets.
      *
-     * @return
+     * @return the minimal port value
      */
     public int getMinPort() {
         return minPort;
@@ -103,7 +102,7 @@ public class MediaProxy implements SessionListener {
     /**
      * Set Minimal port value to listen from incoming packets.
      *
-     * @param minPort
+     * @param minPort the minimal port value
      */
     public void setMinPort(int minPort) {
         this.minPort = minPort;
@@ -112,7 +111,7 @@ public class MediaProxy implements SessionListener {
     /**
      * Get Maximum port value to listen from incoming packets.
      *
-     * @return
+     * @return the maximun port value
      */
     public int getMaxPort() {
         return maxPort;
@@ -121,7 +120,7 @@ public class MediaProxy implements SessionListener {
     /**
      * Set Maximum port value to listen from incoming packets.
      *
-     * @param maxPort
+     * @param maxPort the maximun port value
      */
     public void setMaxPort(int maxPort) {
         this.maxPort = maxPort;
@@ -131,6 +130,7 @@ public class MediaProxy implements SessionListener {
      * Get the agent with an especified ID
      *
      * @param sid the session ID
+     * @return the session with the informed sid, if not found, returns null
      */
     public MediaProxySession getAgent(String sid) {
         for (MediaProxySession session : sessions) {
@@ -157,15 +157,16 @@ public class MediaProxy implements SessionListener {
      * Add a new Static Session to the mediaproxy for defined IPs and ports.
      * Create a channel between two IPs. ( Point A - Point B )
      *
-     * @param id    id of the candidate returned (Could be a Jingle session ID)
-     * @param hostA the hostname or IP of the point A of the Channel
-     * @param portA the port number point A of the Channel
-     * @param hostB the hostname or IP of the point B of the Channel
-     * @param portB the port number point B of the Channel
+     * @param id      id of the candidate returned (Could be a Jingle session ID)
+     * @param creator the agent creator name or description
+     * @param hostA   the hostname or IP of the point A of the Channel
+     * @param portA   the port number point A of the Channel
+     * @param hostB   the hostname or IP of the point B of the Channel
+     * @param portB   the port number point B of the Channel
      * @return the added ProxyCandidate
      */
     public ProxyCandidate addAgent(String id, String creator, String hostA, int portA, String hostB,
-            int portB) {
+                                   int portB) {
         final MediaProxySession session =
                 new MediaProxySession(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
         if (session != null) {
@@ -186,15 +187,16 @@ public class MediaProxy implements SessionListener {
      * Every packet received from Point A will be relayed to the new Point B IP and port.
      * Create a dynamic channel between two IPs. ( Dynamic Point A - Dynamic Point B )
      *
-     * @param id    id of the candidate returned (Could be a Jingle session ID)
-     * @param hostA the hostname or IP of the point A of the Channel
-     * @param portA the port number point A of the Channel
-     * @param hostB the hostname or IP of the point B of the Channel
-     * @param portB the port number point B of the Channel
+     * @param id      id of the candidate returned (Could be a Jingle session ID)
+     * @param creator the agent creator name or description
+     * @param hostA   the hostname or IP of the point A of the Channel
+     * @param portA   the port number point A of the Channel
+     * @param hostB   the hostname or IP of the point B of the Channel
+     * @param portB   the port number point B of the Channel
      * @return the added ProxyCandidate
      */
     public ProxyCandidate addSmartAgent(String id, String creator, String hostA, int portA,
-            String hostB, int portB) {
+                                        String hostB, int portB) {
         final SmartSession agent = new SmartSession(id, creator, localhost, hostA, portA, hostB, portB,
                 minPort, maxPort);
         if (agent != null) {
@@ -215,7 +217,8 @@ public class MediaProxy implements SessionListener {
      * Every packet received from Point A will be relayed to the new Point B IP and port.
      * Create a dynamic channel between two IPs. ( Dynamic Point A - Dynamic Point B )
      *
-     * @param id id of the candidate returned (Could be a Jingle session ID)
+     * @param id      id of the candidate returned (Could be a Jingle session ID)
+     * @param creator the agent creator name or description
      * @return the added ProxyCandidate
      */
     public ProxyCandidate addSmartAgent(String id, String creator) {

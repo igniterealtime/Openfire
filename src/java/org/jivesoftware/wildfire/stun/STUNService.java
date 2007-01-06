@@ -94,11 +94,8 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
             // Do nothing let the default values to be used.
         }
 
-        if (JiveGlobals.getProperty("stun.enabled") == null) {
-            this.enabled = true;
-        } else {
-            this.enabled = Boolean.parseBoolean(JiveGlobals.getProperty("stun.enabled"));
-        }
+        this.enabled=JiveGlobals.getProperty("stun.enabled") == null||Boolean.parseBoolean(JiveGlobals.getProperty("stun.enabled"));
+
     }
 
     public void destroy() {
@@ -325,7 +322,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Set the service enable status.
      *
-     * @param enabled
+     * @param enabled boolean to enable or disable
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
@@ -340,7 +337,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Get the secondary Port used by the STUN server
      *
-     * @return
+     * @return secondary Port used by the STUN server
      */
     public int getSecondaryPort() {
         return secondaryPort;
@@ -349,7 +346,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Get the primary Port used by the STUN server
      *
-     * @return
+     * @return primary Port used by the STUN server
      */
     public int getPrimaryPort() {
         return primaryPort;
@@ -358,7 +355,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Get the secondary Address used by the STUN server
      *
-     * @return
+     * @return secondary Address used by the STUN server
      */
     public String getSecondaryAddress() {
         return secondaryAddress;
@@ -367,7 +364,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Get the primary Address used by the STUN server
      *
-     * @return
+     * @return primary Address used by the STUN server
      */
     public String getPrimaryAddress() {
         return primaryAddress;

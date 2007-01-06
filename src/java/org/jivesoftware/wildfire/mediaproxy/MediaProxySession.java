@@ -56,14 +56,14 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * Creates a new static UDP channel between Host A and Host B.
      *
      * @param id           of the Session (Could be a Jingle session ID)
-     * @param creator
+     * @param creator      the session creator name or description
      * @param localAddress the localhost IP that will listen for UDP packets
      * @param hostA        the hostname or IP of the point A of the Channel
      * @param portA        the port number point A of the Channel
      * @param hostB        the hostname or IP of the point B of the Channel
      * @param portB        the port number point B of the Channel
-     * @param minPort
-     * @param maxPort
+     * @param minPort      the minimal port value to be used by the server
+     * @param maxPort      the maximun port value to be used by the server
      */
     public MediaProxySession(String id, String creator, String localAddress, String hostA, int portA, String hostB, int portB, int minPort, int maxPort) {
         this.id = id;
@@ -101,7 +101,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     protected int getFreePort() {
         ServerSocket ss;
         int freePort = 0;
-        int controlPort = 0;
+        int controlPort;
 
         for (int i = 0; i < 10; i++) {
             freePort = (int) (minPort + Math.round(Math.random() * (maxPort - minPort)));
@@ -136,7 +136,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get the ID of the Session
      *
-     * @return
+     * @return the ID of the session
      */
     public String getSID() {
         return id;
@@ -154,7 +154,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * Get the agent creator.
      * This field is open to MediaProxy users and just can be set in constructor.
      *
-     * @return
+     * @return the session creator name or description
      */
     public String getCreator() {
         return creator;
@@ -239,7 +239,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get localhost of the Session
      *
-     * @return
+     * @return the localhost of the session
      */
     public InetAddress getLocalhost() {
         return localAddress;
@@ -248,7 +248,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get the Host A IP
      *
-     * @return
+     * @return the host A ip
      */
     public InetAddress getHostA() {
         return hostA;
@@ -257,7 +257,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get the Host B IP
      *
-     * @return
+     * @return the host B ip
      */
     public InetAddress getHostB() {
         return hostB;
@@ -266,7 +266,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Set port A value
      *
-     * @param portA
+     * @param portA the port number for A
      */
     public void setPortA(int portA) {
         System.out.println("PORT CHANGED(A):" + portA);
@@ -276,7 +276,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Set port B value
      *
-     * @param portB
+     * @param portB the port number for B
      */
     public void setPortB(int portB) {
         System.out.println("PORT CHANGED(B):" + portB);
@@ -286,7 +286,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Set the Host A IP
      *
-     * @param hostA
+     * @param hostA the host for A
      */
     public void setHostA(InetAddress hostA) {
         this.hostA = hostA;
@@ -295,7 +295,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Set the Host B IP
      *
-     * @param hostB
+     * @param hostB the host for B
      */
     public void setHostB(InetAddress hostB) {
         this.hostB = hostB;
@@ -313,7 +313,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get the Port B IP
      *
-     * @return
+     * @return the port for B
      */
     public int getPortB() {
         return portB;
@@ -322,7 +322,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get the localport that listen for Host A Packets
      *
-     * @return
+     * @return the local port for A
      */
     public int getLocalPortA() {
         return localPortA;
@@ -331,7 +331,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Get the localport that listen for Host B Packets
      *
-     * @return
+     * @return the local port for B
      */
     public int getLocalPortB() {
         return localPortB;

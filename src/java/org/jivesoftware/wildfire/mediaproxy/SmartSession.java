@@ -10,8 +10,8 @@
 
 package org.jivesoftware.wildfire.mediaproxy;
 
-import java.net.*;
 import java.io.IOException;
+import java.net.*;
 
 /**
  * A Session Class will control "receive and relay" proccess.
@@ -37,6 +37,9 @@ public class SmartSession extends MediaProxySession {
      * @param portA     the port number point A of the Channel
      * @param hostB     the hostname or IP of the point B of the Channel
      * @param portB     the port number point B of the Channel
+     * @param creator   the created name or description of the Channel
+     * @param minPort   the minimal port number to be used by the proxy
+     * @param maxPort   the maximun port number to be used by the proxy
      */
     public SmartSession(String id, String creator, String localhost, String hostA, int portA, String hostB, int portB, int minPort, int maxPort) {
         super(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
@@ -51,6 +54,7 @@ public class SmartSession extends MediaProxySession {
      * @param portA     the port number point A of the Channel
      * @param hostB     the hostname or IP of the point B of the Channel
      * @param portB     the port number point B of the Channel
+     * @param creator   the created name or description of the Channel
      */
     public SmartSession(String id, String creator, String localhost, String hostA, int portA, String hostB, int portB) {
         super(id, creator, localhost, hostA, portA, hostB, portB, 10000, 20000);
@@ -99,15 +103,15 @@ public class SmartSession extends MediaProxySession {
         /**
          * Default Channel Constructor
          *
-         * @param dataSocket
-         * @param host
-         * @param port
+         * @param dataSocket datasocket to used to send and receive packets
+         * @param host default destination host for received packets
+         * @param port default destination port for received packets
          */
         public SmartChannel(DatagramSocket dataSocket, InetAddress host, int port) {
             super(dataSocket, host, port);
         }
 
-          /**
+        /**
          * Thread override method
          */
         public void run() {
@@ -121,10 +125,10 @@ public class SmartSession extends MediaProxySession {
                     if (this.getPort() != packet.getPort())
                         System.out.println(dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort() + " relay to: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
 
-                    if (c++ < 5){
+                    if (c++ < 5) {
                         System.out.println("Received:" + dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort());
 
-                        System.out.println("Addr: "+packet.getAddress().getHostName());
+                        System.out.println("Addr: " + packet.getAddress().getHostName());
                     }
 
                     this.setHost(packet.getAddress());
@@ -143,15 +147,15 @@ public class SmartSession extends MediaProxySession {
 
                 }
             } catch (UnknownHostException e) {
-                if(enabled)
-                System.err.println("Unknown Host");
+                if (enabled)
+                    System.err.println("Unknown Host");
             }
             catch (SocketException e) {
-                if(enabled)
-                System.err.println("Socket closed");
+                if (enabled)
+                    System.err.println("Socket closed");
             } catch (IOException e) {
-                if(enabled)
-                System.err.println("Communication error");
+                if (enabled)
+                    System.err.println("Communication error");
                 e.printStackTrace();
             }
         }
@@ -160,7 +164,7 @@ public class SmartSession extends MediaProxySession {
          * Implement DatagramListener method.
          * Set the host and port value to the host and port value from the received packet.
          *
-         * @param datagramPacket
+         * @param datagramPacket the received packet
          */
         public boolean datagramReceived(DatagramPacket datagramPacket) {
             //InetAddress host = datagramPacket.getAddress();

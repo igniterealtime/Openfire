@@ -28,7 +28,7 @@
         mediaProxyService.stopAgents();
     }
 
-    boolean save = request.getParameter("set") != null;
+    boolean save = request.getParameter("update") != null;
     boolean success = false;
 
     long keepAliveDelay = 0;
@@ -103,8 +103,8 @@
         <table cellpadding="3" cellspacing="0" border="0">
             <tbody>
                 <tr valign="middle">
-                    <td width="1%" nowrap>
-                        <input type="radio" name="proxyEnabled" value="true" id="rb02"
+                    <td width="1%" nowrap valign="top">
+                        <input type="radio" name="enabled" value="true" id="rb02"
                         <%= (enabled ? "checked" : "") %> >
                     </td>
                     <td width="99%">
@@ -112,19 +112,27 @@
                             <b>Enabled</b>
                             - This server will act as a media proxy.
                         </label>
-                        <br>
+                        <br><br>
 
-                        Session Idle Timeout:&nbsp<input type="text" size="5" maxlength="8" name="idleTimeout"
+                        Session Idle Timeout (in seconds):&nbsp<input type="text" size="5" maxlength="8" name="idleTimeout"
                                                          value="<%=mediaProxyService.getIdleTime()/1000%>"
                                                          align="left">
+                        <br>
 
-                        <input type="text" size="5" maxlength="10" name="port"
-                               value="<%= 38 %>">
+                        Port Range: Min
+                        <input type="text" size="7" maxlength="20" name="minport"
+                               value="<%=mediaProxyService.getMinPort()%>">
+                        <br>
+                        Port Range Max:
+                        <input type="text" size="7" maxlength="20" name="maxport"
+                               value="<%=mediaProxyService.getMaxPort()%>">
+
+
                     </td>
                 </tr>
                 <tr valign="middle">
                     <td width="1%" nowrap>
-                        <input type="radio" name="proxyEnabled" value="false" id="rb01"
+                        <input type="radio" name="enabled" value="false" id="rb01"
                         <%= (!enabled ? "checked" : "") %> >
                     </td>
                     <td width="99%">
@@ -140,56 +148,7 @@
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 
-
-<form action="media-proxy.jsp" method="post">
-    <fieldset>
-        <legend>Media Proxy Settings</legend>
-        <div>
-
-            <p>
-                The settings will just take effects for new created agents.
-            </p>
-
-            <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td align="left">Idle Timeout:&nbsp<input type="text" size="20"
-                                                                  maxlength="100"
-                                                                  name="keepalivedelay"
-                                                                  value="<%=mediaProxyService.getIdleTime()%>"
-                                                                  align="left">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left">Port Range: Min&nbsp<input type="text" size="20"
-                                                                    maxlength="100"
-                                                                    name="minport"
-                                                                    value="<%=mediaProxyService.getMinPort()%>"
-                                                                    align="left">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left">Max:&nbsp<input type="text" size="20"
-                                                         maxlength="100"
-                                                         name="maxport"
-                                                         value="<%=mediaProxyService.getMaxPort()%>"
-                                                         align="left">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left">Enabled:&nbsp<input type="checkbox"
-                                                             name="enabled"
-                        <%=mediaProxyService.isEnabled()?"checked":""%>
-                                                             align="left">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <input type="submit" name="set" value="Change">
-
-    </fieldset>
-</form>
+<% if (enabled) { %>
 
 <p>
     <b>Active Sessions Summary</b><br>
@@ -265,6 +224,8 @@
         <input type="submit" name="stop" value="Stop Active Sessions"/>
     </form>
 </div>
+
+<% } // end enabled check %>
 
 </body>
 </html>

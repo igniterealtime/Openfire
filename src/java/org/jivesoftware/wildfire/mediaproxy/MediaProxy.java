@@ -1,4 +1,16 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.mediaproxy;
+
+import org.jivesoftware.util.Log;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -15,14 +27,14 @@ import java.net.InetAddress;
  */
 public class MediaProxy implements SessionListener {
 
-    final private List<Session> sessions = new ArrayList<Session>();
+    final private List<MediaProxySession> sessions = new ArrayList<MediaProxySession>();
 
     private String localhost;
 
     private int minPort = 10000;
     private int maxPort = 20000;
 
-    private long keepAliveDelay = 90000;
+    private long idleTime = 90000;
 
     /**
      * Contruct a MediaProxy instance that will listen from every Network Interface.
@@ -57,17 +69,17 @@ public class MediaProxy implements SessionListener {
      * @return Time in millis
      */
     public long getKeepAliveDelay() {
-        return keepAliveDelay;
+        return idleTime;
     }
 
-    /**
-     * Set time in millis that an Session can stay without receive any packet.
-     * After this time it is auto closed.
+     /**
+     * Returns the maximum amount of time (in milleseconds) that a session can
+     * be idle before it's closed.
      *
-     * @return Time in millis
+     * @param idleTime the max idle time in millis.
      */
-    public void setKeepAliveDelay(long keepAliveDelay) {
-        this.keepAliveDelay = keepAliveDelay;
+    public void setIdleTime(long idleTime) {
+        this.idleTime = idleTime;
     }
 
     /**
@@ -75,7 +87,7 @@ public class MediaProxy implements SessionListener {
      *
      * @return List of the Agents
      */
-    public List<Session> getAgents() {
+    public List<MediaProxySession> getAgents() {
         return sessions;
     }
 
@@ -120,8 +132,8 @@ public class MediaProxy implements SessionListener {
      *
      * @param sid the session ID
      */
-    public Session getAgent(String sid) {
-        for (Session session : sessions) {
+    public MediaProxySession getAgent(String sid) {
+        for (MediaProxySession session : sessions) {
             if (session.getSID().equals(sid)) {
                 System.out.println("SID: " + sid + " agentSID: " + session.getSID());
                 return session;
@@ -134,10 +146,11 @@ public class MediaProxy implements SessionListener {
      * Implements Session Listener stopAgent event.
      * Remove the stopped session from the sessions list.
      *
-     * @param session
+     * @param session the session to
      */
-    public void agentStopped(Session session) {
-        System.out.println("Session: " + session.getSID() + " removed: " + sessions.remove(session));
+    public void sessionClosed(MediaProxySession session) {
+        sessions.remove(session);
+        Log.debug("Session: " + session.getSID() + " removed.");
     }
 
     /**
@@ -153,11 +166,11 @@ public class MediaProxy implements SessionListener {
      */
     public ProxyCandidate addAgent(String id, String creator, String hostA, int portA, String hostB,
             int portB) {
-        final Session session =
-                new Session(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
+        final MediaProxySession session =
+                new MediaProxySession(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
         if (session != null) {
             sessions.add(session);
-            session.addKeepAlive(keepAliveDelay);
+            session.addKeepAlive(idleTime);
             session.addAgentListener(this);
         }
         return session;
@@ -186,7 +199,7 @@ public class MediaProxy implements SessionListener {
                 minPort, maxPort);
         if (agent != null) {
             sessions.add(agent);
-            agent.addKeepAlive(keepAliveDelay);
+            agent.addKeepAlive(idleTime);
             agent.addAgentListener(this);
         }
         return agent;
@@ -213,7 +226,7 @@ public class MediaProxy implements SessionListener {
      * Stop every running sessions.
      */
     public void stopProxy() {
-        for (Session session : getAgents()) {
+        for (MediaProxySession session : getAgents()) {
             try {
                 session.clearAgentListeners();
                 session.stopAgent();
@@ -224,23 +237,4 @@ public class MediaProxy implements SessionListener {
         }
         sessions.clear();
     }
-
-    public static void main(String args[]) {
-        MediaProxy media = new MediaProxy();
-
-        ProxyCandidate ag = media.addSmartAgent("abc", "tester", "200.233.136.54", 20001,
-                "200.233.136.54", 20008);
-        ag.start();
-        try {
-            Thread.sleep(5000);
-            System.out.println(InetAddress.getByName("0.0.0.0"));
-        }
-        catch (Exception e) {
-
-        }
-        ag.stopAgent();
-        System.out.println("Closed");
-
-    }
-
 }

@@ -132,14 +132,9 @@
         <!-- Server Settings -->
         <sidebar id="sidebar-media-services" name="Media Services">
             <!-- Media Proxy Settings -->
-            <item id="media-proxy-service" name="Media Proxy Settings"
-                  url="media-proxy-properties.jsp"
-                  description="Media Proxy Settings"/>
-
-            <!-- Media Proxy Session Summary -->
-            <item id="media-proxy-session-summary" name="Media Proxy Sessions"
-                  url="media-proxy-session-summary.jsp"
-                  description="Media Proxy Session Summary"/>
+            <item id="media-proxy-service" name="Media Proxy"
+                  url="media-proxy.jsp"
+                  description="Media proxy settings"/>
 
         </sidebar>
                 

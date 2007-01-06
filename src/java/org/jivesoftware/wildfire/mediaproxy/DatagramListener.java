@@ -1,15 +1,28 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.mediaproxy;
 
 import java.net.DatagramPacket;
 
 /**
- * Interface to listener datagramReceived events
+ * Listener for datagram packets received.
  */
 public interface DatagramListener {
+
     /**
-     * Called when a datagram is received.
-     * If method return false the packet MUST NOT be resent from the received Channel.
-     * @param datagramPacket The received datagram
+     * Called when a datagram is received. If the method returns false, the
+     * packet MUST NOT be resent from the received Channel.
+     *
+     * @param datagramPacket the datagram packet received.
+     * @return ?
      */
     public boolean datagramReceived(DatagramPacket datagramPacket);
 }

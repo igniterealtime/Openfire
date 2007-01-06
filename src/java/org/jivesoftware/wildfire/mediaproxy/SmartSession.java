@@ -1,3 +1,13 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.mediaproxy;
 
 import java.net.*;
@@ -16,7 +26,7 @@ import java.io.IOException;
  * It has 4 Channels. 2 for data and 2 for control.
  */
 
-public class SmartSession extends Session {
+public class SmartSession extends MediaProxySession {
 
     /**
      * Creates a new Smart Session to provide connectivity between Host A and Host B.

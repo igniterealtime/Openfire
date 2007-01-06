@@ -1,15 +1,19 @@
 package org.jivesoftware.wildfire.mediaproxy;
 
+import org.jivesoftware.util.Log;
+
 import java.util.*;
 import java.net.*;
 import java.io.IOException;
 
 /**
- * A Session Class will control "receive and relay" proccess.
- * It creates an UDP channel from Host A to Host B and from Host B to Host A using their specified hosts and ports.
- * It has 4 Channels. 2 for data and 2 for control.
+ * A media proxy session enables two clients to exchange UDP traffic. Each client connects to
+ * a UDP port and then the proxy is responsible for exchanging traffic. Each session uses
+ * a total of four ports: two for traffic exchange, and two control ports.
+ *
+ * @author Thiago Camargo
  */
-public class Session extends Thread implements ProxyCandidate, DatagramListener {
+public class MediaProxySession extends Thread implements ProxyCandidate, DatagramListener {
 
     private List<SessionListener> sessionListeners = new ArrayList<SessionListener>();
 
@@ -18,7 +22,7 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
     private String creator = "";
     private long timestamp = 0;
 
-    protected InetAddress localhost;
+    protected InetAddress localAddress;
     protected InetAddress hostA;
     protected InetAddress hostB;
 
@@ -43,7 +47,7 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
     protected Thread threadBtoA;
     protected Thread threadBtoAControl;
 
-    private Timer keepAliveTimer = null;
+    private Timer idleTimer = null;
 
     private int minPort = 10000;
     private int maxPort = 20000;
@@ -52,51 +56,39 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
      * Creates a new static UDP channel between Host A and Host B.
      *
      * @param id        of the Session (Could be a Jingle session ID)
-     * @param localhost The localhost IP that will listen for UDP packets
+     * @param creator
+     * @param localAddress the localhost IP that will listen for UDP packets
      * @param hostA     the hostname or IP of the point A of the Channel
      * @param portA     the port number point A of the Channel
      * @param hostB     the hostname or IP of the point B of the Channel
      * @param portB     the port number point B of the Channel
+     * @param minPort
+     * @param maxPort
      */
-    public Session(String id, String creator, String localhost, String hostA, int portA, String hostB, int portB) {
-        this(id, creator, localhost, hostA, portA, hostB, portB,10000,20000);
-    }
-
-    /**
-     * Creates a new static UDP channel between Host A and Host B.
-     *
-     * @param id        of the Session (Could be a Jingle session ID)
-     * @param localhost The localhost IP that will listen for UDP packets
-     * @param hostA     the hostname or IP of the point A of the Channel
-     * @param portA     the port number point A of the Channel
-     * @param hostB     the hostname or IP of the point B of the Channel
-     * @param portB     the port number point B of the Channel
-     */
-    public Session(String id, String creator, String localhost, String hostA, int portA, String hostB, int portB, int minPort, int maxPort) {
+    public MediaProxySession(String id, String creator, String localAddress, String hostA, int portA, String hostB, int portB, int minPort, int maxPort) {
         this.id = id;
         this.creator = creator;
         this.minPort = minPort;
         this.maxPort = maxPort;
         this.pass = String.valueOf(Math.abs(new Random().nextLong()));
         try {
-
             this.hostA = InetAddress.getByName(hostA);
             this.hostB = InetAddress.getByName(hostB);
 
             this.portA = portA;
             this.portB = portB;
 
-            this.localhost = InetAddress.getByName(localhost);
+            this.localAddress = InetAddress.getByName(localAddress);
             this.localPortA = getFreePort();
-            this.socketA = new DatagramSocket(localPortA, this.localhost);
-            this.socketAControl = new DatagramSocket(localPortA + 1, this.localhost);
+            this.socketA = new DatagramSocket(localPortA, this.localAddress);
+            this.socketAControl = new DatagramSocket(localPortA + 1, this.localAddress);
             this.localPortB = getFreePort();
-            this.socketB = new DatagramSocket(localPortB, this.localhost);
-            this.socketBControl = new DatagramSocket(localPortB + 1, this.localhost);
+            this.socketB = new DatagramSocket(localPortB, this.localAddress);
+            this.socketBControl = new DatagramSocket(localPortB + 1, this.localAddress);
 
-            System.out.println("Session Created at: A " + localPortA + " : B " + localPortB);
-
-        } catch (Exception e) {
+            Log.debug("Session Created at: A " + localPortA + " : B " + localPortB);
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -211,10 +203,10 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
     public void stopAgent() {
 
         try {
-            if (keepAliveTimer != null) {
-                keepAliveTimer.cancel();
-                keepAliveTimer.purge();
-                keepAliveTimer = null;
+            if (idleTimer != null) {
+                idleTimer.cancel();
+                idleTimer.purge();
+                idleTimer = null;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -250,7 +242,7 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
      * @return
      */
     public InetAddress getLocalhost() {
-        return localhost;
+        return localAddress;
     }
 
     /**
@@ -352,8 +344,9 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
             channelAtoB.setPort(port);
             channelAtoBControl.setHost(address);
             channelAtoBControl.setPort(port + 1);
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+        catch (Exception e) {
+            Log.error(e);
         }
     }
 
@@ -364,8 +357,9 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
             channelBtoA.setPort(port);
             channelBtoAControl.setHost(address);
             channelBtoAControl.setPort(port + 1);
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+        catch (Exception e) {
+            Log.error(e);
         }
     }
 
@@ -375,7 +369,7 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
      * @param datagramPacket
      */
     public boolean datagramReceived(DatagramPacket datagramPacket) {
-        timestamp = new GregorianCalendar().getTimeInMillis();
+        timestamp = System.currentTimeMillis();
         return true;
     }
 
@@ -386,9 +380,9 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
      * @param delay delay time in millis to check if the channel is inactive
      */
     void addKeepAlive(long delay) {
-        if (keepAliveTimer != null) return;
-        keepAliveTimer = new Timer();
-        keepAliveTimer.scheduleAtFixedRate(new TimerTask() {
+        if (idleTimer != null) return;
+        idleTimer = new Timer();
+        idleTimer.scheduleAtFixedRate(new TimerTask() {
             long lastTimeStamp = getTimestamp();
 
             public void run() {
@@ -433,7 +427,7 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
     public void dispatchAgentStopped() {
         for (SessionListener sessionListener : sessionListeners)
             try {
-                sessionListener.agentStopped(this);
+                sessionListener.sessionClosed(this);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -558,14 +552,15 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
                     if (resend) relayPacket(packet);
 
                 }
-            } catch (UnknownHostException e) {
-                System.err.println("Unknown Host");
             }
-            catch (SocketException e) {
-                System.err.println("Socket closed");
-            } catch (IOException e) {
-                System.err.println("Communication error");
-                e.printStackTrace();
+            catch (UnknownHostException uhe) {
+                Log.error(uhe);
+            }
+            catch (SocketException se) {
+                Log.error(se);
+            }
+            catch (IOException ioe) {
+                Log.error(ioe);
             }
         }
 
@@ -573,29 +568,11 @@ public class Session extends Thread implements ProxyCandidate, DatagramListener 
             try {
                 DatagramPacket echo = new DatagramPacket(packet.getData(), packet.getLength(),
                         host, port);
-                //System.out.println("Sent (" + packet.getAddress() + ":" + packet.getPort() + ") " + dataSocket.getLocalAddress() + ":" + dataSocket.getLocalPort() + " to " + host + ":" + port);
                 dataSocket.send(echo);
-            } catch (IOException e) {
-                System.err.println("Communication error");
-                e.printStackTrace();
+            }
+            catch (IOException e) {
+                Log.error(e);
             }
         }
-    }
-
-    public static void main(String args[]) {
-        try {
-            byte packet[] = {0, 0, 1, 1, 1, 1, 1};
-            DatagramSocket ds = new DatagramSocket(14004, InetAddress.getByName("0.0.0.0"));
-            DatagramPacket echo = new DatagramPacket(packet, packet.length,
-                    InetAddress.getByName("10.1.1.3"), 16736);
-
-            for (int i = 0; i < 10; i++) {
-                System.out.print("\nSent");
-                ds.send(echo);
-            }
-        } catch (Exception e) {
-            System.out.print(e.toString());
-        }
-
     }
 }

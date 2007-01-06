@@ -1,3 +1,13 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.mediaproxy;
 
 import org.dom4j.Attribute;
@@ -24,9 +34,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * RTP Bridge Media Proxy service plugin.
- * Provides especial relayed Jingle transport candidates to be used for media transmission and receiving of UDP packets.
- * Especialy used for behind NAT users to ensure connectivity between parties.
+ * A proxy service for UDP traffic such as RTP. It provides Jingle transport candidates
+ * to be used for media transmission. The media proxy is especially useful for users
+ * behind NAT devices or firewalls that prevent peer to peer communication..
  *
  * @author Thiago Camargo
  */
@@ -54,34 +64,23 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      */
     private void loadRTPProxyConfig() {
         try {
-            long keepAliveDelay =
-                    Long.valueOf(JiveGlobals.getProperty("plugin.rtpbridge.keepalivedelay"));
-            mediaProxy.setKeepAliveDelay(keepAliveDelay);
+            long idleTime =
+                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.idleTimeout"));
+            mediaProxy.setIdleTime(idleTime);
         }
         catch (NumberFormatException e) {
             // Do nothing let the default values to be used.
         }
         try {
-            int minPort = Integer.valueOf(JiveGlobals.getProperty("plugin.rtpbridge.minport"));
+            int minPort = Integer.valueOf(JiveGlobals.getProperty("mediaproxy.portMin"));
             mediaProxy.setMinPort(minPort);
         }
         catch (NumberFormatException e) {
             // Do nothing let the default values to be used.
         }
-        try {
-            int maxPort = Integer.valueOf(JiveGlobals.getProperty("plugin.rtpbridge.maxport"));
-            mediaProxy.setMaxPort(maxPort);
-        }
-        catch (NumberFormatException e) {
-            // Do nothing let the default values to be used.
-        }
-        try {
-            boolean enabled = Boolean.valueOf(JiveGlobals.getProperty("plugin.rtpbridge.enabled"));
-            this.enabled = enabled;
-        }
-        catch (NumberFormatException e) {
-            this.enabled = false;
-        }
+        int maxPort = JiveGlobals.getIntProperty("mediaproxy.portMax", mediaProxy.getMaxPort());
+        mediaProxy.setMaxPort(maxPort);
+        this.enabled = JiveGlobals.getBooleanProperty("mediaproxy.enabled");
     }
 
     public void destroy() {
@@ -211,7 +210,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
 
                 if (c != null) {
 
-                    Session session = mediaProxy.getAgent(
+                    MediaProxySession session = mediaProxy.getAgent(
                             childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom());
 
                     Log.debug(
@@ -357,7 +356,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      *
      * @return
      */
-    public List<Session> getAgents() {
+    public List<MediaProxySession> getAgents() {
         return mediaProxy.getAgents();
     }
 
@@ -368,16 +367,16 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      * @param delay time in millis
      */
     public void setKeepAliveDelay(long delay) {
-        mediaProxy.setKeepAliveDelay(delay);
+        mediaProxy.setIdleTime(delay);
     }
 
     /**
-     * Get the keep alive delay of the mediaproxy agents.
-     * When an agent stay more then this delay, the agent is destroyed.
+     * Returns the maximum amount of time (in milleseconds) that a session can
+     * be idle before it's closed.
      *
-     * @return delay time in millis
+     * @return the max idle time in millis.
      */
-    public long getKeepAliveDelay() {
+    public long getIdleTime() {
         return mediaProxy.getKeepAliveDelay();
     }
 

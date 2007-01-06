@@ -20,7 +20,7 @@ This page summarize every active Session in the RTP Media Proxy
         %>
 <%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.wildfire.mediaproxy.Session" %>
+<%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxySession" %>
 <%@ page import="org.jivesoftware.wildfire.mediaproxy.SmartSession" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -73,7 +73,7 @@ This page summarize every active Session in the RTP Media Proxy
         <tbody>
 
             <% // Print the list of agents
-                List<Session> agents = mediaProxyService.getAgents();
+                List<MediaProxySession> agents = mediaProxyService.getAgents();
                 if (agents.isEmpty()) {
             %>
             <tr>
@@ -85,7 +85,7 @@ This page summarize every active Session in the RTP Media Proxy
             <%
                 }
                 int i = 0;
-                for (Session proxySession : agents) {
+                for (MediaProxySession proxySession : agents) {
                     i++;
             %>
             <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">

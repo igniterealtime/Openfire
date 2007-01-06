@@ -2,9 +2,9 @@ package org.jivesoftware.wildfire.mediaproxy;
 
 import org.jivesoftware.util.Log;
 
-import java.util.*;
-import java.net.*;
 import java.io.IOException;
+import java.net.*;
+import java.util.*;
 
 /**
  * A media proxy session enables two clients to exchange UDP traffic. Each client connects to
@@ -55,13 +55,13 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     /**
      * Creates a new static UDP channel between Host A and Host B.
      *
-     * @param id        of the Session (Could be a Jingle session ID)
+     * @param id           of the Session (Could be a Jingle session ID)
      * @param creator
      * @param localAddress the localhost IP that will listen for UDP packets
-     * @param hostA     the hostname or IP of the point A of the Channel
-     * @param portA     the port number point A of the Channel
-     * @param hostB     the hostname or IP of the point B of the Channel
-     * @param portB     the port number point B of the Channel
+     * @param hostA        the hostname or IP of the point A of the Channel
+     * @param portA        the port number point A of the Channel
+     * @param hostB        the hostname or IP of the point B of the Channel
+     * @param portB        the port number point B of the Channel
      * @param minPort
      * @param maxPort
      */
@@ -218,10 +218,10 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
         channelBtoAControl.removeListener();
 
         try {
-            threadAtoB.stop();
-            threadAtoBControl.stop();
-            threadBtoA.stop();
-            threadBtoAControl.stop();
+            channelAtoB.cancel();
+            channelAtoBControl.cancel();
+            channelBtoA.cancel();
+            channelBtoAControl.cancel();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -415,7 +415,6 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
 
     /**
      * Removes every Session events listeners
-     *
      */
     public void clearAgentListeners() {
         sessionListeners.clear();
@@ -441,6 +440,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
         protected byte[] buf = new byte[5000];
         protected DatagramSocket dataSocket;
         protected DatagramPacket packet;
+        protected boolean enabled = true;
 
 
         List<DatagramListener> listeners = new ArrayList<DatagramListener>();
@@ -520,6 +520,11 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
             listeners.removeAll(listeners);
         }
 
+        public void cancel() {
+            this.enabled = false;
+            dataSocket.close();
+        }
+
         /**
          * Thread override method
          */
@@ -534,10 +539,10 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                     if (this.getPort() != packet.getPort())
                         System.out.println(dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort() + " relay to: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
 
-                    if (c++ < 5){
+                    if (c++ < 5) {
                         System.out.println("Received:" + dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort());
 
-                        System.out.println("Addr: "+packet.getAddress().getHostName());
+                        System.out.println("Addr: " + packet.getAddress().getHostName());
                     }
 
                     boolean resend = true;
@@ -554,13 +559,16 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                 }
             }
             catch (UnknownHostException uhe) {
-                Log.error(uhe);
+                if (enabled)
+                    Log.error(uhe);
             }
             catch (SocketException se) {
-                Log.error(se);
+                if (enabled)
+                    Log.error(se);
             }
             catch (IOException ioe) {
-                Log.error(ioe);
+                if (enabled)
+                    Log.error(ioe);
             }
         }
 

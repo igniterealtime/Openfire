@@ -20,7 +20,7 @@ import java.net.InetAddress;
  * MediaProxy create and bind relay channels between IP pairs.
  * This relay can provite UDP connectivity between two parties that are behind NAT.
  * It also work to provide connectivity between two parties that are directly connected to the internet or one party in the internet and another behind a NAT.
- * The RTPPRoxy Class add and control the Bridge Agents.
+ * The MediaProxy Class add and control the Bridge Agents.
  * You can setup a MediaProxy for all your network interfaces with a empty constructor,
  * or bind it to an especific interface with MediaProxy(String localhost) constructor.
  * <i>This MediaProxy ONLY works if your are Direct Connected to the Internet with a valid IP address.</i>

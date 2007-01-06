@@ -143,11 +143,14 @@ public class SmartSession extends MediaProxySession {
 
                 }
             } catch (UnknownHostException e) {
+                if(enabled)
                 System.err.println("Unknown Host");
             }
             catch (SocketException e) {
+                if(enabled)
                 System.err.println("Socket closed");
             } catch (IOException e) {
+                if(enabled)
                 System.err.println("Communication error");
                 e.printStackTrace();
             }

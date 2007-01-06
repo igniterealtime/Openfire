@@ -12,8 +12,8 @@
 <!--
     Build Requirements:
 
-        * Ant 1.6 (including optional tasks)
-        * JDK 1.5
+        * Ant 1.6 or 1.7 (including optional tasks)
+        * JDK 1.5 or higher
         * jUnit in your Ant or Java classpath
 -->
 
@@ -201,9 +201,13 @@
     <target name="init">
 
         <!-- Check for min build requirements -->
+
         <condition property="ant.not.ok" value="true">
             <not>
-                <contains string="${ant.version}" substring="1.6"/>
+                <or>
+                    <contains string="${ant.version}" substring="1.6"/>
+                    <contains string="${ant.version}" substring="1.7"/>
+                </or>
             </not>
         </condition>
         <condition property="java.not.ok" value="true">
@@ -211,7 +215,7 @@
                 <contains string="${ant.java.version}" substring="1.5"/>
             </not>
         </condition>
-        <fail if="ant.not.ok" message="Must use Ant 1.6.x to build Wildfire"/>
+        <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Wildfire"/>
         <fail if="java.not.ok" message="Must use JDK 1.5.x to build Wildfire"/>
 
         <tstamp/>

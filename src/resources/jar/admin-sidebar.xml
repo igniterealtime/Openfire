@@ -136,6 +136,10 @@
                   url="media-proxy.jsp"
                   description="Media proxy settings"/>
 
+            <!-- STUN Server Settings -->
+            <item id="stun-settings" name="STUN Server Settings"
+                  url="stun-settings.jsp"
+                  description="STUN Server Settings"/>
         </sidebar>
                 
     </tab>

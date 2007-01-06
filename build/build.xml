@@ -149,7 +149,7 @@
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
         <fileset dir="${lib.merge.dir}" includes="*.jar"/>
         <fileset dir="${lib.dist.dir}"
-                 includes="servlet.jar, mail.jar, activation.jar, jdic.jar, bouncycastle.jar, jstun-0.6.1.jar"/>
+                 includes="servlet.jar, mail.jar, activation.jar, jdic.jar, bouncycastle.jar"/>
     </path>
 
     <path id="compile.dependencies">
@@ -783,7 +783,7 @@
         <for param="jar">
             <path>
                 <fileset dir="${release.out.dir}/lib" includes="*.jar"
-                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar,jstun-0.6.1.jar"/>
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar"/>
             </path>
             <sequential>
                 <delete file="@{jar}.pack"/>
@@ -800,7 +800,7 @@
         <for param="jar">
             <path>
                 <fileset dir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib" includes="*.jar"
-                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar,jstun-0.6.1.jar"/>
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar"/>
             </path>
             <sequential>
                 <delete file="@{jar}.pack"/>
@@ -1198,7 +1198,7 @@
                  be manually added to this list.
             -->
             <property name="pack200.excludes"
-                      value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar,jstun-0.6.1.jar"/>
+                      value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar"/>
 
             <for param="jar">
                 <path>

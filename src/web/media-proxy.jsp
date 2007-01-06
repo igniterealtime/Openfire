@@ -12,6 +12,9 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxyService" %>
+<%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxySession" %>
+<%@ page import="org.jivesoftware.wildfire.mediaproxy.SmartSession" %>
+<%@ page import="java.util.List" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -19,6 +22,11 @@
 <%
 
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
+
+    boolean stop = request.getParameter("stop") != null;
+    if (stop) {
+        mediaProxyService.stopAgents();
+    }
 
     boolean save = request.getParameter("set") != null;
     boolean success = false;
@@ -182,6 +190,81 @@
 
     </fieldset>
 </form>
+
+<p>
+    <b>Active Sessions Summary</b><br>
+    Sessions are Media Proxy Channels that controls packet relaying.
+    The list below shows current sessions running and which user created the channel.
+</p>
+
+<div class="jive-table">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <thead>
+            <tr>
+                <th>&nbsp;</th>
+                <th nowrap align="left" valign="middle">Creator</th>
+                <th nowrap align="left" valign="middle">Port A</th>
+                <th nowrap align="left" valign="middle">Port B</th>
+                <th nowrap align="left" valign="middle">Server</th>
+                <th nowrap align="left" valign="middle">Inactivity(secs)</th>
+                <th nowrap align="left" valign="middle">Type</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <% // Print the list of agents
+                List<MediaProxySession> sessions = mediaProxyService.getAgents();
+                if (sessions.isEmpty()) {
+            %>
+            <tr>
+                <td align="center" colspan="7">
+                    No active Agents
+                </td>
+            </tr>
+
+            <%
+                }
+                int i = 0;
+                for (MediaProxySession proxySession : sessions) {
+                    i++;
+            %>
+            <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
+                <td width="1%">
+                    <%= i %>
+                </td>
+                <td width="20%" align="left" valign="middle">
+                    <%=proxySession.getCreator()%>
+                </td>
+                <td width="10%" align="left" valign="middle">
+                    <%=proxySession.getLocalPortA()%>
+                </td>
+                <td width="10%" align="left" valign="middle">
+                    <%=proxySession.getLocalPortB()%>
+                </td>
+                <td width="10%" align="left" valign="middle">
+                    <%=proxySession.getLocalhost()%>
+                </td>
+                <td width="20%" align="left" valign="middle">
+                    <%=(System.currentTimeMillis() - proxySession.getTimestamp()) / 1000%>
+                </td>
+                <td width="10%">
+                    <% if (proxySession instanceof SmartSession) { %>
+                    Smart Session
+                    <% } else { %>
+                    Fixed Session
+                    <% } %>
+                </td>
+            </tr>
+
+            <%
+                }
+            %>
+        </tbody>
+    </table>
+    <form action="">
+        <input type="submit" name="stop" value="Stop Active Sessions"/>
+    </form>
+</div>
 
 </body>
 </html>

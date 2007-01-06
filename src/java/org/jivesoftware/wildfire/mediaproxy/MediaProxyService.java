@@ -53,7 +53,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
     public static final String NAMESPACE = "http://www.jivesoftware.com/protocol/rtpbridge";
 
     /**
-     * Constructs a new RTPBridgePlugin plugin.
+     * Constructs a new MediaProxyService.
      */
     public MediaProxyService() {
         super("Media Proxy Service");
@@ -101,7 +101,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
         String hostname = JiveGlobals.getProperty("xmpp.domain",
                 JiveGlobals.getProperty("network.interface", "localhost"));
         mediaProxy = new MediaProxy(hostname);
-        serviceName = JiveGlobals.getProperty("plugin.rtpbridge.serviceName", name);
+        serviceName = JiveGlobals.getProperty("mediaproxy.serviceName", name);
         serviceName = serviceName == null ? name : serviceName.equals("") ? name : serviceName;
 
         routingTable = server.getRoutingTable();

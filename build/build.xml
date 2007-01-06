@@ -212,7 +212,10 @@
         </condition>
         <condition property="java.not.ok" value="true">
             <not>
-                <contains string="${ant.java.version}" substring="1.5"/>
+                <or>
+                    <contains string="${ant.java.version}" substring="1.5"/>
+                    <contains string="${ant.java.version}" substring="1.6"/>
+                </or>
             </not>
         </condition>
         <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Wildfire"/>

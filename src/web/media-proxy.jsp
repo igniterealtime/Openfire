@@ -42,8 +42,6 @@
 
         JiveGlobals.setProperty("mediaproxy.enabled", String.valueOf(enabled));
 
-        mediaProxyService.setEnabled(enabled);
-
         if (minPort > 0 && maxPort > 0) {
             if (maxPort - minPort > 1000) {
                 mediaProxyService.setMinPort(minPort);
@@ -52,6 +50,8 @@
                 JiveGlobals.setProperty("mediaproxy.portMax", String.valueOf(maxPort));
             }
         }
+
+        mediaProxyService.setEnabled(enabled);
 
         success = true;
     }
@@ -88,47 +88,47 @@
 <% } %>
 
 <form action="media-proxy.jsp" method="post">
-	<div class="jive-contentBoxHeader">
-		Media Proxy Settings
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-		<tr valign="middle">
-			<td width="1%" nowrap>
-				<input type="radio" name="proxyEnabled" value="true" id="rb02"
-				<%= (enabled ? "checked" : "") %> >
-			</td>
-			<td width="99%">
-				<label for="rb02">
-					<b>Enabled</b>
-					- This server will act as a media proxy.
-				</label>
-                <br>
+    <div class="jive-contentBoxHeader">
+        Media Proxy Settings
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tbody>
+                <tr valign="middle">
+                    <td width="1%" nowrap>
+                        <input type="radio" name="proxyEnabled" value="true" id="rb02"
+                        <%= (enabled ? "checked" : "") %> >
+                    </td>
+                    <td width="99%">
+                        <label for="rb02">
+                            <b>Enabled</b>
+                            - This server will act as a media proxy.
+                        </label>
+                        <br>
 
-                Session Idle Timeout:&nbsp<input type="text" size="5" maxlength="8" name="idleTimeout"
-                    value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                                                      align="left">
+                        Session Idle Timeout:&nbsp<input type="text" size="5" maxlength="8" name="idleTimeout"
+                                                         value="<%=mediaProxyService.getIdleTime()/1000%>"
+                                                         align="left">
 
-                <input type="text" size="5" maxlength="10" name="port"
-								 value="<%= 38 %>" >
-			</td>
-		</tr>
-		<tr valign="middle">
-			<td width="1%" nowrap>
-				<input type="radio" name="proxyEnabled" value="false" id="rb01"
-				<%= (!enabled ? "checked" : "") %> >
-			</td>
-			<td width="99%">
-				<label for="rb01">
-					<b>Disabled</b>
-					- This server will not act as a media proxy.
-				</label>
-			</td>
-		</tr>
-		</tbody>
-		</table>
-	</div>
+                        <input type="text" size="5" maxlength="10" name="port"
+                               value="<%= 38 %>">
+                    </td>
+                </tr>
+                <tr valign="middle">
+                    <td width="1%" nowrap>
+                        <input type="radio" name="proxyEnabled" value="false" id="rb01"
+                        <%= (!enabled ? "checked" : "") %> >
+                    </td>
+                    <td width="99%">
+                        <label for="rb01">
+                            <b>Disabled</b>
+                            - This server will not act as a media proxy.
+                        </label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 
@@ -146,26 +146,26 @@
                 <tbody>
                     <tr>
                         <td align="left">Idle Timeout:&nbsp<input type="text" size="20"
-                                                                      maxlength="100"
-                                                                      name="keepalivedelay"
-                                                                      value="<%=mediaProxyService.getIdleTime()%>"
-                                                                      align="left">
+                                                                  maxlength="100"
+                                                                  name="keepalivedelay"
+                                                                  value="<%=mediaProxyService.getIdleTime()%>"
+                                                                  align="left">
                         </td>
                     </tr>
                     <tr>
                         <td align="left">Port Range: Min&nbsp<input type="text" size="20"
-                                                                        maxlength="100"
-                                                                        name="minport"
-                                                                        value="<%=mediaProxyService.getMinPort()%>"
-                                                                        align="left">
+                                                                    maxlength="100"
+                                                                    name="minport"
+                                                                    value="<%=mediaProxyService.getMinPort()%>"
+                                                                    align="left">
                         </td>
                     </tr>
                     <tr>
                         <td align="left">Max:&nbsp<input type="text" size="20"
-                                                                        maxlength="100"
-                                                                        name="maxport"
-                                                                        value="<%=mediaProxyService.getMaxPort()%>"
-                                                                        align="left">
+                                                         maxlength="100"
+                                                         name="maxport"
+                                                         value="<%=mediaProxyService.getMaxPort()%>"
+                                                         align="left">
                         </td>
                     </tr>
                     <tr>

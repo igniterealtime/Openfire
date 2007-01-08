@@ -136,8 +136,10 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
                 setEnabled(false);
 
         } catch (SocketException e) {
+            Log.error("Disabling STUN server", e);
             setEnabled(false);
         } catch (UnknownHostException e) {
+            Log.error("Disabling STUN server", e);
             setEnabled(false);
         }
 
@@ -326,7 +328,6 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        loadSTUNConfig();
         if (isEnabled()) {
             startServer();
         } else {

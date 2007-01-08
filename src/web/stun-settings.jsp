@@ -42,7 +42,7 @@
         JiveGlobals.setProperty("stun.enabled", String.valueOf(enabled));
 
         stunService.stop();
-
+        stunService.initialize(XMPPServer.getInstance());
         stunService.setEnabled(enabled);
 
         success = true;

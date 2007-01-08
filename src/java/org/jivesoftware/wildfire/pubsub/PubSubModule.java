@@ -22,6 +22,7 @@ import org.jivesoftware.wildfire.RoutableChannelHandler;
 import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.disco.DiscoInfoProvider;
 import org.jivesoftware.wildfire.disco.DiscoItemsProvider;
@@ -195,7 +196,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public boolean isServiceAdmin(JID user) {
-        return sysadmins.contains(user.toBareJID()) || allowedToCreate.contains(user.toBareJID());
+        return sysadmins.contains(user.toBareJID()) || allowedToCreate.contains(user.toBareJID()) ||
+                InternalComponentManager.getInstance().getComponent(user) != null;
     }
 
     public boolean isInstantNodeSupported() {

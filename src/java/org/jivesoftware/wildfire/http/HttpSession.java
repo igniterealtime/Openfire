@@ -22,6 +22,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.net.VirtualConnection;
 import org.jivesoftware.wildfire.session.ClientSession;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
@@ -69,12 +70,15 @@ public class HttpSession extends ClientSession {
         if(rid <= lastRequestID) {
             Deliverable deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
+                Log.warn("Deliverable unavailable for " + rid);
                 throw new HttpBindException("Unexpected RID Error", true, 404);
             }
             connection.deliverBody(deliverable.getDeliverable());
             return connection;
         }
-        else if (rid > lastRequestID + hold + 1) {
+        else if (rid > (lastRequestID + hold)) {
+            // TODO handle the case of greater RID which basically has it wait
+            Log.warn("Request " + rid + " > " + (lastRequestID + hold) + ", ending session.");
             throw new HttpBindException("Unexpected RID Error", true, 404);
         }
 
@@ -215,6 +219,12 @@ public class HttpSession extends ClientSession {
 
         if(pendingElements.size() > 0) {
             failDelivery();
+        }
+
+        while (connectionQueue.size() > 0) {
+            HttpConnection toClose = connectionQueue.remove();
+            toClose.close();
+            fireConnectionClosed(toClose);
         }
 
         for(SessionListener listener : listeners) {

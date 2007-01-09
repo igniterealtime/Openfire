@@ -11,6 +11,8 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.wildfire.stun.STUNService" %>
+<%@ page import="java.net.InetAddress" %>
+<%@ page import="java.util.List" %>
 <%
 
     STUNService stunService = XMPPServer.getInstance().getSTUNService();
@@ -89,19 +91,48 @@
             <table cellpadding="3" cellspacing="0" border="0" width="100%">
                 <tbody>
                     <tr>
-                        <td align="left">Primary Address:&nbsp<input type="text" size="20"
-                                                                     maxlength="100"
-                                                                     name="primaryAddress"
-                                                                     value="<%=stunService.getPrimaryAddress()%>"
-                                                                     align="left">
+                        <td align="left">Primary Address:&nbsp<select size="1"
+                                                                      maxlength="100"
+                                                                      name="primaryAddress"
+                                                                      align="left">
+                            <option value="<%=stunService.getPrimaryAddress()%>"><%=stunService.getPrimaryAddress()%>
+                                <%
+
+                              List<InetAddress> addresses = stunService.getAddresses();
+
+                              for(InetAddress iaddress:addresses){
+
+                                %>
+                            <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
+                            </option>
+                            <%
+                            }
+
+                                String sname = JiveGlobals.getProperty("xmpp.domain", JiveGlobals.getProperty("network.interface", "localhost"));
+
+                            %>
+                            <option value="<%=sname%>"><%=sname%>
+                            </option>
                         </td>
                     </tr>
                     <tr>
-                        <td align="left">Secondary Address:&nbsp<input type="text" size="20"
-                                                                     maxlength="100"
-                                                                     name="secondaryAddress"
-                                                                     value="<%=stunService.getSecondaryAddress()%>"
-                                                                     align="left">
+                        <td align="left"> Secondary
+                            Address:&nbsp<select size="1"
+                                                 maxlength="100"
+                                                 name="primaryAddress"
+                                                 align="left">
+                            <option value="<%=stunService.getSecondaryAddress()%>"><%=stunService.getSecondaryAddress()%>
+                            </option>
+                            <%
+
+                                for (InetAddress iaddress : addresses) {
+
+                            %>
+                            <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
+                            </option>
+                            <% } %>
+                            <option value="127.0.0.1">127.0.0.1</option>
+                        </select>
                         </td>
                     </tr>
                     <tr>

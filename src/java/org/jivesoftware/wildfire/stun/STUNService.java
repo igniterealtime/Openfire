@@ -29,12 +29,10 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * STUN Server and Service Module
@@ -56,7 +54,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     private String primaryAddress;
     private String secondaryAddress;
     private int primaryPort = 3478;
-    private int secondaryPort = 3576;
+    private int secondaryPort = 3479;
 
     public static final String NAMESPACE = "google:jingleinfo";
 
@@ -94,7 +92,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
             // Do nothing let the default values to be used.
         }
 
-        this.enabled=JiveGlobals.getProperty("stun.enabled") == null||Boolean.parseBoolean(JiveGlobals.getProperty("stun.enabled"));
+        this.enabled = JiveGlobals.getProperty("stun.enabled") == null || Boolean.parseBoolean(JiveGlobals.getProperty("stun.enabled"));
 
     }
 
@@ -369,6 +367,25 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
      */
     public String getPrimaryAddress() {
         return primaryAddress;
+    }
+
+    public List<InetAddress> getAddresses() {
+        List<InetAddress> list = new ArrayList<InetAddress>();
+        try {
+            Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
+            while (ifaces.hasMoreElements()) {
+                NetworkInterface iface = ifaces.nextElement();
+                Enumeration<InetAddress> iaddresses = iface.getInetAddresses();
+                while (iaddresses.hasMoreElements()) {
+                    InetAddress iaddress = iaddresses.nextElement();
+                    if (!iaddress.isLoopbackAddress() && !iaddress.isLinkLocalAddress()) {
+                        list.add(iaddress);
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return list;
     }
 
 }

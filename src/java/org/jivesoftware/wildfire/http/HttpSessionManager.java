@@ -256,7 +256,6 @@ public class HttpSessionManager {
         for (Element packet : elements) {
             try {
                 router.route(packet);
-                session.incrementClientPacketCount();
             }
             catch (UnsupportedEncodingException e) {
                 throw new HttpBindException("Bad auth request, unknown encoding", true, 400);

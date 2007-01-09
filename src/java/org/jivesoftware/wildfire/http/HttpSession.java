@@ -53,6 +53,7 @@ public class HttpSession extends ClientSession {
     private int inactivityTimeout;
     private long lastActivity;
     private long lastRequestID;
+    private int maxRequests;
 
     public HttpSession(String serverName, InetAddress address, StreamID streamID, long rid) {
         super(serverName, null, streamID);
@@ -348,6 +349,38 @@ public class HttpSession extends ClientSession {
      */
     public void setMaxPollingInterval(int maxPollingInterval) {
         this.maxPollingInterval = maxPollingInterval;
+    }
+
+    /**
+     * Returns the max interval within which a client can send polling requests. If more than one
+     * request occurs in the interval the session will be terminated.
+     *
+     * @return the max interval within which a client can send polling requests. If more than one
+     * request occurs in the interval the session will be terminated.
+     */
+    public int getMaxPollingInterval() {
+        return this.maxPollingInterval;
+    }
+
+    /**
+     * The max number of requests it is permissable for this session to have open at any one time.
+     *
+     * @param maxRequests The max number of requests it is permissable for this session to have
+     * open at any one time.
+     */
+    public void setMaxRequests(int maxRequests) {
+        this.maxRequests = maxRequests;
+    }
+
+    /**
+     * Returns the max number of requests it is permissable for this session to have open at any
+     * one time.
+     * 
+     * @return the max number of requests it is permissable for this session to have open at any
+     * one time.
+     */
+    public int getMaxRequests() {
+        return this.maxRequests;
     }
 
     /**

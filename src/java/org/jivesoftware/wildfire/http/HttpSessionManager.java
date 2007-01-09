@@ -33,55 +33,9 @@ import java.net.InetAddress;
  */
 public class HttpSessionManager {
 
-    /**
-     * Milliseconds a connection has to be idle to be closed. Default is 30 minutes. Sending
-     * stanzas to the client is not considered as activity. We are only considering the connection
-     * active when the client sends some data or hearbeats (i.e. whitespaces) to the server.
-     * The reason for this is that sending data will fail if the connection is closed. And if
-     * the thread is blocked while sending data (because the socket is closed) then the clean up
-     * thread will close the socket anyway.
-     */
-    private static int inactivityTimeout;
-
-    /**
-     * The connection manager MAY limit the number of simultaneous requests the client makes with
-     * the 'requests' attribute. The RECOMMENDED value is "2". Servers that only support polling
-     * behavior MUST prevent clients from making simultaneous requests by setting the 'requests'
-     * attribute to a value of "1" (however, polling is NOT RECOMMENDED). In any case, clients MUST
-     * NOT make more simultaneous requests than specified by the connection manager.
-     */
-    private static int maxRequests;
-
-    /**
-     * The connection manager SHOULD include two additional attributes in the session creation
-     * response element, specifying the shortest allowable polling interval and the longest
-     * allowable inactivity period (both in seconds). Communication of these parameters enables
-     * the client to engage in appropriate behavior (e.g., not sending empty request elements more
-     * often than desired, and ensuring that the periods with no requests pending are
-     * never too long).
-     */
-    private static int pollingInterval;
-
-    /**
-     * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
-     * responding to any request during the session. This enables the client to prevent its TCP
-     * connection from expiring due to inactivity, as well as to limit the delay before it
-     * discovers any network failure.
-     */
-    private static int maxWait;
-
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
     private TimerTask inactivityTask;
-
-    static {
-        // Set the default read idle timeout. If none was set then assume 30 minutes
-        inactivityTimeout = JiveGlobals.getIntProperty("xmpp.httpbind.client.idle", 30);
-        maxRequests = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.max", 2);
-        pollingInterval = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.polling", 5);
-        maxWait = JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.wait",
-                Integer.MAX_VALUE);
-    }
 
     public HttpSessionManager() {
         this.sessionManager = SessionManager.getInstance();
@@ -141,11 +95,12 @@ public class HttpSessionManager {
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
 
         HttpSession session = createSession(connection.getRequestId(), address);
-        session.setWait(Math.min(wait, maxWait));
+        session.setWait(Math.min(wait, getMaxWait()));
         session.setHold(hold);
         session.setSecure(connection.isSecure());
-        session.setMaxPollingInterval(pollingInterval);
-        session.setInactivityTimeout(inactivityTimeout);
+        session.setMaxPollingInterval(getPollingInterval());
+        session.setMaxRequests(getMaxRequests());
+        session.setInactivityTimeout(getInactivityTimeout());
         // Store language and version information in the connection.
         session.setLanaguage(language);
         try {
@@ -159,6 +114,63 @@ public class HttpSessionManager {
             throw new HttpBindException("Internal server error", true, 500);
         }
         return session;
+    }
+
+
+    /**
+     * Returns the longest time (in seconds) that Wildfire is allowed to wait before
+     * responding to any request during the session. This enables the client to prevent its TCP
+     * connection from expiring due to inactivity, as well as to limit the delay before it
+     * discovers any network failure.
+     *
+     * @return the longest time (in seconds) that Wildfire is allowed to wait before
+     * responding to any request during the session.
+     */
+    public int getMaxWait() {
+        return JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.wait",
+                Integer.MAX_VALUE);
+    }
+
+    /**
+     * Wildfire SHOULD include two additional attributes in the session creation
+     * response element, specifying the shortest allowable polling interval and the longest
+     * allowable inactivity period (both in seconds). Communication of these parameters enables
+     * the client to engage in appropriate behavior (e.g., not sending empty request elements more
+     * often than desired, and ensuring that the periods with no requests pending are
+     * never too long).
+     *
+     * @return the maximum allowable period over which a client can send empty requests to the
+     * server.
+     */
+    public int getPollingInterval() {
+        return JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.polling", 5);
+    }
+
+    /**
+     * Wildfire MAY limit the number of simultaneous requests the client makes with
+     * the 'requests' attribute. The RECOMMENDED value is "2". Servers that only support polling
+     * behavior MUST prevent clients from making simultaneous requests by setting the 'requests'
+     * attribute to a value of "1" (however, polling is NOT RECOMMENDED). In any case, clients MUST
+     * NOT make more simultaneous requests than specified by the Wildfire.
+     *
+     * @return the number of simultaneous requests allowable.
+     */
+    public int getMaxRequests() {
+        return JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.max", 2);
+    }
+
+    /**
+     * Seconds a session has to be idle to be closed. Default is 30 minutes. Sending
+     * stanzas to the client is not considered as activity. We are only considering the connection
+     * active when the client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * The reason for this is that sending data will fail if the connection is closed. And if
+     * the thread is blocked while sending data (because the socket is closed) then the clean up
+     * thread will close the socket anyway.
+     *
+     * @return Seconds a session has to be idle to be closed.
+     */
+    public int getInactivityTimeout() {
+        return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle", 30);
     }
 
     private HttpSession createSession(long rid, InetAddress address) throws UnauthorizedException {
@@ -202,9 +214,9 @@ public class HttpSessionManager {
         response.addAttribute("authid", session.getStreamID().getID());
         response.addAttribute("sid", session.getStreamID().getID());
         response.addAttribute("secure", Boolean.TRUE.toString());
-        response.addAttribute("requests", String.valueOf(maxRequests));
+        response.addAttribute("requests", String.valueOf(session.getMaxRequests()));
         response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
-        response.addAttribute("polling", String.valueOf(pollingInterval));
+        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
 
         Element features = response.addElement("stream:features");

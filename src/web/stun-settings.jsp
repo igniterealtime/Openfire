@@ -47,7 +47,7 @@
         stunService.initialize(XMPPServer.getInstance());
         stunService.setEnabled(enabled);
 
-        success = true;
+        success = stunService.isEnabled() == enabled;
     }
 
 %>
@@ -77,7 +77,23 @@
 </div>
 <br>
 
+<% } else { %>
+
+<div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+            <tr>
+                <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16"
+                                           border="0"></td>
+                <td class="jive-icon-label">Settings not updated successfully.<br>Server not started.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<br>
+
 <% } %>
+
 
 <form action="stun-settings.jsp" method="post">
     <fieldset>
@@ -98,17 +114,21 @@
                             <option value="<%=stunService.getPrimaryAddress()%>"><%=stunService.getPrimaryAddress()%>
                                 <%
 
+
                               List<InetAddress> addresses = stunService.getAddresses();
 
                               for(InetAddress iaddress:addresses){
+
 
                                 %>
                             <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
                             </option>
                             <%
+
                             }
 
                                 String sname = JiveGlobals.getProperty("xmpp.domain", JiveGlobals.getProperty("network.interface", "localhost"));
+
 
                             %>
                             <option value="<%=sname%>"><%=sname%>
@@ -119,7 +139,7 @@
                         <td align="left"> Secondary
                             Address:&nbsp<select size="1"
                                                  maxlength="100"
-                                                 name="primaryAddress"
+                                                 name="secondaryAddress"
                                                  align="left">
                             <option value="<%=stunService.getSecondaryAddress()%>"><%=stunService.getSecondaryAddress()%>
                             </option>

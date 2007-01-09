@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.stun;
 
 import de.javawi.jstun.test.demo.StunServer;
+import org.bouncycastle.util.Strings;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
@@ -27,12 +28,16 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
+import org.apache.mina.transport.socket.nio.SocketAcceptor;
+import org.apache.mina.common.IoAcceptor;
+import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.LoggingFilter;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.*;
+import java.nio.charset.Charset;
 
 /**
  * STUN Server and Service Module
@@ -387,5 +392,4 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         }
         return list;
     }
-
 }

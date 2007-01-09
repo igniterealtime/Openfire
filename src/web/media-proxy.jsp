@@ -114,12 +114,13 @@
                         </label>
                         <br><br>
 
-                        Session Idle Timeout (in seconds):&nbsp<input type="text" size="5" maxlength="8" name="idleTimeout"
-                                                         value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                                         align="left">
+                        Session Idle Timeout (in seconds):&nbsp<input type="text" size="5" maxlength="8"
+                                                                      name="idleTimeout"
+                                                                      value="<%=mediaProxyService.getIdleTime()/1000%>"
+                                                                      align="left">
                         <br>
 
-                        Port Range: Min
+                        Port Range Min:
                         <input type="text" size="7" maxlength="20" name="minport"
                                value="<%=mediaProxyService.getMinPort()%>">
                         <br>
@@ -127,8 +128,10 @@
                         <input type="text" size="7" maxlength="20" name="maxport"
                                value="<%=mediaProxyService.getMaxPort()%>">
 
-
                     </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
                 </tr>
                 <tr valign="middle">
                     <td width="1%" nowrap>

@@ -13,11 +13,41 @@
 <%@ page import="org.jivesoftware.wildfire.stun.STUNService" %>
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.util.List" %>
+
+<script type="text/javascript">
+
+    function checkAndSubmit() {
+
+        var ip1 = document.settings.primaryAddress.value;
+        var ip2 = document.settings.secondaryAddress.value;
+        var port1 = document.settings.primaryPort.value;
+        var port2 = document.settings.secondaryPort.value;
+
+        var msg = "";
+
+        if (ip1 == ip2) {
+            msg += "* The selected IP values are not valid. Please select different IPs.";
+        }
+        if (port1 == port2) {
+            if (msg != "") msg += "\n";
+            msg += "* The selected port numbers are not valid. Please select different port numbers."
+        }
+
+        if (msg == "") {
+            document.settings.save.value = "Change";
+            document.settings.submit();
+        }
+        else alert(msg);
+
+    }
+
+</script>
+
 <%
 
     STUNService stunService = XMPPServer.getInstance().getSTUNService();
 
-    boolean save = request.getParameter("set") != null;
+    boolean save = request.getParameter("save") != null;
     boolean success = false;
 
     boolean enabled = false;
@@ -60,6 +90,7 @@
 
 <p>
     Use the form below to manage STUN Server settings.<br>
+    A STUN need at least two different IPs in the same machine to run and two different port numbers on each IP.
 </p>
 
 <% if (success) { %>
@@ -69,7 +100,7 @@
         <tbody>
             <tr>
                 <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16"
-                                           border="0"></td>
+                                           border="0" alt="Success"></td>
                 <td class="jive-icon-label">Settings updated successfully.</td>
             </tr>
         </tbody>
@@ -77,7 +108,7 @@
 </div>
 <br>
 
-<% } else { %>
+<% } else if (save) { %>
 
 <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -85,7 +116,9 @@
             <tr>
                 <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16"
                                            border="0"></td>
-                <td class="jive-icon-label">Settings not updated successfully.<br>Server not started.</td>
+                <td class="jive-icon-label">Server cannot started. Check your port
+                    numbers and Primary and Secondary addresses.
+                </td>
             </tr>
         </tbody>
     </table>
@@ -94,97 +127,87 @@
 
 <% } %>
 
+<form action="" method="post" name="settings">
+    <div class="jive-contentBoxHeader">
+        STUN Server Settings
+    </div>
+    <div class="jive-contentBox">
+        <p>
+            The settings will just take effects after savings settings.
+        </p>
 
-<form action="stun-settings.jsp" method="post">
-    <fieldset>
-        <legend>STUN Server Settings</legend>
-        <div>
-
-            <p>
-                The settings will just take effects after savings settings.
-            </p>
-
-            <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td align="left">Primary Address:&nbsp<select size="1"
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+            <tbody>
+                <tr>
+                    <td align="left">Primary Address:&nbsp<select size="1"
+                                                                  maxlength="100"
+                                                                  name="primaryAddress"
+                                                                  align="left">
+                        <option value="<%=stunService.getPrimaryAddress()%>"><%=stunService.getPrimaryAddress()%>
+                            <%
+                           List<InetAddress> addresses = stunService.getAddresses();
+                           for(InetAddress iaddress:addresses){
+                           if(!iaddress.getHostAddress().equals(stunService.getPrimaryAddress())){
+                            %>
+                        <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
+                        </option>
+                        <%
+                          }
+                        }
+                        String sname = JiveGlobals.getProperty("xmpp.domain", JiveGlobals.getProperty("network.interface", "localhost"));
+                        %>
+                        <option value="<%=sname%>"><%=sname%>
+                        </option>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left"> Secondary
+                        Address:&nbsp<select size="1"
+                                             maxlength="100"
+                                             name="secondaryAddress"
+                                             align="left">
+                        <option value="<%=stunService.getSecondaryAddress()%>"><%=stunService.getSecondaryAddress()%>
+                        </option>
+                        <%
+                            for (InetAddress iaddress : addresses) {
+                                if (!iaddress.getHostAddress().equals(stunService.getSecondaryAddress())) {
+                        %>
+                        <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
+                        </option>
+                        <% }
+                        }%>
+                        <option value="127.0.0.1">127.0.0.1</option>
+                    </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">Primary Port Value:&nbsp<input type="text" size="20"
+                                                                    maxlength="100"
+                                                                    name="primaryPort"
+                                                                    value="<%=stunService.getPrimaryPort()%>"
+                                                                    align="left">
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">Secondary Port Value:&nbsp<input type="text" size="20"
                                                                       maxlength="100"
-                                                                      name="primaryAddress"
+                                                                      name="secondaryPort"
+                                                                      value="<%=stunService.getSecondaryPort()%>"
                                                                       align="left">
-                            <option value="<%=stunService.getPrimaryAddress()%>"><%=stunService.getPrimaryAddress()%>
-                                <%
-
-
-                              List<InetAddress> addresses = stunService.getAddresses();
-
-                              for(InetAddress iaddress:addresses){
-
-
-                                %>
-                            <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
-                            </option>
-                            <%
-
-                            }
-
-                                String sname = JiveGlobals.getProperty("xmpp.domain", JiveGlobals.getProperty("network.interface", "localhost"));
-
-
-                            %>
-                            <option value="<%=sname%>"><%=sname%>
-                            </option>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left"> Secondary
-                            Address:&nbsp<select size="1"
-                                                 maxlength="100"
-                                                 name="secondaryAddress"
-                                                 align="left">
-                            <option value="<%=stunService.getSecondaryAddress()%>"><%=stunService.getSecondaryAddress()%>
-                            </option>
-                            <%
-
-                                for (InetAddress iaddress : addresses) {
-
-                            %>
-                            <option value="<%=iaddress.getHostAddress()%>"><%=iaddress.getHostAddress()%>
-                            </option>
-                            <% } %>
-                            <option value="127.0.0.1">127.0.0.1</option>
-                        </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left">Primary Port Value:&nbsp<input type="text" size="20"
-                                                                        maxlength="100"
-                                                                        name="primaryPort"
-                                                                        value="<%=stunService.getPrimaryPort()%>"
-                                                                        align="left">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left">Secondary Port Value:&nbsp<input type="text" size="20"
-                                                                          maxlength="100"
-                                                                          name="secondaryPort"
-                                                                          value="<%=stunService.getSecondaryPort()%>"
-                                                                          align="left">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left">Enabled:&nbsp<input type="checkbox"
-                                                             name="enabled"
-                        <%=stunService.isEnabled()?"checked":""%>
-                                                             align="left">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <input type="submit" name="set" value="Change">
-
-    </fieldset>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">Enabled:&nbsp<input type="checkbox"
+                                                         name="enabled"
+                    <%=stunService.isEnabled()?"checked":""%>
+                                                         align="left">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <input type="hidden" name="save">
+    <input type="button" name="set" value="Change" onclick="checkAndSubmit()">
 </form>
-
 </body>
 </html>

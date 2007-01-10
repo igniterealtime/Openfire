@@ -35,6 +35,9 @@ public class MediaProxy implements SessionListener {
 
     private long idleTime = 90000;
 
+    // Lifetime of a Channel in Seconds
+    private long lifetime = 9000;
+
     /**
      * Contruct a MediaProxy instance that will listen from every Network Interface.
      * Recommended.
@@ -127,6 +130,24 @@ public class MediaProxy implements SessionListener {
     }
 
     /**
+     * Get the Life Time of a channel in seconds
+     *
+     * @return Life Time in Seconds
+     */
+    public long getLifetime() {
+        return lifetime;
+    }
+
+    /**
+     * Sets the Life Time of a Channel in seconds
+     *
+     * @param lifetime Life Time in Seconds
+     */
+    public void setLifetime(long lifetime) {
+        this.lifetime = lifetime;
+    }
+
+    /**
      * Get the agent with an especified ID
      *
      * @param sid the session ID
@@ -146,7 +167,7 @@ public class MediaProxy implements SessionListener {
      * Implements Session Listener stopAgent event.
      * Remove the stopped session from the sessions list.
      *
-     * @param session the session to
+     * @param session the session that stopped
      */
     public void sessionClosed(MediaProxySession session) {
         sessions.remove(session);
@@ -172,6 +193,7 @@ public class MediaProxy implements SessionListener {
         if (session != null) {
             sessions.add(session);
             session.addKeepAlive(idleTime);
+            session.addLifeTime(lifetime);
             session.addAgentListener(this);
         }
         return session;
@@ -197,14 +219,15 @@ public class MediaProxy implements SessionListener {
      */
     public ProxyCandidate addSmartAgent(String id, String creator, String hostA, int portA,
                                         String hostB, int portB) {
-        final SmartSession agent = new SmartSession(id, creator, localhost, hostA, portA, hostB, portB,
+        final SmartSession session = new SmartSession(id, creator, localhost, hostA, portA, hostB, portB,
                 minPort, maxPort);
-        if (agent != null) {
-            sessions.add(agent);
-            agent.addKeepAlive(idleTime);
-            agent.addAgentListener(this);
+        if (session != null) {
+            sessions.add(session);
+            session.addKeepAlive(idleTime);
+            session.addLifeTime(lifetime);
+            session.addAgentListener(this);
         }
-        return agent;
+        return session;
     }
 
     /**

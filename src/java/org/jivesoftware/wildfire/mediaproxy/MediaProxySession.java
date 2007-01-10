@@ -48,6 +48,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
     protected Thread threadBtoAControl;
 
     private Timer idleTimer = null;
+    private Timer lifeTimer = null;
 
     private int minPort = 10000;
     private int maxPort = 20000;
@@ -207,6 +208,16 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                 idleTimer.cancel();
                 idleTimer.purge();
                 idleTimer = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (lifeTimer != null) {
+                lifeTimer.cancel();
+                lifeTimer.purge();
+                lifeTimer = null;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -393,6 +404,25 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                 lastTimeStamp = getTimestamp();
             }
         }, delay, delay);
+    }
+
+    /**
+     * Add a limited life time to the Session.
+     * The Session is stoped and remove from agents List after a certain time.
+     * Prevents that network cycles, refreshes a Session forever.
+     *
+     * @param lifetime time in Seconds to kill the Session
+     */
+    void addLifeTime(long lifetime) {
+        lifetime *= 1000;
+        if (lifeTimer != null) return;
+        lifeTimer = new Timer();
+        lifeTimer.scheduleAtFixedRate(new TimerTask() {
+            public void run() {
+                stopAgent();
+                return;
+            }
+        }, lifetime, lifetime);
     }
 
     /**

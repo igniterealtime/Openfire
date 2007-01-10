@@ -33,7 +33,7 @@ public class MediaProxy implements SessionListener {
     private int minPort = 10000;
     private int maxPort = 20000;
 
-    private long idleTime = 90000;
+    private long idleTime = 60;
 
     // Lifetime of a Channel in Seconds
     private long lifetime = 9000;
@@ -131,8 +131,9 @@ public class MediaProxy implements SessionListener {
 
     /**
      * Get the Life Time of a channel in seconds
-     *
-     * @return Life Time in Seconds
+     * Life Time is the maximum time that a Session can live. After this time the session will be destroyed even if it´s active.
+     * 
+     * @return the Life Time in Seconds
      */
     public long getLifetime() {
         return lifetime;
@@ -140,8 +141,9 @@ public class MediaProxy implements SessionListener {
 
     /**
      * Sets the Life Time of a Channel in seconds
+     * Life Time is the maximum time that a Session can live. After this time the session will be destroyed even if it´s active.
      *
-     * @param lifetime Life Time in Seconds
+     * @param lifetime the Life Time in Seconds
      */
     public void setLifetime(long lifetime) {
         this.lifetime = lifetime;

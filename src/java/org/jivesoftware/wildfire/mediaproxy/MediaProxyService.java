@@ -72,6 +72,14 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
             // Do nothing let the default values to be used.
         }
         try {
+            long lifetime =
+                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.lifetime"));
+            mediaProxy.setLifetime(lifetime);
+        }
+        catch (NumberFormatException e) {
+            // Do nothing let the default values to be used.
+        }
+        try {
             int minPort = Integer.valueOf(JiveGlobals.getProperty("mediaproxy.portMin"));
             mediaProxy.setMinPort(minPort);
         }
@@ -443,5 +451,21 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      */
     public void stopAgents() {
         mediaProxy.stopProxy();
+    }
+
+    /**
+     * Get the Life Time of Sessions
+     * @return lifetime in seconds
+     */
+    public long getLifetime(){
+        return mediaProxy.getLifetime();
+    }
+
+    /**
+     * Set the Life time of Sessions
+     * @param lifetime lifetime in seconds
+     */
+    public void setLifetime(long lifetime){
+        mediaProxy.setLifetime(lifetime);
     }
 }

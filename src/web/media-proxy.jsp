@@ -31,17 +31,25 @@
     boolean save = request.getParameter("update") != null;
     boolean success = false;
 
-    long keepAliveDelay = 0;
+    long keepAliveDelay = 3600;
+    long lifetime = 0;
     int minPort = 10000;
     int maxPort = 20000;
-    boolean enabled = false;
+    boolean enabled = true;
 
     if (save) {
-        keepAliveDelay = ParamUtils.getLongParameter(request, "keepalive", keepAliveDelay);
+        keepAliveDelay = ParamUtils.getLongParameter(request, "idleTimeout", keepAliveDelay);
         if (keepAliveDelay > 50) {
-            mediaProxyService.setKeepAliveDelay(keepAliveDelay);
+            mediaProxyService.setKeepAliveDelay(keepAliveDelay * 1000);
             JiveGlobals
-                    .setProperty("mediaproxy.keepalive", String.valueOf(keepAliveDelay));
+                    .setProperty("mediaproxy.idleTimeout", String.valueOf(keepAliveDelay));
+        }
+
+        lifetime = ParamUtils.getLongParameter(request, "lifetime", lifetime);
+        if (lifetime > 0) {
+            mediaProxyService.setLifetime(lifetime);
+            JiveGlobals
+                    .setProperty("mediaproxy.lifetime", String.valueOf(lifetime));
         }
 
         minPort = ParamUtils.getIntParameter(request, "minport", minPort);
@@ -112,22 +120,47 @@
                             <b>Enabled</b>
                             - This server will act as a media proxy.
                         </label>
-                        <br><br>
-
-                        Session Idle Timeout (in seconds):&nbsp<input type="text" size="5" maxlength="8"
-                                                                      name="idleTimeout"
-                                                                      value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                                                      align="left">
                         <br>
+                        <table>
+                            <tr>
+                                <td>Session Idle Timeout (in seconds):&nbsp;
+                                </td>
+                                <td>
+                                    <input type="text" size="5" maxlength="8"
+                                           name="idleTimeout"
+                                           value="<%=(long)mediaProxyService.getIdleTime()/1000%>"
+                                           align="left">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Session Life Time (in seconds):&nbsp;
+                                </td>
+                                <td>
+                                    <input type="text" size="5" maxlength="8"
+                                           name="lifetime"
+                                           value="<%=mediaProxyService.getLifetime()%>"
+                                           align="left"> &nbsp;<i>Life Time is the maximum time that a Session can
+                                    lives. After this time it is destroyed, even if it stills active.</i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Port Range Min:&nbsp;
+                                </td>
+                                <td>
+                                    <input type="text" size="7" maxlength="20" name="minport"
+                                           value="<%=mediaProxyService.getMinPort()%>">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td> Port Range Max:&nbsp;
+                                </td>
+                                <td>
+                                    <input type="text" size="7" maxlength="20" name="maxport"
+                                           value="<%=mediaProxyService.getMaxPort()%>">
 
-                        Port Range Min:
-                        <input type="text" size="7" maxlength="20" name="minport"
-                               value="<%=mediaProxyService.getMinPort()%>">
-                        <br>
-                        Port Range Max:
-                        <input type="text" size="7" maxlength="20" name="maxport"
-                               value="<%=mediaProxyService.getMaxPort()%>">
-
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
                 <tr>
@@ -151,7 +184,7 @@
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 
-<% if (enabled) { %>
+<% if (mediaProxyService.isEnabled()) { %>
 
 <p>
     <b>Active Sessions Summary</b><br>

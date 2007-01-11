@@ -3,7 +3,7 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -316,5 +316,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
                 Integer.toString(maxConnections));
         JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
+    }
+
+    public String toString() {
+        return connectionPool.toString();
     }
 }

@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision$
- * $Date$
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,12 +12,13 @@
 package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 
 import java.io.IOException;
 import java.sql.*;
-import java.util.*;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Database connection pool.
@@ -44,6 +45,8 @@ public class ConnectionPool implements Runnable {
     private ConnectionWrapper[] wrappers;
     private Object waitLock = new Object();
     private Object conCountLock = new Object();
+
+    private AtomicInteger used = new AtomicInteger(0);
 
     public ConnectionPool(String driver, String serverURL, String username,
                           String password, int minCon, int maxCon,
@@ -175,6 +178,7 @@ public class ConnectionPool implements Runnable {
     }
 
     public void freeConnection() {
+        used.decrementAndGet();
         synchronized (waitLock) {
             if (waitingForCon > 0) {
                 waitLock.notifyAll();
@@ -395,6 +399,7 @@ public class ConnectionPool implements Runnable {
                         wrapper.exception = new Exception();
                         wrapper.hasLoggedException = false;
                     }
+                    used.incrementAndGet();
 
                     return wrapper;
                 }
@@ -409,6 +414,7 @@ public class ConnectionPool implements Runnable {
 
             ConnectionWrapper con = createCon(conCount);
             conCount++;
+            used.incrementAndGet();
             return con;
         }
     }
@@ -481,5 +487,9 @@ public class ConnectionPool implements Runnable {
             Log.error(e);
             throw new SQLException(e.getMessage());
         }
+    }
+
+    public String toString() {
+        return minCon + "," + maxCon + "," + conCount + "," + used.intValue(); 
     }
 }

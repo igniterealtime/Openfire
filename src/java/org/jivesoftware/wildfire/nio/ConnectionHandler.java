@@ -13,11 +13,17 @@ package org.jivesoftware.wildfire.nio;
 import org.apache.mina.common.IdleStatus;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Connection;
+import org.jivesoftware.wildfire.net.MXParser;
 import org.jivesoftware.wildfire.net.StanzaHandler;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -36,7 +42,21 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     private static final String CONNECTION = "CONNECTION";
 
     protected String serverName;
+    private static Map<Integer, XMPPPacketReader> parsers = new ConcurrentHashMap<Integer, XMPPPacketReader>();
+    /**
+     * Reuse the same factory for all the connections.
+     */
+    private static XmlPullParserFactory factory = null;
 
+    static {
+        try {
+            factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
+            factory.setNamespaceAware(true);
+        }
+        catch (XmlPullParserException e) {
+            Log.error("Error creating a parser factory", e);
+        }
+    }
 
     protected ConnectionHandler(String serverName) {
         this.serverName = serverName;
@@ -88,9 +108,20 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         //System.out.println("RCVD: " + message);
         // Get the stanza handler for this session
         StanzaHandler handler = (StanzaHandler) session.getAttribute(HANDLER);
+        // Get the parser to use to process stanza. For optimization there is going
+        // to be a parser for each running thread. Each Filter will be executed
+        // by the Executor placed as the first Filter. So we can have a parser associated
+        // to each Thread
+        int hashCode = Thread.currentThread().hashCode();
+        XMPPPacketReader parser = parsers.get(hashCode);
+        if (parser == null) {
+            parser = new XMPPPacketReader();
+            parser.setXPPFactory(factory);
+            parsers.put(hashCode, parser);
+        }
         // Let the stanza handler process the received stanza
         try {
-            handler.process( (String) message);
+            handler.process((String) message, parser);
         } catch (Exception e) {
             Log.error("Closing connection due to error while processing message: " + message, e);
             Connection connection = (Connection) session.getAttribute(CONNECTION);

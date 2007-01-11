@@ -22,7 +22,6 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.session.Session;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.*;
 
 import java.io.IOException;
@@ -40,11 +39,6 @@ public abstract class StanzaHandler {
      */
     protected static String CHARSET = "UTF-8";
     private static final String STREAM_START = "<stream:stream";
-    /**
-     * Reuse the same factory for all the connections.
-     */
-    private static XmlPullParserFactory factory = null;
-
     private Connection connection;
 
     // DANIELE: Indicate if a session is already created
@@ -75,18 +69,6 @@ public abstract class StanzaHandler {
      */
     private PacketRouter router;
 
-    private XMPPPacketReader reader;
-
-    static {
-        try {
-            factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
-            factory.setNamespaceAware(true);
-        }
-        catch (XmlPullParserException e) {
-            Log.error("Error creating a parser factory", e);
-        }
-    }
-
     /**
      * Creates a dedicated reader for a socket.
      *
@@ -98,12 +80,9 @@ public abstract class StanzaHandler {
         this.serverName = serverName;
         this.router = router;
         this.connection = connection;
-        // Create reader/parser
-        reader = new XMPPPacketReader();
-        reader.setXPPFactory(factory);
     }
 
-    public void process(String stanza) throws Exception {
+    public void process(String stanza, XMPPPacketReader reader) throws Exception {
 
         boolean initialStream = stanza.startsWith(STREAM_START);
         if (!sessionCreated || initialStream) {
@@ -114,7 +93,7 @@ public abstract class StanzaHandler {
             // Found an stream:stream tag...
             if (!sessionCreated) {
                 sessionCreated = true;
-                MXParser parser = (MXParser) factory.newPullParser();
+                MXParser parser = reader.getXPPParser();
                 parser.setInput(new StringReader(stanza));
                 createSession(parser);
             } else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {

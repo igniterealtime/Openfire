@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2006-2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -22,9 +22,9 @@ import javax.net.ssl.SSLServerSocketFactory;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.List;
+
 /**
- * Manages the instances of Jetty which provide the admin console funtionality and the HTTP binding
- * functionality.
+ * Manages the instances of Jetty which provides the admin console funtionality.
  *
  * @author Alexander Wenckus
  */
@@ -56,11 +56,12 @@ public class HttpServerManager {
     private CertificateEventListener certificateListener;
     private boolean restartNeeded = false;
 
-    /** Constructs a new HTTP server manager. */
+    /**
+     * Constructs a new HTTP server manager.
+     */
     private HttpServerManager() {
-                // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.mortbay.log.class",
-                "org.jivesoftware.util.log.util.JettyLog");
+        // Configure Jetty logging to a more reasonable default.
+        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory",
                 "org.jivesoftware.util.log.util.CommonsLogFactory");
@@ -76,9 +77,7 @@ public class HttpServerManager {
     }
 
     /**
-     * Starts any neccesary Jetty instances. If the admin console and http-binding are running on
-     * seperate ports then two jetty instances are started, if not then only one is started. The
-     * proper contexts are then added to the Jetty servers.
+     * Starts the Jetty instance.
      */
     public void startup() {
         restartNeeded = false;
@@ -90,7 +89,9 @@ public class HttpServerManager {
             createAdminConsoleServer();
         }
 
-        addContexts();
+        if (adminServer != null) {
+            adminServer.addHandler(adminConsoleContext);
+        }
 
         if (adminServer != null) {
             try {
@@ -102,7 +103,9 @@ public class HttpServerManager {
         }
     }
 
-    /** Shuts down any Jetty servers that are running the admin console and HTTP binding service. */
+    /**
+     * Shuts down the Jetty server. 
+     * */
     public void shutdown() {
         // Remove listener for certificate events
         if (certificateListener != null) {
@@ -210,12 +213,6 @@ public class HttpServerManager {
         else if (isPlainStarted) {
             log(listening + " http://" +
                     XMPPServer.getInstance().getServerInfo().getName() + ":" + adminPort);
-        }
-    }
-
-    private void addContexts() {
-        if (adminServer != null) {
-            adminServer.addHandler(adminConsoleContext);
         }
     }
 

@@ -106,7 +106,7 @@
         </td>
         <td>
             <%  String n = address.getNode(); %>
-            <%  if (n == null || "".equals(n)) { %>
+            <%  if (isAnonymous) { %>
 
                 <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 

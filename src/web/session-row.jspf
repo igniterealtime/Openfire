@@ -33,7 +33,7 @@
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
             <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"
-             ><%= ((name != null && !"".equals(name)) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
+            ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
         <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>

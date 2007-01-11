@@ -98,7 +98,7 @@ public class DbConnectionManager {
         // See if profiling is enabled. If yes, wrap the connection with a
         // profiled connection.
         if (profilingEnabled) {
-            return (Connection)ProfiledConnection.newInstance(con);
+            return new ProfiledConnection(con);
         }
         else {
             return con;

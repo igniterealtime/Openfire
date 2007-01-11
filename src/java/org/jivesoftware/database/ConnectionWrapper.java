@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision: $
- * $Date: $
+ * $Revision$
+ * $Date$
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,9 +11,6 @@
 
 package org.jivesoftware.database;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -24,34 +21,18 @@ import java.sql.SQLException;
  *
  * @author Jive Software
  */
-public class ConnectionWrapper {
+public class ConnectionWrapper extends AbstractConnection {
 
-    private static Method close;
-    private static Method metaData;
-    private static Method prepareStatement;
-
-    static {
-        try {
-            close = Connection.class.getMethod("close");
-            metaData = Connection.class.getMethod("getMetaData");
-            prepareStatement = Connection.class.getMethod("prepareStatement", String.class);
-        }
-        catch (NoSuchMethodException e) {
-            throw new NoSuchMethodError(e.getMessage());
-        }
-    }
-
-    ConnectionPool pool;
-    boolean checkedout = false;
-    long createTime;
-    long lockTime;
-    long checkinTime;
-    Exception exception;
-    boolean hasLoggedException = false;
-    private Connection poolConnection;
+    public ConnectionPool pool;
+    public boolean checkedout = false;
+    public long createTime;
+    public long lockTime;
+    public long checkinTime;
+    public Exception exception;
+    public boolean hasLoggedException = false;
 
     public ConnectionWrapper(Connection connection, ConnectionPool pool) {
-        setConnection(connection);
+        super(connection);
 
         this.pool = pool;
         createTime = System.currentTimeMillis();
@@ -60,24 +41,28 @@ public class ConnectionWrapper {
     }
 
     public void setConnection(Connection connection) {
-        if (connection == null) {
-            this.poolConnection = null;
-        }
-        else {
-            this.poolConnection = (Connection)java.lang.reflect.Proxy.newProxyInstance(
-                    connection.getClass().getClassLoader(),
-                    connection.getClass().getInterfaces(),
-                    new ConnectionProxy(connection));
-        }
+        super.connection = connection;
     }
 
-    public Connection getConnection() {
-        return poolConnection;
+    /**
+     * Instead of closing the underlying connection, we simply release
+     * it back into the pool.
+     */
+    public void close() throws SQLException {
+        synchronized (this) {
+            checkedout = false;
+            checkinTime = System.currentTimeMillis();
+        }
+
+        pool.freeConnection();
+
+        // Release object references. Any further method calls on the connection will fail.
+        // super.connection = null;
     }
 
     public String toString() {
-        if (poolConnection != null) {
-            return poolConnection.toString();
+        if (connection != null) {
+            return connection.toString();
         }
         else {
             return "Jive Software Connection Wrapper";
@@ -86,56 +71,5 @@ public class ConnectionWrapper {
 
     public synchronized boolean isCheckedOut() {
         return checkedout;
-    }
-
-    /**
-     * Dynamic proxy for connection object that returns connection to the pool when
-     * closing. 
-     */
-    public class ConnectionProxy implements InvocationHandler {
-
-        private Connection connection;
-
-        public ConnectionProxy(Connection connection) {
-            this.connection = connection;
-        }
-
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.equals(prepareStatement)) {
-                return connection.prepareStatement((String) args[0]);
-            } else if (method.equals(metaData)) {
-                return connection.getMetaData();
-            } else if (method.equals(close)) {
-                close();
-                return null;
-            } else {
-                // Invoke the method normally if all else fails.
-                try {
-                    return method.invoke(connection, args);
-                }
-                catch (InvocationTargetException ite) {
-                    throw ite.getCause();
-                }
-            }
-        }
-
-        /**
-         * Instead of closing the underlying connection, we simply release
-         * it back into the pool.
-         *
-         * @throws SQLException if an SQL Exception occurs.
-         */
-        private void close() throws SQLException {
-            synchronized (this) {
-                checkedout = false;
-                checkinTime = System.currentTimeMillis();
-            }
-
-            pool.freeConnection();
-
-            // Release object references. Any further method calls on the connection will fail.
-            poolConnection = null;
-            connection = null;
-        }
     }
 }

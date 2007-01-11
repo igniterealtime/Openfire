@@ -141,7 +141,7 @@ public class ConnectionPool implements Runnable {
                 wrapper.checkedout = true;
                 wrapper.lockTime = System.currentTimeMillis();
             }
-            return wrapper.getConnection();
+            return wrapper;
         }
         else {
             synchronized (waitLock) {
@@ -156,7 +156,7 @@ public class ConnectionPool implements Runnable {
                                 wrapper.checkedout = true;
                                 wrapper.lockTime = System.currentTimeMillis();
                             }
-                            return wrapper.getConnection();
+                            return wrapper;
                         }
                         else {
                             waitLock.wait();

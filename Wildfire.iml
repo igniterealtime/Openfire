@@ -380,7 +380,9 @@
           <root url="jar://$MODULE_DIR$/build/lib/merge/dbutil.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/build/lib/merge/dbutil.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

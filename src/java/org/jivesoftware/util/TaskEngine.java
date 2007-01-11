@@ -11,12 +11,10 @@
 package org.jivesoftware.util;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -44,6 +42,7 @@ public class TaskEngine {
 
     private Timer timer;
     private ExecutorService executor;
+    private Map<TimerTask, TimerTaskWrapper> wrappedTasks = new ConcurrentHashMap<TimerTask, TimerTaskWrapper>();
 
     /**
      * Constructs a new task engine.
@@ -143,7 +142,9 @@ public class TaskEngine {
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
     public void schedule(TimerTask task, long delay, long period) {
-        timer.schedule(new TimerTaskWrapper(task), delay, period);
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.schedule(taskWrapper, delay, period);
     }
 
     /**
@@ -176,7 +177,9 @@ public class TaskEngine {
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
     public void schedule(TimerTask task, Date firstTime, long period) {
-        timer.schedule(new TimerTaskWrapper(task), firstTime, period);
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.schedule(taskWrapper, firstTime, period);
     }
 
     /**
@@ -211,7 +214,9 @@ public class TaskEngine {
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
     public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
-        timer.scheduleAtFixedRate(new TimerTaskWrapper(task), delay, period);
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.scheduleAtFixedRate(taskWrapper, delay, period);
     }
 
     /**
@@ -245,7 +250,21 @@ public class TaskEngine {
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
     public void scheduleAtFixedRate(TimerTask task, Date firstTime, long period) {
-        timer.scheduleAtFixedRate(new TimerTaskWrapper(task), firstTime, period);
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.scheduleAtFixedRate(taskWrapper, firstTime, period);
+    }
+
+    /**
+     * Cancels the execution of a scheduled task. {@link java.util.TimerTask#cancel()}
+     *
+     * @param task the scheduled task to cancel.
+     */
+    public void cancelScheduledTask(TimerTask task) {
+        TaskEngine.TimerTaskWrapper taskWrapper = wrappedTasks.remove(task);
+        if (taskWrapper != null) {
+            taskWrapper.cancel();
+        }
     }
 
     /**

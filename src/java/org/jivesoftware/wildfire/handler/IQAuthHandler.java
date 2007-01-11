@@ -272,7 +272,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     public void setAllowAnonymous(boolean isAnonymous) throws UnauthorizedException {
         anonymousAllowed = isAnonymous;
-        JiveGlobals.setProperty("xmpp.auth.anonymous", anonymousAllowed ? "true" : "false");
+        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonymousAllowed));
     }
 
     public void initialize(XMPPServer server) {

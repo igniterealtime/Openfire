@@ -19,6 +19,7 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.util.regex.Pattern"%>
+<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -39,8 +40,8 @@
     String allowedIPs = request.getParameter("allowedIPs");
 
     // Get an IQRegisterHandler:
-    IQRegisterHandler regHandler = new IQRegisterHandler();
-    IQAuthHandler authHandler = new IQAuthHandler();
+    IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
+    IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
 
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);

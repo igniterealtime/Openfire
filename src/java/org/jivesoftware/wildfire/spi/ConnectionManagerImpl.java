@@ -532,6 +532,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
+    public SocketAcceptor getSocketAcceptor() {
+        return socketAcceptor;
+    }
+
     public int getClientListenerPort() {
         return JiveGlobals.getIntProperty("xmpp.socket.plain.port", DEFAULT_PORT);
     }
@@ -588,6 +592,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public int getServerListenerPort() {
         return JiveGlobals.getIntProperty("xmpp.server.socket.port", DEFAULT_SERVER_PORT);
+    }
+
+    public SocketAcceptor getMultiplexerSocketAcceptor() {
+        return multiplexerSocketAcceptor;
     }
 
     public void setConnectionManagerListenerPort(int port) {

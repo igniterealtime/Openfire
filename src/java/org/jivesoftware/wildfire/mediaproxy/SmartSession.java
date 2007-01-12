@@ -104,8 +104,8 @@ public class SmartSession extends MediaProxySession {
          * Default Channel Constructor
          *
          * @param dataSocket datasocket to used to send and receive packets
-         * @param host default destination host for received packets
-         * @param port default destination port for received packets
+         * @param host       default destination host for received packets
+         * @param port       default destination port for received packets
          */
         public SmartChannel(DatagramSocket dataSocket, InetAddress host, int port) {
             super(dataSocket, host, port);
@@ -117,22 +117,21 @@ public class SmartSession extends MediaProxySession {
         public void run() {
             try {
                 long c = 0;
+                long band = System.currentTimeMillis();
                 while (true) {
                     // Block until a datagram appears:
                     packet = new DatagramPacket(buf, buf.length);
                     dataSocket.receive(packet);
 
-                    if (this.getPort() != packet.getPort())
-                        System.out.println(dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort() + " relay to: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
-
-                    if (c++ < 5) {
-                        System.out.println("Received:" + dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort());
-
-                        System.out.println("Addr: " + packet.getAddress().getHostName());
+                    // Relay Destination
+                    if (c++ < 100) { // 100 packets are enough to discover relay address
+                        this.setHost(packet.getAddress());
+                        this.setPort(packet.getPort());
+                    } else {
+                        c = 1000; // Prevents long overflow
+                        // Check Source Address. If it´s different, discard packet. 
+                        if (!this.getHost().equals(packet.getAddress())) continue;
                     }
-
-                    this.setHost(packet.getAddress());
-                    this.setPort(packet.getPort());
 
                     boolean resend = true;
 

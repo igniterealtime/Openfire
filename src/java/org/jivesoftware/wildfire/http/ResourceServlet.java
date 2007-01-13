@@ -24,9 +24,9 @@ import java.util.zip.GZIPOutputStream;
 import java.io.*;
 
 /**
- *
+ * Combines and serves resources, such as javascript or css files.
  */
-public class JavaScriptServlet extends HttpServlet {
+public class ResourceServlet extends HttpServlet {
 //    private static String suffix = "";    // Set to "_src" to use source version
     private static long expiresOffset = 3600 * 24 * 10;	// 10 days util client cache expires
     private boolean debug = false;
@@ -44,10 +44,11 @@ public class JavaScriptServlet extends HttpServlet {
     public void service(HttpServletRequest request, HttpServletResponse response) {
         boolean compress = false;
 
+        boolean javascript = request.getRequestURI().endsWith("scripts/");
+
         if (!disableCompression) {
             if (request.getHeader("accept-encoding") != null &&
-                request.getHeader("accept-encoding").indexOf("gzip") != -1)
-            {
+                request.getHeader("accept-encoding").indexOf("gzip") != -1) {
                 compress = true;
             }
             else if (request.getHeader("---------------") != null) {
@@ -56,7 +57,12 @@ public class JavaScriptServlet extends HttpServlet {
             }
         }
 
-        response.setHeader("Content-type", "text/javascript");
+        if(javascript) {
+            response.setHeader("Content-type", "text/javascript");
+        }
+        else {
+            response.setHeader("Content-type", "text/css");
+        }
         response.setHeader("Vary", "Accept-Encoding"); // Handle proxies
 
         if (!debug) {
@@ -74,21 +80,24 @@ public class JavaScriptServlet extends HttpServlet {
         InputStream in = null;
 
         try {
-            byte[] jsContent;
-            String cacheKey = String.valueOf(compress);
-            jsContent = cache.get(cacheKey);
-            if (debug || jsContent == null) {
-                jsContent = getJavaScriptContent(compress);
-                cache.put(cacheKey, jsContent);
+            byte[] content;
+            String cacheKey = String.valueOf(compress + " " + javascript);
+            content = cache.get(cacheKey);
+            if (javascript && (debug || content == null)) {
+                content = getJavaScriptContent(compress);
+                cache.put(cacheKey, content);
+            }
+            else if(!javascript && content == null) {
+
             }
 
-            response.setContentLength(jsContent.length);
+            response.setContentLength(content.length);
             if (compress) {
                 response.setHeader("Content-Encoding", "gzip");
             }
 
             // Write the content out
-            in = new ByteArrayInputStream(jsContent);
+            in = new ByteArrayInputStream(content);
             out = response.getOutputStream();
 
             // Use a 128K buffer.
@@ -142,8 +151,9 @@ public class JavaScriptServlet extends HttpServlet {
     }
 
     private static Collection<String> getJavascriptFiles() {
-        return Arrays.asList("xmlextras.js", "connection.js", "dojo.js",
-                "flash.js");
+        return Arrays.asList("prototype.js", "getelementsbyselector.js", "sarissa.js",
+                "connection.js", "yahoo-min.js", "dom-min.js", "event-min.js", "dragdrop-min.js",
+                "yui-ext.js", "spank.js");
     }
 
     private static String getJavaScriptFile(String path) {

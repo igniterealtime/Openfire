@@ -32,21 +32,41 @@ import java.net.InetAddress;
  * <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  */
 public class HttpSessionManager {
-
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
     private TimerTask inactivityTask;
+    private SessionListener sessionListener = new SessionListener() {
+        public void connectionOpened(HttpSession session, HttpConnection connection) {
+        }
 
+        public void connectionClosed(HttpSession session, HttpConnection connection) {
+        }
+
+        public void sessionClosed(HttpSession session) {
+            sessionMap.remove(session.getStreamID().getID());
+            sessionManager.removeSession(session);
+        }
+    };
+
+    /**
+     * Creates a new HttpSessionManager instance.
+     */
     public HttpSessionManager() {
         this.sessionManager = SessionManager.getInstance();
     }
 
+    /**
+     * Starts the services used by the HttpSessionManager.
+     */
     public void start() {
         inactivityTask = new HttpSessionReaper();
         TaskEngine.getInstance().schedule(inactivityTask, 30 * JiveConstants.SECOND,
                 30 * JiveConstants.SECOND);
     }
 
+    /**
+     * Stops any services and cleans up any resources used by the HttpSessionManager.
+     */
     public void stop() {
         inactivityTask.cancel();
         for(HttpSession session : sessionMap.values()) {
@@ -173,60 +193,6 @@ public class HttpSessionManager {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle", 30);
     }
 
-    private HttpSession createSession(long rid, InetAddress address) throws UnauthorizedException {
-        // Create a ClientSession for this user.
-        StreamID streamID = SessionManager.getInstance().nextStreamID();
-        // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID);
-        // Register that the new session is associated with the specified stream ID
-        sessionMap.put(streamID.getID(), session);
-        session.addSessionCloseListener(new SessionListener() {
-            public void connectionOpened(HttpSession session, HttpConnection connection) {
-            }
-
-            public void connectionClosed(HttpSession session, HttpConnection connection) {
-            }
-
-            public void sessionClosed(HttpSession session) {
-                sessionMap.remove(session.getStreamID().getID());
-                sessionManager.removeSession(session);
-            }
-        });
-        return session;
-    }
-
-    private static int getIntAttribute(String value, int defaultValue) {
-        if(value == null || "".equals(value)) {
-            return defaultValue;
-        }
-        try {
-            return Integer.valueOf(value);
-        }
-        catch (Exception ex) {
-            return defaultValue;
-        }
-    }
-
-    private String createSessionCreationResponse(HttpSession session) throws DocumentException {
-        Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
-        response.addNamespace("stream", "http://etherx.jabber.org/streams");
-        response.addAttribute("authid", session.getStreamID().getID());
-        response.addAttribute("sid", session.getStreamID().getID());
-        response.addAttribute("secure", Boolean.TRUE.toString());
-        response.addAttribute("requests", String.valueOf(session.getMaxRequests()));
-        response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
-        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
-        response.addAttribute("wait", String.valueOf(session.getWait()));
-
-        Element features = response.addElement("stream:features");
-        for(Element feature : session.getAvailableStreamFeaturesElements()) {
-            features.add(feature);
-        }
-
-        return response.asXML();
-    }
-
     /**
      * Forwards a client request, which is related to a session, to the server. A connection is
      * created and queued up in the provided session. When a connection reaches the top of a queue
@@ -268,11 +234,55 @@ public class HttpSessionManager {
         return connection;
     }
 
+    private HttpSession createSession(long rid, InetAddress address) throws UnauthorizedException {
+        // Create a ClientSession for this user.
+        StreamID streamID = SessionManager.getInstance().nextStreamID();
+        // Send to the server that a new client session has been created
+        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID);
+        // Register that the new session is associated with the specified stream ID
+        sessionMap.put(streamID.getID(), session);
+        session.addSessionCloseListener(sessionListener);
+        return session;
+    }
+
+    private static int getIntAttribute(String value, int defaultValue) {
+        if(value == null || "".equals(value)) {
+            return defaultValue;
+        }
+        try {
+            return Integer.valueOf(value);
+        }
+        catch (Exception ex) {
+            return defaultValue;
+        }
+    }
+
+    private String createSessionCreationResponse(HttpSession session) throws DocumentException {
+        Element response = DocumentHelper.createElement("body");
+        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        response.addNamespace("stream", "http://etherx.jabber.org/streams");
+        response.addAttribute("authid", session.getStreamID().getID());
+        response.addAttribute("sid", session.getStreamID().getID());
+        response.addAttribute("secure", Boolean.TRUE.toString());
+        response.addAttribute("requests", String.valueOf(session.getMaxRequests()));
+        response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
+        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
+        response.addAttribute("wait", String.valueOf(session.getWait()));
+
+        Element features = response.addElement("stream:features");
+        for(Element feature : session.getAvailableStreamFeaturesElements()) {
+            features.add(feature);
+        }
+
+        return response.asXML();
+    }
+
     private class HttpSessionReaper extends TimerTask {
 
         public void run() {
+            long currentTime = System.currentTimeMillis();            
             for(HttpSession session : sessionMap.values()) {
-                long lastActive = (System.currentTimeMillis() - session.getLastActivity()) / 1000;
+                long lastActive = (currentTime - session.getLastActivity()) / 1000;
                 if (lastActive > session.getInactivityTimeout()) {
                     session.close();
                 }

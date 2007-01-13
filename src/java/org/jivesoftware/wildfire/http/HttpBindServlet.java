@@ -32,7 +32,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 /**
- * Handles requests to the HTTP Bind service.
+ * Servlet which handles requests to the HTTP binding service. It determines if there is currently
+ * an {@link HttpSession} related to the connection or if one needs to be created and then passes
+ * it off to the {@link HttpBindManager} for processing of the client request and formulating of
+ * the response.
  *
  * @author Alexander Wenckus
  */
@@ -50,6 +53,8 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
+    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<XMPPPacketReader>();
+
     public HttpBindServlet() {
     }
 
@@ -66,8 +71,7 @@ public class HttpBindServlet extends HttpServlet {
         sessionManager.stop();
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         if (isContinuation(request, response)) {
@@ -196,7 +200,7 @@ public class HttpBindServlet extends HttpServlet {
     {
         byte[] content;
         try {
-            content = connection.getDeliverable().getBytes("utf-8");
+            content = connection.getResponse().getBytes("utf-8");
         }
         catch (HttpBindTimeoutException e) {
             content = createEmptyBody().getBytes("utf-8");
@@ -235,9 +239,12 @@ public class HttpBindServlet extends HttpServlet {
     private Document createDocument(HttpServletRequest request) throws
             DocumentException, IOException, XmlPullParserException {
         // Reader is associated with a new XMPPPacketReader
-        XMPPPacketReader reader = new XMPPPacketReader();
-        reader.setXPPFactory(factory);
-
+        XMPPPacketReader reader = localReader.get();
+        if (reader == null) {
+            reader = new XMPPPacketReader();
+            reader.setXPPFactory(factory);
+            localReader.set(reader);
+        }
         return reader.read("utf-8", request.getInputStream());
     }
 }

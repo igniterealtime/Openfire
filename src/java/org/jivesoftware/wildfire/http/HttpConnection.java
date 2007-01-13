@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -11,17 +11,16 @@
 
 package org.jivesoftware.wildfire.http;
 
-import org.jivesoftware.wildfire.Connection;
 import org.mortbay.util.ajax.Continuation;
 
 /**
- * A connection to a client. The client will wait on getDeliverable() until the server forwards a
- * message to it or the wait time on the session timesout.
+ * Represents one HTTP connection with a client using the HTTP Binding service. The client will wait
+ * on {@link #getResponse()} until the server forwards a message to it or the wait time on the
+ * session timesout.
  *
  * @author Alexander Wenckus
  */
 public class HttpConnection {
-    private Connection.CompressionPolicy compressionPolicy;
     private long requestId;
     private String body;
     private HttpSession session;
@@ -29,13 +28,15 @@ public class HttpConnection {
     private boolean isClosed;
     private boolean isSecure = false;
 
+    /**
+     * Constructs an HTTP Connection.
+     *
+     * @param requestId the ID which uniquely identifies this request.
+     * @param isSecure true if this connection is using HTTPS
+     */
     public HttpConnection(long requestId, boolean isSecure) {
         this.requestId = requestId;
         this.isSecure = isSecure;
-    }
-
-    public boolean validate() {
-        return false;
     }
 
     /**
@@ -54,10 +55,21 @@ public class HttpConnection {
         }
     }
 
+    /**
+     * Returns true if this connection has been closed, either a response was delivered to the
+     * client or the server closed the connection aburbtly.
+     *
+     * @return true if this connection has been closed.
+     */
     public boolean isClosed() {
         return isClosed;
     }
 
+    /**
+     * Returns true if this connection is using HTTPS.
+     *
+     * @return true if this connection is using HTTPS.
+     */
     public boolean isSecure() {
         return isSecure;
     }
@@ -93,16 +105,16 @@ public class HttpConnection {
 
     /**
      * A call that will cause a wait, or in the case of Jetty the thread to be freed, if there is no
-     * deliverable currently available. Once the deliverable becomes available it is returned.
+     * deliverable currently available. Once the response becomes available, it is returned.
      *
      * @return the deliverable to send to the client
      * @throws HttpBindTimeoutException to indicate that the maximum wait time requested by the
      * client has been surpassed and an empty response should be returned.
      */
-    public String getDeliverable() throws HttpBindTimeoutException {
+    public String getResponse() throws HttpBindTimeoutException {
         if (body == null && continuation != null) {
             try {
-                body = waitForDeliverable();
+                body = waitForResponse();
             }
             catch (HttpBindTimeoutException e) {
                 this.isClosed = true;
@@ -115,31 +127,11 @@ public class HttpConnection {
         return body;
     }
 
-    private String waitForDeliverable() throws HttpBindTimeoutException {
-        if (continuation.suspend(session.getWait() * 1000)) {
-            String deliverable = (String) continuation.getObject();
-            // This will occur when the hold attribute of a session has been exceded.
-            if (deliverable == null) {
-                throw new HttpBindTimeoutException();
-            }
-            return deliverable;
-        }
-        throw new HttpBindTimeoutException("Request " + requestId + " exceded response time from " +
-                "server of " + session.getWait() + " seconds.");
-    }
-
-    public boolean isCompressed() {
-        return false;
-    }
-
-    public Connection.CompressionPolicy getCompressionPolicy() {
-        return compressionPolicy;
-    }
-
-    public void setCompressionPolicy(Connection.CompressionPolicy compressionPolicy) {
-        this.compressionPolicy = compressionPolicy;
-    }
-
+    /**
+     * Returns the ID which uniquely identifies this connection.
+     *
+     * @return the ID which uniquely identifies this connection.
+     */
     public long getRequestId() {
         return requestId;
     }
@@ -164,5 +156,18 @@ public class HttpConnection {
 
     void setContinuation(Continuation continuation) {
         this.continuation = continuation;
+    }
+
+    private String waitForResponse() throws HttpBindTimeoutException {
+        if (continuation.suspend(session.getWait() * 1000)) {
+            String deliverable = (String) continuation.getObject();
+            // This will occur when the hold attribute of a session has been exceded.
+            if (deliverable == null) {
+                throw new HttpBindTimeoutException();
+            }
+            return deliverable;
+        }
+        throw new HttpBindTimeoutException("Request " + requestId + " exceded response time from " +
+                "server of " + session.getWait() + " seconds.");
     }
 }

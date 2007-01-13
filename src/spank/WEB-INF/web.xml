@@ -17,7 +17,7 @@
 
     <servlet>
         <servlet-name>JavaScriptServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.http.JavaScriptServlet</servlet-class>
+        <servlet-class>org.jivesoftware.wildfire.http.ResourceServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 

@@ -171,7 +171,7 @@ public final class HttpBindManager {
      */
     public Map<HttpServlet, String> getServlets() {
         Map<HttpServlet, String> servlets = new HashMap<HttpServlet, String>();
-        servlets.put(new JavaScriptServlet(), "/http-bind/js/");
+        servlets.put(new ResourceServlet(), "/http-bind/js/");
 
         return servlets;
     }

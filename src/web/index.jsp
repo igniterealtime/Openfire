@@ -21,7 +21,6 @@
 <%@ page import="java.net.SocketAddress" %>
 <%@ page import="java.net.InetSocketAddress" %>
 <%@ page import="org.jivesoftware.wildfire.ServerPort" %>
-<%@ page import="org.jivesoftware.wildfire.HttpServerManager" %>
 <%@ page import="org.jivesoftware.wildfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.wildfire.http.HttpBindManager" %>
 <%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxyService" %>
@@ -30,6 +29,7 @@
 <%@ page import="org.jivesoftware.wildfire.Connection" %>
 <%@ page import="org.jivesoftware.wildfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.wildfire.container.AdminConsolePlugin" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -61,7 +61,9 @@
     SocketAcceptor multiplexerSocketAcceptor = connectionManager.getMultiplexerSocketAcceptor();
     ServerPort serverPort = null;
     ServerPort componentPort = null;
-    HttpServerManager httpServerManager = HttpServerManager.getInstance();
+    AdminConsolePlugin adminConsolePlugin =
+            (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin");
+
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
     HttpBindManager httpBindManager = HttpBindManager.getInstance();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
@@ -388,14 +390,14 @@
     <% } %>
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
-        <td><%= httpServerManager.getAdminUnsecurePort() %></td>
+        <td><%= adminConsolePlugin.getAdminUnsecurePort() %></td>
         <td><img src="images/blank.gif" width="1" height="1"></td>
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_unsecured" /></td>
     </tr>
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
-        <td><%= httpServerManager.getAdminSecurePort() %></td>
+        <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
         <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_secured" /></td>

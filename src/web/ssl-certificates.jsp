@@ -13,7 +13,8 @@
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.wildfire.HttpServerManager" %>
+<%@ page import="org.jivesoftware.wildfire.container.PluginManager" %>
+<%@ page import="org.jivesoftware.wildfire.container.AdminConsolePlugin" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -84,6 +85,8 @@
             }
         }
     }
+
+    PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
 %>
 
 <html>
@@ -93,7 +96,7 @@
   </head>
   <body>
 
-  <% if (HttpServerManager.getInstance().isRestartNeeded()) { %>
+  <% if (((AdminConsolePlugin) pluginManager.getPlugin("admin")).isRestartNeeded()) { %>
       <div class="warning">
       <table cellpadding="0" cellspacing="0" border="0">
       <tbody>

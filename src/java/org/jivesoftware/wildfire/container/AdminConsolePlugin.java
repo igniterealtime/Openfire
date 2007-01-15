@@ -10,11 +10,23 @@
 
 package org.jivesoftware.wildfire.container;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.HttpServerManager;
+import org.jivesoftware.util.*;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.net.SSLConfig;
 import org.mortbay.jetty.webapp.WebAppContext;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.handler.HandlerCollection;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.security.SslSocketConnector;
+
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.File;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
  * The admin console plugin. It starts a Jetty instance on the configured
@@ -24,45 +36,266 @@ import java.io.File;
  */
 public class AdminConsolePlugin implements Plugin {
 
+    private int adminPort;
+    private int adminSecurePort;
+    private Server adminServer;
+    private ContextHandlerCollection contexts;
+    private CertificateEventListener certificateListener;
+    private boolean restartNeeded = false;
+
     private File pluginDir;
-    private HttpServerManager serverManager;
 
     /**
-     * Create a jetty module.
+     * Create a Jetty module.
      */
     public AdminConsolePlugin() {
-        serverManager = HttpServerManager.getInstance();
+        // Configure Jetty logging to a more reasonable default.
+        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
+        // JSP 2.0 uses commons-logging, so also override that implementation.
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
+    }
+
+    /**
+     * Starts the Jetty instance.
+     */
+    public void startup() {
+        restartNeeded = false;
+
+        // Add listener for certificate events
+        certificateListener = new CertificateListener();
+        CertificateManager.addListener(certificateListener);
+
+        adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
+        adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
+        adminServer = new Server();
+
+        // Create connector for http traffic if it's enabled.
+        if (adminPort > 0) {
+            Connector httpConnector = new SelectChannelConnector();
+            // Listen on a specific network interface if it has been set.
+            String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+            String bindInterface = null;
+            if (interfaceName != null) {
+                if (interfaceName.trim().length() > 0) {
+                    bindInterface = interfaceName;
+                }
+            }
+            httpConnector.setHost(bindInterface);
+            httpConnector.setPort(adminPort);
+            adminServer.addConnector(httpConnector);
+        }
+
+        // Create a connector for https traffic if it's enabled.
+        try {
+            if (adminSecurePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
+                        XMPPServer.getInstance().getServerInfo().getName()))
+            {
+                JiveSslConnector httpsConnector = new JiveSslConnector();
+                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+                String bindInterface = null;
+                if (interfaceName != null) {
+                    if (interfaceName.trim().length() > 0) {
+                        bindInterface = interfaceName;
+                    }
+                }
+                httpsConnector.setHost(bindInterface);
+                httpsConnector.setPort(adminSecurePort);
+
+                httpsConnector.setTrustPassword(SSLConfig.getTrustPassword());
+                httpsConnector.setTruststoreType(SSLConfig.getStoreType());
+                httpsConnector.setTruststore(SSLConfig.getTruststoreLocation());
+                httpsConnector.setNeedClientAuth(false);
+                httpsConnector.setWantClientAuth(false);
+
+                httpsConnector.setKeyPassword(SSLConfig.getKeyPassword());
+                httpsConnector.setKeystoreType(SSLConfig.getStoreType());
+                httpsConnector.setKeystore(SSLConfig.getKeystoreLocation());
+                adminServer.addConnector(httpsConnector);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+
+        // Make sure that at least one connector was registered.
+        if (adminServer.getConnectors() == null || adminServer.getConnectors().length == 0) {
+            adminServer = null;
+            // Log warning.
+            log(LocaleUtils.getLocalizedString("admin.console.warning"));
+            return;
+        }
+
+        adminServer.setHandler(contexts);
+
+        try {
+            adminServer.start();
+        }
+        catch (Exception e) {
+            Log.error("Could not start admin conosle server", e);
+        }
+
+        // Log the ports that the admin server is listening on.
+        logAdminConsolePorts();
+    }
+
+    /**
+     * Shuts down the Jetty server.
+     * */
+    public void shutdown() {
+        // Remove listener for certificate events
+        if (certificateListener != null) {
+            CertificateManager.removeListener(certificateListener);
+        }
+        //noinspection ConstantConditions
+        try {
+            if (adminServer != null && adminServer.isRunning()) {
+                adminServer.stop();
+            }
+        }
+        catch (Exception e) {
+            Log.error("Error stopping admin console server", e);
+        }
+        adminServer = null;
     }
 
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
+
+        contexts = new ContextHandlerCollection();
+        createWebAppContext(contexts);
+
+        startup();
+    }
+
+    public void destroyPlugin() {
+        shutdown();
+    }
+
+    /**
+     * Returns true if the Jetty server needs to be restarted. This is usually required when
+     * certificates are added, deleted or modified or when server ports were modified.
+     *
+     * @return true if the Jetty server needs to be restarted.
+     */
+    public boolean isRestartNeeded() {
+        return restartNeeded;
+    }
+
+    /**
+     * Returns the non-SSL port on which the admin console is currently operating.
+     *
+     * @return the non-SSL port on which the admin console is currently operating.
+     */
+    public int getAdminUnsecurePort() {
+        return adminPort;
+    }
+
+    /**
+     * Returns the SSL port on which the admin console is current operating.
+     *
+     * @return the SSL port on which the admin console is current operating.
+     */
+    public int getAdminSecurePort() {
+        return adminSecurePort;
+    }
+
+    public ContextHandlerCollection getContexts() {
+        return contexts;
+    }
+
+    public void restart() {
         try {
-            serverManager.setAdminConsoleContext(createWebAppContext());
+            adminServer.stop();
+            adminServer.start();
         }
         catch (Exception e) {
-            System.err.println("Error starting admin console: " + e.getMessage()); 
-            Log.error("Trouble initializing admin console", e);
+            Log.error(e);
         }
     }
 
-    private WebAppContext createWebAppContext() {
+    private void createWebAppContext(ContextHandlerCollection contexts) {
         WebAppContext context;
         // Add web-app. Check to see if we're in development mode. If so, we don't
         // add the normal web-app location, but the web-app in the project directory.
         if (Boolean.getBoolean("developmentMode")) {
             System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
-            context = new WebAppContext(
-                    pluginDir.getParentFile().getParentFile().getParentFile().getParent() + File.separator +
-                            "src" + File.separator + "web", "/");
+            context = new WebAppContext(contexts, pluginDir.getParentFile().getParentFile().getParentFile().getParent() +
+                     File.separator + "src" + File.separator + "web", "/");
         }
         else {
-            context = new WebAppContext(pluginDir.getAbsoluteFile() + File.separator + "webapp",
+            context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp",
                     "/");
         }
         context.setWelcomeFiles(new String[]{"index.jsp"});
-        return context;
     }
 
-    public void destroyPlugin() {
+    private void log(String string) {
+       Log.info(string);
+       System.out.println(string);
+    }
+
+    private void logAdminConsolePorts() {
+        // Log what ports the admin console is running on.
+        String listening = LocaleUtils.getLocalizedString("admin.console.listening");
+        boolean isPlainStarted = false;
+        boolean isSecureStarted = false;
+        for (Connector connector : adminServer.getConnectors()) {
+            if (connector.getPort() == adminPort) {
+                isPlainStarted = true;
+            }
+            else if (connector.getPort() == adminSecurePort) {
+                isSecureStarted = true;
+            }
+        }
+
+        if (isPlainStarted && isSecureStarted) {
+            log(listening + ":" + System.getProperty("line.separator") +
+                    "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    adminPort + System.getProperty("line.separator") +
+                    "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    adminSecurePort);
+        }
+        else if (isSecureStarted) {
+            log(listening + " https://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + adminSecurePort);
+        }
+        else if (isPlainStarted) {
+            log(listening + " http://" +
+                    XMPPServer.getInstance().getServerInfo().getName() + ":" + adminPort);
+        }
+    }
+
+    /**
+     * Listens for security certificates being created and destroyed so we can track when the
+     * admin console needs to be restarted.
+     */
+    private class CertificateListener implements CertificateEventListener {
+
+        public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+            // If new certificate is RSA then (re)start the HTTPS service
+            if ("RSA".equals(cert.getPublicKey().getAlgorithm())) {
+                restartNeeded = true;
+            }
+        }
+
+        public void certificateDeleted(KeyStore keyStore, String alias) {
+            restartNeeded = true;
+        }
+
+        public void certificateSigned(KeyStore keyStore, String alias,
+                                      List<X509Certificate> certificates) {
+            // If new certificate is RSA then (re)start the HTTPS service
+            if ("RSA".equals(certificates.get(0).getPublicKey().getAlgorithm())) {
+                restartNeeded = true;
+            }
+        }
+    }
+
+    private class JiveSslConnector extends SslSocketConnector {
+
+        @Override
+        protected SSLServerSocketFactory createFactory() throws Exception {
+            return SSLConfig.getServerSocketFactory();
+        }
     }
 }

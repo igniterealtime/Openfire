@@ -19,10 +19,7 @@ import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.wildfire.commands.AdHocCommandHandler;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.container.Module;
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginListener;
-import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.wildfire.container.*;
 import org.jivesoftware.wildfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.wildfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
@@ -127,7 +124,6 @@ public class XMPPServer {
             "org.jivesoftware.wildfire.starter.ServerStarter";
     private static final String WRAPPER_CLASSNAME =
             "org.tanukisoftware.wrapper.WrapperManager";
-    private HttpServerManager httpServerManager;
 
     /**
      * Returns a singleton instance of XMPPServer.
@@ -297,7 +293,6 @@ public class XMPPServer {
         }
 
         loader = Thread.currentThread().getContextClassLoader();
-        httpServerManager = HttpServerManager.getInstance();
 
         initialized = true;
     }
@@ -352,9 +347,8 @@ public class XMPPServer {
                             // Otherwise, the page that requested the setup finish won't
                             // render properly!
                             Thread.sleep(1000);
-                            httpServerManager.shutdown();
-                            httpServerManager.startup();
-
+                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
+                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
                         }
 
                         verifyDataSource();
@@ -408,19 +402,6 @@ public class XMPPServer {
             ServerTrafficCounter.initStatistics();
 
             // Load plugins (when in setup mode only the admin console will be loaded)
-            pluginManager.addPluginListener(new PluginListener() {
-                public void pluginCreated(String pluginName, Plugin plugin) {
-                    if("admin".equals(pluginName)) {
-                        httpServerManager.startup();
-                    }
-                }
-
-                public void pluginDestroyed(String pluginName, Plugin plugin) {
-                    if ("admin".equals(pluginName)) {
-                        httpServerManager.shutdown();
-                    }
-                }
-            });
             pluginManager.start();
 
             // Log that the server has been started
@@ -591,8 +572,8 @@ public class XMPPServer {
                     // Otherwise, this page won't render properly!
                     try {
                         Thread.sleep(1000);
-                        httpServerManager.shutdown();
-                        httpServerManager.startup();
+                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
+                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

@@ -12,8 +12,9 @@
 package org.jivesoftware.wildfire;
 
 import org.jivesoftware.util.Version;
+
+import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 
 /**
  * Information 'snapshot' of a server's state. Useful for statistics
@@ -66,5 +67,5 @@ public interface XMPPServerInfo {
      *
      * @return an iterator over the server ports for this server.
      */
-    public Iterator getServerPorts();
+    public Collection<ServerPort> getServerPorts();
 }

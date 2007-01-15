@@ -38,7 +38,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -375,8 +375,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         startClientSSLListeners(localIPAddress);
     }
 
-    public Iterator<ServerPort> getPorts() {
-        return ports.iterator();
+    public Collection<ServerPort> getPorts() {
+        return ports;
     }
 
     public SocketReader createSocketReader(Socket sock, boolean isSecure, ServerPort serverPort,
@@ -538,6 +538,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public int getClientListenerPort() {
         return JiveGlobals.getIntProperty("xmpp.socket.plain.port", DEFAULT_PORT);
+    }
+
+    public SocketAcceptor getSSLSocketAcceptor() {
+        return sslSocketAcceptor;
     }
 
     public void setClientSSLListenerPort(int port) {

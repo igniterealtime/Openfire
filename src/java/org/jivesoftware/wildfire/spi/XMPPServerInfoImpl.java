@@ -11,14 +11,15 @@
 
 package org.jivesoftware.wildfire.spi;
 
-import org.jivesoftware.util.Version;
-import org.jivesoftware.wildfire.XMPPServerInfo;
-import org.jivesoftware.wildfire.ConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Version;
+import org.jivesoftware.wildfire.ConnectionManager;
+import org.jivesoftware.wildfire.ServerPort;
+import org.jivesoftware.wildfire.XMPPServerInfo;
 
-import java.util.Date;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 
 /**
  * Implements the server info for a basic server. Optimization opportunities
@@ -81,9 +82,9 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         return stopDate;
     }
 
-    public Iterator getServerPorts() {
+    public Collection<ServerPort> getServerPorts() {
         if (connectionManager == null) {
-            return Collections.EMPTY_LIST.iterator();
+            return Collections.emptyList();
         }
         else {
             return connectionManager.getPorts();

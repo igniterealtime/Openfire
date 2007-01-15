@@ -11,19 +11,18 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.XMPPServerInfo;
-import org.jivesoftware.wildfire.ServerPort;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.wildfire.ServerPort;
+import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.XMPPServerInfo;
+import org.jivesoftware.wildfire.container.BasicModule;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -84,11 +83,9 @@ public class MulticastDNSService extends BasicModule {
         TimerTask startService = new TimerTask() {
             public void run() {
                 XMPPServerInfo info = XMPPServer.getInstance().getServerInfo();
-                Iterator ports = info.getServerPorts();
                 int clientPortNum = -1;
                 int componentPortNum = -1;
-                while (ports.hasNext()) {
-                    ServerPort port = (ServerPort)ports.next();
+                for (ServerPort port : info.getServerPorts()) {
                     if (port.isClientPort()) {
                         clientPortNum = port.getPort();
                     }

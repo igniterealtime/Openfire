@@ -15,7 +15,7 @@ import org.jivesoftware.wildfire.net.SocketReader;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * Coordinates connections (accept, read, termination) on the server.
@@ -54,7 +54,7 @@ public interface ConnectionManager {
      * @return an iterator of the ports managed by this connection manager
      *      (can be an empty but never null).
      */
-    public Iterator<ServerPort> getPorts();
+    public Collection<ServerPort> getPorts();
 
     /**
      * Creates a new socket reader for the new accepted socket to be managed

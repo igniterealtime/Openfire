@@ -210,7 +210,7 @@ public class SubscriptionPlugin implements Plugin {
             presence.setType(Presence.Type.unsubscribe);
 
             // This is to get around an issue in Spark
-            // (http://www.jivesoftware.org/issues/browse/SPARK-300).
+            // (http://www.igniterealtime.org/issues/browse/SPARK-300).
             // Unfortunately, this is a bit of a hack and can easily be defeated
             // if a user changes their resource when using Spark.
             if (JiveGlobals.getBooleanProperty("plugin.subscription.sparkCheck", false)) {

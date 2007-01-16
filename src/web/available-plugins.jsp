@@ -453,7 +453,7 @@
     if (outdatedPlugins.size() > 0) {
 %>
     <div class="light-gray-border" style="padding:10px;">
-    <p><fmt:message key="plugin.available.outdated" /><a href="http://www.jivesoftware.org/wildfire" target="_blank"><fmt:message key="plugin.available.outdated.update" /></a></p>
+    <p><fmt:message key="plugin.available.outdated" /><a href="http://www.igniterealtime.org/projects/wildfire/" target="_blank"><fmt:message key="plugin.available.outdated.update" /></a></p>
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
 
 

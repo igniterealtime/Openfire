@@ -12,7 +12,7 @@
 package org.jivesoftware.wildfire.update;
 
 /**
- * Plugin available at jivesoftware.org. The plugin may or may not be locally installed.
+ * Plugin available at igniterealtime.org. The plugin may or may not be locally installed.
  *
  * @author Gaston Dombiak
  */

@@ -50,7 +50,7 @@ public class UpdateManager extends BasicModule {
     /**
      * URL of the servlet (JSP) that provides the "check for update" service.
      */
-    private static String updateServiceURL = "http://www.jivesoftware.org/wildfire/versions.jsp";
+    private static String updateServiceURL = "http://www.igniterealtime.org/projects/wildfire/versions.jsp";
 
     /**
      * Information about the available server update.
@@ -63,7 +63,7 @@ public class UpdateManager extends BasicModule {
     private Collection<Update> pluginUpdates = new ArrayList<Update>();
 
     /**
-     * List of plugins available at jivesoftware.org.
+     * List of plugins available at igniterealtime.org.
      */
     private Map<String, AvailablePlugin> availablePlugins = new HashMap<String, AvailablePlugin>();
 
@@ -169,7 +169,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Queries the jivesoftware.org server for new server and plugin updates.
+     * Queries the igniterealtime.org server for new server and plugin updates.
      *
      * @param notificationsEnabled true if admins will be notified when new updates are found.
      * @throws Exception if some error happens during the query.
@@ -275,10 +275,10 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the list of available plugins to install as reported by jivesoftware.org.
+     * Returns the list of available plugins to install as reported by igniterealtime.org.
      * Currently installed plugins will not be included.
      *
-     * @return the list of available plugins to install as reported by jivesoftware.org.
+     * @return the list of available plugins to install as reported by igniterealtime.org.
      */
     public List<AvailablePlugin> getNotInstalledPlugins() {
         ArrayList<AvailablePlugin> plugins =
@@ -373,17 +373,17 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns true if a proxy is being used to connect to jivesoftware.org or false if
+     * Returns true if a proxy is being used to connect to igniterealtime.org or false if
      * a direct connection should be attempted.
      *
-     * @return true if a proxy is being used to connect to jivesoftware.org.
+     * @return true if a proxy is being used to connect to igniterealtime.org.
      */
     public boolean isUsingProxy() {
         return getProxyHost() != null;
     }
 
     /**
-     * Returns the host of the proxy to use to connect to jivesoftware.org or <tt>null</tt>
+     * Returns the host of the proxy to use to connect to igniterealtime.org or <tt>null</tt>
      * if no proxy is used.
      *
      * @return the host of the proxy or null if no proxy is used.
@@ -393,7 +393,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Sets the host of the proxy to use to connect to jivesoftware.org or <tt>null</tt>
+     * Sets the host of the proxy to use to connect to igniterealtime.org or <tt>null</tt>
      * if no proxy is used.
      *
      * @param host the host of the proxy or null if no proxy is used.
@@ -410,10 +410,10 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     * Returns the port of the proxy to use to connect to igniterealtime.org or -1 if no
      * proxy is being used.
      *
-     * @return the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     * @return the port of the proxy to use to connect to igniterealtime.org or -1 if no
      *         proxy is being used.
      */
     public int getProxyPort() {
@@ -421,10 +421,10 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Sets the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     * Sets the port of the proxy to use to connect to igniterealtime.org or -1 if no
      * proxy is being used.
      *
-     * @param port the port of the proxy to use to connect to jivesoftware.org or -1 if no
+     * @param port the port of the proxy to use to connect to igniterealtime.org or -1 if no
      *        proxy is being used.
      */
     public void setProxyPort(int port) {
@@ -563,7 +563,7 @@ public class UpdateManager extends BasicModule {
 
     /**
      * Recreate the list of plugins that need to be updated based on the list of
-     * available plugins at jivesoftware.org.
+     * available plugins at igniterealtime.org.
      */
     private void buildPluginsUpdateList() {
         // Reset list of plugins that need to be updated
@@ -632,7 +632,7 @@ public class UpdateManager extends BasicModule {
 
     /**
      * Saves to conf/available-plugins.xml the list of plugins that are available
-     * at jivesoftware.org.
+     * at igniterealtime.org.
      */
     private void saveAvailablePluginsInfo() {
         //  XML to store in the file

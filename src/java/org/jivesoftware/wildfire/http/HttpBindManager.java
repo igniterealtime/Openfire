@@ -274,8 +274,10 @@ public final class HttpBindManager {
     }
 
     private WebAppContext createWebAppContext() {
-        return new WebAppContext(JiveGlobals.getHomeDirectory() + File.separator +
+        WebAppContext context = new WebAppContext(JiveGlobals.getHomeDirectory() + File.separator +
                                     "resources" + File.separator + "spank", "/");
+        context.setWelcomeFiles(new String[]{"index.html"});
+        return context;
     }
 
     private void doEnableHttpBind(boolean shouldEnable) {

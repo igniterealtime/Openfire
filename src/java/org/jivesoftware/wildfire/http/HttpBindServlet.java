@@ -31,6 +31,8 @@ import javax.servlet.ServletConfig;
 import java.io.IOException;
 import java.net.InetAddress;
 
+import sun.net.util.IPAddressUtil;
+
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently
  * an {@link HttpSession} related to the connection or if one needs to be created and then passes
@@ -180,7 +182,9 @@ public class HttpBindServlet extends HttpServlet {
 
         try {
             HttpConnection connection = new HttpConnection(rid, request.isSecure());
-            InetAddress address = InetAddress.getByName(request.getRemoteAddr());
+            String remoteAddr = request.getRemoteAddr();
+            InetAddress address = InetAddress.getByAddress(IPAddressUtil.
+                    textToNumericFormatV4(remoteAddr));
             connection.setSession(sessionManager.createSession(address, rootNode, connection));
             respond(response, connection);
         }

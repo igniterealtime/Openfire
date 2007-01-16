@@ -218,7 +218,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
 
                 if (c != null) {
 
-                    MediaProxySession session = mediaProxy.getAgent(
+                    MediaProxySession session = mediaProxy.getSession(
                             childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom());
 
                     Log.debug(
@@ -364,7 +364,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      * @return list of active agents
      */
     public List<MediaProxySession> getAgents() {
-        return mediaProxy.getAgents();
+        return mediaProxy.getSessions();
     }
 
     /**
@@ -384,7 +384,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      * @return the max idle time in millis.
      */
     public long getIdleTime() {
-        return mediaProxy.getKeepAliveDelay();
+        return mediaProxy.getIdleTime();
     }
 
     /**

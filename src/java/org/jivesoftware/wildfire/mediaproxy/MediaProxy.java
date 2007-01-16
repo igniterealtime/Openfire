@@ -16,13 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MediaProxy create and bind relay channels between IP pairs.
- * This relay can provite UDP connectivity between two parties that are behind NAT.
- * It also work to provide connectivity between two parties that are directly connected to the internet or one party in the internet and another behind a NAT.
- * The MediaProxy Class add and control the Bridge Agents.
- * You can setup a MediaProxy for all your network interfaces with a empty constructor,
- * or bind it to an especific interface with MediaProxy(String localhost) constructor.
- * <i>This MediaProxy ONLY works if your are Direct Connected to the Internet with a valid IP address.</i>
+ * A Media Proxy relays UDP traffic between two IPs to provide connectivity between
+ * two parties that are behind NAT devices. It also provides connectivity
+ * between two parties that are directly connected to the internet or one party on the
+ * internet and another behind a NAT.<p>
+ *
+ * Each connection relay between two parties is called a session. You can setup a MediaProxy
+ * for all network interfaces with an empty constructor, or bind it to a specific interface
+ * with the MediaProxy(String localhost) constructor. <i>The media proxy ONLY works if your
+ * are directly connected to the Internet with a valid IP address.</i>.
  */
 public class MediaProxy implements SessionListener {
 
@@ -47,9 +49,9 @@ public class MediaProxy implements SessionListener {
     }
 
     /**
-     * Contruct a MediaProxy instance that will listen from an especific Network Interface.
+     * Contruct a MediaProxy instance that will listen on a specific network interface.
      *
-     * @param localhost The IP of the locahost that will listen for packets.
+     * @param localhost the IP of the locahost that will listen for packets.
      */
     public MediaProxy(String localhost) {
         this.localhost = localhost;
@@ -58,25 +60,27 @@ public class MediaProxy implements SessionListener {
     /**
      * Get the public IP of this RTP Proxy that listen for the incomming packets
      *
-     * @return Your selected localhost that listen for the incomming packets
+     * @return the host that listens for incomming packets.
      */
     public String getPublicIP() {
         return localhost;
     }
 
     /**
-     * Get time in millis that an Session can stay without receive any packet.
-     * After this time it is auto closed.
+     * Returns the max time (in millis) that a session can remain open without
+     * receiving any packets. After this time period elapses, the session is
+     * automatically closed. 
      *
-     * @return Time in millis
+     * @return the max idle time (in millis).
      */
-    public long getKeepAliveDelay() {
+    public long getIdleTime() {
         return idleTime;
     }
 
     /**
-     * Returns the maximum amount of time (in milleseconds) that a session can
-     * be idle before it's closed.
+     * Sets the max time (in millis) that a session can remain open without
+     * receiving any packets. After this time period elapses, the session is
+     * automatically closed.
      *
      * @param idleTime the max idle time in millis.
      */
@@ -85,77 +89,77 @@ public class MediaProxy implements SessionListener {
     }
 
     /**
-     * Get the List of all the current active and running Agents.
+     * Returns the list of all currently active and running sessions.
      *
      * @return List of the Agents
      */
-    public List<MediaProxySession> getAgents() {
+    public List<MediaProxySession> getSessions() {
         return sessions;
     }
 
     /**
-     * Get Minimal port value to listen from incoming packets.
+     * Returns the minimum port value to listen for incoming packets.
      *
-     * @return the minimal port value
+     * @return the minimum port value.
      */
     public int getMinPort() {
         return minPort;
     }
 
     /**
-     * Set Minimal port value to listen from incoming packets.
+     * Sets the minimum port value to listen from incoming packets.
      *
-     * @param minPort the minimal port value
+     * @param minPort the minimum port value.
      */
     public void setMinPort(int minPort) {
         this.minPort = minPort;
     }
 
     /**
-     * Get Maximum port value to listen from incoming packets.
+     * Returns the maximum port value to listen for incoming packets.
      *
-     * @return the maximun port value
+     * @return the maximun port value.
      */
     public int getMaxPort() {
         return maxPort;
     }
 
     /**
-     * Set Maximum port value to listen from incoming packets.
+     * Sets the maximum port value to listen for incoming packets.
      *
-     * @param maxPort the maximun port value
+     * @param maxPort the maximun port value.
      */
     public void setMaxPort(int maxPort) {
         this.maxPort = maxPort;
     }
 
     /**
-     * Get the Life Time of a channel in seconds
-     * Life Time is the maximum time that a Session can live. After this time the session will be destroyed even if it´s active.
+     * Returns the maximum lifetime (in seconds) of a session. After the time period
+     * elapses, the session will be destroyed even if currently active.
      * 
-     * @return the Life Time in Seconds
+     * @return the max lifetime of a session (in seconds).
      */
     public long getLifetime() {
         return lifetime;
     }
 
     /**
-     * Sets the Life Time of a Channel in seconds
-     * Life Time is the maximum time that a Session can live. After this time the session will be destroyed even if it´s active.
+     * Sets the maximum lifetime (in seconds) of a session. After the time period
+     * elapses, the session will be destroyed even if currently active.
      *
-     * @param lifetime the Life Time in Seconds
+     * @param lifetime the max lifetime of a session (in seconds).
      */
     public void setLifetime(long lifetime) {
         this.lifetime = lifetime;
     }
 
     /**
-     * Get the agent with an especified ID
+     * Returns a media proxy session with the specified ID.
      *
-     * @param sid the session ID
-     * @return the session with the informed sid, if not found, returns null
+     * @param sid the session ID.
+     * @return the session or <tt>null</tt> if the session doesn't exist.
      */
-    public MediaProxySession getAgent(String sid) {
+    public MediaProxySession getSession(String sid) {
         for (MediaProxySession session : sessions) {
             if (session.getSID().equals(sid)) {
                 System.out.println("SID: " + sid + " agentSID: " + session.getSID());
@@ -189,15 +193,14 @@ public class MediaProxy implements SessionListener {
      * @return the added ProxyCandidate
      */
     public ProxyCandidate addAgent(String id, String creator, String hostA, int portA, String hostB,
-                                   int portB) {
-        final MediaProxySession session =
-                new MediaProxySession(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
-        if (session != null) {
-            sessions.add(session);
-            session.addKeepAlive(idleTime);
-            session.addLifeTime(lifetime);
-            session.addAgentListener(this);
-        }
+               int portB)
+    {
+        MediaProxySession session = new MediaProxySession(
+                id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
+        sessions.add(session);
+        session.addKeepAlive(idleTime);
+        session.addLifeTime(lifetime);
+        session.addAgentListener(this);
         return session;
     }
 
@@ -220,15 +223,14 @@ public class MediaProxy implements SessionListener {
      * @return the added ProxyCandidate
      */
     public ProxyCandidate addSmartAgent(String id, String creator, String hostA, int portA,
-                                        String hostB, int portB) {
-        final SmartSession session = new SmartSession(id, creator, localhost, hostA, portA, hostB, portB,
+            String hostB, int portB)
+    {
+        SmartSession session = new SmartSession(id, creator, localhost, hostA, portA, hostB, portB,
                 minPort, maxPort);
-        if (session != null) {
-            sessions.add(session);
-            session.addKeepAlive(idleTime);
-            session.addLifeTime(lifetime);
-            session.addAgentListener(this);
-        }
+        sessions.add(session);
+        session.addKeepAlive(idleTime);
+        session.addLifeTime(lifetime);
+        session.addAgentListener(this);
         return session;
     }
 
@@ -242,7 +244,7 @@ public class MediaProxy implements SessionListener {
      * Every packet received from Point A will be relayed to the new Point B IP and port.
      * Create a dynamic channel between two IPs. ( Dynamic Point A - Dynamic Point B )
      *
-     * @param id      id of the candidate returned (Could be a Jingle session ID)
+     * @param id id of the candidate returned (Could be a Jingle session ID)
      * @param creator the agent creator name or description
      * @return the added ProxyCandidate
      */
@@ -254,7 +256,7 @@ public class MediaProxy implements SessionListener {
      * Stop every running sessions.
      */
     public void stopProxy() {
-        for (MediaProxySession session : getAgents()) {
+        for (MediaProxySession session : getSessions()) {
             try {
                 session.clearAgentListeners();
                 session.stopAgent();

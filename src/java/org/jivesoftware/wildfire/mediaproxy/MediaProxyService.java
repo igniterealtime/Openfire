@@ -28,10 +28,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A proxy service for UDP traffic such as RTP. It provides Jingle transport candidates
@@ -40,14 +37,14 @@ import java.util.List;
  *
  * @author Thiago Camargo
  */
-public class MediaProxyService extends BasicModule implements ServerItemsProvider, RoutableChannelHandler, DiscoInfoProvider, DiscoItemsProvider {
+public class MediaProxyService extends BasicModule
+        implements ServerItemsProvider, RoutableChannelHandler, DiscoInfoProvider, DiscoItemsProvider {
 
     private String serviceName;
     private RoutingTable routingTable;
     private PacketRouter router;
 
     private MediaProxy mediaProxy = null;
-    private String name = "rtpbridge";
     private boolean enabled = false;
 
     public static final String NAMESPACE = "http://www.jivesoftware.com/protocol/rtpbridge";
@@ -59,84 +56,34 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
         super("Media Proxy Service");
     }
 
-    /**
-     * Load config using JiveGlobals
-     */
-    private void loadRTPProxyConfig() {
-        try {
-            long idleTime =
-                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.idleTimeout"));
-            mediaProxy.setIdleTime(idleTime);
-        }
-        catch (NumberFormatException e) {
-            // Do nothing let the default values to be used.
-        }
-        try {
-            long lifetime =
-                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.lifetime"));
-            mediaProxy.setLifetime(lifetime);
-        }
-        catch (NumberFormatException e) {
-            // Do nothing let the default values to be used.
-        }
-        try {
-            int minPort = Integer.valueOf(JiveGlobals.getProperty("mediaproxy.portMin"));
-            mediaProxy.setMinPort(minPort);
-        }
-        catch (NumberFormatException e) {
-            // Do nothing let the default values to be used.
-        }
-        int maxPort = JiveGlobals.getIntProperty("mediaproxy.portMax", mediaProxy.getMaxPort());
-        mediaProxy.setMaxPort(maxPort);
-        this.enabled = JiveGlobals.getBooleanProperty("mediaproxy.enabled");
-    }
-
-    public void destroy() {
-        super.destroy();
-        // Unregister component.
-        try {
-            mediaProxy.stopProxy();
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        mediaProxy = null;
-    }
-
     public void initialize(XMPPServer server) {
         super.initialize(server);
 
-        String hostname = JiveGlobals.getProperty("xmpp.domain",
-                JiveGlobals.getProperty("network.interface", "localhost"));
-        mediaProxy = new MediaProxy(hostname);
-        serviceName = JiveGlobals.getProperty("mediaproxy.serviceName", name);
-        serviceName = serviceName == null ? name : serviceName.equals("") ? name : serviceName;
+        mediaProxy = new MediaProxy(server.getServerInfo().getName());
+
+        String defaultName = "rtpbridge";
+        serviceName = JiveGlobals.getProperty("mediaproxy.serviceName", defaultName);
+        serviceName = serviceName.equals("") ? defaultName : serviceName;
 
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
 
-        loadRTPProxyConfig();
+        initMediaProxy();
     }
 
     public void start() {
         if (isEnabled()) {
-            startProxy();
+            routingTable.addRoute(getAddress(), this);
+            XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         } else {
-            XMPPServer.getInstance().getIQDiscoItemsHandler().removeServerItemsProvider(this);
+            XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         }
-    }
-
-    public void startProxy() {
-        routingTable.addRoute(getAddress(), this);
-        XMPPServer server = XMPPServer.getInstance();
-        server.getIQDiscoItemsHandler().addServerItemsProvider(this);
     }
 
     public void stop() {
         super.stop();
         mediaProxy.stopProxy();
-        XMPPServer.getInstance().getIQDiscoItemsHandler()
-                .removeComponentItem(getAddress().toString());
+        XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         routingTable.removeRoute(getAddress());
     }
 
@@ -172,39 +119,29 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
         String namespace = childElement.getNamespaceURI();
         Element childElementCopy = iq.getChildElement().createCopy();
         reply.setChildElement(childElementCopy);
-        Log.debug("RECEIVED:" + iq.toXML());
+        if (Log.isDebugEnabled()) {
+            Log.debug("RECEIVED:" + iq.toXML());
+        }
 
         if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-            try {
-                reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
-                router.route(reply);
-                return;
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
+            router.route(reply);
+            return;
         } else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
-            try {
-                // a component
-                reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
-                router.route(reply);
-                return;
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            // a component
+            reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
+            router.route(reply);
+            return;
         } else if (NAMESPACE.equals(namespace) && enabled) {
 
-            Element c = childElementCopy.element("candidate");
+            Element candidateElement = childElementCopy.element("candidate");
+            String sid = childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom();
 
-            if (c != null) {
-
-                childElementCopy.remove(c);
+            if (candidateElement != null) {
+                childElementCopy.remove(candidateElement);
                 Element candidate = childElementCopy.addElement("candidate ");
-                ProxyCandidate proxyCandidate = mediaProxy.addSmartAgent(
-                        childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom(),
-                        iq.getFrom().toString());
-                Log.debug(childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom());
+                ProxyCandidate proxyCandidate = mediaProxy.addRelayAgent(sid, iq.getFrom().toString());
+                Log.debug(sid);
                 proxyCandidate.start();
                 candidate.addAttribute("name", "voicechannel");
                 candidate.addAttribute("ip", mediaProxy.getPublicIP());
@@ -213,74 +150,89 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
                 candidate.addAttribute("pass", proxyCandidate.getPass());
 
             } else {
-
-                c = childElementCopy.element("relay");
-
-                if (c != null) {
-
-                    MediaProxySession session = mediaProxy.getSession(
-                            childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom());
-
-                    Log.debug(
-                            childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom());
-
+                candidateElement = childElementCopy.element("relay");
+                if (candidateElement != null) {
+                    MediaProxySession session = mediaProxy.getSession(sid);
+                    Log.debug(sid);
                     if (session != null) {
-
-                        Attribute pass = c.attribute("pass");
+                        Attribute pass = candidateElement.attribute("pass");
 
                         if (pass != null && pass.getValue().trim().equals(session.getPass().trim())) {
-
                             Log.debug("RIGHT PASS");
-
-                            Attribute portA = c.attribute("porta");
-                            Attribute portB = c.attribute("portb");
-                            Attribute hostA = c.attribute("hosta");
-                            Attribute hostB = c.attribute("hostb");
+                            Attribute portA = candidateElement.attribute("porta");
+                            Attribute portB = candidateElement.attribute("portb");
+                            Attribute hostA = candidateElement.attribute("hosta");
+                            Attribute hostB = candidateElement.attribute("hostb");
 
                             try {
-                                if (hostA != null) {
-                                    if (portA != null) {
-                                        for (int i = 0; i < 2; i++) {
-                                            session.sendFromPortA(hostB.getValue(),
-                                                    Integer.parseInt(portB.getValue()));
-                                        }
+                                if (hostA != null && portA != null) {
+                                    for (int i = 0; i < 2; i++) {
+                                        session.sendFromPortA(hostB.getValue(), Integer.parseInt(portB.getValue()));
                                     }
                                 }
-
                             }
                             catch (Exception e) {
                                 Log.error(e);
                             }
 
-                            //System.out.println(session.getLocalPortA() + "->" + session.getPortA());
-                            //System.out.println(session.getLocalPortB() + "->" + session.getPortB());
-
-                            //componentManager.getLog().debug(session.getLocalPortA() + "->" + session.getPortA());
-                            //componentManager.getLog().debug(session.getLocalPortB() + "->" + session.getPortB());
-
                         } else {
                             reply.setError(PacketError.Condition.forbidden);
                         }
-
                     }
-                    childElementCopy.remove(c);
+                    childElementCopy.remove(candidateElement);
                 }
-
             }
-
         } else {
             // Answer an error since the server can't handle the requested namespace
             reply.setError(PacketError.Condition.service_unavailable);
         }
 
         try {
-            Log.debug("RETURNED:" + reply.toXML());
+            if (Log.isDebugEnabled()) {
+                Log.debug("RETURNED:" + reply.toXML());
+            }
             router.route(reply);
         }
-
         catch (Exception e) {
             Log.error(e);
         }
+    }
+
+    /**
+     * Load config using JiveGlobals
+     */
+    private void initMediaProxy() {
+        try {
+            long idleTime =
+                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.idleTimeout"));
+            mediaProxy.setIdleTime(idleTime);
+        }
+        catch (NumberFormatException e) {
+            // Do nothing let the default values to be used.
+        }
+        try {
+            long lifetime =
+                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.lifetime"));
+            mediaProxy.setLifetime(lifetime);
+        }
+        catch (NumberFormatException e) {
+            // Do nothing let the default values to be used.
+        }
+        try {
+            int minPort = Integer.valueOf(JiveGlobals.getProperty("mediaproxy.portMin"));
+            mediaProxy.setMinPort(minPort);
+        }
+        catch (NumberFormatException e) {
+            // Do nothing let the default values to be used.
+        }
+        try {
+            int maxPort = JiveGlobals.getIntProperty("mediaproxy.portMax", mediaProxy.getMaxPort());
+            mediaProxy.setMaxPort(maxPort);
+        }
+        catch (NumberFormatException e) {
+            // Do nothing let the default values to be used.
+        }
+        this.enabled = JiveGlobals.getBooleanProperty("mediaproxy.enabled");
     }
 
     /**
@@ -363,7 +315,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
      *
      * @return list of active agents
      */
-    public List<MediaProxySession> getAgents() {
+    public Collection<MediaProxySession> getAgents() {
         return mediaProxy.getSessions();
     }
 
@@ -440,7 +392,7 @@ public class MediaProxyService extends BasicModule implements ServerItemsProvide
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         if (isEnabled()) {
-            startProxy();
+            start();
         } else {
             stop();
         }

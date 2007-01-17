@@ -3,7 +3,10 @@ package org.jivesoftware.wildfire.mediaproxy;
 import org.jivesoftware.util.Log;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.*;
 
 /**
@@ -13,7 +16,7 @@ import java.util.*;
  *
  * @author Thiago Camargo
  */
-public class MediaProxySession extends Thread implements ProxyCandidate, DatagramListener {
+public abstract class MediaProxySession extends Thread implements ProxyCandidate, DatagramListener {
 
     private List<SessionListener> sessionListeners = new ArrayList<SessionListener>();
 
@@ -66,7 +69,8 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * @param minPort      the minimal port value to be used by the server
      * @param maxPort      the maximun port value to be used by the server
      */
-    public MediaProxySession(String id, String creator, String localAddress, String hostA, int portA, String hostB, int portB, int minPort, int maxPort) {
+    public MediaProxySession(String id, String creator, String localAddress, String hostA, int portA, String hostB,
+                             int portB, int minPort, int maxPort) {
         this.id = id;
         this.creator = creator;
         this.minPort = minPort;
@@ -86,11 +90,12 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
             this.localPortB = getFreePort();
             this.socketB = new DatagramSocket(localPortB, this.localAddress);
             this.socketBControl = new DatagramSocket(localPortB + 1, this.localAddress);
-
-            Log.debug("Session Created at: A " + localPortA + " : B " + localPortB);
+            if (Log.isDebugEnabled()) {
+                Log.debug("Session Created at: A " + localPortA + " : B " + localPortB);
+            }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            Log.error(e);
         }
     }
 
@@ -118,7 +123,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                     return freePort;
             }
             catch (IOException e) {
-                e.printStackTrace();
+                Log.error(e);
             }
         }
         try {
@@ -127,7 +132,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
             ss.close();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            Log.error(e);
         } finally {
             ss = null;
         }
@@ -174,12 +179,10 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * Thread override method
      */
     public void run() {
+        // Create channels for parties
+        createChannels();
 
-        channelAtoB = new Channel(socketA, hostB, portB);
-        channelAtoBControl = new Channel(socketAControl, hostB, portB + 1);
-        channelBtoA = new Channel(socketB, hostA, portA);
-        channelBtoAControl = new Channel(socketBControl, hostA, portA + 1);
-
+        // Start a thread for each channel
         threadAtoB = new Thread(channelAtoB);
         threadAtoBControl = new Thread(channelAtoBControl);
         threadBtoA = new Thread(channelBtoA);
@@ -190,12 +193,24 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
         threadBtoA.start();
         threadBtoAControl.start();
 
+        // Listen to channel events
+        addChannelListeners();
+    }
+
+    /**
+     * Creates 4 new channels for the two entities. We will create a channel between A and B and vice versa
+     * and also a control channel betwwen A and B and vice versa.
+     */
+    abstract void createChannels();
+
+    /**
+     * Adds listener to channel events like receiving data.
+     */
+    void addChannelListeners() {
         channelAtoB.addListener(this);
         channelAtoBControl.addListener(this);
         channelBtoA.addListener(this);
         channelBtoAControl.addListener(this);
-        //System.out.println("Session running between " + hostA + " and " + hostB);
-
     }
 
     /**
@@ -210,7 +225,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                 idleTimer = null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.error(e);
         }
 
         try {
@@ -220,7 +235,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
                 lifeTimer = null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.error(e);
         }
 
         channelAtoB.removeListener();
@@ -234,7 +249,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
             channelBtoA.cancel();
             channelBtoAControl.cancel();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.error(e);
         }
 
         socketA.close();
@@ -244,7 +259,7 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
 
         dispatchAgentStopped();
 
-        System.out.println("Session Stopped");
+        Log.debug("Session Stopped");
     }
 
     /**
@@ -280,7 +295,9 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * @param portA the port number for A
      */
     public void setPortA(int portA) {
-        System.out.println("PORT CHANGED(A):" + portA);
+        if (Log.isDebugEnabled()) {
+            Log.debug("PORT CHANGED(A):" + portA);
+        }
         this.portA = portA;
     }
 
@@ -290,7 +307,9 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * @param portB the port number for B
      */
     public void setPortB(int portB) {
-        System.out.println("PORT CHANGED(B):" + portB);
+        if (Log.isDebugEnabled()) {
+            Log.debug("PORT CHANGED(B):" + portB);
+        }
         this.portB = portB;
     }
 
@@ -386,7 +405,8 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
 
     /**
      * Add a keep alive detector.
-     * If the packet still more than the keep alive delay without receiving any packets. The Session is stoped and remove from agents List.
+     * If the packet still more than the keep alive delay without receiving any packets. The Session is
+     * stoped and remove from agents List.
      *
      * @param delay delay time in millis to check if the channel is inactive
      */
@@ -420,7 +440,6 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
         lifeTimer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 stopAgent();
-                return;
             }
         }, lifetime, lifetime);
     }
@@ -454,161 +473,10 @@ public class MediaProxySession extends Thread implements ProxyCandidate, Datagra
      * Dispatch Stop Event
      */
     public void dispatchAgentStopped() {
-        for (SessionListener sessionListener : sessionListeners)
+        for (SessionListener sessionListener : sessionListeners) {
             try {
                 sessionListener.sessionClosed(this);
             } catch (Exception e) {
-                e.printStackTrace();
-            }
-    }
-
-    /**
-     * Protected Class Channel.
-     * Listen packets from defined dataSocket and send packets to the defined host.
-     */
-    protected class Channel implements Runnable {
-        protected byte[] buf = new byte[5000];
-        protected DatagramSocket dataSocket;
-        protected DatagramPacket packet;
-        protected boolean enabled = true;
-
-
-        List<DatagramListener> listeners = new ArrayList<DatagramListener>();
-
-        protected InetAddress host;
-        protected int port;
-
-        /**
-         * Creates a Channel according to the parameters.
-         *
-         * @param dataSocket
-         * @param host
-         * @param port
-         */
-        public Channel(DatagramSocket dataSocket, InetAddress host, int port) {
-            this.dataSocket = dataSocket;
-            this.host = host;
-            this.port = port;
-        }
-
-        /**
-         * Get the host that the packet will be sent to.
-         *
-         * @return remote host address
-         */
-        public InetAddress getHost() {
-            return host;
-        }
-
-        /**
-         * Set the host that the packet will be sent to.
-         */
-        protected void setHost(InetAddress host) {
-            this.host = host;
-        }
-
-        /**
-         * Get the port that the packet will be sent to.
-         *
-         * @return The remote port number
-         */
-        public int getPort() {
-            return port;
-        }
-
-        /**
-         * Set the port that the packet will be sent to.
-         *
-         * @param port
-         */
-        protected void setPort(int port) {
-            this.port = port;
-        }
-
-        /**
-         * Adds a DatagramListener to the Channel
-         *
-         * @param datagramListener
-         */
-        public void addListener(DatagramListener datagramListener) {
-            listeners.add(datagramListener);
-        }
-
-        /**
-         * Remove a DatagramListener from the Channel
-         *
-         * @param datagramListener
-         */
-        public void removeListener(DatagramListener datagramListener) {
-            listeners.remove(datagramListener);
-        }
-
-        /**
-         * Remove every Listeners
-         */
-        public void removeListener() {
-            listeners.removeAll(listeners);
-        }
-
-        public void cancel() {
-            this.enabled = false;
-            dataSocket.close();
-        }
-
-        /**
-         * Thread override method
-         */
-        public void run() {
-            try {
-                long c = 0;
-                while (true) {
-                    // Block until a datagram appears:
-                    packet = new DatagramPacket(buf, buf.length);
-                    dataSocket.receive(packet);
-
-                    if (this.getPort() != packet.getPort())
-                        System.out.println(dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort() + " relay to: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
-
-                    if (c++ < 5) {
-                        System.out.println("Received:" + dataSocket.getLocalAddress().getHostAddress() + ":" + dataSocket.getLocalPort());
-
-                        System.out.println("Addr: " + packet.getAddress().getHostName());
-                    }
-
-                    boolean resend = true;
-
-                    for (DatagramListener dl : listeners) {
-                        boolean send = dl.datagramReceived(packet);
-                        if (resend)
-                            if (!send)
-                                resend = false;
-                    }
-
-                    if (resend) relayPacket(packet);
-
-                }
-            }
-            catch (UnknownHostException uhe) {
-                if (enabled)
-                    Log.error(uhe);
-            }
-            catch (SocketException se) {
-                if (enabled)
-                    Log.error(se);
-            }
-            catch (IOException ioe) {
-                if (enabled)
-                    Log.error(ioe);
-            }
-        }
-
-        public void relayPacket(DatagramPacket packet) {
-            try {
-                DatagramPacket echo = new DatagramPacket(packet.getData(), packet.getLength(),
-                        host, port);
-                dataSocket.send(echo);
-            }
-            catch (IOException e) {
                 Log.error(e);
             }
         }

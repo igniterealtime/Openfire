@@ -14,6 +14,8 @@ import java.net.DatagramPacket;
 
 /**
  * Listener for datagram packets received.
+ *
+ * @author Thiago Camargo
  */
 public interface DatagramListener {
 

@@ -12,8 +12,9 @@ package org.jivesoftware.wildfire.mediaproxy;
 
 import org.jivesoftware.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A Media Proxy relays UDP traffic between two IPs to provide connectivity between
@@ -23,12 +24,14 @@ import java.util.List;
  *
  * Each connection relay between two parties is called a session. You can setup a MediaProxy
  * for all network interfaces with an empty constructor, or bind it to a specific interface
- * with the MediaProxy(String localhost) constructor. <i>The media proxy ONLY works if your
+ * with the MediaProxy(String localhost) constructor. <i>The media proxy ONLY works if you
  * are directly connected to the Internet with a valid IP address.</i>.
+ *
+ * @author Thiago Camargo
  */
 public class MediaProxy implements SessionListener {
 
-    final private List<MediaProxySession> sessions = new ArrayList<MediaProxySession>();
+    final private Map<String, MediaProxySession> sessions = new ConcurrentHashMap<String, MediaProxySession>();
 
     private String localhost;
 
@@ -41,14 +44,6 @@ public class MediaProxy implements SessionListener {
     private long lifetime = 9000;
 
     /**
-     * Contruct a MediaProxy instance that will listen from every Network Interface.
-     * Recommended.
-     */
-    public MediaProxy() {
-        this.localhost = "localhost";
-    }
-
-    /**
      * Contruct a MediaProxy instance that will listen on a specific network interface.
      *
      * @param localhost the IP of the locahost that will listen for packets.
@@ -58,7 +53,7 @@ public class MediaProxy implements SessionListener {
     }
 
     /**
-     * Get the public IP of this RTP Proxy that listen for the incomming packets
+     * Get the public IP of this media proxy that listen for incomming packets.
      *
      * @return the host that listens for incomming packets.
      */
@@ -93,8 +88,8 @@ public class MediaProxy implements SessionListener {
      *
      * @return List of the Agents
      */
-    public List<MediaProxySession> getSessions() {
-        return sessions;
+    public Collection<MediaProxySession> getSessions() {
+        return sessions.values();
     }
 
     /**
@@ -160,10 +155,11 @@ public class MediaProxy implements SessionListener {
      * @return the session or <tt>null</tt> if the session doesn't exist.
      */
     public MediaProxySession getSession(String sid) {
-        for (MediaProxySession session : sessions) {
-            if (session.getSID().equals(sid)) {
-                System.out.println("SID: " + sid + " agentSID: " + session.getSID());
-                return session;
+        MediaProxySession proxySession = sessions.get(sid);
+        if (proxySession != null) {
+            if (Log.isDebugEnabled()) {
+                Log.debug("SID: " + sid + " agentSID: " + proxySession.getSID());
+                return proxySession;
             }
         }
         return null;
@@ -176,41 +172,21 @@ public class MediaProxy implements SessionListener {
      * @param session the session that stopped
      */
     public void sessionClosed(MediaProxySession session) {
-        sessions.remove(session);
-        Log.debug("Session: " + session.getSID() + " removed.");
-    }
-
-    /**
-     * Add a new Static Session to the mediaproxy for defined IPs and ports.
-     * Create a channel between two IPs. ( Point A - Point B )
-     *
-     * @param id      id of the candidate returned (Could be a Jingle session ID)
-     * @param creator the agent creator name or description
-     * @param hostA   the hostname or IP of the point A of the Channel
-     * @param portA   the port number point A of the Channel
-     * @param hostB   the hostname or IP of the point B of the Channel
-     * @param portB   the port number point B of the Channel
-     * @return the added ProxyCandidate
-     */
-    public ProxyCandidate addAgent(String id, String creator, String hostA, int portA, String hostB,
-               int portB)
-    {
-        MediaProxySession session = new MediaProxySession(
-                id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
-        sessions.add(session);
-        session.addKeepAlive(idleTime);
-        session.addLifeTime(lifetime);
-        session.addAgentListener(this);
-        return session;
+        sessions.remove(session.getSID());
+        if (Log.isDebugEnabled()) {
+            Log.debug("Session: " + session.getSID() + " removed.");
+        }
     }
 
     /**
      * Add a new Dynamic Session to the mediaproxy for defined IPs and ports.
      * The IP and port pairs can change depending of the Senders IP and port.
      * Which means that the IP and port values of the points can dynamic change after the Channel is opened.
-     * When the agent receives a packet from Point A, the channel set the point A IP and port according to the received packet sender IP and port.
+     * When the agent receives a packet from Point A, the channel set the point A IP and port according to
+     * the received packet sender IP and port.
      * Every packet received from Point B will be relayed to the new Point A IP and port.
-     * When the agent receives a packet from Point B, the channel set the point B IP and port according to the received packet sender IP and port.
+     * When the agent receives a packet from Point B, the channel set the point B IP and port according to
+     * the received packet sender IP and port.
      * Every packet received from Point A will be relayed to the new Point B IP and port.
      * Create a dynamic channel between two IPs. ( Dynamic Point A - Dynamic Point B )
      *
@@ -222,12 +198,11 @@ public class MediaProxy implements SessionListener {
      * @param portB   the port number point B of the Channel
      * @return the added ProxyCandidate
      */
-    public ProxyCandidate addSmartAgent(String id, String creator, String hostA, int portA,
+    public ProxyCandidate addRelayAgent(String id, String creator, String hostA, int portA,
             String hostB, int portB)
     {
-        SmartSession session = new SmartSession(id, creator, localhost, hostA, portA, hostB, portB,
-                minPort, maxPort);
-        sessions.add(session);
+        RelaySession session = new RelaySession(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
+        sessions.put(id, session);
         session.addKeepAlive(idleTime);
         session.addLifeTime(lifetime);
         session.addAgentListener(this);
@@ -237,10 +212,13 @@ public class MediaProxy implements SessionListener {
     /**
      * Add a new Dynamic Session to the mediaproxy WITHOUT defined IPs and ports.
      * The IP and port pairs WILL change depending of the Senders IP and port.
-     * Which means that the IP and port values of the points will dynamic change after the Channel is opened and received packet from both points.
-     * When the agent receives a packet from Point A, the channel set the point A IP and port according to the received packet sender IP and port.
+     * Which means that the IP and port values of the points will dynamic change after the Channel is opened
+     * and received packet from both points.
+     * When the agent receives a packet from Point A, the channel set the point A IP and port according to
+     * the received packet sender IP and port.
      * Every packet received from Point B will be relayed to the new Point A IP and port.
-     * When the agent receives a packet from Point B, the channel set the point B IP and port according to the received packet sender IP and port.
+     * When the agent receives a packet from Point B, the channel set the point B IP and port according to
+     * the received packet sender IP and port.
      * Every packet received from Point A will be relayed to the new Point B IP and port.
      * Create a dynamic channel between two IPs. ( Dynamic Point A - Dynamic Point B )
      *
@@ -248,21 +226,21 @@ public class MediaProxy implements SessionListener {
      * @param creator the agent creator name or description
      * @return the added ProxyCandidate
      */
-    public ProxyCandidate addSmartAgent(String id, String creator) {
-        return addSmartAgent(id, creator, localhost, 40000, localhost, 40004);
+    public ProxyCandidate addRelayAgent(String id, String creator) {
+        return addRelayAgent(id, creator, localhost, 40000, localhost, 40004);
     }
 
     /**
      * Stop every running sessions.
      */
-    public void stopProxy() {
+    void stopProxy() {
         for (MediaProxySession session : getSessions()) {
             try {
                 session.clearAgentListeners();
                 session.stopAgent();
             }
             catch (Exception e) {
-                e.printStackTrace();
+                Log.error("Error cleaning up media proxy sessions", e);
             }
         }
         sessions.clear();

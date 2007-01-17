@@ -14,6 +14,8 @@ import java.net.InetAddress;
 
 /**
  * Basic interface to access a Candidate provided by a Session
+ *
+ * @author Thiago Camargo
  */
 public interface ProxyCandidate {
 
@@ -50,5 +52,4 @@ public interface ProxyCandidate {
     public void start();
 
     public void stopAgent();
-
 }

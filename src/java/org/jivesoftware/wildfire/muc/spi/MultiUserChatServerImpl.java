@@ -262,26 +262,16 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-            try {
-                // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes
-                // a component
-                IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
-                router.route(reply);
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes
+            // a component
+            IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
+            router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
-            try {
-                // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes
-                // a component
-                IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
-                router.route(reply);
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes
+            // a component
+            IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
+            router.route(reply);
         }
         else {
             return false;

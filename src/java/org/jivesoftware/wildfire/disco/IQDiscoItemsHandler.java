@@ -17,7 +17,6 @@ import org.dom4j.QName;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.session.Session;
@@ -71,9 +70,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         return info;
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
-        // TODO Let configure an authorization policy (ACL?). Currently anyone can discover items.
-        
+    public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested items to the reply if any otherwise add 
         // a not found error

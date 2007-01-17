@@ -18,7 +18,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.wildfire.user.UserManager;
@@ -84,7 +83,7 @@ public class IQDiscoInfoHandler extends IQHandler {
         return info;
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error

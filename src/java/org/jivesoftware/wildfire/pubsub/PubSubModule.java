@@ -21,7 +21,6 @@ import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.RoutableChannelHandler;
 import org.jivesoftware.wildfire.RoutingTable;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.disco.DiscoInfoProvider;
@@ -155,26 +154,16 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             namespace = childElement.getNamespaceURI();
         }
         if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-            try {
-                // TODO PubSub should have an IQDiscoInfoHandler of its own when PubSub becomes
-                // a component
-                IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
-                router.route(reply);
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            // TODO PubSub should have an IQDiscoInfoHandler of its own when PubSub becomes
+            // a component
+            IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
+            router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
-            try {
-                // TODO PubSub should have an IQDiscoItemsHandler of its own when PubSub becomes
-                // a component
-                IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
-                router.route(reply);
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            // TODO PubSub should have an IQDiscoItemsHandler of its own when PubSub becomes
+            // a component
+            IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
+            router.route(reply);
         }
         else {
             // Unknown namespace requested so return error to sender

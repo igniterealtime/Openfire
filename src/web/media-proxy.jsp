@@ -13,8 +13,8 @@
 <%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxySession" %>
-<%@ page import="org.jivesoftware.wildfire.mediaproxy.SmartSession" %>
-<%@ page import="java.util.List" %>
+<%@ page import="org.jivesoftware.wildfire.mediaproxy.RelaySession" %>
+<%@ page import="java.util.Collection" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -128,7 +128,7 @@
                                 <td>
                                     <input type="text" size="5" maxlength="8"
                                            name="idleTimeout"
-                                           value="<%=(long)mediaProxyService.getIdleTime()/1000%>"
+                                           value="<%=mediaProxyService.getIdleTime()/1000%>"
                                            align="left">
                                 </td>
                             </tr>
@@ -208,7 +208,7 @@
         <tbody>
 
             <% // Print the list of agents
-                List<MediaProxySession> sessions = mediaProxyService.getAgents();
+                Collection<MediaProxySession> sessions = mediaProxyService.getAgents();
                 if (sessions.isEmpty()) {
             %>
             <tr>
@@ -243,7 +243,7 @@
                     <%=(System.currentTimeMillis() - proxySession.getTimestamp()) / 1000%>
                 </td>
                 <td width="10%">
-                    <% if (proxySession instanceof SmartSession) { %>
+                    <% if (proxySession instanceof RelaySession) { %>
                     Smart Session
                     <% } else { %>
                     Fixed Session

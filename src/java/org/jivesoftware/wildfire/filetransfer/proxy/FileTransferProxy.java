@@ -18,10 +18,13 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.disco.*;
+import org.jivesoftware.wildfire.disco.DiscoInfoProvider;
+import org.jivesoftware.wildfire.disco.DiscoItemsProvider;
+import org.jivesoftware.wildfire.disco.DiscoServerItem;
+import org.jivesoftware.wildfire.disco.ServerItemsProvider;
+import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
 import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -95,25 +98,15 @@ public class FileTransferProxy extends BasicModule
         }
 
         if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-            try {
-                IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(packet);
-                router.route(reply);
-                return true;
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(packet);
+            router.route(reply);
+            return true;
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
-            try {
-                // a component
-                IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(packet);
-                router.route(reply);
-                return true;
-            }
-            catch (UnauthorizedException e) {
-                // Do nothing. This error should never happen
-            }
+            // a component
+            IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(packet);
+            router.route(reply);
+            return true;
         }
         else if (FileTransferManager.NAMESPACE_BYTESTREAMS.equals(namespace)) {
             if (packet.getType() == IQ.Type.get) {

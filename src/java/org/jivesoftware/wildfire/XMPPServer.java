@@ -19,7 +19,9 @@ import org.jivesoftware.wildfire.audit.AuditManager;
 import org.jivesoftware.wildfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.wildfire.commands.AdHocCommandHandler;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.container.*;
+import org.jivesoftware.wildfire.container.AdminConsolePlugin;
+import org.jivesoftware.wildfire.container.Module;
+import org.jivesoftware.wildfire.container.PluginManager;
 import org.jivesoftware.wildfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.wildfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
@@ -28,6 +30,7 @@ import org.jivesoftware.wildfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.wildfire.filetransfer.FileTransferManager;
 import org.jivesoftware.wildfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.wildfire.handler.*;
+import org.jivesoftware.wildfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.wildfire.net.MulticastDNSService;
@@ -36,12 +39,11 @@ import org.jivesoftware.wildfire.net.ServerTrafficCounter;
 import org.jivesoftware.wildfire.pubsub.PubSubModule;
 import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.spi.*;
+import org.jivesoftware.wildfire.stun.STUNService;
 import org.jivesoftware.wildfire.transport.TransportHandler;
 import org.jivesoftware.wildfire.update.UpdateManager;
 import org.jivesoftware.wildfire.user.UserManager;
 import org.jivesoftware.wildfire.vcard.VCardManager;
-import org.jivesoftware.wildfire.mediaproxy.MediaProxyService;
-import org.jivesoftware.wildfire.stun.STUNService;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -283,7 +285,7 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(3, 2, 0, Version.ReleaseStatus.Alpha, 0);
+        version = new Version(3, 2, 0, Version.ReleaseStatus.Beta, 0);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

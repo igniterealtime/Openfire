@@ -163,6 +163,59 @@ hr {
 
 
 
+<h2>3.2.0 Beta -- <span style="font-weight: normal;">January 18, 2007</span></h2>
+
+<h3>Wildfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-925'>JM-925</a>] - Improved scalability of Wildfire.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-356'>JM-356</a>] - Added support for XEP-0124: HTTP Binding. <b>(34 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-892'>JM-892</a>] - Simplified certificates creation and process of signing certificates. <b>(10 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-893'>JM-893</a>] - Added support for certificate event listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-934'>JM-934</a>] - Added new plugin that provides load statistics.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-914'>JM-914</a>] - Added new ad-hoc command to get server info and basic statistics.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-657'>JM-657</a>] - Optimized algorithm used for sending packets to remote servers when new connections are required.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-924'>JM-924</a>] - PacketInterceptors are now triggered in the routing layer and not the networking layer.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-915'>JM-915</a>] - Added support in ComponentManager for sending packets in blocking mode.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-901'>JM-901</a>] - Updated support for 'creation of collection nodes' based on latest XEP-60.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-913'>JM-913</a>] - Support for multiple subscriptions is now optional in PubSubModule.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-931'>JM-931</a>] - Allowed components to create nodes and publish items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-935'>JM-935</a>] - Added to the admin console information about ports being used by the server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-900'>JM-900</a>] - Upgraded to latest installer version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-888'>JM-888</a>] - Updated bouncycastle library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-939'>JM-939</a>] - Updated JVM to 1.6.0.</li>
+</ul>
+
+<h3>Wildfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-885'>JM-885</a>] - Fixed parsing of mappings when using more than one LDAP field.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-886'>JM-886</a>] - Loaded vCards were not being updated after reconfiguring LDAP settings.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-906'>JM-906</a>] - Email test page was not working when integrated with LDAP.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-887'>JM-887</a>] - PluginManager was being used by modules before it was created.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-889'>JM-889</a>] - Fixed NPE in LdapVCardProvider when username was not found.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-890'>JM-890</a>] - Fixed error when IQ error packet failed to be handled.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-895'>JM-895</a>] - TLS was being offered even when keystore was empty.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-896'>JM-896</a>] - Fixed error that was closing a database statement twice.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-902'>JM-902</a>] - Component domain was not being released if an error occured while registing a new component.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-916'>JM-916</a>] - External components were able to connect to the server before the server has finished to start up.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-903'>JM-903</a>] - Sending "subscribed" presence to a new user was updating roster of both users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-918'>JM-918</a>] - Fixed error when shared group had no display name.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-928'>JM-928</a>] - Clicking on login link from setup could fail with 404.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-933'>JM-933</a>] - Enabling/disabling anonymous connections no longer requires a server restart.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-938'>JM-938</a>] - "Per-user offline message storage limit" can now be updated.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-755'>JM-755</a>] - Fixed compilation problem under JDK 1.6.</li>
+</ul>
+
+<h3>Wildfire Enterprise</h3>
+<ul>
+<li>No changes</li>
+</ul>
+
+<h3>Wildfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-907'>JM-907</a>] - Improved scalability of ConnectionManagers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-926'>JM-926</a>] - Added stringprep operations in Connection Manager to offload Wildfire.</li>
+</ul>
+
 <h2>3.1.1 -- <span style="font-weight: normal;">October 27, 2006</span></h2>
 
 <h3>Wildfire New Features</h3>

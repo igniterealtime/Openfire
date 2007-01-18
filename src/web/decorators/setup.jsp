@@ -101,10 +101,10 @@
 <script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
 <script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
 <script language="javascript" type="text/javascript" src="../js/setup.js"></script>
-
+<decorator:head />
 </head>
 
-<body>
+<body onload="<decorator:getProperty property="body.onload" />">
 
 
 <!-- BEGIN jive-header -->

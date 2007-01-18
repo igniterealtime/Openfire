@@ -420,7 +420,7 @@
             <doctitle>
                 <![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
             <header><![CDATA[<b>Wildfire ${version} Javadoc</b>]]></header>
-            <bottom><![CDATA[<i>Copyright &copy; 2003-2006 Jive Software.</i>]]></bottom>
+            <bottom><![CDATA[<i>Copyright &copy; 2003-2007 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies"/>
             </classpath>

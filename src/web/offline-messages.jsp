@@ -44,14 +44,12 @@
 %>
 
 <%  // Get parameters
+	OfflineMessageStrategy manager = webManager.getXMPPServer().getOfflineMessageStrategy();
     boolean update = request.getParameter("update") != null;
     int strategy = ParamUtils.getIntParameter(request,"strategy",-1);
     int storeStrategy = ParamUtils.getIntParameter(request,"storeStrategy",-1);
-    double quota = ParamUtils.getIntParameter(request,"quota",0);
+    double quota = ParamUtils.getDoubleParameter(request,"quota", manager.getQuota()/1024);
     DecimalFormat format = new DecimalFormat("#0.00");
-
-    // Get the offline message manager
-    OfflineMessageStrategy manager = webManager.getXMPPServer().getOfflineMessageStrategy();
 
     // Update the session kick policy if requested
     Map<String, String> errors = new HashMap<String, String>();

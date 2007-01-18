@@ -39,7 +39,7 @@ public class Launcher {
     private String appName;
     private File binDir;
     private Process wildfired;
-    private String configFile;
+    private File configFile;
     private JPanel toolbar = new JPanel();
 
     private ImageIcon offIcon;
@@ -87,8 +87,7 @@ public class Launcher {
             binDir = new File(System.getProperty("appdir"));
         }
 
-        configFile = new File(new File(binDir.getParent(), "conf"),
-                "wildfire.xml").getAbsolutePath();
+        configFile = new File(new File(binDir.getParent(), "conf"), "wildfire.xml");
 
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
@@ -494,6 +493,8 @@ public class Launcher {
             }
         }
         catch (Exception e) {
+            // Make sure to print the exception
+            e.printStackTrace(System.out);
             JOptionPane.showMessageDialog(new JFrame(), configFile + " " + e.getMessage());
         }
     }

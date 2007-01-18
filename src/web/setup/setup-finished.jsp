@@ -40,8 +40,24 @@
     <head>
         <title><fmt:message key="setup.finished.title" /></title>
         <meta name="currentStep" content="5"/>
+        <script type="text/javascript">
+
+        function showhide(id){
+            var obj = document.getElementById(id);
+            if (obj.style.display == "none"){
+                obj.style.display = "";
+            } else {
+                obj.style.display = "none";
+            }
+        }
+
+        function toggleDivs() {
+            showhide('loginlink');
+            showhide('logintext');
+        }
+        </script>
     </head>
-<body>
+<body onload="setTimeout('toggleDivs()', 1500);">
 
 	<h1>
 	<fmt:message key="setup.finished.title" />
@@ -82,10 +98,13 @@
 %>
 
 <br><br>
-	<div class="jive_setup_launchAdmin">
+	<div id="loginlink" style="display:none;" class="jive_setup_launchAdmin">
 		<a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
 	</div>
 
+	<div id="logintext" class="jive_setup_launchAdmin">
+		<fmt:message key="setup.finished.wait" /> <img src="../images/working-16x16.gif" alt="<fmt:message key="setup.finished.wait" />" width="16" height="16">
+	</div>
 
 </body>
 </html>

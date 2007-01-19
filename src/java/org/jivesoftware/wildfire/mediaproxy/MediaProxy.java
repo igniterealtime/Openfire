@@ -38,7 +38,7 @@ public class MediaProxy implements SessionListener {
     private int minPort = 10000;
     private int maxPort = 20000;
 
-    private long idleTime = 60;
+    private long idleTime = 60000;
 
     // Lifetime of a Channel in Seconds
     private long lifetime = 9000;

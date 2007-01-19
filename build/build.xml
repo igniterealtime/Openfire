@@ -1345,6 +1345,11 @@
         <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
             <fileset dir="${basedir}/build/osx/wildfirePrefPane/build/UninstalledProducts/"/>
         </copy>
+        <chmod perm="o+x">
+            <fileset dir="${mac.pkg.dir}/Library/PreferencePanes/Wildfire.prefPane/Contents/MacOS/">
+                <include name="HelperTool"/>
+            </fileset>
+        </chmod>
         <chmod perm="ug+x">
             <fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
                 <include name="extra/wildfire-launchd-wrapper.sh"/>

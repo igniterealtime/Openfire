@@ -114,9 +114,8 @@ public class HttpSessionManager {
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
 
-        HttpSession session = createSession(connection.getRequestId(), address);
+        HttpSession session = createSession(connection.getRequestId(), address, hold);
         session.setWait(Math.min(wait, getMaxWait()));
-        session.setHold(hold);
         session.setSecure(connection.isSecure());
         session.setMaxPollingInterval(getPollingInterval());
         session.setMaxRequests(getMaxRequests());
@@ -234,11 +233,13 @@ public class HttpSessionManager {
         return connection;
     }
 
-    private HttpSession createSession(long rid, InetAddress address) throws UnauthorizedException {
+    private HttpSession createSession(long rid, InetAddress address, int hold) 
+            throws UnauthorizedException
+    {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID);
+        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID, hold);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(sessionListener);

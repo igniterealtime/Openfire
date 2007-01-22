@@ -42,7 +42,7 @@ public class HttpSession extends ClientSession {
     private int wait;
     private int hold = 0;
     private String language;
-    private final Queue<HttpConnection> connectionQueue = new LinkedList<HttpConnection>();
+    private final ConnectionQueue connectionQueue;
     private final List<Deliverable> pendingElements = new ArrayList<Deliverable>();
     private final List<Deliverable> sentElements = new ArrayList<Deliverable>();
     private boolean isSecure;
@@ -52,14 +52,15 @@ public class HttpSession extends ClientSession {
     private boolean isClosed;
     private int inactivityTimeout;
     private long lastActivity;
-    private long lastRequestID;
     private int maxRequests;
 
-    public HttpSession(String serverName, InetAddress address, StreamID streamID, long rid) {
+    public HttpSession(String serverName, InetAddress address, StreamID streamID, long rid,
+                       int hold) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection(address);
         this.lastActivity = System.currentTimeMillis();
-        this.lastRequestID = rid;
+        this.hold = hold;
+        this.connectionQueue = new ConnectionQueue(hold + 1, rid);
     }
 
     /**
@@ -145,18 +146,6 @@ public class HttpSession extends ClientSession {
      */
     public int getWait() {
         return wait;
-    }
-
-    /**
-     * Specifies the maximum number of requests the connection manager is allowed to keep waiting at
-     * any one time during the session. (For example, if a constrained client is unable to keep open
-     * more than two HTTP connections to the same HTTP server simultaneously, then it SHOULD specify
-     * a value of "1".)
-     *
-     * @param hold the maximum number of simultaneous waiting requests.
-     */
-    public void setHold(int hold) {
-        this.hold = hold;
     }
 
     /**
@@ -286,15 +275,6 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * Returns the number of connections currently awaiting a response on this session.
-     *
-     * @return the number of connections currently awaiting a response on this session.
-     */
-    public int getConnectionCount() {
-        return connectionQueue.size();
-    }
-
-    /**
      * Returns the time in milliseconds since the epoch that this session was last active. Activity
      * is a request was either made or responded to.
      *
@@ -322,16 +302,17 @@ public class HttpSession extends ClientSession {
      * @param isPoll true if the request was a poll, no packets were sent along with the request.
      * @param isSecure true if the connection was secured using HTTPS.
      * @return the created {@link org.jivesoftware.wildfire.http.HttpConnection} which represents
-     * the connection.
-     * @throws HttpConnectionClosedException if the connection was closed before a response could
-     * be delivered.
+     *         the connection.
+     *
+     * @throws HttpConnectionClosedException if the connection was closed before a response could be
+     * delivered.
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      * protocol.
      */
     HttpConnection createConnection(long rid, boolean isPoll, boolean isSecure)
             throws HttpConnectionClosedException, HttpBindException {
         HttpConnection connection = new HttpConnection(rid, isSecure);
-        if (rid <= lastRequestID) {
+        if (rid <= connectionQueue.getLastRequestId()) {
             Deliverable deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
                 Log.warn("Deliverable unavailable for " + rid);
@@ -340,14 +321,19 @@ public class HttpSession extends ClientSession {
             connection.deliverBody(deliverable.getDeliverable());
             return connection;
         }
-        else if (rid > (lastRequestID + hold + 1)) {
+        else if (rid > (connectionQueue.getLastRequestId() + hold + 1)) {
             // TODO handle the case of greater RID which basically has it wait
-            Log.warn("Request " + rid + " > " + (lastRequestID + hold + 1) + ", ending session.");
+            Log.warn("Request " + rid + " > " + (connectionQueue.getLastRequestId() + hold + 1)
+                    + ", ending session.");
             throw new HttpBindException("Unexpected RID Error", true, 404);
         }
 
         addConnection(connection, isPoll);
         return connection;
+    }
+
+    void closeConnection(HttpConnection httpConnection) {
+        this.connectionQueue.updateLastRequestId(httpConnection);
     }
 
     private Deliverable retrieveDeliverable(long rid) throws HttpBindException {
@@ -388,19 +374,17 @@ public class HttpSession extends ClientSession {
             catch (HttpConnectionClosedException he) {
                 throw he;
             }
+            connectionQueue.updateLastRequestId(connection);
         }
         else {
             // With this connection we need to check if we will have too many connections open,
             // closing any extras.
-            while (connectionQueue.size() >= hold) {
-                HttpConnection toClose = connectionQueue.remove();
+            for (HttpConnection toClose : connectionQueue.queueConnection(connection)) {
                 toClose.close();
                 fireConnectionClosed(toClose);
             }
-            connectionQueue.offer(connection);
             fireConnectionOpened(connection);
         }
-        lastRequestID = connection.getRequestId();
     }
 
     private void deliver(HttpConnection connection, String deliverable)
@@ -444,8 +428,8 @@ public class HttpSession extends ClientSession {
     private void deliver(Deliverable stanza) {
         String deliverable = createDeliverable(Arrays.asList(stanza));
         boolean delivered = false;
-        while (!delivered && connectionQueue.size() > 0) {
-            HttpConnection connection = connectionQueue.remove();
+        while (!delivered && connectionQueue.hasConnectionWaiting()) {
+            HttpConnection connection = connectionQueue.getConnection();
             try {
                 deliver(connection, deliverable);
                 delivered = true;
@@ -488,8 +472,8 @@ public class HttpSession extends ClientSession {
             failDelivery();
         }
 
-        while (connectionQueue.size() > 0) {
-            HttpConnection toClose = connectionQueue.remove();
+        while (connectionQueue.hasConnectionWaiting()) {
+            HttpConnection toClose = connectionQueue.getConnection();
             toClose.close();
             fireConnectionClosed(toClose);
         }
@@ -510,6 +494,8 @@ public class HttpSession extends ClientSession {
         }
         pendingElements.clear();
     }
+
+
 
     /**
      * A virtual server connection relates to a http session which its self can relate to many http
@@ -589,15 +575,78 @@ public class HttpSession extends ClientSession {
 
         private final HttpConnection[] connections;
 
-        private final String[] requestIds;
+        private int mark = 0;
 
-        private int pointer = 0;
+        private long lastRequestId = -1;
 
-        public ConnectionQueue(int size) {
+        public ConnectionQueue(int size, long firstRequestId) {
             this.connections = new HttpConnection[size];
-            this.requestIds = new String[size];
+            this.lastRequestId = firstRequestId;
         }
 
+        public Collection<HttpConnection> queueConnection(HttpConnection connection)
+                throws HttpBindException {
+            long diff = connection.getRequestId() - lastRequestId;
+            if (diff <= 0 || diff > connections.length) {
+                throw new HttpBindException("Unexpected rid error", true, 404);
+            }
+            Collection<HttpConnection> closableConnections = new ArrayList<HttpConnection>();
 
+            int newPointer;
+            if (connections[mark] != null && diff == 1 && !connections[mark].isClosed()) {
+                closableConnections.add(connections[mark]);
+            }
+            else if(connections[mark] != null && !connections[mark].isClosed()) {
+                throw new HttpBindException("Unexpected rid error", true, 404);
+            }
+            newPointer = ((int) ((mark + (diff - 1)) % connections.length));
+            connections[newPointer] = connection;
+
+            return Collections.unmodifiableCollection(closableConnections);
+        }
+
+        public HttpConnection getConnection() {
+            HttpConnection toReturn;
+            if (connections[mark] != null && !connections[mark].isClosed()) {
+                int newMark = (mark + 1) % connections.length;
+                lastRequestId = connections[mark].getRequestId();
+                toReturn = connections[mark];
+                connections[mark] = null;
+                mark = newMark;
+            }
+            else {
+                toReturn = null;
+            }
+
+            return toReturn;
+        }
+
+        /**
+         * Returns either the last request serviced or, if there are connections currently queued up
+         * the next RID that will be servered.
+         *
+         * @return the last request serviced or the last connection made.
+         */
+        public long getNextRID() {
+            return connections[mark].getRequestId();
+        }
+
+        public long getLastRequestId() {
+            return lastRequestId;
+        }
+
+        public boolean hasConnectionWaiting() {
+            return connections[mark] != null && !connections[mark].isClosed();
+        }
+
+        public void updateLastRequestId(HttpConnection request) {
+            for(int i = 0; i < connections.length; i ++) {
+                if(connections[i].getRequestId() == request.getRequestId()) {
+                    connections[i] = null;
+                    lastRequestId = request.getRequestId();
+                    return;
+                }
+            }
+        }
     }
 }

@@ -118,6 +118,7 @@ public class HttpConnection {
             }
             catch (HttpBindTimeoutException e) {
                 this.isClosed = true;
+                session.closeConnection(this);
                 throw e;
             }
         }

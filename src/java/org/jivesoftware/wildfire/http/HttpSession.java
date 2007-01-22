@@ -641,7 +641,8 @@ public class HttpSession extends ClientSession {
 
         public void updateLastRequestId(HttpConnection request) {
             for(int i = 0; i < connections.length; i ++) {
-                if(connections[i].getRequestId() == request.getRequestId()) {
+                if(connections[i] != null
+                        && connections[i].getRequestId() == request.getRequestId()) {
                     connections[i] = null;
                     lastRequestId = request.getRequestId();
                     return;

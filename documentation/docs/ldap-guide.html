@@ -118,6 +118,12 @@
         To specify many LDAP servers use the comma or the white space character as delimiter.</li>
     <li>ldap.port -- LDAP server port number. If this property is not set, the default value is
         389.</li>
+    <li>ldap.readTimeout -- The value of this property is the string representation of an integer
+        representing the read timeout in milliseconds for LDAP operations. If the LDAP provider doesn't
+        get an LDAP response within the specified period, it aborts the read attempt. The integer should
+        be greater than zero. An integer less than or equal to zero means no read timeout is specified which
+        is equivalent to waiting for the response infinitely until it is received which defaults
+        to the original behavior. <i>Requires Java 1.6 or later.</i></li>
     <li>ldap.baseDN <font color="red"><b>*</b></font> -- the starting DN that searches for users
         will performed with.
         The entire subtree under the base DN will be searched for user accounts.

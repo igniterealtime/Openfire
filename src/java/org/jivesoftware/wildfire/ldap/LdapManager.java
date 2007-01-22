@@ -128,6 +128,7 @@ public class LdapManager {
 
     private Collection<String> hosts = new ArrayList<String>();
     private int port;
+    private int readTimeout = -1;
     private String usernameField;
     private String nameField;
     private String emailField;
@@ -188,6 +189,15 @@ public class LdapManager {
         if (portStr != null) {
             try {
                 this.port = Integer.parseInt(portStr);
+            }
+            catch (NumberFormatException nfe) {
+                Log.error(nfe);
+            }
+        }
+        String timeout = properties.get("ldap.readTimeout");
+        if (timeout != null) {
+            try {
+                this.readTimeout = Integer.parseInt(timeout);
             }
             catch (NumberFormatException nfe) {
                 Log.error(nfe);
@@ -429,6 +439,9 @@ public class LdapManager {
             // break with a timemout.
             if (!sslEnabled) {
                 env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+            }
+            if (readTimeout > 0) {
+                env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
             }
             if (ldapDebugEnabled) {
                 env.put("com.sun.jndi.ldap.trace.ber", System.err);

@@ -92,7 +92,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
             // Do nothing let the default values to be used.
         }
 
-        this.enabled = JiveGlobals.getProperty("stun.enabled") == null || Boolean.parseBoolean(JiveGlobals.getProperty("stun.enabled"));
+        this.enabled = JiveGlobals.getBooleanProperty("stun.enabled", true);
 
     }
 
@@ -105,6 +105,8 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         super.initialize(server);
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
+        serviceName = JiveGlobals.getProperty("stun.serviceName", name);
+        serviceName = serviceName == null ? name : serviceName.equals("") ? name : serviceName;
         loadSTUNConfig();
     }
 
@@ -125,9 +127,6 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
             if (primary != null && secondary != null) {
 
                 stunServer = new StunServer(primaryPort, primary, secondaryPort, secondary);
-                serviceName = JiveGlobals.getProperty("stun.serviceName", name);
-                serviceName = serviceName == null ? name : serviceName.equals("") ? name : serviceName;
-
                 stunServer.start();
 
             } else
@@ -154,8 +153,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         if (stunServer != null)
             stunServer.stop();
         stunServer = null;
-        XMPPServer.getInstance().getIQDiscoItemsHandler()
-                .removeComponentItem(getAddress().toString());
+        XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         if (routingTable != null)
             routingTable.removeRoute(getAddress());
     }

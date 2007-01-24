@@ -111,6 +111,10 @@ public abstract class StanzaHandler {
             session.getConnection().close();
             return;
         }
+        // Ignore <?xml version="1.0"?> stanzas sent by clients
+        if (stanza.startsWith("<?xml")) {
+            return;
+        }
         // Create DOM object from received stanza
         Element doc;
         try {

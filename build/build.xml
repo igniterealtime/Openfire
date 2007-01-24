@@ -256,6 +256,7 @@
                 includeAntRuntime="no"
                 debug="on"
                 source="1.5"
+                target="1.5"
                 >
             <src path="${src.java.dir}"/>
             <patternset refid="compile.sources"/>
@@ -458,6 +459,7 @@
                 includeAntRuntime="no"
                 debug="on"
                 source="1.5"
+                target="1.5"
                 includes="org/jivesoftware/wildfire/admin/**/*.java"
                 >
             <src path="${jspc.java.dest.dir}"/>
@@ -507,6 +509,7 @@
                 includeAntRuntime="no"
                 debug="on"
                 source="1.5"
+                target="1.5"
                 >
             <src path="${src.test.java.dir}"/>
             <patternset refid="test.sources"/>
@@ -1032,6 +1035,7 @@
                     includeAntRuntime="no"
                     debug="on"
                     source="1.5"
+                    target="1.5"
                     >
                 <src path="@{pluginsrc}/@{plugin}/src/java"/>
                 <classpath>
@@ -1173,6 +1177,7 @@
                             includeAntRuntime="no"
                             debug="on"
                             source="1.5"
+                            target="1.5"
                             >
                         <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                         <classpath>

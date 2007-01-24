@@ -253,6 +253,9 @@ class XMLLightweightParser {
                     insideChildrenTag = false;
                     continue;
                 }
+                else if (ch == '/') {
+                    status = XMLLightweightParser.VERIFY_CLOSE_TAG;
+                }
                 head.append(ch);
 
             } else if (status == XMLLightweightParser.INIT) {

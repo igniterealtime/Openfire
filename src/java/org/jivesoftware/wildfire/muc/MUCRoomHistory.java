@@ -12,9 +12,9 @@
 package org.jivesoftware.wildfire.muc;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -59,6 +59,12 @@ public final class MUCRoomHistory {
             if (packet.getSubject() == null || packet.getSubject().trim().length() == 0) {
                 return;
             }
+        }
+
+        // Ignore messages with no subject AND no body
+        if ((packet.getSubject() == null || "".equals(packet.getSubject().trim())) &&
+                (packet.getBody() == null || "".equals(packet.getBody().trim()))) {
+            return;
         }
 
         Message packetToAdd = packet.createCopy();

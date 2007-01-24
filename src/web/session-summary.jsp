@@ -233,6 +233,10 @@
         boolean current = false; // needed in session-row.jspf
         String linkURL = "session-details.jsp";
         for (ClientSession sess : sessions) {
+            if (sess.getAuthToken() == null) {
+                // Double check: Ignore non-authenticated sessions
+                continue;
+            }
             count++;
     %>
         <%@ include file="session-row.jspf" %>

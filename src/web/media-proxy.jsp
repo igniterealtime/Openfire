@@ -39,10 +39,10 @@
 
     if (save) {
         keepAliveDelay = ParamUtils.getLongParameter(request, "idleTimeout", keepAliveDelay);
-        if (keepAliveDelay > 50) {
+        if (keepAliveDelay > 1) {
             mediaProxyService.setKeepAliveDelay(keepAliveDelay * 1000);
             JiveGlobals
-                    .setProperty("mediaproxy.idleTimeout", String.valueOf(keepAliveDelay));
+                    .setProperty("mediaproxy.idleTimeout", String.valueOf(keepAliveDelay * 1000));
         }
 
         lifetime = ParamUtils.getLongParameter(request, "lifetime", lifetime);
@@ -129,7 +129,7 @@
                                     <input type="text" size="5" maxlength="8"
                                            name="idleTimeout"
                                            value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                           align="left">
+                                           align="left"> &nbsp;<i>This value is usually bigger than 15 seconds.</i>
                                 </td>
                             </tr>
                             <tr>

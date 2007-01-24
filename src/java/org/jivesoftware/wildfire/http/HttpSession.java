@@ -427,7 +427,7 @@ public class HttpSession extends ClientSession {
         long time = System.currentTimeMillis();
         if (((time - lastPoll) / 1000) < maxPollingInterval) {
             throw new HttpBindException("Too frequent polling minimum interval is "
-                    + maxPollingInterval + ", current interval " + ((lastPoll - time) / 1000),
+                    + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000),
                     true, 403);
         }
         lastPoll = time;

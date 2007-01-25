@@ -45,7 +45,7 @@ public class MediaProxyService extends BasicModule
     private PacketRouter router;
 
     private MediaProxy mediaProxy = null;
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     public static final String NAMESPACE = "http://www.jivesoftware.com/protocol/rtpbridge";
 
@@ -101,7 +101,6 @@ public class MediaProxyService extends BasicModule
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         // Check if user is allowed to send packet to this service
-        Log.debug("TEST");
         if (packet instanceof IQ) {
             // Handle disco packets
             IQ iq = (IQ) packet;
@@ -119,9 +118,6 @@ public class MediaProxyService extends BasicModule
         String namespace = childElement.getNamespaceURI();
         Element childElementCopy = iq.getChildElement().createCopy();
         reply.setChildElement(childElementCopy);
-        if (Log.isDebugEnabled()) {
-            Log.debug("RECEIVED:" + iq.toXML());
-        }
 
         if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
             reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
@@ -158,7 +154,6 @@ public class MediaProxyService extends BasicModule
                         Attribute pass = candidateElement.attribute("pass");
 
                         if (pass != null && pass.getValue().trim().equals(session.getPass().trim())) {
-                            Log.debug("RIGHT PASS");
                             Attribute portA = candidateElement.attribute("porta");
                             Attribute portB = candidateElement.attribute("portb");
                             Attribute hostA = candidateElement.attribute("hosta");

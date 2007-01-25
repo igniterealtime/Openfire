@@ -45,7 +45,7 @@ public class MediaProxyService extends BasicModule
     private PacketRouter router;
 
     private MediaProxy mediaProxy = null;
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     public static final String NAMESPACE = "http://www.jivesoftware.com/protocol/rtpbridge";
 
@@ -232,7 +232,7 @@ public class MediaProxyService extends BasicModule
         catch (NumberFormatException e) {
             // Do nothing let the default values to be used.
         }
-        this.enabled = JiveGlobals.getBooleanProperty("mediaproxy.enabled");
+        setEnabled(JiveGlobals.getBooleanProperty("mediaproxy.enabled"));
     }
 
     /**

@@ -74,7 +74,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
         if (primaryAddress == null || primaryAddress.equals(""))
             primaryAddress = JiveGlobals.getProperty("xmpp.domain",
-                    JiveGlobals.getProperty("network.interface", "localhost"));
+                    JiveGlobals.getXMLProperty("network.interface", "localhost"));
 
         if (secondaryAddress == null || secondaryAddress.equals(""))
             secondaryAddress = "127.0.0.1";

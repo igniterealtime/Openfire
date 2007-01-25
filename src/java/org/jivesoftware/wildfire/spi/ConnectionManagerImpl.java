@@ -11,8 +11,8 @@
 
 package org.jivesoftware.wildfire.spi;
 
-import org.apache.mina.common.ExecutorThreadModel;
 import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.ExecutorThreadModel;
 import org.apache.mina.common.SimpleByteBufferAllocator;
 import org.apache.mina.filter.SSLFilter;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -158,7 +158,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
             try {
                 // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("xmpp.socket.network.interface");
+                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
                 InetAddress bindInterface = null;
                 if (interfaceName != null) {
                     if (interfaceName.trim().length() > 0) {
@@ -247,7 +247,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
             try {
                 // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("xmpp.socket.network.interface");
+                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
                 InetAddress bindInterface = null;
                 if (interfaceName != null) {
                     if (interfaceName.trim().length() > 0) {
@@ -322,7 +322,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 sslSocketAcceptor.getFilterChain().addFirst("tls", new SSLFilter(sslContext));
 
                 // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("xmpp.socket.network.interface");
+                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
                 InetAddress bindInterface = null;
                 if (interfaceName != null) {
                     if (interfaceName.trim().length() > 0) {

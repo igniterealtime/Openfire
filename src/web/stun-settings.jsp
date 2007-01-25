@@ -154,7 +154,7 @@
                         <%
                           }
                         }
-                        String sname = JiveGlobals.getProperty("xmpp.domain", JiveGlobals.getProperty("network.interface", "localhost"));
+                        String sname = JiveGlobals.getProperty("xmpp.domain", JiveGlobals.getXMLProperty("network.interface", "localhost"));
                         %>
                         <option value="<%=sname%>"><%=sname%>
                         </option>

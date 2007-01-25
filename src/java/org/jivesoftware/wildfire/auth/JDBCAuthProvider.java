@@ -217,6 +217,7 @@ public class JDBCAuthProvider implements AuthProvider {
     /**
      * Indicates how the password is stored.
      */
+    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     public enum PasswordType {
 
         /**
@@ -232,7 +233,7 @@ public class JDBCAuthProvider implements AuthProvider {
         /**
          * The password is stored as a hex-encoded SHA-1 hash.
          */
-        sha1
+        sha1;
     }
 
     /**

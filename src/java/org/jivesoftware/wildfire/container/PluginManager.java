@@ -746,6 +746,7 @@ public class PluginManager {
     /**
      * An enumberation for plugin license agreement types.
      */
+    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     public enum License {
 
         /**
@@ -773,7 +774,7 @@ public class PluginManager {
          * one of the other choices. The license agreement should be detailed in the
          * plugin Readme.
          */
-        other
+        other;
     }
 
     /**

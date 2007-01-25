@@ -800,6 +800,7 @@ public class DbConnectionManager {
      * there are certain cases where it's critical to know the database for
      * performance reasons.
      */
+    @SuppressWarnings({"UnnecessarySemicolon"}) // Support for QDox parsing
     public static enum DatabaseType {
 
         oracle,
@@ -816,7 +817,7 @@ public class DbConnectionManager {
 
         interbase,
 
-        unknown
+        unknown;
     }
 
     private DbConnectionManager() {

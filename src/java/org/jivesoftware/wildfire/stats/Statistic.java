@@ -56,6 +56,7 @@ public interface Statistic {
     /**
      * The type of statistic.
      */
+    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     public enum Type {
 
         /**
@@ -73,13 +74,13 @@ public interface Statistic {
          */
         // TODO: rate_total,
 
-        /**
+        /*
          * The average count over a time period. An example would be the
          * number of users in multi-user chats. Each time the {@link Statistic#sample()}
          * method is invoked, it should return the current measurement of the data, irrelevant of
          * previous reads of the data.   
          */
-        count,
+        count;
 
         /**
          * The max count over a time period. An example would be the maximum number of users

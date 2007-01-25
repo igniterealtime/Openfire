@@ -94,6 +94,7 @@ public class SASLAuthentication {
         }
     }
 
+    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     public enum Status {
         /**
          * Entity needs to respond last challenge. Session is still negotiating
@@ -108,7 +109,7 @@ public class SASLAuthentication {
         /**
          * SASL negotiation has been successful.
          */
-        authenticated
+        authenticated;
     }
 
     /**

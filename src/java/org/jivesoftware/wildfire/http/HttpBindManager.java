@@ -20,10 +20,8 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.net.SSLConfig;
 import org.jivesoftware.wildfire.XMPPServer;
 
-import javax.servlet.http.HttpServlet;
 import javax.net.ssl.SSLServerSocketFactory;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
@@ -168,19 +166,6 @@ public final class HttpBindManager {
     public boolean isHttpBindEnabled() {
         return httpBindServer != null && httpBindServer.isRunning();
     }
-
-    /**
-     * Returns all the servlets that are part of the http-bind service.
-     *
-     * @return all the servlets that are part of the http-bind service.
-     */
-    public Map<HttpServlet, String> getServlets() {
-        Map<HttpServlet, String> servlets = new HashMap<HttpServlet, String>();
-        servlets.put(new ResourceServlet(), "/http-bind/js/");
-
-        return servlets;
-    }
-
 
     public String getHttpBindUnsecureAddress() {
         return "http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +

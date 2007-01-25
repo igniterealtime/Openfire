@@ -81,9 +81,7 @@
 <body>
 
 <p>
-    The media proxy enables clients to make rich media (including VoIP) connections to one another
-    when peer to peer connections fail, such as when one or both clients are behind a
-    strict firewall.<br>
+      <fmt:message key="mediaproxy.desc" /><br>
 </p>
 
 <% if (success) { %>
@@ -94,7 +92,7 @@
             <tr>
                 <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" alt="Success"
                                            border="0"></td>
-                <td class="jive-icon-label">Settings updated successfully.</td>
+                <td class="jive-icon-label"><fmt:message key="mediaproxy.settings.success" /></td>
             </tr>
         </tbody>
     </table>
@@ -105,7 +103,7 @@
 
 <form action="media-proxy.jsp" method="post">
     <div class="jive-contentBoxHeader">
-        Media Proxy Settings
+        <fmt:message key="mediaproxy.form.label" />
     </div>
     <div class="jive-contentBox">
         <table cellpadding="3" cellspacing="0" border="0">
@@ -117,34 +115,33 @@
                     </td>
                     <td width="99%">
                         <label for="rb02">
-                            <b>Enabled</b>
-                            - This server will act as a media proxy.
+                            <b><fmt:message key="mediaproxy.form.enabled" /></b>
+                            - <fmt:message key="mediaproxy.form.enabled.desc" />
                         </label>
                         <br>
                         <table>
                             <tr>
-                                <td>Session Idle Timeout (in seconds):&nbsp;
+                                <td><fmt:message key="mediaproxy.form.idletimeout" />:&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="5" maxlength="8"
                                            name="idleTimeout"
                                            value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                           align="left"> &nbsp;<i>This value is usually bigger than 15 seconds.</i>
+                                           align="left"> &nbsp;<i><fmt:message key="mediaproxy.form.idletimeout.tip" /></i>
                                 </td>
                             </tr>
                             <tr>
-                                <td>Session Life Time (in seconds):&nbsp;
+                                <td><fmt:message key="mediaproxy.form.lifetime" />:&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="5" maxlength="8"
                                            name="lifetime"
                                            value="<%=mediaProxyService.getLifetime()%>"
-                                           align="left"> &nbsp;<i>Life Time is the maximum time that a Session can
-                                    lives. After this time it is destroyed, even if it stills active.</i>
+                                           align="left"> &nbsp;<i><fmt:message key="mediaproxy.form.lifetime.tip" /></i>
                                 </td>
                             </tr>
                             <tr>
-                                <td>Port Range Min:&nbsp;
+                                <td><fmt:message key="mediaproxy.form.minport" />:&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="7" maxlength="20" name="minport"
@@ -152,7 +149,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td> Port Range Max:&nbsp;
+                                <td><fmt:message key="mediaproxy.form.maxport" />:&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="7" maxlength="20" name="maxport"
@@ -173,8 +170,8 @@
                     </td>
                     <td width="99%">
                         <label for="rb01">
-                            <b>Disabled</b>
-                            - This server will not act as a media proxy.
+                            <b><fmt:message key="mediaproxy.form.disabled" /></b>
+                            - <fmt:message key="mediaproxy.form.disabled.desc" />
                         </label>
                     </td>
                 </tr>
@@ -187,9 +184,8 @@
 <% if (mediaProxyService.isEnabled()) { %>
 
 <p>
-    <b>Active Sessions Summary</b><br>
-    Sessions are Media Proxy Channels that controls packet relaying.
-    The list below shows current sessions running and which user created the channel.
+    <b><fmt:message key="mediaproxy.summary.label" /></b><br>
+    <fmt:message key="mediaproxy.summary.desc" />
 </p>
 
 <div class="jive-table">
@@ -197,12 +193,12 @@
         <thead>
             <tr>
                 <th>&nbsp;</th>
-                <th nowrap align="left" valign="middle">Creator</th>
-                <th nowrap align="left" valign="middle">Port A</th>
-                <th nowrap align="left" valign="middle">Port B</th>
-                <th nowrap align="left" valign="middle">Server</th>
-                <th nowrap align="left" valign="middle">Inactivity(secs)</th>
-                <th nowrap align="left" valign="middle">Type</th>
+                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.creator" /></th>
+                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.port" /> A</th>
+                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.port" /> B</th>
+                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.server" /></th>
+                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.inactivity" /></th>
+                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.type" /></th>
             </tr>
         </thead>
         <tbody>
@@ -213,7 +209,7 @@
             %>
             <tr>
                 <td align="center" colspan="7">
-                    No active Agents
+                <fmt:message key="mediaproxy.summary.session.noactive" />
                 </td>
             </tr>
 
@@ -257,7 +253,7 @@
         </tbody>
     </table>
     <form action="">
-        <input type="submit" name="stop" value="Stop Active Sessions"/>
+        <input type="submit" name="stop" value="<fmt:message key="mediaproxy.summary.stopbutton" />"/>
     </form>
 </div>
 

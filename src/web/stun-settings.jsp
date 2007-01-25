@@ -14,6 +14,9 @@
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.util.List" %>
 
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <script type="text/javascript">
 
     function checkAndSubmit() {
@@ -26,11 +29,11 @@
         var msg = "";
 
         if (ip1 == ip2) {
-            msg += "* The selected IP values are not valid. Please select different IPs.";
+            msg += "<fmt:message key="stun.settings.alert.notvalidip" />";
         }
         if (port1 == port2) {
             if (msg != "") msg += "\n";
-            msg += "* The selected port numbers are not valid. Please select different port numbers."
+            msg += "<fmt:message key="stun.settings.alert.notvalidip" />";
         }
 
         if (msg == "") {
@@ -83,14 +86,13 @@
 %>
 <html>
 <head>
-    <title>STUN Server Settings</title>
+    <title><fmt:message key="stun.settings.title" /></title>
     <meta name="pageID" content="stun-settings"/>
 </head>
 <body>
 
 <p>
-    Use the form below to manage STUN Server settings.<br>
-    A STUN need at least two different IPs in the same machine to run and two different port numbers on each IP.
+     <fmt:message key="stun.settings.desc" />
 </p>
 
 <% if (success) { %>
@@ -101,7 +103,7 @@
             <tr>
                 <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16"
                                            border="0" alt="Success"></td>
-                <td class="jive-icon-label">Settings updated successfully.</td>
+                <td class="jive-icon-label"><fmt:message key="stun.settings.success" /></td>
             </tr>
         </tbody>
     </table>
@@ -116,8 +118,7 @@
             <tr>
                 <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16"
                                            border="0"></td>
-                <td class="jive-icon-label">Server cannot started. Check your port
-                    numbers and Primary and Secondary addresses.
+                <td class="jive-icon-label"><fmt:message key="stun.settings.error" />
                 </td>
             </tr>
         </tbody>
@@ -129,17 +130,17 @@
 
 <form action="" method="post" name="settings">
     <div class="jive-contentBoxHeader">
-        STUN Server Settings
+       <fmt:message key="stun.settings.title" />
     </div>
     <div class="jive-contentBox">
         <p>
-            The settings will just take effects after savings settings.
+            <fmt:message key="stun.settings.comment" />
         </p>
 
         <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody>
                 <tr>
-                    <td align="left">Primary Address:&nbsp<select size="1"
+                    <td align="left"><fmt:message key="stun.settings.primaryaddress" />:&nbsp<select size="1"
                                                                   maxlength="100"
                                                                   name="primaryAddress"
                                                                   align="left">
@@ -161,8 +162,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td align="left"> Secondary
-                        Address:&nbsp<select size="1"
+                    <td align="left"> <fmt:message key="stun.settings.secondaryaddress" />:&nbsp<select size="1"
                                              maxlength="100"
                                              name="secondaryAddress"
                                              align="left">
@@ -181,7 +181,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td align="left">Primary Port Value:&nbsp<input type="text" size="20"
+                    <td align="left"> <fmt:message key="stun.settings.primaryport" />:&nbsp<input type="text" size="20"
                                                                     maxlength="100"
                                                                     name="primaryPort"
                                                                     value="<%=stunService.getPrimaryPort()%>"
@@ -189,7 +189,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td align="left">Secondary Port Value:&nbsp<input type="text" size="20"
+                    <td align="left"><fmt:message key="stun.settings.secondaryport" />:&nbsp<input type="text" size="20"
                                                                       maxlength="100"
                                                                       name="secondaryPort"
                                                                       value="<%=stunService.getSecondaryPort()%>"
@@ -197,7 +197,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td align="left">Enabled:&nbsp<input type="checkbox"
+                    <td align="left"><fmt:message key="stun.settings.enabled" />:&nbsp<input type="checkbox"
                                                          name="enabled"
                     <%=stunService.isEnabled()?"checked":""%>
                                                          align="left">
@@ -207,7 +207,7 @@
         </table>
     </div>
     <input type="hidden" name="save">
-    <input type="button" name="set" value="Change" onclick="checkAndSubmit()">
+    <input type="button" name="set" value="<fmt:message key="stun.settings.change" />" onclick="checkAndSubmit()">
 </form>
 </body>
 </html>

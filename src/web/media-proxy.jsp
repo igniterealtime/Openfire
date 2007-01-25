@@ -31,11 +31,11 @@
     boolean save = request.getParameter("update") != null;
     boolean success = false;
 
-    long keepAliveDelay = 3600;
-    long lifetime = 0;
-    int minPort = 10000;
-    int maxPort = 20000;
-    boolean enabled = true;
+    long keepAliveDelay = mediaProxyService.getIdleTime();
+    long lifetime = mediaProxyService.getLifetime();
+    int minPort = mediaProxyService.getMinPort();
+    int maxPort = mediaProxyService.getMaxPort();
+    boolean enabled = mediaProxyService.isEnabled();
 
     if (save) {
         keepAliveDelay = ParamUtils.getLongParameter(request, "idleTimeout", keepAliveDelay);

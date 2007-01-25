@@ -259,12 +259,11 @@ class XMLLightweightParser {
                 head.append(ch);
 
             } else if (status == XMLLightweightParser.INIT) {
-                if (ch != ' ' && ch != '\r' && ch != '\n' && ch != '<') {
-                    invalidateBuffer();
-                    return;
-                }
                 if (ch == '<') {
                     status = XMLLightweightParser.HEAD;
+                }
+                else {
+                    startLastMsg++;
                 }
             }
         }

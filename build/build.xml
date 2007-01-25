@@ -52,6 +52,13 @@
             <pathelement location="${basedir}/build/lib/pack200task.jar"/>
         </classpath>
     </taskdef>
+    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
+        <classpath>
+            <pathelement location="${basedir}/build/lib/ant-jive-edition.jar"/>
+            <pathelement location="${basedir}/build/lib/qdox.jar"/>
+        </classpath>
+    </typedef>
+
 
     <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
@@ -438,8 +445,8 @@
         <mkdir dir="${webapp.dest.dir}"/>
 
         <antcall target="-jspc-impl"/>
-
     </target>
+    
     <target name="-jspc-impl" unless="no.jspc">
         <java classname="org.apache.jasper.JspC" fork="true">
             <classpath>
@@ -675,21 +682,29 @@
             </fileset>
         </copy>
     </target>
-
-    <!-- dist.src =============================================================================== -->
-    <target name="dist.src" depends="javadoc, -i18n"
-            description="Creates a source distribution package">
-        <mkdir dir="${release.dest.dir}"/>
-
-        <!-- Create a new prop for the final release dirs then create the dirs -->
-
+    
+    <!-- dist.init ============================================================================== -->
+    <target name="dist.init" >
         <!-- ie: wildfire_src -->
         <property name="release.name.src" value="${dist.prefix}_src"/>
         <!-- ie: wildfire_src_2_1_2 -->
         <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
-
         <property name="release.src.out.dir" value="${release.dest.dir}/${release.name.src}"/>
 
+        <!-- ie: wildfire -->
+        <property name="release.name" value="${dist.prefix}"/>
+        <!-- ie: wildfire_2_1_2 -->
+        <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
+        <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
+    </target>    
+
+    <!-- dist.src =============================================================================== -->
+    <target name="dist.src" depends="init, dist.init, javadoc, -i18n"
+            description="Creates a source distribution package">
+
+        <mkdir dir="${release.dest.dir}"/>
+
+        <!-- Create a new prop for the final release dirs then create the dirs -->
         <mkdir dir="${release.src.out.dir}"/>
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.src.out.dir}">
@@ -712,10 +727,22 @@
         <copy todir="${release.src.out.dir}/documentation/docs/javadoc">
             <fileset dir="${javadoc.dest.dir}"/>
         </copy>
-        <!-- Copy source -->
+        <!-- Copy non-java source -->
         <copy todir="${release.src.out.dir}/src">
-            <fileset dir="${src.dir}"/>
+            <fileset dir="${src.dir}" excludes="**/*.java"/>
         </copy>
+
+        <!-- Copy java source, stripping non-distributable files and replacing DATE strings -->
+        <copy todir="${release.src.out.dir}/src">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java" />
+                <srcinc />
+            </fileset>
+            <filterset>
+                <filter token="DATE" value="${builddate}"/>
+            </filterset>
+        </copy>
+
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.src.out.dir}/resources/i18n">
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
@@ -751,15 +778,8 @@
     </target>
 
     <!-- dist.bin =============================================================================== -->
-    <target name="dist.bin" depends="plugins,javadoc"
+    <target name="dist.bin" depends="init, dist.init, plugins, javadoc, enterprise"
             description="Creates a binary distribution package">
-        <!-- ie: wildfire -->
-        <property name="release.name" value="${dist.prefix}"/>
-        <!-- ie: wildfire_2_1_2 -->
-        <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
-        <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
-
-        <antcall target="enterprise"/>
 
         <mkdir dir="${release.out.dir}"/>
 
@@ -913,7 +933,6 @@
 
     <!-- installer ============================================================================= -->
     <target name="installer" description="Creates Wildfire installers">
-
         <condition property="install4j.not.ok" value="true">
             <not>
                 <available file="${installer.install4j.home}/bin/install4j.jar"/>
@@ -921,7 +940,7 @@
         </condition>
         <fail if="install4j.not.ok"
               message="Path to Install4j not set, see build.properties.template file."/>
-
+    
         <antcall target="dist.src"/>
 
         <antcall target="dist.bin">
@@ -1045,11 +1064,64 @@
                 </classpath>
             </javac>
 
+            <!-- Searchs source of a plugin and makes a <plugin>-lib.jar that contains compiled versions of all
+                 non-distributable source -->
+            <property name="pluginlib" value="@{pluginsrc}/@{plugin}/lib" />
+
+            <mkdir dir="${pluginlib}" />
+            <mkdir dir="${pluginlib}/source" />
+            <mkdir dir="${pluginlib}/classes" />
+
+            <!-- copy the source we want to compile -->
+            <copy todir="${pluginlib}/source">
+                <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" >
+                    <not>
+                        <srcinc />
+                    </not>
+                </fileset>
+            </copy>
+
+            <if>
+                <not><uptodate>
+                    <srcfiles dir="${pluginlib}/source" includes="**/*.java"/>
+                    <mapper type="merge" to="${pluginlib}/@{plugin}-lib.jar"/>
+                </uptodate></not>
+                <then>
+                    <javac
+                        destdir="${pluginlib}/classes"
+                        includeAntRuntime="no"
+                        debug="on"
+                        source="1.5"
+                        includes="**/*.java"
+                    >
+                        <src path="${pluginlib}/source"/>
+                        <classpath>
+                            <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
+                            <path>
+                                <path refid="plugin.dependencies"/>
+                                <!-- Jars used by the plugin to compile with -->
+                                <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                            </path>
+                        </classpath>
+                    </javac>
+
+                    <jar jarfile="${pluginlib}/@{plugin}-lib.jar">
+                        <fileset dir="${pluginlib}/classes" />
+                    </jar>
+                </then>
+            </if>
+
             <!-- Make the jar -->
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"/>
             <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
-                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" >
+                    <present present="srconly" targetdir="${pluginlib}/classes"/>
+                </fileset>
             </jar>
+
+            <delete dir="${pluginlib}/classes" />
+            <delete dir="${pluginlib}/source" />
+
             <available file="@{pluginsrc}/@{plugin}/src/include" type="dir"
                        property="@{plugin}.include.exists"/>
             <if>
@@ -1285,6 +1357,15 @@
     <target name="clean" description="Cleans up all build-generated output">
         <delete dir="${work.dir}"/>
         <delete dir="${target.dir}"/>
+
+        <!-- Delete the Enterprise plugin in the wildfire plugin directory, if this isn't an enterprise build -->
+        <if>
+            <not><equals arg1="${do.enterprise}" arg2="true"/></not>
+            <then>
+                <!-- Copy pre-configured wildfireHome dir -->
+                <delete dir="${basedir}/src/plugins/enterprise" />
+            </then>
+        </if>
     </target>
 
     <!-- clean-jspc ============================================================================ -->

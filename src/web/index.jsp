@@ -456,7 +456,7 @@
     %>
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
-        <td><%= stunService.getPrimaryPort() %> / <%= stunService.getSecondaryPort() %></td>
+        <td><%= stunService.getPrimaryPort() %> & <%= stunService.getSecondaryPort() %></td>
         <td><img src="images/blank.gif" width="1" height="1"></td>
         <td><fmt:message key="ports.stun" /></td>
         <td><fmt:message key="ports.stun.desc" /></td>

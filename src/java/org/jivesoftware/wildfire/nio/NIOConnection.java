@@ -128,7 +128,7 @@ public class NIOConnection implements Connection {
         synchronized (this) {
             if (!isClosed()) {
                 try {
-                    deliverRawText("</stream:stream>");
+                    deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>");
                 } catch (Exception e) {
                     // Ignore
                 }

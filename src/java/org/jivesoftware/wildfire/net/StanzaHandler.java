@@ -10,7 +10,6 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.LocaleUtils;
@@ -38,7 +37,6 @@ public abstract class StanzaHandler {
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
     protected static String CHARSET = "UTF-8";
-    private static final String STREAM_START = "<stream:stream";
     private Connection connection;
 
     // DANIELE: Indicate if a session is already created
@@ -84,7 +82,7 @@ public abstract class StanzaHandler {
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
 
-        boolean initialStream = stanza.startsWith(STREAM_START);
+        boolean initialStream = stanza.startsWith("<stream:stream") || stanza.startsWith("<flash:stream");
         if (!sessionCreated || initialStream) {
             if (!initialStream) {
                 // Ignore <?xml version="1.0"?>
@@ -116,17 +114,7 @@ public abstract class StanzaHandler {
             return;
         }
         // Create DOM object from received stanza
-        Element doc;
-        try {
-            doc = reader.read(new StringReader(stanza)).getRootElement();
-        } catch (DocumentException e) {
-            if (stanza.equals("</stream:stream>")) {
-                connection.close();
-                return;
-            }
-            // Throw the exception. This will close the connection
-            throw e;
-        }
+        Element doc = reader.read(new StringReader(stanza)).getRootElement();
         if (doc == null) {
             // No document found.
             return;

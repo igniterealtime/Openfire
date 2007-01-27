@@ -225,8 +225,8 @@ class XMLLightweightParser {
                 if (ch == '"') {
                     status = XMLLightweightParser.INSIDE_PARAM_VALUE;
                 } else if (ch == '>') {
-                    if (insideRootTag &&
-                            ("stream:stream>".equals(head.toString()) || ("?xml>".equals(head.toString())))) {
+                    if (insideRootTag && ("stream:stream>".equals(head.toString()) ||
+                            ("?xml>".equals(head.toString())) || ("flash:stream>".equals(head.toString())))) {
                         // Found closing stream:stream
                         int end = buffer.length() - readByte + (i + 1);
                         // Skip LF, CR and other "weird" characters that could appear
@@ -267,7 +267,8 @@ class XMLLightweightParser {
                 }
             }
         }
-        if (head.length() > 0 && "/stream:stream>".equals(head.toString())) {
+        if (head.length() > 0 &&
+                ("/stream:stream>".equals(head.toString()) || ("/flash:stream>".equals(head.toString())))) {
             // Found closing stream:stream
             foundMsg("</stream:stream>");
         }

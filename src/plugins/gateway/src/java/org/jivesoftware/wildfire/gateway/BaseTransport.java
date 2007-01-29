@@ -1472,6 +1472,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public void sendComposingNotification(JID to, JID from) {
         Message m = new Message();
+        m.setType(Message.Type.chat);
         m.setTo(to);
         m.setFrom(from);
         Element xEvent = m.addChildElement("x", "jabber:x:event");
@@ -1492,6 +1493,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public void sendComposingPausedNotification(JID to, JID from) {
         Message m = new Message();
+        m.setType(Message.Type.chat);
         m.setTo(to);
         m.setFrom(from);
         m.addChildElement("paused", CHATSTATES);
@@ -1509,6 +1511,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public void sendChatInactiveNotification(JID to, JID from) {
         Message m = new Message();
+        m.setType(Message.Type.chat);
         m.setTo(to);
         m.setFrom(from);
         m.addChildElement("inactive", CHATSTATES);
@@ -1526,6 +1529,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public void sendChatGoneNotification(JID to, JID from) {
         Message m = new Message();
+        m.setType(Message.Type.chat);
         m.setTo(to);
         m.setFrom(from);
         m.addChildElement("gone", CHATSTATES);

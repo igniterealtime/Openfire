@@ -1443,7 +1443,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         m.setBody(msg);
         if (type.equals(Message.Type.chat) || type.equals(Message.Type.normal)) {
             Element xEvent = m.addChildElement("x", "jabber:x:event");
-            xEvent.addElement("id");
+//            xEvent.addElement("id");
             xEvent.addElement("composing");
             m.addChildElement("active", CHATSTATES);
         }

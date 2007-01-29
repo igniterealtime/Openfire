@@ -17,8 +17,9 @@ import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.handler.HandlerCollection;
+import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.mortbay.jetty.handler.DefaultHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
 
@@ -49,6 +50,8 @@ public class AdminConsolePlugin implements Plugin {
      * Create a Jetty module.
      */
     public AdminConsolePlugin() {
+        contexts = new ContextHandlerCollection();
+        
         // Configure Jetty logging to a more reasonable default.
         System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
@@ -125,7 +128,7 @@ public class AdminConsolePlugin implements Plugin {
             return;
         }
 
-        adminServer.setHandler(contexts);
+        adminServer.setHandlers(new Handler[] { contexts, new DefaultHandler() });
 
         try {
             adminServer.start();
@@ -161,8 +164,7 @@ public class AdminConsolePlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
 
-        contexts = new ContextHandlerCollection();
-        createWebAppContext(contexts);
+        createWebAppContext();
 
         startup();
     }
@@ -213,8 +215,8 @@ public class AdminConsolePlugin implements Plugin {
         }
     }
 
-    private void createWebAppContext(ContextHandlerCollection contexts) {
-        WebAppContext context;
+    private void createWebAppContext() {
+        Context context;
         // Add web-app. Check to see if we're in development mode. If so, we don't
         // add the normal web-app location, but the web-app in the project directory.
         if (Boolean.getBoolean("developmentMode")) {

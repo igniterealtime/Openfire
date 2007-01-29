@@ -6,7 +6,7 @@
     response.setContentType("application/x-download");
     response.setHeader("Content-Disposition","attachment;filename="+fileName+".xml");
     ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
-    byte[] content = plugin.exportUsersToFile();
+    byte[] content = plugin.exportUsersToByteArray();
     OutputStream os = response.getOutputStream();
     os.write(content);
     os.flush();

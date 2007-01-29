@@ -1,5 +1,5 @@
 <%@ page import="java.io.IOException,
-                 java.util.*,				 
+                 java.util.*,
                  org.jivesoftware.wildfire.plugin.ImportExportPlugin,
                  org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.util.ParamUtils"
@@ -85,13 +85,12 @@
 
 <form action="export-user-data.jsp?exportUsers" method="post">
 
-<fieldset>
-    <legend>Export Options</legend>
-    <div>
+<div class="jive-contentBoxHeader">Export Options</div>
+<div class="jive-contentBox">
     <p>
     Select the radio button next to the desired export option and then click on the Export button.
     </p>
-	
+    
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
@@ -112,10 +111,7 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
-
-<br><br>
+</div>
 
 <input type="submit" value="Export">
 </form>

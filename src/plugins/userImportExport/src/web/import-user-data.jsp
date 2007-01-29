@@ -10,7 +10,6 @@
 
 <%
     boolean importUsers = request.getParameter("importUsers") != null;
-    boolean success = request.getParameter("success") != null;
    
     ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
     List<String> duplicateUsers = new ArrayList<String>();
@@ -41,8 +40,8 @@
                     response.sendRedirect("import-user-data.jsp?success=true");
                     return;
                 }
-      			
-                errors.put("userAlreadyExists", "userAlreadyExists");
+                
+                errors.put("invalidUser", "invalidUser");
             }
             catch (MalformedURLException e) {
                 errors.put("IOException", "IOException");
@@ -80,8 +79,13 @@
                 Import failed.
             <% } else if (errors.containsKey("invalidUserFile")) { %>
                 The import file does not match the user schema.
-            <% } else if (errors.containsKey("userAlreadyExists")) { %>
-                The following users are already exist in the system and were not loaded:<br>
+            <% } else if (errors.containsKey("invalidUser")) { %>
+                
+                <% if (plugin.isUserProviderReadOnly()) { %>
+                   The following users did not exist in the system or have invalid username so their roster was not loaded:<br>
+                <% } else { %>
+                   The following users already exist in the system or have invalid username and were not loaded:<br>
+               <% } %>
             <%
                 Iterator iter = duplicateUsers.iterator();
                 while (iter.hasNext()) {
@@ -108,7 +112,11 @@
         <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">All users added successfully.</td>
+            <% if (plugin.isUserProviderReadOnly()) { %>
+               <td class="jive-icon-label">User roster data added successfully.</td>
+            <% } else { %>
+               <td class="jive-icon-label">All users added successfully.</td>
+            <% } %>
         </tr>
         </tbody>
     </table>
@@ -122,9 +130,8 @@ Use the form below to import a user data XML file.
 
 <form action="import-user-data.jsp?importUsers" method="post" enctype="multipart/form-data">
 
-<fieldset>
-    <legend>Import</legend>
-    <div>
+<div class="jive-contentBoxHeader">Import</div>
+<div class="jive-contentBox">
     <p>
     Choose a file to import:</p>
     <input type="file" name="thefile">
@@ -136,10 +143,7 @@ Use the form below to import a user data XML file.
     See the migration section of the <a href="../../plugin-admin.jsp?plugin=userimportexport&showReadme=true&decorator=none">readme</a> for details.
     </p>
     Replace Domain: <input type="text" size="20" maxlength="150" name="previousDomain" value=""/>
-   
-    </div>
-</fieldset>
-<br><br>
+</div>
 <input type="submit" value="Import">
 
 </form>

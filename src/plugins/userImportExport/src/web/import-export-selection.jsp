@@ -16,12 +16,6 @@
 
 <p>
 
-<% if (plugin.isUserProviderReadOnly()) { %>
-
-    Sorry, because you are using LDAP as your user store, this plugin will not work with your Wildfire installation.
-
-<% } else { %>
-
 The import and export functions allow you to read data into and write user
 data from your Wildfire installation.
 
@@ -30,7 +24,13 @@ data from your Wildfire installation.
     <li><a href="export-user-data.jsp">Export User Data</a></li>    
 </ul>
 
+<% if (plugin.isUserProviderReadOnly()) { %>
+
+   Note: because you are using a read-only user data store such as LDAP or POP3 you will only be able to import user roster data, not users themselves.
+   Please see the <a href="../../plugin-admin.jsp?plugin=userimportexport&showReadme=true&decorator=none">readme</a> for details.
+
 <% } %>
+</p>
 
 </body>
 </html>

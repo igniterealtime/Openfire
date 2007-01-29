@@ -609,6 +609,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     IQ result = IQ.createResultIQ(packet);
                     result.setError(Condition.bad_request);
                     reply.add(result);
+                    Message em = new Message();
+                    em.setType(Message.Type.error);
+                    em.setTo(packet.getFrom());
+                    em.setFrom(packet.getTo());
+                    em.setBody(LocaleUtils.getLocalizedString("gateway.base.registrationdeniedbyacls", "gateway"));
+                    reply.add(em);
                     return reply;
                 }
 
@@ -664,18 +670,36 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                         IQ eresult = IQ.createResultIQ(packet);
                         eresult.setError(Condition.bad_request);
                         reply.add(eresult);
+                        Message em = new Message();
+                        em.setType(Message.Type.error);
+                        em.setTo(packet.getFrom());
+                        em.setFrom(packet.getTo());
+                        em.setBody(LocaleUtils.getLocalizedString("gateway.base.registrationdeniednoacct", "gateway"));
+                        reply.add(em);
                     }
                     catch (IllegalAccessException e) {
                         Log.error("Someone who is not a user of this server tried to register with the transport: "+from);
                         IQ eresult = IQ.createResultIQ(packet);
                         eresult.setError(Condition.not_allowed);
                         reply.add(eresult);
+                        Message em = new Message();
+                        em.setType(Message.Type.error);
+                        em.setTo(packet.getFrom());
+                        em.setFrom(packet.getTo());
+                        em.setBody(LocaleUtils.getLocalizedString("gateway.base.registrationdeniedbyhost", "gateway"));
+                        reply.add(em);
                     }
                     catch (IllegalArgumentException e) {
                         Log.error("Someone attempted to register with the gateway with an invalid username: " + from);
                         IQ eresult = IQ.createResultIQ(packet);
                         eresult.setError(Condition.bad_request);
                         reply.add(eresult);
+                        Message em = new Message();
+                        em.setType(Message.Type.error);
+                        em.setTo(packet.getFrom());
+                        em.setFrom(packet.getTo());
+                        em.setBody(LocaleUtils.getLocalizedString("gateway.base.registrationdeniedbadusername", "gateway"));
+                        reply.add(em);
                     }
                 }
             }
@@ -701,6 +725,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     // We want to allow them to change settings if they are already registered.
                     result.setError(Condition.bad_request);
                     reply.add(result);
+                    Message em = new Message();
+                    em.setType(Message.Type.error);
+                    em.setTo(packet.getFrom());
+                    em.setFrom(packet.getTo());
+                    em.setBody(LocaleUtils.getLocalizedString("gateway.base.registrationdeniedbyacls", "gateway"));
+                    reply.add(em);
                     return reply;
                 }
 

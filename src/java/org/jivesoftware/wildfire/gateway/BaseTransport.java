@@ -1458,7 +1458,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     }
 
     /**
-     * Sends a simple message throught he component manager.
+     * Sends a simple message through he component manager.
      *
      * @param to Who the message is for.
      * @param from Who the message is from.

@@ -10,7 +10,7 @@
     <author>Daniel Henninger</author>
     <version>1.0 Beta 6b</version>
     <date>12/20/2006</date>
-    <minServerVersion>3.1.1</minServerVersion>
+    <minServerVersion>3.2.0</minServerVersion>
     <databaseKey>gateway</databaseKey>
     <databaseVersion>2</databaseVersion>
     <licenseType>gpl</licenseType>
@@ -33,3 +33,4 @@
         </tab>
     </adminconsole>
 </plugin>
+i

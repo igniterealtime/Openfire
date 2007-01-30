@@ -109,12 +109,13 @@ public class HttpBindServlet extends HttpServlet {
     private boolean isContinuation(HttpServletRequest request, HttpServletResponse response)
             throws IOException
     {
-        HttpConnection connection = (HttpConnection) request.getAttribute("request-connection");
-        if (connection == null) {
+        HttpSession session = (HttpSession) request.getAttribute("request-session");
+        if (session == null) {
             return false;
         }
-        synchronized (connection.getSession()) {
-            respond(response, connection);
+        synchronized (session) {
+            respond(response, session.getResponse((Long) request.getAttribute("request"))
+                    .getBytes("utf-8"));
         }
         return true;
     }
@@ -162,7 +163,8 @@ public class HttpBindServlet extends HttpServlet {
             else {
                 connection
                         .setContinuation(ContinuationSupport.getContinuation(request, connection));
-                request.setAttribute("request-connection", connection);
+                request.setAttribute("request-session", connection.getSession());
+                request.setAttribute("request", connection.getRequestId());
                 respond(response, connection);
             }
         }
@@ -218,7 +220,7 @@ public class HttpBindServlet extends HttpServlet {
         response.getOutputStream().write(content);
     }
 
-    private String createEmptyBody() {
+    private static String createEmptyBody() {
         Element body = DocumentHelper.createElement("body");
         body.addNamespace("", "http://jabber.org/protocol/httpbind");
         return body.asXML();

@@ -42,7 +42,7 @@ public class HttpSession extends ClientSession {
     private int wait;
     private int hold = 0;
     private String language;
-    private final Queue<HttpConnection> connectionQueue = new LinkedList<HttpConnection>();
+    private final List<HttpConnection> connectionQueue = new LinkedList<HttpConnection>();
     private final List<Deliverable> pendingElements = new ArrayList<Deliverable>();
     private final List<Deliverable> sentElements = new ArrayList<Deliverable>();
     private boolean isSecure;
@@ -296,12 +296,37 @@ public class HttpSession extends ClientSession {
 
     /**
      * Returns the time in milliseconds since the epoch that this session was last active. Activity
-     * is a request was either made or responded to.
+     * is a request was either made or responded to. If the session is currently active, meaning
+     * there are connections awaiting a response, the current time is returned.
      *
      * @return the time in milliseconds since the epoch that this session was last active.
      */
     public synchronized long getLastActivity() {
-        return lastActivity;
+        if (connectionQueue.size() <= 0) {
+            return lastActivity;
+        }
+        // The session is currently active, return the current time.
+        else {
+            return System.currentTimeMillis();
+        }
+    }
+
+    public String getResponse(long requestID) {
+        for (HttpConnection connection : connectionQueue) {
+            if (connection.getRequestId() == requestID) {
+                String response;
+                try {
+                    response = connection.getResponse();
+                }
+                catch (HttpBindTimeoutException e) {
+                    response = createEmptyBody();
+                }
+                connectionQueue.remove(connection);
+                fireConnectionClosed(connection);
+                return response;
+            }
+        }
+        throw new InternalError("Could not locate connection: " + requestID);
     }
 
     /**
@@ -393,11 +418,11 @@ public class HttpSession extends ClientSession {
             // With this connection we need to check if we will have too many connections open,
             // closing any extras.
             while (connectionQueue.size() >= hold) {
-                HttpConnection toClose = connectionQueue.remove();
+                HttpConnection toClose = connectionQueue.remove(0);
                 toClose.close();
                 fireConnectionClosed(toClose);
             }
-            connectionQueue.offer(connection);
+            connectionQueue.add(connection);
             fireConnectionOpened(connection);
         }
         lastRequestID = connection.getRequestId();
@@ -444,12 +469,11 @@ public class HttpSession extends ClientSession {
     private void deliver(Deliverable stanza) {
         String deliverable = createDeliverable(Arrays.asList(stanza));
         boolean delivered = false;
-        while (!delivered && connectionQueue.size() > 0) {
-            HttpConnection connection = connectionQueue.remove();
+        for (HttpConnection connection : connectionQueue) {
             try {
                 deliver(connection, deliverable);
                 delivered = true;
-                fireConnectionClosed(connection);
+                break;
             }
             catch (HttpConnectionClosedException e) {
                 /* Connection was closed, try the next one */
@@ -488,8 +512,7 @@ public class HttpSession extends ClientSession {
             failDelivery();
         }
 
-        while (connectionQueue.size() > 0) {
-            HttpConnection toClose = connectionQueue.remove();
+        for (HttpConnection toClose : connectionQueue) {
             toClose.close();
             fireConnectionClosed(toClose);
         }
@@ -509,6 +532,12 @@ public class HttpSession extends ClientSession {
             }
         }
         pendingElements.clear();
+    }
+
+    private static String createEmptyBody() {
+        Element body = DocumentHelper.createElement("body");
+        body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        return body.asXML();
     }
 
     /**

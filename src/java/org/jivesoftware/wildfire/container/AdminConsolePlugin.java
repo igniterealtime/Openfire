@@ -13,15 +13,15 @@ package org.jivesoftware.wildfire.container;
 import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.net.SSLConfig;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.jetty.Server;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.handler.DefaultHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.webapp.WebAppContext;
 
 import javax.net.ssl.SSLServerSocketFactory;
 import java.io.File;
@@ -71,6 +71,8 @@ public class AdminConsolePlugin implements Plugin {
         adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
         adminServer = new Server();
+        // Do not send Jetty info in HTTP headers
+        adminServer.setSendServerVersion(false);
 
         // Create connector for http traffic if it's enabled.
         if (adminPort > 0) {

@@ -143,6 +143,12 @@
 
             <decorator:body/>
 
+            <br/><br/>
+            <div align="center" style="font-size:smaller;">
+            <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>,
+            built by <a href="http://www.jivesoftware.com">Jive Software</a> with contributions
+            from the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+            </div>
         </td>
     </tr>
 </tbody>

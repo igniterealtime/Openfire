@@ -136,23 +136,30 @@
 
             <%-- Show bottom footer  --%>
             <br/><br/>
-            <div style="position:fixed;left:0;bottom:0;">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td width="163">&nbsp;</td><td align="center">
-            <div style="border-left:#B3D3F4 1px solid;
-                        border-right:#B3D3F4 1px solid;
-                        border-top:#B3D3F4 1px solid;
-                        width:500px;
-                        padding:5px;
-                        background-color:#EAF1F8;
-                        font-size:smaller;"
-            >
-                <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>,
-            built by <a href="http://www.jivesoftware.com">Jive Software</a> and the
-            <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+            <div width="100%" style="position:fixed;left:0;bottom:0;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="164">
+                    <img src="/images/blank.gif" width="164" height="1" alt="">
+                </td>
+                <td align="center">
+                <div style="border-left:#B3D3F4 1px solid;
+                            border-right:#B3D3F4 1px solid;
+                            border-top:#B3D3F4 1px solid;
+                            width:500px;
+                            padding:5px;
+                            background-color:#EAF1F8;
+                            font-size:smaller;"
+                >
+                    <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>,
+                built by <a href="http://www.jivesoftware.com">Jive Software</a> and the
+                <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+                </div>
+                </td>
+            </tr>
+            </table>
             </div>
-            </td></tr></table>
 
-            </div>
         </td>
     </tr>
 </tbody>

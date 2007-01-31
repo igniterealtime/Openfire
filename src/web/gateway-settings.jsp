@@ -545,7 +545,7 @@
 </head>
 
 <body>
-<p><fmt:message key="gateway.web.settings.instructions" />
+<p><fmt:message key="gateway.web.settings.instructions" /></p>
 
 <form action="" name="gatewayForm">
 
@@ -553,6 +553,13 @@
 <% icqSettings.printSettingsDialog(); %>
 <% ircSettings.printSettingsDialog(); %>    
 <% msnSettings.printSettingsDialog(); %>
+
+<br><br>
+
+<div id="jive-title"><fmt:message key="gateway.web.settings.unstable.title" /></div>
+
+<p><fmt:message key="gateway.web.settings.unstable.notice" /></p>
+
 <% yahooSettings.printSettingsDialog(); %>
 
 </form>

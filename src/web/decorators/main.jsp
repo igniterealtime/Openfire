@@ -50,13 +50,7 @@
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/scriptaculous.js"></script>
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/cookies.js"></script>
     <script language="JavaScript" type="text/javascript">
-    <!-- // code for window popups
-    function helpwin() {
-        var newwin = window.open('<%= path %>/help/index.html#<decorator:getProperty property="meta.helpPage" default=""/>',
-            'helpWindow','width=750,height=550,menubar=yes,location=no,personalbar=no,scrollbars=yes,resize=yes');
-        newwin.focus();
-    }
-    //-->
+
     </script>
     <script type="text/javascript" src="<%= path %>/js/behaviour.js"></script>
     <script type="text/javascript">
@@ -82,15 +76,12 @@
 <body id="jive-body">
 
 <div id="jive-header">
-	<div class="info">
-		<a href="#" onclick="helpwin();return false;"><img src="<%= path %>/images/header-help_new.gif" width="22" height="22" border="0" alt="Click for help"></a><br>
-		<%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>
-	</div>
 	<div id="jive-logo-image_new">
 		<strong>Administration Console</strong>
 	</div>
 	<div id="jive-logout" style="float: right;">
-		<a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) %>]</a>
+
+        <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) %>]</a>
 	</div>
 	<div id="jive-tabs">
 		<admin:tabs css="" currentcss="currentlink">
@@ -143,11 +134,24 @@
 
             <decorator:body/>
 
+            <%-- Show bottom footer  --%>
             <br/><br/>
-            <div align="center" style="font-size:smaller;">
-            <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>,
-            built by <a href="http://www.jivesoftware.com">Jive Software</a> with contributions
-            from the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+            <div style="position:fixed;left:0;bottom:0;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td width="163">&nbsp;</td><td align="center">
+            <div style="border-left:#B3D3F4 1px solid;
+                        border-right:#B3D3F4 1px solid;
+                        border-top:#B3D3F4 1px solid;
+                        width:500px;
+                        padding:5px;
+                        background-color:#EAF1F8;
+                        font-size:smaller;"
+            >
+                <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>,
+            built by <a href="http://www.jivesoftware.com">Jive Software</a> and the
+            <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+            </div>
+            </td></tr></table>
+
             </div>
         </td>
     </tr>

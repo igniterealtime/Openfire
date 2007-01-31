@@ -349,8 +349,9 @@ public class XMPPServer {
                             // Otherwise, the page that requested the setup finish won't
                             // render properly!
                             Thread.sleep(1000);
-                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
-                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
+                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
+//                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
+//                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
                         }
 
                         verifyDataSource();

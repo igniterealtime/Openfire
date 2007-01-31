@@ -142,6 +142,16 @@ public class Version {
      * are indicated by type safe enum constants.
      */
     public enum ReleaseStatus {
-        Release, Release_Candidate, Beta, Alpha
+        Release(""), Release_Candidate("RC"), Beta("Beta"), Alpha("Alpha");
+
+        private String status;
+
+        private ReleaseStatus(String status) {
+            this.status = status;
+        }
+
+        public String toString() {
+            return status;
+        }
     }
 }

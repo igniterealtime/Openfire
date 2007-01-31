@@ -57,7 +57,6 @@
         user = webManager.getUserManager().getUser(username);
     }
     catch (UserNotFoundException unfe) {
-        user = webManager.getUserManager().getUser(username);
     }
 
     PresenceManager presenceManager = webManager.getPresenceManager();
@@ -114,6 +113,15 @@
     </tr>
 </thead>
 <tbody>
+    <% if (user == null) { %>
+    <tr>
+        <td colspan="2" align="center">
+            <fmt:message key="error.specific_user_not_found">
+                <fmt:param value="<%= username%>" />
+            </fmt:message>
+        </td>
+    </tr>
+    <% } else { %>
     <tr>
         <td class="c1">
             <fmt:message key="user.create.username" />:
@@ -221,13 +229,14 @@
             %>
         </td>
     </tr>
+    <% } %>
 </tbody>
 </table>
 </div>
 
 <br><br>
 
-<% if (!UserManager.getUserProvider().isReadOnly()) { %>
+<% if (user != null && !UserManager.getUserProvider().isReadOnly()) { %>
 
 <form action="user-edit-form.jsp">
 <input type="hidden" name="username" value="<%= user.getUsername() %>">

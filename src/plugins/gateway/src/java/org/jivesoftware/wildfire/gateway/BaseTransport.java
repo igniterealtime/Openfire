@@ -16,6 +16,7 @@ import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -834,7 +835,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @return The legacy username as a JID.
      */
     public JID convertIDToJID(String username) {
-        return new JID(JID.escapeNode(username), this.jid.getDomain(), null);
+        if (JiveGlobals.getBooleanProperty("plugin.gateway.tweak.percenthack", false)) {
+            return new JID(username.replace('@', '%').replace(" ", ""), this.jid.getDomain(), null);
+        }
+        else {
+            return new JID(JID.escapeNode(username.replace(" ", "")), this.jid.getDomain(), null);
+        }
     }
 
     /**
@@ -844,7 +850,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      * @return THe legacy username as a String.
      */
     public String convertJIDToID(JID jid) {
-        return JID.unescapeNode(jid.getNode());
+        if (JiveGlobals.getBooleanProperty("plugin.gateway.tweak.percenthack", false)) {
+            return jid.getNode().replace('%', '@');
+        }
+        else {
+            return JID.unescapeNode(jid.getNode());
+        }
     }
 
     /**

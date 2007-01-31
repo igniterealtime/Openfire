@@ -1,3 +1,27 @@
+* html #footer {
+	margin: -30px 0 0 0;
+	}
+* html #main {
+	height: 100%;
+	}
+
+html {
+	height: 100%;
+	}
+body {
+	padding: 0;
+	margin: 0;
+	height: 100%;
+	}
+
+#main {
+	min-height:100%;
+	}
+
+#jive-main {
+    padding-bottom: 20px;
+    }
+
 BODY, DIV, P, TD, TH {
     font-family : arial, helvetica, sans-serif;
     font-size : 100%;
@@ -862,4 +886,33 @@ th.jive-table-th-center {
     background: transparent url(../images/success-16x16.gif) no-repeat left;
     color: #106600;
     padding-left: 20px;
+    }
+
+
+#footer {
+	position: relative;
+    width: 100%;
+	height: 30px;
+    background-image : url("../images/page-background_new.gif");
+    background-repeat : repeat-y;
+    margin-top: -30px;
+    }
+#footer_padding {
+    text-align: center;
+    padding-left: 165px;
+    }
+
+#footer_content {
+    width: 500px;
+    padding: 0;
+    height: 29px;
+    margin: 0 auto;
+    background-color: #eaf1f8;
+	border: 1px solid #b3d3f4;
+	border-bottom: none;
+	font-size: 8pt;
+    }
+#footer_content span {
+    display: block;
+    padding: 7px;
     }

@@ -203,6 +203,22 @@ public class AdminConsolePlugin implements Plugin {
         return adminSecurePort;
     }
 
+    /**
+     * Returns the collection of Jetty contexts used in the admin console. A root context "/"
+     * is where the admin console lives. Additional contexts can be added dynamically for
+     * other web applications that should be run as part of the admin console server
+     * process. The following pseudo code demonstrates how to do this:
+     *
+     * <pre>
+     *   ContextHandlerCollection contexts = ((AdminConsolePlugin)pluginManager.getPlugin("admin")).getContexts();
+     *   context = new WebAppContext(SOME_DIRECTORY, "/CONTEXT_NAME");
+     *   contexts.addHandler(context);
+     *   context.setWelcomeFiles(new String[]{"index.jsp"});
+     *   context.start();
+     * </pre>
+     *
+     * @return the Jetty handlers.
+     */
     public ContextHandlerCollection getContexts() {
         return contexts;
     }

@@ -75,96 +75,86 @@
 
 <body id="jive-body">
 
-<div id="jive-header">
-	<div id="jive-logo-image_new">
-		<strong>Administration Console</strong>
-	</div>
-	<div id="jive-logout" style="float: right;">
+<!-- BEGIN main -->
+<div id="main">
 
-        <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) %>]</a>
-	</div>
-	<div id="jive-tabs">
-		<admin:tabs css="" currentcss="currentlink">
-		<a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
-		</admin:tabs>
-	</div>
-	<div id="sidebar-top"></div>
-</div>
+    <div id="jive-header">
+        <div id="jive-logo-image_new">
+            <strong>Administration Console</strong>
+        </div>
+        <div id="jive-logout" style="float: right;">
 
-<%--
-<div id="jive-secondary">
-    <ul>
-        <li><a href="">Server Manager</a></li>
-        <li><a href="">Server Settings</a></li>
-    </ul>
-</div>
---%>
+            <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) %>]</a>
+        </div>
+        <div id="jive-tabs">
+            <admin:tabs css="" currentcss="currentlink">
+            <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
+            </admin:tabs>
+        </div>
+        <div id="sidebar-top"></div>
+    </div>
 
-<div id="jive-main">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tbody>
-    <tr valign="top">
-        <td width="1%" id="jive-sidebar-box">
-            <div id="jive-sidebar">
-                <admin:sidebar css="" currentcss="currentlink" headercss="category">
-                    <a href="[url]" title="[description]"
-                      onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                      >[name]</a>
-                     <admin:subsidebar css="" currentcss="currentlink">
+    <%--
+    <div id="jive-secondary">
+        <ul>
+            <li><a href="">Server Manager</a></li>
+            <li><a href="">Server Settings</a></li>
+        </ul>
+    </div>
+    --%>
+
+    <div id="jive-main">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr valign="top">
+            <td width="1%" id="jive-sidebar-box">
+                <div id="jive-sidebar">
+                    <admin:sidebar css="" currentcss="currentlink" headercss="category">
                         <a href="[url]" title="[description]"
-                         onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                         >[name]</a>
-                     </admin:subsidebar>
-                </admin:sidebar>
-                <br>
-                <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
-            </div>
-        </td>
-        <td width="99%" id="jive-content">
-
-            <%  if (message != null) { %>
-
-                <%= message %>
-
-            <%  } %>
-
-            <div id="jive-title">
-                <decorator:title default="&nbsp;"/>
-            </div>
-
-            <decorator:body/>
-
-            <%-- Show bottom footer  --%>
-            <br/><br/>
-            <div width="100%" style="position:fixed;left:0;bottom:0;">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tr>
-                <td width="164">
-                    <img src="/images/blank.gif" width="164" height="1" alt="">
-                </td>
-                <td align="center">
-                <div style="border-left:#B3D3F4 1px solid;
-                            border-right:#B3D3F4 1px solid;
-                            border-top:#B3D3F4 1px solid;
-                            width:500px;
-                            padding:5px;
-                            background-color:#EAF1F8;
-                            font-size:smaller;"
-                >
-                    <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>,
-                built by <a href="http://www.jivesoftware.com">Jive Software</a> and the
-                <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+                          onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                          >[name]</a>
+                         <admin:subsidebar css="" currentcss="currentlink">
+                            <a href="[url]" title="[description]"
+                             onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                             >[name]</a>
+                         </admin:subsidebar>
+                    </admin:sidebar>
+                    <br>
+                    <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
                 </div>
-                </td>
-            </tr>
-            </table>
-            </div>
+            </td>
+            <td width="99%" id="jive-content">
 
-        </td>
-    </tr>
-</tbody>
-</table>
+                <%  if (message != null) { %>
+
+                    <%= message %>
+
+                <%  } %>
+
+                <div id="jive-title">
+                    <decorator:title default="&nbsp;"/>
+                </div>
+
+                <decorator:body/>
+
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+
 </div>
+<!-- END main -->
+
+<!-- BEGIN footer -->
+	<div id="footer">
+        <div id="footer_padding">
+        <div id="footer_content">
+			<span><%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>, built by <a href="http://www.jivesoftware.com">Jive Software</a> and the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community</span>
+		</div>
+        </div>
+    </div>
+<!-- END footer -->
 
 </body>
 </html>

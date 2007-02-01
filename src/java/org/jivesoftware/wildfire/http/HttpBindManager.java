@@ -67,9 +67,9 @@ public final class HttpBindManager {
 
     private HttpBindManager() {
         // Configure Jetty logging to a more reasonable default.
-//        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
+        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
 //        // JSP 2.0 uses commons-logging, so also override that implementation.
-//        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
 
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();

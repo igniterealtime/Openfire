@@ -13,6 +13,9 @@ package org.jivesoftware.wildfire.http;
 
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.mortbay.jetty.handler.DefaultHandler;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -55,6 +58,8 @@ public final class HttpBindManager {
     private CertificateListener certificateListener;
 
     private HttpSessionManager httpSessionManager;
+    
+    private ContextHandlerCollection contexts;
 
     public static HttpBindManager getInstance() {
         return instance;
@@ -62,12 +67,13 @@ public final class HttpBindManager {
 
     private HttpBindManager() {
         // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
-        // JSP 2.0 uses commons-logging, so also override that implementation.
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
+//        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
+//        // JSP 2.0 uses commons-logging, so also override that implementation.
+//        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
 
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();
+        contexts = new ContextHandlerCollection();
     }
 
     public void start() {
@@ -254,15 +260,19 @@ public final class HttpBindManager {
         if (httpsConnector != null) {
             httpBindServer.addConnector(httpsConnector);
         }
-
-        httpBindServer.addHandler(createWebAppContext());
+        createWebAppContext();
+        httpBindServer.setHandlers(new Handler[] { contexts, new DefaultHandler() });
     }
 
     private WebAppContext createWebAppContext() {
-        WebAppContext context = new WebAppContext(JiveGlobals.getHomeDirectory() + File.separator +
-                                    "resources" + File.separator + "spank", "/");
+        WebAppContext context = new WebAppContext(contexts, JiveGlobals.getHomeDirectory() +
+                File.separator + "resources" + File.separator + "spank", "/");
         context.setWelcomeFiles(new String[]{"index.html"});
         return context;
+    }
+
+    public ContextHandlerCollection getContexts() {
+        return contexts;
     }
 
     private void doEnableHttpBind(boolean shouldEnable) {

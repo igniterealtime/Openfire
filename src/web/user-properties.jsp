@@ -101,6 +101,19 @@
     </table>
     </div><br>
 
+<% } else if (user == null) { %>
+    <div class="warning">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+        <td class="jive-icon-label">
+            <fmt:message key="error.specific_user_not_found">
+                <fmt:param value="<%= username%>" />
+            </fmt:message>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 <%  } %>
 
 <div class="jive-table">
@@ -116,9 +129,7 @@
     <% if (user == null) { %>
     <tr>
         <td colspan="2" align="center">
-            <fmt:message key="error.specific_user_not_found">
-                <fmt:param value="<%= username%>" />
-            </fmt:message>
+            <fmt:message key="error.requested_user_not_found" />
         </td>
     </tr>
     <% } else { %>

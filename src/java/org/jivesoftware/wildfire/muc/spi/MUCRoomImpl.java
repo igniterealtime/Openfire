@@ -13,10 +13,7 @@ package org.jivesoftware.wildfire.muc.spi;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.PacketRouter;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.muc.*;
@@ -141,7 +138,7 @@ public class MUCRoomImpl implements MUCRoom {
     /**
      * Indicates if occupants are allowed to change the subject of the room. 
      */
-    private boolean canOccupantsChangeSubject = false;
+    private boolean canOccupantsChangeSubject = JiveGlobals.getBooleanProperty("muc.room.canOccupantsChangeSubject", false);
 
     /**
      * Maximum number of occupants that could be present in the room. If the limit's been reached
@@ -159,32 +156,32 @@ public class MUCRoomImpl implements MUCRoom {
      * A public room means that the room is searchable and visible. This means that the room can be
      * located using disco requests.
      */
-    private boolean publicRoom = true;
+    private boolean publicRoom = JiveGlobals.getBooleanProperty("muc.room.publicRoom", true);
 
     /**
      * Persistent rooms are saved to the database to make sure that rooms configurations can be
      * restored in case the server goes down.
      */
-    private boolean persistent = false;
+    private boolean persistent = JiveGlobals.getBooleanProperty("muc.room.persistent", false);
 
     /**
      * Moderated rooms enable only participants to speak. Users that join the room and aren't
      * participants can't speak (they are just visitors).
      */
-    private boolean moderated = false;
+    private boolean moderated = JiveGlobals.getBooleanProperty("muc.room.moderated", false);
 
     /**
      * A room is considered members-only if an invitation is required in order to enter the room.
      * Any user that is not a member of the room won't be able to join the room unless the user
      * decides to register with the room (thus becoming a member).
      */
-    private boolean membersOnly = false;
+    private boolean membersOnly = JiveGlobals.getBooleanProperty("muc.room.membersOnly", false);
 
     /**
      * Some rooms may restrict the occupants that are able to send invitations. Sending an 
      * invitation in a members-only room adds the invitee to the members list.
      */
-    private boolean canOccupantsInvite = false;
+    private boolean canOccupantsInvite = JiveGlobals.getBooleanProperty("muc.room.canOccupantsInvite", false);
 
     /**
      * The password that every occupant should provide in order to enter the room.
@@ -195,31 +192,31 @@ public class MUCRoomImpl implements MUCRoom {
      * Every presence packet can include the JID of every occupant unless the owner deactives this
      * configuration. 
      */
-    private boolean canAnyoneDiscoverJID = false;
+    private boolean canAnyoneDiscoverJID = JiveGlobals.getBooleanProperty("muc.room.canAnyoneDiscoverJID", true);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean logEnabled = false;
+    private boolean logEnabled = JiveGlobals.getBooleanProperty("muc.room.logEnabled", false);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean loginRestrictedToNickname = false;
+    private boolean loginRestrictedToNickname = JiveGlobals.getBooleanProperty("muc.room.loginRestrictedToNickname", false);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean canChangeNickname = true;
+    private boolean canChangeNickname = JiveGlobals.getBooleanProperty("muc.room.canChangeNickname", true);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean registrationEnabled = true;
+    private boolean registrationEnabled = JiveGlobals.getBooleanProperty("muc.room.registrationEnabled", true);
 
     /**
      * Internal component that handles IQ packets sent by the room owners.

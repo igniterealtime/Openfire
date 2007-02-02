@@ -117,6 +117,10 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         return false;
     }
 
+    boolean validateJIDs() {
+        return false;
+    }
+
     boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {

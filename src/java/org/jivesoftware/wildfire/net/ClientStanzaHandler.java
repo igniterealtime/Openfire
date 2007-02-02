@@ -59,6 +59,10 @@ public class ClientStanzaHandler extends StanzaHandler {
         return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
     }
 
+    boolean validateJIDs() {
+        return true;
+    }
+
     boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if ("jabber:client".equals(namespace)) {

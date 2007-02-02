@@ -164,7 +164,7 @@ public abstract class StanzaHandler {
         if ("message".equals(tag)) {
             Message packet;
             try {
-                packet = new Message(doc, true);
+                packet = new Message(doc, !validateJIDs());
             }
             catch(IllegalArgumentException e) {
                 Log.debug("Rejecting packet. JID malformed", e);
@@ -182,7 +182,7 @@ public abstract class StanzaHandler {
         else if ("presence".equals(tag)) {
             Presence packet;
             try {
-                packet = new Presence(doc, true);
+                packet = new Presence(doc, !validateJIDs());
             }
             catch (IllegalArgumentException e) {
                 Log.debug("Rejecting packet. JID malformed", e);
@@ -263,7 +263,7 @@ public abstract class StanzaHandler {
             return new Roster(doc);
         }
         else {
-            return new IQ(doc, true);
+            return new IQ(doc, !validateJIDs());
         }
     }
 
@@ -618,6 +618,16 @@ public abstract class StanzaHandler {
      *         validated.
      */
     abstract boolean validateHost();
+
+    /**
+     * Returns true if the value of the 'to' attribute of {@link IQ}, {@link Presence} and
+     * {@link Message} must be validated. Connection Managers perform their own
+     * JID validation so there is no need to validate JIDs again but when clients are
+     * directly connected to the server then we need to validate JIDs.
+     *
+     * @return rue if the value of the 'to' attribute of IQ, Presence and Messagemust be validated.
+     */
+    abstract boolean validateJIDs();
 
     /**
      * Creates the appropriate {@link Session} subclass based on the specified namespace.

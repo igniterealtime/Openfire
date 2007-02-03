@@ -95,6 +95,24 @@ public class ServerTrafficCounter {
         return new WritableByteChannelWrapper(originalChannel);
     }
 
+    /**
+     * Increments the counter of read bytes by delta.
+     *
+     * @param delta the delta of bytes that were read.
+     */
+    public static void incrementIncomingCounter(long delta) {
+        incomingCounter.getAndAdd(delta);
+    }
+
+    /**
+     * Increments the counter of written bytes by delta.
+     *
+     * @param delta the delta of bytes that were written.
+     */
+    public static void incrementOutgoingCounter(long delta) {
+        outgoingCounter.getAndAdd(delta);
+    }
+
     private static void addReadBytesStat() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
@@ -166,7 +184,7 @@ public class ServerTrafficCounter {
         public int read() throws IOException {
             int readByte = originalStream.read();
             if (readByte > -1) {
-                incomingCounter.incrementAndGet();
+                incrementIncomingCounter(1);
             }
             return readByte;
         }
@@ -174,7 +192,7 @@ public class ServerTrafficCounter {
         public int read(byte b[]) throws IOException {
             int bytes = originalStream.read(b);
             if (bytes > -1) {
-                incomingCounter.getAndAdd(bytes);
+                incrementIncomingCounter(bytes);
             }
             return bytes;
         }
@@ -182,7 +200,7 @@ public class ServerTrafficCounter {
         public int read(byte b[], int off, int len) throws IOException {
             int bytes = originalStream.read(b, off, len);
             if (bytes > -1) {
-                incomingCounter.getAndAdd(bytes);
+                incrementIncomingCounter(bytes);
             }
             return bytes;
         }
@@ -229,21 +247,21 @@ public class ServerTrafficCounter {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
-            outgoingCounter.incrementAndGet();
+            incrementOutgoingCounter(1);
         }
 
         public void write(byte b[]) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
-            outgoingCounter.getAndAdd(b.length);
+            incrementOutgoingCounter(b.length);
         }
 
         public void write(byte b[], int off, int len) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b, off, len);
             // update outgoingCounter
-            outgoingCounter.getAndAdd(b.length);
+            incrementOutgoingCounter(b.length);
         }
 
         public void close() throws IOException {
@@ -268,7 +286,7 @@ public class ServerTrafficCounter {
         public int read(ByteBuffer dst) throws IOException {
             int bytes = originalChannel.read(dst);
             if (bytes > -1) {
-                incomingCounter.getAndAdd(bytes);
+                incrementIncomingCounter(bytes);
             }
             return bytes;
         }
@@ -302,7 +320,7 @@ public class ServerTrafficCounter {
 
         public int write(ByteBuffer src) throws IOException {
             int bytes = originalChannel.write(src);
-            outgoingCounter.getAndAdd(bytes);
+            incrementOutgoingCounter(bytes);
             return bytes;
         }
     }

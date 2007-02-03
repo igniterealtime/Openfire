@@ -17,6 +17,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Connection;
 import org.jivesoftware.wildfire.net.MXParser;
+import org.jivesoftware.wildfire.net.ServerTrafficCounter;
 import org.jivesoftware.wildfire.net.StanzaHandler;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -105,7 +106,6 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     }
 
     public void messageReceived(IoSession session, Object message) throws Exception {
-        //System.out.println("RCVD: " + message);
         // Get the stanza handler for this session
         StanzaHandler handler = (StanzaHandler) session.getAttribute(HANDLER);
         // Get the parser to use to process stanza. For optimization there is going
@@ -119,6 +119,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             parser.setXPPFactory(factory);
             parsers.put(hashCode, parser);
         }
+        // Update counter of read btyes
+        updateReadBytesCounter(session);
         // Let the stanza handler process the received stanza
         try {
             handler.process((String) message, parser);
@@ -127,6 +129,12 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             Connection connection = (Connection) session.getAttribute(CONNECTION);
             connection.close();
         }
+    }
+
+    public void messageSent(IoSession session, Object message) throws Exception {
+        super.messageSent(session, message);
+        // Update counter of written btyes
+        updateWrittenBytesCounter(session);
     }
 
     abstract NIOConnection createNIOConnection(IoSession session);
@@ -140,4 +148,44 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
      * @return the max number of seconds a connection can be idle.
      */
     abstract int getMaxIdleTime();
+
+    /**
+     * Updates the system counter of read bytes. This information is used by the incoming
+     * bytes statistic.
+     *
+     * @param session the session that read more bytes from the socket.
+     */
+    private void updateReadBytesCounter(IoSession session) {
+        long currentBytes = session.getReadBytes();
+        Long prevBytes = (Long) session.getAttribute("_read_bytes");
+        long delta;
+        if (prevBytes == null) {
+            delta = currentBytes;
+        }
+        else {
+            delta = currentBytes - prevBytes;
+        }
+        session.setAttribute("_read_bytes", currentBytes);
+        ServerTrafficCounter.incrementIncomingCounter(delta);
+    }
+
+    /**
+     * Updates the system counter of written bytes. This information is used by the outgoing
+     * bytes statistic.
+     *
+     * @param session the session that wrote more bytes to the socket.
+     */
+    private void updateWrittenBytesCounter(IoSession session) {
+        long currentBytes = session.getWrittenBytes();
+        Long prevBytes = (Long) session.getAttribute("_written_bytes");
+        long delta;
+        if (prevBytes == null) {
+            delta = currentBytes;
+        }
+        else {
+            delta = currentBytes - prevBytes;
+        }
+        session.setAttribute("_written_bytes", currentBytes);
+        ServerTrafficCounter.incrementOutgoingCounter(delta);
+    }
 }

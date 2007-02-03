@@ -211,7 +211,6 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                //System.out.println("SENT: " + doc.asXML());
                 ioSession.write(buffer);
             }
             catch (Exception e) {
@@ -241,7 +240,6 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                //System.out.println("SENT: " + text);
                 ioSession.write(buffer);
             }
             catch (Exception e) {

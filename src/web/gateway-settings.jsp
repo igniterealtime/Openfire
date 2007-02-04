@@ -439,6 +439,10 @@
         Effect.Fade(transportID+"testsresults");
     }
 
+    var lastUserList;
+    var lastGroupList;
+    var lastTransportID;
+
     function savePermissions(transportID) {
         var userEntry = DWRUtil.getValue(transportID+"userpermentry");
         var groupEntry = DWRUtil.getValue(transportID+"grouppermentry");
@@ -455,9 +459,60 @@
         }
         var userList = userEntry.split(/\s+/);
         var groupList = groupEntry.split(/\s+/);
-        ConfigManager.savePermissions(transportID, globalSetting, userList, groupList);
-        document.getElementById(transportID+"userpermtext").innerHTML = userList.join(" ");
-        document.getElementById(transportID+"grouppermtext").innerHTML = groupList.join(" ");
+        lastUserList = userList;
+        lastGroupList = groupList;
+        lastTransportID = transportID;
+        ConfigManager.savePermissions(transportID, globalSetting, userList, groupList, cb_savePermissions);
+    }
+
+    function cb_savePermissions(errorList) {
+        var userList = lastUserList;
+        var groupList = lastGroupList;
+        var transportID = lastTransportID;
+        if (errorList != null && errorList.length > 0) {
+            var errUsers = new Array();
+            var errGroups = new Array();
+            for (i = 0; i < errorList.length; i++) {
+                if (errorList[i].charAt(0) == "@") {
+                    var grpName = errorList[i].substr(1, (errorList[i].length-1));
+                    errGroups.push(grpName);
+                    for (j = 0; j < groupList.length; j++) {
+                        if (groupList[j] == grpName) {
+                            groupList.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+                else {
+                    var userName = errorList[i];
+                    errUsers.push(userName);
+                    for (j = 0; j < userList.length; j++) {
+                        if (userList[j] == userName) {
+                            userList.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+            var errMsg = "";
+            if (errUsers.length > 0) {
+                errMsg = errMsg + "\nThe following users were not valid and were ignored:\n" + errUsers.join("\n") + "\n";
+            }
+            if (errGroups.length > 0) {
+                errMsg = errMsg + "\nThe following groups were not valid and were ignored:\n" + errGroups.join("\n") + "\n";
+            }
+            alert(errMsg);
+        }
+        for (i = 0; i < userList.length; i++) {
+            var charPos = userList[i].indexOf("@");
+            if (charPos >= 0) {
+                userList[i] = userList[i].substr(0, charPos);
+            }
+        }
+        document.getElementById(transportID+"userpermtext").innerHTML = (userList.length > 0 ? userList.join(" ") : "[none selected]");
+        document.getElementById(transportID+"userpermentry").value = userList.join(" ");
+        document.getElementById(transportID+"grouppermtext").innerHTML = (groupList.length > 0 ? groupList.join(" ") : "[none selected]");
+        document.getElementById(transportID+"grouppermentry").value = groupList.join(" ");
         deactivateModifyUsers(transportID);
         deactivateModifyGroups(transportID);
         document.getElementById(transportID+"permsresults").style.display = "";

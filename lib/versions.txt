@@ -4,9 +4,9 @@ cindy.jar              | 2.4.4
 dwr.jar                | 1.1.1 (patched [#3])
 irclib.jar             | 1.10
 jml.jar                | svn-20061216
-joscar-client.jar      | svn-20061110 (patched [#2])
-joscar-common.jar      | svn-20061110
-joscar-protocol.jar    | svn-20061110 (patched [#2])
+joscar-client.jar      | svn-20070204 (patched [#2])
+joscar-common.jar      | svn-20070204
+joscar-protocol.jar    | svn-20070204 (patched [#2])
 picocontainer.jar      | 1.2.0
 ymsg_network.jar       | 0.61 (patched [#1])
 ymsg_support.jar       | 0.61 (patched [#1])
@@ -23,8 +23,8 @@ Patch Descriptions
   http://sourceforge.net/tracker/download.php?group_id=76691&atid=547951&file_id=156956&aid=1362244
   
 2) joscar patches
-- applied patches from nikitine to provide support for setting default encoding
-  http://groups.google.com/group/joscar-discuss/browse_thread/thread/96fade8cc1fc220e/97d042138818c3d9#97d042138818c3d9
+- applied patches from Damian Minkov for numerous ICQ fixes
+  http://groups.google.com/group/joscar-discuss/browse_thread/thread/e73fd2a3011cd0df
 
 3) dwr patches
 - Derek did something to DWR itself to make it work, I don't have details

@@ -25,9 +25,11 @@ import org.jivesoftware.util.JiveGlobals;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Attribute;
+import org.xmpp.packet.JID;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Transport Configuration Manager (for web interface)
@@ -146,22 +148,31 @@ public class ConfigManager {
      * @param overallSetting The general "all(1), some(2), or none(3)" setting for the permissions.
      * @param users List of specific users that have access.
      * @param groups List of specific groups that have access.
+     * @return List of usernames and groups (@ preceded) that were rejected.
      */
-    public void savePermissions(String transportName, Integer overallSetting, ArrayList<String> users, ArrayList<String> groups) {
+    public List<String> savePermissions(String transportName, Integer overallSetting, List<String> users, List<String> groups) {
         JiveGlobals.setProperty("plugin.gateway."+transportName+".registration", overallSetting.toString());
         PermissionManager permissionManager = new PermissionManager(TransportType.valueOf(transportName));
-
+        List<String> errorList = new ArrayList<String>();
         ArrayList<User> userList = new ArrayList<User>();
         UserManager userManager = UserManager.getInstance();
         for (String username : users) {
-            if (username.matches("\\s+")) { continue; }
+            if (username.matches("\\s*")) { continue; }
             try {
+                if (username.contains("@")) {
+                    JID jid = new JID(username);
+                    if (!jid.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                        throw new UserNotFoundException();
+                    }
+                    username = username.substring(0, username.indexOf("@"));
+                }
                 User user = userManager.getUser(username);
                 if (user == null || user.getUsername() == null) { throw new UserNotFoundException(); }
                 userList.add(user);
             }
             catch (UserNotFoundException e) {
                 Log.warn("User "+username+" not found while adding access rules.");
+                errorList.add(username);
             }
         }
         permissionManager.storeUserList(userList);
@@ -169,7 +180,7 @@ public class ConfigManager {
         ArrayList<Group> groupList = new ArrayList<Group>();
         GroupManager groupManager = GroupManager.getInstance();
         for (String grpname : groups) {
-            if (grpname.matches("\\s+")) { continue; }
+            if (grpname.matches("\\s*")) { continue; }
             try {
                 Group group = groupManager.getGroup(grpname);
                 if (group == null || group.getName() == null) { throw new GroupNotFoundException(); }
@@ -177,9 +188,12 @@ public class ConfigManager {
             }
             catch (GroupNotFoundException e) {
                 Log.warn("Group "+grpname+" not found while adding access rules.");
+                errorList.add("@"+grpname);
             }
         }
         permissionManager.storeGroupList(groupList);
+
+        return errorList;
     }
 
 }

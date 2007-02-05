@@ -163,79 +163,19 @@ hr {
 
 
 
-<h2>3.2.0 RC 2 -- <span style="font-weight: normal;">January 31, 2007</span></h2>
-
-<h3>Wildfire New Features</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-948'>JM-948</a>] - Updated truststore with Java 6 built-in certificates.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-946'>JM-946</a>] - Removed Jetty information from HTTP headers.</li>
-</ul>
-
-<h3>Wildfire Bug Fixes</h3>
-<ul>
-<li>Flash clients can now connect to the server.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-945'>JM-945</a>] - Clients were being disconnected prematurely when HTTP binding wait exceded session timeout.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-947'>JM-947</a>] - A nice error message is now displayed when trying to view user properties of a non-existent user.</li>
-</ul>
-
-<h3>Wildfire Enterprise</h3>
-<ul>
-<li>Webchat.war can again be deployed as a Wildfire plugin.</li>
-<li>SIP pages were added to the admin console.</li>
-</ul>
-
-<h3>Wildfire Connection Manager Module</h3>
-<ul>
-<li>Flash clients can now connect to the server.</li>
-</ul>
-
-<h2>3.2.0 RC -- <span style="font-weight: normal;">January 25, 2007</span></h2>
-
-<h3>Wildfire New Features</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-925'>JM-925</a>] - Improved scalability of Wildfire.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-936'>JM-936</a>] - Added STUN server support.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-937'>JM-937</a>] - Added Media Proxy for Jingle.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-941'>JM-941</a>] - Allowed to set read timeout when connected to LDAP (requires Java 1.6).</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-912'>JM-912</a>] - Added listener for offline messages. <b>(1 vote)</b></li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-944'>JM-944</a>] - Bundled root certificate of XMPP Intermediate Certificate Authority.</li>
-</ul>
-
-<h3>Wildfire Bug Fixes</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-943'>JM-943</a>] - Messages with no body and no subject were being store in rooms' history.</li>
-<li>Fixed interface binding for client-to-server connections.</li>
-<li>Trillian clients can now connect to the server.</li>
-<li>Gaim clients can now connect to the server.</li>
-<li>Connection was getting closed when parsing large packets.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-940'>JM-940</a>] - Fixed NPE in server certificates page.</li>
-<li>Wildfire 3.2.0 can be run again using Java 5.</li>
-</ul>
-
-<h3>Wildfire Enterprise</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-50'>ENT-50</a>] - Added support for phone registration.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-35'>ENT-35</a>] - Archiving was only done one-way with gateways.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-44'>ENT-44</a>] - Added support for transfering support session to another workgroup, queue, agent or user.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-56'>ENT-56</a>] - Warning message is now displayed when license is about to expire (30 days).</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-54'>ENT-54</a>] - Added support for iq:version to components to discover Wildfire version.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-55'>ENT-55</a>] - Changed license validation to validate maintenance date.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-45'>ENT-45</a>] - Moved invitation logic to the server.</li>
-</ul>
-
-<h3>Wildfire Connection Manager Module</h3>
-<ul>
-<li>Trillian clients can now connect to the server.</li>
-<li>Gaim clients can now connect to the server.</li>
-<li>Connection was getting closed when parsing large packets.</li>
-</ul>
-
-<h2>3.2.0 Beta -- <span style="font-weight: normal;">January 18, 2007</span></h2>
+<h2>3.2.0 -- <span style="font-weight: normal;">February 7, 2007</span></h2>
 
 <h3>Wildfire New Features</h3>
 <ul>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-925'>JM-925</a>] - Improved scalability of Wildfire.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-356'>JM-356</a>] - Added support for XEP-0124: HTTP Binding. <b>(34 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-936'>JM-936</a>] - Added STUN server support.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-937'>JM-937</a>] - Added Media Proxy for Jingle.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-941'>JM-941</a>] - Allowed to set read timeout when connected to LDAP (requires Java 1.6).</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-912'>JM-912</a>] - Added listener for offline messages. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-944'>JM-944</a>] - Bundled root certificate of XMPP Intermediate Certificate Authority.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-948'>JM-948</a>] - Updated truststore with Java 6 built-in certificates.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-946'>JM-946</a>] - Removed Jetty information from HTTP headers.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-892'>JM-892</a>] - Simplified certificates creation and process of signing certificates. <b>(10 votes)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-767'>JM-767</a>] - Added Mac OS X DMG installer.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-893'>JM-893</a>] - Added support for certificate event listeners.</li>
@@ -247,6 +187,9 @@ hr {
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-901'>JM-901</a>] - Updated support for 'creation of collection nodes' based on latest XEP-60.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-913'>JM-913</a>] - Support for multiple subscriptions is now optional in PubSubModule.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-931'>JM-931</a>] - Allowed components to create nodes and publish items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-949'>JM-949</a>] - Default configuration of new group chat rooms can now be configured.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-950'>JM-950</a>] - Group chat rooms are now not anonymous by default.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-952'>JM-952</a>] - Allowed to explicitly specify the FQDN of the server.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-935'>JM-935</a>] - Added to the admin console information about ports being used by the server.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-900'>JM-900</a>] - Upgraded to latest installer version.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-888'>JM-888</a>] - Updated bouncycastle library to latest version.</li>
@@ -255,6 +198,9 @@ hr {
 
 <h3>Wildfire Bug Fixes</h3>
 <ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-947'>JM-947</a>] - A nice error message is now displayed when trying to view user properties of a non-existent user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-943'>JM-943</a>] - Messages with no body and no subject were being store in rooms' history.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-940'>JM-940</a>] - Fixed NPE in server certificates page.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-885'>JM-885</a>] - Fixed parsing of mappings when using more than one LDAP field.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-886'>JM-886</a>] - Loaded vCards were not being updated after reconfiguring LDAP settings.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-906'>JM-906</a>] - Email test page was not working when integrated with LDAP.</li>
@@ -275,7 +221,13 @@ hr {
 
 <h3>Wildfire Enterprise</h3>
 <ul>
-<li>No changes</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-50'>ENT-50</a>] - Added support for SIP integration.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-35'>ENT-35</a>] - Archiving was only done one-way with gateways.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-44'>ENT-44</a>] - Added support for transfering support session to another workgroup, queue, agent or user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-56'>ENT-56</a>] - Warning message is now displayed when license is about to expire (30 days).</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-54'>ENT-54</a>] - Added support for iq:version to components to discover Wildfire version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-55'>ENT-55</a>] - Changed license validation to validate maintenance date.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-45'>ENT-45</a>] - Moved invitation logic to the server.</li>
 </ul>
 
 <h3>Wildfire Connection Manager Module</h3>

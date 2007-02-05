@@ -161,11 +161,34 @@ hr {
     
 <h2>Major Known Issues</h2>
 <ul>
-<li>Many issues with Yahoo support that I haven't been able to track down</li>
+<li>Many issues with Yahoo support that I haven't been able to track down (yahoo supported moved to post-1.0)</li>
 <li>XMPP away status not shown in AIM/ICQ service</li>
-<li>Many issues with ICQ as joscar doesn't full support ICQ yet</li>
+<li>Many issues with ICQ as joscar doesn't fully support ICQ yet</li>
 </ul>
 
+
+<h2>1.0 Beta 7 -- <span style="font-weight: normal;">February 5, 2007</span></h2>    
+
+<b>Bug Fixes</b>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-106'>GATE-106</a>] - Messages from ICQ 2003 clients are now handled properly</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-154'>GATE-154</a>] - Chat state notifications are now sent with type "chat"</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-169'>GATE-169</a>] - MsSQL issues with long vs integer resolved (may need to redo/fix your database)</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-170'>GATE-170</a>] - PostgresQL issue with numeric representation of time resolved (may need to redo/fix your database)</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-171'>GATE-171</a>] - Fixed composing bug that upsets ichat</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-172'>GATE-172</a>] - Web interface is no longer showing up blank under 3.2.0</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-173'>GATE-173</a>] - Full JIDs are now acceptabled in gateway permissions</li>
+</ul>
+
+<b>Improvements</b>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-148'>GATE-148</a>] - If some users/groups are ignored during permissions setting, now reflected after save</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-156'>GATE-156</a>] - Messages sent to remote users trying to register</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-158'>GATE-158</a>] - Killing spaces in AIM screen names automatically</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-164'>GATE-164</a>] - Messages coming in from ICQ through gateway to XMPP user are now logged (via fix in wildfire 3.2.0)</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-168'>GATE-168</a>] - Added ability to turn on 'percent hack' for @ translation in JIDs</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/GATE-174'>GATE-174</a>] - Separated stable transports from unstable ones in web interface</li>
+</ul>
 
 <h2>1.0 Beta 6b -- <span style="font-weight: normal;">December 20, 2006</span></h2>
 

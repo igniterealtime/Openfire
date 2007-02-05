@@ -949,10 +949,22 @@
 
         <mkdir dir="${installer.dest.dir}"/>
 
+        <!-- Install4j doesn't support extra version info (like beta) correctly, so
+             define a special revision number.  -->
+        <if>
+            <equals arg1="${version.extra}" arg2=""/>
+            <then>
+                <property name="install4j.revision" value="${version.revision}"/>
+            </then>
+            <else>
+                <property name="install4j.revision" value="${version.revision}.${version.extra}"/>
+            </else>
+        </if>
+
         <install4j projectfile="${installer.install4j.srcfile}" destination="${installer.dest.dir}">
             <variable name="VERSION_MAJOR" value="${version.major}"/>
             <variable name="VERSION_MINOR" value="${version.minor}"/>
-            <variable name="VERSION_REVISION" value="${version.revision}"/>
+            <variable name="VERSION_REVISION" value="${install4j.revision}"/>
             <variable name="APP_NAME" value="${installer.app_name}"/>
             <variable name="APP_SHORT_NAME" value="${installer.app_short_name}"/>
             <variable name="PRODUCT_NAME" value="${installer.product_name}"/>

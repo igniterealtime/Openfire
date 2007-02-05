@@ -660,13 +660,6 @@
             <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}"/>
         </copy>
 
-        <!-- Copy help files -->
-        <if>
-            <available file="${src.dir}/help/help.zip"/>
-            <then>
-                <unzip src="${src.dir}/help/help.zip" dest="${plugin.dest.dir}/admin/webapp"/>
-            </then>
-        </if>
     </target>
 
     <target name="spank">

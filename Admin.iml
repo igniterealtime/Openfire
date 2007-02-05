@@ -16,9 +16,7 @@
           <root url="jar://$MODULE_DIR$/src/web/WEB-INF/lib/dwr.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../java/dwr-1.1.4-src/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntryProperties />
@@ -42,11 +40,6 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/ant-contrib.jar" />
       <url>jar://$MODULE_DIR$/build/lib/ant-contrib.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/ant-jive-edition.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/ant-jive-edition.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -140,11 +133,6 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/dbutil.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/dbutil.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/dom4j.jar" />
       <url>jar://$MODULE_DIR$/build/lib/merge/dom4j.jar!/</url>
     </containerElement>
@@ -180,28 +168,8 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jstun-0.6.1.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jstun-0.6.1.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/jzlib.jar" />
       <url>jar://$MODULE_DIR$/build/lib/merge/jzlib.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mina-core-1.2.0.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/mina-core-1.2.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mina-filter-compression-1.2.0.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/mina-filter-compression-1.2.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mina-filter-ssl-1.2.0.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/mina-filter-ssl-1.2.0.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -212,16 +180,6 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/sitemesh.jar" />
       <url>jar://$MODULE_DIR$/build/lib/merge/sitemesh.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/slf4j-api-1.1.0.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/slf4j-api-1.1.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/slf4j-simple-1.1.0.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/slf4j-simple-1.1.0.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />

@@ -672,11 +672,11 @@ public class ClientSession extends Session {
 
         // Include Stream Compression Mechanism
         // TODO Fix stream compression when using MINA and then enable this code
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+        /*if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
             sb.append(
                     "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
-        }
+        }*/
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication

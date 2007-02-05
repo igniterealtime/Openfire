@@ -249,7 +249,7 @@ public class SASLAuthentication {
                                 props.put(Sasl.SERVER_AUTH, "TRUE");
                             }
                             SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
-                                    session.getServerName(), props,
+                                    JiveGlobals.getProperty("xmpp.fqdn", session.getServerName()), props,
                                     new XMPPCallbackHandler());
                             // evaluateResponse doesn't like null parameter
                             byte[] token = new byte[0];

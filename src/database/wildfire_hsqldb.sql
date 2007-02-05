@@ -214,7 +214,7 @@ CREATE TABLE mucConversationLog (
 );
 CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 
-# PubSub Tables
+// PubSub Tables
 
 CREATE TABLE pubsubNode (
   serviceID           VARCHAR(100)  NOT NULL,

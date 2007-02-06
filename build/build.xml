@@ -1206,7 +1206,7 @@
                             <pathelement
                                     location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
                             <path refid="jspc.dependencies"/>
-                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target" includes="lib/*.jar"/>
                             <pathelement path="${compile.dir}"/>
                         </classpath>
                     </taskdef>
@@ -1265,9 +1265,7 @@
                         <classpath>
                             <path refid="jspc.dependencies"/>
                             <pathelement path="${compile.dir}"/>
-                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                            <pathelement
-                                    location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
+                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target" includes="lib/*.jar"/>
                         </classpath>
                     </javac>
 

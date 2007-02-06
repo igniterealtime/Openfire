@@ -55,6 +55,13 @@ public class HttpSession extends ClientSession {
     private long lastRequestID;
     private int maxRequests;
 
+    private static final Comparator<HttpConnection> connectionComparator
+            = new Comparator<HttpConnection>() {
+        public int compare(HttpConnection o1, HttpConnection o2) {
+            return (int) (o1.getRequestId() - o2.getRequestId());
+        }
+    };
+
     public HttpSession(String serverName, InetAddress address, StreamID streamID, long rid) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection(address);
@@ -311,22 +318,32 @@ public class HttpSession extends ClientSession {
         }
     }
 
-    public String getResponse(long requestID) {
+    public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
             if (connection.getRequestId() == requestID) {
-                String response;
-                try {
-                    response = connection.getResponse();
-                }
-                catch (HttpBindTimeoutException e) {
-                    response = createEmptyBody();
+                if(requestID > lastRequestID + 1) {
+                    throw new HttpBindException("Invalid RID error.", true, 404);
                 }
                 connectionQueue.remove(connection);
                 fireConnectionClosed(connection);
-                return response;
+                if(requestID > lastRequestID) {
+                    lastRequestID = connection.getRequestId();
+                }
+                return getResponse(connection);
             }
         }
         throw new InternalError("Could not locate connection: " + requestID);
+    }
+
+    private String getResponse(HttpConnection connection) {
+        String response;
+        try {
+            response = connection.getResponse();
+        }
+        catch (HttpBindTimeoutException e) {
+            response = createEmptyBody();
+        }
+        return response;
     }
 
     /**
@@ -347,9 +364,10 @@ public class HttpSession extends ClientSession {
      * @param isPoll true if the request was a poll, no packets were sent along with the request.
      * @param isSecure true if the connection was secured using HTTPS.
      * @return the created {@link org.jivesoftware.wildfire.http.HttpConnection} which represents
-     * the connection.
-     * @throws HttpConnectionClosedException if the connection was closed before a response could
-     * be delivered.
+     *         the connection.
+     *
+     * @throws HttpConnectionClosedException if the connection was closed before a response could be
+     * delivered.
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      * protocol.
      */
@@ -402,12 +420,13 @@ public class HttpSession extends ClientSession {
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
-        if (hold <= 0 || pendingElements.size() > 0) {
+        if (hold <= 0 || (pendingElements.size() > 0 && connection.getRequestId()
+                == lastRequestID + 1)) {
             String deliverable = createDeliverable(pendingElements);
             try {
                 fireConnectionOpened(connection);
                 deliver(connection, deliverable);
-                fireConnectionClosed(connection);
+                lastRequestID = connection.getRequestId();
                 pendingElements.clear();
             }
             catch (HttpConnectionClosedException he) {
@@ -417,15 +436,18 @@ public class HttpSession extends ClientSession {
         else {
             // With this connection we need to check if we will have too many connections open,
             // closing any extras.
-            while (connectionQueue.size() >= hold) {
-                HttpConnection toClose = connectionQueue.remove(0);
+
+            // Number of current connections open plus the current one tells us how many that
+            // we need to close.
+            int connectionsToClose = (connectionQueue.size() + 1) - hold;
+            for (int i = 0; i < connectionsToClose; i++) {
+                HttpConnection toClose = connectionQueue.get(i);
                 toClose.close();
-                fireConnectionClosed(toClose);
             }
             connectionQueue.add(connection);
+            Collections.sort(connectionQueue, connectionComparator);
             fireConnectionOpened(connection);
         }
-        lastRequestID = connection.getRequestId();
     }
 
     private void deliver(HttpConnection connection, String deliverable)
@@ -471,9 +493,12 @@ public class HttpSession extends ClientSession {
         boolean delivered = false;
         for (HttpConnection connection : connectionQueue) {
             try {
-                deliver(connection, deliverable);
-                delivered = true;
-                break;
+                if (connection.getRequestId() == lastRequestID + 1) {
+                    deliver(connection, deliverable);
+                    delivered = true;
+                    lastRequestID = connection.getRequestId();
+                    break;
+                }
             }
             catch (HttpConnectionClosedException e) {
                 /* Connection was closed, try the next one */
@@ -608,25 +633,5 @@ public class HttpSession extends ClientSession {
         public int compareTo(Deliverable o) {
             return (int) (o.getRequestID() - requestID);
         }
-    }
-
-    /**
-     * A queue of all current connections. Connections are dealt with in order of their request
-     * IDs.
-     */
-    private class ConnectionQueue {
-
-        private final HttpConnection[] connections;
-
-        private final String[] requestIds;
-
-        private int pointer = 0;
-
-        public ConnectionQueue(int size) {
-            this.connections = new HttpConnection[size];
-            this.requestIds = new String[size];
-        }
-
-
     }
 }

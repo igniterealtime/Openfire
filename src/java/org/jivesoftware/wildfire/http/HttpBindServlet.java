@@ -114,8 +114,16 @@ public class HttpBindServlet extends HttpServlet {
             return false;
         }
         synchronized (session) {
-            respond(response, session.getResponse((Long) request.getAttribute("request"))
-                    .getBytes("utf-8"));
+            try {
+                respond(response, session.getResponse((Long) request.getAttribute("request"))
+                        .getBytes("utf-8"));
+            }
+            catch (HttpBindException e) {
+                response.sendError(e.getHttpError(), e.getMessage());
+                if(e.shouldCloseSession()) {
+                    session.close();
+                }
+            }
         }
         return true;
     }

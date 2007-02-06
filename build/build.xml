@@ -709,12 +709,16 @@
         </copy>
         <!-- Copy the license -->
         <copy todir="${release.src.out.dir}" file="${license.file.path}/LICENSE.html"/>
-        <!-- Copy docs -->
+        <!-- Copy text docs -->
         <copy todir="${release.src.out.dir}/documentation">
-            <fileset dir="${docs.dir}" includes="**/*.*"/>
+            <fileset dir="${docs.dir}" includes="**/*.html,**/*.txt"/>
             <filterset>
                 <filter token="version" value="${version}"/>
             </filterset>
+        </copy>
+        <!-- Copy rest of docs -->
+        <copy todir="${release.src.out.dir}/documentation">
+            <fileset dir="${docs.dir}" excludes="**/*.html,**/*.txt"/>
         </copy>
         <!-- Copy Javadocs -->
         <copy todir="${release.src.out.dir}/documentation/docs/javadoc">
@@ -1045,6 +1049,7 @@
     <macrodef name="buildplugin">
         <attribute name="plugin"/>
         <attribute name="pluginsrc"/>
+        <attribute name="pluginlib" default="${plugin.dev.dest.dir}/@{plugin}/work/lib" />
         <sequential>
 
             <!-- For each plugin, copile code, make a jar and copy resources. -->
@@ -1069,16 +1074,15 @@
                 </classpath>
             </javac>
 
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
+
             <!-- Searchs source of a plugin and makes a <plugin>-lib.jar that contains compiled versions of all
                  non-distributable source -->
-            <property name="pluginlib" value="@{pluginsrc}/@{plugin}/lib" />
-
-            <mkdir dir="${pluginlib}" />
-            <mkdir dir="${pluginlib}/source" />
-            <mkdir dir="${pluginlib}/classes" />
+            <mkdir dir="@{pluginlib}/source" />
+            <mkdir dir="@{pluginlib}/classes" />
 
             <!-- copy the source we want to compile -->
-            <copy todir="${pluginlib}/source">
+            <copy todir="@{pluginlib}/source">
                 <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" >
                     <not>
                         <srcinc />
@@ -1088,18 +1092,18 @@
 
             <if>
                 <not><uptodate>
-                    <srcfiles dir="${pluginlib}/source" includes="**/*.java"/>
-                    <mapper type="merge" to="${pluginlib}/@{plugin}-lib.jar"/>
+                    <srcfiles dir="@{pluginlib}/source" includes="**/*.java"/>
+                    <mapper type="merge" to="@{pluginlib}/@{plugin}-lib.jar"/>
                 </uptodate></not>
                 <then>
                     <javac
-                        destdir="${pluginlib}/classes"
+                        destdir="@{pluginlib}/classes"
                         includeAntRuntime="no"
                         debug="on"
                         source="1.5"
                         includes="**/*.java"
                     >
-                        <src path="${pluginlib}/source"/>
+                        <src path="@{pluginlib}/source"/>
                         <classpath>
                             <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
                             <path>
@@ -1110,22 +1114,23 @@
                         </classpath>
                     </javac>
 
-                    <jar jarfile="${pluginlib}/@{plugin}-lib.jar">
-                        <fileset dir="${pluginlib}/classes" />
+                    
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/@{plugin}-lib.jar">
+                        <fileset dir="@{pluginlib}/classes" />
                     </jar>
                 </then>
             </if>
 
             <!-- Make the jar -->
-            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"/>
             <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" >
-                    <present present="srconly" targetdir="${pluginlib}/classes"/>
+                    <present present="srconly" targetdir="@{pluginlib}/classes"/>
                 </fileset>
             </jar>
 
-            <delete dir="${pluginlib}/classes" />
-            <delete dir="${pluginlib}/source" />
+            <!-- Clean-up our source files for the "srcinc" files -->
+            <delete dir="@{pluginlib}/classes" />
+            <delete dir="@{pluginlib}/source" />
 
             <available file="@{pluginsrc}/@{plugin}/src/include" type="dir"
                        property="@{plugin}.include.exists"/>
@@ -1145,7 +1150,7 @@
                 <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*"/>
             </copy>
 
-            <!-- Copy anything in the plugin's lib dir to the target lib dir -->
+            <!-- Copy web.xml to web-custom.xml -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false"
                   overwrite="${overwrite}">
                 <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml"/>

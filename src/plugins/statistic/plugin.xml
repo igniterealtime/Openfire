@@ -6,6 +6,6 @@
     <description>Logs server statistics to a file</description>
     <author>Jive Software</author>
     <version>1.0.0</version>
-    <date>1/31/2007</date>
+    <date>2/6/2007</date>
     <minServerVersion>3.2.0</minServerVersion>
 </plugin>

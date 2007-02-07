@@ -456,6 +456,20 @@ public class SASLAuthentication {
             tokens.nextToken();
         }
         username = tokens.nextToken();
+        if (username != null && username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                // Domains match. Store in username just the username
+                username = username.substring(0, index);
+            }
+            else {
+                // Unknown domain. Return authentication failed
+                authenticationFailed(session);
+                return Status.failed;
+            }
+        }
         password = tokens.nextToken();
         try {
             AuthToken token = AuthFactory.authenticate(username, password);

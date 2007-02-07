@@ -554,6 +554,12 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             // this.convinceNotToLeave() ... kidding.
             IQ result = IQ.createResultIQ(packet);
 
+            if (packet.getChildElement().elements().size() != 1) {
+                result.setError(Condition.bad_request);
+                reply.add(result);
+                return reply;
+            }
+
             // Tell the end user the transport went byebye.
             Presence unavailable = new Presence(Presence.Type.unavailable);
             unavailable.setTo(from);
@@ -565,7 +571,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
             }
             catch (UserNotFoundException e) {
                 Log.error("Error cleaning up contact list of: " + from);
-                result.setError(Condition.bad_request);
+                result.setError(Condition.registration_required);
             }
 
             reply.add(result);
@@ -1331,6 +1337,9 @@ public abstract class BaseTransport implements Component, RosterEventListener {
      */
     public void deleteRegistration(JID jid) throws UserNotFoundException {
         Collection<Registration> registrations = registrationManager.getRegistrations(jid, this.transportType);
+        if (registrations.isEmpty()) {
+            throw new UserNotFoundException("User was not registered.");
+        }
         // For now, we're going to have to just nuke all of these.  Sorry.
         for (Registration reg : registrations) {
             registrationManager.deleteRegistration(reg);

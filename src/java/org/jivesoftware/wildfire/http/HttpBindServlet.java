@@ -173,7 +173,16 @@ public class HttpBindServlet extends HttpServlet {
                         .setContinuation(ContinuationSupport.getContinuation(request, connection));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
-                respond(response, connection);
+                try {
+                    respond(response, session.getResponse(connection.getRequestId())
+                            .getBytes("utf-8"));
+                }
+                catch (HttpBindException e) {
+                    response.sendError(e.getHttpError(), e.getMessage());
+                    if (e.shouldCloseSession()) {
+                        session.close();
+                    }
+                }
             }
         }
     }

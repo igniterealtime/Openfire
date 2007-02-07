@@ -324,12 +324,17 @@ public class HttpSession extends ClientSession {
                 if(requestID > lastRequestID + 1) {
                     throw new HttpBindException("Invalid RID error.", true, 404);
                 }
-                connectionQueue.remove(connection);
-                fireConnectionClosed(connection);
                 if(requestID > lastRequestID) {
                     lastRequestID = connection.getRequestId();
                 }
-                return getResponse(connection);
+                String response = getResponse(connection);
+
+                // connection needs to be removed after response is returned to maintain idempotence
+                // otherwise if this method is called again, after 'waiting', the InternalError
+                // will be thrown because the connection is no longer in the queue.
+                connectionQueue.remove(connection);
+                fireConnectionClosed(connection);
+                return response;
             }
         }
         throw new InternalError("Could not locate connection: " + requestID);
@@ -424,7 +429,6 @@ public class HttpSession extends ClientSession {
                 == lastRequestID + 1)) {
             String deliverable = createDeliverable(pendingElements);
             try {
-                fireConnectionOpened(connection);
                 deliver(connection, deliverable);
                 lastRequestID = connection.getRequestId();
                 pendingElements.clear();
@@ -444,10 +448,10 @@ public class HttpSession extends ClientSession {
                 HttpConnection toClose = connectionQueue.get(i);
                 toClose.close();
             }
-            connectionQueue.add(connection);
-            Collections.sort(connectionQueue, connectionComparator);
-            fireConnectionOpened(connection);
         }
+        connectionQueue.add(connection);
+        Collections.sort(connectionQueue, connectionComparator);
+        fireConnectionOpened(connection);
     }
 
     private void deliver(HttpConnection connection, String deliverable)

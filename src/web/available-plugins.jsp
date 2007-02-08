@@ -38,6 +38,7 @@
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
     List<AvailablePlugin> plugins = updateManager.getNotInstalledPlugins();
 
+    String time = JiveGlobals.getProperty("update.lastCheck");
     // Sort plugins alphabetically
     Collections.sort(plugins, new Comparator<AvailablePlugin>() {
         public int compare(AvailablePlugin o1, AvailablePlugin o2) {
@@ -226,7 +227,7 @@
 
 <p>
 
-<%if(plugins.size() == 0){ %>
+<%if(time == null){ %>
 <div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
     <fmt:message key="plugin.available.no.list" />&nbsp;<span id="reloaderID"><a href="javascript:updatePluginsList();"><fmt:message key="plugin.available.list" /></a></span>
 </div>
@@ -514,10 +515,9 @@
 </div>
 <br/>
  <%
-        String time = JiveGlobals.getProperty("update.lastCheck");
         if(time != null){
-        Date date = new Date(Long.parseLong(time));
-        time = JiveGlobals.formatDate(date);
+            Date date = new Date(Long.parseLong(time));
+            time = JiveGlobals.formatDate(date);
         }
     %>
        <p>

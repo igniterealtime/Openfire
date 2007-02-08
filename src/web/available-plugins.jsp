@@ -39,9 +39,9 @@
     List<AvailablePlugin> plugins = updateManager.getNotInstalledPlugins();
 
     // Sort plugins alphabetically
-    Collections.sort(plugins, new Comparator() {
-        public int compare(Object o1, Object o2) {
-            return ((AvailablePlugin)o1).getName().compareTo(((AvailablePlugin)o2).getName());
+    Collections.sort(plugins, new Comparator<AvailablePlugin>() {
+        public int compare(AvailablePlugin o1, AvailablePlugin o2) {
+            return o1.getName().compareTo(o2.getName());
         }
     });
 

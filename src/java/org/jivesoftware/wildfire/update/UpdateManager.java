@@ -276,13 +276,13 @@ public class UpdateManager extends BasicModule {
 
     /**
      * Returns the list of available plugins to install as reported by igniterealtime.org.
-     * Currently installed plugins will not be included.
+     * Currently installed plugins will not be included or plugins that require a newer
+     * server version.
      *
      * @return the list of available plugins to install as reported by igniterealtime.org.
      */
     public List<AvailablePlugin> getNotInstalledPlugins() {
-        ArrayList<AvailablePlugin> plugins =
-                new ArrayList<AvailablePlugin>(availablePlugins.values());
+        List<AvailablePlugin> plugins = new ArrayList<AvailablePlugin>(availablePlugins.values());
         XMPPServer server = XMPPServer.getInstance();
         // Remove installed plugins from the list of available plugins
         for (Plugin plugin : server.getPluginManager().getPlugins()) {
@@ -293,6 +293,14 @@ public class UpdateManager extends BasicModule {
                     it.remove();
                     break;
                 }
+            }
+        }
+        // Remove plugins that require a newer server version
+        String serverVersion = XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
+        for (Iterator<AvailablePlugin> it=plugins.iterator(); it.hasNext();) {
+            AvailablePlugin plugin = it.next();
+            if (serverVersion.compareTo(plugin.getMinServerVersion()) < 0) {
+                it.remove();
             }
         }
         return plugins;
@@ -576,9 +584,14 @@ public class UpdateManager extends BasicModule {
             String currentVersion = server.getPluginManager().getVersion(plugin);
             if (latestPlugin != null &&
                     latestPlugin.getLatestVersion().compareTo(currentVersion) > 0) {
-                Update update = new Update(pluginName, latestPlugin.getLatestVersion(),
-                        latestPlugin.getChangelog(), latestPlugin.getURL());
-                pluginUpdates.add(update);
+                // Check if the update can run in the current version of the server
+                String serverVersion =
+                        XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
+                if (serverVersion.compareTo(latestPlugin.getMinServerVersion()) >= 0) {
+                    Update update = new Update(pluginName, latestPlugin.getLatestVersion(),
+                            latestPlugin.getChangelog(), latestPlugin.getURL());
+                    pluginUpdates.add(update);
+                }
             }
         }
     }

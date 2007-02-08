@@ -236,7 +236,7 @@ public class InterceptorManager {
                     }
                 }
                 catch (Throwable e) {
-                    Log.error("Error in interceptor", e);
+                    Log.error("Error in interceptor: " + interceptor, e);
                 }
             }
         }
@@ -263,7 +263,7 @@ public class InterceptorManager {
                         }
                     }
                     catch (Throwable e) {
-                        Log.error("Error in interceptor", e);
+                        Log.error("Error in interceptor: " + interceptor, e);
                     }
                 }
             }

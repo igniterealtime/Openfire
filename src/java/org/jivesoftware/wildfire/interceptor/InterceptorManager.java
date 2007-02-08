@@ -235,7 +235,7 @@ public class InterceptorManager {
                         throw e;
                     }
                 }
-                catch (Exception e) {
+                catch (Throwable e) {
                     Log.error("Error in interceptor", e);
                 }
             }
@@ -262,7 +262,7 @@ public class InterceptorManager {
                             throw e;
                         }
                     }
-                    catch (Exception e) {
+                    catch (Throwable e) {
                         Log.error("Error in interceptor", e);
                     }
                 }

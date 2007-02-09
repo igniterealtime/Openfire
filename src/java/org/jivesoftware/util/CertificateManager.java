@@ -278,7 +278,7 @@ public class CertificateManager {
      * Returns true if a certificate with the specifed configuration was found in the key store.
      *
      * @param ksKeys the keystore to use for searching the certificate.
-     * @param domain the domain present in the subjectAltName.
+     * @param domain the domain present in the subjectAltName or "*" if anything is accepted.
      * @param algorithm the DSA or RSA algorithm used by the certificate.
      * @return true if a certificate with the specifed configuration was found in the key store.
      * @throws KeyStoreException
@@ -286,9 +286,18 @@ public class CertificateManager {
     private static boolean isCertificate(KeyStore ksKeys, String domain, String algorithm) throws KeyStoreException {
         for (Enumeration<String> aliases = ksKeys.aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) ksKeys.getCertificate(aliases.nextElement());
-            for (String identity : getPeerIdentities(certificate)) {
-                if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
+            if ("*".equals(domain)) {
+                // Any domain certified by the certificate is accepted
+                if (certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
                     return true;
+                }
+            }
+            else {
+                // Only accept certified domains that match the specified domain
+                for (String identity : getPeerIdentities(certificate)) {
+                    if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
+                        return true;
+                    }
                 }
             }
         }

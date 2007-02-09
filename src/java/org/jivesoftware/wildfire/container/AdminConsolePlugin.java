@@ -92,9 +92,13 @@ public class AdminConsolePlugin implements Plugin {
 
         // Create a connector for https traffic if it's enabled.
         try {
-            if (adminSecurePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
-                        XMPPServer.getInstance().getServerInfo().getName()))
+            if (adminSecurePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*"))
             {
+                if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
+                        XMPPServer.getInstance().getServerInfo().getName())) {
+                    Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
+                }
+                         
                 JiveSslConnector httpsConnector = new JiveSslConnector();
                 String interfaceName = JiveGlobals.getXMLProperty("network.interface");
                 String bindInterface = null;

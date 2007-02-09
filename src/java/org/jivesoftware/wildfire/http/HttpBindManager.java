@@ -129,8 +129,12 @@ public final class HttpBindManager {
 
     private Connector createSSLConnector(int securePort) {
         try {
-            if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
-                    XMPPServer.getInstance().getServerInfo().getName())) {
+            if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*")) {
+                if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
+                        XMPPServer.getInstance().getServerInfo().getName())) {
+                    Log.warn("HTTP binding: Using RSA certificates but they are not valid for the hosted domain");
+                }
+
                 SslSocketConnector sslConnector = new JiveSslConnector();
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);

@@ -70,6 +70,7 @@
     The Wildfire setup tool includes an easy to use LDAP setup wizard.
     Choose the LDAP option on the Profile Settings page to configure directory integration.
     The wizard along with in-line help will guide you through the rest of the process.
+    <a href="#activedirectory">Specific tips</a> for working with Active Directory are noted below.
 
     <img src="images/setup_ldap.png" alt="LDAP settup" width="710" height="400" vspace="10">
     <br clear="left"/>
@@ -90,6 +91,41 @@
     </ol>
 
 </p>
+
+<h2><a name="activedirectory">Working with Active Directory</a></h2>
+
+<p>Microsoft's Active Directory is a broadly deployed directory system that supports the
+LDAP protocol. You'll be prompted for several LDAP fields when connecting to Active Directory
+servers, some of which are detailed below:
+</p>
+
+<ul>
+    <li><b>Base DN</b><br/><br/>
+        <p>The base DN describes where to load users and groups. If you're using a default
+            Active Directory setup, all user accounts and groups are located in the
+            "Users" folder under your domain. In LDAP form, that's <tt>cn=Users;dc=&lt;Your Domain&gt;</tt>.
+            To get more specific, say your domain is <tt>activedirectory.jivesoftware.com</tt>. In that case,
+            your base DN would be <tt>cn=Users;dc=activedirectory,dc=jivesoftware,dc=com</tt>. If
+            you've customized where users are stored, you'll just need to replicate that folder
+            structure using LDAP syntax.
+        </p>
+    </li>
+    <li><b>Administrator DN</b><br/><br/>
+        <p>By default, Active Directory does not allow anonymous LDAP connections. Therefore,
+            you'll need to enter the DN of a user that's allowed to connect to the server and read
+            all user and group data. Unless you've created a special user account for this
+            purpose, an easy choice is to use the built-in administrator account. By default,
+            the administrator DN is in the form <tt>cn=Administrator,dc=&lt;Your Domain&gt;</tt>.
+            Using our previous example,
+            <tt>cn=Administrator,cn=users,dc=activedirectory,dc=jivesoftware,dc=com</tt>.
+        </p>
+    </li>
+
+</ul>
+
+
+<div align="center"><img src="images/active_directory.png" width="629" height="414"></div>
+
 
 <h3>Manually Editing the Config File</h3>
 
@@ -125,8 +161,7 @@
         is equivalent to waiting for the response infinitely until it is received which defaults
         to the original behavior. <i>Requires Java 1.6 or later.</i></li>
     <li>ldap.baseDN <font color="red"><b>*</b></font> -- the starting DN that searches for users
-        will performed with.
-        The entire subtree under the base DN will be searched for user accounts.
+        will performed with. The entire subtree under the base DN will be searched for user accounts.
     </li>
 
     <li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the

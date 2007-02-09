@@ -312,9 +312,16 @@ public class HttpSession extends ClientSession {
         if (connectionQueue.size() <= 0) {
             return lastActivity;
         }
-        // The session is currently active, return the current time.
         else {
-            return System.currentTimeMillis();
+            for(HttpConnection connection : connectionQueue) {
+                // The session is currently active, return the current time.
+                if(!connection.isClosed()) {
+                    return System.currentTimeMillis();
+                }
+            }
+            // We have no currently open connections therefore we can assume that lastActivity is
+            // the last time the client did anything.
+            return lastActivity;
         }
     }
 

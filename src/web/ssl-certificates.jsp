@@ -96,7 +96,18 @@
   </head>
   <body>
 
-  <% if (((AdminConsolePlugin) pluginManager.getPlugin("admin")).isRestartNeeded()) { %>
+  <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) { %>
+      <div class="warning">
+      <table cellpadding="0" cellspacing="0" border="0">
+      <tbody>
+          <tr>
+          <td class="jive-icon-label">
+              <fmt:message key="index.certificate-warning"/>
+          </td></tr>
+      </tbody>
+      </table>
+      </div><br>
+  <% } else if (((AdminConsolePlugin) pluginManager.getPlugin("admin")).isRestartNeeded()) { %>
       <div class="warning">
       <table cellpadding="0" cellspacing="0" border="0">
       <tbody>

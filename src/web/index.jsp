@@ -30,6 +30,8 @@
 <%@ page import="org.jivesoftware.wildfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.wildfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.util.CertificateManager" %>
+<%@ page import="org.jivesoftware.wildfire.net.SSLConfig" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -176,6 +178,9 @@
             <fmt:message key="index.server_name" />
         </td>
         <td class="c2">
+            <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
+            <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />">&nbsp;
+            <% } %>
             ${webManager.serverInfo.name}
         </td>
     </tr>

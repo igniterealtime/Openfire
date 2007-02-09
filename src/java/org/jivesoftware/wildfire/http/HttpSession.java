@@ -17,13 +17,12 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.wildfire.Connection;
 import org.jivesoftware.wildfire.StreamID;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.PacketDeliverer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.net.SASLAuthentication;
 import org.jivesoftware.wildfire.net.VirtualConnection;
 import org.jivesoftware.wildfire.session.ClientSession;
 import org.jivesoftware.util.Log;
-import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 import java.net.InetAddress;
@@ -44,7 +43,7 @@ public class HttpSession extends ClientSession {
     private String language;
     private final List<HttpConnection> connectionQueue = new LinkedList<HttpConnection>();
     private final List<Deliverable> pendingElements = new ArrayList<Deliverable>();
-    private final List<Deliverable> sentElements = new ArrayList<Deliverable>();
+    private final List<Delivered> sentElements = new ArrayList<Delivered>();
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
@@ -54,6 +53,7 @@ public class HttpSession extends ClientSession {
     private long lastActivity;
     private long lastRequestID;
     private int maxRequests;
+    private PacketDeliverer backupDeliverer;
 
     private static final Comparator<HttpConnection> connectionComparator
             = new Comparator<HttpConnection>() {
@@ -62,11 +62,13 @@ public class HttpSession extends ClientSession {
         }
     };
 
-    public HttpSession(String serverName, InetAddress address, StreamID streamID, long rid) {
+    public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
+                       StreamID streamID, long rid) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection(address);
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;
+        this.backupDeliverer = backupDeliverer;
     }
 
     /**
@@ -313,9 +315,9 @@ public class HttpSession extends ClientSession {
             return lastActivity;
         }
         else {
-            for(HttpConnection connection : connectionQueue) {
+            for (HttpConnection connection : connectionQueue) {
                 // The session is currently active, return the current time.
-                if(!connection.isClosed()) {
+                if (!connection.isClosed()) {
                     return System.currentTimeMillis();
                 }
             }
@@ -328,10 +330,10 @@ public class HttpSession extends ClientSession {
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
             if (connection.getRequestId() == requestID) {
-                if(requestID > lastRequestID + 1) {
+                if (requestID > lastRequestID + 1) {
                     throw new HttpBindException("Invalid RID error.", true, 404);
                 }
-                if(requestID > lastRequestID) {
+                if (requestID > lastRequestID) {
                     lastRequestID = connection.getRequestId();
                 }
                 String response = getResponse(connection);
@@ -387,12 +389,12 @@ public class HttpSession extends ClientSession {
             throws HttpConnectionClosedException, HttpBindException {
         HttpConnection connection = new HttpConnection(rid, isSecure);
         if (rid <= lastRequestID) {
-            Deliverable deliverable = retrieveDeliverable(rid);
+            Delivered deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
                 Log.warn("Deliverable unavailable for " + rid);
                 throw new HttpBindException("Unexpected RID Error", true, 404);
             }
-            connection.deliverBody(deliverable.getDeliverable());
+            connection.deliverBody(createDeliverable(deliverable.deliverables));
             return connection;
         }
         else if (rid > (lastRequestID + hold + 1)) {
@@ -405,8 +407,8 @@ public class HttpSession extends ClientSession {
         return connection;
     }
 
-    private Deliverable retrieveDeliverable(long rid) throws HttpBindException {
-        for (Deliverable delivered : sentElements) {
+    private Delivered retrieveDeliverable(long rid) {
+        for (Delivered delivered : sentElements) {
             if (delivered.getRequestID() == rid) {
                 return delivered;
             }
@@ -434,9 +436,8 @@ public class HttpSession extends ClientSession {
         // to be sent to the client.
         if (hold <= 0 || (pendingElements.size() > 0 && connection.getRequestId()
                 == lastRequestID + 1)) {
-            String deliverable = createDeliverable(pendingElements);
             try {
-                deliver(connection, deliverable);
+                deliver(connection, pendingElements);
                 lastRequestID = connection.getRequestId();
                 pendingElements.clear();
             }
@@ -461,11 +462,11 @@ public class HttpSession extends ClientSession {
         fireConnectionOpened(connection);
     }
 
-    private void deliver(HttpConnection connection, String deliverable)
+    private void deliver(HttpConnection connection, Collection<Deliverable> deliverable)
             throws HttpConnectionClosedException {
-        connection.deliverBody(deliverable);
+        connection.deliverBody(createDeliverable(deliverable));
 
-        Deliverable delivered = new Deliverable(deliverable);
+        Delivered delivered = new Delivered(deliverable);
         delivered.setRequestID(connection.getRequestId());
         while (sentElements.size() > hold) {
             sentElements.remove(0);
@@ -496,11 +497,11 @@ public class HttpSession extends ClientSession {
     }
 
     private synchronized void deliver(Packet stanza) {
-        deliver(new Deliverable(stanza));
+        deliver(new Deliverable(Arrays.asList(stanza)));
     }
 
     private void deliver(Deliverable stanza) {
-        String deliverable = createDeliverable(Arrays.asList(stanza));
+        Collection<Deliverable> deliverable = Arrays.asList(stanza);
         boolean delivered = false;
         for (HttpConnection connection : connectionQueue) {
             try {
@@ -548,11 +549,6 @@ public class HttpSession extends ClientSession {
             failDelivery();
         }
 
-        for (HttpConnection toClose : connectionQueue) {
-            toClose.close();
-            fireConnectionClosed(toClose);
-        }
-
         for (SessionListener listener : listeners) {
             listener.sessionClosed(this);
         }
@@ -561,14 +557,40 @@ public class HttpSession extends ClientSession {
 
     private void failDelivery() {
         for (Deliverable deliverable : pendingElements) {
-            Packet packet = deliverable.packet;
-            if (packet != null && packet instanceof Message) {
-                XMPPServer.getInstance().getOfflineMessageStrategy()
-                        .storeOffline((Message) packet);
+            Collection<Packet> packet = deliverable.packets;
+            if (packet != null) {
+                failDelivery(packet);
             }
+        }
+
+        for (HttpConnection toClose : connectionQueue) {
+            if (!toClose.isDelivered()) {
+                Delivered delivered = retrieveDeliverable(toClose.getRequestId());
+                if (delivered != null) {
+                    failDelivery(delivered.getPackets());
+                }
+                else {
+                    Log.warn("Packets could not be found for session " + getStreamID() + " cannot" +
+                            "be delivered to client");
+                }
+            }
+            toClose.close();
+            fireConnectionClosed(toClose);
         }
         pendingElements.clear();
     }
+
+    private void failDelivery(Collection<Packet> packets) {
+        for (Packet packet : packets) {
+            try {
+                backupDeliverer.deliver(packet);
+            }
+            catch (UnauthorizedException e) {
+                Log.error("Unable to deliver message to backup deliverer", e);
+            }
+        }
+    }
+
 
     private static String createEmptyBody() {
         Element body = DocumentHelper.createElement("body");
@@ -611,22 +633,29 @@ public class HttpSession extends ClientSession {
 
     private class Deliverable implements Comparable<Deliverable> {
         private final String text;
-        private final Packet packet;
+        private final Collection<Packet> packets;
         private long requestID;
 
         public Deliverable(String text) {
             this.text = text;
-            this.packet = null;
+            this.packets = null;
         }
 
-        public Deliverable(Packet element) {
+        public Deliverable(Collection<Packet> elements) {
             this.text = null;
-            this.packet = element.createCopy();
+            this.packets = new ArrayList<Packet>();
+            for (Packet element : elements) {
+                this.packets.add(element.createCopy());
+            }
         }
 
         public String getDeliverable() {
             if (text == null) {
-                return packet.toXML();
+                StringBuilder builder = new StringBuilder();
+                for (Packet packet : packets) {
+                    builder.append(packet.toXML());
+                }
+                return builder.toString();
             }
             else {
                 return text;
@@ -643,6 +672,33 @@ public class HttpSession extends ClientSession {
 
         public int compareTo(Deliverable o) {
             return (int) (o.getRequestID() - requestID);
+        }
+    }
+
+    private class Delivered {
+        private long requestID;
+        private Collection<Deliverable> deliverables;
+
+        public Delivered(Collection<Deliverable> deliverables) {
+            this.deliverables = deliverables;
+        }
+
+        public void setRequestID(long requestID) {
+            this.requestID = requestID;
+        }
+
+        public long getRequestID() {
+            return requestID;
+        }
+
+        public Collection<Packet> getPackets() {
+            List<Packet> packets = new ArrayList<Packet>();
+            for (Deliverable deliverable : deliverables) {
+                if (deliverable.packets != null) {
+                    packets.addAll(deliverable.packets);
+                }
+            }
+            return packets;
         }
     }
 }

@@ -546,7 +546,8 @@ public class SessionManager extends BasicModule {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        HttpSession session = new HttpSession(serverName, address, id, rid);
+        PacketDeliverer backupDeliverer = XMPPServer.getInstance().getPacketDeliverer();
+        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);

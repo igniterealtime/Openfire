@@ -27,6 +27,7 @@ public class HttpConnection {
     private Continuation continuation;
     private boolean isClosed;
     private boolean isSecure = false;
+    private boolean isDelivered;
 
     /**
      * Constructs an HTTP Connection.
@@ -37,6 +38,7 @@ public class HttpConnection {
     public HttpConnection(long requestId, boolean isSecure) {
         this.requestId = requestId;
         this.isSecure = isSecure;
+        this.isDelivered = false;
     }
 
     /**
@@ -72,6 +74,10 @@ public class HttpConnection {
      */
     public boolean isSecure() {
         return isSecure;
+    }
+
+    public boolean isDelivered() {
+        return isDelivered;
     }
 
     /**
@@ -162,11 +168,13 @@ public class HttpConnection {
         if (continuation.suspend(session.getWait() * 1000)) {
             String deliverable = (String) continuation.getObject();
             // This will occur when the hold attribute of a session has been exceded.
+            this.isDelivered = true;
             if (deliverable == null) {
                 throw new HttpBindTimeoutException();
             }
             return deliverable;
         }
+        this.isDelivered = true;
         throw new HttpBindTimeoutException("Request " + requestId + " exceded response time from " +
                 "server of " + session.getWait() + " seconds.");
     }

@@ -982,6 +982,34 @@
         </install4j>
 
     </target>
+    
+    <!-- installer.rpm ========================================================================= -->
+    <property name="target.rpm" value="${work.dir}/rpm" />
+    <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of wildfire.">
+        <mkdir dir="${target.rpm}/SPECS" />
+        <mkdir dir="${target.rpm}/SOURCES" />
+        <mkdir dir="${target.rpm}/BUILD" />
+        <mkdir dir="${target.rpm}/SRPMS" />
+        <mkdir dir="${target.rpm}/RPMS" />
+
+        <copy todir="${target.rpm}/SPECS" file="${basedir}/build/rpm/wildfire.spec" />
+        <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+        <copy todir="${target.rpm}/BUILD/wildfire-root/opt" >
+            <fileset dir="${release.out.dir}/.."
+               includes="${release.fullname}/**/*, ${release.name}/**/*"/>
+        </copy>
+
+        <rpm specFile="wildfire.spec" 
+             topDir="${target.rpm}"
+             command="-ba"
+             failOnError="true"
+             />
+             
+        <copy todir="${release.dest.dir}" >
+            <fileset dir="${target.rpm}/SRPMS" />
+            <fileset dir="${target.rpm}/RPMS/i386" />
+        </copy>
+    </target>
 
     <!-- plugins =============================================================================== -->
     <target name="plugins" description="Builds all plugins">

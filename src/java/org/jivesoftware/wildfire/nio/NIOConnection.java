@@ -128,7 +128,7 @@ public class NIOConnection implements Connection {
         synchronized (this) {
             if (!isClosed()) {
                 try {
-                    deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>");
+                    deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
                 } catch (Exception e) {
                     // Ignore
                 }
@@ -145,19 +145,6 @@ public class NIOConnection implements Connection {
         deliverRawText("<stream:error><system-shutdown " +
                 "xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>");
         close();
-    }
-
-    /**
-     * Forces the connection to be closed immediately no matter if closing the socket takes
-     * a long time. This method should only be called from {@link org.jivesoftware.wildfire.net.SocketSendingTracker} when
-     * sending data over the socket has taken a long time and we need to close the socket, discard
-     * the connection and its ioSession.
-     */
-    private void forceClose() {
-        closeConnection();
-        // Notify the close listeners so that the SessionManager can send unavailable
-        // presences if required.
-        notifyCloseListeners();
     }
 
     private void closeConnection() {
@@ -227,6 +214,11 @@ public class NIOConnection implements Connection {
     }
 
     public void deliverRawText(String text) {
+        // Deliver the packet in asynchronous mode
+        deliverRawText(text, true);
+    }
+
+    private void deliverRawText(String text, boolean asynchronous) {
         if (!isClosed()) {
             ByteBuffer buffer = ByteBuffer.allocate(text.length());
             buffer.setAutoExpand(true);
@@ -240,7 +232,12 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                ioSession.write(buffer);
+                if (asynchronous) {
+                    ioSession.write(buffer);
+                }
+                else {
+                    ioSession.write(buffer).join();
+                }
             }
             catch (Exception e) {
                 Log.debug("Error delivering raw text" + "\n" + this.toString(), e);

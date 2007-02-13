@@ -12,6 +12,7 @@
 package org.jivesoftware.wildfire.plugin;
 
 import org.apache.mina.common.ExecutorThreadModel;
+import org.apache.mina.management.MINAStatCollector;
 import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -43,7 +44,7 @@ public class StatCollector extends TimerTask {
     // Take a sample every X seconds
     private int frequency;
     private boolean started = false;
-    private org.apache.mina.management.StatCollector statCollector;
+    private MINAStatCollector statCollector;
 
     public StatCollector(int frequency) {
         this.frequency = frequency;
@@ -55,7 +56,7 @@ public class StatCollector extends TimerTask {
         else {
             socketAcceptor = connectionManager.getSocketAcceptor();
         }
-        statCollector = new org.apache.mina.management.StatCollector(socketAcceptor, frequency - 1000);
+        statCollector = new MINAStatCollector(socketAcceptor, frequency - 1000);
     }
 
     public void run() {

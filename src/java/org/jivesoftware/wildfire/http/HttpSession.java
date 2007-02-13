@@ -505,7 +505,7 @@ public class HttpSession extends ClientSession {
         boolean delivered = false;
         for (HttpConnection connection : connectionQueue) {
             try {
-                if (connection.getRequestId() == lastRequestID + 1) {
+                if (connection.getRequestId() <= lastRequestID + 1) {
                     deliver(connection, deliverable);
                     delivered = true;
                     lastRequestID = connection.getRequestId();

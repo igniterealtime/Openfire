@@ -634,6 +634,16 @@ public class MUCRoomImpl implements MUCRoom {
             Presence presence = leaveRole.getPresence().createCopy();
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
+            // Change (or add) presence information about roles and affiliations
+            Element childElement = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+            if (childElement == null) {
+                childElement = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
+            }
+            Element item = childElement.element("item");
+            if (item == null) {
+                item = childElement.addElement("item");
+            }
+            item.addAttribute("role", "none");
             // Inform the leaving user that he/she has left the room
             leaveRole.send(presence);
             // Inform the rest of the room occupants that the user has left the room

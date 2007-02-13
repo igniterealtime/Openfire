@@ -97,7 +97,7 @@ public class PermissionManager {
             pstmt.setString(2, jid.getNode());
             rs = pstmt.executeQuery();
             rs.next();
-            return (rs.getInt(1) > 1);
+            return (rs.getInt(1) > 0);
         }
         catch (SQLException sqle) {
             Log.error(sqle);

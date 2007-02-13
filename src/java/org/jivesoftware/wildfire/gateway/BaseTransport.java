@@ -614,7 +614,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     // User does not have permission to register with transport.
                     // We want to allow them to change settings if they are already registered.
                     IQ result = IQ.createResultIQ(packet);
-                    result.setError(Condition.bad_request);
+                    result.setError(Condition.forbidden);
                     reply.add(result);
                     Message em = new Message();
                     em.setType(Message.Type.error);
@@ -675,7 +675,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     catch (UserNotFoundException e) {
                         Log.error("Someone attempted to register with the gateway who is not registered with the server: " + from);
                         IQ eresult = IQ.createResultIQ(packet);
-                        eresult.setError(Condition.bad_request);
+                        eresult.setError(Condition.forbidden);
                         reply.add(eresult);
                         Message em = new Message();
                         em.setType(Message.Type.error);
@@ -687,7 +687,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                     catch (IllegalAccessException e) {
                         Log.error("Someone who is not a user of this server tried to register with the transport: "+from);
                         IQ eresult = IQ.createResultIQ(packet);
-                        eresult.setError(Condition.not_allowed);
+                        eresult.setError(Condition.forbidden);
                         reply.add(eresult);
                         Message em = new Message();
                         em.setType(Message.Type.error);
@@ -730,7 +730,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 if (!registered && !permissionManager.hasAccess(from)) {
                     // User does not have permission to register with transport.
                     // We want to allow them to change settings if they are already registered.
-                    result.setError(Condition.bad_request);
+                    result.setError(Condition.forbidden);
                     reply.add(result);
                     Message em = new Message();
                     em.setType(Message.Type.error);

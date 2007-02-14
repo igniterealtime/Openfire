@@ -123,21 +123,3 @@ function toggleEdit(theNum) {
 		Effect.Appear($(editRow), {duration: .2});
 	}
 }
-
-
-
-/* 
-toggleFilters function
-this is for a future feature, to replace the row of filter options with a
-dynamic pulldown menu.
-*/
-
-/*
-function toggleFilters() {
-	if ($(jiveFilterDrop).style.display != 'none') {
-		Effect.toggle($(jiveFilterDrop),'slide', {duration: .4});
-	} else {
-		Effect.toggle($(jiveFilterDrop),'slide', {duration: .4});
-	}
-}
-*/

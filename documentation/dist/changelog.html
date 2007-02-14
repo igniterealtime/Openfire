@@ -164,6 +164,47 @@ hr {
 
 
 
+<h2>3.2.1 -- <span style="font-weight: normal;">February 15, 2007</span></h2>
+
+<h3>Wildfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-974'>JM-974</a>] - Updated MUC implementation to send role="none" when leaving a room.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-978'>JM-978</a>] - Updated MINA library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-977'>JM-977</a>] - Updated bouncycastle library to latest version.</li>
+<li>New draft page for importing signed certificates.</li>
+</ul>
+
+<h3>Wildfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-970'>JM-970</a>] - Fixed deadlock when using old SSL method.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-968'>JM-968</a>] - The https port was not working in the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-963'>JM-963</a>] - A throwable exception was preventing users from logging in.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-959'>JM-959</a>] - HTTP-Binding was failing over HTTPS.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-969'>JM-969</a>] - HTTP-Binding sessions were not being closed properly.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-971'>JM-971</a>] - Messages could be lost when using HTTP Binding.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-973'>JM-973</a>] - HTTP-binding would be held open and not closed when new packets arrived.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-972'>JM-972</a>] - Fixed presence problem when shared groups can be seen by a common non-shared group and both users belong to such group.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-962'>JM-962</a>] - PLAIN SASL authentication failed to authenticate clients that were sending bare JIDs.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-975'>JM-975</a>] - Client connections were closed before flushing end of stream stanza.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-967'>JM-967</a>] - Plugins that require a newer server version were shown as available to be installed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-965'>JM-965</a>] - Available Plugins was listing reports that list "has not been downloaded" when all available plugins were installed.</li>
+</ul>
+
+<h3>Wildfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-53'>ENT-53</a>] - Webchat is now more resistant to network failures.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-68'>ENT-68</a>] - Webchat setup is now always required.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-69'>ENT-69</a>] - Webchat was not connecting to agent when using IE6.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-70'>ENT-70</a>] - Webchat could kill the JVM when not able to connect to Wildfire.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-71'>ENT-71</a>] - Webchat now properly disconnects dangling connections.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-79'>ENT-79</a>] - SIP Phone now sends on-phone presence.</li>
+</ul>
+
+<h3>Wildfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-970'>JM-970</a>] - Fixed deadlock when using old SSL method.</li>
+</ul>
+
 <h2>3.2.0 -- <span style="font-weight: normal;">February 6, 2007</span></h2>
 
 <h3>Wildfire New Features</h3>

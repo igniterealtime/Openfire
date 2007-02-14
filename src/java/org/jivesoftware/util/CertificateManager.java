@@ -18,12 +18,10 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
@@ -212,8 +210,10 @@ public class CertificateManager {
                         encoded = ((DERTaggedObject) encoded).getObject();
                         encoded = ((DERTaggedObject) encoded).getObject();
                         String identity = ((DERUTF8String) encoded).getString();
-                        // Add the decoded server name to the list of identities
-                        identities.add(identity);
+                        if (!"".equals(identity)) {
+                            // Add the decoded server name to the list of identities
+                            identities.add(identity);
+                        }
                     }
                     catch (UnsupportedEncodingException e) {
                         // Ignore
@@ -226,7 +226,7 @@ public class CertificateManager {
                     }
                 }
                 // Other types are not good for XMPP so ignore them
-                if (Log.isDebugEnabled()) {
+                else if (Log.isDebugEnabled()) {
                     Log.debug("SubjectAltName of invalid type found: " + certificate);
                 }
             }
@@ -413,6 +413,76 @@ public class CertificateManager {
             for (CertificateEventListener listener : listeners) {
                 try {
                     listener.certificateSigned(keyStore, alias, newCerts);
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Imports a new signed certificate and its private key into the keystore. The certificate input
+     * stream may contain the signed certificate as well as its CA chain.
+     *
+     * @param keyStore    key store where the certificate will be stored.
+     * @param trustStore  key store where ca certificates are stored.
+     * @param keyPassword password of the keystore.
+     * @param alias the alias of the the new signed certificate.
+     * @param pkInputStream the stream containing the private key.
+     * @param inputStream the stream containing the signed certificate.
+     * @param trustCACerts true if certificates present in the truststore file will be used to verify the
+     *        identity of the entity signing the certificate.
+     * @param validateRoot true if you want to verify that the root certificate in the chain can be trusted
+     *        based on the truststore.
+     * @return true if the certificate was successfully imported.
+     * @throws Exception if no certificates were found in the inputStream.
+     */
+    public static boolean installCert(KeyStore keyStore, KeyStore trustStore, String keyPassword, String alias,
+                                      InputStream pkInputStream, InputStream inputStream, boolean trustCACerts,
+                                      boolean validateRoot) throws Exception {
+        // Check that there is a certificate for the specified alias
+        X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
+        if (certificate != null) {
+            Log.warn("Certificate already exists for alias: " + alias);
+            return false;
+        }
+        // Retrieve the private key of the stored certificate
+        PEMReader pemReader = new PEMReader(new InputStreamReader(pkInputStream));
+        KeyPair kp = (KeyPair) pemReader.readObject();
+        PrivateKey privKey = kp.getPrivate();
+
+        // Load certificates found in the PEM input stream
+        List<X509Certificate> certs = new ArrayList<X509Certificate>();
+        for (Certificate cert : CertificateFactory.getInstance("X509").generateCertificates(inputStream)) {
+            certs.add((X509Certificate) cert);
+        }
+        if (certs.isEmpty()) {
+            throw new Exception("No certificates were found");
+        }
+        List<X509Certificate> newCerts;
+        if (certs.size() == 1) {
+            // Reply has only one certificate
+            newCerts = establishCertChain(keyStore, trustStore, certificate, certs.get(0), trustCACerts);
+        } else {
+            // Reply has a chain of certificates
+            newCerts = validateReply(keyStore, trustStore, alias, certificate, certs, trustCACerts, validateRoot);
+        }
+        if (newCerts != null) {
+            keyStore.setKeyEntry(alias, privKey, keyPassword.toCharArray(),
+                    newCerts.toArray(new X509Certificate[newCerts.size()]));
+
+            // Notify listeners that a new certificate has been created (and signed)
+            for (CertificateEventListener listener : listeners) {
+                try {
+                    listener.certificateCreated(keyStore, alias, certs.get(0));
+                    if (newCerts.size() > 1) {
+                        listener.certificateSigned(keyStore, alias, newCerts);
+                    }
                 }
                 catch (Exception e) {
                     Log.error(e);

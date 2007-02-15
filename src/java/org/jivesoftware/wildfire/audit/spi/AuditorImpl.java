@@ -381,10 +381,10 @@ public class AuditorImpl implements Auditor {
         public AuditPacket(Packet packet, Session session) {
             element = docFactory.createElement("packet", "http://www.jivesoftware.org");
             creationDate = new Date();
-            if (session.getStreamID() != null) {
+            if (session != null && session.getStreamID() != null) {
                 element.addAttribute("streamID", session.getStreamID().toString());
             }
-            switch (session.getStatus()) {
+            switch (session == null ? 0 : session.getStatus()) {
                 case Session.STATUS_AUTHENTICATED:
                     element.addAttribute("status", "auth");
                     break;

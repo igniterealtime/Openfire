@@ -435,6 +435,7 @@ public class HttpSession extends ClientSession {
                 == lastRequestID + 1)) {
             try {
                 deliver(connection, pendingElements);
+                lastRequestID = connection.getRequestId();
                 pendingElements.clear();
             }
             catch (HttpConnectionClosedException he) {

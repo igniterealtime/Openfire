@@ -439,7 +439,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         else {
             Log.debug("Unable to handle iq request: " + xmlns);
             IQ error = IQ.createResultIQ(packet);
-            error.setError(Condition.bad_request);
+            error.setError(Condition.service_unavailable);
             reply.add(error);
         }
 

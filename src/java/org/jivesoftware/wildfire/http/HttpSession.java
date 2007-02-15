@@ -330,9 +330,6 @@ public class HttpSession extends ClientSession {
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
             if (connection.getRequestId() == requestID) {
-                if (requestID > lastRequestID + 1) {
-                    throw new HttpBindException("Invalid RID error.", true, 404);
-                }
                 if (requestID > lastRequestID) {
                     lastRequestID = connection.getRequestId();
                 }
@@ -438,7 +435,6 @@ public class HttpSession extends ClientSession {
                 == lastRequestID + 1)) {
             try {
                 deliver(connection, pendingElements);
-                lastRequestID = connection.getRequestId();
                 pendingElements.clear();
             }
             catch (HttpConnectionClosedException he) {
@@ -508,7 +504,6 @@ public class HttpSession extends ClientSession {
                 if (connection.getRequestId() <= lastRequestID + 1) {
                     deliver(connection, deliverable);
                     delivered = true;
-                    lastRequestID = connection.getRequestId();
                     break;
                 }
             }

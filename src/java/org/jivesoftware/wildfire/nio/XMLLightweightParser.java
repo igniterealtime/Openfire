@@ -73,6 +73,7 @@ class XMLLightweightParser {
     protected StringBuilder head = new StringBuilder(5);
     // List with all finished messages found.
     protected List<String> msgs = new ArrayList<String>();
+    private int depth = 0;
 
     protected boolean insideChildrenTag = false;
 
@@ -141,8 +142,12 @@ class XMLLightweightParser {
         int readByte = byteBuffer.remaining();
 
         invalidateBuffer();
+        // Check that the buffer is not bigger than 1 Megabyte. For security reasons
+        // we will abort parsing when 1 Mega of queued chars was found.
+        if (buffer.length() > 1048576) {
+            throw new Exception("Stopped parsing never ending stanza");
+        }
         CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
-        //charBuffer.flip();
         char[] buf = charBuffer.array();
 
         buffer.append(buf);
@@ -153,10 +158,10 @@ class XMLLightweightParser {
             ch = buf[i];
             if (status == XMLLightweightParser.TAIL) {
                 // Looking for the close tag
-                if (ch == head.charAt(tailCount)) {
+                if (depth < 1 && ch == head.charAt(tailCount)) {
                     tailCount++;
                     if (tailCount == head.length()) {
-                        // Close tag found!
+                        // Close stanza found!
                         // Calculate the correct start,end position of the message into the buffer
                         int end = buffer.length() - readByte + (i + 1);
                         String msg = buffer.substring(startLastMsg, end);
@@ -182,9 +187,16 @@ class XMLLightweightParser {
                 }
                 if (ch == '/') {
                     status = XMLLightweightParser.TAIL;
+                    depth--;
+                }
+                else {
+                    depth++;
                 }
             } else if (status == XMLLightweightParser.VERIFY_CLOSE_TAG) {
                 if (ch == '>') {
+                    depth--;
+                }
+                if (depth < 1) {
                     // Found a tag in the form <tag />
                     int end = buffer.length() - readByte + (i + 1);
                     String msg = buffer.substring(startLastMsg, end);
@@ -241,7 +253,7 @@ class XMLLightweightParser {
                 } else if (ch == '<') {
                     status = XMLLightweightParser.PRETAIL;
                     insideChildrenTag = true;
-                } else if (ch == '/' && insideRootTag && !insideChildrenTag) {
+                } else if (ch == '/') {
                     status = XMLLightweightParser.VERIFY_CLOSE_TAG;
                 }
             } else if (status == XMLLightweightParser.HEAD) {
@@ -253,14 +265,16 @@ class XMLLightweightParser {
                     insideChildrenTag = false;
                     continue;
                 }
-                else if (ch == '/') {
+                else if (ch == '/' && head.length() > 0) {
                     status = XMLLightweightParser.VERIFY_CLOSE_TAG;
+                    depth--;
                 }
                 head.append(ch);
 
             } else if (status == XMLLightweightParser.INIT) {
                 if (ch == '<') {
                     status = XMLLightweightParser.HEAD;
+                    depth = 1;
                 }
                 else {
                     startLastMsg++;

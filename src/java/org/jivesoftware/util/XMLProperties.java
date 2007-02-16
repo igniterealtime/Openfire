@@ -127,8 +127,8 @@ public class XMLProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
-            element = element.element(propName[i]);
+        for (String aPropName : propName) {
+            element = element.element(aPropName);
             if (element == null) {
                 // This node doesn't match this part of the property name which
                 // indicates this property doesn't exist so return null.
@@ -256,8 +256,7 @@ public class XMLProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
-            String child = propName[i];
+        for (String child : propName) {
             element = element.element(child);
             if (element == null) {
                 // This node doesn't match this part of the property name which
@@ -305,10 +304,10 @@ public class XMLProperties {
         }
         String childName = propName[propName.length - 1];
         // We found matching property, clear all children.
-        List toRemove = new ArrayList();
+        List<Element> toRemove = new ArrayList<Element>();
         Iterator iter = element.elementIterator(childName);
         while (iter.hasNext()) {
-            toRemove.add(iter.next());
+            toRemove.add((Element) iter.next());
         }
         for (iter = toRemove.iterator(); iter.hasNext();) {
             element.remove((Element)iter.next());
@@ -354,8 +353,8 @@ public class XMLProperties {
         String[] propName = parsePropertyName(parent);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
-            element = element.element(propName[i]);
+        for (String aPropName : propName) {
+            element = element.element(aPropName);
             if (element == null) {
                 // This node doesn't match this part of the property name which
                 // indicates this property doesn't exist so return empty array.
@@ -393,13 +392,13 @@ public class XMLProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
+        for (String aPropName : propName) {
             // If we don't find this part of the property in the XML heirarchy
             // we add it as a new node
-            if (element.element(propName[i]) == null) {
-                element.addElement(propName[i]);
+            if (element.element(aPropName) == null) {
+                element.addElement(aPropName);
             }
-            element = element.element(propName[i]);
+            element = element.element(aPropName);
         }
         // Set the value of the property in this node.
         if (value.startsWith("<![CDATA[")) {
@@ -420,7 +419,7 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        Map<String, String> params = new HashMap<String,String>();
+        Map<String, Object> params = new HashMap<String, Object>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
@@ -451,8 +450,8 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        PropertyEventDispatcher.dispatchEvent(name,
-                PropertyEventDispatcher.EventType.xml_property_deleted, Collections.emptyMap());
+        Map<String, Object> params = Collections.emptyMap();
+        PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.xml_property_deleted, params);
     }
 
     /**

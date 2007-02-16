@@ -11,8 +11,6 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.util.Log;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -70,7 +68,7 @@ public class PropertyEventDispatcher {
      * @param eventType the event type.
      * @param params event parameters.
      */
-    public static void dispatchEvent(String property, EventType eventType, Map params) {
+    public static void dispatchEvent(String property, EventType eventType, Map<String, Object> params) {
         for (PropertyEventListener listener : listeners) {
             try {
                 switch (eventType) {

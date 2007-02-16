@@ -11,11 +11,14 @@
 
 package org.jivesoftware.util;
 
+import org.jivesoftware.database.DbConnectionManager;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.sql.*;
-
-import org.jivesoftware.database.DbConnectionManager;
 
 /**
  * Retrieves and stores Jive properties. Properties are stored in the database.
@@ -162,8 +165,8 @@ public class JiveProperties implements Map<String, String> {
         deleteProperty((String)key);
 
         // Generate event.
-        PropertyEventDispatcher.dispatchEvent((String)key,
-                PropertyEventDispatcher.EventType.property_deleted, Collections.emptyMap());
+        Map<String, Object> params = Collections.emptyMap();
+        PropertyEventDispatcher.dispatchEvent((String)key, PropertyEventDispatcher.EventType.property_deleted, params);
 
         return value;
     }
@@ -189,13 +192,12 @@ public class JiveProperties implements Map<String, String> {
             insertProperty(key, value);
         }
 
-        String result = properties.put((String)key, (String)value);
+        String result = properties.put(key, value);
 
         // Generate event.
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, Object> params = new HashMap<String, Object>();
         params.put("value", value);
-        PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set,
-                params);
+        PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
 
         return result;
     }

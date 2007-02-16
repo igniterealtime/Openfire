@@ -13,6 +13,7 @@ package org.jivesoftware.wildfire.nio;
 import org.apache.mina.common.IdleStatus;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
+import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.Connection;
@@ -99,6 +100,10 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         if (cause instanceof IOException) {
             // TODO Verify if there were packets pending to be sent and decide what to do with them
             Log.debug(cause);
+        }
+        else if (cause instanceof ProtocolDecoderException) {
+            Log.warn("Closing session due to exception: " + session, cause);
+            session.close();
         }
         else {
             Log.error(cause);

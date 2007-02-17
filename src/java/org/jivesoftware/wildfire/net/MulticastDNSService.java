@@ -11,10 +11,7 @@
 
 package org.jivesoftware.wildfire.net;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.*;
 import org.jivesoftware.wildfire.ServerPort;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.XMPPServerInfo;
@@ -80,6 +77,10 @@ public class MulticastDNSService extends BasicModule {
     }
 
     public void start() throws IllegalStateException {
+        // If the service isn't enabled, return.
+        if (!JiveGlobals.getBooleanProperty("multicastDNS.enabled", false) ) {
+            return;     
+        }
         TimerTask startService = new TimerTask() {
             public void run() {
                 XMPPServerInfo info = XMPPServer.getInstance().getServerInfo();

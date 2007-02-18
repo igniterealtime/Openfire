@@ -30,6 +30,7 @@ import net.kano.joscar.snaccmd.loc.SetInfoCmd;
 import net.kano.joscar.snaccmd.InfoData;
 import net.kano.joscar.snaccmd.CapabilityBlock;
 import net.kano.joscar.snaccmd.icq.OfflineMsgIcqRequest;
+import net.kano.joscar.snaccmd.icq.MetaShortInfoRequest;
 import net.kano.joscar.ssiitem.BuddyItem;
 import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
@@ -471,7 +472,20 @@ public class OSCARSession extends TransportSession {
             if (nickname == null) {
                 nickname = buddy.getScreenname();
             }
-            
+            try {
+                Integer buddyUIN = Integer.parseInt(buddy.getScreenname());
+                if (nickname.equalsIgnoreCase(buddy.getScreenname())) {
+                    Log.debug("REQUESTING SHORT INFO FOR "+buddy.getScreenname());
+                    request(new MetaShortInfoRequest(getUIN(), (int)nextIcqId(), buddyUIN));
+                }
+            }
+            catch (NumberFormatException e) {
+                // Not an ICQ number then  ;D
+            }
+            if (nickname == null) {
+                nickname = buddy.getScreenname();
+            }
+
             int groupid = buddy.getGroupId();
             String groupname = null;
             if (groupid != 0 && groups.containsKey(groupid)) {
@@ -549,14 +563,48 @@ public class OSCARSession extends TransportSession {
         }
     }
 
+    /**
+     * Retrieves the next ICQ id number and increments the counter.
+     * @return The next ICQ id number.
+     */
     public long nextIcqId() { return icqSeqNum.next(); }
 
+    /**
+     * Retrieves a UIN in integer format for the session.
+     *
+     * @return The UIN in integer format.
+     */
     public int getUIN() {
         try {
             return Integer.parseInt(getRegistration().getUsername());
         }
         catch (Exception e) {
             return -1;
+        }
+    }
+
+    /**
+     * Updates roster nickname information about a contact.
+     *
+     * @param sn Screenname/UIN of contact
+     * @param nickname New nickname
+     */
+    public void updateRosterNickname(String sn, String nickname) {
+        BuddyItem buddy = buddies.get(sn);
+        if (buddy == null) { return; }
+        int groupid = buddy.getGroupId();
+        String groupname = null;
+        if (groupid != 0 && groups.containsKey(groupid)) {
+            String newgroupname = groups.get(groupid).getGroupName();
+            if (newgroupname.length() > 0) {
+                groupname = newgroupname;
+            }
+        }
+        try {
+            getTransport().addOrUpdateRosterItem(getJID(), getTransport().convertIDToJID(sn), nickname, groupname);
+        }
+        catch (UserNotFoundException e) {
+            Log.error("Contact not found while updating nickname.");
         }
     }
 

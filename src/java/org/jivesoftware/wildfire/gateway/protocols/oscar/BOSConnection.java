@@ -21,6 +21,7 @@ import net.kano.joscar.snaccmd.*;
 import net.kano.joscar.snaccmd.icq.OfflineMsgIcqCmd;
 import net.kano.joscar.snaccmd.icq.OfflineMsgDoneCmd;
 import net.kano.joscar.snaccmd.icq.OfflineMsgIcqAckCmd;
+import net.kano.joscar.snaccmd.icq.MetaShortInfoCmd;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.icbm.*;
 import net.kano.joscar.snaccmd.loc.*;
@@ -150,6 +151,11 @@ public class BOSConnection extends BasicFlapConnection {
         }
         else if (cmd instanceof OfflineMsgDoneCmd) {
             request(new OfflineMsgIcqAckCmd(oscarSession.getUIN(), (int)oscarSession.nextIcqId()));
+        }
+        else if (cmd instanceof MetaShortInfoCmd) {
+            MetaShortInfoCmd msic = (MetaShortInfoCmd)cmd;
+            Log.debug("RECEIVED META SHORT INFO: "+msic);
+            oscarSession.updateRosterNickname(String.valueOf(msic.getUIN()), msic.getNickname());
         }
     }
 }

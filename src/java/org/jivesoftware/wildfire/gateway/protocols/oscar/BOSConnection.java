@@ -18,6 +18,9 @@ import net.kano.joscar.flapcmd.*;
 import net.kano.joscar.net.*;
 import net.kano.joscar.snac.*;
 import net.kano.joscar.snaccmd.*;
+import net.kano.joscar.snaccmd.icq.OfflineMsgIcqCmd;
+import net.kano.joscar.snaccmd.icq.OfflineMsgDoneCmd;
+import net.kano.joscar.snaccmd.icq.OfflineMsgIcqAckCmd;
 import net.kano.joscar.snaccmd.conn.*;
 import net.kano.joscar.snaccmd.icbm.*;
 import net.kano.joscar.snaccmd.loc.*;
@@ -131,6 +134,23 @@ public class BOSConnection extends BasicFlapConnection {
                 oscarSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
                 oscarSession.gotCompleteSSI();
             }
+        }
+        else if (cmd instanceof OfflineMsgIcqCmd) {
+            Log.debug("Found offline message:"+cmd);
+            OfflineMsgIcqCmd omic = (OfflineMsgIcqCmd)cmd;
+
+            String sn = String.valueOf(omic.getFromUIN());
+            //String msg = "Offline message sent at "+new Date(omic.getDate().getTime()).toString()+"\n"+OscarTools.stripHtml(omic.getContents()).trim();
+            String msg = "Offline message received:\n"+OscarTools.stripHtml(omic.getContents()).trim();
+
+            oscarSession.getTransport().sendMessage(
+                    oscarSession.getJIDWithHighestPriority(),
+                    oscarSession.getTransport().convertIDToJID(sn),
+                    msg
+            );
+        }
+        else if (cmd instanceof OfflineMsgDoneCmd) {
+            request(new OfflineMsgIcqAckCmd(oscarSession.getUIN(), (int)oscarSession.nextIcqId()));
         }
     }
 }

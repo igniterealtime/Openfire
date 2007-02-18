@@ -136,7 +136,6 @@ public class BOSConnection extends BasicFlapConnection {
             }
         }
         else if (cmd instanceof OfflineMsgIcqCmd) {
-            Log.debug("Found offline message:"+cmd);
             OfflineMsgIcqCmd omic = (OfflineMsgIcqCmd)cmd;
 
             String sn = String.valueOf(omic.getFromUIN());

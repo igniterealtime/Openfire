@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.kano.joscar.ByteBlock;
 import net.kano.joscar.OscarTools;
+import net.kano.joscar.SeqNum;
 import net.kano.joscar.net.ConnDescriptor;
 import net.kano.joscar.flapcmd.SnacCommand;
 import net.kano.joscar.snac.SnacRequest;
@@ -28,6 +29,7 @@ import net.kano.joscar.snaccmd.conn.ServiceRequest;
 import net.kano.joscar.snaccmd.loc.SetInfoCmd;
 import net.kano.joscar.snaccmd.InfoData;
 import net.kano.joscar.snaccmd.CapabilityBlock;
+import net.kano.joscar.snaccmd.icq.OfflineMsgIcqRequest;
 import net.kano.joscar.ssiitem.BuddyItem;
 import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
@@ -75,6 +77,9 @@ public class OSCARSession extends TransportSession {
     private PresenceType presenceType = null;
     private String verboseStatus = null;
     private String propertyPrefix;
+    private static final String DEFAULT_AIM_GROUP = "   "; // We're using 3 spaces to indicated main group, invalid in real aim
+    private static final String DEFAULT_ICQ_GROUP = "General";
+    private SeqNum icqSeqNum = new SeqNum(0, Integer.MAX_VALUE);
     
     /**
      * SSI tracking variables.
@@ -172,7 +177,12 @@ public class OSCARSession extends TransportSession {
      */
     public void syncContactGroupsAndNickname(String contact, String nickname, List<String> grouplist) {
         if (grouplist.isEmpty()) {
-            grouplist.add("   "); // We're using 3 spaces to indicated main group, invalid in real aim
+            if (transport.getType().equals(TransportType.icq)) {
+                grouplist.add(DEFAULT_ICQ_GROUP);
+            }
+            else {
+                grouplist.add(DEFAULT_AIM_GROUP);
+            }
         }
         Log.debug("contact = "+contact+", grouplist = "+grouplist);
         // First, lets take the known good list of groups and add whatever is missing on the server.
@@ -192,7 +202,7 @@ public class OSCARSession extends TransportSession {
         // Now, lets clean up any groups this contact should no longer be a member of.
         for (BuddyItem buddy : buddies.values()) {
             if (buddy.getScreenname().equalsIgnoreCase(contact)) {
-                if (buddy.getGroupId() == 0 && !grouplist.contains("   ")) {
+                if (buddy.getGroupId() == 0 && !grouplist.equals(DEFAULT_AIM_GROUP)) {
                     // Ok this group is the "main group", but contact isn't in it.
                     Log.debug("Removing "+buddy+" from main group");
                     request(new DeleteItemsCmd(buddy.toSsiItem()));
@@ -481,6 +491,10 @@ public class OSCARSession extends TransportSession {
         }
 
         updateStatus(this.presenceType, this.verboseStatus);
+
+        if (getTransport().getType().equals(TransportType.icq)) {
+            request(new OfflineMsgIcqRequest(getUIN(), (int)nextIcqId()));
+        }
     }
 
     /**
@@ -494,9 +508,9 @@ public class OSCARSession extends TransportSession {
         }
     }
 
-    private static final List<CapabilityBlock> MY_CAPS = Arrays.asList(new CapabilityBlock[] {
-        CapabilityBlock.BLOCK_ICQCOMPATIBLE,
-    });
+    private static final List<CapabilityBlock> MY_CAPS = Arrays.asList(
+            CapabilityBlock.BLOCK_ICQCOMPATIBLE
+    );
 
     /**
      * @see org.jivesoftware.wildfire.gateway.TransportSession#updateStatus(org.jivesoftware.wildfire.gateway.PresenceType, String)
@@ -532,6 +546,17 @@ public class OSCARSession extends TransportSession {
     public void resendContactStatuses(JID jid) {
         if (bosConn != null) {
             bosConn.getAndSendAllStatuses(jid);
+        }
+    }
+
+    public long nextIcqId() { return icqSeqNum.next(); }
+
+    public int getUIN() {
+        try {
+            return Integer.parseInt(getRegistration().getUsername());
+        }
+        catch (Exception e) {
+            return -1;
         }
     }
 

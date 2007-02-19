@@ -189,6 +189,10 @@ class XMLLightweightParser {
                     status = XMLLightweightParser.TAIL;
                     depth--;
                 }
+                else if (ch == '!') {
+                    // This is a <! (comment) so ignore it
+                    status = XMLLightweightParser.INSIDE;
+                }
                 else {
                     depth++;
                 }

@@ -195,14 +195,17 @@ class XMLLightweightParser {
             } else if (status == XMLLightweightParser.VERIFY_CLOSE_TAG) {
                 if (ch == '>') {
                     depth--;
-                }
-                if (depth < 1) {
-                    // Found a tag in the form <tag />
-                    int end = buffer.length() - readByte + (i + 1);
-                    String msg = buffer.substring(startLastMsg, end);
-                    // Add message to the list
-                    foundMsg(msg);
-                    startLastMsg = end;
+                    if (depth < 1) {
+                        // Found a tag in the form <tag />
+                        int end = buffer.length() - readByte + (i + 1);
+                        String msg = buffer.substring(startLastMsg, end);
+                        // Add message to the list
+                        foundMsg(msg);
+                        startLastMsg = end;
+                    }
+                } else if (ch == '<') {
+                    status = XMLLightweightParser.PRETAIL;
+                    insideChildrenTag = true;
                 } else {
                     status = XMLLightweightParser.INSIDE;
                 }
@@ -210,7 +213,6 @@ class XMLLightweightParser {
 
                 if (ch == '"') {
                     status = XMLLightweightParser.INSIDE;
-                    continue;
                 }
             } else if (status == XMLLightweightParser.INSIDE_CDATA) {
                 if (ch == XMLLightweightParser.CDATA_END[cdataOffset]) {
@@ -218,7 +220,6 @@ class XMLLightweightParser {
                     if (cdataOffset == XMLLightweightParser.CDATA_END.length) {
                         status = XMLLightweightParser.INSIDE;
                         cdataOffset = 0;
-                        continue;
                     }
                 } else {
                     cdataOffset = 0;

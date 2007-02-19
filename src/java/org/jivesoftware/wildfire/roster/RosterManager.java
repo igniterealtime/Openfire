@@ -885,15 +885,15 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                                 otherGroupNames.contains(group.getName())) {
                             return true;
                         }
-                        // Check if both shared groups have a common group that can see both shared groups and
-                        // the users belong to such group
+                        // Check if each shared group can be seen by a group where each user belongs
                         Collection<Group> groupList = parseGroups(groupNames);
                         Collection<Group> otherGroupList = parseGroups(otherGroupNames);
                         for (Group groupName : groupList) {
-                            for (Group otherGroupName : otherGroupList) {
-                                if (groupName.equals(otherGroupName) && groupName.isUser(user) &&
-                                        otherGroupName.isUser(otherUser)) {
-                                    return true;
+                            if (groupName.isUser(otherUser)) {
+                                for (Group otherGroupName : otherGroupList) {
+                                    if (otherGroupName.isUser(user)) {
+                                        return true;
+                                    }
                                 }
                             }
                         }

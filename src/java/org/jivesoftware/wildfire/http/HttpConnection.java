@@ -29,6 +29,8 @@ public class HttpConnection {
     private boolean isSecure = false;
     private boolean isDelivered;
 
+    private static final String CONNECTION_CLOSED = "connection closed";
+
     /**
      * Constructs an HTTP Connection.
      *
@@ -50,7 +52,7 @@ public class HttpConnection {
         }
 
         try {
-            deliverBody(null);
+            deliverBody(CONNECTION_CLOSED);
         }
         catch (HttpConnectionClosedException e) {
             /* Shouldn't happen */
@@ -91,6 +93,9 @@ public class HttpConnection {
      * a deliverable to forward to the client
      */
     public void deliverBody(String body) throws HttpConnectionClosedException {
+        if(body == null) {
+            throw new IllegalArgumentException("Body cannot be null!");
+        }
         // We only want to use this function once so we will close it when the body is delivered.
         if (isClosed) {
             throw new HttpConnectionClosedException("The http connection is no longer " +
@@ -171,6 +176,9 @@ public class HttpConnection {
             this.isDelivered = true;
             if (deliverable == null) {
                 throw new HttpBindTimeoutException();
+            }
+            else if(CONNECTION_CLOSED.equals(deliverable)) {
+                return null;
             }
             return deliverable;
         }

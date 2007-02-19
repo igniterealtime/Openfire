@@ -330,9 +330,6 @@ public class HttpSession extends ClientSession {
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
             if (connection.getRequestId() == requestID) {
-                if (requestID > lastRequestID) {
-                    lastRequestID = connection.getRequestId();
-                }
                 String response = getResponse(connection);
 
                 // connection needs to be removed after response is returned to maintain idempotence
@@ -346,12 +343,20 @@ public class HttpSession extends ClientSession {
         throw new InternalError("Could not locate connection: " + requestID);
     }
 
-    private String getResponse(HttpConnection connection) {
-        String response;
+    private String getResponse(HttpConnection connection) throws HttpBindException {
+        String response = null;
         try {
             response = connection.getResponse();
         }
         catch (HttpBindTimeoutException e) {
+            // This connection timed out we need to increment the request count
+            if(connection.getRequestId() != lastRequestID + 1) {
+                Log.warn("Connection timed out: " + connection.getRequestId() + ". " + e.getMessage());
+                throw new HttpBindException("Unexpected RID error.", true, 404);
+            }
+            lastRequestID = connection.getRequestId();
+        }
+        if(response == null) {
             response = createEmptyBody();
         }
         return response;
@@ -448,15 +453,30 @@ public class HttpSession extends ClientSession {
 
             // Number of current connections open plus the current one tells us how many that
             // we need to close.
-            int connectionsToClose = (connectionQueue.size() + 1) - hold;
-            for (int i = 0; i < connectionsToClose; i++) {
+            int connectionsToClose = (getOpenConnectionCount() + 1) - hold;
+            int closed = 0;
+            for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
                 HttpConnection toClose = connectionQueue.get(i);
-                toClose.close();
+                if (!toClose.isClosed()) {
+                    lastRequestID = toClose.getRequestId();
+                    toClose.close();
+                    closed++;
+                }
             }
         }
         connectionQueue.add(connection);
         Collections.sort(connectionQueue, connectionComparator);
         fireConnectionOpened(connection);
+    }
+
+    private int getOpenConnectionCount() {
+        int count = 0;
+        for(HttpConnection connection : connectionQueue) {
+            if(!connection.isClosed()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private void deliver(HttpConnection connection, Collection<Deliverable> deliverable)
@@ -502,7 +522,8 @@ public class HttpSession extends ClientSession {
         boolean delivered = false;
         for (HttpConnection connection : connectionQueue) {
             try {
-                if (connection.getRequestId() <= lastRequestID + 1) {
+                if (connection.getRequestId() == lastRequestID + 1) {
+                    lastRequestID = connection.getRequestId();
                     deliver(connection, deliverable);
                     delivered = true;
                     break;

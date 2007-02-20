@@ -351,7 +351,6 @@ public class HttpSession extends ClientSession {
         catch (HttpBindTimeoutException e) {
             // This connection timed out we need to increment the request count
             if(connection.getRequestId() != lastRequestID + 1) {
-                Log.warn("Connection timed out: " + connection.getRequestId() + ". " + e.getMessage());
                 throw new HttpBindException("Unexpected RID error.", true, 404);
             }
             lastRequestID = connection.getRequestId();

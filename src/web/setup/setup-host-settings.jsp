@@ -11,6 +11,7 @@
                  java.net.InetAddress,
                  org.jivesoftware.wildfire.XMPPServer"
 %>
+<%@ page import="java.net.UnknownHostException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -23,8 +24,8 @@
     }
 %>
 
-<%  // Get parameters
-    String domain = ParamUtils.getParameter(request,"domain");
+<% // Get parameters
+    String domain = ParamUtils.getParameter(request, "domain");
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
@@ -32,15 +33,15 @@
     boolean doContinue = request.getParameter("continue") != null;
 
     // handle a continue request:
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String, String> errors = new HashMap<String, String>();
     if (doContinue) {
         // Validate parameters
         if (domain == null) {
-            errors.put("domain","domain");
+            errors.put("domain", "domain");
         }
         if (XMPPServer.getInstance().isStandAlone()) {
             if (embeddedPort == Integer.MIN_VALUE) {
-                errors.put("embeddedPort","embeddedPort");
+                errors.put("embeddedPort", "embeddedPort");
             }
             // Force any negative value to -1.
             else if (embeddedPort < 0) {
@@ -48,29 +49,28 @@
             }
 
             if (securePort == Integer.MIN_VALUE) {
-                errors.put("securePort","securePort");
+                errors.put("securePort", "securePort");
             }
             // Force any negative value to -1.
             else if (securePort < 0) {
                 securePort = -1;
             }
-        }
-        else {
+        } else {
             embeddedPort = -1;
             securePort = -1;
         }
         // Continue if there were no errors
         if (errors.size() == 0) {
-            Map<String,String> xmppSettings = new HashMap<String,String>();
+            Map<String, String> xmppSettings = new HashMap<String, String>();
 
-            xmppSettings.put("xmpp.domain",domain);
-            xmppSettings.put("xmpp.socket.ssl.active",""+sslEnabled);
-            xmppSettings.put("xmpp.auth.anonymous", "true" );
+            xmppSettings.put("xmpp.domain", domain);
+            xmppSettings.put("xmpp.socket.ssl.active", "" + sslEnabled);
+            xmppSettings.put("xmpp.auth.anonymous", "true");
             session.setAttribute("xmppSettings", xmppSettings);
 
-            Map<String,String> xmlSettings = new HashMap<String,String>();
-            xmlSettings.put("adminConsole.port",Integer.toString(embeddedPort));
-            xmlSettings.put("adminConsole.securePort",Integer.toString(securePort));
+            Map<String, String> xmlSettings = new HashMap<String, String>();
+            xmlSettings.put("adminConsole.port", Integer.toString(embeddedPort));
+            xmlSettings.put("adminConsole.securePort", Integer.toString(securePort));
             session.setAttribute("xmlSettings", xmlSettings);
 
             // Successful, so redirect
@@ -88,7 +88,12 @@
 
         // If the domain is still blank, guess at the value:
         if (domain == null) {
-            domain = InetAddress.getLocalHost().getHostName().toLowerCase();
+            try {
+                domain = InetAddress.getLocalHost().getHostName().toLowerCase();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                domain = "127.0.0.1";
+            }
         }
     }
 %>

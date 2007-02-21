@@ -75,7 +75,6 @@ public class GetListActiveUsers extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
-        field.setType(FormField.Type.jid_single);
         field.setLabel("The list of active users");
         field.setVariable("activeuserjids");
 

@@ -29,6 +29,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import java.util.*;
+import java.net.UnknownHostException;
+import java.net.SocketException;
 
 /**
  * A proxy service for UDP traffic such as RTP. It provides Jingle transport candidates
@@ -43,6 +45,8 @@ public class MediaProxyService extends BasicModule
     private String serviceName;
     private RoutingTable routingTable;
     private PacketRouter router;
+    private Echo echo = null;
+    private int echoPort = 10020;
 
     private MediaProxy mediaProxy = null;
     private boolean enabled = true;
@@ -65,6 +69,8 @@ public class MediaProxyService extends BasicModule
         serviceName = JiveGlobals.getProperty("mediaproxy.serviceName", defaultName);
         serviceName = serviceName.equals("") ? defaultName : serviceName;
 
+        echoPort = JiveGlobals.getIntProperty("mediaproxy.echoPort", echoPort);
+
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
 
@@ -73,9 +79,19 @@ public class MediaProxyService extends BasicModule
 
     public void start() {
         if (isEnabled()) {
+
+            try {
+                echo = new Echo(echoPort);
+                Thread t = new Thread(echo);
+                t.start();
+            } catch (UnknownHostException e) {
+            } catch (SocketException e) {
+            }
+
             routingTable.addRoute(getAddress(), this);
             XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         } else {
+            if(echo!=null) echo.cancel();
             XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         }
     }
@@ -85,6 +101,7 @@ public class MediaProxyService extends BasicModule
         mediaProxy.stopProxy();
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         routingTable.removeRoute(getAddress());
+        if(echo!=null) echo.cancel();
     }
 
     // Component Interface
@@ -402,17 +419,19 @@ public class MediaProxyService extends BasicModule
 
     /**
      * Get the Life Time of Sessions
+     *
      * @return lifetime in seconds
      */
-    public long getLifetime(){
+    public long getLifetime() {
         return mediaProxy.getLifetime();
     }
 
     /**
      * Set the Life time of Sessions
+     *
      * @param lifetime lifetime in seconds
      */
-    public void setLifetime(long lifetime){
+    public void setLifetime(long lifetime) {
         mediaProxy.setLifetime(lifetime);
     }
 }

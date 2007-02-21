@@ -70,17 +70,20 @@ public class Roster implements Cacheable {
 
 
     /**
-     * <p>Create a roster for the given user, pulling the existing roster items
+     * Create a roster for the given user, pulling the existing roster items
      * out of the backend storage provider. The roster will also include items that
-     * belong to the user's shared groups.</p>
+     * belong to the user's shared groups.<p>
      *
-     * <p>RosterItems that ONLY belong to shared groups won't be persistent unless the user
+     * RosterItems that ONLY belong to shared groups won't be persistent unless the user
      * explicitly subscribes to the contact's presence, renames the contact in his roster or adds
-     * the item to a personal group.</p>
+     * the item to a personal group.<p>
+     *
+     * This constructor is not public and instead you should use
+     * {@link org.jivesoftware.wildfire.roster.RosterManager#getRoster(String)}. 
      *
      * @param username The username of the user that owns this roster
      */
-    public Roster(String username) {
+    Roster(String username) {
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         rosterManager = XMPPServer.getInstance().getRosterManager();
         sessionManager = SessionManager.getInstance();

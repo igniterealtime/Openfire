@@ -1,9 +1,9 @@
 Summary: Wildfire XMPP Server
 Name: wildfire
-Version: 3.2.0
+Version: 3.2.2
 Release: 1
 BuildRoot: %{_builddir}/%{name}-root
-Source0: %{name}_src_3_2_0.tar.gz
+Source0: %{name}_src_3_2_2.tar.gz
 Group: Applications/Communications
 Vendor: Jive Software
 License: Commercial

@@ -986,6 +986,15 @@
     <!-- installer.rpm ========================================================================= -->
     <property name="target.rpm" value="${work.dir}/rpm" />
     <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of wildfire.">
+        <antcall target="dist.src"/>
+
+        <antcall target="dist.bin">
+            <!-- Don't need package for installer build -->
+            <param name="no.package" value="true"/>
+            <!-- Already built javadoc with dist.src above -->
+            <param name="no.javadoc" value="true"/>
+        </antcall>
+
         <mkdir dir="${target.rpm}/SPECS" />
         <mkdir dir="${target.rpm}/SOURCES" />
         <mkdir dir="${target.rpm}/BUILD" />

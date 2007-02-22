@@ -434,4 +434,22 @@ public class MediaProxyService extends BasicModule
     public void setLifetime(long lifetime) {
         mediaProxy.setLifetime(lifetime);
     }
+
+    /**
+     * Get the Port used to the UDP Echo Test
+     *
+     * @return port number
+     */
+    public int getEchoPort() {
+        return echoPort;
+    }
+
+    /**
+     * Set the Port used to the UDP Echo Test
+     *
+     * @param echoPort port number
+     */
+    public void setEchoPort(int echoPort) {
+        this.echoPort = echoPort;
+    }
 }

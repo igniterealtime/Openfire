@@ -35,6 +35,7 @@
     long lifetime = mediaProxyService.getLifetime();
     int minPort = mediaProxyService.getMinPort();
     int maxPort = mediaProxyService.getMaxPort();
+    int echoPort = mediaProxyService.getEchoPort();
     boolean enabled = mediaProxyService.isEnabled();
 
     if (save) {
@@ -54,6 +55,7 @@
 
         minPort = ParamUtils.getIntParameter(request, "minport", minPort);
         maxPort = ParamUtils.getIntParameter(request, "maxport", maxPort);
+        echoPort = ParamUtils.getIntParameter(request, "echoport", echoPort);
         enabled = ParamUtils.getBooleanParameter(request, "enabled", enabled);
 
         JiveGlobals.setProperty("mediaproxy.enabled", String.valueOf(enabled));
@@ -65,6 +67,11 @@
                 JiveGlobals.setProperty("mediaproxy.portMin", String.valueOf(minPort));
                 JiveGlobals.setProperty("mediaproxy.portMax", String.valueOf(maxPort));
             }
+        }
+
+        if (echoPort > 0){
+            mediaProxyService.setEchoPort(echoPort);
+            JiveGlobals.setProperty("mediaproxy.echoPort", String.valueOf(echoPort));
         }
 
         mediaProxyService.setEnabled(enabled);
@@ -81,7 +88,8 @@
 <body>
 
 <p>
-      <fmt:message key="mediaproxy.desc" /><br>
+    <fmt:message key="mediaproxy.desc"/>
+    <br>
 </p>
 
 <% if (success) { %>
@@ -92,7 +100,9 @@
             <tr>
                 <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" alt="Success"
                                            border="0"></td>
-                <td class="jive-icon-label"><fmt:message key="mediaproxy.settings.success" /></td>
+                <td class="jive-icon-label">
+                    <fmt:message key="mediaproxy.settings.success"/>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -103,7 +113,7 @@
 
 <form action="media-proxy.jsp" method="post">
     <div class="jive-contentBoxHeader">
-        <fmt:message key="mediaproxy.form.label" />
+        <fmt:message key="mediaproxy.form.label"/>
     </div>
     <div class="jive-contentBox">
         <table cellpadding="3" cellspacing="0" border="0">
@@ -115,33 +125,46 @@
                     </td>
                     <td width="99%">
                         <label for="rb02">
-                            <b><fmt:message key="mediaproxy.form.enabled" /></b>
-                            - <fmt:message key="mediaproxy.form.enabled.desc" />
+                            <b>
+                                <fmt:message key="mediaproxy.form.enabled"/>
+                            </b>
+                            -
+                            <fmt:message key="mediaproxy.form.enabled.desc"/>
                         </label>
                         <br>
                         <table>
                             <tr>
-                                <td><fmt:message key="mediaproxy.form.idletimeout" />:&nbsp;
+                                <td>
+                                    <fmt:message key="mediaproxy.form.idletimeout"/>
+                                    :&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="5" maxlength="8"
                                            name="idleTimeout"
                                            value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                           align="left"> &nbsp;<i><fmt:message key="mediaproxy.form.idletimeout.tip" /></i>
+                                           align="left"> &nbsp;<i>
+                                    <fmt:message key="mediaproxy.form.idletimeout.tip"/>
+                                </i>
                                 </td>
                             </tr>
                             <tr>
-                                <td><fmt:message key="mediaproxy.form.lifetime" />:&nbsp;
+                                <td>
+                                    <fmt:message key="mediaproxy.form.lifetime"/>
+                                    :&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="5" maxlength="8"
                                            name="lifetime"
                                            value="<%=mediaProxyService.getLifetime()%>"
-                                           align="left"> &nbsp;<i><fmt:message key="mediaproxy.form.lifetime.tip" /></i>
+                                           align="left"> &nbsp;<i>
+                                    <fmt:message key="mediaproxy.form.lifetime.tip"/>
+                                </i>
                                 </td>
                             </tr>
                             <tr>
-                                <td><fmt:message key="mediaproxy.form.minport" />:&nbsp;
+                                <td>
+                                    <fmt:message key="mediaproxy.form.minport"/>
+                                    :&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="7" maxlength="20" name="minport"
@@ -149,12 +172,23 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td><fmt:message key="mediaproxy.form.maxport" />:&nbsp;
+                                <td>
+                                    <fmt:message key="mediaproxy.form.maxport"/>
+                                    :&nbsp;
                                 </td>
                                 <td>
                                     <input type="text" size="7" maxlength="20" name="maxport"
                                            value="<%=mediaProxyService.getMaxPort()%>">
-
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <fmt:message key="mediaproxy.form.echoport"/>
+                                    :&nbsp;
+                                </td>
+                                <td>
+                                    <input type="text" size="7" maxlength="20" name="echoport"
+                                           value="<%=mediaProxyService.getEchoPort()%>">
                                 </td>
                             </tr>
                         </table>
@@ -170,8 +204,11 @@
                     </td>
                     <td width="99%">
                         <label for="rb01">
-                            <b><fmt:message key="mediaproxy.form.disabled" /></b>
-                            - <fmt:message key="mediaproxy.form.disabled.desc" />
+                            <b>
+                                <fmt:message key="mediaproxy.form.disabled"/>
+                            </b>
+                            -
+                            <fmt:message key="mediaproxy.form.disabled.desc"/>
                         </label>
                     </td>
                 </tr>
@@ -184,8 +221,10 @@
 <% if (mediaProxyService.isEnabled()) { %>
 
 <p>
-    <b><fmt:message key="mediaproxy.summary.label" /></b><br>
-    <fmt:message key="mediaproxy.summary.desc" />
+    <b>
+        <fmt:message key="mediaproxy.summary.label"/>
+    </b><br>
+    <fmt:message key="mediaproxy.summary.desc"/>
 </p>
 
 <div class="jive-table">
@@ -193,12 +232,26 @@
         <thead>
             <tr>
                 <th>&nbsp;</th>
-                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.creator" /></th>
-                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.port" /> A</th>
-                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.port" /> B</th>
-                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.server" /></th>
-                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.inactivity" /></th>
-                <th nowrap align="left" valign="middle"><fmt:message key="mediaproxy.summary.session.type" /></th>
+                <th nowrap align="left" valign="middle">
+                    <fmt:message key="mediaproxy.summary.session.creator"/>
+                </th>
+                <th nowrap align="left" valign="middle">
+                    <fmt:message key="mediaproxy.summary.session.port"/>
+                    A
+                </th>
+                <th nowrap align="left" valign="middle">
+                    <fmt:message key="mediaproxy.summary.session.port"/>
+                    B
+                </th>
+                <th nowrap align="left" valign="middle">
+                    <fmt:message key="mediaproxy.summary.session.server"/>
+                </th>
+                <th nowrap align="left" valign="middle">
+                    <fmt:message key="mediaproxy.summary.session.inactivity"/>
+                </th>
+                <th nowrap align="left" valign="middle">
+                    <fmt:message key="mediaproxy.summary.session.type"/>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -209,7 +262,7 @@
             %>
             <tr>
                 <td align="center" colspan="7">
-                <fmt:message key="mediaproxy.summary.session.noactive" />
+                    <fmt:message key="mediaproxy.summary.session.noactive"/>
                 </td>
             </tr>
 

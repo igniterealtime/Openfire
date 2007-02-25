@@ -11,6 +11,7 @@
 package org.jivesoftware.wildfire.gateway.protocols.msn;
 
 import net.sf.jml.*;
+import net.sf.jml.message.MsnControlMessage;
 import net.sf.jml.impl.BasicMessenger;
 import net.sf.jml.impl.MsnMessengerFactory;
 import org.jivesoftware.util.Log;
@@ -394,7 +395,14 @@ public class MSNSession extends TransportSession {
      * @see org.jivesoftware.wildfire.gateway.TransportSession#sendChatState(org.xmpp.packet.JID, org.jivesoftware.wildfire.gateway.ChatStateType)
      */
     public void sendChatState(JID jid, ChatStateType chatState) {
-        // TODO: Handle this
+        Email jidEmail = Email.parseStr(getTransport().convertJIDToID(jid));
+        MsnControlMessage mcm = new MsnControlMessage();
+        mcm.setTypingUser(msnMessenger.getOwner().getEmail().getEmailAddress());
+        for (MsnSwitchboard sb : msnMessenger.getActiveSwitchboards()) {
+            if (sb.containContact(jidEmail)) {
+                sb.sendMessage(mcm, true);
+            }
+        }
     }
 
     /**

@@ -437,32 +437,32 @@
 		<strong>Filter by:</strong>
 		<label for="filterAIMcheckbox">
 			<input type="checkbox" name="filter[]" value="aim" <%= ((filteropts.contains("aim")) ? "checked" : "") %> id="filterAIMcheckbox"> 
-			<img src="images/aim.gif" alt="" border="0" alt="<fmt:message key="gateway.aim.shortservice" />">
+			<img src="images/aim.gif" border="0" alt="<fmt:message key="gateway.aim.shortservice" />">
 			<!--<span><fmt:message key="gateway.aim.shortservice" /></span>-->
 		</label>
 		<label for="filterICQcheckbox">
 			<input type="checkbox" name="filter[]" value="icq" <%= ((filteropts.contains("icq")) ? "checked" : "") %> id="filterICQcheckbox"> 
-			<img src="images/icq.gif" alt="" border="0" alt="<fmt:message key="gateway.icq.shortservice" />">
+			<img src="images/icq.gif" border="0" alt="<fmt:message key="gateway.icq.shortservice" />">
 			<!--<span><fmt:message key="gateway.icq.shortservice" /></span>-->
 		</label>
         <label for="filterIRCcheckbox">
             <input type="checkbox" name="filter[]" value="irc" <%= ((filteropts.contains("irc")) ? "checked" : "") %> id="filterIRCcheckbox">
-            <img src="images/irc.gif" alt="" border="0" alt="<fmt:message key="gateway.irc.shortservice" />">
+            <img src="images/irc.gif" border="0" alt="<fmt:message key="gateway.irc.shortservice" />">
             <!--<span><fmt:message key="gateway.irc.shortservice" /></span>-->
         </label>
         <label for="filterMSNcheckbox">
 			<input type="checkbox" name="filter[]" value="msn" <%= ((filteropts.contains("msn")) ? "checked" : "") %> id="filterMSNcheckbox"> 
-			<img src="images/msn.gif" alt="" border="0" alt="<fmt:message key="gateway.msn.shortservice" />">
+			<img src="images/msn.gif" border="0" alt="<fmt:message key="gateway.msn.shortservice" />">
 			<!--<span><fmt:message key="gateway.msn.shortservice" /></span>-->
 		</label>
         <label for="filterSIPcheckbox">
             <input type="checkbox" name="filter[]" value="sip" <%= ((filteropts.contains("sip")) ? "checked" : "") %> id="filterSIPcheckbox"> 
-            <img src="images/sipsimple.gif" alt="" border="0" alt="<fmt:message key="gateway.sip.shortservice" />">
+            <img src="images/sipsimple.gif" border="0" alt="<fmt:message key="gateway.sip.shortservice" />">
             <!--<span><fmt:message key="gateway.sip.shortservice" /></span>-->
         </label>
         <label for="filterYAHOOcheckbox">
 			<input type="checkbox" name="filter[]" value="yahoo" <%= ((filteropts.contains("yahoo")) ? "checked" : "") %> id="filterYAHOOcheckbox"> 
-			<img src="images/yahoo.gif" alt="" border="0" alt="<fmt:message key="gateway.yahoo.shortservice" />"> 
+			<img src="images/yahoo.gif" border="0" alt="<fmt:message key="gateway.yahoo.shortservice" />"> 
 			<!--<span><fmt:message key="gateway.yahoo.shortservice" /></span>-->
 		</label>
 		<label for="filterActiveOnly">

@@ -16,8 +16,8 @@ import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.util.Log;
 
-import java.util.TreeMap;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Interface for a transport session.
@@ -79,7 +79,12 @@ public abstract class TransportSession implements Runnable {
     /**
      * All JIDs (including resources) that are associated with this session.
      */
-    public TreeMap<Integer,String> resources = new TreeMap<Integer,String>();
+    public ConcurrentHashMap<String,Integer> resources = new ConcurrentHashMap<String,Integer>();
+
+    /**
+     * Current highest resource.
+     */
+    public String highestResource = null;
 
     /**
      * Is this session valid?  Set to false when session is done.
@@ -113,7 +118,10 @@ public abstract class TransportSession implements Runnable {
      * @param priority Priority of resource
      */
     public void addResource(String resource, Integer priority) {
-        resources.put(priority, resource);
+        resources.put(resource, priority);
+        if (resources.get(highestResource) >= priority) {
+            highestResource = resource;
+        }
     }
 
     /**
@@ -122,17 +130,23 @@ public abstract class TransportSession implements Runnable {
      * @param resource Resource string
      */
     public void removeResource(String resource) {
-        for (Integer i : resources.keySet()) {
-            if (resources.get(i).equals(resource)) {
-                resources.remove(i);
-                try {
-                    getTransport().notifyRosterOffline(new JID(getJID().getNode(),getJID().getDomain(),resource));
+        resources.remove(resource);
+        try {
+            getTransport().notifyRosterOffline(new JID(getJID().getNode(),getJID().getDomain(),resource));
+        }
+        catch (UserNotFoundException e) {
+            // Don't care
+        }
+        if (resource.equals(highestResource)) {
+            Integer highestPriority = -255;
+            String tmpHighestResource = null;
+            for (String res : resources.keySet()) {
+                if (resources.get(res) > highestPriority) {
+                    tmpHighestResource = res;
+                    highestPriority = resources.get(res);
                 }
-                catch (UserNotFoundException e) {
-                    // Don't care
-                }
-                break;
             }
+            highestResource = tmpHighestResource;
         }
     }
 
@@ -143,20 +157,23 @@ public abstract class TransportSession implements Runnable {
      * @param priority New priority
      */
     public void updateResource(String resource, Integer priority) {
-        for (Integer i : resources.keySet()) {
-            if (resources.get(i).equals(resource)) {
-                resources.remove(i);
-                break;
+        resources.put(resource, priority);
+        Integer highestPriority = -255;
+        String tmpHighestResource = null;
+        for (String res : resources.keySet()) {
+            if (resources.get(res) > highestPriority) {
+                tmpHighestResource = res;
+                highestPriority = resources.get(res);
             }
         }
-        resources.put(priority, resource);
+        highestResource = tmpHighestResource;
     }
 
     /**
      * Removes all resources associated with a session.
      */
     public void removeAllResources() {
-        for (String resource : resources.values()) {
+        for (String resource : resources.keySet()) {
             removeResource(resource); 
         }
     }
@@ -274,7 +291,7 @@ public abstract class TransportSession implements Runnable {
      * @return Full JID including resource with highest priority.
      */
     public JID getJIDWithHighestPriority() {
-        return new JID(jid.getNode(),jid.getDomain(),resources.get(resources.lastKey()));
+        return new JID(jid.getNode(),jid.getDomain(),highestResource);
     }
 
     /**
@@ -284,7 +301,7 @@ public abstract class TransportSession implements Runnable {
      * @return True or false if the resource is the highest priority.
      */
     public Boolean isHighestPriority(String resource) {
-        return (resources.get(resources.lastKey()).equals(resource));
+        return (highestResource.equals(resource));
     }
 
     /**
@@ -305,12 +322,7 @@ public abstract class TransportSession implements Runnable {
      * @return Priority of the resource, or null if not found.
      */
     public Integer getPriority(String resource) {
-        for (Integer i : resources.keySet()) {
-            if (resources.get(i).equals(resource)) {
-                return i;
-            }
-        }
-        return null;
+        return resources.get(resource);
     }
 
     /**
@@ -320,7 +332,7 @@ public abstract class TransportSession implements Runnable {
      * @return True of false if the resource is associated with this session.
      */
     public Boolean hasResource(String resource) {
-        return (resources.containsValue(resource));
+        return (resources.containsKey(resource));
     }
 
     /**

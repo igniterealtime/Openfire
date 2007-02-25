@@ -24,6 +24,7 @@ import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Attribute;
@@ -219,7 +220,7 @@ public class ConfigManager {
             jid = new JID(user, XMPPServer.getInstance().getServerInfo().getName(), null);
         }
         if (!plugin.getTransportInstance(transportType).isEnabled()) {
-            return "Transport is not enabled.  Please enable before attempting adds.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.notenabled", "gateway");
         }
         try {
             plugin.getTransportInstance(transportType).getTransport().addNewRegistration(jid, legacyUsername, legacyPassword, legacyNickname, false);
@@ -227,15 +228,15 @@ public class ConfigManager {
         }
         catch (UserNotFoundException e) {
             Log.error("Not found while adding account for "+jid.toString());
-            return "Unable to find XMPP user account.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.xmppnotfound", "gateway");
         }
         catch (IllegalAccessException e) {
             Log.error("Domain of JID specified for registration is not on this server: "+jid.toString());
-            return "XMPP user account domain is not on this server.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.illegaldomain", "gateway");
         }
         catch (IllegalArgumentException e) {
             Log.error("Username specified for registration is not valid.");
-            return "Invalid username specified for legacy service.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.invaliduser", "gateway");
         }
     }
 
@@ -251,7 +252,7 @@ public class ConfigManager {
         try {
             Registration reg = new Registration(registrationID);
             if (!plugin.getTransportInstance(reg.getTransportType().toString()).isEnabled()) {
-                return "Transport is not enabled.  Please enable before attempting deletes.";
+                return LocaleUtils.getLocalizedString("gateway.web.registrations.notenabled", "gateway");
             }
             plugin.getTransportInstance(reg.getTransportType().toString()).getTransport().deleteRegistration(reg.getJID());
             return null;
@@ -259,12 +260,12 @@ public class ConfigManager {
         catch (NotFoundException e) {
             // Ok, nevermind.
             Log.error("Not found while deleting id "+registrationID, e);
-            return "Unable to find XMPP user account.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.xmppnotfound", "gateway");
         }
         catch (UserNotFoundException e) {
             // Ok, nevermind.
             Log.error("Not found while deleting id "+registrationID, e);
-            return "Unable to find registration.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.regnotfound", "gateway");
         }
     }
 
@@ -291,7 +292,7 @@ public class ConfigManager {
         catch (NotFoundException e) {
             // Ok, nevermind.
             Log.error("Not found while editing id "+registrationID, e);
-            return "Unable to find registration.";
+            return LocaleUtils.getLocalizedString("gateway.web.registrations.regnotfound", "gateway");
         }
     }
 

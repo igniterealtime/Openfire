@@ -1,6 +1,6 @@
 Name                   |  Version
 -------------------------------------------------------
-cindy.jar              | 2.4.4
+cindy.jar              | 2.4.4 (patched [#4])
 concurrent.jar         | 1.3.4
 dwr.jar                | 1.1.1 (patched [#3])
 irclib.jar             | 1.10
@@ -33,3 +33,6 @@ Patch Descriptions
 
 3) dwr patches
 - Derek did something to DWR itself to make it work, I don't have details
+
+4) cindy patches
+- silenced session X idle messages.

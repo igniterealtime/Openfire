@@ -148,7 +148,8 @@ public class SimpleSession extends TransportSession {
 				udpSipProvider = sipStack.createSipProvider(udp);
 		} catch (Exception ex) {
 			Log.debug(ex);
-		}
+            return;
+        }
 		
 		try {
 			myListener = new SimpleSessionListener(this);
@@ -156,13 +157,15 @@ public class SimpleSession extends TransportSession {
 			udpSipProvider.addSipListener(myListener);
 		} catch (TooManyListenersException ex) {
 			Log.debug(ex);
-		}
+            return;
+        }
 		
 		try {
 			sipStack.start();
 		} catch (SipException ex) {
 			Log.debug(ex);
-		}
+            return;
+        }
 		
 		seqNum = 1L;
 	}

@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.JID;
@@ -103,7 +104,7 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
 
             String sn = icbm.getSenderInfo().getScreenname();
             InstantMessage message = icbm.getMessage();
-            String msg = OscarTools.stripHtml(message.getMessage());
+            String msg = StringUtils.unescapeFromXML(OscarTools.stripHtml(message.getMessage()));
 
             oscarSession.getTransport().sendMessage(
                     oscarSession.getJIDWithHighestPriority(),

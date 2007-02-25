@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 import org.xmpp.packet.Presence;
 
@@ -141,7 +142,7 @@ public class BOSConnection extends BasicFlapConnection {
 
             String sn = String.valueOf(omic.getFromUIN());
             //String msg = "Offline message sent at "+new Date(omic.getDate().getTime()).toString()+"\n"+OscarTools.stripHtml(omic.getContents()).trim();
-            String msg = "Offline message received:\n"+OscarTools.stripHtml(omic.getContents()).trim();
+            String msg = "Offline message received:\n"+ StringUtils.unescapeFromXML(OscarTools.stripHtml(omic.getContents()).trim());
 
             oscarSession.getTransport().sendMessage(
                     oscarSession.getJIDWithHighestPriority(),

@@ -31,6 +31,7 @@ import net.kano.joscar.snaccmd.InfoData;
 import net.kano.joscar.snaccmd.CapabilityBlock;
 import net.kano.joscar.snaccmd.icq.OfflineMsgIcqRequest;
 import net.kano.joscar.snaccmd.icq.MetaShortInfoRequest;
+import net.kano.joscar.snaccmd.icq.MetaFullInfoRequest;
 import net.kano.joscar.ssiitem.BuddyItem;
 import net.kano.joscar.ssiitem.GroupItem;
 import org.jivesoftware.util.Log;
@@ -469,14 +470,14 @@ public class OSCARSession extends TransportSession {
         for (BuddyItem buddy : buddies.values()) {
             //Log.debug("CompleteSSI: adding "+buddy.getScreenname());
             String nickname = buddy.getAlias();
-            if (nickname == null) {
+            if (nickname == null || nickname.matches("/^\\s*$/")) {
                 nickname = buddy.getScreenname();
             }
             try {
-                Integer buddyUIN = Integer.parseInt(buddy.getScreenname());
                 if (nickname.equalsIgnoreCase(buddy.getScreenname())) {
-                    Log.debug("REQUESTING SHORT INFO FOR "+buddy.getScreenname());
-                    request(new MetaShortInfoRequest(getUIN(), (int)nextIcqId(), buddyUIN));
+                    Integer buddyUIN = Integer.parseInt(buddy.getScreenname());
+                    Log.debug("REQUESTING SHORT INFO FOR "+buddyUIN);
+                    request(new MetaFullInfoRequest(getUIN(), (int)nextIcqId(), buddyUIN));
                 }
             }
             catch (NumberFormatException e) {

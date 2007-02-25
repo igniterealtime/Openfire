@@ -153,9 +153,9 @@ public class BOSConnection extends BasicFlapConnection {
             request(new OfflineMsgIcqAckCmd(oscarSession.getUIN(), (int)oscarSession.nextIcqId()));
         }
         else if (cmd instanceof MetaShortInfoCmd) {
-            MetaShortInfoCmd msic = (MetaShortInfoCmd)cmd;
-            Log.debug("RECEIVED META SHORT INFO: "+msic);
-            oscarSession.updateRosterNickname(String.valueOf(msic.getUIN()), msic.getNickname());
+//            MetaShortInfoCmd msic = (MetaShortInfoCmd)cmd;
+//            Log.debug("RECEIVED META SHORT INFO: "+msic);
+//            oscarSession.updateRosterNickname(String.valueOf(msic.getUIN()), msic.getNickname());
         }
     }
 }

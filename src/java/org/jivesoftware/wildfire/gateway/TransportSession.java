@@ -119,7 +119,7 @@ public abstract class TransportSession implements Runnable {
      */
     public void addResource(String resource, Integer priority) {
         resources.put(resource, priority);
-        if (resources.get(highestResource) >= priority) {
+        if (highestResource == null || resources.get(highestResource) >= priority) {
             highestResource = resource;
         }
     }

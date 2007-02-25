@@ -58,7 +58,7 @@ public abstract class BaseFlapConnection extends ClientFlapConn {
         getFlapProcessor().addExceptionHandler(new ConnProcessorExceptionHandler() {
             public void handleException(ConnProcessorExceptionEvent event) {
                 Log.error(event.getType() + " FLAP ERROR: "
-                        + event.getException().getMessage());
+                        + event.getException().getMessage() + " " + event.getReason());
             }
         });
         sp.addPacketListener(new SnacPacketListener() {

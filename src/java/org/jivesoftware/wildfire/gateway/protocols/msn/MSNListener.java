@@ -269,6 +269,16 @@ public class MSNListener extends MsnAdapter {
 //            m.setBody("MSN protocol error: "+throwable.toString());
 //            msnSession.getTransport().sendPacket(m);
         }
+        else if (throwable.getClass().getName().equals("java.io.IOException")) {
+            Log.debug("MSN: IO error: "+throwable.toString());
+            msnSession.getTransport().sendMessage(
+                    msnSession.getJIDWithHighestPriority(),
+                    msnSession.getTransport().getJID(),
+                    LocaleUtils.getLocalizedString("gateway.msn.disconnect", "gateway"),
+                    Message.Type.error
+            );
+            msnSession.logOut();
+        }
         else {
             Log.debug("MSN: Unknown error: "+throwable.toString());
 //            Message m = new Message();

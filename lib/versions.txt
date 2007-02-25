@@ -7,7 +7,7 @@ irclib.jar             | 1.10
 jainsipapi.jar         | 1.2 (nightly 2007-02-13)
 jainsipri.jar          | 1.2 (nightly 2007-02-13)
 jakarta-regexp.jar     | 1.3
-jml.jar                | svn-20061216
+jml.jar                | svn-20070225
 joscar-client.jar      | svn-20070204 (patched [#2])
 joscar-common.jar      | svn-20070204
 joscar-protocol.jar    | svn-20070204 (patched [#2])

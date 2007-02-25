@@ -20,8 +20,10 @@ import org.jivesoftware.wildfire.group.GroupNotFoundException;
 import org.jivesoftware.wildfire.gateway.GatewayPlugin;
 import org.jivesoftware.wildfire.gateway.TransportType;
 import org.jivesoftware.wildfire.gateway.PermissionManager;
+import org.jivesoftware.wildfire.gateway.Registration;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NotFoundException;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Attribute;
@@ -194,6 +196,103 @@ public class ConfigManager {
         permissionManager.storeGroupList(groupList);
 
         return errorList;
+    }
+
+    /**
+     * Adds a new registration via the web interface.
+     *
+     * @param user Username or full JID of user who is getting an account registered.
+     * @param transportType Type of transport to add user to.
+     * @param legacyUsername User's username on the legacy service.
+     * @param legacyPassword User's password on the legacy service.
+     * @param legacyNickname User's nickname on the legacy service.
+     * @return Error message or null on success.
+     */
+    public String addRegistration(String user, String transportType, String legacyUsername, String legacyPassword, String legacyNickname) {
+        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        GatewayPlugin plugin = (GatewayPlugin)pluginManager.getPlugin("gateway");
+        JID jid;
+        if (user.contains("@")) {
+            jid = new JID(user);
+        }
+        else {
+            jid = new JID(user, XMPPServer.getInstance().getServerInfo().getName(), null);
+        }
+        if (!plugin.getTransportInstance(transportType).isEnabled()) {
+            return "Transport is not enabled.  Please enable before attempting adds.";
+        }
+        try {
+            plugin.getTransportInstance(transportType).getTransport().addNewRegistration(jid, legacyUsername, legacyPassword, legacyNickname, false);
+            return null;
+        }
+        catch (UserNotFoundException e) {
+            Log.error("Not found while adding account for "+jid.toString());
+            return "Unable to find XMPP user account.";
+        }
+        catch (IllegalAccessException e) {
+            Log.error("Domain of JID specified for registration is not on this server: "+jid.toString());
+            return "XMPP user account domain is not on this server.";
+        }
+        catch (IllegalArgumentException e) {
+            Log.error("Username specified for registration is not valid.");
+            return "Invalid username specified for legacy service.";
+        }
+    }
+
+    /**
+     * Deletes a registration via the web interface.
+     *
+     * @param registrationID ID number associated with registration to delete.
+     * @return Error message or null on success.
+     */
+    public String deleteRegistration(Integer registrationID) {
+        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        GatewayPlugin plugin = (GatewayPlugin)pluginManager.getPlugin("gateway");
+        try {
+            Registration reg = new Registration(registrationID);
+            if (!plugin.getTransportInstance(reg.getTransportType().toString()).isEnabled()) {
+                return "Transport is not enabled.  Please enable before attempting deletes.";
+            }
+            plugin.getTransportInstance(reg.getTransportType().toString()).getTransport().deleteRegistration(reg.getJID());
+            return null;
+        }
+        catch (NotFoundException e) {
+            // Ok, nevermind.
+            Log.error("Not found while deleting id "+registrationID, e);
+            return "Unable to find XMPP user account.";
+        }
+        catch (UserNotFoundException e) {
+            // Ok, nevermind.
+            Log.error("Not found while deleting id "+registrationID, e);
+            return "Unable to find registration.";
+        }
+    }
+
+    /**
+     * Updates a registration via the web interface.
+     *
+     *
+     * @param registrationID ID number associated with registration to modify.
+     * @param legacyUsername User's updated username on the legacy service.
+     * @param legacyPassword User's updated password on the legacy service, null if no change.
+     * @param legacyNickname User's updated nickname on the legacy service.
+     * @return Error message or null on success.
+     */
+    public String updateRegistration(Integer registrationID, String legacyUsername, String legacyPassword, String legacyNickname) {
+        try {
+            Registration reg = new Registration(registrationID);
+            reg.setUsername(legacyUsername);
+            if (legacyPassword != null) {
+                reg.setPassword(legacyPassword);
+            }
+            reg.setNickname(legacyNickname);
+            return null;
+        }
+        catch (NotFoundException e) {
+            // Ok, nevermind.
+            Log.error("Not found while editing id "+registrationID, e);
+            return "Unable to find registration.";
+        }
     }
 
 }

@@ -77,7 +77,15 @@ public class MSNListener extends MsnAdapter {
      * Handles incoming control messages from MSN.
      */
     public void controlMessageReceived(MsnSwitchboard switchboard, MsnControlMessage message, MsnContact friend) {
-        Log.debug("MSN: Received control msg to " + switchboard + " from " + friend + ": " + message);
+        if (message.getTypingUser() != null) {
+            msnSession.getTransport().sendComposingNotification(
+                    msnSession.getJIDWithHighestPriority(),
+                    msnSession.getTransport().convertIDToJID(friend.getEmail().toString())
+            );
+        }
+        else {
+            Log.debug("MSN: Received unknown control msg to " + switchboard + " from " + friend + ": " + message);
+        }
     }
 
     /**

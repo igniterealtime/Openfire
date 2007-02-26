@@ -473,16 +473,17 @@ public class OSCARSession extends TransportSession {
             if (nickname == null || nickname.matches("/^\\s*$/")) {
                 nickname = buddy.getScreenname();
             }
-            try {
-                if (nickname.equalsIgnoreCase(buddy.getScreenname())) {
-                    Integer buddyUIN = Integer.parseInt(buddy.getScreenname());
-                    Log.debug("REQUESTING SHORT INFO FOR "+buddyUIN);
-                    request(new MetaFullInfoRequest(getUIN(), (int)nextIcqId(), buddyUIN));
-                }
-            }
-            catch (NumberFormatException e) {
-                // Not an ICQ number then  ;D
-            }
+//            Doesn't work yet so disabling.
+//            try {
+//                if (nickname.equalsIgnoreCase(buddy.getScreenname())) {
+//                    Integer buddyUIN = Integer.parseInt(buddy.getScreenname());
+//                    Log.debug("REQUESTING SHORT INFO FOR "+buddyUIN);
+//                    request(new MetaFullInfoRequest(getUIN(), (int)nextIcqId(), buddyUIN));
+//                }
+//            }
+//            catch (NumberFormatException e) {
+//                // Not an ICQ number then  ;D
+//            }
             if (nickname == null) {
                 nickname = buddy.getScreenname();
             }

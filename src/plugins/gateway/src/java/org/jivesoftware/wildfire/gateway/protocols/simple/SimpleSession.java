@@ -1,3 +1,13 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.gateway.protocols.simple;
 
 import java.net.InetAddress;
@@ -10,7 +20,6 @@ import java.util.TooManyListenersException;
 
 import javax.sip.ClientTransaction;
 import javax.sip.ListeningPoint;
-import javax.sip.ServerTransaction;
 import javax.sip.SipException;
 import javax.sip.SipFactory;
 import javax.sip.SipProvider;
@@ -169,14 +178,14 @@ public class SimpleSession extends TransportSession {
 		
 		seqNum = 1L;
 	}
-	
+
 	/**
 	 * Perform rollback action once the login fails or logout goes on the way.
 	 */
 	private void rollback() {
-		
+
 	}
-	
+
 	public void updateStatus(PresenceType presenceType, String verboseStatus) {
 		Log.debug("SimpleSession(" + getJID().getNode() + ").updateStatus:  Method commenced!");
 	}

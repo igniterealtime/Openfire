@@ -1,3 +1,13 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.gateway.protocols.simple;
 
 import java.util.Date;
@@ -12,19 +22,15 @@ import javax.sip.TransactionTerminatedEvent;
 import javax.sip.address.Address;
 import javax.sip.address.URI;
 import javax.sip.header.CSeqHeader;
-import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
-import javax.sip.header.MaxForwardsHeader;
-import javax.sip.header.RecordRouteHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -75,7 +81,6 @@ public class SimpleSessionListener implements SipListener {
 				FromHeader fromHeader  = (FromHeader) request.getHeader(FromHeader.NAME);
 				Address    fromAddress = fromHeader.getAddress();
 				
-				String displayName = fromAddress.getDisplayName();
 				URI    fromUri     = fromAddress.getURI();
 				if (fromUri != null) {
 					fromAddr = fromUri.toString();
@@ -222,13 +227,8 @@ public class SimpleSessionListener implements SipListener {
 	public void processResponse(ResponseEvent responseEvent) {
 		Log.debug("SimpleSessionListener for " + myUsername + ":  Received a response event:  " + responseEvent.getResponse().toString());
 		
-		String   fromAddr = "";
 		String   toAddr   = "";
 		Response response = responseEvent.getResponse();
-		if (response.getHeader(FromHeader.NAME) != null) {
-			FromHeader fromHeader = (FromHeader) response.getHeader(FromHeader.NAME);
-			fromAddr = fromHeader.getAddress().getURI().toString();
-		}
 		if (response.getHeader(ToHeader.NAME) != null) {
 			ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
 			toAddr = toHeader.getAddress().getURI().toString();
@@ -315,7 +315,7 @@ public class SimpleSessionListener implements SipListener {
 	}
 	
 	public void finalize() {
-		Log.debug("SimpleSessionListener for " + myUsername + " is being shut down!!");
+        Log.debug("SimpleSessionListener for " + myUsername + " is being shut down!!");
 		mySimpleSession = null;
 	}
 }

@@ -1,18 +1,22 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.gateway.protocols.simple;
 
 import java.io.ByteArrayInputStream;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import org.dom4j.Document;
-import org.dom4j.DocumentFactory;
-import org.dom4j.Element;
-import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xmpp.packet.Presence;
 
 /**
  * This class performs conversions between presence packets of XMPP and SIMPLE formats.
@@ -340,7 +344,8 @@ public class SimplePresence {
 					tupleStatus = TupleStatus.getTupleStatus(data);
 				}
 				catch (IllegalArgumentException ex) {
-				}
+                    // Ignore
+                }
 //				if(data.equals("open")) {
 //					statusType = "online";
 //					statusName = "Online";

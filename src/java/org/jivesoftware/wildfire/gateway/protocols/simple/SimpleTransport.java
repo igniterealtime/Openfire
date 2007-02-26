@@ -1,27 +1,21 @@
+/**
+ * $Revision$
+ * $Date$
+ *
+ * Copyright (C) 2006 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
 package org.jivesoftware.wildfire.gateway.protocols.simple;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import java.util.TooManyListenersException;
-import javax.sip.InvalidArgumentException;
 import javax.sip.ListeningPoint;
-import javax.sip.ObjectInUseException;
-import javax.sip.PeerUnavailableException;
 import javax.sip.SipFactory;
-import javax.sip.SipProvider;
-import javax.sip.SipStack;
-import javax.sip.TransportNotSupportedException;
-import javax.sip.address.AddressFactory;
-import javax.sip.header.HeaderFactory;
-import javax.sip.message.MessageFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.BaseTransport;
 import org.jivesoftware.wildfire.gateway.PresenceType;
 import org.jivesoftware.wildfire.gateway.Registration;
-import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
 import org.jivesoftware.wildfire.gateway.TransportSession;
 import org.xmpp.packet.JID;
 
@@ -69,9 +63,8 @@ public class SimpleTransport extends BaseTransport {
 
 	public String getTerminologyNickname() {
 		// If this string is needed, then take it.  Just put a draft code to ensure integrity.
-		
-		String result = null;
-		return result;
+
+        return null;
 	}
 
 	public String getTerminologyRegistration() {
@@ -80,23 +73,20 @@ public class SimpleTransport extends BaseTransport {
 
 	public Boolean isPasswordRequired() {
 		// Just put a draft code to ensure integrity.
-		
-		Boolean result = true;
-		return result;
+
+        return true;
 	}
 
 	public Boolean isNicknameRequired() {
 		// Just put a draft code to ensure integrity.
-		
-		Boolean result = false;
-		return result;
+
+        return false;
 	}
 
 	public Boolean isUsernameValid(String username) {
 		// Just put a draft code to ensure integrity.
-		
-		Boolean result = username.matches("\\w+");
-		return result;
+
+        return username.matches("\\w+");
 	}
 	
 	

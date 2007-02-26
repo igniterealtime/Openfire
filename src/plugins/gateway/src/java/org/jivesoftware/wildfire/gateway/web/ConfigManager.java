@@ -280,8 +280,13 @@ public class ConfigManager {
      * @return Error message or null on success.
      */
     public String updateRegistration(Integer registrationID, String legacyUsername, String legacyPassword, String legacyNickname) {
+        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        GatewayPlugin plugin = (GatewayPlugin)pluginManager.getPlugin("gateway");
         try {
             Registration reg = new Registration(registrationID);
+            if (!plugin.getTransportInstance(reg.getTransportType().toString()).isEnabled()) {
+                return LocaleUtils.getLocalizedString("gateway.web.registrations.notenabled", "gateway");
+            }
             reg.setUsername(legacyUsername);
             if (legacyPassword != null) {
                 reg.setPassword(legacyPassword);

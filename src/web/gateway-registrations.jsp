@@ -1,13 +1,10 @@
-<%@ page import="org.jivesoftware.util.Log,
-                 org.jivesoftware.util.NotFoundException,
-                 org.jivesoftware.util.ParamUtils,
+<%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.wildfire.SessionManager,
                  org.jivesoftware.wildfire.XMPPServer,
                  org.jivesoftware.wildfire.gateway.GatewayPlugin,
                  org.jivesoftware.wildfire.gateway.Registration,
                  org.jivesoftware.wildfire.gateway.RegistrationManager,
                  org.jivesoftware.wildfire.session.ClientSession,
-                 org.jivesoftware.wildfire.user.UserNotFoundException,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
@@ -33,96 +30,9 @@
     trEnabled.put("yahoo", plugin.getTransportInstance("yahoo").isEnabled());
     trEnabled.put("sip", plugin.getTransportInstance("sip").isEnabled());
 
-    String success = request.getParameter("success");
     webManager.init(request, response, session, application, out);
 
     RegistrationManager registrationManager = new RegistrationManager();
-
-    String action = ParamUtils.getParameter(request, "action");
-    if (action != null) {
-        if (action.equals("delete")) {
-            long regId = ParamUtils.getLongParameter(request, "deleteid", -1);
-            try {
-                Registration reg = new Registration(regId);
-                if (!trEnabled.get(reg.getTransportType().toString())) {
-                    response.sendRedirect("gateway-registrations.jsp?success=false");
-                }
-                plugin.getTransportInstance(reg.getTransportType().toString()).getTransport().deleteRegistration(reg.getJID());
-                response.sendRedirect("gateway-registrations.jsp?success=true");
-                return;
-            }
-            catch (NotFoundException e) {
-                // Ok, nevermind.
-                Log.error("Not found while deleting id "+regId, e);
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-            catch (UserNotFoundException e) {
-                // Ok, nevermind.
-                Log.error("Not found while deleting id "+regId, e);
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-        }
-        else if (action.equals("edit")) {
-            long regId = ParamUtils.getLongParameter(request, "editid", -1);
-            try {
-                Registration reg = new Registration(regId);
-                reg.setUsername(ParamUtils.getParameter(request, "gatewayUsername"));
-                if (!ParamUtils.getParameter(request, "gatewayPassword").equals("********")) {
-                    reg.setPassword(ParamUtils.getParameter(request, "gatewayPassword"));
-                }
-                reg.setNickname(ParamUtils.getParameter(request, "gatewayNickname"));
-                response.sendRedirect("gateway-registrations.jsp?success=true");
-                return;
-            }
-            catch (NotFoundException e) {
-                // Ok, nevermind.
-                Log.error("Not found while editing id "+regId, e);
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-        }
-        else if (action.equals("add")) {
-            JID jid;
-            String jidStr = ParamUtils.getParameter(request, "gatewayJID");
-            if (jidStr.contains("@")) {
-                jid = new JID(jidStr);
-            }
-            else {
-                jid = new JID(jidStr, XMPPServer.getInstance().getServerInfo().getName(), null);
-            }
-            String typeStr = ParamUtils.getParameter(request, "gatewayType");
-            String username = ParamUtils.getParameter(request, "gatewayUser");
-            String password = ParamUtils.getParameter(request, "gatewayPass");
-            String nickname = ParamUtils.getParameter(request, "gatewayNick");
-            if (!trEnabled.get(typeStr)) {
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-            try {
-                plugin.getTransportInstance(typeStr).getTransport().addNewRegistration(jid, username, password, nickname, false);
-                response.sendRedirect("gateway-registrations.jsp?success=true");
-                return;
-            }
-            catch (UserNotFoundException e) {
-                Log.error("Not found while adding account for "+jid.toString());
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-            catch (IllegalAccessException e) {
-                Log.error("Domain of JID specified for registration is not on this server: "+jid.toString());
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-            catch (IllegalArgumentException e) {
-                Log.error("Username specified for registration is not valid.");
-                response.sendRedirect("gateway-registrations.jsp?success=false");
-                return;
-            }
-        }
-    }
-
     Collection<Registration> registrations = registrationManager.getRegistrations();
 
     // Get the user manager
@@ -265,6 +175,7 @@
 </style>
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
+<script src="dwr/interface/ConfigManager.js" type="text/javascript"></script>
 <script src="dwr/interface/ConnectionTester.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript" src="scripts/gateways.js"></script>
 <script type="text/javascript" >
@@ -273,6 +184,75 @@
 
     function handleError(error) {
         // swallow errors
+    }
+
+    var lastRegistrationID;
+
+    function deleteRegistration(registrationID) {
+        lastRegistrationID = registrationID;
+        ConfigManager.deleteRegistration(registrationID, cb_deleteRegistration);
+    }
+
+    function cb_deleteRegistration(statusMsg) {
+        Effect.Fade("jiveRegistration"+lastRegistrationID);
+        document.getElementById("regStatusMsg").style.display = "";
+        if (statusMsg == null) {
+            document.getElementById("regStatusMsg").innerHTML = "<div class='jive-success'><img src='images/success-16x16.gif' align='absmiddle' /><fmt:message key='gateway.web.registrations.deletesuccess' /></div>";
+        }
+        else {
+            document.getElementById("regStatusMsg").innerHTML = "<div class='jive-error'><img src='images/error-16x16.gif' align='absmiddle' />"+statusMsg+"</div>";
+        }
+        setTimeout("to_statusMessage()", 5000);
+    }
+
+    function updateRegistration(registrationID) {
+        var usernameEntry = DWRUtil.getValue("gatewayUsername"+registrationID);
+        var passwordEntry = DWRUtil.getValue("gatewayPassword"+registrationID);
+        if (passwordEntry == "********") {
+            passwordEntry = null;
+        }
+        var nicknameEntry = DWRUtil.getValue("gatewayNickname"+registrationID);
+        lastRegistrationID = registrationID;
+        ConfigManager.updateRegistration(registrationID, usernameEntry, passwordEntry, nicknameEntry, cb_updateRegistration);
+    }
+
+    function cb_updateRegistration(statusMsg) {
+        toggleEdit(lastRegistrationID);
+        var usernameEntry = DWRUtil.getValue("gatewayUsername"+lastRegistrationID);
+        document.getElementById("registrationUsername"+lastRegistrationID).innerHTML = usernameEntry;
+        document.getElementById("regStatusMsg").style.display = "";
+        if (statusMsg == null) {
+            document.getElementById("regStatusMsg").innerHTML = "<div class='jive-success'><img src='images/success-16x16.gif' align='absmiddle' /><fmt:message key='gateway.web.registrations.updatesuccess' /></div>";
+        }
+        else {
+            document.getElementById("regStatusMsg").innerHTML = "<div class='jive-error'><img src='images/error-16x16.gif' align='absmiddle' />"+statusMsg+"</div>";
+        }
+        setTimeout("to_statusMessage()", 5000);
+    }
+
+    function addRegistration() {
+        var userEntry = DWRUtil.getValue("newRegistrationUser");
+        var typeEntry = DWRUtil.getValue("newRegistrationType");
+        var legacyUsernameEntry = DWRUtil.getValue("newRegistrationLegacyUsername");
+        var legacyPasswordEntry = DWRUtil.getValue("newRegistrationLegacyPassword");
+        var legacyNicknameEntry = DWRUtil.getValue("newRegistrationLegacyNickname");
+        ConfigManager.addRegistration(userEntry, typeEntry, legacyUsernameEntry, legacyPasswordEntry, legacyNicknameEntry, cb_addRegistration);
+    }
+
+    function cb_addRegistration(statusMsg) {
+        toggleAdd();
+        document.getElementById("regStatusMsg").style.display = "";
+        if (statusMsg == null) {
+            document.getElementById("regStatusMsg").innerHTML = "<div class='jive-success'><img src='images/success-16x16.gif' align='absmiddle' /><fmt:message key='gateway.web.registrations.addsuccess' /></div>";
+        }
+        else {
+            document.getElementById("regStatusMsg").innerHTML = "<div class='jive-error'><img src='images/error-16x16.gif' align='absmiddle' />"+statusMsg+"</div>";
+        }
+        setTimeout("to_statusMessage()", 5000);
+    }
+
+    function to_statusMessage() {
+        Effect.Fade("regStatusMsg");
     }
 
     function pingSession() {
@@ -287,44 +267,7 @@
 <body>
 <p><fmt:message key="gateway.web.registrations.instructions" /></p>
 
-<%
-    if (success != null) {
-        if (success.equals("true")) {
-%>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16"
- height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-            <fmt:message key="gateway.web.registrations.regsuccess" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%
-        }
-        else {
-%>
-
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16"
- height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-            <fmt:message key="gateway.web.registrations.regfailure" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%
-        }
-    }
-%>
+<div id="regStatusMsg" style="display: none"></div>
 
 <!-- BEGIN add registration -->
 <div class="jive-gateway-addregBtn" id="jiveAddRegButton">
@@ -332,14 +275,14 @@
 </div>
 <div class="jive-gateway-addreg" id="jiveAddRegPanel" style="display: none;">
 	<div class="jive-gateway-addregPad">
-		<form action="gateway-registrations.jsp" name="jive-addRegistration">
+		<form action="" name="jive-addRegistration" onSubmit="return false">
         <input type="hidden" name="action" value="add" />
 		<div class="jive-registrations-addJid">
-			<input type="text" name="gatewayJID" size="12" maxlength="50" value=""><br>
+			<input type="text" name="newRegistrationUser" id="newRegistrationUser" size="12" maxlength="50" value=""><br>
 			<strong><fmt:message key="gateway.web.registrations.jid" /></strong>
 		</div>
 		<div class="jive-registrations-addGateway">
-			<select name="gatewayType" size="1">
+			<select name="newRegistrationType" id="newRegistrationType" size="1">
 			<option value="0" SELECTED> -- select -- </option>
 			<% if (trEnabled.get("aim")) { %> <option value="aim"><fmt:message key="gateway.aim.shortservice" /></option> <% } %>
 			<% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
@@ -351,19 +294,19 @@
 			<strong><fmt:message key="gateway.web.registrations.gateway" /></strong>
 		</div>
 		<div class="jive-registrations-addUsername">
-			<input type="text" name="gatewayUser" size="12" maxlength="50" value=""><br>
+			<input type="text" name="newRegistrationLegacyUsername" id="newRegistrationLegacyUsername" size="12" maxlength="50" value=""><br>
 			<strong><fmt:message key="gateway.web.registrations.username" /></strong>
 		</div>
 		<div class="jive-registrations-addPassword">
-			<input type="password" name="gatewayPass" size="12" maxlength="50" value=""><br>
+			<input type="password" name="newRegistrationLegacyPassword" id="newRegistrationLegacyPassword" size="12" maxlength="50" value=""><br>
 			<strong><fmt:message key="gateway.web.registrations.password" /></strong>
 		</div>
             <div class="jive-registrations-addNickname">
-                <input type="text" name="gatewayNick" size="12" maxlength="50" value=""><br>
+                <input type="text" name="newRegistrationLegacyNickname" id="newRegistrationLegacyNickname" size="12" maxlength="50" value=""><br>
                 <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
             </div>
         <div class="jive-registrations-addButtons">
-			<input type="submit" name="Submit" value="<fmt:message key="global.add" />" class="savechanges"> &nbsp;
+			<input type="submit" name="Submit" value="<fmt:message key="global.add" />" class="savechanges" onClick="addRegistration(); return false"> &nbsp;
 			<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleAdd();">
 		</div>
 		</form>
@@ -501,31 +444,31 @@
 			<td align="center">
 			<img src="images/im_<%= result.status %>.gif" alt="<%= result.linestatus %>" border="0"></td>
 			<td><%= result.jid %></td>
-			<td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><%= result.username %></span></td>
+			<td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><span id="registrationUsername<%= result.id %>"><%= result.username %></span></span></td>
 			<td><%= result.lastLogin %></td>
-			<td align="center"><a href="" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>toggleEdit(<%= result.id %>); return false<% } %>"><img src="images/edit-16x16.gif" alt="" border="0"></a></td>
-			<td align="center"><form method="post" id="deleteRegistration<%= result.id %>" name="deleteRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="delete" /><input type="hidden" name="deleteid" value="<%= result.id %>" /><a href="" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { document.getElementById('deleteRegistration<%= result.id %>').submit(); return false; } else { return false; }<% } %>"><img src="images/delete-16x16.gif" alt="" border="0"></a></form></td>
+			<td align="center"><a href="javascript:noop()" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>toggleEdit(<%= result.id %>); return false<% } %>"><img src="images/edit-16x16.gif" alt="<fmt:message key="global.edit" />" border="0"></a></td>
+            <td align="center"><a href="javascript:noop()" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to delete registrations.'); return false;<% } else { %>if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { deleteRegistration('<%= result.id %>'); return false; } else { return false; }<% } %>"><img src="images/delete-16x16.gif" alt="<fmt:message key="global.delete" />" border="0"></a></td>
 		</tr>
-		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none;">
+		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none">
 			<td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>
 			<td><%= result.jid %></td>
-			<td colspan="4"><form method="post" id="editRegistration<%= result.id %>" name="editRegistration<%= result.id %>" action="gateway-registrations.jsp"><input type="hidden" name="action" value="edit" /><input type="hidden" name="editid" value="<%= result.id %>" />
+			<td colspan="4"><form method="post" id="editRegistration<%= result.id %>" name="editRegistration<%= result.id %>" action="" onSubmit="return false">
 			<span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %>on">
 				<div class="jive-registrations-editUsername">
-				<input type="text" name="gatewayUsername" size="12" maxlength="50" value="<%= result.username %>"><br>
+				<input type="text" name="gatewayUsername<%= result.id %>" id="gatewayUsername<%= result.id %>"size="12" maxlength="50" value="<%= result.username %>"><br>
 				<strong><fmt:message key="gateway.web.registrations.username" /></strong>
 				</div>
 				<div class="jive-registrations-editPassword">
-				<input type="password" name="gatewayPassword" size="12" maxlength="50" value="********"><br>
+				<input type="password" name="gatewayPassword<%= result.id %>" id="gatewayPassword<%= result.id %>"size="12" maxlength="50" value="********"><br>
 				<strong><fmt:message key="gateway.web.registrations.password" /></strong>
 				</div>
                 <div class="jive-registrations-editNickname">
-                <input type="text" name="gatewayNickname" size="12" maxlength="50" value="<%= result.nickname %>"><br>
+                <input type="text" name="gatewayNickname<%= result.id %>%>" id="gatewayNickname<%= result.id %>" size="12" maxlength="50" value="<%= result.nickname %>"><br>
                 <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
                 </div>
                 <div class="jive-registrations-editButtons">
-				<input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />" class="savechanges" onClick="document.getElementById.submit()"> &nbsp;
-				<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleEdit(<%= result.id %>);">
+				<input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />" class="savechanges" onClick="updateRegistration('<%= result.id %>'); return false" /> &nbsp;
+				<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleEdit(<%= result.id %>);" />
 				</div>
 			</span>
 			</form></td>

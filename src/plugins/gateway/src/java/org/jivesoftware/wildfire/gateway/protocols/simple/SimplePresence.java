@@ -11,12 +11,18 @@
 package org.jivesoftware.wildfire.gateway.protocols.simple;
 
 import java.io.ByteArrayInputStream;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.dom4j.Document;
+import org.dom4j.DocumentFactory;
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.util.Log;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import org.xmpp.packet.Presence;
 
 /**
  * This class performs conversions between presence packets of XMPP and SIMPLE formats.
@@ -166,6 +172,15 @@ public class SimplePresence {
 		return this.tupleStatus;
 	}
 	
+	private String getEightLength(int hash) {
+		StringBuffer buffer = new StringBuffer(Integer.toHexString(hash));
+		
+		while (buffer.length() < 8) {
+			buffer.insert(0, "0");
+		}
+		
+		return new String(buffer);
+	}
 	
 	public String toXML() {
 		String result =
@@ -175,8 +190,13 @@ public class SimplePresence {
 				         " xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid'" +
 				         " xmlns:c='urn:ietf:params:xml:ns:pidf:cipid'" +
 				         " entity='" + entity + "'>" +
-				"<tuple id='t" + hashCode() + "'><status><basic>" + tupleStatus.toString() + "</basic></status></tuple>" +
-				"<dm:person id='p" + hashCode() + "'><rpid:activities><rpid:" + rpid.toString() + "/></rpid:activities></dm:person></presence>";
+				"<tuple id='t" + getEightLength(tupleStatus.hashCode()) + "'><status><basic>" + tupleStatus.toString() + "</basic></status></tuple>" +
+				"<dm:person id='p" + getEightLength(this.hashCode()) + "'><rpid:activities><rpid:" + rpid.toString() + "/></rpid:activities>" +
+//				"<tuple><status><basic>" + tupleStatus.toString() + "</basic></status></tuple>" +
+//				"<dm:person><rpid:activities><rpid:" + rpid.toString() + "/></rpid:activities>" +
+				((dmNote != null && !dmNote.equals("")) ? "<dm:note>" + dmNote + "</dm:note>" : "") + 
+				"</dm:person>" +
+				"</presence>";
 		
 //		DocumentFactory docFactory = DocumentFactory.getInstance();
 //		
@@ -205,6 +225,7 @@ public class SimplePresence {
 		
 		return result;
 	}
+	
 //	public Presence convertSIPPresenceToXMPP(String sipPresence) {
 //		Presence  xmppPresence = new Presence();
 //		
@@ -344,16 +365,7 @@ public class SimplePresence {
 					tupleStatus = TupleStatus.getTupleStatus(data);
 				}
 				catch (IllegalArgumentException ex) {
-                    // Ignore
-                }
-//				if(data.equals("open")) {
-//					statusType = "online";
-//					statusName = "Online";
-//				}
-//				else {
-//					statusType = "offline";
-//					statusName = "Offline";
-//				}
+				}
 			}
 			else if (isStatusType) {
 //				statusType = data;

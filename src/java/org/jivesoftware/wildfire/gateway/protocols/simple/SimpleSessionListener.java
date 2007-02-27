@@ -10,27 +10,35 @@
 
 package org.jivesoftware.wildfire.gateway.protocols.simple;
 
-import java.util.Date;
+import gov.nist.javax.sip.address.SipUri;
 import java.util.ListIterator;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
 import javax.sip.SipListener;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 import javax.sip.address.Address;
+import javax.sip.address.SipURI;
 import javax.sip.address.URI;
 import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.RecordRouteHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.gateway.TransportLoginStatus;
+import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -67,28 +75,39 @@ public class SimpleSessionListener implements SipListener {
 	}
 	
 	public void processRequest(RequestEvent requestEvent) {
+		ServerTransaction serverTransaction = requestEvent.getServerTransaction();
+		Dialog            dialog            = null;
+		if (serverTransaction != null) {
+			Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  Getting dialog");
+			dialog = serverTransaction.getDialog();
+		}
+		
 		int responseCode = 200;
 		
 		Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  Received a request event:  \n" + requestEvent.getRequest().toString());
 		
 		String       fromAddr    = "";
 		Request      request     = requestEvent.getRequest();
-		ListIterator headerNames = request.getHeaderNames();
 		
-		while (headerNames.hasNext()) {
-			String headerName = (String) headerNames.next();
-			if (headerName.equals(FromHeader.NAME)) {
-				FromHeader fromHeader  = (FromHeader) request.getHeader(FromHeader.NAME);
-				Address    fromAddress = fromHeader.getAddress();
-				
-				URI    fromUri     = fromAddress.getURI();
-				if (fromUri != null) {
+		if (request.getHeader(FromHeader.NAME) != null) {
+			FromHeader fromHeader  = (FromHeader) request.getHeader(FromHeader.NAME);
+			Address    fromAddress = fromHeader.getAddress();
+			
+			String displayName = fromAddress.getDisplayName();
+			URI    fromUri     = fromAddress.getURI();
+			if (fromUri != null) {
+				if (fromUri.isSipURI()) {
+					SipURI fromSipUri = (SipURI) fromUri;
+					
+					fromAddr = fromSipUri.getUser() + "@" + fromSipUri.getHost();
+				}
+				else {
 					fromAddr = fromUri.toString();
-					break;
 				}
 			}
 		}
 		
+		Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  FromAddr = "        + fromAddr);
 		Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  Request method = '" + request.getMethod() + "'");
 		
 		if (request.getMethod().equals(Request.MESSAGE)) {
@@ -102,9 +121,13 @@ public class SimpleSessionListener implements SipListener {
 			
 			mySimpleSession.getTransport().sendMessage(mySimpleSession.getJID(), senderJid, msgContent);
 			
-			mySimpleSession.sendResponse(responseCode, request);
+			mySimpleSession.sendResponse(responseCode, request, serverTransaction);
 		}
 		else if (request.getMethod().equals(Request.NOTIFY)) {
+			Presence presence = new Presence();
+			presence.setFrom(mySimpleSession.getTransport().convertIDToJID(fromAddr));
+			presence.setTo(mySimpleSession.getJID());
+			
 			SubscriptionStateHeader subscriptionStateHeader = (SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME);
 			
 			Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  NOTIFY request handling process started.");
@@ -116,10 +139,6 @@ public class SimpleSessionListener implements SipListener {
 				Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  NOTIFY Expiry = " + expires);
 				
 				try {
-					Presence presence = new Presence();
-					presence.setFrom(mySimpleSession.getTransport().convertIDToJID(fromAddr));
-					presence.setTo(mySimpleSession.getJID());
-					
 					if (expires > 0) {
 						String content = "";
 						if (request.getContent() != null)
@@ -127,117 +146,81 @@ public class SimpleSessionListener implements SipListener {
 						
 						if (content.length() > 0) {
 							SimplePresence simplePresence = SimplePresence.parseSimplePresence(content);
-							if (simplePresence.getTupleStatus().isOpen()) {
-								presence.setStatus("Online");
-								Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  " +
-								          "SIP user '" + fromAddr + "' is '" + simplePresence.getRpid().toString() + "'!");
-								switch (simplePresence.getRpid()) {
-									case AWAY:
-										presence.setShow(Presence.Show.away);
-										presence.setStatus("Away");
-										break;
-									case BUSY:
-										presence.setShow(Presence.Show.dnd);
-										presence.setStatus("Do Not Disturb");
-										break;
-									case HOLIDAY:
-										presence.setShow(Presence.Show.xa);
-										presence.setStatus("(SIP) On Holiday");
-										break;
-									case IN_TRANSIT:
-										presence.setShow(Presence.Show.xa);
-										presence.setStatus("(SIP) In Transit");
-										break;
-									case ON_THE_PHONE:
-										presence.setShow(Presence.Show.away);
-										presence.setStatus("On Phone");
-										break;
-									case PERMANENT_ABSENCE:
-										presence.setStatus("Offline");
-										break;
-									case SLEEPING:
-										presence.setShow(Presence.Show.away);
-										presence.setStatus("(SIP) Idle");
-										break;
-									default:
-										break;
-								}
-							}
-						} else {
-							presence.setStatus("Offline");
+							((SimpleTransport) mySimpleSession.getTransport()).convertSIPStatusToJap(presence, simplePresence);
 						}
-					} else {
+					}
+					else {
 						presence.setType(Presence.Type.unsubscribed);
 					}
 					
 					Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  Sending XMPP presence packet.");
-					mySimpleSession.getTransport().sendPacket(presence);
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					Log.debug("SimpleSessionListener(" + myUsername + ").processRequest:  Exception occured when processing NOTIFY packet...", ex);
 				}
 			}
+			else if (subscriptionStateHeader.getState().equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
+				presence.setType(Presence.Type.unsubscribed);
+			}
 			
-			mySimpleSession.sendResponse(responseCode, request);
+			mySimpleSession.getTransport().sendPacket(presence);
+			
+			mySimpleSession.sendResponse(responseCode, request, serverTransaction);
 		}
 		else if (request.getMethod().equals(Request.SUBSCRIBE)) {
 			Log.debug("SimpleSessionListener for " + myUsername + ":  SUBSCRIBE request handling process.");
 			
-			mySimpleSession.sendResponse(202, request);
+			ServerTransaction transaction = mySimpleSession.sendResponse(202, request, serverTransaction);
 			
 			Log.debug("SimpleSessionListener for " + myUsername + ":  SUBSCRIBE should be followed by a NOTIFY");
 			
 			// Send NOTIFY packet.
 			try {
-				mySimpleSession.sendNotify(request);
+				if (transaction != null)
+					mySimpleSession.sendNotify(transaction.getDialog());
+				else
+					mySimpleSession.sendNotify(dialog);
 			}
 			catch (Exception e) {
 				Log.debug("SimpleSessionListener for " + myUsername + ":  Unable to prepare NOTIFY packet.", e);
 			}
-			
-//			long seqNum = 1L;
-//			if (request.getHeader(CSeqHeader.NAME) != null) {
-//				seqNum = ((CSeqHeader) request.getHeader(CSeqHeader.NAME)).getSeqNumber() + 1;
-//			}
-//			
-//			int expires = 0;
-//			if (request.getHeader(ExpiresHeader.NAME) != null) {
-//				expires = ((ExpiresHeader) request.getHeader(ExpiresHeader.NAME)).getExpires();
-//			}
-//			
-//			String callId = null;
-//			if (request.getHeader(CallIdHeader.NAME) != null) {
-//				callId = ((CallIdHeader) request.getHeader(CallIdHeader.NAME)).getCallId();
-//			}
-			
-//			int maxForward = 0;
-//			if (request.getHeader(MaxForwardsHeader.NAME) != null) {
-//				maxForward = ((MaxForwardsHeader) request.getHeader(MaxForwardsHeader.NAME)).getMaxForwards();
-//			}
-//			if (maxForward > 0) maxForward--;
-			
-//			if (request.getHeader(RecordRouteHeader.NAME) != null) {
-//				String recordRouteHeader = ((RecordRouteHeader) request.getHeader(RecordRouteHeader.NAME)).toString();
-//			}
-			
-			// Send notify packet to show my own presence.
-//			mySimpleSession.sendNotify(fromAddr, callId, seqNum, expires, maxForward, new Presence());
 		}
 	}
 	
 	public void processResponse(ResponseEvent responseEvent) {
+		if (responseEvent.getClientTransaction() != null) {
+			Log.debug("SimpleSessionListener for " + myUsername + ":  Getting client transaction...");
+			ClientTransaction clientTransaction = responseEvent.getClientTransaction();
+			Dialog            clientDialog      = clientTransaction.getDialog();
+			mySimpleSession.printDialog(clientDialog);
+		}
+		
 		Log.debug("SimpleSessionListener for " + myUsername + ":  Received a response event:  " + responseEvent.getResponse().toString());
 		
+		String   fromAddr = "";
 		String   toAddr   = "";
 		Response response = responseEvent.getResponse();
+		if (response.getHeader(FromHeader.NAME) != null) {
+			FromHeader fromHeader = (FromHeader) response.getHeader(FromHeader.NAME);
+			URI        fromUri    = fromHeader.getAddress().getURI();
+			if (fromUri instanceof SipUri)
+				fromAddr = ((SipUri) fromUri).getUser() + "@" + ((SipUri) fromUri).getHost();
+			else
+				fromAddr = fromUri.toString();
+		}
 		if (response.getHeader(ToHeader.NAME) != null) {
 			ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
-			toAddr = toHeader.getAddress().getURI().toString();
+			URI      toUri    = toHeader.getAddress().getURI();
+			if (toUri instanceof SipUri)
+				toAddr = ((SipUri) toUri).getUser() + "@" + ((SipUri) toUri).getHost();
+			else
+				toAddr = toUri.toString();
 		}
 		
 		if (response.getHeader(CSeqHeader.NAME) != null) {
 			String method = ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).getMethod();
 			if (method.equals(Request.REGISTER)) {
-				if (response.getStatusCode() - response.getStatusCode() % 100 == 200) {
+				if (response.getStatusCode() / 100 == 2) {
 					int expires = 0;
 					if (response.getHeader(ContactHeader.NAME) != null) {
 						expires = ((ContactHeader) response.getHeader(ContactHeader.NAME)).getExpires();
@@ -249,22 +232,23 @@ public class SimpleSessionListener implements SipListener {
 						Log.debug("SimpleSessionListener(" + myUsername + ").processResponse:  " +
 						          mySimpleSession.getRegistration().getUsername() + " log in successful!");
 						
-						mySimpleSession.getRegistration().setLastLogin(new Date());
-						mySimpleSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
+						mySimpleSession.sipUserLoggedIn();
+//						mySimpleSession.getRegistration().setLastLogin(new Date());
+//						mySimpleSession.setLoginStatus(TransportLoginStatus.LOGGED_IN);
 					}
 					else {
 						if (mySimpleSession.getLoginStatus().equals(TransportLoginStatus.LOGGING_OUT)) {
 							Log.debug("SimpleSessionListener(" + myUsername + ").processResponse:  " +
 							          mySimpleSession.getRegistration().getUsername() + " log out successful!");
 
-							mySimpleSession.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+							mySimpleSession.sipUserLoggedOut();
 							mySimpleSession.removeStack();
 						}
 					}
 				}
 			}
 			if (method.equals(Request.SUBSCRIBE)) {
-				if (response.getStatusCode() - response.getStatusCode() % 100 == 200) {
+				if (response.getStatusCode() / 100 == 2) {
 					Log.debug("SimpleSessionListener for " + myUsername + ":  Handling SUBSCRIBE acknowledgement!!");
 					
 					int expires = 0;
@@ -280,42 +264,43 @@ public class SimpleSessionListener implements SipListener {
 //					presence.setTo(mySimpleSession.getJID());
 					
 					if (expires > 0) {
-						// Confirm addition of roster item
-//						presence.setType(Presence.Type.subscribed);
+						// Confirm subscription of roster item
 						mySimpleSession.contactSubscribed(toAddr);
 					} else {
-						// Confirm deletion of roster item
-//						presence.setType(Presence.Type.unsubscribed);
+						// Confirm unsubscription of roster item
+						mySimpleSession.contactUnsubscribed(toAddr);
 					}
 					
 					Log.debug("SimpleSessionListener for " + myUsername + ":  Handled SUBSCRIBE acknowledgement!!");
-//					mySimpleSession.getTransport().sendPacket(presence);
 				}
 			}
 		}
 	}
 	
 	public void processTimeout(TimeoutEvent timeoutEvent) {
-		Log.debug("SimpleSessionListener for " + myUsername + " received a timeout event:  " +
-				timeoutEvent.getTimeout().toString());
+		Log.debug("SimpleSessionListener for " + myUsername + " received a timeout event:  " + timeoutEvent.getTimeout().toString());
+		
+//		timeoutEvent.getTimeout().
+		// Should we try to resend the packet?
 	}
 	
 	public void processIOException(IOExceptionEvent iOExceptionEvent) {
-		Log.debug("SimpleSessionListener for " + myUsername + " received an IOException event:  " +
-				iOExceptionEvent.toString());
+		Log.debug("SimpleSessionListener for " + myUsername + " received an IOException event:  " + iOExceptionEvent.toString());
 	}
 	
 	public void processTransactionTerminated(TransactionTerminatedEvent transactionTerminatedEvent) {
 		Log.debug("SimpleSessionListener(" + myUsername + "):  Received a TransactionTerminatedEvent [" + transactionTerminatedEvent.hashCode() + "]");
+		
+		// Should we obtain the transaction and log down the tranaction terminated?
 	}
 	
 	public void processDialogTerminated(DialogTerminatedEvent dialogTerminatedEvent) {
 		Log.debug("SimpleSessionListener for " + myUsername + " received a dialog terminated event:  " +
-				dialogTerminatedEvent.getDialog().getDialogId());
+		          dialogTerminatedEvent.getDialog().getDialogId());
 	}
 	
 	public void finalize() {
-        Log.debug("SimpleSessionListener for " + myUsername + " is being shut down!!");
+		Log.debug("SimpleSessionListener for " + myUsername + " is being shut down!!");
 		mySimpleSession = null;
 	}
 }

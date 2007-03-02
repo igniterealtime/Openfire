@@ -69,7 +69,7 @@ public class YahooTransport extends BaseTransport {
      * @see org.jivesoftware.wildfire.gateway.BaseTransport#isUsernameValid(String)
      */
     public Boolean isUsernameValid(String username) {
-        return username.matches("\\w+");
+        return username.matches("[\\w\\.]+");
     }
 
     /**

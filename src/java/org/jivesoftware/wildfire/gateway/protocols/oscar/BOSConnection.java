@@ -158,5 +158,46 @@ public class BOSConnection extends BasicFlapConnection {
 //            Log.debug("RECEIVED META SHORT INFO: "+msic);
 //            oscarSession.updateRosterNickname(String.valueOf(msic.getUIN()), msic.getNickname());
         }
+        else if (cmd instanceof BuddyAddedYouCmd) {
+            BuddyAddedYouCmd bay = (BuddyAddedYouCmd)cmd;
+
+            Presence p = new Presence();
+            p.setType(Presence.Type.subscribe);
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(bay.getUin()));
+            oscarSession.getTransport().sendPacket(p);
+        }
+        else if (cmd instanceof BuddyAuthRequest) {
+            BuddyAuthRequest bar = (BuddyAuthRequest)cmd;
+
+            Presence p = new Presence();
+            p.setType(Presence.Type.subscribe);
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(bar.getScreenname()));
+            oscarSession.getTransport().sendPacket(p);
+        }
+        else if (cmd instanceof AuthReplyCmd) {
+            AuthReplyCmd ar = (AuthReplyCmd)cmd;
+
+            if (ar.isAccepted()) {
+                Presence p = new Presence();
+                p.setType(Presence.Type.subscribed);
+                p.setTo(oscarSession.getJID());
+                p.setFrom(oscarSession.getTransport().convertIDToJID(ar.getSender()));
+                oscarSession.getTransport().sendPacket(p);
+            }
+            else {
+                // Hrm, should we do something on a deny?
+            }
+        }
+        else if (cmd instanceof AuthFutureCmd) {
+            AuthFutureCmd af = (AuthFutureCmd)cmd;
+
+            Presence p = new Presence();
+            p.setType(Presence.Type.subscribe);
+            p.setTo(oscarSession.getJID());
+            p.setFrom(oscarSession.getTransport().convertIDToJID(af.getUin()));
+            oscarSession.getTransport().sendPacket(p);
+        }
     }
 }

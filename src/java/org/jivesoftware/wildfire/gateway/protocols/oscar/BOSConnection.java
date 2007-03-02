@@ -187,7 +187,11 @@ public class BOSConnection extends BasicFlapConnection {
                 oscarSession.getTransport().sendPacket(p);
             }
             else {
-                // Hrm, should we do something on a deny?
+                Presence p = new Presence();
+                p.setType(Presence.Type.unsubscribed);
+                p.setTo(oscarSession.getJID());
+                p.setFrom(oscarSession.getTransport().convertIDToJID(ar.getSender()));
+                oscarSession.getTransport().sendPacket(p);
             }
         }
         else if (cmd instanceof AuthFutureCmd) {

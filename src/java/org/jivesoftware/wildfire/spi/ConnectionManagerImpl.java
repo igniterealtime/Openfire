@@ -424,7 +424,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         sessionManager = server.getSessionManager();
         // Check if we need to configure MINA to use Direct or Heap Buffers
         // Note: It has been reported that heap buffers are 50% faster than direct buffers
-        if (JiveGlobals.getBooleanProperty("xmpp.socket.directBuffer", false)) {
+        if (!JiveGlobals.getBooleanProperty("xmpp.socket.directBuffer", false)) {
             ByteBuffer.setUseDirectBuffers(false);
             ByteBuffer.setAllocator(new SimpleByteBufferAllocator());
         }

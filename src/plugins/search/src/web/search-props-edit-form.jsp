@@ -1,6 +1,7 @@
 <%@ page import="java.util.*,
                  org.jivesoftware.wildfire.XMPPServer,
-				 org.jivesoftware.wildfire.plugin.SearchPlugin,
+                 org.jivesoftware.wildfire.plugin.SearchPlugin,
+                 org.jivesoftware.wildfire.user.*,
                  org.jivesoftware.util.*"
 %>
 
@@ -11,9 +12,9 @@
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
     String searchName = ParamUtils.getParameter(request, "searchname");
-	boolean searchEnabled = ParamUtils.getBooleanParameter(request, "searchEnabled");
+    boolean searchEnabled = ParamUtils.getBooleanParameter(request, "searchEnabled");
 
-	SearchPlugin plugin = (SearchPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("search");
+    SearchPlugin plugin = (SearchPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("search");
 
     // Handle a save
     Map errors = new HashMap();
@@ -23,8 +24,17 @@
         }
         
         if (errors.size() == 0) {
-        	plugin.setServiceEnabled(searchEnabled);
+            plugin.setServiceEnabled(searchEnabled);
             plugin.setServiceName(searchName.trim());
+            
+            ArrayList<String> excludedFields = new ArrayList<String>();
+            for (String field : UserManager.getInstance().getSearchFields()) {
+                if (!ParamUtils.getBooleanParameter(request, field)) {
+                     excludedFields.add(field);
+                }
+            }
+            plugin.setExcludedFields(excludedFields);
+            
             response.sendRedirect("search-props-edit-form.jsp?success=true");
             return;
         }
@@ -38,17 +48,18 @@
     }
     
     searchEnabled = plugin.getServiceEnabled();
+    Collection<String> searchableFields = plugin.getFilteredSearchFields();
 %>
 
 <html>
     <head>
-        <title>Search Service Properties</title>
+        <title><fmt:message key="search.props.edit.form.title" /></title>
         <meta name="pageID" content="search-props-edit-form"/>
     </head>
     <body>
 
 <p>
-Use the form below to edit search service settings, these settings do not affect the user search in the admin console.<br>
+<fmt:message key="search.props.edit.form.directions" />
 </p>
 
 <%  if (success) { %>
@@ -58,7 +69,7 @@ Use the form below to edit search service settings, these settings do not affect
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-            Service properties edited successfully.
+            <fmt:message key="search.props.edit.form.successful_edit" />
         </td></tr>
     </tbody>
     </table>
@@ -71,7 +82,7 @@ Use the form below to edit search service settings, these settings do not affect
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
         <td class="jive-icon-label">
-        Error setting the service name.
+            <fmt:message key="search.props.edit.form.error" />
         </td></tr>
     </tbody>
     </table>
@@ -81,11 +92,10 @@ Use the form below to edit search service settings, these settings do not affect
 
 <form action="search-props-edit-form.jsp?save" method="post">
 
-<fieldset>
-    <legend>Service Enabled</legend>
-    <div>
+<div class="jive-contentBoxHeader"><fmt:message key="search.props.edit.form.service_enabled" /></div>
+<div class="jive-contentBox">
     <p>
-    You can choose to enable or disable user searches from clients. Disabling this services does not prevent user searches from the admin console.
+    <fmt:message key="search.props.edit.form.service_enabled_directions" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
@@ -95,7 +105,7 @@ Use the form below to edit search service settings, these settings do not affect
              <%= ((searchEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb01"><b>Enabled</b></label> - Clients will be able to search for users.
+                <label for="rb01"><b><fmt:message key="search.props.edit.form.enabled" /></b></label> - <fmt:message key="search.props.edit.form.enabled_details" />
             </td>
         </tr>
         <tr>
@@ -104,24 +114,21 @@ Use the form below to edit search service settings, these settings do not affect
              <%= ((!searchEnabled) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb02"><b>Disabled</b></label> - Clients will not be able to search for users.
+                <label for="rb02"><b><fmt:message key="search.props.edit.form.disabled" /></b></label> - <fmt:message key="search.props.edit.form.disabled_details" />
             </td>
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
+</div>
 
-<br><br>
+<br>
 
-<fieldset>
-    <legend>Service Name</legend>
-    <div>
+<div class="jive-contentBoxHeader"><fmt:message key="search.props.edit.form.service_name" /></div>
+<div class="jive-contentBox">
     <table cellpadding="3" cellspacing="0" border="0">
-
     <tr>
         <td class="c1">
-           Search service name:
+           <fmt:message key="search.props.edit.form.search_service_name" />:
         </td>
         <td>
         <input type="text" size="30" maxlength="150" name="searchname"  value="<%= (searchName != null ? searchName : "") %>">.<%=XMPPServer.getInstance().getServerInfo().getName() %>
@@ -129,19 +136,39 @@ Use the form below to edit search service settings, these settings do not affect
         <%  if (errors.containsKey("searchname")) { %>
 
             <span class="jive-error-text">
-            <br>Please enter a valid name.
+            <br><fmt:message key="search.props.edit.form.search_service_name_details" />
             </span>
 
         <%  } %>
         </td>
     </tr>
     </table>
-    </div>
-</fieldset>
+</div>
 
-<br><br>
+<br>
 
-<input type="submit" value="Save Properties">
+<div class="jive-contentBoxHeader"><fmt:message key="search.props.edit.form.searchable_fields" /></div>
+<div class="jive-contentBox">
+    <p>
+    <fmt:message key="search.props.edit.form.searchable_fields_details" />
+    </p>
+    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="400">
+        <tr>
+            <th align="center" width="1%"><fmt:message key="search.props.edit.form.enabled" /></th>
+            <th align="left" width="99%"><fmt:message key="search.props.edit.form.fields" /></th>
+        </tr>
+        <% for (String field : UserManager.getInstance().getSearchFields()) { %>
+        <tr>
+            <td align="center" width="1%"><input type="checkbox"  <%=searchableFields.contains(field) ? "checked" : "" %>  name="<%=field %>"></td>
+            <td align="left" width="99%"><%=field %></td>
+        </tr>
+        <% } %>
+    </table>
+</div>
+
+<br>
+
+<input type="submit" value="<fmt:message key="search.props.edit.form.save_properties" />">
 </form>
 
 </body>

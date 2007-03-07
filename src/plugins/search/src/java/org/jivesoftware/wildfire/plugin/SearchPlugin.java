@@ -11,9 +11,11 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -38,20 +40,21 @@ import java.util.*;
 
 /** 
  * Provides support for Jabber Search
- * (<a href="http://www.jabber.org/jeps/jep-0055.html">JEP-0055</a>).<p>
+ * (<a href="http://www.xmpp.org/extensions/xep-0055.html">XEP-0055</a>).<p>
  *
  * The basic functionality is to query an information repository 
  * regarding the possible search fields, to send a search query, 
  * and to receive search results. This implementation was primarily designed to use
- * <a href="http://www.jabber.org/jeps/jep-0004.html">Data Forms</a>, but 
+ * <a href="http://www.xmpp.org/extensions/xep-0004.html">Data Forms</a>, but 
  * also supports non-dataform searches.
  * <p/>
  * 
- * @author Ryan Graham 
+ * @author <a href="mailto:ryan@version2software.com">Ryan Graham</a>
  */
 public class SearchPlugin implements Component, Plugin, PropertyEventListener {
-    public static final String PLUGIN_SEARCH_SERVICENAME = "plugin.search.serviceName";
-    public static final String PLUGIN_SEARCH_SERVICEENABLED = "plugin.search.serviceEnabled";
+    public static final String SERVICENAME = "plugin.search.serviceName";
+    public static final String SERVICEENABLED = "plugin.search.serviceEnabled";
+    public static final String EXCLUDEDFIELDS = "plugin.search.excludedFields";
    
     private UserManager userManager;
     private ComponentManager componentManager;
@@ -59,36 +62,22 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
     private String serviceName;
     private boolean serviceEnabled;
+    private Collection<String> exculudedFields;
     
     private static String serverName;
 
-    private static String instructions = "The following fields are available for search. "
-        + "Wildcard (*) characters are allowed as part of the query.";
-    
-    private static Element probeResult;
-
-    private Collection<String> searchFields;
     private TreeMap<String, String> fieldLookup = new TreeMap<String, String>(new CaseInsensitiveComparator());
     private Map<String, String> reverseFieldLookup = new HashMap<String, String>();
 
     public SearchPlugin() {
-        serviceName = JiveGlobals.getProperty("plugin.search.serviceName", "search");
-        serviceEnabled = JiveGlobals.getBooleanProperty("plugin.search.serviceEnabled", true);
+        serviceName = JiveGlobals.getProperty(SERVICENAME, "search");
+        serviceEnabled = JiveGlobals.getBooleanProperty(SERVICEENABLED, true);
+        exculudedFields = StringUtils.stringToCollection(JiveGlobals.getProperty(EXCLUDEDFIELDS, ""));
         
         serverName = XMPPServer.getInstance().getServerInfo().getName();
-        // See if the installed provider supports searching. If not, workaround
-        // by providing our own searching.
-        UserManager manager = UserManager.getInstance();
-        try {
-            searchFields = manager.getSearchFields();
-            userManager = UserManager.getInstance();
-            searchFields = userManager.getSearchFields();
-        }
-        catch (UnsupportedOperationException uoe) {
-            // Use a SearchPluginUserManager instead.
-            searchFields = getSearchFields();
-        }
-        
+               
+        // Some clients, such as Miranda, are hard-coded to search specific fields,
+        // so we map those fields to the fields that Wildfire actually supports.
         fieldLookup.put("jid", "Username");
         fieldLookup.put("username", "Username");
         fieldLookup.put("first", "Name");
@@ -97,7 +86,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         fieldLookup.put("name", "Name");
         fieldLookup.put("email", "Email");
     }
-
+    
     public String getName() {
         return pluginManager.getName(this);
     }
@@ -106,53 +95,17 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         return pluginManager.getDescription(this);
     }
     
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {        
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
         pluginManager = manager;
         
         componentManager = ComponentManagerFactory.getComponentManager();
         try {
             componentManager.addComponent(serviceName, this);
         }
-        catch (Exception e) {
+        catch (ComponentException e) {
             componentManager.getLog().error(e);
         }
         PropertyEventDispatcher.addListener(this);
-
-        if (probeResult == null) {
-            probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
-
-            //non-data form
-            probeResult.addElement("instructions").addText(instructions);
-            
-            XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
-            searchForm.setTitle("User Search");
-            searchForm.addInstruction(instructions);
-         
-            XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-            field.setType(FormField.TYPE_HIDDEN);
-            field.addValue("jabber:iq:search");
-            searchForm.addField(field);
-            
-            field = new XFormFieldImpl("search");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel("Search");
-            field.setRequired(true);
-            searchForm.addField(field);
-            
-            for (String searchField : searchFields) {
-                //non-data form
-                probeResult.addElement(searchField);
-
-                field = new XFormFieldImpl(searchField);
-                field.setType(FormField.TYPE_BOOLEAN);
-                field.addValue("1");
-                field.setLabel(searchField);
-                field.setRequired(false);
-                searchForm.addField(field);
-            }
-
-            probeResult.add(searchForm.asXMLElement());
-        }
     }
     
     public void initialize(JID jid, ComponentManager componentManager) {
@@ -174,12 +127,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         userManager = null;
         fieldLookup = null;
         reverseFieldLookup = null;
+        exculudedFields = null;
     }
 
     public void shutdown() {
     }
     
-    public void processPacket(Packet p) {        
+    public void processPacket(Packet p) {
         if (p instanceof IQ) {
             IQ packet = (IQ) p;
 
@@ -240,12 +194,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
         else if (IQ.Type.set.equals(packet.getType())) {
             return processSetPacket(packet);
-        } else
-        if (IQ.Type.result.equals(packet.getType()) || IQ.Type.error.equals(packet.getType())) {
+        }
+        else if (IQ.Type.result.equals(packet.getType()) || IQ.Type.error.equals(packet.getType())) {
             // Ignore
         }
         else {
-            // Unknown type was sent so
+            // Unknown type was sent so return an error
             IQ reply = new IQ(IQ.Type.error, packet.getID());
             reply.setFrom(packet.getTo());
             reply.setTo(packet.getFrom());
@@ -260,8 +214,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         IQ replyPacket = IQ.createResultIQ(packet);
         Element reply = replyPacket.setChildElement("query", "jabber:iq:search");
         XDataFormImpl unavailableForm = new XDataFormImpl(DataForm.TYPE_CANCEL);
-        unavailableForm.setTitle("User Search");
-        unavailableForm.addInstruction("This service is unavailable.");
+        unavailableForm.setTitle(LocaleUtils.getLocalizedString("advance.user.search.title", "search"));
+        unavailableForm.addInstruction(LocaleUtils.getLocalizedString("search.service_unavailable", "search"));
         reply.add(unavailableForm.asXMLElement());
 
         return replyPacket;
@@ -269,7 +223,43 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
     private IQ processGetPacket(IQ packet) {
         IQ replyPacket = IQ.createResultIQ(packet);
-        replyPacket.setChildElement(probeResult.createCopy());
+        
+        Element queryResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:search"));
+        
+        String instructions = LocaleUtils.getLocalizedString("advance.user.search.details", "search");
+        
+        // non-data form
+        queryResult.addElement("instructions").addText(instructions);
+        
+        XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
+        searchForm.setTitle(LocaleUtils.getLocalizedString("advance.user.search.title", "search"));
+        searchForm.addInstruction(instructions);
+     
+        XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
+        field.setType(FormField.TYPE_HIDDEN);
+        field.addValue("jabber:iq:search");
+        searchForm.addField(field);
+        
+        field = new XFormFieldImpl("search"); 
+        field.setType(FormField.TYPE_TEXT_SINGLE);
+        field.setLabel(LocaleUtils.getLocalizedString("advance.user.search.search", "search"));
+        field.setRequired(true);
+        searchForm.addField(field);
+        
+        for (String searchField : getFilteredSearchFields()) {
+            // non-data form
+            queryResult.addElement(searchField);
+
+            field = new XFormFieldImpl(searchField);
+            field.setType(FormField.TYPE_BOOLEAN);
+            field.addValue("1");
+            field.setLabel(searchField);
+            field.setRequired(false);
+            searchForm.addField(field);
+        }
+
+        queryResult.add(searchForm.asXMLElement());
+        replyPacket.setChildElement(queryResult);
 
         return replyPacket;
     }
@@ -297,6 +287,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 foundUsers.addAll(findUsers(field, query));
             }
             
+            //occasionally null a User is returned so filter them out
             for (User user : foundUsers) {
                 if (user != null) {
                     users.add(user);
@@ -371,7 +362,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         field.setLabel("JID");
         searchResults.addReportedField(field);
 
-        for (String fieldName : searchFields) {
+        for (String fieldName : getFilteredSearchFields()) {
             field = new XFormFieldImpl(fieldName);
             field.setLabel(fieldName);
             searchResults.addReportedField(field);
@@ -444,7 +435,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     
     public void setServiceName(String name) {
         changeServiceName(name);
-        JiveGlobals.setProperty(PLUGIN_SEARCH_SERVICENAME, name);
+        JiveGlobals.setProperty(SERVICENAME, name);
     }
     
     public boolean getServiceEnabled() {
@@ -453,33 +444,67 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     
     public void setServiceEnabled(boolean enabled) {
         serviceEnabled = enabled;
-        JiveGlobals.setProperty(PLUGIN_SEARCH_SERVICEENABLED, enabled ? "true" : "false");
+        JiveGlobals.setProperty(SERVICEENABLED, enabled ? "true" : "false");
+    }
+    
+    /**
+     * Returns the collection of searchable field names that does not include the fields
+     * listed in the EXCLUDEDFIELDS property list.
+     */
+    public Collection<String> getFilteredSearchFields() {
+       Collection<String> searchFields;
+       
+       // See if the installed provider supports searching. If not, workaround
+       // by providing our own searching.
+       try {
+           userManager = UserManager.getInstance();
+           searchFields = userManager.getSearchFields();
+       }
+       catch (UnsupportedOperationException uoe) {
+           // Use a SearchPluginUserManager instead.
+          searchFields = getSearchPluginUserManagerSearchFields();
+       }
+       
+       searchFields.removeAll(exculudedFields);
+       
+       return searchFields;
+    }
+    
+    public void setExcludedFields(Collection<String> exculudedFields) {
+       this.exculudedFields = exculudedFields;
+       JiveGlobals.setProperty(EXCLUDEDFIELDS, StringUtils.collectionToString(exculudedFields));
     }
     
     public void propertySet(String property, Map params) {
-        if (property.equals(PLUGIN_SEARCH_SERVICEENABLED)) {
+        if (property.equals(SERVICEENABLED)) {
             this.serviceEnabled = Boolean.parseBoolean((String)params.get("value"));
         }
-        else if (property.equals(PLUGIN_SEARCH_SERVICENAME)) {
+        else if (property.equals(SERVICENAME)) {
             changeServiceName((String)params.get("value"));
+        }
+        else if (property.equals(EXCLUDEDFIELDS)) {
+            exculudedFields = StringUtils.stringToCollection(JiveGlobals.getProperty(EXCLUDEDFIELDS, (String)params.get("value")));
         }
     }
 
     public void propertyDeleted(String property, Map params) {
-        if (property.equals(PLUGIN_SEARCH_SERVICEENABLED)) {
+        if (property.equals(SERVICEENABLED)) {
             this.serviceEnabled = true;
         }
-        else if (property.equals(PLUGIN_SEARCH_SERVICENAME)) {
+        else if (property.equals(SERVICENAME)) {
             changeServiceName("search");
+        }
+        else if (property.equals(EXCLUDEDFIELDS)) {
+           exculudedFields = new ArrayList<String>();
         }
     }
 
     public void xmlPropertySet(String property, Map params) {
-        // not used  
+        // not used
     }
 
     public void xmlPropertyDeleted(String property, Map params) {
-        // not used       
+        // not used
     }
     
     private void changeServiceName(String serviceName) {
@@ -509,15 +534,9 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         this.serviceName = serviceName;
     }
     
-    private class CaseInsensitiveComparator implements Comparator {
-        public int compare(Object o1, Object o2) {
-            String s1 = (String) o1;
-            String s2 = (String) o2;
-            return s1.toUpperCase().compareTo(s2.toUpperCase());
-        }
-
-        public boolean equals(Object o) {
-           return compare(this, o) == 0;
+    private class CaseInsensitiveComparator implements Comparator<String> {
+        public int compare(String s1, String s2) {
+            return s1.compareToIgnoreCase(s2);
         }
     }
     
@@ -534,7 +553,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * user. Typical fields are username, name, and email. These values can be
      * used to contruct a data form.
      */
-    public Collection<String> getSearchFields() {
+    public Collection<String> getSearchPluginUserManagerSearchFields() {
         return Arrays.asList("Username", "Name", "Email");
     }
 
@@ -551,7 +570,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     public Collection<User> findUsers(String field, String query) {
         List<User> foundUsers = new ArrayList<User>();
 
-        if (!getSearchFields().contains(field)) {
+        if (!getSearchPluginUserManagerSearchFields().contains(field)) {
             return foundUsers;
         }
 

@@ -133,26 +133,7 @@ public class SASLAuthentication {
             }
         }
         else {
-            for (String mech : mechanisms) {
-                if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
-                    // Check if the user provider in use supports passwords retrieval. Accessing
-                    // to the users passwords will be required by the CallbackHandler
-                    if (!AuthFactory.getAuthProvider().supportsPasswordRetrieval()) {
-                        continue;
-                    }
-                }
-                else if (mech.equals("ANONYMOUS")) {
-                    // Check anonymous is supported
-                    if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
-                        continue;
-                    }
-                }
-                else if (mech.equals("JIVE-SHAREDSECRET")) {
-                    // Check anonymous is supported
-                    if (!isSharedSecretAllowed()) {
-                        continue;
-                    }
-                }
+            for (String mech : getSupportedMechanisms()) {
                 sb.append("<mechanism>");
                 sb.append(mech);
                 sb.append("</mechanism>");
@@ -178,26 +159,7 @@ public class SASLAuthentication {
             }
         }
         else {
-            for (String mech : mechanisms) {
-                if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
-                    // Check if the user provider in use supports passwords retrieval. Accessing
-                    // to the users passwords will be required by the CallbackHandler
-                    if (!AuthFactory.getAuthProvider().supportsPasswordRetrieval()) {
-                        continue;
-                    }
-                }
-                else if (mech.equals("ANONYMOUS")) {
-                    // Check anonymous is supported
-                    if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
-                        continue;
-                    }
-                }
-                else if (mech.equals("JIVE-SHAREDSECRET")) {
-                    // Check shared secret is supported
-                    if (!isSharedSecretAllowed()) {
-                        continue;
-                    }
-                }
+            for (String mech : getSupportedMechanisms()) {
                 Element mechanism = mechs.addElement("mechanism");
                 mechanism.setText(mech);
             }
@@ -643,7 +605,31 @@ public class SASLAuthentication {
      * @return the list of supported SASL mechanisms by the server.
      */
     public static Set<String> getSupportedMechanisms() {
-        return Collections.unmodifiableSet(mechanisms);
+        Set<String> answer = new HashSet<String>(mechanisms);
+        // Clean up not-available mechanisms
+        for (Iterator<String> it=answer.iterator(); it.hasNext();) {
+            String mech = it.next();
+            if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
+                // Check if the user provider in use supports passwords retrieval. Accessing
+                // to the users passwords will be required by the CallbackHandler
+                if (!AuthFactory.getAuthProvider().supportsPasswordRetrieval()) {
+                    it.remove();
+                }
+            }
+            else if (mech.equals("ANONYMOUS")) {
+                // Check anonymous is supported
+                if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
+                    it.remove();
+                }
+            }
+            else if (mech.equals("JIVE-SHAREDSECRET")) {
+                // Check shared secret is supported
+                if (!isSharedSecretAllowed()) {
+                    it.remove();
+                }
+            }
+        }
+        return answer;
     }
 
     private static void initMechanisms() {

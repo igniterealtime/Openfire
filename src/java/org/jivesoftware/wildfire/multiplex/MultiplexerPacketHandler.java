@@ -24,7 +24,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 /**
@@ -170,7 +169,7 @@ public class MultiplexerPacketHandler {
                     "http://jabber.org/protocol/connectionmanager#errors"));
             sendErrorPacket(route, PacketError.Condition.bad_request, extraError);
         }
-        catch (UnsupportedEncodingException e) {
+        catch (Exception e) {
             Log.error("Error processing wrapped packet: " + route.getChildElement().asXML(), e);
             sendErrorPacket(route, PacketError.Condition.internal_server_error, null);
         }

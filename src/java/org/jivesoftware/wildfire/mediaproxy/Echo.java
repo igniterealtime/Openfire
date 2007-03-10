@@ -28,7 +28,7 @@ public class Echo implements Runnable {
 
     public void run() {
         try {
-            System.out.println("Listening for ECHO: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort());
+            //System.out.println("Listening for ECHO: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort());
             while (true) {
 
                 DatagramPacket packet = new DatagramPacket(new byte[8], 8);

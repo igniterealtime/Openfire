@@ -42,6 +42,9 @@ public abstract class StanzaHandler {
     // DANIELE: Indicate if a session is already created
     private boolean sessionCreated = false;
 
+    // Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
+    // client sent a new initial stream header the value will return to false.
+    private boolean startedTLS = false;
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
     private boolean startedSASL = false;
@@ -94,6 +97,9 @@ public abstract class StanzaHandler {
                 MXParser parser = reader.getXPPParser();
                 parser.setInput(new StringReader(stanza));
                 createSession(parser);
+            } else if (startedTLS) {
+                startedTLS = false;
+                tlsNegotiated();
             } else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
                 startedSASL = false;
                 saslSuccessful();
@@ -123,7 +129,7 @@ public abstract class StanzaHandler {
         if ("starttls".equals(tag)) {
             // Negotiate TLS
             if (negotiateTLS()) {
-                tlsNegotiated();
+                startedTLS= true;
             } else {
                 connection.close();
                 session = null;

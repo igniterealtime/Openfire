@@ -120,6 +120,7 @@
     <property name="webapp.dest.dir" value="${work.dir}/webapp"/>
 
     <property name="release.dest.dir" value="${target.dir}/release"/>
+    <property name="package.dest.dir" value="${release.dest.dir}"/>
     <property name="overwrite" value="false"/>
     <property name="deploy.jar.dir" value="${jar.dest.dir}"/>
     <property name="anttools.src.dir" value="${src.dir}/tools"/>
@@ -682,6 +683,9 @@
         <property name="release.name.src" value="${dist.prefix}_src"/>
         <!-- ie: wildfire_src_2_1_2 -->
         <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
+        <property name="package.dest.filename.zip" value="${package.dest.dir}/${release.fullname.src}.zip" />
+        <property name="package.dest.filename.tar" value="${package.dest.dir}/${release.fullname.src}.tar" />
+        <property name="package.dest.filename.tar.gz" value="${package.dest.filename.tar}.gz" />
         <property name="release.src.out.dir" value="${release.dest.dir}/${release.name.src}"/>
 
         <!-- ie: wildfire -->
@@ -750,8 +754,6 @@
             <fileset dir="${basedir}/build"/>
         </copy>
 
-        <property name="package.dest.dir" value="${release.dest.dir}"/>
-
         <if>
             <not>
                 <isset property="no.package"/>
@@ -759,11 +761,11 @@
             <then>
                 <parallel>
                     <!-- Source Packages -->
-                    <zip zipfile="${package.dest.dir}/${release.fullname.src}.zip"
+                    <zip zipfile="${package.dest.filename.zip}"
                          basedir="${release.src.out.dir}/.."
                          includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
                             />
-                    <tar tarfile="${package.dest.dir}/${release.fullname.src}.tar.gz"
+                    <tar tarfile="${package.dest.filename.tar.gz}"
                          basedir="${release.src.out.dir}/.."
                          includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
                          compression="gzip"
@@ -1536,46 +1538,52 @@
     <property name="debian.release.dir" value="${target.dir}/debian"/>
     <property name="debian.release.install_path" value="${debian.release.dir}/usr/bin"/>
     <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
+    <property name="debian.work.dir" value="${work.dir}/debian"/>
     <tstamp>
         <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
     </tstamp>
 
-    <target name="installer-debian" depends="dist.bin" description="Creates a Debian package">
-        <mkdir dir="${debian.release.install_path}/${dist.prefix}"/>
-        <copy todir="${debian.release.install_path}/${dist.prefix}">
-            <fileset dir="${release.dest.dir}/${dist.prefix}">
-                <exclude name="**/*.bat"/>
-            </fileset>
-        </copy>
-
-        <copy todir="${debian.release.dir}/DEBIAN">
-            <fileset dir="${debian.dir}" includes="**/*"/>
+    <target name="installer-debian" depends="dist.src" description="Creates a Debian package">
+	<copy file="${package.dest.filename.tar.gz}" tofile="${debian.work.dir}/${dist.prefix}_${version}.orig.tar.gz"/>
+	
+	<!-- Unpack the sources -->	
+	<gunzip src="${package.dest.filename.tar.gz}"/>
+	<untar src="${package.dest.filename.tar}" dest="${debian.work.dir}"/>
+	
+	<!-- Copy the /debian/dir into workdir -->
+        <copy todir="${debian.work.dir}/${release.name.src}/debian">
+            <fileset dir="${debian.dir}/" includes="**/*"/>
             <filterset>
                 <filter token="builddate" value="${debian.builddate}"/>
                 <filter token="version" value="${debian.version}"/>
             </filterset>
         </copy>
-        <!-- Move the conf directory to /etc/wildfire and then make a sym link  -->
-        <mkdir dir="${debian.release.dir}/etc/${dist.prefix}"/>
-        <copy todir="${debian.release.dir}/etc/${dist.prefix}">
-            <fileset dir="${debian.release.install_path}/${dist.prefix}/conf"/>
-        </copy>
-        <delete dir="${debian.release.install_path}/${dist.prefix}/conf"/>
-        <exec executable="ln" failonerror="true">
-            <arg line="-s  /etc/${dist.prefix} ${debian.release.install_path}/${dist.prefix}/conf"/>
-        </exec>
-        <!-- Move the logs directory to /var/log/wildfire and then make a sym link -->
-        <mkdir dir="${debian.release.dir}/var/log/${dist.prefix}"/>
-        <delete dir="${debian.release.install_path}/${dist.prefix}/logs"/>
-        <exec executable="ln" failonerror="true">
-            <arg line="-s  /var/log/${dist.prefix} ${debian.release.install_path}/${dist.prefix}/logs"/>
-        </exec>
+	
+	<!-- Make the copied 'rules' executable -->
+	<chmod file="${debian.work.dir}/${release.name.src}/debian/rules" perm="755" />
+	
         <!-- Create the package -->
-        <exec executable="dpkg" failonerror="true">
-            <arg line="-b ${debian.release.dir} ${dist.prefix}_${debian.version}-i386.deb"/>
+        <exec executable="dpkg-buildpackage" dir="${debian.work.dir}/${release.name.src}" failonerror="true">
+            <!-- Allow building without root-privs -->
+            <arg line="-rfakeroot"/>
+            <!-- Don't sign source -->
+            <arg line="-us"/>
+            <!-- Don't sign changelog -->
+            <arg line="-uc"/>
         </exec>
-        <move file="${dist.prefix}_${debian.version}-i386.deb" todir="${release.dest.dir}"/>
+
+        <!-- Copy resulting files to target-dir -->
+        <mkdir dir="${release.dest.dir}/debian" />
+	<copy todir="${release.dest.dir}/debian">
+           <fileset dir="${debian.work.dir}">
+               <filename name="wildfire_*" />
+               <filename name="wildfire_src" negate="true" />
+           </fileset>
+        </copy>
+
+	<!-- Cleanup -->
         <delete dir="${debian.release.dir}"/>
+	<delete dir="${debian.work.dir}"/>
     </target>
 
 </project>

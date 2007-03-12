@@ -1,0 +1,68 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+DESTINATION=${CURDIR}/debian/wildfire/
+
+build: build-stamp
+build-stamp: 
+	dh_testdir
+	dh_installdirs
+	
+	ant -f build/build.xml
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	
+	rm -f build-stamp configure-stamp install-stamp
+	
+	-ant -f build/build.xml clean
+	
+	dh_clean 
+
+install: install-stamp
+install-stamp:
+	mv $(CURDIR)/target/wildfire $(DESTINATION)/opt/
+	
+	# Move the conf-dir to etc an create a symlink back.
+	mv ${DESTINATION}/opt/wildfire/conf ${DESTINATION}/etc/wildfire
+	ln -s /etc/wildfire ${DESTINATION}/opt/wildfire/conf
+	
+	# Move the resource dir to etc and symlink back.
+	mv ${DESTINATION}/opt/wildfire/resources/security ${DESTINATION}/etc/wildfire/security
+	ln -s /etc/wildfire/security ${DESTINATION}/opt/wildfire/resources/security
+	
+	# Move the logs dir to /var/log an symlink back.
+	mv ${DESTINATION}/opt/wildfire/logs ${DESTINATION}/var/log/wildfire
+	ln -s /var/log/wildfire ${DESTINATION}/opt/wildfire/logs
+	
+	touch $@
+	
+
+# Build architecture-dependent files here.
+binary-indep: install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs changelog.html
+	dh_installdocs
+	dh_installexamples
+	dh_installdebconf	
+	dh_installinit
+	dh_link
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep
+.PHONY: build clean binary-indep binary install configure

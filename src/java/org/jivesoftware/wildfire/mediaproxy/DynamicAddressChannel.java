@@ -43,7 +43,7 @@ public class DynamicAddressChannel extends Channel implements Runnable, Datagram
             return true;
         } else {
             c = 1000; // Prevents long overflow
-            // Check Source Address. If it´s different, discard packet.
+            // Check Source Address. If it's different, discard packet.
             return this.getHost().equals(packet.getAddress());
         }
     }

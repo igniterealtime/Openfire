@@ -14,6 +14,7 @@ import net.sf.cindy.SessionAdapter;
 import net.sf.cindy.Session;
 import net.sf.cindy.Message;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 
 /**
  * MSN Session Listener Interface.
@@ -40,6 +41,27 @@ public class MsnSessionListener extends SessionAdapter {
 
     public void messageReceived(Session arg0, Message message) throws Exception {
         Log.debug("MSN: Session messageReceived for "+msnSession.getRegistration().getUsername()+" : "+message);
+        // TODO: Kinda hacky, would like to improve on this later.
+        if (message.equals("OUT OTH")) {
+            // Forced disconnect because account logged in elsewhere
+            msnSession.getTransport().sendMessage(
+                    msnSession.getJIDWithHighestPriority(),
+                    msnSession.getTransport().getJID(),
+                    LocaleUtils.getLocalizedString("gateway.msn.otherloggedin", "gateway"),
+                    org.xmpp.packet.Message.Type.error
+            );
+            msnSession.logOut();
+        }
+        else if (message.equals("OUT SDH")) {
+            // Forced disconnect from server for maintenance
+            msnSession.getTransport().sendMessage(
+                    msnSession.getJIDWithHighestPriority(),
+                    msnSession.getTransport().getJID(),
+                    LocaleUtils.getLocalizedString("gateway.msn.disconnect", "gateway"),
+                    org.xmpp.packet.Message.Type.error
+            );
+            msnSession.logOut();
+        }
     }
 
     public void messageSent(Session arg0, Message message) throws Exception {

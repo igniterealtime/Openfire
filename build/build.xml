@@ -1543,27 +1543,22 @@
         <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
     </tstamp>
 
-    <target name="installer-debian" depends="dist.src" description="Creates a Debian package">
-	<copy file="${package.dest.filename.tar.gz}" tofile="${debian.work.dir}/${dist.prefix}_${version}.orig.tar.gz"/>
-	
-	<!-- Unpack the sources -->	
-	<gunzip src="${package.dest.filename.tar.gz}"/>
-	<untar src="${package.dest.filename.tar}" dest="${debian.work.dir}"/>
-	
-	<!-- Copy the /debian/dir into workdir -->
-        <copy todir="${debian.work.dir}/${release.name.src}/debian">
+
+    <target name="installer-debian" depends="clean, init" description="Creates a Debian package">
+        <!-- Copy the /debian/dir into workdir -->
+        <copy todir="${basedir}/debian">
             <fileset dir="${debian.dir}/" includes="**/*"/>
             <filterset>
                 <filter token="builddate" value="${debian.builddate}"/>
                 <filter token="version" value="${debian.version}"/>
             </filterset>
         </copy>
-	
-	<!-- Make the copied 'rules' executable -->
-	<chmod file="${debian.work.dir}/${release.name.src}/debian/rules" perm="755" />
-	
+
+        <!-- Make the copied 'rules' executable -->
+        <chmod file="${basedir}/debian/rules" perm="755" />
+
         <!-- Create the package -->
-        <exec executable="dpkg-buildpackage" dir="${debian.work.dir}/${release.name.src}" failonerror="true">
+        <exec executable="dpkg-buildpackage" dir="${basedir}" failonerror="true">
             <!-- Allow building without root-privs -->
             <arg line="-rfakeroot"/>
             <!-- Don't sign source -->
@@ -1572,18 +1567,8 @@
             <arg line="-uc"/>
         </exec>
 
-        <!-- Copy resulting files to target-dir -->
-        <mkdir dir="${release.dest.dir}/debian" />
-	<copy todir="${release.dest.dir}/debian">
-           <fileset dir="${debian.work.dir}">
-               <filename name="wildfire_*" />
-               <filename name="wildfire_src" negate="true" />
-           </fileset>
-        </copy>
-
-	<!-- Cleanup -->
-        <delete dir="${debian.release.dir}"/>
-	<delete dir="${debian.work.dir}"/>
+        <!-- Clean up -->
+        <delete dir="${basedir}/debian" />
     </target>
 
 </project>

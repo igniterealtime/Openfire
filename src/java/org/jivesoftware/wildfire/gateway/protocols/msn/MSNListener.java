@@ -23,6 +23,9 @@ import net.sf.jml.message.MsnDatacastMessage;
 import net.sf.jml.message.MsnUnknownMessage;
 
 import java.util.Date;
+import java.util.TimerTask;
+import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * MSN Listener Interface.
@@ -41,12 +44,34 @@ public class MSNListener extends MsnAdapter {
      */
     public MSNListener(MSNSession session) {
         this.msnSession = session;
+        sessionReaper = new SessionReaper();
+        timer.schedule(sessionReaper, reaperInterval, reaperInterval);
     }
 
     /**
      * The session this listener is associated with.
      */
     public MSNSession msnSession = null;
+
+    /**
+     * Timer to check for stale typing notifications.
+     */
+    private Timer timer = new Timer();
+
+    /**
+     * Interval at which typing notifications are reaped.
+     */
+    private int reaperInterval = 5000; // 5 seconds
+
+    /**
+     * The actual repear task.
+     */
+    private SessionReaper sessionReaper;
+
+    /**
+     * Record of active typing notifications.
+     */
+    private ConcurrentHashMap<String,Date> typingNotificationMap = new ConcurrentHashMap<String,Date>();
 
     /**
      * Handles incoming messages from MSN users.
@@ -82,6 +107,7 @@ public class MSNListener extends MsnAdapter {
                     msnSession.getJIDWithHighestPriority(),
                     msnSession.getTransport().convertIDToJID(friend.getEmail().toString())
             );
+            typingNotificationMap.put(friend.getEmail().toString(), new Date());
         }
         else {
             Log.debug("MSN: Received unknown control msg to " + switchboard + " from " + friend + ": " + message);
@@ -314,6 +340,33 @@ public class MSNListener extends MsnAdapter {
 //            m.setBody("Unknown error from MSN: "+throwable.toString());
 //            throwable.printStackTrace();
 //            msnSession.getTransport().sendPacket(m);
+        }
+    }
+
+    /**
+     * Clean up any active typing notifications that are stale.
+     */
+    private class SessionReaper extends TimerTask {
+        /**
+         * Silence any typing notifications that are stale.
+         */
+        public void run() {
+            cancelTypingNotifications();
+        }
+    }
+
+    /**
+     * Any typing notification that hasn't been heard in 10 seconds will be killed.
+     */
+    private void cancelTypingNotifications() {
+        for (String source : typingNotificationMap.keySet()) {
+            if (typingNotificationMap.get(source).getTime() < ((new Date().getTime()) - 10000)) {
+                msnSession.getTransport().sendChatInactiveNotification(
+                        msnSession.getJIDWithHighestPriority(),
+                        msnSession.getTransport().convertIDToJID(source)
+                );
+                typingNotificationMap.remove(source);
+            }
         }
     }
 

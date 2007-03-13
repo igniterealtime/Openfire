@@ -397,7 +397,9 @@ public class MSNSession extends TransportSession {
     public void sendChatState(JID jid, ChatStateType chatState) {
         Email jidEmail = Email.parseStr(getTransport().convertJIDToID(jid));
         MsnControlMessage mcm = new MsnControlMessage();
-        mcm.setTypingUser(msnMessenger.getOwner().getEmail().getEmailAddress());
+        if (chatState.equals(ChatStateType.composing)) {
+            mcm.setTypingUser(msnMessenger.getOwner().getEmail().getEmailAddress());
+        }
         for (MsnSwitchboard sb : msnMessenger.getActiveSwitchboards()) {
             if (sb.containContact(jidEmail)) {
                 sb.sendMessage(mcm, true);

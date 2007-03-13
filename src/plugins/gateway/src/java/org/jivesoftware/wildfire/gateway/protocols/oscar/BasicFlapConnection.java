@@ -41,6 +41,7 @@ import net.kano.joscar.snaccmd.*;
 import net.kano.joscar.snaccmd.icbm.RecvImIcbm;
 import net.kano.joscar.snaccmd.icbm.InstantMessage;
 import net.kano.joscar.snaccmd.icbm.TypingCmd;
+import net.kano.joscar.snaccmd.icbm.OldIcbm;
 import net.kano.joscar.snaccmd.buddy.BuddyStatusCmd;
 import net.kano.joscar.snaccmd.buddy.BuddyOfflineCmd;
 import net.kano.joscar.ratelim.RateLimitingQueueMgr;
@@ -111,6 +112,20 @@ public abstract class BasicFlapConnection extends BaseFlapConnection {
                     oscarSession.getTransport().convertIDToJID(sn),
                     msg
             );
+        }
+        else if (cmd instanceof OldIcbm) {
+            OldIcbm oicbm = (OldIcbm) cmd;
+            if (oicbm.getMessageType() == OldIcbm.MTYPE_PLAIN) {
+                String uin = String.valueOf(oicbm.getSender());
+                InstantMessage message = oicbm.getMessage();
+                String msg = StringUtils.unescapeFromXML(OscarTools.stripHtml(message.getMessage()));
+
+                oscarSession.getTransport().sendMessage(
+                        oscarSession.getJIDWithHighestPriority(),
+                        oscarSession.getTransport().convertIDToJID(uin),
+                        msg
+                );
+            }
         }
         else if (cmd instanceof WarningNotification) {
             WarningNotification wn = (WarningNotification) cmd;

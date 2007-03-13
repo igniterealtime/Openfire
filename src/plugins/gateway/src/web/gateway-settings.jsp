@@ -606,8 +606,7 @@
 <form action="" name="gatewayForm">
 
 <% aimSettings.printSettingsDialog(); %>
-<% icqSettings.printSettingsDialog(); %>
-<% ircSettings.printSettingsDialog(); %>    
+<% ircSettings.printSettingsDialog(); %>
 <% msnSettings.printSettingsDialog(); %>
 
 <br><br>
@@ -616,6 +615,7 @@
 
 <p><fmt:message key="gateway.web.settings.unstable.notice" /></p>
 
+<% icqSettings.printSettingsDialog(); %>
 <% sipSettings.printSettingsDialog(); %>
 <% yahooSettings.printSettingsDialog(); %>
 

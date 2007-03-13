@@ -1298,6 +1298,13 @@ public abstract class BaseTransport implements Component, RosterEventListener {
                 registration.setPassword(password);
                 foundReg = true;
             }
+            try {
+                TransportSession relatedSession = sessionManager.getSession(registration.getJID().getNode());
+                this.registrationLoggedOut(relatedSession);
+            }
+            catch (NotFoundException e) {
+                // No worries, move on.
+            }
         }
 
         if (!foundReg) {

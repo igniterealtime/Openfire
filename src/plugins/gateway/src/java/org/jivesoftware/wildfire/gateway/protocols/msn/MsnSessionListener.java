@@ -42,7 +42,7 @@ public class MsnSessionListener extends SessionAdapter {
     public void messageReceived(Session arg0, Message message) throws Exception {
         Log.debug("MSN: Session messageReceived for "+msnSession.getRegistration().getUsername()+" : "+message);
         // TODO: Kinda hacky, would like to improve on this later.
-        if (message.equals("OUT OTH")) {
+        if (message.toString().startsWith("OUT OTH")) {
             // Forced disconnect because account logged in elsewhere
             msnSession.getTransport().sendMessage(
                     msnSession.getJIDWithHighestPriority(),
@@ -52,7 +52,7 @@ public class MsnSessionListener extends SessionAdapter {
             );
             msnSession.logOut();
         }
-        else if (message.equals("OUT SDH")) {
+        else if (message.toString().startsWith("OUT SDH")) {
             // Forced disconnect from server for maintenance
             msnSession.getTransport().sendMessage(
                     msnSession.getJIDWithHighestPriority(),

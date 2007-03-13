@@ -458,7 +458,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
        // by providing our own searching.
        try {
            userManager = UserManager.getInstance();
-           searchFields = userManager.getSearchFields();
+           searchFields = new ArrayList<String>(userManager.getSearchFields());
        }
        catch (UnsupportedOperationException uoe) {
            // Use a SearchPluginUserManager instead.

@@ -4,6 +4,7 @@
                  org.jivesoftware.wildfire.PresenceManager,
                  org.jivesoftware.wildfire.user.*,
                  org.jivesoftware.wildfire.XMPPServer,
+                 org.xmpp.packet.JID,
                  org.xmpp.packet.Presence"
 %>
 
@@ -159,13 +160,13 @@
         %>
        </td>
        <td width="30%">
-           <a href="../../user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a>
+           <a href="../../user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
        </td>
        <td width="35">
            <%= user.getName() %> &nbsp;
        </td>
        <td width="35%">
-           <%= user.getEmail() %> &nbsp;
+           <%= JiveGlobals.formatDate(user.getCreationDate()) %> &nbsp;
        </td>
         <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>

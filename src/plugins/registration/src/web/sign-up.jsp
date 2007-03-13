@@ -9,7 +9,8 @@
                  org.jivesoftware.wildfire.plugin.RegistrationPlugin,
                  org.jivesoftware.util.*,
                  org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.stringprep.StringprepException"
+                 org.jivesoftware.stringprep.StringprepException,
+                 org.xmpp.packet.JID"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -17,15 +18,15 @@
 
 <html>
 <head>
-    <title>Jive Wildfire Web Registration</title>
+    <title><fmt:message key="registration.sign.up.title" /></title>
     <link rel="stylesheet" type="text/css" href="/style/global.css">
     <style type="text/css">
         .drop-shadow {
-         	font-weight: bold;
-         	font-size: 14pt;
-         	color: white;
-         	text-shadow: black 0.1em 0.1em 0.2em;
-         	padding-top: 21px;}
+             font-weight: bold;
+             font-size: 14pt;
+             color: white;
+             text-shadow: black 0.1em 0.1em 0.2em;
+             padding-top: 21px;}
     </style>
     <meta name="decorator" content="none"/>
 </head>
@@ -50,6 +51,7 @@
         else {
             try {
                 username = username.trim().toLowerCase();
+                username = JID.escapeNode(username);
                 username = Stringprep.nodeprep(username);
             }
             catch (StringprepException se) {
@@ -101,11 +103,11 @@
 
 <% if (!plugin.webEnabled()) { %>
 
-This service is currently unavailable.
+<fmt:message key="registration.sign.up.unavailable" />
 
 <% } else { %>
 
-<p>Use the form below to create a new user account</p>
+<p><fmt:message key="registration.sign.up.instructions" /></p>
 
 <c:set var="submit" value="${param.create}"/>
 <c:set var="errors" value="${errors}"/>
@@ -120,21 +122,21 @@ This service is currently unavailable.
             <td class="jive-icon-label">
 
             <% if (errors.get("general") != null) { %>
-                <fmt:message key="user.create.error_creating_account" />
+                <fmt:message key="registration.sign.up.error_creating_account" />
             <% } else if (errors.get("username") != null) { %>
-                <fmt:message key="user.create.invalid_username" />
+                <fmt:message key="registration.sign.up.invalid_username" />
             <% } else if (errors.get("usernameAlreadyExists") != null) { %>
-                <fmt:message key="user.create.user_exist" />
+                <fmt:message key="registration.sign.up.user_exist" />
             <% } else if (errors.get("name") != null) { %>
-                <fmt:message key="user.create.invalid_name" />
+                <fmt:message key="registration.sign.up.invalid_name" />
             <% } else if (errors.get("email") != null) { %>
-                <fmt:message key="user.create.invalid_email" />
+                <fmt:message key="registration.sign.up.invalid_email" />
             <% } else if (errors.get("password") != null) { %>
-                <fmt:message key="user.create.invalid_password" />
+                <fmt:message key="registration.sign.up.invalid_password" />
             <% } else if (errors.get("passwordMatch") != null) { %>
-                <fmt:message key="user.create.invalid_match_password" />
+                <fmt:message key="registration.sign.up.invalid_match_password" />
             <% } else if (errors.get("passwordConfirm") != null) { %>
-                <fmt:message key="user.create.invalid_password_confirm" />
+                <fmt:message key="registration.sign.up.invalid_password_confirm" />
             <% } %>
             </td>
         </tr>
@@ -150,7 +152,7 @@ This service is currently unavailable.
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">New account successfully created.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.sign.up.success" /></td>
         </tr>
     </tbody>
     </table>
@@ -160,13 +162,13 @@ This service is currently unavailable.
 
 <form name="f" action="sign-up.jsp" method="get">
 
-<fieldset>
-    <legend>Create Account</legend>
+<div class="jive-contentBoxHeader"><fmt:message key="registration.sign.up.create_account" /></div>
+<div class="jive-contentBox">
     <div>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
     <tr>
-        <td width="1%" nowrap><label for="usernametf">Username:</label> *</td>
+        <td width="1%" nowrap><label for="usernametf"><fmt:message key="registration.sign.up.username" />:</label> *</td>
         <td width="99%">
             <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
              id="usernametf" autocomplete="off">
@@ -174,7 +176,7 @@ This service is currently unavailable.
     </tr>
     <tr>
         <td width="1%" nowrap>
-            <label for="nametf">Name:</label>
+            <label for="nametf"><fmt:message key="registration.sign.up.name" />:</label>
         </td>
         <td width="99%">
             <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
@@ -183,7 +185,7 @@ This service is currently unavailable.
     </tr>
     <tr>
         <td width="1%" nowrap>
-            <label for="emailtf">Email:</label></td>
+            <label for="emailtf"><fmt:message key="registration.sign.up.email" />:</label></td>
         <td width="99%">
             <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
              id="emailtf">
@@ -191,7 +193,7 @@ This service is currently unavailable.
     </tr>
     <tr>
         <td nowrap>
-            <label for="passtf">Password:</label> *
+            <label for="passtf"><fmt:message key="registration.sign.up.password" />:</label> *
         </td>
         <td width="99%">
             <input type="password" name="password" value="" size="20" maxlength="75"
@@ -200,7 +202,7 @@ This service is currently unavailable.
     </tr>
     <tr>
         <td width="1%" nowrap>
-            <label for="confpasstf">Confirm Password:</label> *
+            <label for="confpasstf"><fmt:message key="registration.sign.up.confirm_password" />:</label> *
         </td>
         <td width="99%">
             <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
@@ -211,15 +213,12 @@ This service is currently unavailable.
     </table>
     <br>
     <span class="jive-description">
-    * Required Fields
+    * <fmt:message key="registration.sign.up.required_fields" />
     </span>
     </div>
-</fieldset>
+</div>
 
-<br><br>
-
-<input type="submit" name="create" value="Create Account">
-
+<input type="submit" name="create" value="<fmt:message key="registration.sign.up.create_account" />">
 </form>
 
 <script language="JavaScript" type="text/javascript">

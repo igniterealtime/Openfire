@@ -23,24 +23,24 @@
     boolean saveWelcome = request.getParameter("savemessage") != null;
     boolean saveGroup = request.getParameter("savegroup") != null;
     boolean saveHeader = request.getParameter("saveheader") != null;
-	
-    boolean imEnabled = ParamUtils.getBooleanParameter(request, "imenabled", false);	
+
+    boolean imEnabled = ParamUtils.getBooleanParameter(request, "imenabled", false);
     boolean emailEnabled = ParamUtils.getBooleanParameter(request, "emailenabled", false);
     boolean welcomeEnabled = ParamUtils.getBooleanParameter(request, "welcomeenabled", false);
     boolean groupEnabled = ParamUtils.getBooleanParameter(request, "groupenabled", false);
     boolean webEnabled = ParamUtils.getBooleanParameter(request, "webenabled", false);
-	
+
     String contactIM = ParamUtils.getParameter(request, "contactIM");
     boolean addIM = ParamUtils.getBooleanParameter(request, "addIM");
     boolean deleteIM = ParamUtils.getBooleanParameter(request, "deleteIM");
 
     String contactEmail = ParamUtils.getParameter(request, "contactEmail");
     boolean addEmail = ParamUtils.getBooleanParameter(request, "addEmail");
-    boolean deleteEmail = ParamUtils.getBooleanParameter(request, "deleteEmail");    
-	
+    boolean deleteEmail = ParamUtils.getBooleanParameter(request, "deleteEmail");
+
     String welcomeMessage = ParamUtils.getParameter(request, "welcomemessage");
     String group = ParamUtils.getParameter(request, "groupname");
-	
+
     String header = ParamUtils.getParameter(request, "header");
 
     RegistrationPlugin plugin = (RegistrationPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("registration");
@@ -92,19 +92,19 @@
         response.sendRedirect("registration-props-form.jsp?deleteSuccess=true");
         return;
     }
-	
+    
     if (save) {
         plugin.setIMNotificationEnabled(imEnabled);
         plugin.setEmailNotificationEnabled(emailEnabled);
         plugin.setWelcomeEnabled(welcomeEnabled);
         plugin.setWebEnabled(webEnabled);
-		
+        
         if (groupEnabled) {
             group = plugin.getGroup();
             if (group == null || group.trim().length() < 1) {
                 errors.put("groupNotFound", "groupNotFound");
-            } 
-		    
+            }
+            
             try {
                 GroupManager.getInstance().getGroup(group);
             }
@@ -112,14 +112,14 @@
                 errors.put("groupNotFound", "groupNotFound");
             }
         }
-		
+        
         if (errors.size() == 0) {
             plugin.setGroupEnabled(groupEnabled);
             response.sendRedirect("registration-props-form.jsp?settingsSaved=true");
             return;
-        }		
+        }
     }
-	
+    
     if (saveWelcome) {
         if (welcomeMessage == null || welcomeMessage.trim().length() < 1) {
             errors.put("missingWelcomeMessage", "missingWelcomeMessage");
@@ -130,47 +130,47 @@
             return;
         }
     }
-	
+    
     if (saveGroup && plugin.groupEnabled()) {
         if (group == null || group.trim().length() < 1) {
             errors.put("groupNotFound", "groupNotFound");
-        } 
-	    
+        }
+        
         try {
             GroupManager.getInstance().getGroup(group);
         }
         catch (Exception e) {
             errors.put("groupNotFound", "groupNotFound");
         }
-	    
+        
         if (errors.size() == 0) {
             plugin.setGroup(group);
             response.sendRedirect("registration-props-form.jsp?groupSaved=true");
             return;
         }
     }
-	
+    
     if (saveGroup && !plugin.groupEnabled()) {
         group = (group == null) ? "" : group;
         plugin.setGroup(group);
     }
-	
+    
     if (saveHeader) {
-	    if (header == null || header.trim().length() < 1) {
-			errors.put("missingHeader", "missingHeader");
-		} else {
-			plugin.setHeader(header);
-			response.sendRedirect("registration-props-form.jsp?headerSaved=true");
+        if (header == null || header.trim().length() < 1) {
+            errors.put("missingHeader", "missingHeader");
+        } else {
+            plugin.setHeader(header);
+            response.sendRedirect("registration-props-form.jsp?headerSaved=true");
             return;
         }
     }
-	
+    
     imEnabled = plugin.imNotificationEnabled();
     emailEnabled = plugin.emailNotificationEnabled();
     welcomeEnabled = plugin.welcomeEnabled();
     groupEnabled = plugin.groupEnabled();
     webEnabled = plugin.webEnabled();
-	
+    
     welcomeMessage = plugin.getWelcomeMessage();
     group = plugin.getGroup();
     header = plugin.getHeader();
@@ -178,7 +178,7 @@
 
 <html>
     <head>
-        <title>User Registration</title>
+        <title><fmt:message key="registration.props.form.title" /></title>
         <meta name="pageID" content="registration-props-form"/>
     </head>
     <body>
@@ -195,17 +195,15 @@ function addEmailContact() {
 }
 </script>
 
-<p>Use the form below to edit user registration settings.</p>
+<p><fmt:message key="registration.props.form.details" /></p>
 
 <form action="registration-props-form.jsp?save" name="regform" method="post">
 <input type="hidden" name="addIM" value="">
 <input type="hidden" name="addEmail" value="">
 
-<fieldset>
-    <legend>Registration Settings</legend>
-    <div>
-    
-    <p>Enable registration features using the checkboxes below.</p>
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.registration_settings" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.enable_features" /></p>
    
     <% if (ParamUtils.getBooleanParameter(request, "settingsSaved")) { %>
    
@@ -214,7 +212,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Settings saved successfully.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.save_success" /></td>
         </tr>
     </tbody>
     </table>
@@ -229,7 +227,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Please enter and save a valid group name in the Default Group section at the bottom of this page before enabling automatic group adding.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.invalid_group" /></td>
         </tr>
     </tbody>
     </table>
@@ -241,38 +239,35 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="imenabled" <%=(imEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left">Enable instant message registration notification.</td>
+            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_im_notification" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="emailenabled" <%=(emailEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left">Enable email registration notification.</td>
+            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_email_notification" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="welcomeenabled" <%=(welcomeEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left">Enable welcome message.</td>
+            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_welcome_msg" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="groupenabled" <%=(groupEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left">Enable automatically adding of new users to a group.</td>
+            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="webenabled" <%=(webEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left">Enable users to register via a web page at <%=plugin.webRegistrationAddress() %>.</td>
+            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_web_registration" /> <%=plugin.webRegistrationAddress() %></td>
         </tr>
     </tbody>
     </table>
-    </div>
+    <br>
+    <input type="submit" value="<fmt:message key="registration.props.form.save_settings" />"/>
+</div>
 
-<input type="submit" value="Save Settings"/>
-</fieldset>
+<br>
 
-<br><br>
-
-<fieldset>
-    <legend>Registration Notification Contacts</legend>
-    <div>
-   
-    <p>Add or remove contacts to be alerted when a new user registers.</p>
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.registration_contacts" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.registration_contacts_details" /></p>
    
     <% if (ParamUtils.getBooleanParameter(request, "deleteSuccess")) { %>
    
@@ -281,7 +276,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Contact successfully removed.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.registration_contact_removed" /></td>
         </tr>
     </tbody>
     </table>
@@ -294,7 +289,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Contact successfully added.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.registration_contact_removed" /></td>
         </tr>
     </tbody>
     </table>
@@ -307,7 +302,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Missing contact.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.registration_contact_missing" /></td>
         </tr>
     </tbody>
     </table>
@@ -320,7 +315,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Contact not found.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.registration_contact_not_found" /></td>
         </tr>
     </tbody>
     </table>
@@ -333,7 +328,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Invalid email address.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.registration_invalid_email" /></td>
         </tr>
     </tbody>
     </table>
@@ -342,9 +337,9 @@ function addEmailContact() {
     <% } %>
    
     <div>
-    <label for="contacttf">Add IM Contact:</label> 
+    <label for="contacttf"><fmt:message key="registration.props.form.registration_add_im" />:</label> 
     <input type="text" name="contactIM" size="30" maxlength="100" value="<%= (contactIM != null ? contactIM : "") %>" id="contacttf"/> 
-    <input type="submit" value="Add" onclick="return addIMContact();"/>
+    <input type="submit" value="<fmt:message key="registration.props.form.registration_add" />" onclick="return addIMContact();"/>
    
     <br><br>
    
@@ -352,15 +347,15 @@ function addEmailContact() {
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
-            <th width="99%">IM Contact</th>
-            <th width="1%" nowrap>Remove</th>
+            <th width="99%"><fmt:message key="registration.props.form.registration_im_contact" /></th>
+            <th width="1%" nowrap><fmt:message key="registration.props.form.registration_remove" /></th>
         </tr>
     </thead>
     <tbody>
     <% if (plugin.getIMContacts().size() == 0) { %>
    
     <tr>
-        <td width="100%" colspan="2" align="center" nowrap>No contacts specified, use the form above to add one.</td>
+        <td width="100%" colspan="2" align="center" nowrap><fmt:message key="registration.props.form.registration_no_contact" /></td>
     </tr>
    
     <% } %>
@@ -385,9 +380,9 @@ function addEmailContact() {
     </div>
    
     <div>
-    <label for="emailtf">Add Email Contact:</label>
+    <label for="emailtf"><fmt:message key="registration.props.form.registration_add_email" />:</label>
     <input type="text" name="contactEmail" size="30" maxlength="100" value="<%= (contactEmail != null ? contactEmail : "") %>" id="emailtf"/>
-    <input type="submit" value="Add" onclick="return addEmailContact();"/>
+    <input type="submit" value="<fmt:message key="registration.props.form.registration_add" />" onclick="return addEmailContact();"/>
    
     <br><br>
    
@@ -395,15 +390,15 @@ function addEmailContact() {
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
-            <th width="99%">Email Contact</th>
-            <th width="1%" nowrap>Remove</th>
+            <th width="99%"><fmt:message key="registration.props.form.registration_email_contact" /></th>
+            <th width="1%" nowrap><fmt:message key="registration.props.form.registration_add" /></th>
         </tr>
     </thead>
     <tbody>
     <% if (plugin.getEmailContacts().size() == 0) { %>
    
     <tr>
-        <td width="100%" colspan="2" align="center" nowrap>No contacts specified, use the form above to add one.</td>
+        <td width="100%" colspan="2" align="center" nowrap><fmt:message key="registration.props.form.registration_no_contact" /></td>
     </tr>
    
     <% } %>
@@ -426,17 +421,15 @@ function addEmailContact() {
     </table>
     </div>
     </div>
-</fieldset>
+</div>
 </form>
 
-<br><br>
+<br>
 
 <form action="registration-props-form.jsp?savemessage=true" method="post">
-<fieldset>
-    <legend>Welcome Message</legend>
-    <div>
-   
-    <p>Enter the welcome message that will be sent to new users when they register.</p>
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.welcome_message" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.welcome_message_details" /></p>
    
     <% if (ParamUtils.getBooleanParameter(request, "welcomeSaved")) { %>
 
@@ -445,7 +438,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Message saved successfully.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.welcome_message_saved" /></td>
         </tr>
     </tbody>
     </table>
@@ -459,25 +452,23 @@ function addEmailContact() {
             <td width="5%" valign="top">Message:&nbsp;</td>
             <td width="95%"><textarea cols="45" rows="5" wrap="virtual" name="welcomemessage"><%= welcomeMessage %></textarea></td>
             <% if (errors.containsKey("missingWelcomeMessage")) { %>
-            <span class="jive-error-text"><br>Please enter a welcome message.</span>
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.welcome_message_missing" /></span>
             <% } %>            
         </tr>
     </tbody>
     </table>
+    
+    <br>
+    <input type="submit" value="<fmt:message key="registration.props.form.welcome_message_save" />"/>
     </div>
-   
-<input type="submit" value="Save Message"/>
-</fieldset>
 </form>
 
-<br><br>
+<br>
 
 <form action="registration-props-form.jsp?savegroup=true" method="post">
-<fieldset>
-    <legend>Default Group</legend>
-    <div>
-
-    <p>Enter the name of the group that all new users will be automatically added to.</p>
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.default_group" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.default_group_details" /></p>
    
     <% if (ParamUtils.getBooleanParameter(request, "groupSaved")) { %>
 
@@ -486,7 +477,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Group saved successfully.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.default_group_saved" /></td>
         </tr>
     </tbody>
     </table>
@@ -499,25 +490,23 @@ function addEmailContact() {
         <tr>
             <td>Default Group:&nbsp;<input type="text" name="groupname" size="30" maxlength="100" value="<%= (group != null ? group : "") %>"/>
             <% if (errors.containsKey("groupNotFound")) { %> 
-            <span class="jive-error-text"><br>Group not found or is invalid.</span> 
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.default_group_invalid" /></span>
             <% } %>
         </tr>
     </tbody>
     </table>
+    
+   <br>
+    <input type="submit" value="<fmt:message key="registration.props.form.default_group_save" />"/>
     </div>
-   
-<input type="submit" value="Save Group"/>
-</fieldset>
 </form>
 
-<br><br>
+<br>
 
 <form action="registration-props-form.jsp?saveheader=true" method="post">
-<fieldset>
-    <legend>Sign-Up Page Header Text</legend>
-    <div>
-   
-    <p>Enter the text that will be displayed at the top of the sign-up web page.</p>
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.sign_up" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.sign_up_details" /></p>
    
     <% if (ParamUtils.getBooleanParameter(request, "headerSaved")) { %>
 
@@ -526,7 +515,7 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">Header saved successfully.</td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.sign_up_saved" /></td>
         </tr>
     </tbody>
     </table>
@@ -539,15 +528,15 @@ function addEmailContact() {
         <tr>
             <td>Header Text:&nbsp;<input type="text" name="header" size="30" maxlength="100" value="<%=header %>"/></td>
             <% if (errors.containsKey("missingHeader")) { %>
-            <span class="jive-error-text"><br>Please enter a header.</span>
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.sign_up_missing" /></span>
             <% } %>
          </tr>
     </tbody>
     </table>
+    
+    <br>
+    <input type="submit" value="<fmt:message key="registration.props.form.sign_up_save" />"/>
     </div>
-   
-<input type="submit" value="Save Message"/>
-</fieldset>
 </form>
 
 </body>

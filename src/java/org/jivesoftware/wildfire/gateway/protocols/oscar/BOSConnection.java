@@ -143,11 +143,13 @@ public class BOSConnection extends BasicFlapConnection {
             String sn = String.valueOf(omic.getFromUIN());
             //String msg = "Offline message sent at "+new Date(omic.getDate().getTime()).toString()+"\n"+OscarTools.stripHtml(omic.getContents()).trim();
             String msg = "Offline message received:\n"+ StringUtils.unescapeFromXML(OscarTools.stripHtml(omic.getContents()).trim());
+            EncodedStringInfo encmsg = MinimalEncoder.encodeMinimally(msg);
+            InstantMessage imsg = new InstantMessage(encmsg.getImEncoding().getCharsetCode(), ByteBlock.wrap(encmsg.getData()));
 
             oscarSession.getTransport().sendMessage(
                     oscarSession.getJIDWithHighestPriority(),
                     oscarSession.getTransport().convertIDToJID(sn),
-                    msg
+                    imsg.getMessage()
             );
         }
         else if (cmd instanceof OfflineMsgDoneCmd) {

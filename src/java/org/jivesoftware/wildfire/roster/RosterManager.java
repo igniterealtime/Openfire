@@ -64,8 +64,6 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
 
     public RosterManager() {
         super("Roster Manager");
-        // Add the new instance as a listener of group events
-        GroupEventDispatcher.addListener(this);
     }
 
     /**
@@ -926,11 +924,15 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // Add this module as a user event listener so we can update
         // rosters when users are created or deleted
         UserEventDispatcher.addListener(this);
+        // Add the new instance as a listener of group events
+        GroupEventDispatcher.addListener(this);
     }
 
     public void stop() {
         super.stop();
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(this);
+        // Remove this module as a listener of group events
+        GroupEventDispatcher.removeListener(this);
     }
 }

@@ -13,10 +13,10 @@ package org.jivesoftware.wildfire.gateway;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.container.PluginManager;
@@ -70,6 +70,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     public void initialize(JID jid, ComponentManager componentManager) {
         this.jid = jid;
         this.componentManager = componentManager;
+        rosterManager = XMPPServer.getInstance().getRosterManager();
         sessionManager.startThreadManager(jid);
     }
 
@@ -109,7 +110,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
     /**
      * Manager component for user rosters.
      */
-    public final RosterManager rosterManager = new RosterManager();
+    public RosterManager rosterManager;
 
     /**
      * Type of the transport in question.

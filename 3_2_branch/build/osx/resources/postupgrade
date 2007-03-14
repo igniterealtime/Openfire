@@ -1,0 +1,30 @@
+#!/bin/sh
+
+if [ -f /tmp/wildfire.xml ]; then 
+	mv /tmp/wildfire.xml /usr/local/wildfire/conf/
+fi
+
+if [ -f /tmp/security ]; then
+	mv /tmp/security /usr/local/wildfire/resources/
+fi
+
+if [ -f /tmp/embedded-db ]; then
+    mv /tmp/embedded-db /usr/local/wildfire/embedded-db
+fi
+
+if [ -f /tmp/enterprise ]; then
+    mv /tmp/enterprise /usr/local/wildfire/enterprise
+fi
+
+if [ -f /tmp/plugins ]; then
+    mv /tmp/plugins /usr/local/wildfire/plugins
+fi
+
+WILDFIRE_HOME=/usr/local/wildfire/
+WILDFIRE_GID=`cat /private/tmp/wildfiregid`
+rm /private/tmp/wildfiregid
+
+chown -R wildfire $WILDFIRE_HOME
+chgrp -R $WILDFIRE_GID $WILDFIRE_HOME
+
+/bin/launchctl load /Library/LaunchDaemons/org.jivesoftware.wildfire.plist

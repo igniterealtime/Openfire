@@ -1,0 +1,53 @@
+#!/bin/bash
+#determine safe uid/gid
+
+NIUTIL_PRESENT=`which niutil`
+
+if [ -z $NIUTIL_PRESENT] ; then
+	echo "No niutil"
+	WILDFIRE_USER=`dscl . -search /Users name wildfire | awk '{print $1}'`
+
+	WILDFIRE_GID=`dscl . -readall /Users PrimaryGroupID | awk '/PrimaryGroupID/{print $2}' | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+	let "WILDFIRE_GID=$WILDFIRE_GID+1"
+	echo $WILDFIRE_GID > /private/tmp/wildfiregid
+
+	if [ -z $WILDFIRE_USER ] ; then
+		WILDFIRE_UID=`dscl . -readall /Users UniqueID | awk '/UniqueID/{print $2}' | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+		let "WILDFIRE_UID=$WILDFIRE_UID+1"
+		echo $WILDFIRE_UID
+
+		#create user
+		dscl . -create /Users/wildfire
+
+		#set properties
+		dscl . -create /Users/wildfire PrimaryGroupID $WILDFIRE_GID
+		dscl . -create /Users/wildfire UniqueID $WILDFIRE_UID
+		dscl . -create /Users/wildfire UserShell /usr/bin/false
+		dscl . -create /Users/wildfire NFSHomeDirectory /usr/local/wildfire/
+		dscl . -create /Users/wildfire RealName "Jive Wildfire"
+		dscl . -passwd /Users/wildfire '*'
+	fi
+else
+	WILDFIRE_USER=`nireport / /users name | grep "wildfire"`
+
+	WILDFIRE_GID=`nireport / /users gid | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+	let "WILDFIRE_GID=$WILDFIRE_GID+1"
+	echo $WILDFIRE_GID > /private/tmp/wildfiregid
+
+	if [ -z $WILDFIRE_USER] ; then
+		WILDFIRE_UID=`nireport / /users uid | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+		let "WILDFIRE_UID=$WILDFIRE_UID+1"
+		echo $WILDFIRE_UID
+
+		#create user
+		niutil -create . /users/wildfire
+
+		#set properties
+		niutil -createprop . /users/wildfire gid $WILDFIRE_GID
+		niutil -createprop . /users/wildfire uid $WILDFIRE_UID
+		niutil -createprop . /users/wildfire shell /usr/bin/false
+		niutil -createprop . /users/wildfire home /usr/local/wildfire/
+		niutil -createprop . /users/wildfire realname "Jive Wildfire"
+		niutil -createprop . /users/wildfire passwd '*'
+	fi
+fi

@@ -1,0 +1,25 @@
+<sitemesh>
+  <property name="decorators-file" value="/WEB-INF/decorators.xml" /> 
+  <excludes file="${decorators-file}" /> 
+  <page-parsers>
+  <parser content-type="text/html" class="com.opensymphony.module.sitemesh.parser.FastPageParser" /> 
+  </page-parsers>
+  <decorator-mappers>
+    <mapper class="com.opensymphony.module.sitemesh.mapper.PageDecoratorMapper">
+      <param name="property.1" value="meta.decorator" /> 
+      <param name="property.2" value="decorator" /> 
+    </mapper>
+    <mapper class="com.opensymphony.module.sitemesh.mapper.ParameterDecoratorMapper">
+      <param name="decorator.parameter" value="decorator" />
+    </mapper>
+    <mapper class="com.opensymphony.module.sitemesh.mapper.PrintableDecoratorMapper">
+      <param name="decorator" value="printable" /> 
+      <param name="parameter.name" value="printable" /> 
+      <param name="parameter.value" value="true" /> 
+    </mapper>
+    <mapper class="com.opensymphony.module.sitemesh.mapper.FileDecoratorMapper" /> 
+    <mapper class="com.opensymphony.module.sitemesh.mapper.ConfigDecoratorMapper">
+      <param name="config" value="${decorators-file}" /> 
+    </mapper>
+  </decorator-mappers>
+</sitemesh>

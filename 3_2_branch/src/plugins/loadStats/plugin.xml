@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.wildfire.plugin.StatisticPlugin</class>
+    <name>Load Statistic</name>
+    <description>Logs load statistics to a file</description>
+    <author>Jive Software</author>
+    <version>1.0.0</version>
+    <date>2/15/2007</date>
+    <minServerVersion>3.2.0</minServerVersion>
+</plugin>

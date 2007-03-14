@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel></leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.yahoo.connecthost" var="host" desckey="gateway.web.settings.host" default="scs.msg.yahoo.com"/>
+        <item type="text" sysprop="plugin.gateway.yahoo.connectport" var="port" desckey="gateway.web.settings.port" default="5050"/>
+    </rightpanel>
+</optionsconfig>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel></leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.msn.connecthost" var="host" desckey="gateway.web.settings.host" default="messenger.hotmail.com"/>
+        <item type="text" sysprop="plugin.gateway.msn.connectport" var="port" desckey="gateway.web.settings.port" default="1863"/>
+    </rightpanel>
+</optionsconfig>

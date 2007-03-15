@@ -344,14 +344,6 @@ a.jive-gatewayButtonOn {
 	background: url(../images/msn-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
-.jive-gateway-SIPon {
-    background: url(../images/sip.gif) no-repeat left;
-    background-position: 2px 1px;
-    }
-.jive-gateway-SIPoff {
-    background: url(../images/sip-gray.gif) no-repeat left;
-    background-position: 2px 1px;
-    }
 .jive-gateway-YAHOOon {
 	background: url(../images/yahoo.gif) no-repeat left;
 	background-position: 0px 1px;

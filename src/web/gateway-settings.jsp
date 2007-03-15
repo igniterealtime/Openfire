@@ -354,7 +354,6 @@
     GatewaySettings icqSettings = new GatewaySettings(out, plugin, TransportType.icq, LocaleUtils.getLocalizedString("gateway.icq.service", "gateway"));
     GatewaySettings ircSettings = new GatewaySettings(out, plugin, TransportType.irc, LocaleUtils.getLocalizedString("gateway.irc.service", "gateway"));
     GatewaySettings msnSettings = new GatewaySettings(out, plugin, TransportType.msn, LocaleUtils.getLocalizedString("gateway.msn.service", "gateway"));
-    GatewaySettings sipSettings = new GatewaySettings(out, plugin, TransportType.sip, LocaleUtils.getLocalizedString("gateway.sip.service", "gateway"));
     GatewaySettings yahooSettings = new GatewaySettings(out, plugin, TransportType.yahoo, LocaleUtils.getLocalizedString("gateway.yahoo.service", "gateway"));
 %>
 
@@ -616,7 +615,6 @@
 <p><fmt:message key="gateway.web.settings.unstable.notice" /></p>
 
 <% icqSettings.printSettingsDialog(); %>
-<% sipSettings.printSettingsDialog(); %>
 <% yahooSettings.printSettingsDialog(); %>
 
 </form>

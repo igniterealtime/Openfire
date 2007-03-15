@@ -47,6 +47,7 @@ public class MediaProxyService extends BasicModule
     private PacketRouter router;
     private Echo echo = null;
     private int echoPort = 10020;
+    private SessionManager sessionManager = null;
 
     private MediaProxy mediaProxy = null;
     private boolean enabled = true;
@@ -63,6 +64,7 @@ public class MediaProxyService extends BasicModule
     public void initialize(XMPPServer server) {
         super.initialize(server);
 
+        sessionManager = server.getSessionManager();
         mediaProxy = new MediaProxy(server.getServerInfo().getName());
 
         String defaultName = "rtpbridge";
@@ -91,7 +93,7 @@ public class MediaProxyService extends BasicModule
             routingTable.addRoute(getAddress(), this);
             XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         } else {
-            if(echo!=null) echo.cancel();
+            if (echo != null) echo.cancel();
             XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         }
     }
@@ -101,7 +103,7 @@ public class MediaProxyService extends BasicModule
         mediaProxy.stopProxy();
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
         routingTable.removeRoute(getAddress());
-        if(echo!=null) echo.cancel();
+        if (echo != null) echo.cancel();
     }
 
     // Component Interface
@@ -192,6 +194,25 @@ public class MediaProxyService extends BasicModule
                         }
                     }
                     childElementCopy.remove(candidateElement);
+                } else {
+                    candidateElement = childElementCopy.element("publicip");
+                    if (candidateElement != null) {
+                        childElementCopy.remove(candidateElement);
+                        Element publicIp = childElementCopy.addElement("publicip");
+                        try {
+                            String ip = sessionManager.getSession(iq.getFrom()).getConnection().getInetAddress().getHostAddress();
+                            if (ip != null) {
+                                publicIp.addAttribute("ip", ip);
+                            }
+                        } catch (UnknownHostException e) {
+                            e.printStackTrace();
+                        }
+
+                    } else {
+                        childElementCopy.remove(candidateElement);
+                        reply.setError(PacketError.Condition.forbidden);
+                    }
+
                 }
             }
         } else {

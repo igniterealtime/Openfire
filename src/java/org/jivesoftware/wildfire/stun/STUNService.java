@@ -56,6 +56,9 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     private int primaryPort = 3478;
     private int secondaryPort = 3479;
 
+    private String externalServerAddress = null;
+    private int externalServerPort = 3478;
+
     public static final String NAMESPACE = "google:jingleinfo";
 
     /**
@@ -71,6 +74,9 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     private void loadSTUNConfig() {
         primaryAddress = JiveGlobals.getProperty("stun.address.primary");
         secondaryAddress = JiveGlobals.getProperty("stun.address.secondary");
+
+        externalServerAddress = JiveGlobals.getProperty("stun.external.address");
+        externalServerAddress = JiveGlobals.getProperty("stun.external.port");
 
         if (primaryAddress == null || primaryAddress.equals(""))
             primaryAddress = JiveGlobals.getProperty("xmpp.domain",

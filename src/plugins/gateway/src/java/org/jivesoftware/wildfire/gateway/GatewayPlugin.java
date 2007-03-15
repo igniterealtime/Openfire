@@ -2,7 +2,7 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2006-2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -81,10 +81,6 @@ public class GatewayPlugin implements Plugin {
         /* Set up MSN transport. */
         transports.put("msn", new TransportInstance(TransportType.msn, LocaleUtils.getLocalizedString("gateway.msn.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.msn.MSNTransport", componentManager));
         maybeStartService("msn");
-
-        /* Set up SIP/SIMPLE transport. */
-        transports.put("sip", new TransportInstance(TransportType.sip, LocaleUtils.getLocalizedString("gateway.sip.name", "gateway"), "org.jivesoftware.wildfire.gateway.protocols.simple.SimpleTransport", componentManager));
-        maybeStartService("sip");
     }
 
     public void destroyPlugin() {

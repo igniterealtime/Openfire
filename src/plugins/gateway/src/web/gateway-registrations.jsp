@@ -28,7 +28,6 @@
     trEnabled.put("irc", plugin.getTransportInstance("irc").isEnabled());
     trEnabled.put("msn", plugin.getTransportInstance("msn").isEnabled());
     trEnabled.put("yahoo", plugin.getTransportInstance("yahoo").isEnabled());
-    trEnabled.put("sip", plugin.getTransportInstance("sip").isEnabled());
 
     webManager.init(request, response, session, application, out);
 
@@ -66,7 +65,6 @@
         if (webManager.getPageProperty("gateway-registrations", "filterYAHOO", 0) != 0) { filteropts.add("yahoo"); }
         if (webManager.getPageProperty("gateway-registrations", "filterIRC", 0) != 0) { filteropts.add("irc"); }
         if (webManager.getPageProperty("gateway-registrations", "filterSIGNEDON", 0) != 0) { filteropts.add("signedon"); }
-        if (webManager.getPageProperty("gateway-registrations", "filterSIP", 0) != 0) { filteropts.add("sip"); }
     }
     else {
         filteropts.add("aim");
@@ -74,7 +72,6 @@
         filteropts.add("msn");
         filteropts.add("yahoo");
         filteropts.add("irc");
-        filteropts.add("sip");
     }
 
     webManager.setPageProperty("gateway-registrations", "filterSET", 1);
@@ -84,7 +81,6 @@
     webManager.setPageProperty("gateway-registrations", "filterYAHOO", filteropts.contains("yahoo") ? 1 : 0);
     webManager.setPageProperty("gateway-registrations", "filterIRC", filteropts.contains("irc") ? 1 : 0);
     webManager.setPageProperty("gateway-registrations", "filterSIGNEDON", filteropts.contains("signedon") ? 1 : 0);
-    webManager.setPageProperty("gateway-registrations", "filterSIP", filteropts.contains("sip") ? 1 : 0);
 
     int resCount = 0;
     for (Registration registration : registrations) {
@@ -288,7 +284,6 @@
 			<% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
 			<% if (trEnabled.get("irc")) { %> <option value="irc"><fmt:message key="gateway.irc.shortservice" /></option> <% } %>
             <% if (trEnabled.get("msn")) { %> <option value="msn"><fmt:message key="gateway.msn.shortservice" /></option> <% } %>
-            <% if (trEnabled.get("sip")) { %> <option value="sip"><fmt:message key="gateway.sip.shortservice" /></option> <% } %>
             <% if (trEnabled.get("yahoo")) { %> <option value="yahoo"><fmt:message key="gateway.yahoo.shortservice" /></option> <% } %>
 			</select><br>
 			<strong><fmt:message key="gateway.web.registrations.gateway" /></strong>
@@ -398,11 +393,6 @@
 			<img src="images/msn.gif" border="0" alt="<fmt:message key="gateway.msn.shortservice" />">
 			<!--<span><fmt:message key="gateway.msn.shortservice" /></span>-->
 		</label>
-        <label for="filterSIPcheckbox">
-            <input type="checkbox" name="filter[]" value="sip" <%= ((filteropts.contains("sip")) ? "checked" : "") %> id="filterSIPcheckbox"> 
-            <img src="images/sipsimple.gif" border="0" alt="<fmt:message key="gateway.sip.shortservice" />">
-            <!--<span><fmt:message key="gateway.sip.shortservice" /></span>-->
-        </label>
         <label for="filterYAHOOcheckbox">
 			<input type="checkbox" name="filter[]" value="yahoo" <%= ((filteropts.contains("yahoo")) ? "checked" : "") %> id="filterYAHOOcheckbox"> 
 			<img src="images/yahoo.gif" border="0" alt="<fmt:message key="gateway.yahoo.shortservice" />"> 

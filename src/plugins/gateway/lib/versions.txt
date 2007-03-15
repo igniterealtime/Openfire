@@ -1,17 +1,12 @@
 Name                   |  Version
 -------------------------------------------------------
 cindy.jar              | 2.4.4 (patched [#4])
-concurrent.jar         | 1.3.4
 dwr.jar                | 1.1.1 (patched [#3])
 irclib.jar             | 1.10
-jainsipapi.jar         | 1.2 (nightly 2007-02-13)
-jainsipri.jar          | 1.2 (nightly 2007-02-13)
-jakarta-regexp.jar     | 1.3
 jml.jar                | svn-20070225
 joscar-client.jar      | svn-20070204 (patched [#2])
 joscar-common.jar      | svn-20070204
 joscar-protocol.jar    | svn-20070204 (patched [#2])
-log4j.jar              | 1.2.8
 picocontainer.jar      | 1.2.0
 ymsg_network.jar       | 0.61 (patched [#1])
 ymsg_support.jar       | 0.61 (patched [#1])

@@ -8,11 +8,7 @@
 
 package org.jivesoftware.openfire.test.throttle;
 
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.PacketCollector;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.PacketListener;
-import org.jivesoftware.smack.filter.PacketIDFilter;
+import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.PacketTypeFilter;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
@@ -63,7 +59,7 @@ public class ThrottleTestReader {
             // Connect to the server, without TLS encryption.
             ConnectionConfiguration config = new ConnectionConfiguration(server);
             config.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
-            XMPPConnection con = new XMPPConnection(config);
+            final XMPPConnection con = new XMPPConnection(config);
             System.out.print("Connecting to " + server + "... ");
             con.connect();
 
@@ -74,7 +70,7 @@ public class ThrottleTestReader {
             // Get the "real" server address.
             server = con.getServiceName();
 
-            String writerAddress = username + "@" + server + "/writer";
+            final String writerAddress = username + "@" + server + "/writer";
             String readerAddress = username + "@" + server + "/reader";
 
             System.out.println("Registered as " + readerAddress);

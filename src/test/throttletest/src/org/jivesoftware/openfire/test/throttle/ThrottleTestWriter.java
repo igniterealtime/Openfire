@@ -17,6 +17,8 @@ import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smackx.packet.Time;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * A simple client to test XMPP server throttling. When server throttling is working
  * properly, a server should slow down incoming packets to match the speed of outgoing
@@ -36,6 +38,9 @@ import org.jivesoftware.smackx.packet.Time;
  */
 public class ThrottleTestWriter {
 
+    private static boolean done = false;
+    private static AtomicInteger packetCount = new AtomicInteger(0);
+
     /**
      * Starts the throttle test write client.
      *
@@ -53,7 +58,7 @@ public class ThrottleTestWriter {
             // Connect to the server, without TLS encryption.
             ConnectionConfiguration config = new ConnectionConfiguration(server);
             config.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
-            XMPPConnection con = new XMPPConnection(config);
+            final XMPPConnection con = new XMPPConnection(config);
             System.out.print("Connecting to " + server + "... ");
             con.connect();
 
@@ -65,7 +70,7 @@ public class ThrottleTestWriter {
             server = con.getServiceName();
 
             String writerAddress = username + "@" + server + "/writer";
-            String readerAddress = username + "@" + server + "/reader";
+            final String readerAddress = username + "@" + server + "/reader";
 
             System.out.println("Registered as " + writerAddress);
 
@@ -98,11 +103,30 @@ public class ThrottleTestWriter {
                 }
             }
 
-            // Found reader, now start flooding packets.
+            // Create a process to log how many packets we're writing out.
+            Runnable statsRunnable = new Runnable() {
+
+                public void run() {
+                    while (!done) {
+                        try {
+                            Thread.sleep(5000);
+                        }
+                        catch (Exception e) { /* ignore */ }
+                        int count = packetCount.getAndSet(0);
+                        System.out.println("Packets per second: " + (count/5));
+                    }
+                }
+            };
+            Thread statsThread = new Thread(statsRunnable);
+            statsThread.setDaemon(true);
+            statsThread.start();
+
+            // Now start flooding packets.
             Message testMessage = new Message(readerAddress);
             testMessage.setBody("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            while (true) {
+            while (!done) {
                 con.sendPacket(testMessage);
+                packetCount.getAndIncrement();
             }
         }
         catch (Exception e) {

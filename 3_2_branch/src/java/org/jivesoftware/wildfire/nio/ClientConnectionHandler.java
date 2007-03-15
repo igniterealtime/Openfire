@@ -37,6 +37,6 @@ public class ClientConnectionHandler extends ConnectionHandler {
     }
 
     int getMaxIdleTime() {
-        return JiveGlobals.getIntProperty("xmpp.client.idle", 30 * 60 * 1000) / 1000;
+        return JiveGlobals.getIntProperty("xmpp.client.idle", 2 * 60 * 1000) / 1000;
     }
 }

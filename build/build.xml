@@ -1535,18 +1535,23 @@
 
     <!-- Debian package ========================================================================= -->
     <property name="debian.dir" value="${basedir}/build/debian"/>
-    <property name="debian.release.dir" value="${target.dir}/debian"/>
-    <property name="debian.release.install_path" value="${debian.release.dir}/usr/bin"/>
+    <property name="debian.release.dir" value="${release.dest.dir}/debian"/>
     <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
-    <property name="debian.work.dir" value="${work.dir}/debian"/>
+    <property name="debian.work.dir" value="${work.dir}/debian/${dist.prefix}-${debian.version}"/>
     <tstamp>
         <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
     </tstamp>
 
+    <target name="installer-debian" depends="dist.src" description="Creates a Debian package">
+        <!-- Copy the sources to some place to work -->
+        <copy todir="${debian.work.dir}"> 
+            <fileset dir="${release.src.out.dir}">
+                <include name="**/*" />
+            </fileset>
+        </copy>
 
-    <target name="installer-debian" depends="clean, init" description="Creates a Debian package">
-        <!-- Copy the /debian/dir into workdir -->
-        <copy todir="${basedir}/debian">
+        <!-- Copy build/debian into workdir -->
+        <copy todir="${debian.work.dir}/debian">
             <fileset dir="${debian.dir}/" includes="**/*"/>
             <filterset>
                 <filter token="builddate" value="${debian.builddate}"/>
@@ -1555,10 +1560,10 @@
         </copy>
 
         <!-- Make the copied 'rules' executable -->
-        <chmod file="${basedir}/debian/rules" perm="755" />
+        <chmod file="${debian.work.dir}/debian/rules" perm="755" />
 
         <!-- Create the package -->
-        <exec executable="dpkg-buildpackage" dir="${basedir}" failonerror="true">
+        <exec executable="dpkg-buildpackage" dir="${debian.work.dir}" failonerror="true">
             <!-- Allow building without root-privs -->
             <arg line="-rfakeroot"/>
             <!-- Don't sign source -->
@@ -1567,8 +1572,15 @@
             <arg line="-uc"/>
         </exec>
 
-        <!-- Clean up -->
-        <delete dir="${basedir}/debian" />
+	<!-- Copy the resulting files into target -->
+	<copy todir="${debian.release.dir}">
+            <fileset dir="${debian.work.dir}/..">
+		<include name="**/*.deb" />
+		<include name="**/*.changes" />
+		<include name="**/*.dsc" />
+		<include name="**/*.gz" />
+            </fileset>
+        </copy>
     </target>
 
 </project>

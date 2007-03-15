@@ -30,14 +30,14 @@ set -e
 case "$1" in
   start)
 	echo -n "Starting $DESC: "
-	start-stop-daemon --start --quiet --background \
+	start-stop-daemon --start --quiet --oknodo --background \
 		--pidfile /var/run/$NAME.pid --make-pidfile \
 		--exec $DAEMON -- $DAEMON_OPTS
 	echo "$NAME."
 	;;
   stop)
 	echo -n "Stopping $DESC: "
-	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/$NAME.pid \
 		--exec $DAEMON
 	echo "$NAME."
 	;;

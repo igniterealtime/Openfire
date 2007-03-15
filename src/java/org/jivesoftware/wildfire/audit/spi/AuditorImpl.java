@@ -77,10 +77,12 @@ public class AuditorImpl implements Auditor {
     private Timer timer = new Timer("Auditor");
     private SaveQueuedPacketsTask saveQueuedPacketsTask;
     private FastDateFormat dateFormat;
+    private static FastDateFormat auditFormat;
 
     public AuditorImpl(AuditManager manager) {
         auditManager = manager;
         dateFormat = FastDateFormat.getInstance("yyyyMMdd", TimeZone.getTimeZone("UTC"));
+        auditFormat = FastDateFormat.getInstance("MMM dd, yyyy hh:mm:ss:SSS a", JiveGlobals.getLocale());
     }
 
     protected void setMaxValues(int totalSize, int fileSize, int days) {
@@ -406,7 +408,7 @@ public class AuditorImpl implements Auditor {
                     element.addAttribute("status", "unknown");
                     break;
             }
-            element.addAttribute("timestamp", JiveGlobals.formatDateTime(creationDate));
+            element.addAttribute("timestamp", auditFormat.format(creationDate));
             element.add(packet.getElement());
         }
 

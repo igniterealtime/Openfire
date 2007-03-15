@@ -236,7 +236,12 @@ public class NIOConnection implements Connection {
                     ioSession.write(buffer);
                 }
                 else {
-                    ioSession.write(buffer).join();
+                    // Send stanza and wait for ACK (using a 2 seconds default timeout)
+                    boolean ok =
+                            ioSession.write(buffer).join(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
+                    if (!ok) {
+                        Log.warn("No ACK was received when sending stanza to: " + this.toString());
+                    }
                 }
             }
             catch (Exception e) {

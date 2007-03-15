@@ -1,5 +1,4 @@
 /**
- * $RCSfile$
  * $Revision: $
  * $Date: $
  *
@@ -28,6 +27,8 @@ import org.xmpp.packet.Packet;
 import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A session represents a serious of interactions with an XMPP client sending packets using the HTTP
@@ -54,6 +55,10 @@ public class HttpSession extends ClientSession {
     private long lastRequestID;
     private int maxRequests;
     private PacketDeliverer backupDeliverer;
+
+    private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
+    // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
+    private final Semaphore packetsToSendSemaphore = new Semaphore(1);
 
     private static final Comparator<HttpConnection> connectionComparator
             = new Comparator<HttpConnection>() {
@@ -295,15 +300,6 @@ public class HttpSession extends ClientSession {
     }
 
     /**
-     * Returns the number of connections currently awaiting a response on this session.
-     *
-     * @return the number of connections currently awaiting a response on this session.
-     */
-    public int getConnectionCount() {
-        return connectionQueue.size();
-    }
-
-    /**
      * Returns the time in milliseconds since the epoch that this session was last active. Activity
      * is a request was either made or responded to. If the session is currently active, meaning
      * there are connections awaiting a response, the current time is returned.
@@ -350,12 +346,12 @@ public class HttpSession extends ClientSession {
         }
         catch (HttpBindTimeoutException e) {
             // This connection timed out we need to increment the request count
-            if(connection.getRequestId() != lastRequestID + 1) {
+            if (connection.getRequestId() != lastRequestID + 1) {
                 throw new HttpBindException("Unexpected RID error.", true, 404);
             }
             lastRequestID = connection.getRequestId();
         }
-        if(response == null) {
+        if (response == null) {
             response = createEmptyBody();
         }
         return response;
@@ -371,12 +367,44 @@ public class HttpSession extends ClientSession {
     }
 
     /**
+     * Returns the next set of packets to be sent. This method is meant to be used in the
+     * producer-consumer model to prevent deadlocks when processing incoming packets from the
+     * session. The internal packet queue is protected so that only one collection of packets can be
+     * sent at a time. This method will return null if packets are currently being consumed or there
+     * is no collection of packets waiting to be sent. After done consuming the packets {@link
+     * #releasePacketsToSend()} needs to be called.
+     *
+     * @param time the quantity of time to wait for the queue to be free for consumption
+     * @param timeUnit the unit of time related to the quanity
+     * @return a collection of packets to be sent.
+     */
+    public Collection<Element> getPacketsToSend(long time, TimeUnit timeUnit) {
+        try {
+            if (!packetsToSendSemaphore.tryAcquire(time, timeUnit)
+                    || packetsToSend.size() <= 0) {
+                return null;
+            }
+        }
+        catch (InterruptedException e) {
+            return null;
+        }
+        return packetsToSend.remove();
+    }
+
+    /**
+     * Releases the lock on the send packets queue so that other threads may access it.
+     */
+    public void releasePacketsToSend() {
+        packetsToSendSemaphore.release();
+    }
+
+    /**
      * Creates a new connection on this session. If a response is currently available for this
      * session the connection is responded to immediately, otherwise it is queued awaiting a
      * response.
      *
      * @param rid the request id related to the connection.
-     * @param isPoll true if the request was a poll, no packets were sent along with the request.
+     * @param packetsToBeSent any packets that this connection should send.
      * @param isSecure true if the connection was secured using HTTPS.
      * @return the created {@link org.jivesoftware.wildfire.http.HttpConnection} which represents
      *         the connection.
@@ -386,8 +414,10 @@ public class HttpSession extends ClientSession {
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      * protocol.
      */
-    HttpConnection createConnection(long rid, boolean isPoll, boolean isSecure)
-            throws HttpConnectionClosedException, HttpBindException {
+    synchronized HttpConnection createConnection(long rid, Collection<Element> packetsToBeSent,
+                                                 boolean isSecure)
+            throws HttpConnectionClosedException, HttpBindException
+    {
         HttpConnection connection = new HttpConnection(rid, isSecure);
         if (rid <= lastRequestID) {
             Delivered deliverable = retrieveDeliverable(rid);
@@ -404,7 +434,10 @@ public class HttpSession extends ClientSession {
             throw new HttpBindException("Unexpected RID Error", true, 404);
         }
 
-        addConnection(connection, isPoll);
+        if (packetsToBeSent.size() > 0) {
+            packetsToSend.add(packetsToBeSent);
+        }
+        addConnection(connection, packetsToBeSent.size() <= 0);
         return connection;
     }
 
@@ -470,8 +503,8 @@ public class HttpSession extends ClientSession {
 
     private int getOpenConnectionCount() {
         int count = 0;
-        for(HttpConnection connection : connectionQueue) {
-            if(!connection.isClosed()) {
+        for (HttpConnection connection : connectionQueue) {
+            if (!connection.isClosed()) {
                 count++;
             }
         }

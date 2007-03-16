@@ -695,6 +695,12 @@
         <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
     </target>    
 
+    <target name="clean.dist.folders" depends="init, dist.init">
+        <!-- Removes the expanded release folders, makes for easier automation of builds -->
+        <delete dir="${release.src.out.dir}"/>
+        <delete dir="${release.out.dir}"/>
+    </target>    
+
     <!-- dist.src =============================================================================== -->
     <target name="dist.src" depends="init, dist.init, javadoc, -i18n"
             description="Creates a source distribution package">

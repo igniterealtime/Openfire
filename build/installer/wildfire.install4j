@@ -22,20 +22,20 @@
     </searchSequence>
     <variables>
       <variable name="VERSION_MAJOR" value="3" />
-      <variable name="VERSION_MINOR" value="2" />
+      <variable name="VERSION_MINOR" value="3" />
       <variable name="VERSION_REVISION" value="0" />
-      <variable name="APP_NAME" value="Wildfire" />
-      <variable name="APP_SHORT_NAME" value="wildfire" />
-      <variable name="PRODUCT_NAME" value="wildfire" />
+      <variable name="APP_NAME" value="Openfire" />
+      <variable name="APP_SHORT_NAME" value="openfire" />
+      <variable name="PRODUCT_NAME" value="openfire" />
       <variable name="PUBLISHER" value="Jive Software" />
-      <variable name="PUBLISHER_URL" value="www.jivesoftware.org" />
+      <variable name="PUBLISHER_URL" value="www.igniterealtime.org" />
       <variable name="RELEASE_DIR" value="${compiler:APP_SHORT_NAME}" />
       <variable name="RELEASE_ROOT_PATH" value="..\..\target\release" />
       <variable name="RELEASE_FULL_PATH" value="${compiler:RELEASE_ROOT_PATH}/${compiler:RELEASE_DIR}" />
       <variable name="FILE_PREFIX" value="${compiler:APP_SHORT_NAME}" />
       <variable name="APPLICATION_ID" value="6886-9911-0474-3571" />
-      <variable name="UNIX_INSTALL_DIR" value="wildfire" />
-      <variable name="WINDOWS_INSTALL_DIR" value="Wildfire" />
+      <variable name="UNIX_INSTALL_DIR" value="openfire" />
+      <variable name="WINDOWS_INSTALL_DIR" value="Openfire" />
     </variables>
   </application>
   <files>
@@ -150,7 +150,7 @@
       </customScript>
     </launcher>
   </launchers>
-  <installerGui installerType="1" suggestPreviousProgramGroup="true" addOnAppId="" suggestPreviousLocations="true" allowUnattended="true" allowConsole="true" useCustomInstallerHeaderImage="true" customInstallerHeaderImage="./images/wildfire_logo_small.png" useCustomUninstallerHeaderImage="true" customUninstallerHeaderImage="./images/wildfire_logo_small.png" customSize="false" customWidth="500" customHeight="390" useCustomIcon="false" customIcnsFile="" customPngIcon16File="" customPngIcon32File="" customIcoFile="" vmParameters="" watermark="false" resizable="true">
+  <installerGui installerType="1" suggestPreviousProgramGroup="true" addOnAppId="" suggestPreviousLocations="true" allowUnattended="true" allowConsole="true" useCustomInstallerHeaderImage="true" customInstallerHeaderImage="./images/logo_small.png" useCustomUninstallerHeaderImage="true" customUninstallerHeaderImage="./images/logo_small.png" customSize="false" customWidth="500" customHeight="390" useCustomIcon="false" customIcnsFile="" customPngIcon16File="" customPngIcon32File="" customIcoFile="" vmParameters="" watermark="false" resizable="true">
     <customCode useInstalledFiles="false">
       <archive location="${compiler:RELEASE_FULL_PATH}/lib/startup.jar" />
     </customCode>

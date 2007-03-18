@@ -129,7 +129,7 @@
     #jive-loginLogo {
         display: block;
         position: relative;
-        width: 180px;
+        width: 179px;
         height: 53px;
         margin: 12px 0px 0px 7px;
         background: url('images/login_logo.gif') no-repeat;

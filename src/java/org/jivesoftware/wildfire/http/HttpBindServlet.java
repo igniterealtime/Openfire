@@ -1,9 +1,8 @@
 /**
- * $RCSfile$
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -22,6 +21,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.mortbay.util.ajax.ContinuationSupport;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -29,13 +29,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 import javax.servlet.ServletConfig;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.net.InetAddress;
+import java.net.URLDecoder;
 
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently
- * an {@link HttpSession} related to the connection or if one needs to be created and then passes
- * it off to the {@link HttpBindManager} for processing of the client request and formulating of
- * the response.
+ * an {@link HttpSession} related to the connection or if one needs to be created and then passes it
+ * off to the {@link HttpBindManager} for processing of the client request and formulating of the
+ * response.
  *
  * @author Alexander Wenckus
  */
@@ -59,27 +62,56 @@ public class HttpBindServlet extends HttpServlet {
     }
 
 
-    @Override public void init(ServletConfig servletConfig) throws ServletException {
+    @Override
+    public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         sessionManager = HttpBindManager.getInstance().getSessionManager();
         sessionManager.start();
     }
 
 
-    @Override public void destroy() {
+    @Override
+    public void destroy() {
         super.destroy();
         sessionManager.stop();
     }
 
-    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         if (isContinuation(request, response)) {
             return;
         }
+        String queryString = request.getQueryString();
+        if (queryString == null || "".equals(queryString)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "Unable to parse request content");
+            return;
+        }
+        queryString = URLDecoder.decode(queryString, "utf-8");
+
+        parseDocument(request, response, new ByteArrayInputStream(queryString.getBytes()));
+    }
+
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        if (isContinuation(request, response)) {
+            return;
+        }
+
+        parseDocument(request, response, request.getInputStream());
+    }
+
+    private void parseDocument(HttpServletRequest request, HttpServletResponse response,
+                               InputStream documentContent)
+            throws IOException {
+
         Document document;
         try {
-            document = createDocument(request);
+            document = createDocument(documentContent);
         }
         catch (Exception e) {
             Log.warn("Error parsing user request. [" + request.getRemoteAddr() + "]");
@@ -115,12 +147,12 @@ public class HttpBindServlet extends HttpServlet {
         }
         synchronized (session) {
             try {
-                respond(response, session.getResponse((Long) request.getAttribute("request"))
-                        .getBytes("utf-8"));
+                respond(response, session.getResponse((Long) request.getAttribute("request")),
+                        request.getMethod());
             }
             catch (HttpBindException e) {
                 response.sendError(e.getHttpError(), e.getMessage());
-                if(e.shouldCloseSession()) {
+                if (e.shouldCloseSession()) {
                     session.close();
                 }
             }
@@ -149,11 +181,11 @@ public class HttpBindServlet extends HttpServlet {
             HttpConnection connection;
             try {
                 connection = sessionManager.forwardRequest(rid, session,
-                        request.isSecure(),  rootNode);
+                        request.isSecure(), rootNode);
             }
             catch (HttpBindException e) {
                 response.sendError(e.getHttpError(), e.getMessage());
-                if(e.shouldCloseSession()) {
+                if (e.shouldCloseSession()) {
                     session.close();
                 }
                 return;
@@ -162,11 +194,11 @@ public class HttpBindServlet extends HttpServlet {
                 Log.error("Error sending packet to client.", nc);
                 return;
             }
-            
+
             String type = rootNode.attributeValue("type");
             if ("terminate".equals(type)) {
                 session.close();
-                respond(response, createEmptyBody().getBytes("utf-8"));
+                respond(response, createEmptyBody(), request.getMethod());
             }
             else {
                 connection
@@ -174,8 +206,8 @@ public class HttpBindServlet extends HttpServlet {
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
                 try {
-                    respond(response, session.getResponse(connection.getRequestId())
-                            .getBytes("utf-8"));
+                    respond(response, session.getResponse(connection.getRequestId()),
+                            request.getMethod());
                 }
                 catch (HttpBindException e) {
                     response.sendError(e.getHttpError(), e.getMessage());
@@ -201,7 +233,7 @@ public class HttpBindServlet extends HttpServlet {
             HttpConnection connection = new HttpConnection(rid, request.isSecure());
             InetAddress address = InetAddress.getByName(request.getRemoteAddr());
             connection.setSession(sessionManager.createSession(address, rootNode, connection));
-            respond(response, connection);
+            respond(response, connection, request.getMethod());
         }
         catch (UnauthorizedException e) {
             // Server wasn't initialized yet.
@@ -214,27 +246,33 @@ public class HttpBindServlet extends HttpServlet {
 
     }
 
-    private void respond(HttpServletResponse response, HttpConnection connection)
+    private void respond(HttpServletResponse response, HttpConnection connection, String method)
             throws IOException
     {
-        byte[] content;
+        String content;
         try {
-            content = connection.getResponse().getBytes("utf-8");
+            content = connection.getResponse();
         }
         catch (HttpBindTimeoutException e) {
-            content = createEmptyBody().getBytes("utf-8");
+            content = createEmptyBody();
         }
 
-        respond(response, content);
+        respond(response, content, method);
     }
 
-    private void respond(HttpServletResponse response, byte [] content) throws IOException {
+    private void respond(HttpServletResponse response, String content, String method)
+            throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("text/xml");
+        response.setContentType("GET".equals(method) ? "text/javascript" : "text/xml");
         response.setCharacterEncoding("utf-8");
 
-        response.setContentLength(content.length);
-        response.getOutputStream().write(content);
+        if ("GET".equals(method)) {
+            content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
+        }
+
+        byte[] byteContent = content.getBytes("utf-8");
+        response.setContentLength(byteContent.length);
+        response.getOutputStream().write(byteContent);
     }
 
     private static String createEmptyBody() {
@@ -255,8 +293,7 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    private Document createDocument(HttpServletRequest request) throws
-            DocumentException, IOException, XmlPullParserException {
+    private XMPPPacketReader getPacketReader() {
         // Reader is associated with a new XMPPPacketReader
         XMPPPacketReader reader = localReader.get();
         if (reader == null) {
@@ -264,6 +301,12 @@ public class HttpBindServlet extends HttpServlet {
             reader.setXPPFactory(factory);
             localReader.set(reader);
         }
-        return reader.read("utf-8", request.getInputStream());
+        return reader;
+    }
+
+    private Document createDocument(InputStream request) throws
+            DocumentException, IOException, XmlPullParserException
+    {
+        return getPacketReader().read("utf-8", request);
     }
 }

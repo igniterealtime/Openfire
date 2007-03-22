@@ -16,10 +16,10 @@ OPENFIRE_USER="jive"
 OPENFIRE_GROUP="jive"
 
 if [ ! $OPENFIRE_HOME ]; then
-	if [ -d "/opt/wildfire" ]; then
-		OPENFIRE_HOME="/opt/wildfire"
-	elif [ -d "/usr/local/wildfire" ]; then
-		OPENFIRE_HOME="/usr/local/wildfire"
+	if [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
+		OPENFIRE_HOME="/usr/local/openfire"
 	fi
 fi
 

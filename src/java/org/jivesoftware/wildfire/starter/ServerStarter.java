@@ -32,7 +32,7 @@ import java.util.jar.JarOutputStream;
  *      <li>Start the server</li>
  * </ul>
  *
- * Note: if the enviroment property <tt>wildfire.lib.directory</tt> is specified
+ * Note: if the enviroment property <tt>openfire.lib.directory</tt> is specified
  * ServerStarter will attempt to use this value as the value for openfire's lib
  * directory. If the property is not specified the default value of ../lib will be used.
  *
@@ -60,7 +60,7 @@ public class ServerStarter {
             // Load up the bootstrap container
             final ClassLoader parent = findParentClassLoader();
 
-            String libDirString = System.getProperty("wildfire.lib.dir");
+            String libDirString = System.getProperty("openfire.lib.dir");
 
             File libDir;
             if (libDirString != null) {

@@ -71,7 +71,7 @@ fi
 
 #set the OPENFIRE_LIB location
 OPENFIRE_LIB="${OPENFIRE_HOME}/lib"
-OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dwildfire.lib.dir=${OPENFIRE_LIB}"
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dopenfire.lib.dir=${OPENFIRE_LIB}"
 
 
 if [ -z "$JAVACMD" ] ; then

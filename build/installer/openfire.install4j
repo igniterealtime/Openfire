@@ -49,10 +49,10 @@
     <entries>
       <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/keystore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
-      <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/wildfire.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
+      <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/openfire.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <dirEntry mountPoint="1" file="${compiler:RELEASE_FULL_PATH}" overwrite="4" shared="false" mode="644" uninstallMode="0" excludeSuffixes="" dirMode="755">
         <exclude>
-          <entry location="conf/wildfire.xml" launcher="false" />
+          <entry location="conf/openfire.xml" launcher="false" />
           <entry location="resources/security/keystore" launcher="false" />
           <entry location="resources/security/truststore" launcher="false" />
         </exclude>
@@ -83,8 +83,8 @@
         <scriptLines />
       </customScript>
     </launcher>
-    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="${compiler:APP_NAME} Server" icnsFile="" pngIcon16File="./images/wildfire-16x16.png" pngIcon32File="./images/wildfire-32x32.png" macServiceDependencies="" swtApp="false">
-      <executable name="${compiler:PRODUCT_NAME}" type="1" iconSet="true" iconFile="./images/wildfire.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
+    <launcher name="GUI Launcher" id="12" external="false" excludeFromMenu="false" menuName="${compiler:APP_NAME} Server" icnsFile="" pngIcon16File="./images/openfire-16x16.png" pngIcon32File="./images/openfire-32x32.png" macServiceDependencies="" swtApp="false">
+      <executable name="${compiler:PRODUCT_NAME}" type="1" iconSet="true" iconFile="./images/openfire.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="1" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
         <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME} Launcher" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
@@ -105,8 +105,8 @@
         <scriptLines />
       </customScript>
     </launcher>
-    <launcher name="wildfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/wildfired-16x16.png" pngIcon32File="./images/wildfired-32x32.png" macServiceDependencies="" swtApp="false">
-      <executable name="${compiler:PRODUCT_NAME}d" type="1" iconSet="true" iconFile="./images/wildfired.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
+    <launcher name="wildfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/openfired-16x16.png" pngIcon32File="./images/openfired-32x32.png" macServiceDependencies="" swtApp="false">
+      <executable name="${compiler:PRODUCT_NAME}d" type="1" iconSet="true" iconFile="./images/openfired.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
         <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME} Server" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
       <splashScreen show="false" autoOff="true" alwaysOnTop="true" width="0" height="0" bitmapFile="">
@@ -137,7 +137,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="-DwildfireHome=$app_home -Dwildfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="-DopenfireHome=$app_home -Dopenfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="true" />
         </classPath>
@@ -262,7 +262,7 @@
                 <object class="com.install4j.runtime.beans.actions.files.SetModeAction">
                   <void property="file">
                     <object class="java.io.File">
-                      <string>bin/wildfire.sh</string>
+                      <string>bin/openfire.sh</string>
                     </object>
                   </void>
                   <void property="mode">
@@ -470,9 +470,9 @@
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
-        <entry location="bin/extra/wildfired" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="bin/extra/openfired" launcher="false" />
+        <entry location="bin/openfire.bat" launcher="false" />
+        <entry location="bin/openfire.sh" launcher="false" />
         <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
@@ -489,8 +489,8 @@
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="bin/openfire.bat" launcher="false" />
+        <entry location="bin/openfire.sh" launcher="false" />
         <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
@@ -517,8 +517,8 @@
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/embedded-db-viewer.bat" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="bin/openfire.bat" launcher="false" />
+        <entry location="bin/openfire.sh" launcher="false" />
         <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />
@@ -531,9 +531,9 @@
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" launcher="false" />
-        <entry location="bin/extra/wildfired" launcher="false" />
-        <entry location="bin/wildfire.bat" launcher="false" />
-        <entry location="bin/wildfire.sh" launcher="false" />
+        <entry location="bin/extra/openfired" launcher="false" />
+        <entry location="bin/openfire.bat" launcher="false" />
+        <entry location="bin/openfire.sh" launcher="false" />
         <entry location="documentation/javadoc" launcher="false" />
       </exclude>
       <variables />

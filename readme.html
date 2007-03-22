@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire Readme</title>
+<title>Openfire Readme</title>
 <style type="text/css">
 /* global font and body settings */
 body {
@@ -175,7 +175,7 @@ hr {
 
 <h2>Installation</h2>
 <p>
-    Copy the gateway.jar into the plugins directory of your Wildfire
+    Copy the gateway.jar into the plugins directory of your Openfire
     installation. The plugin will then be automatically deployed. To upgrade to a
     new version, copy the new gateway.jar file over the existing file.  Please
     be aware that an upgrade will cause all of the users on your server who are
@@ -186,7 +186,7 @@ hr {
 <h2>Configuration</h2>
 <p>
     By default, after the plugin has been deployed all of its features are disabled.
-    This plugin is configured via the "Gateways" sidebar item located in the Wildfire
+    This plugin is configured via the "Gateways" sidebar item located in the Openfire
     Admin Console.  You can enable individual transports via the "Settings" sidebar
     item, and add new registrations/view existing registrations from the "Registrations"
     sidebar item.
@@ -202,7 +202,7 @@ hr {
     transport itself can "hear" them come online, and act appropriately (logging
     them in and such).  In this case, we interact with the user's roster directly,
     so there is no need for a flood of subscription requests to the client itself.
-    A side effect of this is that only users of the local Wildfire server will
+    A side effect of this is that only users of the local Openfire server will
     be able to make use of any transport on the gateway.  Roster items are created
     as non-persistent, which means that when the end user logs out or disconnects
     from the gateway, the associated transport roster items will no longer exist
@@ -237,7 +237,7 @@ hr {
     though.  There may be ranges of IP addresses or something that you can
     open up but I do not know those lists.  Also, it is now possible to change
     the initial connect host and port via
-    <a href="http://wiki.igniterealtime.org/display/WILDFIRE/Wildfire+Properties">Wildfire Properties</a>.
+    <a href="http://wiki.igniterealtime.org/display/WILDFIRE/Wildfire+Properties">Openfire Properties</a>.
 </p>
 <p>
     There is additional documentation available at:

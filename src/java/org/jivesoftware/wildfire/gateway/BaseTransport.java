@@ -825,7 +825,7 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         if (packet.getType() == IQ.Type.get) {
             IQ result = IQ.createResultIQ(packet);
             Element query = DocumentHelper.createElement(QName.get("query", IQ_VERSION));
-            query.addElement("name").addText("Wildfire " + this.getDescription());
+            query.addElement("name").addText("Openfire " + this.getDescription());
             query.addElement("version").addText(XMPPServer.getInstance().getServerInfo().getVersion().getVersionString() + " - " + this.getVersionString());
             query.addElement("os").addText(System.getProperty("os.name"));
             result.setChildElement(query);

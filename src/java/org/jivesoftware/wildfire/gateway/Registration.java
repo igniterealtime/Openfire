@@ -27,7 +27,7 @@ import java.sql.*;
  * as well as a registration date and last login date.<p>
  *
  * The password for the transport registration is stored in encrypted form using
- * the Wildfire password encryption key. See {@link AuthFactory#encryptPassword(String)}.
+ * the Openfire password encryption key. See {@link AuthFactory#encryptPassword(String)}.
  *
  * @author Matt Tucker
  */

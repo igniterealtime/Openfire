@@ -393,7 +393,11 @@
     <tbody>
         <tr>
             <td><%= room.getName() %></td>
+            <% if (room.getOccupantsCount() == 0) { %>
             <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
+            <% } else { %>
+            <td><a href="muc-room-occupants.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8")%>"><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></a></td>
+            <% } %>
             <td><%= dateFormatter.format(room.getCreationDate()) %></td>
             <td><%= dateFormatter.format(room.getModificationDate()) %></td>
         </tr>

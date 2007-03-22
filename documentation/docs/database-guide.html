@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire: Database Schema Guide</title>
+<title>Openfire: Database Schema Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -23,7 +23,7 @@
 
 <h2>Introduction</h2>
 <p>
-This document outlines the data type conventions and tables in the Wildfire database schema.
+This document outlines the data type conventions and tables in the Openfire database schema.
 Some information, like column indexes and foreign keys, is omitted. For this, please read
 the individual schema of the database you're interested in.
 
@@ -32,7 +32,7 @@ the individual schema of the database you're interested in.
 <h2>Data Type Conventions</h2>
 <p>
 Date column type support varies widely across databases. Therefore,
-Wildfire specially encodes dates as VARCHAR values. Each date is a Java long
+Openfire specially encodes dates as VARCHAR values. Each date is a Java long
 value which is 0-padded to 15 characters. The long value is the internal
 representation of Java Date objects, which can be obtained with code such as the
 following:
@@ -43,7 +43,7 @@ Boolean values are always represented a numeric values: 0 for false and 1 for tr
 </p>
 <h2>Database Tables</h2>
 <p>
-Below is a description of each of the tables in the Wildfire
+Below is a description of each of the tables in the Openfire
 database schema.
 A <span class="primary-key">yellow row</span> denotes a primary key.
 
@@ -675,18 +675,12 @@ roster)</th>
 
       <td>User Name (Primary Key)</td>
     </tr>
-    <tr class="primary-key">
-      <td>name</td>
-      <td>VARCHAR</td>
-      <td>100</td>
-      <td>Name of the vCard entry (Primary Key)</td>
-
-    </tr>
     <tr>
-      <td>propValue</td>
-      <td>TEXT</td>
-      <td>n/a</td>
-      <td>Value of the vCard entry</td>
+        <td>value</td>
+        <td>TEXT</td>
+
+        <td>n/a</td>
+        <td>Value of the vCard entry</td>
     </tr>
 
   </tbody>
@@ -754,7 +748,7 @@ roster)</th>
       <td>TEXT</td>
 
       <td>n/a</td>
-      <td>Value of the vCard entry</td>
+      <td>Value of the entry</td>
     </tr>
   </tbody>
 </table>
@@ -934,7 +928,7 @@ roster)</th>
     </tr>
 
     <tr>
-      <td>invitationRequired</td>
+      <td>membersOnly</td>
       <td>NUMBER</td>
       <td>n/a</td>
       <td>Flag indicating whether the room is members-only or not</td>

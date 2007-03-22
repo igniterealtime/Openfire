@@ -39,7 +39,7 @@
     SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
     org.jivesoftware.wildfire.session.ClientSession currentSess = sessionManager.getSession(address);
-    boolean isAnonymous = !UserManager.getInstance().isRegisteredUser(address);
+    boolean isAnonymous = webManager.getXMPPServer().isLocal(address) && !UserManager.getInstance().isRegisteredUser(address.getNode());
 
     // Get a presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();

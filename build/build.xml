@@ -17,10 +17,10 @@
         * jUnit in your Ant or Java classpath
 -->
 
-<project name="Wildfire XMPP Server" default="wildfire" basedir="..">
+<project name="Openfire XMPP Server" default="openfire" basedir="..">
 
     <description>
-        Wildfire build script.
+        Openfire build script.
     </description>
 
     <!-- ======================================================================================= -->
@@ -65,10 +65,10 @@
     <!-- ======================================================================================= -->
 
     <property name="version.major" value="3"/>
-    <property name="version.minor" value="2"/>
-    <property name="version.revision" value="2"/>
-    <property name="version.extra" value=""/>    <!-- For 'beta' or 'alpha' -->
-    <property name="dist.prefix" value="wildfire"/>
+    <property name="version.minor" value="3"/>
+    <property name="version.revision" value="0"/>
+    <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
+    <property name="dist.prefix" value="openfire"/>
 
     <property file="${basedir}/build/build.properties"/>
 
@@ -85,7 +85,7 @@
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
     <property name="lib.dist.dir" value="${lib.build.dir}/dist"/>
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib"/>
-    <property name="i18n.basename" value="wildfire_i18n"/>
+    <property name="i18n.basename" value="openfire_i18n"/>
     <property name="i18n.default.locale" value="en"/>
 
     <property name="work.dir" value="${basedir}/work"/>
@@ -93,10 +93,10 @@
     <property name="target.i18n.dir" value="${temp.build.dir}/i18n"/>
 
     <property name="target.dir" value="${basedir}/target"/>
-    <property name="target.wildfireHome" value="${target.dir}/wildfire"/>
+    <property name="target.openfireHome" value="${target.dir}/openfire"/>
 
     <property name="compile.dir" value="${work.dir}/classes"/>
-    <property name="jar.name" value="wildfire.jar"/>
+    <property name="jar.name" value="openfire.jar"/>
     <property name="jar.starter.name" value="startup.jar"/>
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
@@ -131,13 +131,13 @@
     <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
     <property name="installer.dest.dir" value="${release.dest.dir}"/>
-    <property name="installer.install4j.srcfile" value="${installer.src}/wildfire.install4j"/>
-    <property name="installer.app_name" value="Wildfire"/>
-    <property name="installer.app_short_name" value="wildfire"/>
-    <property name="installer.product_name" value="wildfire"/>
+    <property name="installer.install4j.srcfile" value="${installer.src}/openfire.install4j"/>
+    <property name="installer.app_name" value="Openfire"/>
+    <property name="installer.app_short_name" value="openfire"/>
+    <property name="installer.product_name" value="openfire"/>
     <property name="installer.application_id" value="6886-9911-0474-3571"/>
-    <property name="installer.unix_install_dir" value="wildfire"/>
-    <property name="installer.windows_install_dir" value="Wildfire"/>
+    <property name="installer.unix_install_dir" value="openfire"/>
+    <property name="installer.windows_install_dir" value="Openfire"/>
     <property name="installer.publisher" value="Jive Software"/>
     <property name="installer.publisher_url" value="www.igniterealtime.org"/>
     <property name="installer.file_prefix" value="${installer.app_short_name}"/>
@@ -170,14 +170,14 @@
 
     <path id="test.dependencies">
         <path refid="compile.dependencies"/>
-        <fileset dir="${jar.dest.dir}" includes="wildfire.jar"/>
+        <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
         <fileset dir="${lib.build.dir}" includes="junit.jar"/>
         <!-- <fileset dir="${ant.home}/lib" includes="clover.jar" /> -->
     </path>
 
     <path id="plugin.dependencies">
         <path refid="javadoc.dependencies"/>
-        <fileset dir="${jar.dest.dir}" includes="wildfire.jar"/>
+        <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
     </path>
 
     <patternset id="compile.sources">
@@ -225,8 +225,8 @@
                 </or>
             </not>
         </condition>
-        <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Wildfire"/>
-        <fail if="java.not.ok" message="Must use JDK 1.5.x or higher to build Wildfire"/>
+        <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Openfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.5.x or higher to build Openfire"/>
 
         <tstamp/>
         <tstamp>
@@ -257,7 +257,7 @@
     </target>
 
     <!-- compile =============================================================================== -->
-    <target name="compile" depends="init" description="Compiles Wildfire app code">
+    <target name="compile" depends="init" description="Compiles Openfire app code">
         <mkdir dir="${compile.dir}"/>
         <javac
                 destdir="${compile.dir}"
@@ -285,8 +285,8 @@
     </target>
 
     <target name="plugins-dev">
-        <!-- Setup Wildfire -->
-        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="wildfire"
+        <!-- Setup Openfire -->
+        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="openfire"
              inheritAll="false" inheritRefs="false"/>
 
         <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
@@ -299,7 +299,7 @@
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
                 <xmltask source="${plugin.src.dir}/@{plugin}/plugin.xml" dest="${plugin.src.dir}/@{plugin}/plugins2.xml">
-                    <insert path="/plugin/minWildfireVersion[last()]"  position="after">
+                    <insert path="/plugin/minOpenfireVersion[last()]"  position="after">
                         <![CDATA[
                           <development>
                             <webRoot>
@@ -321,11 +321,11 @@
 
     </target>
 
-    <!-- wildfire =================================================================================== -->
-    <target name="wildfire" depends="compile, jspc, -i18n"
-            description="Compiles and generates runnable target/wildfire folder">
+    <!-- openfire =================================================================================== -->
+    <target name="openfire" depends="compile, jspc, -i18n"
+            description="Compiles and generates runnable target/openfire folder">
         <mkdir dir="${jar.dest.dir}"/>
-        <!-- Make main Wildfire jar -->
+        <!-- Make main Openfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
             <fileset dir="${compile.dir}" includes="**/*.class"
                      excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class,org/jivesoftware/wildfire/launcher/*.class"/>
@@ -369,15 +369,15 @@
             <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
         </copy>
 
-        <!-- Update/create target/wildfire directory -->
-        <antcall target="wildfireHome"/>
+        <!-- Update/create target/openfire directory -->
+        <antcall target="openfireHome"/>
     </target>
 
     <!-- run =================================================================================== -->
-    <target name="run" description="Starts Wildfire inline to the build process.">
-        <available file="${target.wildfireHome}" type="dir" property="wildfire.found"/>
-        <fail unless="wildfire.found"
-              message="Can't find wildfire, run 'ant wildfire' or specify with -Dtarget.wildfireHome."/>
+    <target name="run" description="Starts Openfire inline to the build process.">
+        <available file="${target.openfireHome}" type="dir" property="openfire.found"/>
+        <fail unless="openfire.found"
+              message="Can't find openfire, run 'ant openfire' or specify with -Dtarget.openfireHome."/>
 
         <condition property="run.debug"
                    value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
@@ -386,8 +386,8 @@
 
         <property name="run.spawn" value="false"/>
 
-        <java jar="${target.wildfireHome}/lib/startup.jar" fork="true" spawn="${run.spawn}"
-              dir="${target.wildfireHome}/bin">
+        <java jar="${target.openfireHome}/lib/startup.jar" fork="true" spawn="${run.spawn}"
+              dir="${target.openfireHome}/bin">
             <jvmarg line="${run.debug}"/>
         </java>
     </target>
@@ -395,21 +395,21 @@
 
     <!-- run.test.init ========================================================================= -->
     <target name="run.test.init">
-        <delete dir="${target.wildfireHome}"/>
+        <delete dir="${target.openfireHome}"/>
 
-        <property name="wildfireHome.preconfigured" value="true"/>
+        <property name="openfireHome.preconfigured" value="true"/>
 
         <property name="run.spawn" value="true"/>
     </target>
 
     <!-- run.test ============================================================================== -->
-    <!--    Starts Wildfire inline to the build process, with a clean pre-configured wildfireHome -->
-    <target name="run.test" depends="run.test.init,wildfireHome,run">
-        <echo>Wildfire server started.</echo>
+    <!--    Starts Openfire inline to the build process, with a clean pre-configured openfireHome -->
+    <target name="run.test" depends="run.test.init,openfireHome,run">
+        <echo>Openfire server started.</echo>
     </target>
 
     <!-- javadoc =============================================================================== -->
-    <target name="javadoc" depends="init" description="Produces Wildfire Javadocs">
+    <target name="javadoc" depends="init" description="Produces Openfire Javadocs">
         <mkdir dir="${javadoc.dest.dir}"/>
         <antcall target="-javadoc-impl"/>
     </target>
@@ -419,7 +419,7 @@
         <javadoc
                 packagenames="org.jivesoftware.*, org.xmpp.*"
                 destdir="${javadoc.dest.dir}"
-                windowtitle="Wildfire ${version} Javadoc"
+                windowtitle="Openfire ${version} Javadoc"
                 overview="${src.java.dir}/overview.html"
                 failonerror="yes"
                 >
@@ -427,8 +427,8 @@
                 <path location="${src.java.dir}"/>
             </sourcepath>
             <doctitle>
-                <![CDATA[<font face="arial,helvetica,sans-serif">Wildfire ${version} Javadoc</font>]]></doctitle>
-            <header><![CDATA[<b>Wildfire ${version} Javadoc</b>]]></header>
+                <![CDATA[<font face="arial,helvetica,sans-serif">Openfire ${version} Javadoc</font>]]></doctitle>
+            <header><![CDATA[<b>Openfire ${version} Javadoc</b>]]></header>
             <bottom><![CDATA[<i>Copyright &copy; 2003-2007 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies"/>
@@ -509,7 +509,7 @@
     </target>
 
     <!-- test ================================================================================== -->
-    <target name="test" depends="wildfire" description="Compiles and runs test cases">
+    <target name="test" depends="openfire" description="Compiles and runs test cases">
         <!-- Compile all test code -->
         <mkdir dir="${test.classes.dest.dir}"/>
         <javac
@@ -552,16 +552,16 @@
         </junit>
     </target>
 
-    <!-- wildfireHome ========================================================================== -->
-    <target name="wildfireHome" unless="wildfireHome.no.update">
-        <!-- Set this to true to enable a pre-setup wildfireHome directory -->
-        <property name="wildfireHome.preconfigured" value="false"/>
-        <property name="wildfireHome.no.plugins" value="false"/>
+    <!-- openfireHome ========================================================================== -->
+    <target name="openfireHome" unless="openfireHome.no.update">
+        <!-- Set this to true to enable a pre-setup openfireHome directory -->
+        <property name="openfireHome.preconfigured" value="false"/>
+        <property name="openfireHome.no.plugins" value="false"/>
 
-        <mkdir dir="${target.wildfireHome}"/>
+        <mkdir dir="${target.openfireHome}"/>
 
         <!-- Copy conf dir -->
-        <copy todir="${target.wildfireHome}">
+        <copy todir="${target.openfireHome}">
             <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
         </copy>
 
@@ -569,14 +569,14 @@
         <if>
             <equals arg1="${copy.dbscripts}" arg2="true"/>
             <then>
-                <copy todir="${target.wildfireHome}/resources">
+                <copy todir="${target.openfireHome}/resources">
                     <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
                 </copy>
             </then>
         </if>
 
         <!-- Copy security resources -->
-        <copy todir="${target.wildfireHome}/resources">
+        <copy todir="${target.openfireHome}/resources">
             <fileset dir="${src.dir}">
                 <include name="security/*"/>
                 <include name="security/*.*"/>
@@ -584,55 +584,55 @@
         </copy>
 
         <!-- Copy native authentication files -->
-        <copy todir="${target.wildfireHome}/resources">
+        <copy todir="${target.openfireHome}/resources">
             <fileset dir="${src.dir}/resources">
                 <include name="nativeAuth/**"/>
             </fileset>
         </copy>
 
         <!-- Copy lib dir -->
-        <copy todir="${target.wildfireHome}/lib">
+        <copy todir="${target.openfireHome}/lib">
             <fileset dir="${jar.dest.dir}" includes="*.*"></fileset>
         </copy>
 
-        <!-- Overwrite config with build/wildfireHome dir, if requested -->
+        <!-- Overwrite config with build/openfireHome dir, if requested -->
         <if>
-            <equals arg1="${wildfireHome.preconfigured}" arg2="true"/>
+            <equals arg1="${openfireHome.preconfigured}" arg2="true"/>
             <then>
-                <!-- Copy pre-configured wildfireHome dir -->
-                <copy todir="${target.wildfireHome}">
-                    <fileset dir="${basedir}/build/wildfireHome" includes="**/*.*"/>
+                <!-- Copy pre-configured openfireHome dir -->
+                <copy todir="${target.openfireHome}">
+                    <fileset dir="${basedir}/build/openfireHome" includes="**/*.*"/>
                 </copy>
             </then>
         </if>
 
         <!-- Copy admin Plugin -->
         <antcall target="adminPlugin">
-            <param name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
+            <param name="plugin.dest.dir" value="${target.openfireHome}/plugins"/>
         </antcall>
 
         <antcall target="spank">
-            <param name="plugin.dest.dir" value="${target.wildfireHome}/plugins"/>
+            <param name="plugin.dest.dir" value="${target.openfireHome}/plugins"/>
         </antcall>
 
         <!-- Copy compiled plugins if we need to -->
         <if>
-            <equals arg1="${wildfireHome.no.plugins}" arg2="false"/>
+            <equals arg1="${openfireHome.no.plugins}" arg2="false"/>
             <then>
-                <copy todir="${target.wildfireHome}/plugins" failonerror="false">
+                <copy todir="${target.openfireHome}/plugins" failonerror="false">
                     <fileset dir="${plugin.dest.dir}"/>
                 </copy>
             </then>
         </if>
 
         <!-- Copy bin dir -->
-        <copy todir="${target.wildfireHome}">
+        <copy todir="${target.openfireHome}">
             <fileset dir="${src.dir}" includes="bin/**/*"/>
         </copy>
-        <fixcrlf srcdir="${target.wildfireHome}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
+        <fixcrlf srcdir="${target.openfireHome}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
 
         <!-- Create a logs dir in the binary release -->
-        <mkdir dir="${target.wildfireHome}/logs"/>
+        <mkdir dir="${target.openfireHome}/logs"/>
     </target>
 
     <!-- adminPlugin =========================================================================== -->
@@ -664,8 +664,8 @@
     </target>
 
     <target name="spank">
-        <mkdir dir="${target.wildfireHome}/resources/spank"/>
-        <copy todir="${target.wildfireHome}/resources/spank">
+        <mkdir dir="${target.openfireHome}/resources/spank"/>
+        <copy todir="${target.openfireHome}/resources/spank">
             <!-- All web resources minus jsp's and jspf's - those are precompiled -->
             <fileset dir="${spank.dir}">
                 <patternset refid="web.sources"/>
@@ -679,18 +679,18 @@
     
     <!-- dist.init ============================================================================== -->
     <target name="dist.init" >
-        <!-- ie: wildfire_src -->
+        <!-- ie: openfire_src -->
         <property name="release.name.src" value="${dist.prefix}_src"/>
-        <!-- ie: wildfire_src_2_1_2 -->
+        <!-- ie: openfire_src_2_1_2 -->
         <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
         <property name="package.dest.filename.zip" value="${package.dest.dir}/${release.fullname.src}.zip" />
         <property name="package.dest.filename.tar" value="${package.dest.dir}/${release.fullname.src}.tar" />
         <property name="package.dest.filename.tar.gz" value="${package.dest.filename.tar}.gz" />
         <property name="release.src.out.dir" value="${release.dest.dir}/${release.name.src}"/>
 
-        <!-- ie: wildfire -->
+        <!-- ie: openfire -->
         <property name="release.name" value="${dist.prefix}"/>
-        <!-- ie: wildfire_2_1_2 -->
+        <!-- ie: openfire_2_1_2 -->
         <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
         <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
     </target>    
@@ -802,14 +802,14 @@
         </copy>
 
         <!-- Copy all prepare dirs to the binary dist -->
-        <antcall target="wildfireHome">
-            <param name="target.wildfireHome" value="${release.out.dir}"/>
-            <param name="wildfireHome.no.plugins" value="true"/>
+        <antcall target="openfireHome">
+            <param name="target.openfireHome" value="${release.out.dir}"/>
+            <param name="openfireHome.no.plugins" value="true"/>
         </antcall>
 
         <!-- Remove the development scripts -->
-        <delete file="${release.out.dir}/bin/wildfire-dev.bat"/>
-        <delete file="${release.out.dir}/bin/wildfire-dev.sh"/>
+        <delete file="${release.out.dir}/bin/openfire-dev.bat"/>
+        <delete file="${release.out.dir}/bin/openfire-dev.sh"/>
 
         <!-- Pack200 processing on JAR files in lib dir -->
 
@@ -943,7 +943,7 @@
     </target>
 
     <!-- installer ============================================================================= -->
-    <target name="installer" description="Creates Wildfire installers">
+    <target name="installer" description="Creates Openfire installers">
         <condition property="install4j.not.ok" value="true">
             <not>
                 <available file="${installer.install4j.home}/bin/install4j.jar"/>
@@ -1000,7 +1000,7 @@
     
     <!-- installer.rpm ========================================================================= -->
     <property name="target.rpm" value="${work.dir}/rpm" />
-    <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of wildfire.">
+    <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of openfire.">
         <antcall target="dist.src"/>
 
         <antcall target="dist.bin">
@@ -1016,14 +1016,14 @@
         <mkdir dir="${target.rpm}/SRPMS" />
         <mkdir dir="${target.rpm}/RPMS" />
 
-        <copy todir="${target.rpm}/SPECS" file="${basedir}/build/rpm/wildfire.spec" />
+        <copy todir="${target.rpm}/SPECS" file="${basedir}/build/rpm/openfire.spec" />
         <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
-        <copy todir="${target.rpm}/BUILD/wildfire-root/opt" >
+        <copy todir="${target.rpm}/BUILD/openfire-root/opt" >
             <fileset dir="${release.out.dir}/.."
                includes="${release.fullname}/**/*, ${release.name}/**/*"/>
         </copy>
 
-        <rpm specFile="wildfire.spec" 
+        <rpm specFile="openfire.spec"
              topDir="${target.rpm}"
              command="-ba"
              failOnError="true"
@@ -1040,8 +1040,8 @@
         <!-- Call jar task, can't do this is as a 'depends' call of this target because
              of the way class loading works for jspc calls.
         -->
-        <antcall target="wildfire">
-            <param name="wildfireHome.no.update" value="true"/>
+        <antcall target="openfire">
+            <param name="openfireHome.no.update" value="true"/>
         </antcall>
 
         <mkdir dir="${plugin.dest.dir}"/>
@@ -1053,8 +1053,8 @@
         <antcall target="-plugins-impl-dev"/>
         <antcall target="-plugins-impl"/>
 
-        <!-- Update/create target/wildfire directory -->
-        <antcall target="wildfireHome"/>
+        <!-- Update/create target/openfire directory -->
+        <antcall target="openfireHome"/>
 
     </target>
     <target name="-plugins-impl" if="dirlist">
@@ -1093,8 +1093,8 @@
         <delete file="${plugin.dest.dir}/${plugin}.jar"/>
         <buildplugin plugin="${plugin}" pluginsrc="${plugin.src.dir}"/>
 
-        <!-- Update/create target/wildfire directory -->
-        <antcall target="wildfireHome"/>
+        <!-- Update/create target/openfire directory -->
+        <antcall target="openfireHome"/>
     </target>
 
     <!-- buildplugin (MACRO) =================================================================== -->
@@ -1234,7 +1234,7 @@
                     <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                     <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"/>
 
-                    <!-- Copy jsp's from plugin and web.xml from wildfire to a temp dir. We'll
+                    <!-- Copy jsp's from plugin and web.xml from openfire to a temp dir. We'll
                          not fail on an error since the web dir might not exist.
                     -->
                     <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web"
@@ -1245,7 +1245,7 @@
                         <fileset dir="${web.dir}">
                             <include name="WEB-INF/**/*.*"/>
                             <exclude name="WEB-INF/web.xml"/>
-                            <exclude name="WEB-INF/classes/wildfire_init.xml"/>
+                            <exclude name="WEB-INF/classes/openfire_init.xml"/>
                             <exclude name="WEB-INF/tmp/**/*.*"/>
                             <exclude name="WEB-INF/work/**/*.*"/>
                         </fileset>
@@ -1350,7 +1350,7 @@
                 </sequential>
             </for>
 
-            <!-- Copy everything else to Wildfire's plugin dir -->
+            <!-- Copy everything else to Openfire's plugin dir -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
                     <include name="lib/*.pack"/>
@@ -1418,11 +1418,11 @@
         <delete dir="${work.dir}"/>
         <delete dir="${target.dir}"/>
 
-        <!-- Delete the Enterprise plugin in the wildfire plugin directory, if this isn't an enterprise build -->
+        <!-- Delete the Enterprise plugin in the openfire plugin directory, if this isn't an enterprise build -->
         <if>
             <not><equals arg1="${do.enterprise}" arg2="true"/></not>
             <then>
-                <!-- Copy pre-configured wildfireHome dir -->
+                <!-- Copy pre-configured openfireHome dir -->
                 <delete dir="${basedir}/src/plugins/enterprise" />
             </then>
         </if>
@@ -1452,8 +1452,8 @@
 
     <!-- Mac installer ========================================================================= -->
     <property name="mac.pkg.dir" value="${basedir}/macpkg"/>
-    <property name="mac.dmg.dir" value="${basedir}/Wildfire"/>
-    <property name="mac.dmg.file" value="${basedir}/wildfire.dmg"/>
+    <property name="mac.dmg.dir" value="${basedir}/Openfire"/>
+    <property name="mac.dmg.file" value="${basedir}/openfire.dmg"/>
     <property name="mac.template" value="${basedir}/build/osx/template"/>
 
     <target name="mac.delete">
@@ -1465,20 +1465,20 @@
     
     <target name="mac.prefpane">
     <!-- install will put it in macpkg/Library/PreferencePanes/ as specified in the target settings -->
-        <exec executable="/usr/bin/xcodebuild" dir="${basedir}/build/osx/wildfirePrefPane/" failonerror="true">
+        <exec executable="/usr/bin/xcodebuild" dir="${basedir}/build/osx/openfirePrefPane/" failonerror="true">
             <arg value="-configuration"/>
             <arg value="Deployment"/>
             <arg value="-target"/>
-            <arg value="Wildfire"/>
+            <arg value="Openfire"/>
             <arg value="clean"/>
             <arg value="install"/>
         </exec>
     </target>
 
-    <target name="mac.prepare" depends="mac.delete,wildfire, mac.prefpane">
-        <copy todir="${mac.pkg.dir}/usr/local/wildfire">
-            <fileset dir="${target.dir}/wildfire">
-                <exclude name="**/wildfired"/>
+    <target name="mac.prepare" depends="mac.delete,openfire, mac.prefpane">
+        <copy todir="${mac.pkg.dir}/usr/local/openfire">
+            <fileset dir="${target.dir}/openfire">
+                <exclude name="**/openfired"/>
                 <exclude name="**/embedded-db*"/>
                 <exclude name="**/redhat-postinstall.sh"/>
             </fileset>
@@ -1489,16 +1489,16 @@
         <mkdir dir="${mac.dmg.dir}"/>
         <mkdir dir="${mac.pkg.dir}/Library/PreferencePanes"/>
         <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
-            <fileset dir="${basedir}/build/osx/wildfirePrefPane/build/UninstalledProducts/"/>
+            <fileset dir="${basedir}/build/osx/openfirePrefPane/build/UninstalledProducts/"/>
         </copy>
         <chmod perm="o+x">
-            <fileset dir="${mac.pkg.dir}/Library/PreferencePanes/Wildfire.prefPane/Contents/MacOS/">
+            <fileset dir="${mac.pkg.dir}/Library/PreferencePanes/Openfire.prefPane/Contents/MacOS/">
                 <include name="HelperTool"/>
             </fileset>
         </chmod>
         <chmod perm="ug+x">
-            <fileset dir="${mac.pkg.dir}/usr/local/wildfire/bin">
-                <include name="extra/wildfire-launchd-wrapper.sh"/>
+            <fileset dir="${mac.pkg.dir}/usr/local/openfire/bin">
+                <include name="extra/openfire-launchd-wrapper.sh"/>
             </fileset>
             <fileset dir="${basedir}/build/osx/resources"/>
         </chmod>
@@ -1513,23 +1513,23 @@
         <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
             <arg value="-build"/>
             <arg value="-proj"/>
-            <arg value="${basedir}/build/osx/wildfire.pmproj"/>
+            <arg value="${basedir}/build/osx/openfire.pmproj"/>
             <arg value="-p"/>
-            <arg value="${mac.template}/Wildfire.pkg"/>
+            <arg value="${mac.template}/Openfire.pkg"/>
             <arg value="-v"/>
         </exec>
     </target>
 
     <target name="installer.mac" depends="mac.pkg" description="Creates a Mac OS X package">
         <exec executable="hdiutil" failonerror="true">
-            <arg line="create -srcfolder '${mac.template}' -volname 'Wildfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${basedir}/tmp.dmg'"/>
+            <arg line="create -srcfolder '${mac.template}' -volname 'Openfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${basedir}/tmp.dmg'"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
             <arg line="attach '${basedir}/tmp.dmg' -readwrite -noverify -noautoopen -mountpoint '${mac.dmg.dir}'"/>
         </exec>
         <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
-            <arg value="dmg_wildfire.scpt"/>
-            <arg value="Wildfire"/>
+            <arg value="dmg_openfire.scpt"/>
+            <arg value="Openfire"/>
             <arg value="images"/>
             <arg value="360"/>
             <arg value="200"/>

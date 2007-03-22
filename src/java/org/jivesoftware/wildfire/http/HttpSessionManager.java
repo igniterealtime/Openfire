@@ -30,7 +30,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 
 /**
- * Manages sessions for all users connecting to Wildfire using the HTTP binding protocal,
+ * Manages sessions for all users connecting to Openfire using the HTTP binding protocal,
  * <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  */
 public class HttpSessionManager {
@@ -89,16 +89,16 @@ public class HttpSessionManager {
     }
 
     /**
-     * Creates an HTTP binding session which will allow a user to exchange packets with Wildfire.
+     * Creates an HTTP binding session which will allow a user to exchange packets with Openfire.
      *
      * @param address the internet address that was used to bind to Wildfie.
      * @param rootNode the body element that was sent containing the request for a new session.
      * @param connection the HTTP connection object which abstracts the individual connections to
-     * Wildfire over the HTTP binding protocol. The initial session creation response is returned to
+     * Openfire over the HTTP binding protocol. The initial session creation response is returned to
      * this connection.
      * @return the created HTTP session.
      *
-     * @throws UnauthorizedException if the Wildfire server is currently in an uninitialized state.
+     * @throws UnauthorizedException if the Openfire server is currently in an uninitialized state.
      * Either shutting down or starting up.
      * @throws HttpBindException when there is an internal server error related to the creation of
      * the initial session creation response.
@@ -141,12 +141,12 @@ public class HttpSessionManager {
 
 
     /**
-     * Returns the longest time (in seconds) that Wildfire is allowed to wait before responding to
+     * Returns the longest time (in seconds) that Openfire is allowed to wait before responding to
      * any request during the session. This enables the client to prevent its TCP connection from
      * expiring due to inactivity, as well as to limit the delay before it discovers any network
      * failure.
      *
-     * @return the longest time (in seconds) that Wildfire is allowed to wait before responding to
+     * @return the longest time (in seconds) that Openfire is allowed to wait before responding to
      *         any request during the session.
      */
     public int getMaxWait() {
@@ -155,7 +155,7 @@ public class HttpSessionManager {
     }
 
     /**
-     * Wildfire SHOULD include two additional attributes in the session creation response element,
+     * Openfire SHOULD include two additional attributes in the session creation response element,
      * specifying the shortest allowable polling interval and the longest allowable inactivity
      * period (both in seconds). Communication of these parameters enables the client to engage in
      * appropriate behavior (e.g., not sending empty request elements more often than desired, and
@@ -169,11 +169,11 @@ public class HttpSessionManager {
     }
 
     /**
-     * Wildfire MAY limit the number of simultaneous requests the client makes with the 'requests'
+     * Openfire MAY limit the number of simultaneous requests the client makes with the 'requests'
      * attribute. The RECOMMENDED value is "2". Servers that only support polling behavior MUST
      * prevent clients from making simultaneous requests by setting the 'requests' attribute to a
      * value of "1" (however, polling is NOT RECOMMENDED). In any case, clients MUST NOT make more
-     * simultaneous requests than specified by the Wildfire.
+     * simultaneous requests than specified by the Openfire.
      *
      * @return the number of simultaneous requests allowable.
      */

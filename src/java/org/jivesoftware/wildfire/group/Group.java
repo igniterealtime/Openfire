@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * The actual group implementation is controlled by the {@link GroupProvider}, which
  * includes things like the group name, the members, and adminstrators. Each group
- * also has properties, which are always stored in the Wildfire database.
+ * also has properties, which are always stored in the Openfire database.
  *
  * @see GroupManager#createGroup(String)
  *

@@ -120,7 +120,7 @@ public class UpdateManager extends BasicModule {
                             JiveGlobals.setProperty("update.lastCheck", String.valueOf(now));
                             // As an extra precaution, make sure that that the value
                             // we just set is saved. If not, return to make sure that
-                            // no additional update checks are performed until Wildfire
+                            // no additional update checks are performed until Openfire
                             // is restarted.
                             if (now != JiveGlobals.getLongProperty("update.lastCheck", 0)) {
                                 Log.error("Error: update service check did not save correctly. " +
@@ -471,9 +471,9 @@ public class UpdateManager extends BasicModule {
     private String getServerUpdateRequest() {
         XMPPServer server = XMPPServer.getInstance();
         Element xmlRequest = docFactory.createDocument().addElement("version");
-        // Add current wildfire version
-        Element wildfire = xmlRequest.addElement("wildfire");
-        wildfire.addAttribute("current", server.getServerInfo().getVersion().getVersionString());
+        // Add current openfire version
+        Element openfire = xmlRequest.addElement("wildfire");
+        openfire.addAttribute("current", server.getServerInfo().getVersion().getVersionString());
         return xmlRequest.asXML();
     }
 
@@ -493,14 +493,14 @@ public class UpdateManager extends BasicModule {
         xmlReader.setEncoding("UTF-8");
         Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
         // Parse response and keep info as Update objects
-        Element wildfire = xmlResponse.element("wildfire");
-        if (wildfire != null) {
-            // A new version of wildfire was found
-            String latestVersion = wildfire.attributeValue("latest");
-            String changelog = wildfire.attributeValue("changelog");
-            String url = wildfire.attributeValue("url");
+        Element openfire = xmlResponse.element("wildfire");
+        if (openfire != null) {
+            // A new version of openfire was found
+            String latestVersion = openfire.attributeValue("latest");
+            String changelog = openfire.attributeValue("changelog");
+            String url = openfire.attributeValue("url");
             // Keep information about the available server update
-            serverUpdate = new Update("Wildfire", latestVersion, changelog, url);
+            serverUpdate = new Update("Openfire", latestVersion, changelog, url);
         }
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && serverUpdate != null) {
@@ -597,7 +597,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Saves to conf/server-update.xml information about the latest Wildfire release that is
+     * Saves to conf/server-update.xml information about the latest Openfire release that is
      * available for download.
      */
     private void saveLatestServerInfo() {
@@ -746,16 +746,16 @@ public class UpdateManager extends BasicModule {
             }
         }
         // Parse info and recreate update information (if still required)
-        Element wildfire = xmlResponse.getRootElement().element("wildfire");
-        if (wildfire != null) {
-            String latestVersion = wildfire.attributeValue("latest");
-            String changelog = wildfire.attributeValue("changelog");
-            String url = wildfire.attributeValue("url");
+        Element openfire = xmlResponse.getRootElement().element("wildfire");
+        if (openfire != null) {
+            String latestVersion = openfire.attributeValue("latest");
+            String changelog = openfire.attributeValue("changelog");
+            String url = openfire.attributeValue("url");
             // Check if current server version is correct
             String serverVersion =
                     XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
             if (serverVersion.compareTo(latestVersion) < 0) {
-                serverUpdate = new Update("Wildfire", latestVersion, changelog, url);
+                serverUpdate = new Update("Openfire", latestVersion, changelog, url);
             }
         }
     }

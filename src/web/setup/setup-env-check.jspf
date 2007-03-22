@@ -15,8 +15,8 @@
     boolean servlet22Installed = false;
     boolean jsp11Installed = false;
     boolean jiveJarsInstalled = false;
-    boolean wildfireHomeExists = false;
-    File wildfireHome = null;
+    boolean openfireHomeExists = false;
+    File openfireHome = null;
 
     // Check for JDK 1.5
     try {
@@ -37,7 +37,7 @@
         jsp11Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}
-    // Check that the Wildfire jar are installed:
+    // Check that the Openfire jar are installed:
     try {
         ClassUtils.forName("org.jivesoftware.wildfire.XMPPServer");
         jiveJarsInstalled = true;
@@ -47,12 +47,12 @@
     // Try to determine what the jiveHome directory is:
     try {
         Class jiveGlobalsClass = ClassUtils.forName("org.jivesoftware.util.JiveGlobals");
-        Method getWildfireHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
-        String wildfireHomeProp = (String)getWildfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
-        if (wildfireHomeProp != null) {
-            wildfireHome = new File(wildfireHomeProp);
-            if (wildfireHome.exists()) {
-                wildfireHomeExists = true;
+        Method getOpenfireHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
+        String openfireHomeProp = (String)getOpenfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
+        if (openfireHomeProp != null) {
+            openfireHome = new File(openfireHomeProp);
+            if (openfireHome.exists()) {
+                openfireHomeExists = true;
             }
         }
     }
@@ -62,7 +62,7 @@
 
     // If there were no errors, redirect to the main setup page
     if (!jdk13Installed || !servlet22Installed || !jsp11Installed || !jiveJarsInstalled
-            || !wildfireHomeExists)
+            || !openfireHomeExists)
     {
 %>
         <html>
@@ -172,13 +172,13 @@
             </tr>
 
         <%  }
-            if (wildfireHomeExists) {
+            if (openfireHomeExists) {
         %>
             <tr>
                 <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
                 <td>
                     <span class="jive-setup-error-text">
-                    <fmt:message key="setup.env.check.jive" /> (<%= wildfireHome.toString() %>)
+                    <fmt:message key="setup.env.check.jive" /> (<%= openfireHome.toString() %>)
                     </span>
                 </td>
             </tr>

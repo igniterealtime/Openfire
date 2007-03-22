@@ -39,7 +39,7 @@ public class MUCRoomImpl implements MUCRoom {
     /**
      * The server hosting the room.
      */
-    private MultiUserChatServer server;
+    private MultiUserChatServerImpl server;
 
     /**
      * The occupants of the room accessible by the occupants nickname.
@@ -270,7 +270,7 @@ public class MUCRoomImpl implements MUCRoom {
      * @param packetRouter the router for sending packets from the room.
      */
     MUCRoomImpl(MultiUserChatServer chatserver, String roomname, PacketRouter packetRouter) {
-        this.server = chatserver;
+        this.server = (MultiUserChatServerImpl) chatserver;
         this.name = roomname;
         this.naturalLanguageName = roomname;
         this.description = roomname;
@@ -562,6 +562,8 @@ public class MUCRoomImpl implements MUCRoom {
         }
         // Update the date when the last occupant left the room
         setEmptyDate(null);
+        // Fire event that occupant joined the room
+        server.fireOccupantJoined(getRole().getRoleAddress(), user.getAddress(), joinRole.getNickname());
         return joinRole;
     }
 
@@ -620,6 +622,8 @@ public class MUCRoomImpl implements MUCRoom {
             if (occupants.isEmpty() && !isPersistent()) {
                 endTime = System.currentTimeMillis();
                 server.removeChatRoom(name);
+                // Fire event that the room has been destroyed
+                server.fireRoomDestroyed(getRole().getRoleAddress());
             }
             if (occupants.isEmpty()) {
                 // Update the date when the last occupant left the room
@@ -675,10 +679,12 @@ public class MUCRoomImpl implements MUCRoom {
             }
         }
         occupantsByFullJID.remove(user.getAddress());
+        // Fire event that occupant left the room
+        server.fireOccupantLeft(getRole().getRoleAddress(), user.getAddress());
     }
 
     public void destroyRoom(String alternateJID, String reason) {
-        MUCRole leaveRole = null;
+        MUCRole leaveRole;
         Collection<MUCRole> removedRoles = new ArrayList<MUCRole>();
         lock.writeLock().lock();
         try {
@@ -733,6 +739,8 @@ public class MUCRoomImpl implements MUCRoom {
         }
         // Remove the room from the DB if the room was persistent
         MUCPersistenceManager.deleteFromDB(this);
+        // Fire event that the room has been destroyed
+        server.fireRoomDestroyed(getRole().getRoleAddress());
     }
 
     public Presence createPresence(Presence.Type presenceType) throws UnauthorizedException {
@@ -759,6 +767,9 @@ public class MUCRoomImpl implements MUCRoom {
         // Send the message to all occupants
         message.setFrom(senderRole.getRoleAddress());
         send(message);
+        // Fire event that message was receibed by the room
+        server.fireMessageReceived(getRole().getRoleAddress(), senderRole.getChatUser().getAddress(),
+                senderRole.getNickname(), message);
     }
 
     public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException {

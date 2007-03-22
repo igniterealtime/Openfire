@@ -24,7 +24,7 @@ import java.util.Collection;
 /**
  * Provider for authorization. Checks if the authenticated principal is in
  * the user's .k5login file. A traditional Unix Kerberos methodology. The
- * location of this file can be configured in the <tt>wildfire.xml</tt>
+ * location of this file can be configured in the <tt>openfire.xml</tt>
  * file. An entry in that file would look like the following:
  *
  * <pre>

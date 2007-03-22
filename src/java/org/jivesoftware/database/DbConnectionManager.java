@@ -464,7 +464,7 @@ public class DbConnectionManager {
                 setMetaData(con);
 
                 // Check to see if the database schema needs to be upgraded.
-                schemaManager.checkWildfireSchema(con);
+                schemaManager.checkOpenfireSchema(con);
             }
             catch (Exception e) {
                 Log.error(e);
@@ -630,7 +630,7 @@ public class DbConnectionManager {
 
     /**
      * Returns a SchemaManager instance, which can be used to manage the database
-     * schema information for Wildfire and plugins.
+     * schema information for Openfire and plugins.
      *
      * @return a SchemaManager instance.
      */

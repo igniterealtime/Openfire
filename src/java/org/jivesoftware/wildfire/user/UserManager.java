@@ -130,8 +130,8 @@ public class UserManager implements IQResultListener {
         userCache.put(username, user);
 
         // Fire event.
-        UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_created,
-                Collections.emptyMap());
+        Map<String,Object> params = Collections.emptyMap();
+        UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_created, params);
 
         return user;
     }
@@ -156,8 +156,8 @@ public class UserManager implements IQResultListener {
         }
 
         // Fire event.
-        UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_deleting,
-                Collections.emptyMap());
+        Map<String,Object> params = Collections.emptyMap();
+        UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_deleting, params);
 
         provider.deleteUser(user.getUsername());
         // Remove the user from cache.

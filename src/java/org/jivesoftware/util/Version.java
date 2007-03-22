@@ -11,7 +11,7 @@
 package org.jivesoftware.util;
 
 /**
- * Holds version information for Wildfire.
+ * Holds version information for Openfire.
  *
  * @author Iain Shigeoka
  */
@@ -81,7 +81,7 @@ public class Version {
     }
 
     /**
-     * Returns the version number of this instance of Wildfire as a
+     * Returns the version number of this instance of Openfire as a
      * String (ie major.minor.revision).
      *
      * @return The version as a string

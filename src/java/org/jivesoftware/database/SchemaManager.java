@@ -22,7 +22,7 @@ import java.sql.*;
 import java.util.Arrays;
 
 /**
- * Manages database schemas for Wildfire and Wildfire plugins. The manager uses the
+ * Manages database schemas for Openfire and Openfire plugins. The manager uses the
  * jiveVersion database table to figure out which database schema is currently installed
  * and then attempts to automatically apply database schema changes as necessary.<p>
  *
@@ -42,7 +42,7 @@ public class SchemaManager {
             "SELECT version FROM jiveVersion WHERE name=?";
 
     /**
-     * Current Wildfire database schema version.
+     * Current Openfire database schema version.
      */
     private static final int DATABASE_VERSION = 11;
 
@@ -54,16 +54,18 @@ public class SchemaManager {
     }
 
     /**
-     * Checks the Wildfire database schema to ensure that it's installed and up to date.
+     * Checks the Openfire database schema to ensure that it's installed and up to date.
      * If the schema isn't present or up to date, an automatic update will be attempted.
      *
      * @param con a connection to the database.
      * @return true if database schema checked out fine, or was automatically installed
      *      or updated successfully.
      */
-    public boolean checkWildfireSchema(Connection con) {
+    public boolean checkOpenfireSchema(Connection con) {
+        // Change 'wildfire' to 'openfire' in jiveVersion table (update to new name)
+        updateToOpenfire(con);
         try {
-            return checkSchema(con, "wildfire", DATABASE_VERSION,
+            return checkSchema(con, "openfire", DATABASE_VERSION,
                     new ResourceLoader() {
                         public InputStream loadResource(String resourceName) {
                             File file = new File(JiveGlobals.getHomeDirectory() + File.separator +
@@ -156,10 +158,10 @@ public class SchemaManager {
         catch (SQLException sqle) {
             DbConnectionManager.closeResultSet(rs);
             DbConnectionManager.closeStatement(pstmt);
-            // Releases of Wildfire before 2.6.0 stored a major and minor version
+            // Releases of Openfire before 2.6.0 stored a major and minor version
             // number so the normal check for version can fail. Check for the
             // version using the old format in that case.
-            if (schemaKey.equals("wildfire")) {
+            if (schemaKey.equals("openfire")) {
                 try {
                     if (pstmt != null) {
                         pstmt.close();
@@ -190,7 +192,7 @@ public class SchemaManager {
                     Arrays.asList(schemaKey)));
             System.out.println(LocaleUtils.getLocalizedString("upgrade.database.missing_schema",
                     Arrays.asList(schemaKey)));
-            // Resource will be like "/database/wildfire_hsqldb.sql"
+            // Resource will be like "/database/openfire_hsqldb.sql"
             String resourceName = schemaKey + "_" +
                     DbConnectionManager.getDatabaseType() + ".sql";
             InputStream resource = resourceLoader.loadResource(resourceName);
@@ -268,8 +270,8 @@ public class SchemaManager {
             String schemaKey)
     {
         InputStream resource = null;
-        if ("wildfire".equals(schemaKey)) {
-            // Resource will be like "/database/upgrade/6/wildfire_hsqldb.sql"
+        if ("openfire".equals(schemaKey)) {
+            // Resource will be like "/database/upgrade/6/openfire_hsqldb.sql"
             String path = JiveGlobals.getHomeDirectory() + File.separator + "resources" +
                     File.separator + "database" + File.separator + "upgrade" + File.separator +
                     upgradeVersion;
@@ -288,6 +290,20 @@ public class SchemaManager {
             resource = resourceLoader.loadResource(resourceName);
         }
         return resource;
+    }
+
+    private void updateToOpenfire(Connection con){
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = con.prepareStatement("UPDATE jiveVersion SET name='openfire' WHERE name='wildfire'");
+            pstmt.executeUpdate();
+        }
+        catch (Exception ex) {
+            Log.warn("Error when trying to update to new name", ex);
+        }
+        finally {
+            DbConnectionManager.closeStatement(pstmt);
+        }
     }
 
     /**

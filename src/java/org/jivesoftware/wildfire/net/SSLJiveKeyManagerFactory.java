@@ -26,7 +26,7 @@ import org.jivesoftware.util.Log;
 
 /**
  * A custom KeyManagerFactory that creates a key manager list using the
- * default key manager or a standard keystore as specified in wildfire.xml.
+ * default key manager or a standard keystore as specified in openfire.xml.
  * The default keystore provided with the Jive distribution uses the Sun Java
  * Keystore (JKS) and that takes a single password which must apply to both the
  * keystore and the key itself. Users may specify another keystore type and keystore

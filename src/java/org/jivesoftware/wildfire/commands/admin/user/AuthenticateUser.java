@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Arrays;
 
 /**
- * Takes a user's username and password to authenticate them against the Wildfire authprovider.
+ * Takes a user's username and password to authenticate them against the Openfire authprovider.
  *
  * @author Alexander Wenckus
  */

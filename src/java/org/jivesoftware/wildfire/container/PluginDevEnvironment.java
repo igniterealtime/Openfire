@@ -15,7 +15,7 @@ import java.io.File;
 
 /**
  * Represents the data model used to represent development mode within the Jive
- * Wildfire plugin framework.
+ * Openfire plugin framework.
  *
  * @author Derek DeMoro
  */

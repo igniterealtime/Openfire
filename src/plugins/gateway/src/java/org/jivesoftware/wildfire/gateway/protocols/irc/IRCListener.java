@@ -180,7 +180,7 @@ public class IRCListener implements IRCEventListener {
         if (msg.equals("VERSION")) {
             // This is actually a CTCP VERSION request.  Why is it showing as a Privmsg?
             // TODO: Should figure out a proper way to handle this.
-            //getSession().getConnection().send("CTCP REPLY "+ircUser.getNick()+" VERSION IM Gateway Plugin for Wildfire");
+            //getSession().getConnection().send("CTCP REPLY "+ircUser.getNick()+" VERSION IM Gateway Plugin for Openfire");
             return;
         }
         getSession().getTransport().sendMessage(

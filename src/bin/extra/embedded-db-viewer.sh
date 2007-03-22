@@ -3,7 +3,7 @@
 
 # Script to start the HSQLDB database viewer. The embedded-db.rc file
 # contains connection settings. Visit http://hsqldb.org for documentation
-# on using the tool. The classpath includes JDBC drivers shipped with Wildfire
+# on using the tool. The classpath includes JDBC drivers shipped with Openfire
 # to work with the Transfer tool. You will need to add any other JDBC driver
 # that you'd like to use with the transfer tool to the classpath manually.
 

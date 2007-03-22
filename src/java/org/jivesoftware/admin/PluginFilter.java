@@ -71,7 +71,7 @@ public class PluginFilter implements Filter {
     }
 
     public void destroy() {
-        // If the destroy method is being called, the Wildfire instance is being shutdown.
+        // If the destroy method is being called, the Openfire instance is being shutdown.
         // Therefore, clear out the list of plugin filters.
         pluginFilters.clear();
     }

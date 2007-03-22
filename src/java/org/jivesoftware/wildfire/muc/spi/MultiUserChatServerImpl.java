@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -195,6 +196,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * Flag that indicates if MUC service is enabled.
      */
     private boolean serviceEnabled = true;
+
+    Collection<MUCEventListener> listeners = new ConcurrentLinkedQueue<MUCEventListener>();
 
     /**
      * Create a new group chat server.
@@ -439,6 +442,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         }
                     }
                     room.addFirstOwner(userjid.toBareJID());
+                    // Fire event that a new room has been created
+                    for (MUCEventListener listener : listeners) {
+                        listener.roomCreated(room.getRole().getRoleAddress());
+                    }
                 }
                 rooms.put(roomName, room);
             }
@@ -1148,6 +1155,44 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             return false;
         }
         return room.isPublicRoom();
+    }
+
+    public void addListener(MUCEventListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(MUCEventListener listener) {
+        listeners.remove(listener);
+    }
+
+    void fireOccupantJoined(JID roomJID, JID user, String nickname) {
+        for (MUCEventListener listener : listeners) {
+            listener.occupantJoined(roomJID, user, nickname);
+        }
+    }
+
+    void fireOccupantLeft(JID roomJID, JID user) {
+        for (MUCEventListener listener : listeners) {
+            listener.occupantLeft(roomJID, user);
+        }
+    }
+
+    void fireNicknameChanged(JID roomJID, JID user, String oldNickname, String newNickname) {
+        for (MUCEventListener listener : listeners) {
+            listener.nicknameChanged(roomJID, user, oldNickname, newNickname);
+        }
+    }
+
+    void fireMessageReceived(JID roomJID, JID user, String nickname, Message message) {
+        for (MUCEventListener listener : listeners) {
+            listener.messageReceived(roomJID, user, nickname, message);
+        }
+    }
+
+    void fireRoomDestroyed(JID roomJID) {
+        for (MUCEventListener listener : listeners) {
+            listener.roomDestroyed(roomJID);
+        }
     }
 
     /**

@@ -58,16 +58,16 @@ plugin is set to reject subscription requests users will not be able to add peop
 
 <h2>Installation</h2>
 <p>
-Copy the file, subscription.jar into the plugins directory of your Wildfire installation. The plugin will
+Copy the file, subscription.jar into the plugins directory of your Openfire installation. The plugin will
 then be automatically deployed. To upgrade to a new version: 1) go to the plugin screen of the Admin
 Console, 2) click on the delete icon on the same row as the currently installed subscription plugin, 3) 
-copy the new subscription.jar into the plugins directory of your Wildfire installation.
+copy the new subscription.jar into the plugins directory of your Openfire installation.
 </p>
 
 <h2>Configuration</h2>
 <p>
 The subscription plugin is configured via Subscription Properties sidebar item which can found under the 
-Sever tab in Wildfire Admin Console. The subscription plugin can be configured in the following ways:
+Sever tab in Openfire Admin Console. The subscription plugin can be configured in the following ways:
 <ul>
 <p>
 <li>Disabled (Default setting) - Subscription requests will not be intercepted.</li>
@@ -75,10 +75,10 @@ Sever tab in Wildfire Admin Console. The subscription plugin can be configured i
 <p>
 <li>Accept - Subscription requests will be intercepted and accepted.</li>
 <ul>
-<li>Local - Only subscription requests sent by users <u>who have</u> an account on the Wildfire server on which 
+<li>Local - Only subscription requests sent by users <u>who have</u> an account on the Openfire server on which
 the plugin is installed, will be intercepted and accepted.</li>
 <li>All - All subscription requests, regardless of which server the user account resides on, will be 
-intercepted and accepted. Selecting this level can make Wildfire vulnerable to spIM*.</li>
+intercepted and accepted. Selecting this level can make Openfire vulnerable to spIM*.</li>
 </ul>
 </p>
 <p>
@@ -88,7 +88,7 @@ subscription rejection packets are not processed properly so this feature will n
 the plugin attempt to work around this issue create a "plugin.subscription.sparkCheck" system property and set its 
 value to "true".</li>
 <ul>
-<li>Local - Only subscription requests sent by users <u>who do not have</u> an account on the Wildfire server on which 
+<li>Local - Only subscription requests sent by users <u>who do not have</u> an account on the Openfire server on which
 the plugin is installed, will be intercepted and rejected.</li>
 <li>All - All subscription requests, regardless of which server the user account resides on, will be 
 intercepted and rejected.</li>

@@ -35,8 +35,8 @@ public class LocaleUtils {
 
     // The basename to use for looking up the appropriate resource bundles
     // TODO - extract this out into a test that grabs the resource name from JiveGlobals
-    // TODO and defaults to wildfire_i18n if nothing set.
-    private static final String resourceBaseName = "wildfire_i18n";
+    // TODO and defaults to openfire_i18n if nothing set.
+    private static final String resourceBaseName = "openfire_i18n";
 
     private LocaleUtils() {
     }

@@ -72,16 +72,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * <p/>
  * A configuration file keeps the server configuration. This information is required for the
  * server to work correctly. The server assumes that the configuration file is named
- * <b>wildfire.xml</b> and is located in the <b>conf</b> folder. The folder that keeps
+ * <b>openfire.xml</b> and is located in the <b>conf</b> folder. The folder that keeps
  * the configuration file must be located under the home folder. The server will try different
  * methods to locate the home folder.
  * <p/>
  * <ol>
- * <li><b>system property</b> - The server will use the value defined in the <i>wildfireHome</i>
+ * <li><b>system property</b> - The server will use the value defined in the <i>openfireHome</i>
  * system property.</li>
  * <li><b>working folder</b> -  The server will check if there is a <i>conf</i> folder in the
  * working directory. This is the case when running in standalone mode.</li>
- * <li><b>wildfire_init.xml file</b> - Attempt to load the value from wildfire_init.xml which
+ * <li><b>openfire_init.xml file</b> - Attempt to load the value from openfire_init.xml which
  * must be in the classpath</li>
  * </ol>
  *
@@ -111,7 +111,7 @@ public class XMPPServer {
      * Location of the home directory. All configuration files should be
      * located here.
      */
-    private File wildfireHome;
+    private File openfireHome;
     private ClassLoader loader;
 
     private PluginManager pluginManager;
@@ -238,7 +238,7 @@ public class XMPPServer {
             }
             catch (IllegalArgumentException e) {
                 // Ignore usernames that when appended @server.com result in an invalid JID
-                Log.warn("Invalid username found in authorizedUsernames at wildfire.xml: " +
+                Log.warn("Invalid username found in authorizedUsernames at openfire.xml: " +
                         username, e);
             }
         }
@@ -253,7 +253,7 @@ public class XMPPServer {
                 admins.add(new JID(jid));
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid JID found in authorizedJIDs at wildfire.xml: " + jid, e);
+                Log.warn("Invalid JID found in authorizedJIDs at openfire.xml: " + jid, e);
             }
         }
 
@@ -281,11 +281,11 @@ public class XMPPServer {
     }
 
     private void initialize() throws FileNotFoundException {
-        locateWildfire();
+        locateOpenfire();
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(3, 2, 2, Version.ReleaseStatus.Release, 1);
+        version = new Version(3, 3, 0, Version.ReleaseStatus.Alpha, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -362,8 +362,6 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
-                        // Keep a reference to the internal component manager
-                        componentManager = getComponentManager();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -385,7 +383,7 @@ public class XMPPServer {
             initialize();
 
             // Create PluginManager now (but don't start it) so that modules may use it
-            File pluginDir = new File(wildfireHome, "plugins");
+            File pluginDir = new File(openfireHome, "plugins");
             pluginManager = new PluginManager(pluginDir);
 
             // If the server has already been setup then we can start all the server's modules
@@ -398,8 +396,6 @@ public class XMPPServer {
                 initModules();
                 // Start all the modules
                 startModules();
-                // Keep a reference to the internal component manager
-                componentManager = getComponentManager();
             }
             // Initialize statistics
             ServerTrafficCounter.initStatistics();
@@ -481,6 +477,8 @@ public class XMPPServer {
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
+        // Keep a reference to the internal component manager
+        componentManager = getComponentManager();
     }
 
     /**
@@ -687,8 +685,8 @@ public class XMPPServer {
     }
 
     /**
-     * Verifies that the given home guess is a real Wildfire home directory.
-     * We do the verification by checking for the Wildfire config file in
+     * Verifies that the given home guess is a real Openfire home directory.
+     * We do the verification by checking for the Openfire config file in
      * the config dir of jiveHome.
      *
      * @param homeGuess a guess at the path to the home directory.
@@ -699,14 +697,14 @@ public class XMPPServer {
      *                                       directory provided
      */
     private File verifyHome(String homeGuess, String jiveConfigName) throws FileNotFoundException {
-        File wildfireHome = new File(homeGuess);
-        File configFile = new File(wildfireHome, jiveConfigName);
+        File openfireHome = new File(homeGuess);
+        File configFile = new File(openfireHome, jiveConfigName);
         if (!configFile.exists()) {
             throw new FileNotFoundException();
         }
         else {
             try {
-                return new File(wildfireHome.getCanonicalPath());
+                return new File(openfireHome.getCanonicalPath());
             }
             catch (Exception ex) {
                 throw new FileNotFoundException();
@@ -719,14 +717,14 @@ public class XMPPServer {
      *
      * @throws FileNotFoundException If jiveHome could not be located
      */
-    private void locateWildfire() throws FileNotFoundException {
-        String jiveConfigName = "conf" + File.separator + "wildfire.xml";
-        // First, try to load it wildfireHome as a system property.
-        if (wildfireHome == null) {
-            String homeProperty = System.getProperty("wildfireHome");
+    private void locateOpenfire() throws FileNotFoundException {
+        String jiveConfigName = "conf" + File.separator + "openfire.xml";
+        // First, try to load it openfireHome as a system property.
+        if (openfireHome == null) {
+            String homeProperty = System.getProperty("openfireHome");
             try {
                 if (homeProperty != null) {
-                    wildfireHome = verifyHome(homeProperty, jiveConfigName);
+                    openfireHome = verifyHome(homeProperty, jiveConfigName);
                 }
             }
             catch (FileNotFoundException fe) {
@@ -737,9 +735,9 @@ public class XMPPServer {
         // If we still don't have home, let's assume this is standalone
         // and just look for home in a standard sub-dir location and verify
         // by looking for the config file
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             try {
-                wildfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
+                openfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
             }
             catch (FileNotFoundException fe) {
                 // Ignore.
@@ -750,19 +748,19 @@ public class XMPPServer {
         }
 
         // If home is still null, no outside process has set it and
-        // we have to attempt to load the value from wildfire_init.xml,
+        // we have to attempt to load the value from openfire_init.xml,
         // which must be in the classpath.
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             InputStream in = null;
             try {
-                in = getClass().getResourceAsStream("/wildfire_init.xml");
+                in = getClass().getResourceAsStream("/openfire_init.xml");
                 if (in != null) {
                     SAXReader reader = new SAXReader();
                     Document doc = reader.read(in);
                     String path = doc.getRootElement().getText();
                     try {
                         if (path != null) {
-                            wildfireHome = verifyHome(path, jiveConfigName);
+                            openfireHome = verifyHome(path, jiveConfigName);
                         }
                     }
                     catch (FileNotFoundException fe) {
@@ -771,7 +769,7 @@ public class XMPPServer {
                 }
             }
             catch (Exception e) {
-                System.err.println("Error loading wildfire_init.xml to find home.");
+                System.err.println("Error loading openfire_init.xml to find home.");
                 e.printStackTrace();
             }
             finally {
@@ -787,13 +785,13 @@ public class XMPPServer {
             }
         }
 
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             System.err.println("Could not locate home");
             throw new FileNotFoundException();
         }
         else {
             // Set the home directory for the config file
-            JiveGlobals.setHomeDirectory(wildfireHome.toString());
+            JiveGlobals.setHomeDirectory(openfireHome.toString());
             // Set the name of the config file
             JiveGlobals.setConfigName(jiveConfigName);
         }
@@ -871,7 +869,7 @@ public class XMPPServer {
         // Stop the Db connection manager.
         DbConnectionManager.destroyConnectionProvider();
         // hack to allow safe stopping
-        Log.info("Wildfire stopped");
+        Log.info("Openfire stopped");
     }
 
     /**

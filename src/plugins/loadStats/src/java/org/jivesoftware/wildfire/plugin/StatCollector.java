@@ -81,7 +81,7 @@ public class StatCollector extends TimerTask {
             sb.append(executor.getCompletedTaskCount());
             // Add info about number of connected sessions
             sb.append(',');
-            sb.append(SessionManager.getInstance().getSessionCount());
+            sb.append(SessionManager.getInstance().getConnectionsCount());
             // Add info about MINA statistics
             sb.append(',');
             sb.append(statCollector.getMsgRead());

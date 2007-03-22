@@ -635,13 +635,13 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
             User user = UserManager.getInstance().getUser(violationContact);
             
             //this is automatically put on a another thread for execution.
-            EmailService.getInstance().sendMessage(user.getName(), user.getEmail(), "Wildfire",
+            EmailService.getInstance().sendMessage(user.getName(), user.getEmail(), "Openfire",
                 "no_reply@" + violationNotificationFrom.getDomain(), subject, body, null);
 
         }
         catch (Throwable e) {
             // catch throwable in case email setup is invalid
-            Log.error("Content Filter: Failed to send email, please review Wildfire setup", e);
+            Log.error("Content Filter: Failed to send email, please review Openfire setup", e);
         }
     }
 }

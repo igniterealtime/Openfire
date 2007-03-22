@@ -169,13 +169,13 @@ hr {
 <div id="pageBody">
 
 <h2>Overview</h2>
-<p>The user import/export plugin provides a way to import and export Wildfire user data via 
+<p>The user import/export plugin provides a way to import and export Openfire user data via
 the Admin Console. The user data consists of username, password, name, email address, creation 
 and modified date, and roster list (aka "buddy list"). This plugin also can aid in the migration 
-of users from other Jabber/XMPP based systems to Wildfire.</p>
+of users from other Jabber/XMPP based systems to Openfire.</p>
 
 <h2>Installation</h2>
-<p>Copy the userImportExport.jar into the plugins directory of your Wildfire installation.
+<p>Copy the userImportExport.jar into the plugins directory of your Openfire installation.
 The plugin will then be automatically deployed. To upgrade to a new version, copy the new 
 userImportExport.jar file over the existing file.</p>
 
@@ -208,11 +208,11 @@ the "To Screen" radio button and then click on the "Export" button. The user dat
 the provided text area.</li>
 <br>
 <li><strong>Migration</strong> - To import user data from another instant messaging system using the plugin,
-the import file must conform to the wildfire-user-schema.xsd.xml schema file (located in the classes 
+the import file must conform to the openfire-user-schema.xsd.xml schema file (located in the classes
 directory of the userImportExport.jar). When importing a user data file the plugin will first validate 
 the file against the schema file. If the plugin cannot validate the import file the user data will 
 not be imported. During the import process the plugin gives you the ability to update user roster 
-entries domain names to server name of your Wildfire installation. For example, say you have a user 
+entries domain names to server name of your Openfire installation. For example, say you have a user
 whose roster looks like:
 </li>
 
@@ -245,7 +245,7 @@ whose roster looks like:
 
 <p>
 Mike and Jane's accounts both reside on server whose domain name is "im.olddomain.net" and are being 
-imported to a Wildfire installation whose server name is "im.newdomain.net". If on the import screen 
+imported to a Openfire installation whose server name is "im.newdomain.net". If on the import screen
 the "Optional Existing Domain" field is filled in with "im.olddomain.net" (without the quotes) any 
 roster item jid that contains "im.olddomain.net" will be replaced with "im.newdomain.net". So, in 
 effect, the import file would be transformed to look like:
@@ -280,7 +280,7 @@ effect, the import file would be transformed to look like:
 </p>
 
 <p>
-Below is a sample of an exported user list from Wildfire than contains two users, Joe and Sally, who 
+Below is a sample of an exported user list from Openfire than contains two users, Joe and Sally, who
 have added each other to their respective rosters.
 </p>
 
@@ -291,7 +291,7 @@ have added each other to their respective rosters.
 <td>
 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
 <br>
-&lt;Wildfire&gt;<br>
+&lt;Openfire&gt;<br>
 &nbsp;&nbsp;&lt;User&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Username&gt;joe&lt;/Username&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Password&gt;joepwd&lt;/Password&gt;<br>
@@ -318,7 +318,7 @@ have added each other to their respective rosters.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
 &nbsp;&nbsp;&lt;/User&gt;<br>
-&lt;/Wildfire&gt;<br>
+&lt;/Openfire&gt;<br>
 </td>
 </tr>
 </table>

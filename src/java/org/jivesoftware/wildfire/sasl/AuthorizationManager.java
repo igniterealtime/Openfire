@@ -77,7 +77,7 @@ public class AuthorizationManager {
      * Returns the currently-installed AuthorizationProvider. Warning: You
      * should not be calling the AuthorizationProvider directly to perform
      * authorizations, it will not take into account the policy selected in
-     * the <tt>wildfire.xml</tt>.  Use @see{authorize} in this class, instead.
+     * the <tt>openfire.xml</tt>.  Use @see{authorize} in this class, instead.
      *
      * @return the current AuthorizationProvider.
      */

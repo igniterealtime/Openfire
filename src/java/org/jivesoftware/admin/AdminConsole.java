@@ -173,7 +173,7 @@ public class AdminConsole {
             return getAdminText(globalVersion.getText(), pluginName);
         }
         else {
-            // Default to the Wildfire version if none has been provided via XML.
+            // Default to the Openfire version if none has been provided via XML.
             XMPPServer xmppServer = XMPPServer.getInstance();
             return xmppServer.getServerInfo().getVersion().getVersionString();
         }
@@ -208,7 +208,7 @@ public class AdminConsole {
      *
      * @param string the String.
      * @param pluginName the name of the plugin that the i18n String can be found in,
-     *      or <tt>null</tt> if the standard Wildfire resource bundle should be used.
+     *      or <tt>null</tt> if the standard Openfire resource bundle should be used.
      * @return the string, or if the string is encoded as an i18n key, the value from
      *      the appropriate resource bundle.
      */
@@ -227,7 +227,7 @@ public class AdminConsole {
         // Load the core model as the admin-sidebar.xml file from the classpath.
         InputStream in = ClassUtils.getResourceAsStream("/admin-sidebar.xml");
         if (in == null) {
-            Log.error("Failed to load admin-sidebar.xml file from Wildfire classes - admin "
+            Log.error("Failed to load admin-sidebar.xml file from Openfire classes - admin "
                     + "console will not work correctly.");
             return;
         }
@@ -359,7 +359,7 @@ public class AdminConsole {
             }
         }
 
-        // Special case: show an informational tab about Wildfire Enterprise if Enterprise
+        // Special case: show an informational tab about Openfire Enterprise if Enterprise
         // is not installed and if the user has not chosen to hide tab.
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         boolean pluginExists = pluginManager != null && pluginManager.isPluginDownloaded(
@@ -372,12 +372,12 @@ public class AdminConsole {
             enterprise.addAttribute("description", "Click for Enterprise information.");
             Element sidebar = enterprise.addElement("sidebar");
             sidebar.addAttribute("id", "sidebar-enterprise-info");
-            sidebar.addAttribute("name", "Wildfire Enterprise");
+            sidebar.addAttribute("name", "Openfire Enterprise");
             Element item = sidebar.addElement("item");
             item.addAttribute("id", "enterprise-info");
             item.addAttribute("name", "Try Enterprise");
             item.addAttribute("url", "enterprise-info.jsp");
-            item.addAttribute("description", "Wildfire Enterprise overview inforation");
+            item.addAttribute("description", "Openfire Enterprise overview inforation");
         }
     }
 

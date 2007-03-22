@@ -24,7 +24,7 @@ import java.net.URL;
 import java.util.*;
 
 /**
- * A utility bean for Wildfire admin console pages.
+ * A utility bean for Openfire admin console pages.
  */
 public class WebManager extends WebBean {
 
@@ -42,7 +42,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * Returns <tt>true</tt> if the Wildfire container is in setup mode, <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if the Openfire container is in setup mode, <tt>false</tt> otherwise.
      */
     public boolean isSetupMode() {
         return getXMPPServer().isSetupMode();

@@ -578,7 +578,7 @@ public class SASLAuthentication {
      * new mechanism will be offered to clients and connection managers as stream features.<p>
      *
      * Note: this method simply registers the SASL mechanism to be advertised as a supported
-     * mechanism by Wildfire. Actual SASL handling is done by Java itself, so you must add
+     * mechanism by Openfire. Actual SASL handling is done by Java itself, so you must add
      * the provider to Java.
      *
      * @param mechanism the new SASL mechanism.

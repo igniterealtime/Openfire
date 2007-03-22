@@ -34,11 +34,11 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * The user import/export plugin provides a way to import and export Wildfire
+ * The user import/export plugin provides a way to import and export Openfire
  * user data via the Admin Console. The user data consists of username, 
  * name, email address, password and roster list (aka "buddy list"). This plugin also 
  * can aid in the migration of users from other Jabber/XMPP based systems to Jive 
- * Wildfire.
+ * Openfire.
  * 
  * @author <a href="mailto:ryan@version2software.com">Ryan Graham</a>
  */
@@ -121,8 +121,8 @@ public class ImportExportPlugin implements Plugin {
      *
      * @param file a FileItem containing the user data to be imported.
      * @param previousDomain a String an optional parameter that if supplied will replace the user roster entries domain names to 
-     * server name of current Wildfire installation.
-     * @return True if FileItem matches the wildfire user schema.
+     * server name of current Openfire installation.
+     * @return True if FileItem matches the openfire user schema.
      * @throws IOException if there is a problem reading the FileItem.
      * @throws DocumentException if an error occurs during parsing.
      */
@@ -133,10 +133,10 @@ public class ImportExportPlugin implements Plugin {
     }
     
     /**
-     * Returns whether or not the supplied FileItem matches the wildfire user schema 
+     * Returns whether or not the supplied FileItem matches the openfire user schema
      *
      * @param file a FileItem to be validated.
-     * @return True if FileItem matches the wildfire user schema.
+     * @return True if FileItem matches the openfire user schema.
      */
     public boolean validateImportFile(FileItem file) {
         try {
@@ -150,7 +150,7 @@ public class ImportExportPlugin implements Plugin {
     
     private Document exportUsers() {
         Document document = DocumentHelper.createDocument();
-        Element root = document.addElement("Wildfire");
+        Element root = document.addElement("Openfire");
 
         Collection<User> users = userManager.getUsers();
         for (User user : users) {

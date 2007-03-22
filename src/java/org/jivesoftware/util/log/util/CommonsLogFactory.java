@@ -16,7 +16,7 @@ import org.jivesoftware.util.Log;
 
 /**
  * A LogFactory implementation to override the default commons-logging behavior. All log
- * statements are written to the Wildfire logs. Info level logging is sent to debug.
+ * statements are written to the Openfire logs. Info level logging is sent to debug.
  */
 public class CommonsLogFactory extends LogFactory {
 

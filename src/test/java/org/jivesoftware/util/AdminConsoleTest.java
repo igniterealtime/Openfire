@@ -36,7 +36,7 @@ public class AdminConsoleTest extends TestCase {
     public void testGetGlobalProps() throws Exception {
         String name = AdminConsole.getAppName();
         String image = AdminConsole.getLogoImage();
-        assertEquals("Wildfire", name);
+        assertEquals("Openfire", name);
         assertEquals("images/header-title.gif", image);
     }
 

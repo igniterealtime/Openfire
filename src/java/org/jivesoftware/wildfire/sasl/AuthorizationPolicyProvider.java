@@ -16,7 +16,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 /**
  * Provider interface for authorization policy. Users that wish to integrate with
  * their own authorization system must implement this class and then register
- * the implementation with Wildfire in the <tt>wildfire.xml</tt>
+ * the implementation with Openfire in the <tt>openfire.xml</tt>
  * file. An entry in that file would look like the following:
  *
  * <pre>

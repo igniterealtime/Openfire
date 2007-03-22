@@ -77,7 +77,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         serverName = XMPPServer.getInstance().getServerInfo().getName();
                
         // Some clients, such as Miranda, are hard-coded to search specific fields,
-        // so we map those fields to the fields that Wildfire actually supports.
+        // so we map those fields to the fields that Openfire actually supports.
         fieldLookup.put("jid", "Username");
         fieldLookup.put("username", "Username");
         fieldLookup.put("first", "Name");
@@ -316,7 +316,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 
                 if (fieldLookup.containsKey(name)) {
                     //make best effort to map the fields submitted by   
-                    //the client to those that Wildfire can search
+                    //the client to those that Openfire can search
                     reverseFieldLookup.put(fieldLookup.get(name), name);
                     searchList.put(fieldLookup.get(name), element.getText());
                 }

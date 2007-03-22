@@ -13,7 +13,7 @@ package org.jivesoftware.wildfire.update;
 
 /**
  * An Update represents a component that needs to be updated. By component we can refer
- * to the Wildfire server itself or to any of the installed plugins.
+ * to the Openfire server itself or to any of the installed plugins.
  *
  * @author Gaston Dombiak
  */
@@ -21,7 +21,7 @@ public class Update {
 
     /**
      * Name of the component that is outdated. The name could be of the server
-     * (i.e. "Wildfire") or of installed plugins.
+     * (i.e. "Openfire") or of installed plugins.
      */
     private String componentName;
     /**
@@ -39,7 +39,7 @@ public class Update {
 
     /**
      * Flag that indicates if the plugin was downloaded. This flag only makes sense for
-     * plugins since we currently do not support download new wildfire releases.
+     * plugins since we currently do not support download new openfire releases.
      */
     private boolean downloaded;
 
@@ -52,7 +52,7 @@ public class Update {
 
     /**
      * Returns the name of the component that is outdated. When the server is the
-     * outdated component then a "Wildfire" will be returned. Otherwise, the name of
+     * outdated component then a "Openfire" will be returned. Otherwise, the name of
      * the outdated plugin is returned.
      *
      * @return the name of the component that is outdated.
@@ -91,7 +91,7 @@ public class Update {
     /**
      * Returns true if the plugin was downloaded. Once a plugin has been downloaded
      * it may take a couple of seconds to be installed. This flag only makes sense for
-     * plugins since we currently do not support download new wildfire releases.
+     * plugins since we currently do not support download new openfire releases.
      *
      * @return true if the plugin was downloaded.
      */
@@ -102,7 +102,7 @@ public class Update {
     /**
      * Sets if the plugin was downloaded. Once a plugin has been downloaded
      * it may take a couple of seconds to be installed. This flag only makes sense for
-     * plugins since we currently do not support download new wildfire releases.
+     * plugins since we currently do not support download new openfire releases.
      *
      * @param downloaded true if the plugin was downloaded.
      */

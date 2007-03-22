@@ -58,10 +58,14 @@ public class SessionManager extends BasicModule {
     private int conflictLimit;
 
     /**
-     * Counter of user sessions. A session is counted just after it was created and not
-     * after the user came available.
+     * Counter of user connections. A connection is counted just after it was created and not
+     * after the user became available.
      */
-    private final AtomicInteger usersSessionsCounter = new AtomicInteger(0);
+    private final AtomicInteger connectionsCounter = new AtomicInteger(0);
+    /**
+     * Counter of non-anonymous user sessions.
+     */
+    private final AtomicInteger userSessionsCounter = new AtomicInteger(0);
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
@@ -536,7 +540,7 @@ public class SessionManager extends BasicModule {
         // Add to pre-authenticated sessions.
         preAuthenticatedSessions.put(session.getAddress().getResource(), session);
         // Increment the counter of user sessions
-        usersSessionsCounter.incrementAndGet();
+        connectionsCounter.incrementAndGet();
         return session;
     }
 
@@ -552,7 +556,7 @@ public class SessionManager extends BasicModule {
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);
         preAuthenticatedSessions.put(session.getAddress().getResource(), session);
-        usersSessionsCounter.incrementAndGet();
+        connectionsCounter.incrementAndGet();
         return session;
     }
 
@@ -697,7 +701,10 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Add a new session to be managed.
+     * Add a new session to be managed. The session has been authenticated by
+     * a non-anonymous user.
+     *
+     * @param session the session that was authenticated.
      */
     public void addSession(ClientSession session) {
         String username = session.getAddress().getNode();
@@ -713,6 +720,8 @@ public class SessionManager extends BasicModule {
         }
         // Remove the pre-Authenticated session but remember to use the temporary ID as the key
         preAuthenticatedSessions.remove(session.getStreamID().toString());
+        // Increment counter of authenticated sessions
+        userSessionsCounter.incrementAndGet();
         // Fire session created event.
         SessionEventDispatcher
                 .dispatchEvent(session, SessionEventDispatcher.EventType.session_created);
@@ -1027,8 +1036,8 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Returns a list that contains all client sessions connected to the server. The list
-     * contains sessions of anonymous and non-anonymous users.
+     * Returns a list that contains all authenticated client sessions connected to the server.
+     * The list contains sessions of anonymous and non-anonymous users.
      *
      * @return a list that contains all client sessions connected to the server.
      */
@@ -1239,13 +1248,23 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Returns number of client sessions that are connected to the server. Anonymous users
-     * are included too.
+     * Returns number of client sessions that are connected to the server. Sessions that
+     * are authenticated and not authenticated will be included
      *
      * @return number of client sessions that are connected to the server.
      */
-    public int getSessionCount() {
-        return usersSessionsCounter.get();
+    public int getConnectionsCount() {
+        return connectionsCounter.get();
+    }
+
+    /**
+     * Returns number of client sessions that are authenticated with the server using a
+     * non-anoymous user.
+     *
+     * @return number of client sessions that are authenticated with the server using a non-anoymous user.
+     */
+    public int getUserSessionsCount() {
+        return userSessionsCounter.get();
     }
 
     /**
@@ -1271,7 +1290,7 @@ public class SessionManager extends BasicModule {
     /**
      * Returns the number of sessions for a user that are available. For the count
      * of all sessions for the user, including sessions that are just starting
-     * or closed, see {@see #getSessionCount(String)}.
+     * or closed, see {@see #getConnectionsCount(String)}.
      *
      * @param username the user.
      * @return number of available sessions for a user.
@@ -1304,6 +1323,12 @@ public class SessionManager extends BasicModule {
         return sessionCount;
     }
 
+    /**
+     * Returns the number of users that are authenticated with the server. For users
+     * that are connected from more than one resource the count will be one.
+     *
+     * @return the number of users that are authenticated with the server.
+     */
     public Collection<String> getSessionUsers() {
         return Collections.unmodifiableCollection(sessions.keySet());
     }
@@ -1412,6 +1437,8 @@ public class SessionManager extends BasicModule {
                 if (sessionMap != null) {
                     synchronized (username.intern()) {
                         auth_removed = sessionMap.removeSession(session);
+                        // Decrement number of authenticated sessions (of non-anonymous users)
+                        userSessionsCounter.decrementAndGet();
                     }
                     if (sessionMap.isEmpty()) {
                         sessions.remove(username);
@@ -1438,7 +1465,7 @@ public class SessionManager extends BasicModule {
         }
         if (auth_removed || preauth_removed) {
             // Decrement the counter of user sessions
-            usersSessionsCounter.decrementAndGet();
+            connectionsCounter.decrementAndGet();
             return true;
         }
         return false;
@@ -1448,7 +1475,6 @@ public class SessionManager extends BasicModule {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
         preAuthenticatedSessions.remove(session.getAddress().getResource());
-
         // Fire session event.
         SessionEventDispatcher.dispatchEvent(session,
                 SessionEventDispatcher.EventType.anonymous_session_created);

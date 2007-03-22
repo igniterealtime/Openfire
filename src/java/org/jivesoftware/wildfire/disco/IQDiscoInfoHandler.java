@@ -272,7 +272,7 @@ public class IQDiscoInfoHandler extends IQHandler {
                             Element identity = DocumentHelper.createElement("identity");
                             identity.addAttribute("category", "server");
                             identity.addAttribute("name", JiveGlobals.getProperty(
-                                    "xmpp.server.name", "Wildfire Server"));
+                                    "xmpp.server.name", "Openfire Server"));
                             identity.addAttribute("type", "im");
 
                             identities.add(identity);

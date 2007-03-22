@@ -3,7 +3,7 @@
  * $Revision: 3036 $
  * $Date: 2005-11-07 15:15:00 -0300 (Mon, 07 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -307,4 +307,18 @@ public interface MultiUserChatServer extends Component {
      * @return true if the MUC service is available.
      */
     boolean isServiceEnabled();
+
+    /**
+     * Registers a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    void addListener(MUCEventListener listener);
+
+    /**
+     * Unregisters a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    void removeListener(MUCEventListener listener);
 }

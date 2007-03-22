@@ -20,7 +20,7 @@ package org.jivesoftware.wildfire.sasl;
  * encouraged to extend either the AbstractAuthoriationPolicy
  * or the AbstractAuthorizationProvider classes which allow
  * the admin console manage the classes more effectively.
- * Register the class with Wildfire in the <tt>wildfire.xml</tt>
+ * Register the class with Openfire in the <tt>openfire.xml</tt>
  * file.  An entry in that file would look like the following:
  *
  * <pre>

@@ -114,7 +114,7 @@
         to = user.getEmail();
     }
     if (subject == null) {
-        subject = "Test email sent via Wildfire";
+        subject = "Test email sent via Openfire";
     }
     if (body == null) {
         body = "This is a test message.";

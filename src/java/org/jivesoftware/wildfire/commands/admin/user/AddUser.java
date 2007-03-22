@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Adds a user to Wildfire if the provider is not read-only. See
+ * Adds a user to Openfire if the provider is not read-only. See
  * <a href="http://www.xmpp.org/extensions/xep-0133.html#add-user">Service Administration:
  * Add User</a>
  *

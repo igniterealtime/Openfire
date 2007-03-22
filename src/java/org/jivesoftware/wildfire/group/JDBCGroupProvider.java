@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * The JDBC group provider allows you to use an external database to define the make up of groups.
  * It is best used with the JDBCAuthProvider to provide integration between your external system and
- * Wildfire.  All data is treated as read-only so any set operations will result in an exception.
+ * Openfire.  All data is treated as read-only so any set operations will result in an exception.
  *
  * To enable this provider, set the following in the XML configuration file:
  *

@@ -168,7 +168,7 @@ public class User implements Cacheable {
             this.name = name;
 
             // Fire event.
-            Map<String,String> params = new HashMap<String,String>();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -198,7 +198,7 @@ public class User implements Cacheable {
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
             // Fire event.
-            Map<String,String> params = new HashMap<String,String>();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "emailModified");
             params.put("originalValue", originalEmail);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,

@@ -217,7 +217,7 @@ public class RegistrationPlugin implements Plugin {
     }
 
     public String getWelcomeMessage() {
-        return JiveGlobals.getProperty(WELCOME_MSG, "Welcome to Wildfire!");
+        return JiveGlobals.getProperty(WELCOME_MSG, "Welcome to Openfire!");
     }
     
     public void setGroupEnabled(boolean enable) {
@@ -298,7 +298,7 @@ public class RegistrationPlugin implements Plugin {
             EmailService emailService = EmailService.getInstance();
             for (String toAddress : emailContacts) {
                try {
-                   emailService.sendMessage(null, toAddress, "Wildfire", "no_reply@" + serverName,
+                   emailService.sendMessage(null, toAddress, "Openfire", "no_reply@" + serverName,
                            subject, body, null);
                }
                catch (Exception e) {

@@ -43,8 +43,8 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
  * to plugins. Since plugins can be dynamically loaded and live in a different place
- * than normal Wildfire admin console files, it's not possible to have them
- * added to the normal Wildfire admin console web app directory.<p>
+ * than normal Openfire admin console files, it's not possible to have them
+ * added to the normal Openfire admin console web app directory.<p>
  * <p/>
  * The servlet listens for requests in the form <tt>/plugins/[pluginName]/[JSP File]</tt>
  * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for non JSP requests in the
@@ -498,13 +498,13 @@ public class PluginServlet extends HttpServlet {
             classpath.append(libFile.getAbsolutePath()).append(';');
         }
 
-        File wildfireRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
-        File wildfireLib = new File(wildfireRoot, "target//lib");
+        File openfireRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
+        File openfireLib = new File(openfireRoot, "target//lib");
 
-        classpath.append(wildfireLib.getAbsolutePath()).append("//servlet.jar;");
-        classpath.append(wildfireLib.getAbsolutePath()).append("//wildfire.jar;");
-        classpath.append(wildfireLib.getAbsolutePath()).append("//jasper-compiler.jar;");
-        classpath.append(wildfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//servlet.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//openfire.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//jasper-compiler.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
 
         if (pluginEnv.getClassesDir() != null) {
             classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");

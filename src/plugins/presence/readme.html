@@ -64,13 +64,13 @@ poll for presence information from a web service.
 
 <h2>Installation</h2>
 
-<p>Copy presence.jar into the plugins directory of your Wildfire installation. The
+<p>Copy presence.jar into the plugins directory of your Openfire installation. The
 plugin will then be automatically deployed. To upgrade to a new version, copy the new
 presence.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 
-The presence plugin can be configured via the Wildfire Admin Console.
+The presence plugin can be configured via the Openfire Admin Console.
 Use the configuration page to specify whether presence information should be available 
 to anyone or restricted to authorized users (users which have presence subscriptions).
 The status message for unavailable users can also be changed from the default of
@@ -178,8 +178,8 @@ custom images that should be used to display the user's presence:</p>
 
 <p><b>Working With Firewalls</b></p>
 
-<p>Because the presence plugin runs within the Wildfire admin console web container, users
-behind firewalls may have problems seeing the presence icons. For example, if the Wildfire
+<p>Because the presence plugin runs within the Openfire admin console web container, users
+behind firewalls may have problems seeing the presence icons. For example, if the Openfire
 admin console runs on the default port of 9090 and a user is only allowed to receive HTTP traffic
 on port 80, then a web request like the following won't work:</p>
 <ul>

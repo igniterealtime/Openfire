@@ -111,7 +111,7 @@ public class UserEventDispatcher {
      * @param eventType the event type.
      * @param params event parameters.
      */
-    public static void dispatchEvent(User user, EventType eventType, Map params) {
+    public static void dispatchEvent(User user, EventType eventType, Map<String,Object> params) {
         for (UserEventListener listener : listeners) {
             try {
                 switch (eventType) {

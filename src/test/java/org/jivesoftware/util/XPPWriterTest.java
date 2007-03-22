@@ -34,7 +34,7 @@ public class XPPWriterTest extends TestCase {
         // NOTE: disabling this test case until we get resources working again.
         /*
         try {
-            Document doc = XPPReader.parseDocument(new FileReader("../conf/wildfire.xml"),this.getClass());
+            Document doc = XPPReader.parseDocument(new FileReader("../conf/openfire.xml"),this.getClass());
             XPPWriter.write(doc, new FileWriter("../conf/xmpp_writer_test_copy.xml"));
         } catch (Exception e) {
             e.printStackTrace();

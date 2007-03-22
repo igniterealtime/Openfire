@@ -77,7 +77,7 @@ static bool wildfireIsRunning()
     }
 }
 
-static void toggleStartWildfireAtBoot()
+static void toggleStartOpenfireAtBoot()
 {
 	CFURLRef propFile = CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
 													  CFSTR("/Library/LaunchDaemons/org.jivesoftware.wildfire.plist"),
@@ -108,7 +108,7 @@ static void toggleStartWildfireAtBoot()
 	CFQRelease(propFile);
 }
 
-static void toggleWildfire()
+static void toggleOpenfire()
 {
 	char *args[4];
 	args[0] = "launchctl";
@@ -126,14 +126,14 @@ int main(int inArgsCount, char * const inArgs[])
 {
 	char* selfPath = NULL;
 	int err = GetPathToSelf(&selfPath);
-	const char* correctPath = "/Library/PreferencePanes/Wildfire.prefPane/Contents/MacOS/HelperTool";
+	const char* correctPath = "/Library/PreferencePanes/Openfire.prefPane/Contents/MacOS/HelperTool";
 	if(err == 0 && strncmp(correctPath, selfPath, strlen(correctPath)) == 0) {
 		setuid(0);
 
 		if(inArgs[1] && strlen(inArgs[1]) == strlen("boot") && strncmp("boot", inArgs[1], strlen("boot")) == 0) {
-			toggleStartWildfireAtBoot();
+			toggleStartOpenfireAtBoot();
 		} else {
-			toggleWildfire();
+			toggleOpenfire();
 		}
 	}
 	

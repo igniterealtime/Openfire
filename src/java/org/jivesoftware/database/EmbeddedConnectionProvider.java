@@ -65,7 +65,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
                 }
 
                 String serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() +
-                        File.separator + "wildfire";
+                        File.separator + "openfire";
                 String username = "sa";
                 String password = "";
                 int minConnections = 3;

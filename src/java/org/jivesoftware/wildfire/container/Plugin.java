@@ -14,12 +14,12 @@ package org.jivesoftware.wildfire.container;
 import java.io.File;
 
 /**
- * Plugin interface. Plugins enhance the functionality of Wildfire. They can:<ul>
+ * Plugin interface. Plugins enhance the functionality of Openfire. They can:<ul>
  *
  *      <li>Act as {@link org.xmpp.component.Component Components} to implement
  *      additional features in the XMPP protocol.
  *      <li>Dynamically modify the admin console.
- *      <li>Use the Wildfire API to add new functionality to the server.
+ *      <li>Use the Openfire API to add new functionality to the server.
  * </ul>
  *
  * Plugins live in the <tt>plugins</tt> directory of <tt>home</tt>. Plugins
@@ -53,7 +53,7 @@ import java.io.File;
  * with a parent plugin.<p/>
  *
  * Please see the Plugin Developer Guide (available with the
- * Wildfire documentation) for additional details about plugin development.
+ * Openfire documentation) for additional details about plugin development.
  *
  * @author Matt Tucker
  */
@@ -72,7 +72,7 @@ public interface Plugin {
      *
      * Implementations of this method must release all resources held
      * by the plugin such as file handles, database or network connections,
-     * and references to core Wildfire classes. In other words, a
+     * and references to core Openfire classes. In other words, a
      * garbage collection executed after this method is called must be able
      * to clean up all plugin classes.
      */

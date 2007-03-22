@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire: SSL Guide</title>
+<title>Openfire: SSL Guide</title>
 <link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,17 +24,17 @@
 <h2>Introduction</h2>
 <p>
 This document outlines how to <b>manually</b> customize the SSL support in
-Wildfire. As of Wildfire 3.2 certificate management can be performed from the
+Openfire. As of Openfire 3.2 certificate management can be performed from the
 Admin Console. However, if needed you can still manually manage certificates
 using JDK 1.5 tools.
 
 <font color="red"><b>Important note:</b></font>
-Once the setup process is completed Wildfire will create self-signed certificates
-for the assigned Wildfire's domain. Most users should either get the created
+Once the setup process is completed Openfire will create self-signed certificates
+for the assigned Openfire's domain. Most users should either get the created
 certificates signed by a Certificate Authority or replace the created certificates
 with your own certificates.</p>
 
-<p>Wildfire's SSL support is built using the standard Java security
+<p>Openfire's SSL support is built using the standard Java security
 SSL implementation (javax.net.ssl.SSLServerSocket). In this document, we will
 describe how use the standard JDK 1.5 tools to accomplish these tasks.
 </p>
@@ -94,11 +94,11 @@ record keeping, and costs).
 <h2>Sun JDK 1.5 security tools</h2>
 <p>
 The Sun JDK (version 1.5.x) ships with all the security tools you need
-to configure SSL with Wildfire. The most important is the
+to configure SSL with Openfire. The most important is the
 <tt>keytool</tt> located in the <tt>JAVA_HOME/bin directory</tt> of the
 JDK. Sun JVMs persist keystores and truststores on the filesystem as
 encrypted files. The <tt>keytool</tt> is used to create, read, update,
-and delete entries in these files. Wildfire ships with a self-signed
+and delete entries in these files. Openfire ships with a self-signed
 "dummy" certificate designed for initial evaluation testing. You will need
 to adjust the default configuration for most deployments.
 
@@ -108,9 +108,9 @@ In order to configure SSL on your server you need complete the
 following tasks:
 </p>
 <ol>
-  <li>Decide on your Wildfire server's domain.</li>
+  <li>Decide on your Openfire server's domain.</li>
   <li>Create a self-signed SSL server certificate for your server
-domain. Note: you may already have one if your Wildfire server
+domain. Note: you may already have one if your Openfire server
 domain matches an existing web domain with SSL.
 If so, you can skip to step 4.</li>
   <li>[Optional] Have a certificate authority (CA) certify the SSL
@@ -127,13 +127,13 @@ generated in step 2, the certificate is already imported and you can
 skip this step.</li>
   <li>Remove default certificates from the keystore.</li>
   <li>Import client certificates into the truststore.</li>
-  <li>Adjust the Wildfire configuration with proper keystore and
+  <li>Adjust the Openfire configuration with proper keystore and
 truststore settings.</li>
 
 </ol>
 <h3>1. Decide on a Server Domain</h3>
 <p>
-The Wildfire server domain should match the host name of the server;
+The Openfire server domain should match the host name of the server;
 for example, "example.com". Your user accounts will have addresses with
 the format "user@example.com" like email addresses. We'll assume
 the domain is "example.com" for the rest of the examples.
@@ -142,7 +142,7 @@ the domain is "example.com" for the rest of the examples.
 <p>
 In order to create a self-signed server certificate go to the command
 line and change directories to the <tt>resources/security</tt>
-directory of your Wildfire installation. You should see the default
+directory of your Openfire installation. You should see the default
 <tt>keystore</tt> and <tt>truststore</tt> files. First, you should
 change the default keystore
 password:
@@ -222,9 +222,9 @@ Now import each certificate using the keytool:
 </p>
 <p><tt>keytool -import -keystore truststore -alias user_name -file
 certificate_file</tt></p>
-<h3>7. Configure Wildfire</h3>
+<h3>7. Configure Openfire</h3>
 <p>
-Open the Wildfire Admin Console in your favorite
+Open the Openfire Admin Console in your favorite
 browser and add or change the following system properties:
 </p>
 <ul>
@@ -233,16 +233,16 @@ browser and add or change the following system properties:
 5223 for XMPP)</li>
   <li>xmpp.socket.ssl.storeType -- the store type used ("JKS" is
 the Sun Java Keystore format used by the JDK keytool). If this property is 
-not defined, Wildfire will assume a value of "jks".</li>
+not defined, Openfire will assume a value of "jks".</li>
 
   <li>xmpp.socket.ssl.keystore -- the location of the keystore file
-relative to your Wildfire installation root directory. You can leave this property
+relative to your Openfire installation root directory. You can leave this property
 blank to use the default keystore.</li>
   <li>xmpp.socket.ssl.keypass -- the keystore/key password you
 changed in step 2.</li>
   <li>xmpp.socket.ssl.truststore -- leave blank to not use a
 truststore, otherwise the location of the truststore file relative to
-your Wildfire installation root directory.</li>
+your Openfire installation root directory.</li>
   <li>xmpp.socket.ssl.trustpass -- the truststore/key password you
 changed in step 6.</li>
 </ul>

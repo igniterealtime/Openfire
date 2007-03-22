@@ -6,9 +6,9 @@
 <taglib>
 	<tlibversion>1.0</tlibversion>
 	<jspversion>1.1</jspversion>
-	<shortname>Tag Library for Wildfire 2.0</shortname>
+	<shortname>Tag Library for Openfire 2.0</shortname>
 	<uri>http://www.igniterealtime.org/</uri>
-	<info>Tab Library for Wildfire Admin Console</info>
+	<info>Tab Library for Openfire Admin Console</info>
 	<tag>
 		<name>tabs</name>
 		<tagclass>org.jivesoftware.admin.TabsTag</tagclass>

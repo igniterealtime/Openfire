@@ -17,7 +17,7 @@
 <p>
 
 The import and export functions allow you to read data into and write user
-data from your Wildfire installation.
+data from your Openfire installation.
 
 <ul>
     <li><a href="import-user-data.jsp">Import User Data</a></li>

@@ -59,7 +59,7 @@ User Service Plugin Readme
 <p>
 The User Service Plugin provides the ability to add,edit,delete users by sending an http request to the server.
 It is intended to be used by applications automating the user administration process. 
-This plugin's functionality is useful for applications that need to administer users outside of the Wildfire admin console.
+This plugin's functionality is useful for applications that need to administer users outside of the Openfire admin console.
 An example of such an application might be a live sports reporting application that uses XMPP as its transport, and
 creates/deletes users according to the receipt, or non receipt, of a subscription fee.
 
@@ -67,16 +67,16 @@ creates/deletes users according to the receipt, or non receipt, of a subscriptio
 
 <h2>Installation</h2>
 
-<p>Copy userservice.jar into the plugins directory of your Wildfire server. The
+<p>Copy userservice.jar into the plugins directory of your Openfire server. The
 plugin will then be automatically deployed. To upgrade to a new version, copy the new
 userservice.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 
-Access to the service is restricted with a "secret" that can be viewed and set from the User Service page in the Wildfire admin console
-This should really only be considered weak security. The plugin was initially written with the assumption that http access to the Wildfire service was
+Access to the service is restricted with a "secret" that can be viewed and set from the User Service page in the Openfire admin console
+This should really only be considered weak security. The plugin was initially written with the assumption that http access to the Openfire service was
 only available to trusted machines. In the case of the plugin's author, a web application running on the same server as 
-Wildfire makes the request.
+Openfire makes the request.
 
 <h2>Using the Plugin</h2>
 

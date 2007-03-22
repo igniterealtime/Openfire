@@ -204,8 +204,12 @@ public class MUCRoleImpl implements MUCRole {
     }
 
     public void changeNickname(String nickname) {
+        String oldNickname = this.nick;
         this.nick = nickname;
         setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nick));
+        // Fire event that user changed his nickname
+        ((MultiUserChatServerImpl) server)
+                .fireNicknameChanged(room.getRole().getRoleAddress(), user.getAddress(), oldNickname, nickname);
     }
 
     public MUCUser getChatUser() {

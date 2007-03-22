@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire: Database Installation Guide</title>
+<title>Openfire: Database Installation Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -21,13 +21,13 @@
 	
 	<div id="pageBody">
 
-<p>Wildfire stores all data in a back-end database. If you choose to not use the embedded
+<p>Openfire stores all data in a back-end database. If you choose to not use the embedded
 database, you must setup and manage an external database for the application.
 This document provides setup instructions for all of the currently supported databases.
 </p>
 <p>
-JDBC 2.0 drivers are required for Wildfire to communicate with your database. Suggested
-drivers for particular databases are noted below where applicable. Wildfire bundles JDBC
+JDBC 2.0 drivers are required for Openfire to communicate with your database. Suggested
+drivers for particular databases are noted below where applicable. Openfire bundles JDBC
 drivers for MySQL, Postgres, Microsoft SQL Server, and HSQLDB.
 </p>
 <p>
@@ -37,7 +37,7 @@ http://industry.java.sun.com/products/jdbc/drivers</a>.</p>
 
 <p>
 All database schemas can be found in the <tt>resources/database</tt> directory of the
-Wildfire installation.
+Openfire installation.
 </p>
 
 <p>Note that additional databases besides the ones in this list may be supported.
@@ -60,11 +60,11 @@ Choose your database from the list below for setup details:
 <ul>
 	<b>JDBC Drivers</b><p>
 
-	The JDBC driver for MySQL is bundled with Wildfire, so you do not need
+	The JDBC driver for MySQL is bundled with Openfire, so you do not need
     to download and install a separate driver.
     
 	<p>
-	In the Wildfire setup tool, use the following values:<p><ul>
+	In the Openfire setup tool, use the following values:<p><ul>
 		<li>driver: <tt>com.mysql.jdbc.Driver</tt>
 		<li>server: <tt>jdbc:mysql://[YOUR_HOST]/[DATABASE_NAME]</tt>
 	</ul><p>
@@ -76,23 +76,23 @@ Choose your database from the list below for setup details:
 	<p><b>Setup Instructions</b><p>
 	<ol>
 		<li>Make sure that you are using MySQL 4.1.18 or later (5.x recommended) <a href="#note1">&sup1;</a>.
-		<li>Create a database for the Wildfire tables:<br>
+		<li>Create a database for the Openfire tables:<br>
 	    <code>mysqladmin create [databaseName]</code><br>
-	    (note: "databaseName" can be something like 'wildfire')
+	    (note: "databaseName" can be something like 'openfire')
 
 	    <li>Import the schema file from the <tt>resources/database</tt> directory of the installation folder:<br>
-	    Unix/Linux: <code>cat wildfire_mysql.sql | mysql [databaseName];</code>
+	    Unix/Linux: <code>cat openfire_mysql.sql | mysql [databaseName];</code>
 		<br>   
-        Windows: <code>type wildfire_mysql.sql | mysql [databaseName];</code>
+        Windows: <code>type openfire_mysql.sql | mysql [databaseName];</code>
 		
-		<li>Start the Wildfire setup tool, and use the appropriate JDBC connection
+		<li>Start the Openfire setup tool, and use the appropriate JDBC connection
 			settings.
 	</ol>
 
     <p><a name="note1">&sup1;</a> Character fields larger than 255 are not supported by versions prior
     to MySQL 4.1.18. If you cannot upgrade MySQL to the latest version, you will then need to change the
     database scripts. In particular, replace VARCHAR(1024) with VARCHAR(255) in the 
-    resources/database/wildfire_mysql.sql script.</p>
+    resources/database/openfire_mysql.sql script.</p>
 	
     <p><b>Character Encoding Issues</b><p>
     
@@ -100,7 +100,7 @@ Choose your database from the list below for setup details:
     in non-Western languages difficult. However, the MySQL JDBC driver has a workaround
     which can be enabled by adding 
     <tt>&lt;mysql&gt;&lt;useUnicode&gt;true&lt;/useUnicode&gt;&lt;/mysql&gt;</tt>
-    to the <tt>&lt;database&gt;</tt> section of your <tt>wildfire.xml</tt> file.
+    to the <tt>&lt;database&gt;</tt> section of your <tt>openfire.xml</tt> file.
     When using this setting, you should also set the Jive character encoding
     to utf-8 in the admin tool.
 	
@@ -121,11 +121,11 @@ Choose your database from the list below for setup details:
 	The Oracle 9i or 10g "thin" drivers are recommended and can be downloaded from 
     <a href="http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/index.html">Oracle's website</a>. 
      
-    Various versions of the thin drivers are avaialble, but the "ojdbc14.jar" driver is recommended for use with Wildfire.
-    Copy the JDBC driver to the <tt>lib/</tt> directory of your Wildfire installation.
+    Various versions of the thin drivers are avaialble, but the "ojdbc14.jar" driver is recommended for use with Openfire.
+    Copy the JDBC driver to the <tt>lib/</tt> directory of your Openfire installation.
     
 	<p>
-	In the Wildfire web-based setup tool, use the following values:<p>
+	In the Openfire web-based setup tool, use the following values:<p>
     
     <ul>
 		<li>driver: <tt>oracle.jdbc.driver.OracleDriver</tt>
@@ -144,10 +144,10 @@ Choose your database from the list below for setup details:
 	<p>
 	Next import the schema from the <tt>resources/database</tt> directory of the installation
     using sqlplus (or your favorite Oracle tool such
-	as Toad). For sqlplus: copy the "wildfire_oracle.sql" file to the same
+	as Toad). For sqlplus: copy the "openfire_oracle.sql" file to the same
 	directory where sqlplus is installed (should be something like 
 	/Oracle/Ora81/bin/). Next, log into sqlplus and then execute the command:<br>
-		<code>@ wildfire_oracle</code><br>
+		<code>@ openfire_oracle</code><br>
 	That will import the schema file. Your database is now setup.</p>
 </ul>
 
@@ -157,9 +157,9 @@ Choose your database from the list below for setup details:
     <p><b>SQL Server</b></p>
     <b>JDBC Drivers</b><p>
 
-    Wildfire includes the <a href="http://www.freetds.org/">Free TDS</a> JDBC driver, which
+    Openfire includes the <a href="http://www.freetds.org/">Free TDS</a> JDBC driver, which
     is the recommended way to connect to SQL Server databases. To
-    connect to SQL Server, simply use the following values in the Wildfire
+    connect to SQL Server, simply use the following values in the Openfire
     web-based setup tool:<p>
 
     	<ul>
@@ -180,12 +180,12 @@ Choose your database from the list below for setup details:
 			like to use. Consider making the default database for the user be the
 			one you created in step 1.
 		<li>Open the Query Analyser and connect to the server.
-		<li>Select the database you want to use for Wildfire
+		<li>Select the database you want to use for Openfire
 		    from the DB drop down (the one you created in step 1 if you're using a new database).
-		<li>Open the wildfire_sqlserver.sql file.
+		<li>Open the openfire_sqlserver.sql file.
 		<li>Press F5 to run the script. The script will run and create the
 			necessary tables.
-		<li>Proceed to the Wildfire setup tool and use the appropriate JDBC settings
+		<li>Proceed to the Openfire setup tool and use the appropriate JDBC settings
 			when prompted.
    </ol>
 </ul>     
@@ -195,10 +195,10 @@ Choose your database from the list below for setup details:
 <ul>
 	<b>JDBC Drivers</b>
 	<p>
-	The JDBC driver for Postgres is bundled with Wildfire, so you do not need
+	The JDBC driver for Postgres is bundled with Openfire, so you do not need
     to download and install a separate driver.
     <p>
-	In the Wildfire web-based setup tool, use the following values:<p><ul>
+	In the Openfire web-based setup tool, use the following values:<p><ul>
 		<li>driver -- <tt>org.postgresql.Driver</tt>
 		<li>server -- <tt>jdbc:postgresql://[HOST_NAME]:[PORT_NUMBER]/dbname</tt>
 	</ul><p>
@@ -212,13 +212,13 @@ Choose your database from the list below for setup details:
 	  <li>Create the database. For example, using the 
 	  	PostgreSQL <code>&quot;createdb&quot;</code> utility:
 	  	<br>
-	  	<code>createdb -E UNICODE wildfire</code>
+	  	<code>createdb -E UNICODE openfire</code>
 	  <li>Import the schema from the <tt>resources/database</tt> directory of the installation.
         Use psql (or your favorite Postgres sql 
-	  	utility) to import the Wildfire database schema:
+	  	utility) to import the Openfire database schema:
 	  	<br>
-	  	<code>psql -d wildfire -f wildfire_postgresql.sql</code>
-	  <li>Proceed to Wildfire setup and use the appropriate JDBC settings when
+	  	<code>psql -d openfire -f openfire_postgresql.sql</code>
+	  <li>Proceed to Openfire setup and use the appropriate JDBC settings when
 	  	prompted.	  
 	</ol>
 </ul>
@@ -229,7 +229,7 @@ Choose your database from the list below for setup details:
 	<p>
 	Use the JDBC 1.2 compliant driver, db2java.zip (1293KB),
 	located in the <nobr>"%DB2PATH%\java2"</nobr> directory. Copy the JDBC driver to the <tt>lib/</tt>
-    directory of your Wildfire installation.
+    directory of your Openfire installation.
 	<p>
 	Values for the config file are:
 	<ul>
@@ -257,7 +257,7 @@ Choose your database from the list below for setup details:
 	Start the DB2 command window (in Windows), or the user's shell in 
 	Unix and import the schema in the <tt>resources/database</tt> directory of the
     installation with:<p>
-		<code>db2 -tvf wildfire_db2.sql</code>
+		<code>db2 -tvf openfire_db2.sql</code>
 	<p>
 	Or, use the DB2 Command Center and run the script
 	through the "Replication Sources" folder in the Database tree.
@@ -271,14 +271,14 @@ Choose your database from the list below for setup details:
 
     <b>Special Note</b>
     <p>
-    Wildfire bundles hsqldb as its embedded database. If you choose to use the embedded database,
-    it can be configured via the Wildfire installer. If you have a stand-alone installation
+    Openfire bundles hsqldb as its embedded database. If you choose to use the embedded database,
+    it can be configured via the Openfire installer. If you have a stand-alone installation
     of HSQLDB, follow the instructions below to connect to it.
     </p>
 
 	<b>JDBC Drivers</b>
 	<p>
-	Because hsqldb is embedded in Wildfire, there is no need to download the
+	Because hsqldb is embedded in Openfire, there is no need to download the
     JDBC driver separately. Values for the config file are:
 	<ul>
 		<li>driver: <code>org.hsqldb.jdbcDriver</code>
@@ -289,7 +289,7 @@ Choose your database from the list below for setup details:
 	<p>
 	<b>Setup Instructions</b>
 	<p>
-	Create a database for the Wildfire tables. This assumes you have HSQLDB installed
+	Create a database for the Openfire tables. This assumes you have HSQLDB installed
     in its own directory and working correctly.
 	<ol>
 		<li>
@@ -303,7 +303,7 @@ Choose your database from the list below for setup details:
 	        <p>
 		</ul>
 	    then hit enter. You will now see a GUI application. Note, you will not see a hsqldb.jar
-	    in the Wildfire distribution - this is referring to the hsqldb.jar from the HSQLDB
+	    in the Openfire distribution - this is referring to the hsqldb.jar from the HSQLDB
 	    distribution.
 	
 		<li>
@@ -311,7 +311,7 @@ Choose your database from the list below for setup details:
 	    as the Driver, and specify the URL of your database in
 	    the URL field. The default password is already entered.
 	
-	    <li>Now copy and paste the contents of <tt>wildfire_hsql.sql</tt> from
+	    <li>Now copy and paste the contents of <tt>openfire_hsql.sql</tt> from
         the <tt>resources/database</tt> directory of the installation into the
 	    command window, and hit execute.  If no errors are
 	    reported, then your database is setup properly.
@@ -319,7 +319,7 @@ Choose your database from the list below for setup details:
 	    <li>Finally, you should change the username and password login for your
 		database: just open the .script file in your
 	    database folder and change the appropriate values. Make sure that you
-		don't use a blank password, as Wildfire will not accept
+		don't use a blank password, as Openfire will not accept
 		one.
 	</ol>
 </ul>

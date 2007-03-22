@@ -32,7 +32,8 @@ public class GetNumberUserSessions extends AdHocCommand {
         field = form.addField();
         field.setLabel(getLabel());
         field.setVariable("onlineuserssessionsnum");
-        field.addValue(SessionManager.getInstance().getSessionCount());
+        SessionManager sessionManager = SessionManager.getInstance();
+        field.addValue(sessionManager.getUserSessionsCount() + sessionManager.getAnonymousSessionCount());
 
         command.add(form.getElement());
     }

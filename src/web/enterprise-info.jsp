@@ -62,7 +62,7 @@
 
 <html>
 <head>
-<title>Try Wildfire Enterprise</title>
+<title>Try Openfire Enterprise</title>
 <meta name="pageID" content="enterprise-info"/>
 
 <script src="dwr/engine.js" type="text/javascript"></script>
@@ -229,12 +229,12 @@
 
 <span class="jive-enterprise-info">
 
-    <img src="images/enterprise.png" alt="Wildfire Enterprise" hspace="10" vspace="10" width="200" height="197" border="0" align="right" />
+    <img src="images/enterprise.png" alt="Openfire Enterprise" hspace="10" vspace="10" width="200" height="197" border="0" align="right" />
 
     <h3>What is it?</h3>
 
     <ul>
-        <li>A commercial extension to Wildfire that provides practical and valuable features.</li>
+        <li>A commercial extension to Openfire that provides practical and valuable features.</li>
         <li>Delivered as a plugin that works with the Open Source edition.</li>
         <li>Low per-user pricing.</li>
     </ul>
@@ -293,7 +293,7 @@
         ByteFormat byteFormat = new ByteFormat();
         String fileSize = byteFormat.format(plugin.getFileSize());
 
-        if (!plugin.isCommercial() || !pluginName.equals("Wildfire Enterprise")) {
+        if (!plugin.isCommercial() || !pluginName.equals("Openfire Enterprise")) {
             continue;
         }
 %>

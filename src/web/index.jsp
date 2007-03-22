@@ -179,7 +179,7 @@
         </td>
         <td class="c2">
             <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
-            <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />">&nbsp;
+            <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" text="<fmt:message key="index.certificate-warning" />">&nbsp;
             <% } %>
             ${webManager.serverInfo.name}
         </td>

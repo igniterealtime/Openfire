@@ -26,7 +26,7 @@ import java.util.Enumeration;
 /**
  * Provider for authorization using LDAP. Checks if the authenticated 
  * principal is in the user's LDAP object using the authorizeField 
- * from the <tt>wildfire.xml</tt> file. An entry in that file would 
+ * from the <tt>openfire.xml</tt> file. An entry in that file would
  * look like the following:
  *
  * <pre>

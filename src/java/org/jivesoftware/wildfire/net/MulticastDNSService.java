@@ -24,9 +24,9 @@ import java.util.Map;
 import java.util.TimerTask;
 
 /**
- * Publishes Wildfire information as a service using the Multicast DNS (marketed by Apple
+ * Publishes Openfire information as a service using the Multicast DNS (marketed by Apple
  * as Rendezvous) protocol. This lets other nodes on the local network to discover
- * the name and port of Wildfire.<p>
+ * the name and port of Openfire.<p>
  *
  * The multicast DNS entries published:<ul>
  *  <li>Client connections: type of "_xmpp-client._tcp.local.".

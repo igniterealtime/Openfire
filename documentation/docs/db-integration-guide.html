@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire: Custom Database Integration Guide</title>
+<title>Openfire: Custom Database Integration Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -24,16 +24,16 @@
 <h2>Introduction</h2>
 
 <p>
-    This document provides instructions for integrating Wildfire authentication, users, and
+    This document provides instructions for integrating Openfire authentication, users, and
     groups with your custom database tables. This is useful when your users already have
-    accounts in an external system and you do not wish to duplicate those accounts in Wildfire.
+    accounts in an external system and you do not wish to duplicate those accounts in Openfire.
     If your user information is available via an LDAP directory rather than custom database
     tables, see the <a href="ldap-guide.html">LDAP guide</a>.
 </p>
 <p>
     Simple integration with a custom database lets users authenticate using their existing
-    username and password. Optionally, you can configure Wildfire to load user profile and
-    group information from your custom database. Any group in Wildfire can be designated
+    username and password. Optionally, you can configure Openfire to load user profile and
+    group information from your custom database. Any group in Openfire can be designated
     as a shared group, which means that you can pre-populate user's rosters using groups.
 </p>
 
@@ -42,7 +42,7 @@
 <p>
     The integration requires that you enter customized database queries to access your
     database. You'll need to be familiar with your database table structure and simple SQL.
-    Your custom database can be a different database on a different server from the Wildfire
+    Your custom database can be a different database on a different server from the Openfire
     database -- you'll enter database connection information as part of the configuration.
 </p>
 
@@ -51,11 +51,11 @@
 <p>
     In order to configure your server to integrate with your custom database tables:
     <ol>
-        <li>Stop Wildfire.</li>
-        <li>Edit <tt>conf/wildfire.xml</tt> in your Wildfire installation folder as
+        <li>Stop Openfire.</li>
+        <li>Edit <tt>conf/openfire.xml</tt> in your Openfire installation folder as
             described below using your favorite editor.
         </li>
-        <li>Restart Wildfire.</li>
+        <li>Restart Openfire.</li>
     </ol>
 
 </p>
@@ -67,8 +67,8 @@
 </p>
 <ul>
     <li>jdbcProvider.driver -- the class name of the JDBC driver used to connect to your
-        custom database. The driver must also be in the Wildfire classpath (for example, by
-        placing it into the "lib/" directory of your Wildfire installation. See the
+        custom database. The driver must also be in the Openfire classpath (for example, by
+        placing it into the "lib/" directory of your Openfire installation. See the
         <a href="database.html">database guide</a> for common driver names for major databases.
     </li>
     <li>jdbcProvider.connectionString -- the full connection string for the database. Please
@@ -150,7 +150,7 @@
 
 <h3>User Integration</h3>
 
-<p>Optionally, Wildfire can load user data from your custom database. If you enable user integration
+<p>Optionally, Openfire can load user data from your custom database. If you enable user integration
 you must also enable authentication integration (see above). Use the following settings to
 enable user integration.</p>
 
@@ -204,7 +204,7 @@ enable user integration.</p>
 
 <h3>Group Integration</h3>
 
-<p>Wildfire can load group data from your custom database. If you enable group integration
+<p>Openfire can load group data from your custom database. If you enable group integration
 you must also enable authentication integration; you'll also likely want to enable user
 integration (see above). Use the following settings to enable group integration.</p>
 

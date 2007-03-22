@@ -57,7 +57,7 @@ public class IRCSession extends TransportSession {
         password = (password == null || password.equals("")) ? null : password;
         String nickname = registration.getNickname();
 
-        conn = new IRCConnection(server, ports, password, nickname, username, "Wildfire User");
+        conn = new IRCConnection(server, ports, password, nickname, username, "Openfire User");
         conn.setPong(true);
         conn.setDaemon(false);
         conn.setColors(false);

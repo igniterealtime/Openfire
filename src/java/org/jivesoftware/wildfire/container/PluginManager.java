@@ -216,7 +216,7 @@ public class PluginManager {
                 saxReader.setEncoding("UTF-8");
                 Document pluginXML = saxReader.read(pluginConfig);
 
-                // See if the plugin specifies a version of Wildfire
+                // See if the plugin specifies a version of Openfire
                 // required to run.
                 Element minServerVersion = (Element)pluginXML.selectSingleNode("/plugin/minServerVersion");
                 if (minServerVersion != null) {
@@ -520,7 +520,7 @@ public class PluginManager {
         // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
         // in the destroy plugin process will disrupt the whole unloading process. It's still
         // possible that classloader destruction won't work in the case that destroying the plugin
-        // fails. In that case, Wildfire may need to be restarted to fully cleanup the plugin
+        // fails. In that case, Openfire may need to be restarted to fully cleanup the plugin
         // resources.
         try {
             plugin.destroyPlugin();
@@ -1007,7 +1007,7 @@ public class PluginManager {
                     String jarName = packedFile.getName().substring(0,
                             packedFile.getName().length() - ".pack".length());
                     // Delete JAR file with same name if it exists (could be due to upgrade
-                    // from old Wildfire release).
+                    // from old Openfire release).
                     File jarFile = new File(libDir, jarName);
                     if (jarFile.exists()) {
                         jarFile.delete();

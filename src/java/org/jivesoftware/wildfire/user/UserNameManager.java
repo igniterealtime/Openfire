@@ -75,6 +75,23 @@ public class UserNameManager {
      *         found for that jid.
      */
     public static String getUserName(JID entity) throws UserNotFoundException {
+        return getUserName(entity, entity.toString());
+    }
+
+    /**
+     * Returns the name of the XMPP entity. If the entity is a local user then the User's name
+     * will be returned. However, if the user is not a local user then check if there exists a
+     * UserNameProvider that provides name for the specified domain. If none was found then
+     * the vCard of the entity might be requested and if none was found then a string
+     * representation of the entity's JID will be returned.
+     *
+     * @param entity the JID of the entity to get its name.
+     * @param defaultName default name to return when no name was found.
+     * @return the name of the XMPP entity.
+     * @throws UserNotFoundException if the jid belongs to the local server but no user was
+     *         found for that jid.
+     */
+    public static String getUserName(JID entity, String defaultName) throws UserNotFoundException {
         if (server.isLocal(entity)) {
             // Contact is a local entity so search for his user name
             User localUser = UserManager.getInstance().getUser(entity.getNode());
@@ -90,7 +107,7 @@ public class UserNameManager {
             // TODO high traffic.
 
             // Return the jid itself as the username
-            return entity.toString();
+            return defaultName;
         }
     }
 }

@@ -21,7 +21,7 @@ package org.jivesoftware.wildfire.sasl;
  * Users that wish to integrate with their own authorization 
  * system must extend this class and implement the 
  * AuthorizationProvider interface then register the class
- * with Wildfire in the <tt>wildfire.xml</tt> file. An entry 
+ * with Openfire in the <tt>openfire.xml</tt> file. An entry
  * in that file would look like the following:
  *
  * <pre>

@@ -21,7 +21,7 @@ import java.util.jar.JarOutputStream;
  * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.
  *
- * This class should be for standalone mode only. Wildfire servers launched
+ * This class should be for standalone mode only. Openfire servers launched
  * through a J2EE container (servlet/EJB) will use those environment's
  * classloading facilities to ensure proper startup.<p>
  *
@@ -33,7 +33,7 @@ import java.util.jar.JarOutputStream;
  * </ul>
  *
  * Note: if the enviroment property <tt>wildfire.lib.directory</tt> is specified
- * ServerStarter will attempt to use this value as the value for wildfire's lib
+ * ServerStarter will attempt to use this value as the value for openfire's lib
  * directory. If the property is not specified the default value of ../lib will be used.
  *
  * @author Iain Shigeoka
@@ -141,7 +141,7 @@ public class ServerStarter {
                 String jarName = packedFile.getName().substring(0,
                         packedFile.getName().length() - ".pack".length());
                 // Delete JAR file with same name if it exists (could be due to upgrade
-                // from old Wildfire release).
+                // from old Openfire release).
                 File jarFile = new File(libDir, jarName);
                 if (jarFile.exists()) {
                     jarFile.delete();

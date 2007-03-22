@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire: Plugin Developer Guide</title>
+<title>Openfire: Plugin Developer Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -13,7 +13,7 @@
 
 	<div id="pageHeader">
 		<div id="logo"></div>
-		<h1>Wildfire Plugin Developer Guide</h1>
+		<h1>Openfire Plugin Developer Guide</h1>
 	</div>
 	<div class="navigation">
 		<a href="index.html">&laquo; Back to documentation index</a>
@@ -25,14 +25,14 @@
 <h2>Introduction</h2>
 
 <p>
-Plugins enhance the functionality of Wildfire. This document is a
+Plugins enhance the functionality of Openfire. This document is a
 developer's guide for creating plugins.
 </p>
 
 <h2>Structure of a Plugin</h2>
 
 <p>
-Plugins live in the <tt>plugins</tt> directory of <tt>wildfireHome</tt>. When a plugin
+Plugins live in the <tt>plugins</tt> directory of <tt>openfireHome</tt>. When a plugin
 is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
 plugin directory are as follows:
 
@@ -60,7 +60,7 @@ plugin directory are as follows:
 </fieldset>
 
 <p>The <tt>web</tt> directory exists for plugins that need to add content
-to the Wildfire Admin Console. Further details are below.</p>
+to the Openfire Admin Console. Further details are below.</p>
 
 <p>
 The <tt>plugin.xml</tt> file specifies the main Plugin class. A sample
@@ -106,8 +106,8 @@ file might look like the following:
           as 07/01/2006.</li>
 
     <li>url -- a URL where additional information about the plugin is available.</li>
-    <li>minServerVersion -- the minimum version of Wildfire required
-          to run the plugin (supported by Wildfire 2.1.2 and later). If the
+    <li>minServerVersion -- the minimum version of Openfire required
+          to run the plugin (supported by Openfire 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
     <li>databaseKey -- if the plugin requires it's own database tables, the databaseKey element should
             be set with a schema key name (often the same name as the plugin). Database
@@ -159,7 +159,7 @@ end-users (all placed in the main plugin directory):
 
 <p>Your plugin class must be implement the
 <tt><a href="javadoc/org/jivesoftware/wildfire/container/Plugin.html">Plugin</a></tt>
-interface from the <a href="javadoc/index.html">Wildfire API</a> as
+interface from the <a href="javadoc/index.html">Openfire API</a> as
 well as have a default (no argument) contructor. The Plugin interface has
 methods for initializing and destroying the plugin.
 </p>
@@ -175,7 +175,7 @@ import org.jivesoftware.wildfire.container.PluginManager;
 import java.io.File;
 
 /**
- * A sample plugin for Wildfire.
+ * A sample plugin for Openfire.
  */
 public class ExamplePlugin implements Plugin {
 
@@ -204,7 +204,7 @@ are a several steps to accomplishing this:
     <li>JSP files must be compiled and put into the classpath of the
         plugin. A <tt>web.xml</tt> file containing the compiled JSP
         servlet entries must be put into the <tt>web/</tt> directory
-        of the plugin. <i>Note:</i> the Wildfire build script
+        of the plugin. <i>Note:</i> the Openfire build script
         can assist with compiling JSPs and creating the web.xml. This
         is detailed below.
     </li>
@@ -253,7 +253,7 @@ the existing id attribute values in your own <tt>&lt;adminconsole&gt;</tt> defin
 <h3>Admin Console Best Practices</h3>
 
 There are several best practices to consider when making changes to
-the Wildfire admin console via a plugin. The general theme is
+the Openfire admin console via a plugin. The general theme is
 that plugins should integrate seamlessly:
 
 <ul>
@@ -266,7 +266,7 @@ that plugins should integrate seamlessly:
 		<li>Try to match the UI of the existing admin console in your custom
 		    plugin pages.
 		<li>There is no need to create an admin console entry to show plugin
-	        meta-data. Instead, let Wildfire inform the user about which
+	        meta-data. Instead, let Openfire inform the user about which
             plugins are installed and provide plugin management.
 </ul>
 
@@ -274,7 +274,7 @@ that plugins should integrate seamlessly:
 
 <p>
 
-Wildfire uses the <a href="http://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
+Openfire uses the <a href="http://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
 framework to decorate pages in the admin console. A globally-defined decorator is applied to
 each page in order to render the final output, as in the following diagram:</p>
 <br>
@@ -345,10 +345,10 @@ procedure:
     <tt>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</tt>
 </ul>
 </p>
-<h2>Using the Wildfire Build Script</h2>
+<h2>Using the Openfire Build Script</h2>
 
 <p>
-The Wildfire build script will help you build and develop plugins. It
+The Openfire build script will help you build and develop plugins. It
 looks for plugin development directories in the following format:
 </p>
 
@@ -394,7 +394,7 @@ process.</p>
 
 <h2>Implementing Your Plugin</h2>
 
-<p>Plugins have full access to the Wildfire API. This provides a tremendous
+<p>Plugins have full access to the Openfire API. This provides a tremendous
 amount of flexibility for what plugins can accomplish. However, there are several integration
 points that are the most common:
 
@@ -420,7 +420,7 @@ points that are the most common:
     PacketInterceptor</a> to receive all packets being sent through the system and
     optionally reject them. For example, an interceptor could reject all messages that contained
     profanity or flag them for review by an administrator.</li>
-    <li>You can store persistent plugin settings as Wildfire properties using the
+    <li>You can store persistent plugin settings as Openfire properties using the
     JiveGlobals.getProperty(String) and JiveGlobals.setProperty(String, String) methods. Make
     your plugin a property listener to listen for changes to its properties by implementing the
     <tt>org.jivesoftware.util.PropertyEventListener</tt> method.
@@ -436,16 +436,16 @@ points that are the most common:
 
 <b>Can I deploy a plugin as a directory instead of a JAR?</b>
 <p>No, all plugins must be deployed as JAR or WAR files. When a JAR or WAR is not present for the plugin,
-Wildfire assumes that the file has been deleted and that the users wants to destroy the plugin,
+Openfire assumes that the file has been deleted and that the users wants to destroy the plugin,
 so it also deletes the directory.</p>
 
 <b>What license agreement are plugins subject to?</b>
-<p>Because Wildfire is released under the Open Source GPL license, any plugins developed
+<p>Because Openfire is released under the Open Source GPL license, any plugins developed
 must also be released under the GPL or a compatible Open Source license if you distribute
 the plugins outside your organization. It is a violation of the license agreement to create
 plugins for distribution that are not Open Source. Please visit
 <a href="http://www.jivesoftware.com/products/wildfire/">Jive Software</a> if you need different
-licensing terms for Wildfire, including the right to create commercial plugins.</p>
+licensing terms for Openfire, including the right to create commercial plugins.</p>
 
 <br>
 <br>

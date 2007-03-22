@@ -44,7 +44,7 @@ public class PluginDownloadManager {
     }
 
     /**
-     * Installs a new plugin into Wildfire.
+     * Installs a new plugin into Openfire.
      *
      * @param url the url of the plugin to install.
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.

@@ -58,7 +58,7 @@
             	}
             	catch (SQLException sqle) {
                     success = false;
-                    errors.put("general","The Wildfire database schema does not "
+                    errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
             	}

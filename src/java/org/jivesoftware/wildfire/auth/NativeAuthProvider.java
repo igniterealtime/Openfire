@@ -68,7 +68,7 @@ public class NativeAuthProvider implements AuthProvider {
         this.domain = JiveGlobals.getXMLProperty("nativeAuth.domain");
 
         // Configure the library path so that we can load the shaj native library
-        // from the Wildfire lib directory.
+        // from the Openfire lib directory.
         // Find the root path of this class.
         try {
             String binaryPath = (new URL(Shaj.class.getProtectionDomain()
@@ -88,7 +88,7 @@ public class NativeAuthProvider implements AuthProvider {
             Log.error(e);
         }
 
-        // Configure Shaj to log output to the Wildfire logger.
+        // Configure Shaj to log output to the Openfire logger.
         com.cenqua.shaj.log.Log.Factory.setInstance(new com.cenqua.shaj.log.Log() {
             public boolean isDebug() {
                 return Log.isDebugEnabled();

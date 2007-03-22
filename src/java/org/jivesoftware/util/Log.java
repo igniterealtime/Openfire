@@ -76,9 +76,9 @@ public class Log {
             logDirectory = JiveGlobals.getXMLProperty("log.directory");
             if (logDirectory == null) {
                 if (JiveGlobals.getHomeDirectory() != null) {
-                    File wildfireHome = new File(JiveGlobals.getHomeDirectory());
-                    if (wildfireHome.exists() && wildfireHome.canWrite()) {
-                        logDirectory = (new File(wildfireHome, "logs")).toString();
+                    File openfireHome = new File(JiveGlobals.getHomeDirectory());
+                    if (openfireHome.exists() && openfireHome.canWrite()) {
+                        logDirectory = (new File(openfireHome, "logs")).toString();
                     }
                 }
             }
@@ -154,7 +154,7 @@ public class Log {
         try {
             // home was not setup correctly
             if (logName == null) {
-                throw new IOException("LogName was null - WildfireHome not set?");
+                throw new IOException("LogName was null - OpenfireHome not set?");
             }
             else {
                 RevolvingFileStrategy fileStrategy = new RevolvingFileStrategy(logName, 5);

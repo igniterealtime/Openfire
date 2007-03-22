@@ -34,7 +34,7 @@ import java.util.*;
  * &lt;/provider&gt;
  * </pre><p/>
  *
- * and an xml vcard-mapping to wildfire.xml.<p/>
+ * and an xml vcard-mapping to openfire.xml.<p/>
  *
  * The vcard attributes can be configured by adding an <code>attrs="attr1,attr2"</code>
  * attribute to the vcard elements.<p/>

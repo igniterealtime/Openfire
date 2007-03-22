@@ -22,7 +22,7 @@ import java.util.Date;
 /**
  * The JDBC user provider allows you to use an external database to define the users.
  * It is best used with the JDBCAuthProvider & JDBCGroupProvider to provide integration
- * between your external system and Wildfire. All data is treated as read-only so any
+ * between your external system and Openfire. All data is treated as read-only so any
  * set operations will result in an exception.<p/>
  *
  * For the seach facility, the SQL will be constructed from the SQL in the <i>search</i>

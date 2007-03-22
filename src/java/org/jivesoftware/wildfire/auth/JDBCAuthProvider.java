@@ -51,7 +51,7 @@ import java.sql.SQLException;
  *      &lt;passwordType&gt;plain&lt;/passwordType&gt;
  * &lt;/jdbcAuthProvider&gt;</pre>
  *
- * The passwordType setting tells Wildfire how the password is stored. Setting the value
+ * The passwordType setting tells Openfire how the password is stored. Setting the value
  * is optional (when not set, it defaults to "plain"). The valid values are:<ul>
  *      <li>{@link PasswordType#plain plain}
  *      <li>{@link PasswordType#md5 md5}

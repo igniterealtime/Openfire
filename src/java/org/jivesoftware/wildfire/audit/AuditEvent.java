@@ -25,7 +25,7 @@ public class AuditEvent {
 
     /**
      * All user generated codes must be equal to or greater than this constant
-     * to avoid clashing with Wildfire event codes.
+     * to avoid clashing with Openfire event codes.
      */
     public static final int USER_CODES = 100;
 

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Wildfire: LDAP Guide</title>
+<title>Openfire: LDAP Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -24,11 +24,11 @@
 <h2>Introduction</h2>
 
 <p>
-    This document details how to configure your Wildfire installation to use
+    This document details how to configure your Openfire installation to use
     an external directory such as Open LDAP or Active Directory. Integration with a directory
     lets users authenticate using their directory username and password. Optionally, you can
-    configure Wildfire to load user profile and group information from the directory. Any group in
-    Wildfire can be designated as a shared group, which means that you can pre-populate user's
+    configure Openfire to load user profile and group information from the directory. Any group in
+    Openfire can be designated as a shared group, which means that you can pre-populate user's
     rosters using directory groups.
 </p>
 
@@ -46,28 +46,28 @@
 </p>
 
 <p>
-    By default, Wildfire stores all user data in its database and performs
+    By default, Openfire stores all user data in its database and performs
     authentication using database lookups. The LDAP module replaces that
-    functionality and allows Wildfire to:
+    functionality and allows Openfire to:
     <ul>
         <li>Use a LDAP server to authenticate a user's identity.</li>
         <li>Load user profile information from a LDAP directory.</li>
         <li>Load group information from an LDAP directory.</li>
     </ul>
 
-    <b>Note:</b> Wildfire treats the LDAP directory as read-only. 
+    <b>Note:</b> Openfire treats the LDAP directory as read-only.
 </p>
 
 <p>
-    This document will guide you through configuring LDAP support in Wildfire. These
+    This document will guide you through configuring LDAP support in Openfire. These
     instructions assume that you're a competent LDAP user, and that you're familiar
-    with Wildfire setup issues.
+    with Openfire setup issues.
 </p>
 
 <h2>Configuration</h2>
 
 <p>
-    The Wildfire setup tool includes an easy to use LDAP setup wizard.
+    The Openfire setup tool includes an easy to use LDAP setup wizard.
     Choose the LDAP option on the Profile Settings page to configure directory integration.
     The wizard along with in-line help will guide you through the rest of the process.
     <a href="#activedirectory">Specific tips</a> for working with Active Directory are noted below.
@@ -80,13 +80,13 @@
     <ol>
 
         <li>
-            Stop Wildfire.
+            Stop Openfire.
         </li>
-        <li>Edit <tt>conf/wildfire.xml</tt> in your Wildfire installation folder and set
+        <li>Edit <tt>conf/openfire.xml</tt> in your Openfire installation folder and set
             &lt;setup&gt;true&lt;/setup&gt; to &lt;setup&gt;false&lt;/setup&gt;.
         </li>
         <li>
-            Restart Wildfire and enter the setup tool.
+            Restart Openfire and enter the setup tool.
         </li>
     </ol>
 
@@ -131,7 +131,7 @@ servers, some of which are detailed below:
 
 <p>
     If you prefer to edit the configuration file to enable LDAP integration directly, use the following
-    instructions. Open the configuration file <tt>conf/wildfire.xml</tt> from your Wildfire
+    instructions. Open the configuration file <tt>conf/openfire.xml</tt> from your Openfire
     installation in your favorite
     editor and add or change the following settings. Properties flagged with (<font color="red">
     <b>*</b></font>)
@@ -171,7 +171,7 @@ servers, some of which are detailed below:
             performed
             with this account. The admin must be able to perform searches and load user records. The
             user does
-            not need to be able to make changes to the directory, as Wildfire treats the
+            not need to be able to make changes to the directory, as Openfire treats the
             directory as read-only.
             If this property is not set, an anonymous login to the server will be attempted.
         </li>
@@ -204,7 +204,7 @@ servers, some of which are detailed below:
         installation is "(objectClass=organizationalPerson)". When combined with the default
         filter, the actual search executed would be
         "(&(sAMAccountName={0})(objectClass=organizationalPerson))".</li>
-    <li>ldap.subTreeSearch -- by default, Wildfire will search the entire LDAP sub-tree (starting
+    <li>ldap.subTreeSearch -- by default, Openfire will search the entire LDAP sub-tree (starting
         at the base DN) when trying to load users. If this property is set to <tt>false</tt>, then
         sub-tree searching is disabled and users will only be loaded directly from the base DN.
         Disabling sub-tree can improve performance, but it will fail to find users if your directory
@@ -327,7 +327,7 @@ servers, some of which are detailed below:
 
 <p><a name=""><h2>Custom Search Filter</h2></a></p>
 
-<p>By default, Wildfire will load all objects under the baseDN that
+<p>By default, Openfire will load all objects under the baseDN that
     have the attribute specified by <tt>ldap.usernameField</tt>. In the
     case that the username field is set to "uid", the search for all users
     would be "(uid=*)". However, there are cases when this logic does
@@ -345,7 +345,7 @@ servers, some of which are detailed below:
     loading the list of all users or a username when loading a single user.</p>
 
 <p>Some custom search filters may include reserved XML entities such as
-    "&". In that case, you must enter the search filter into the wildfire.xml
+    "&". In that case, you must enter the search filter into the openfire.xml
     file using CDATA:
 
     <pre>&lt;searchFilter&gt;&lt;![CDATA[(&(sAMAccountName={0})(|(givenName=GEORGE)(givenName=admin)))]]&gt;&lt;/searchFilter&gt;</pre>
@@ -356,7 +356,7 @@ servers, some of which are detailed below:
 
         Some LDAP servers or application servers may require that a different LDAP
         initial context factory be used rather than the default (com.sun.jndi.ldap.LdapCtxFactory).
-        You can set a custom initial context factory by adding the following to wildfire.xml:
+        You can set a custom initial context factory by adding the following to openfire.xml:
 
 <pre>
   &lt;ldap&gt;
@@ -412,7 +412,7 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
     &lt;/provider&gt;
 </pre>
 
-<p>Next, you must add mappings between LDAP fields and vCard fields in the wildfire.xml file.
+<p>Next, you must add mappings between LDAP fields and vCard fields in the openfire.xml file.
     The vcard attributes are configured by adding an attrs="attr1,attr2" attribute to the vcard
     elements. Arbitrary text can be used for the element values as well as MessageFormat style
     placeholders for the ldap attributes. For example, if you wanted to map the LDAP attribute
@@ -478,8 +478,8 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
 
 <p>
 
-    <b>Can I create new users through Wildfire when using LDAP?</b>
-    <ul>No, Wildfire treats LDAP directories as read-only. Therefore, it's
+    <b>Can I create new users through Openfire when using LDAP?</b>
+    <ul>No, Openfire treats LDAP directories as read-only. Therefore, it's
         not possible to create or edit users through the application.</ul>
 
     <b>Why is the list of usernames not sorted in the admin console when using LDAP?</b>
@@ -502,7 +502,7 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
         You can also enable debugging to get more information from the LDAP module. To
         do this, add &lt;log&gt;&lt;debug&gt;&lt;enabled&gt;true&lt;/enabled&gt;&lt;/debug&gt;&lt;/log&gt;
 
-        to your <tt>conf/wildfire.xml</tt> file. Log statements will be written
+        to your <tt>conf/openfire.xml</tt> file. Log statements will be written
         to the <tt>logs/debug.log</tt> file.
     </ul>
 

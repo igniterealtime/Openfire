@@ -15,7 +15,7 @@
          <sidebar id="user-import-export" name="Import &amp; Export">
             <item id="import-export-selection" name="User Import &amp; Export"
                   url="import-export-selection.jsp"
-                  description="Allows the importing and exporting of Wildfire user data." />
+                  description="Allows the importing and exporting of Openfire user data." />
          </sidebar>
       </tab>
    </adminconsole>

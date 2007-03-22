@@ -1,6 +1,6 @@
 //
 //  wildfirePrefPane.h
-//  Preference panel for Wildfire
+//  Preference panel for Openfire
 //
 //  Created by Daniel Henninger on 7/7/06.
 //  Copyright (c) 2006 Jive Software. All rights reserved.
@@ -13,7 +13,7 @@
 #import <SecurityInterface/SFAuthorizationView.h>
 #include <unistd.h>
 
-// 'ps' command to use to check for running wildfire daemon
+// 'ps' command to use to check for running openfire daemon
 char *pscmd = "/bin/ps auxww | fgrep -v 'fgrep' | fgrep wildfire/lib/startup.jar";
 
 // The path to the plist file

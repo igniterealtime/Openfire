@@ -27,7 +27,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 
 /**
- * Configuration of Wildfire's SSL settings.
+ * Configuration of Openfire's SSL settings.
  *
  * @author Iain Shigeoka
  */

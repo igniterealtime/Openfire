@@ -19,9 +19,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 /**
- * Pluggable authentication service. Users of Wildfire that wish to change the AuthProvider
+ * Pluggable authentication service. Users of Openfire that wish to change the AuthProvider
  * implementation used to authenticate users can set the <code>AuthProvider.className</code>
- * XML property. For example, if you have configured Wildfire to use LDAP for user information,
+ * XML property. For example, if you have configured Openfire to use LDAP for user information,
  * you'd want to send a custom implementation of AuthFactory to make LDAP auth queries.
  * After changing the <code>AuthProvider.className</code> XML property, you must restart your
  * application server.
@@ -232,7 +232,7 @@ public class AuthFactory {
      * The encryption key is stored as the Jive property "passwordKey". If it's not present,
      * it will be automatically generated.
      *
-     * @return the Blowfish cipher, or <tt>null</tt> if Wildfire is not able to create a Cipher;
+     * @return the Blowfish cipher, or <tt>null</tt> if Openfire is not able to create a Cipher;
      *      for example, during setup mode.
      */
     private static synchronized Blowfish getCipher() {

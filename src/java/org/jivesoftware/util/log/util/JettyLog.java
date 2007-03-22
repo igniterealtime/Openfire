@@ -14,13 +14,13 @@ import org.jivesoftware.util.Log;
 
 /**
  * A Logger implementation to override the default Jetty logging behavior. All log statements
- * are written to the Wildfire logs. Info level logging is sent to debug.
+ * are written to the Openfire logs. Info level logging is sent to debug.
  */
 public class JettyLog implements Logger {
 
     /**
      * Only enable Jetty debug logging if it's specifically enabled. Otherwise, Jetty debug logs
-     * pollute the Wildfire debug log with too much data.
+     * pollute the Openfire debug log with too much data.
      */
     private boolean debugEnabled = JiveGlobals.getBooleanProperty("jetty.debugEnabled");
 

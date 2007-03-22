@@ -30,7 +30,7 @@ import java.io.*;
 import java.net.URL;
 
 /**
- * Graphical launcher for Wildfire.
+ * Graphical launcher for Openfire.
  *
  * @author Matt Tucker
  */
@@ -38,7 +38,7 @@ public class Launcher {
 
     private String appName;
     private File binDir;
-    private Process wildfired;
+    private Process openfired;
     private File configFile;
     private JPanel toolbar = new JPanel();
 
@@ -78,7 +78,7 @@ public class Launcher {
             appName = System.getProperty("app.name");
         }
         else {
-            appName = "Wildfire";
+            appName = "Openfire";
         }
 
         binDir = new File("").getAbsoluteFile();
@@ -87,7 +87,7 @@ public class Launcher {
             binDir = new File(System.getProperty("appdir"));
         }
 
-        configFile = new File(new File(binDir.getParent(), "conf"), "wildfire.xml");
+        configFile = new File(new File(binDir.getParent(), "conf"), "openfire.xml");
 
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
@@ -111,8 +111,8 @@ public class Launcher {
             splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
             splashLabel = new JLabel("", splash, JLabel.CENTER);
 
-            onIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_on-16x16.gif"));
-            offIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_off-16x16.gif"));
+            onIcon = new ImageIcon(getClass().getClassLoader().getResource("openfire_on-16x16.gif"));
+            offIcon = new ImageIcon(getClass().getClassLoader().getResource("openfire_off-16x16.gif"));
             frame.setIconImage(offIcon.getImage());
         }
         catch (Exception e) {
@@ -346,15 +346,15 @@ public class Launcher {
     }
 
     private synchronized void startApplication() {
-        if (wildfired == null) {
+        if (openfired == null) {
             try {
-                File windowsExe = new File(binDir, "wildfired.exe");
-                File unixExe = new File(binDir, "wildfired");
+                File windowsExe = new File(binDir, "openfired.exe");
+                File unixExe = new File(binDir, "openfired");
                 if (windowsExe.exists()) {
-                    wildfired = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
+                    openfired = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
                 }
                 else if (unixExe.exists()) {
-                    wildfired = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
+                    openfired = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
                 }
                 else {
                     throw new FileNotFoundException();
@@ -364,7 +364,7 @@ public class Launcher {
                 // Try one more time using the jar and hope java is on the path
                 try {
                     File libDir = new File(binDir.getParentFile(), "lib").getAbsoluteFile();
-                    wildfired = Runtime.getRuntime().exec(new String[]{
+                    openfired = Runtime.getRuntime().exec(new String[]{
                         "java", "-jar", new File(libDir, "startup.jar").toString()
                     });
                 }
@@ -379,10 +379,10 @@ public class Launcher {
             final SimpleAttributeSet styles = new SimpleAttributeSet();
             SwingWorker inputWorker = new SwingWorker() {
                 public Object construct() {
-                    if (wildfired != null) {
+                    if (openfired != null) {
                         try {
                             // Get the input stream and read from it
-                            InputStream in = wildfired.getInputStream();
+                            InputStream in = openfired.getInputStream();
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -408,10 +408,10 @@ public class Launcher {
 
             SwingWorker errorWorker = new SwingWorker() {
                 public Object construct() {
-                    if (wildfired != null) {
+                    if (openfired != null) {
                         try {
                             // Get the input stream and read from it
-                            InputStream in = wildfired.getErrorStream();
+                            InputStream in = openfired.getErrorStream();
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -453,10 +453,10 @@ public class Launcher {
     }
 
     private synchronized void stopApplication() {
-        if (wildfired != null) {
+        if (openfired != null) {
             try {
-                wildfired.destroy();
-                wildfired.waitFor();
+                openfired.destroy();
+                openfired.waitFor();
                 cardLayout.show(cardPanel, "main");
             }
             catch (Exception e) {
@@ -464,7 +464,7 @@ public class Launcher {
             }
         }
 
-        wildfired = null;
+        openfired = null;
     }
 
     private synchronized void launchBrowser() {

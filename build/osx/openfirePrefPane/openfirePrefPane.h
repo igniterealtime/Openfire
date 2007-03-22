@@ -1,5 +1,5 @@
 //
-//  wildfirePrefPane.h
+//  openfirePrefPane.h
 //  Preference panel for Openfire
 //
 //  Created by Daniel Henninger on 7/7/06.
@@ -14,13 +14,13 @@
 #include <unistd.h>
 
 // 'ps' command to use to check for running openfire daemon
-char *pscmd = "/bin/ps auxww | fgrep -v 'fgrep' | fgrep wildfire/lib/startup.jar";
+char *pscmd = "/bin/ps auxww | fgrep -v 'fgrep' | fgrep openfire/lib/startup.jar";
 
 // The path to the plist file
-NSString *plistPath = @"/Library/LaunchDaemons/org.jivesoftware.wildfire.plist";
+NSString *plistPath = @"/Library/LaunchDaemons/org.jivesoftware.openfire.plist";
 
 
-@interface wildfirePrefPane : NSPreferencePane 
+@interface openfirePrefPane : NSPreferencePane 
 {
 	IBOutlet NSButton *startButton;
 	IBOutlet NSButton *autoStartCheckbox;

@@ -116,7 +116,7 @@ static void toggleOpenfire()
 		args[1] = "unload";
 	else
 		args[1] = "load";
-	args[2] = "/Library/LaunchDaemons/org.jivesoftware.wildfire.plist";
+	args[2] = "/Library/LaunchDaemons/org.jivesoftware.openfire.plist";
 	args[3] = NULL;
 	
 	execv("/bin/launchctl", args);

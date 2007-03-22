@@ -1,6 +1,6 @@
 //
-//  wildfirePrefPane.m
-//  Preference panel for Wildfire
+//  openfirePrefPane.m
+//  Preference panel for Openfire
 //
 //  Created by Daniel Henninger on 7/7/06.
 //  Copyright (c) 2006 Jive Software. All rights reserved.
@@ -10,9 +10,9 @@
 
 #import <Security/Security.h>
 #import <CoreFoundation/CoreFoundation.h>
-#import "wildfirePrefPane.h"
+#import "openfirePrefPane.h"
 
-@implementation wildfirePrefPane
+@implementation openfirePrefPane
 
 - (void)mainViewDidLoad
 {
@@ -56,7 +56,7 @@
             nil,
             nil,
             self,
-            @"An error occured while detecting a running Wildfire process.",
+            @"An error occured while detecting a running Openfire process.",
             nil);
         
         return NO;
@@ -102,7 +102,7 @@
 						  nil,
 						  nil,
 						  self,
-						  @"Could not start the Wildfire server.",
+						  @"Could not start the Openfire server.",
 						  nil);
 		[statusTimer invalidate];
 		[self checkStatus];
@@ -148,7 +148,7 @@
 		[statusMessage setStringValue:@"Stopped"];
 		[statusMessage setTextColor:[NSColor redColor]];
 		[statusDescription setStringValue:@"The server may take a few seconds to start up."];
-		[startButton setTitle:@"Start Wildfire"];
+		[startButton setTitle:@"Start Openfire"];
 		[viewAdminButton setEnabled:NO];
 	}
 	else 
@@ -156,7 +156,7 @@
 		[statusMessage setStringValue:@"Running"];
 		[statusMessage setTextColor:[NSColor greenColor]];
 		[statusDescription setStringValue:@"The server may take a few seconds to stop."];
-		[startButton setTitle:@"Stop Wildfire"];
+		[startButton setTitle:@"Stop Openfire"];
 		[viewAdminButton setEnabled:YES];
 	}
 	BOOL isStartingAtBoot = [[[NSMutableDictionary dictionaryWithContentsOfFile:plistPath] objectForKey:@"RunAtLoad"] boolValue];
@@ -186,7 +186,7 @@
 			nil,
 			nil,
 			self,
-			@"Could not start the Wildfire server.",
+			@"Could not start the Openfire server.",
 			nil);
 		[statusTimer invalidate];
 		[self checkStatus];
@@ -215,7 +215,7 @@
 			nil,
 			nil,
 			self,
-			@"Could not stop the Wildfire server.",
+			@"Could not stop the Openfire server.",
 			nil);
 		[statusTimer invalidate];
 		[self checkStatus];

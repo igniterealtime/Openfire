@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Wildfire</string>
+	<string>Openfire</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
@@ -21,12 +21,12 @@
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
 	<key>NSMainNibFile</key>
-	<string>wildfirePrefPane</string>
+	<string>openfirePrefPane</string>
 	<key>NSPrefPaneIconFile</key>
-	<string>wildfirePrefPaneLogo.tiff</string>
+	<string>openfirePrefPaneLogo.tiff</string>
 	<key>NSPrefPaneIconLabel</key>
-	<string>Wildfire</string>
+	<string>Openfire</string>
 	<key>NSPrincipalClass</key>
-	<string>wildfirePrefPane</string>
+	<string>openfirePrefPane</string>
 </dict>
 </plist>

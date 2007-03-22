@@ -1484,7 +1484,7 @@
             </fileset>
         </copy>
         <mkdir dir="${mac.pkg.dir}/Library/LaunchDaemons"/>
-        <copy file="${basedir}/build/osx/org.jivesoftware.wildfire.plist"
+        <copy file="${basedir}/build/osx/org.jivesoftware.openfire.plist"
               todir="${mac.pkg.dir}/Library/LaunchDaemons"/>
         <mkdir dir="${mac.dmg.dir}"/>
         <mkdir dir="${mac.pkg.dir}/Library/PreferencePanes"/>

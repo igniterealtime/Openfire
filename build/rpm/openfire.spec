@@ -22,7 +22,7 @@ pwd
 /opt/openfire/plugins
 /opt/openfire/resources
 /opt/openfire/documentation
-%config /opt/openfire/conf/wildfire.xml
+%config /opt/openfire/conf/openfire.xml
 %docdir /opt/openfire/documentation
 %doc /opt/openfire/LICENSE.html 
 %doc /opt/openfire/README.html 

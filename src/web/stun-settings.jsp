@@ -13,6 +13,7 @@
 <%@ page import="org.jivesoftware.wildfire.stun.STUNService" %>
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.jivesoftware.wildfire.stun.StunServerAddress" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -311,7 +312,7 @@
             <tbody>
                 <%
                     int i = 0;
-                    for (STUNService.StunServerAddress stunServerAddress : stunService.getExternalServers()) {
+                    for (StunServerAddress stunServerAddress : stunService.getExternalServers()) {
                 %>
                 <tr>
                     <td align="left">

@@ -59,6 +59,8 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
     private List<StunServerAddress> externalServers = null;
 
+    private String defaultExternalAddresses = "stun.xten.net:3478;jivesoftware.com:3478;igniterealtime.org:3478";
+
     public static final String NAMESPACE = "google:jingleinfo";
 
     /**
@@ -76,7 +78,11 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         primaryAddress = JiveGlobals.getProperty("stun.address.primary");
         secondaryAddress = JiveGlobals.getProperty("stun.address.secondary");
 
-        externalServers = getStunServerAddresses(JiveGlobals.getProperty("stun.external.addresses"));
+        String addresses = JiveGlobals.getProperty("stun.external.addresses");
+
+        if (addresses == null) addresses = defaultExternalAddresses;
+
+        externalServers = getStunServerAddresses(addresses);
 
         if (primaryAddress == null || primaryAddress.equals(""))
             primaryAddress = JiveGlobals.getProperty("xmpp.domain",
@@ -218,10 +224,15 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
             if (isEnabled()) {
                 Element stun = childElementCopy.addElement("stun");
+
                 if (isLocalEnabled()) {
-                    Element server = stun.addElement("server");
-                    server.addAttribute("host", primaryAddress);
-                    server.addAttribute("udp", String.valueOf(primaryPort));
+                    StunServerAddress local = null;
+                    local = new StunServerAddress(primaryAddress, String.valueOf(primaryPort));
+                    if (!externalServers.contains(local)) {
+                        Element server = stun.addElement("server");
+                        server.addAttribute("host", local.getServer());
+                        server.addAttribute("udp", local.getPort());
+                    }
                 }
                 for (StunServerAddress stunServerAddress : externalServers) {
                     Element server = stun.addElement("server");
@@ -450,37 +461,6 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     }
 
     /**
-     * Provides easy abstract to store STUN Server Addresses and Ports
-     */
-    public class StunServerAddress {
-        private String server;
-        private String port;
-
-        public StunServerAddress(String server, String port) {
-            this.server = server;
-            this.port = port;
-        }
-
-        /**
-         * Get the Host Address
-         *
-         * @return Host Address
-         */
-        public String getServer() {
-            return server;
-        }
-
-        /**
-         * Get STUN port
-         *
-         * @return the Server Port
-         */
-        public String getPort() {
-            return port;
-        }
-    }
-
-    /**
      * Abstraction method used to convert a String into a STUN Server Address List
      *
      * @param addresses the String representation of Server Addresses with their respective Ports (server1:port1;server2:port2)
@@ -490,13 +470,15 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
         List<StunServerAddress> list = new ArrayList<StunServerAddress>();
 
-        if (addresses == null || addresses.equals("")) return list;
+        if (addresses.equals("")) return list;
 
         String servers[] = addresses.split(";");
 
         for (String server : servers) {
             String address[] = server.split(":");
-            list.add(new StunServerAddress(address[0], address[1]));
+            StunServerAddress aux = new StunServerAddress(address[0], address[1]);
+            if (!list.contains(aux))
+                list.add(aux);
         }
 
         return list;

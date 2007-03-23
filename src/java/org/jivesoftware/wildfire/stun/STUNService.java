@@ -57,6 +57,8 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     private int primaryPort = 3478;
     private int secondaryPort = 3479;
 
+    private SessionManager sessionManager = null;
+
     private List<StunServerAddress> externalServers = null;
 
     private String defaultExternalAddresses = "stun.xten.net:3478;jivesoftware.com:3478;igniterealtime.org:3478";
@@ -116,6 +118,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
+        sessionManager = server.getSessionManager();
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
         serviceName = JiveGlobals.getProperty("stun.serviceName", name);
@@ -239,6 +242,17 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
                     server.addAttribute("host", stunServerAddress.getServer());
                     server.addAttribute("udp", stunServerAddress.getPort());
                 }
+
+                try {
+                    String ip = sessionManager.getSession(iq.getFrom()).getConnection().getInetAddress().getHostAddress();
+                    if (ip != null) {
+                        Element publicIp = childElementCopy.addElement("publicip");
+                        publicIp.addAttribute("ip", ip);
+                    }
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+
             }
 
         } else {

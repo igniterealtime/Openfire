@@ -1,5 +1,5 @@
-Summary: Wildfire XMPP Server
-Name: wildfire
+Summary: Openfire XMPP Server
+Name: openfire
 Version: 3.2.2
 Release: 1
 BuildRoot: %{_builddir}/%{name}-root
@@ -9,21 +9,21 @@ Vendor: Jive Software
 License: Commercial
 URL: www.igniterealtime.org
 %description
-Wildfire XMPP Server
+Openfire XMPP Server
 %prep
 pwd
 %build
 %install
 %files
 %defattr(-,root,root)
-/opt/wildfire/bin
-/opt/wildfire/lib
-/opt/wildfire/logs/stderr.out
-/opt/wildfire/plugins
-/opt/wildfire/resources
-/opt/wildfire/documentation
-%config /opt/wildfire/conf/wildfire.xml
-%docdir /opt/wildfire/documentation
-%doc /opt/wildfire/LICENSE.html 
-%doc /opt/wildfire/README.html 
-%doc /opt/wildfire/changelog.html
+/opt/openfire/bin
+/opt/openfire/lib
+/opt/openfire/logs/stderr.out
+/opt/openfire/plugins
+/opt/openfire/resources
+/opt/openfire/documentation
+%config /opt/openfire/conf/wildfire.xml
+%docdir /opt/openfire/documentation
+%doc /opt/openfire/LICENSE.html 
+%doc /opt/openfire/README.html 
+%doc /opt/openfire/changelog.html

@@ -1,0 +1,3 @@
+/etc/openfire/wildfire.xml
+/etc/openfire/security/keystore
+/etc/openfire/security/truststore

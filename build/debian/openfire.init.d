@@ -9,20 +9,20 @@
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/java
-NAME=wildfire
-DESC=wildfire
-DAEMON_DIR=/opt/wildfire
+NAME=openfire
+DESC=openfire
+DAEMON_DIR=/opt/openfire
 DAEMON_LIB=${DAEMON_DIR}/lib
 
 test -x $DAEMON || exit 0
 
-# Include wildfire defaults if available
-if [ -f /etc/default/wildfire ] ; then
-	. /etc/default/wildfire
+# Include openfire defaults if available
+if [ -f /etc/default/openfire ] ; then
+	. /etc/default/openfire
 fi
 
-DAEMON_OPTS="-server -DwildfireHome=${DAEMON_DIR} \
- -Dwildfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\
+DAEMON_OPTS="-server -DopenfireHome=${DAEMON_DIR} \
+ -Dopenfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\
  -jar ${DAEMON_LIB}/startup.jar $DAEMON_OPTS"
 
 set -e

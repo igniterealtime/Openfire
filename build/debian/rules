@@ -8,7 +8,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-DESTINATION=${CURDIR}/debian/wildfire/
+DESTINATION=${CURDIR}/debian/openfire/
 
 build: build-stamp
 build-stamp: 
@@ -30,19 +30,19 @@ clean:
 
 install: install-stamp
 install-stamp:
-	mv $(CURDIR)/target/wildfire $(DESTINATION)/opt/
+	mv $(CURDIR)/target/openfire $(DESTINATION)/opt/
 	
 	# Move the conf-dir to etc an create a symlink back.
-	mv ${DESTINATION}/opt/wildfire/conf ${DESTINATION}/etc/wildfire
-	ln -s /etc/wildfire ${DESTINATION}/opt/wildfire/conf
+	mv ${DESTINATION}/opt/openfire/conf ${DESTINATION}/etc/openfire
+	ln -s /etc/openfire ${DESTINATION}/opt/openfire/conf
 	
 	# Move the resource dir to etc and symlink back.
-	mv ${DESTINATION}/opt/wildfire/resources/security ${DESTINATION}/etc/wildfire/security
-	ln -s /etc/wildfire/security ${DESTINATION}/opt/wildfire/resources/security
+	mv ${DESTINATION}/opt/openfire/resources/security ${DESTINATION}/etc/openfire/security
+	ln -s /etc/openfire/security ${DESTINATION}/opt/openfire/resources/security
 	
 	# Move the logs dir to /var/log an symlink back.
-	mv ${DESTINATION}/opt/wildfire/logs ${DESTINATION}/var/log/wildfire
-	ln -s /var/log/wildfire ${DESTINATION}/opt/wildfire/logs
+	mv ${DESTINATION}/opt/openfire/logs ${DESTINATION}/var/log/openfire
+	ln -s /var/log/openfire ${DESTINATION}/opt/openfire/logs
 	
 	touch $@
 	

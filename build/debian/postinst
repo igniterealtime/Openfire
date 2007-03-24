@@ -1,5 +1,5 @@
-/var/log/wildfire
+/var/log/openfire
 
 # move the
 
-/etc/wildfire
+/etc/openfire

@@ -197,6 +197,7 @@
         <include name="**/*.css"/>
         <include name="**/*.gif"/>
         <include name="**/*.png"/>
+        <include name="**/favicon.ico"/>
         <include name="**/*.js"/>
     </patternset>
 
@@ -1213,7 +1214,7 @@
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false"
                   overwrite="${overwrite}">
-                <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html, *.gif, *.png"/>
+                <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html, *.gif, *.png, *.ico"/>
             </copy>
 
             <!-- Copy the database and i18n file to the target dir, if they exist. -->

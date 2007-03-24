@@ -35,13 +35,15 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 /**
- * STUN Server and Service Module
- * Provides especial Address discovery for p2p sessions to be used for media transmission and receiving of UDP packets.
- * Especialy used for behind NAT users to ensure connectivity between parties.
+ * STUN server and service module. It provides address discovery for p2p sessions to be
+ * used for media transmission and receiving of UDP packets. It's especially useful for
+ * clients behind NAT devices.
  *
  * @author Thiago Camargo
  */
-public class STUNService extends BasicModule implements ServerItemsProvider, RoutableChannelHandler, DiscoInfoProvider, DiscoItemsProvider {
+public class STUNService extends BasicModule implements ServerItemsProvider, RoutableChannelHandler,
+        DiscoInfoProvider, DiscoItemsProvider
+{
 
     private String serviceName;
     private RoutingTable routingTable;
@@ -52,16 +54,16 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     private boolean enabled = false;
     private boolean localEnabled = false;
 
-    private String primaryAddress;
-    private String secondaryAddress;
-    private int primaryPort = 3478;
-    private int secondaryPort = 3479;
+    private String primaryAddress = null;
+    private String secondaryAddress = null;
+    private int primaryPort;
+    private int secondaryPort;
 
     private SessionManager sessionManager = null;
 
     private List<StunServerAddress> externalServers = null;
 
-    private String defaultExternalAddresses = "stun.xten.net:3478;jivesoftware.com:3478;igniterealtime.org:3478";
+    private String defaultExternalAddresses = "stun.xten.net:3478;jivesoftware.com:3478;igniterealtime.org:3478;stun.fwdnet.net:3478";
 
     public static final String NAMESPACE = "google:jingleinfo";
 
@@ -86,29 +88,20 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
         externalServers = getStunServerAddresses(addresses);
 
-        if (primaryAddress == null || primaryAddress.equals(""))
-            primaryAddress = JiveGlobals.getProperty("xmpp.domain",
-                    JiveGlobals.getXMLProperty("network.interface", "localhost"));
-
-        if (secondaryAddress == null || secondaryAddress.equals(""))
-            secondaryAddress = "127.0.0.1";
-
-        try {
-            primaryPort = Integer.valueOf(JiveGlobals.getProperty("stun.port.primary"));
-        }
-        catch (NumberFormatException e) {
-            // Do nothing let the default values to be used.
-        }
-        try {
-            secondaryPort = Integer.valueOf(JiveGlobals.getProperty("stun.port.secondary"));
-        }
-        catch (NumberFormatException e) {
-            // Do nothing let the default values to be used.
-        }
+        primaryPort = JiveGlobals.getIntProperty("stun.port.primary", 3478);
+        secondaryPort = JiveGlobals.getIntProperty("stun.port.secondary", 3479);
 
         this.enabled = JiveGlobals.getBooleanProperty("stun.enabled", true);
-        this.localEnabled = JiveGlobals.getBooleanProperty("stun.local.enabled", true);
 
+        this.localEnabled = JiveGlobals.getBooleanProperty("stun.local.enabled", false);
+        // If the local server is supposed to be enabled, ensure that primary and secondary
+        // addresses are defined.
+        if (localEnabled) {
+            if (primaryAddress == null || secondaryAddress == null) {
+                Log.warn("STUN server cannot be enabled. Primary and secondary addresses must be defined.");
+                enabled = false;
+            }
+        }
     }
 
     public void destroy() {
@@ -129,31 +122,33 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     public void start() {
         if (isEnabled()) {
             startService();
-            if (isLocalEnabled())
+            if (isLocalEnabled()) {
                 startLocalServer();
-        } else {
+            }
+        }
+        else {
             XMPPServer.getInstance().getIQDiscoItemsHandler().removeServerItemsProvider(this);
         }
     }
 
     public void startLocalServer() {
         try {
-
             InetAddress primary = InetAddress.getByName(primaryAddress);
             InetAddress secondary = InetAddress.getByName(secondaryAddress);
 
             if (primary != null && secondary != null) {
-
                 stunServer = new StunServer(primaryPort, primary, secondaryPort, secondary);
                 stunServer.start();
-
-            } else
+            }
+            else {
                 setLocalEnabled(false);
-
-        } catch (SocketException e) {
+            }
+        }
+        catch (SocketException e) {
             Log.error("Disabling STUN server", e);
             setLocalEnabled(false);
-        } catch (UnknownHostException e) {
+        }
+        catch (UnknownHostException e) {
             Log.error("Disabling STUN server", e);
             setLocalEnabled(false);
         }
@@ -169,13 +164,15 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         super.stop();
         this.enabled = false;
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
-        if (routingTable != null)
+        if (routingTable != null) {
             routingTable.removeRoute(getAddress());
+        }
     }
 
     public void stopLocal() {
-        if (stunServer != null)
+        if (stunServer != null) {
             stunServer.stop();
+        }
         stunServer = null;
     }
 
@@ -218,13 +215,14 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
             reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
             router.route(reply);
             return;
-        } else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
+        }
+        else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
             // a component
             reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
             router.route(reply);
             return;
-        } else if (NAMESPACE.equals(namespace)) {
-
+        }
+        else if (NAMESPACE.equals(namespace)) {
             if (isEnabled()) {
                 Element stun = childElementCopy.addElement("stun");
 
@@ -249,13 +247,14 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
                         Element publicIp = childElementCopy.addElement("publicip");
                         publicIp.addAttribute("ip", ip);
                     }
-                } catch (UnknownHostException e) {
+                }
+                catch (UnknownHostException e) {
                     e.printStackTrace();
                 }
-
             }
 
-        } else {
+        }
+        else {
             // Answer an error since the server can't handle the requested namespace
             reply.setError(PacketError.Condition.service_unavailable);
         }
@@ -294,7 +293,9 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
 
         String property = "";
         for (StunServerAddress stunServerAddress : externalServers) {
-            if (!property.equals("")) property += ";";
+            if (!property.equals("")) {
+                property += ";";
+            }
             property += stunServerAddress.getServer() + ":" + stunServerAddress.getPort();
         }
         JiveGlobals.setProperty("stun.external.addresses", property);
@@ -304,7 +305,9 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         externalServers.remove(index);
         String property = "";
         for (StunServerAddress stunServerAddress : externalServers) {
-            if (!property.equals("")) property += ";";
+            if (!property.equals("")) {
+                property += ";";
+            }
             property += stunServerAddress.getServer() + ":" + stunServerAddress.getPort();
         }
         JiveGlobals.setProperty("stun.external.addresses", property);
@@ -370,7 +373,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     }
 
     /**
-     * Get if the service is enabled.
+     * Returns true if the service is enabled.
      *
      * @return enabled
      */
@@ -379,7 +382,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     }
 
     /**
-     * Get if the local STUN Server is enabled.
+     * Returns true if the local STUN server is enabled.
      *
      * @return enabled
      */
@@ -390,7 +393,7 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Set the service enable status.
      *
-     * @param enabled      boolean to enable or disable
+     * @param enabled boolean to enable or disable
      * @param localEnabled local Server enable or disable
      */
     public void setEnabled(boolean enabled, boolean localEnabled) {
@@ -398,9 +401,11 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
         this.localEnabled = localEnabled;
         if (isEnabled()) {
             startService();
-            if (isLocalEnabled())
+            if (isLocalEnabled()) {
                 startLocalServer();
-        } else {
+            }
+        }
+        else {
             stop();
         }
     }
@@ -412,10 +417,12 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
      */
     public void setLocalEnabled(boolean enabled) {
         this.localEnabled = enabled;
-        if (isLocalEnabled())
+        if (isLocalEnabled()) {
             startLocalServer();
-        else
+        }
+        else {
             stopLocal();
+        }
     }
 
     /**
@@ -477,25 +484,27 @@ public class STUNService extends BasicModule implements ServerItemsProvider, Rou
     /**
      * Abstraction method used to convert a String into a STUN Server Address List
      *
-     * @param addresses the String representation of Server Addresses with their respective Ports (server1:port1;server2:port2)
-     * @return STUN Server Addresses List
+     * @param addresses the String representation of server addresses with their
+     *      respective ports (server1:port1;server2:port2).
+     * @return STUN server addresses list.
      */
     public List<StunServerAddress> getStunServerAddresses(String addresses) {
 
         List<StunServerAddress> list = new ArrayList<StunServerAddress>();
 
-        if (addresses.equals("")) return list;
+        if (addresses.equals("")) {
+            return list;
+        }
 
         String servers[] = addresses.split(";");
 
         for (String server : servers) {
             String address[] = server.split(":");
             StunServerAddress aux = new StunServerAddress(address[0], address[1]);
-            if (!list.contains(aux))
+            if (!list.contains(aux)) {
                 list.add(aux);
+            }
         }
-
         return list;
     }
-
 }

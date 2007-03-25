@@ -93,13 +93,12 @@ public class HistoryStrategy {
     /**
      * Set the maximum number of messages for strategies using message number limitations.
      *
-     * @param max The maximum number of messages to store in applicable strategies.
+     * @param max the maximum number of messages to store in applicable strategies.
      */
     public void setMaxNumber(int max) {
         this.maxNumber = max;
         if (contextPrefix != null){
-            JiveGlobals.setProperty(contextPrefix + ".maxNumber",
-                                    Integer.toString(maxNumber));
+            JiveGlobals.setProperty(contextPrefix + ".maxNumber", Integer.toString(maxNumber));
         }
     }
 
@@ -215,7 +214,7 @@ public class HistoryStrategy {
      * Strategy type.
      */
     public enum Type {
-        defaulType, none, all, number;
+        defaulType, none, all, number
     }
 
     /**
@@ -252,9 +251,9 @@ public class HistoryStrategy {
         if (maxNumberString != null && maxNumberString.trim().length() > 0){
             try {
                 setMaxNumber(Integer.parseInt(maxNumberString));
-            }catch (Exception e){
-                Log.info("Jive property "
-                        + prefix + ".maxNumber not a valid number.");
+            }
+            catch (Exception e){
+                Log.info("Jive property " + prefix + ".maxNumber not a valid number.");
             }
         }
     }

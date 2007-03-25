@@ -1,9 +1,5 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: $
-  -
-  - Copyright (C) 2005 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2007 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.
@@ -234,7 +230,7 @@
     <h3>What is it?</h3>
 
     <ul>
-        <li>A commercial extension to Openfire that provides practical and valuable features.</li>
+        <li>A commercial edition of Openfire that provides practical and valuable features along with professional support.</li>
         <li>Delivered as a plugin that works with the Open Source edition.</li>
         <li>Low per-user pricing.</li>
     </ul>
@@ -256,7 +252,7 @@
 
     <h3>How to get started:</h3>
     <ol>
-        <li>Install the plugin (no re-start necessary).</li>
+        <li>Install the Enterprise edition via the plugin (no re-start necessary).</li>
         <li>Get an evaluation license file (you'll be prompted after install).</li>
     </ol>
 

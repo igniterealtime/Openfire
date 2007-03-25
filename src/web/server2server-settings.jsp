@@ -247,17 +247,6 @@
 		<tbody>
 			<tr valign="middle">
 				<td width="1%" nowrap>
-					<input type="radio" name="s2sEnabled" value="false" id="rb01"
-					 <%= (!s2sEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="server2server.settings.label_disable" /></b> - <fmt:message key="server2server.settings.label_disable_info" />
-					</label>
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
 					<input type="radio" name="s2sEnabled" value="true" id="rb02"
 					 <%= (s2sEnabled ? "checked" : "") %>>
 				</td>
@@ -267,14 +256,25 @@
 					</label>  <input type="text" size="5" maxlength="10" name="port" value="<%= port %>">
 				</td>
 			</tr>
+            <tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="s2sEnabled" value="false" id="rb01"
+					 <%= (!s2sEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01">
+					<b><fmt:message key="server2server.settings.label_disable" /></b> - <fmt:message key="server2server.settings.label_disable_info" />
+					</label>
+				</td>
+			</tr>
 		</tbody>
 		</table>
-		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+        <br/>
+        <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 	</div>
 </form>
 <!-- END 'Service Enabled' -->
 
-<br>
 
 <!-- BEGIN 'Idle Connection Settings' -->
 <form action="server2server-settings.jsp?closeSettings" method="post">
@@ -284,15 +284,6 @@
 	<div class="jive-contentBox">
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="closeEnabled" value="false" id="rb03"
-					 <%= ((webManager.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
-				</td>
-			</tr>
 			<tr valign="middle">
 				<td width="1%" nowrap>
 					<input type="radio" name="closeEnabled" value="true" id="rb04"
@@ -306,14 +297,22 @@
 						 <fmt:message key="global.minutes" />.
 				</td>
 			</tr>
+            <tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="closeEnabled" value="false" id="rb03"
+					 <%= ((webManager.getSessionManager().getServerSessionIdleTime() < 0) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
+				</td>
+			</tr>
 		</tbody>
 		</table>
-		<input type="submit" value="<fmt:message key="global.save_settings" />">
+        <br/>
+        <input type="submit" value="<fmt:message key="global.save_settings" />">
 	</div>
 </form>
 <!-- END 'Idle Connection Settings' -->
-
-<br>
 
 <!-- BEGIN 'Allowed to Connect' -->
 	<div class="jive-contentBoxHeader">
@@ -324,7 +323,7 @@
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 
-			<tr valign="middle">
+			<tr valign="top">
 				<td width="1%" nowrap>
 					<input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.blacklist %>" id="rb05"
 					 <%= (RemoteServerManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
@@ -335,7 +334,7 @@
 					</label>
 				</td>
 			</tr>
-			<tr valign="middle">
+			<tr valign="top">
 				<td width="1%" nowrap>
 					<input type="radio" name="permissionFilter" value="<%= RemoteServerManager.PermissionPolicy.whitelist %>" id="rb06"
 					 <%= (RemoteServerManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
@@ -348,7 +347,7 @@
 			</tr>
 		</tbody>
 		</table>
-		<br>
+		<br/>
 		<input type="submit" name="permissionUpdate" value="<fmt:message key="global.save_settings" />">
 		<br><br>
 		</form>
@@ -412,9 +411,6 @@
 		</table>
 	</div>
 <!-- END 'Allowed to Connect' -->
-
-<br>
-
 
 <!-- BEGIN 'Not Allowed to Connect' -->
 	<div class="jive-contentBoxHeader">

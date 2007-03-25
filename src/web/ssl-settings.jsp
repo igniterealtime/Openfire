@@ -225,10 +225,8 @@
 
 <!-- BEGIN 'Client Connection Security' -->
 <form action="ssl-settings.jsp" method="post">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="ssl.settings.client.legend" />
-	</div>
-	<div class="jive-contentBox">
+	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
+	<h4><fmt:message key="ssl.settings.client.legend" /></h4>
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 			<tr valign="middle">
@@ -301,22 +299,16 @@
 			</tr>
 		</tbody>
 		</table>
-		<br>
-		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-	</div>
-</form>
+
+
 <!-- END 'Client Connection Security' -->
 
-<br>
-<br>
-
+    <br/>
+    <br/>
 
 <!-- BEGIN 'Server Connection Security' -->
-<form action="ssl-settings.jsp" method="post">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="ssl.settings.server.legend" />
-	</div>
-	<div class="jive-contentBox">
+
+    <h4><fmt:message key="ssl.settings.server.legend" /></h4>
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 			<tr valign="middle">
@@ -387,9 +379,9 @@
 			</tr>
 		</tbody>
 		</table>
-		<br>
-		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 	</div>
+
+    <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- BEGIN 'Server Connection Security' -->
 

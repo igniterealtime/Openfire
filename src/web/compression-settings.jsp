@@ -69,9 +69,7 @@
 
 <!-- BEGIN compression settings -->
 <form action="compression-settings.jsp">
-	<!--<div class="jive-contentBoxHeader">
 
-	</div>-->
 	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
 
 	<h4><fmt:message key="compression.settings.client.policy" /></h4>

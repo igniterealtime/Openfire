@@ -193,24 +193,6 @@
 	<div class="jive-contentBox">
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="strategy" value="<%= BOUNCE %>" id="rb01"
-					 <%= ((strategy==BOUNCE) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01"><b><fmt:message key="offline.messages.bounce_option" /></b></label> - <fmt:message key="offline.messages.never_back" />
-				</td>
-			</tr>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="strategy" value="<%= DROP %>" id="rb02"
-					 <%= ((strategy==DROP) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb02"><b><fmt:message key="offline.messages.drop_option" /></b></label> - <fmt:message key="offline.messages.never_store" />
-				</td>
-			</tr>
 			<tr valign="top" class="">
 				<td width="1%" nowrap>
 					<input type="radio" name="strategy" value="<%= STORE %>" id="rb03"
@@ -229,22 +211,22 @@
 					<table cellpadding="4" cellspacing="0" border="0">
 					<tr valign="top">
 						<td width="1%" nowrap>
-							<input type="radio" name="storeStrategy" value="<%= ALWAYS_STORE %>" id="rb05"
-							 onclick="this.form.strategy[2].checked=true;"
-							 <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
-						</td>
-						<td width="99%">
-							<label for="rb05"><b><fmt:message key="offline.messages.always_store" /></b></label> - <fmt:message key="offline.messages.always_store_info" />
-						</td>
-					</tr>
-					<tr valign="top">
-						<td width="1%" nowrap>
 							<input type="radio" name="storeStrategy" value="<%= STORE_AND_BOUNCE%>" id="rb06"
 							 onclick="this.form.strategy[2].checked=true;"
 							 <%= ((storeStrategy==STORE_AND_BOUNCE) ? "checked" : "") %>>
 						</td>
 						<td width="99%">
 							<label for="rb06"><b><fmt:message key="offline.messages.bounce" /></b></label> - <fmt:message key="offline.messages.bounce_info" />
+						</td>
+					</tr>
+                    <tr valign="top">
+						<td width="1%" nowrap>
+							<input type="radio" name="storeStrategy" value="<%= ALWAYS_STORE %>" id="rb05"
+							 onclick="this.form.strategy[2].checked=true;"
+							 <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
+						</td>
+						<td width="99%">
+							<label for="rb05"><b><fmt:message key="offline.messages.always_store" /></b></label> - <fmt:message key="offline.messages.always_store_info" />
 						</td>
 					</tr>
 					<tr valign="top">
@@ -269,7 +251,25 @@
 					</table>
 				</td>
 			</tr>
-		</tbody>
+            <tr valign="top">
+				<td width="1%" nowrap>
+					<input type="radio" name="strategy" value="<%= BOUNCE %>" id="rb01"
+					 <%= ((strategy==BOUNCE) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01"><b><fmt:message key="offline.messages.bounce_option" /></b></label> - <fmt:message key="offline.messages.never_back" />
+				</td>
+			</tr>
+			<tr valign="top">
+				<td width="1%" nowrap>
+					<input type="radio" name="strategy" value="<%= DROP %>" id="rb02"
+					 <%= ((strategy==DROP) ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb02"><b><fmt:message key="offline.messages.drop_option" /></b></label> - <fmt:message key="offline.messages.never_store" />
+				</td>
+			</tr>
+        </tbody>
 		</table>
 	</div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">

@@ -164,21 +164,7 @@ public class SessionManager extends BasicModule {
         else {
             streamIDFactory = new BasicStreamIDFactory();
         }
-
-        String conflictLimitProp = JiveGlobals.getProperty("xmpp.session.conflict-limit");
-        if (conflictLimitProp == null) {
-            conflictLimit = 0;
-            JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
-        }
-        else {
-            try {
-                conflictLimit = Integer.parseInt(conflictLimitProp);
-            }
-            catch (NumberFormatException e) {
-                conflictLimit = 0;
-                JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
-            }
-        }
+        conflictLimit = JiveGlobals.getIntProperty("xmpp.session.conflict-limit", 0);
     }
 
     /**
@@ -315,7 +301,7 @@ public class SessionManager extends BasicModule {
         /**
          * Add a session to the manager.
          *
-         * @param session
+         * @param session the session to add.
          */
         void addSession(ClientSession session) {
             String resource = session.getAddress().getResource();
@@ -407,7 +393,7 @@ public class SessionManager extends BasicModule {
          *
          * @param filterAvailable flag that indicates if only available sessions should be
          *        considered.
-         * @return The default session for the user.
+         * @return the default session for the user.
          */
         ClientSession getDefaultSession(boolean filterAvailable) {
             if (priorityList.isEmpty()) {
@@ -440,9 +426,11 @@ public class SessionManager extends BasicModule {
         }
 
         /**
-         * Broadcast to all resources for the given user
+         * Broadcast to all resources for the given user.
          *
-         * @param packet
+         * @param packet the packet to broadcast.
+         * @throws UnauthorizedException if not allowed to send the packet.
+         * @throws PacketException if an exception occurs.
          */
         private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
             for (Session session : resources.values()) {
@@ -524,7 +512,6 @@ public class SessionManager extends BasicModule {
      * @param conn the connection to create the session from.
      * @param id the streamID to use for the new session.
      * @return a newly created session.
-     * @throws UnauthorizedException
      */
     public ClientSession createClientSession(Connection conn, StreamID id) {
         if (serverName == null) {
@@ -748,6 +735,7 @@ public class SessionManager extends BasicModule {
                 SessionMap sessionMap = sessions.get(session.getUsername());
                 if (sessionMap == null) {
                     Log.warn("No SessionMap found for session" + "\n" + session);
+                    return;
                 }
                 // Update the order of the sessions based on the new presence of this session
                 sessionMap.sessionAvailable(session);
@@ -771,9 +759,9 @@ public class SessionManager extends BasicModule {
      * Sends the presences of other connected resources to the resource that just connected.
      * 
      * @param session the newly created session.
+     * @throws UserNotFoundException if the an error occurs sending presence to a session.
      */
-    private void broadcastPresenceOfOtherResource(ClientSession session)
-            throws UserNotFoundException {
+    private void broadcastPresenceOfOtherResource(ClientSession session) throws UserNotFoundException {
         Presence presence;
         Collection<ClientSession> availableSession;
         SessionMap sessionMap = sessions.get(session.getUsername());
@@ -796,6 +784,7 @@ public class SessionManager extends BasicModule {
      * existing available resources (if any).
      *
      * @param originatingResource the full JID of the session that sent the presence update.
+     * @param presence the presence.
      */
     public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
         Collection<ClientSession> availableSession;
@@ -1383,7 +1372,8 @@ public class SessionManager extends BasicModule {
      * Broadcasts the given data to all connected sessions. Excellent
      * for server administration messages.
      *
-     * @param packet The packet to be broadcast
+     * @param packet the packet to be broadcast.
+     * @throws UnauthorizedException if not allowed to perform the operation.
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
         for (SessionMap sessionMap : sessions.values()) {
@@ -1400,7 +1390,10 @@ public class SessionManager extends BasicModule {
      * user. Excellent for updating all connected resources for users such as
      * roster pushes.
      *
-     * @param packet The packet to be broadcast
+     * @param username the user to send the boradcast to.
+     * @param packet the packet to be broadcast.
+     * @throws UnauthorizedException if not allowed to perform the operation.
+     * @throws PacketException if a packet exception occurs.
      */
     public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
         SessionMap sessionMap = sessions.get(username);

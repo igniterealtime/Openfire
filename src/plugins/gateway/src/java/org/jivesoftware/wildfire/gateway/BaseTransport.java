@@ -1348,6 +1348,20 @@ public abstract class BaseTransport implements Component, RosterEventListener {
         if (registrations.isEmpty()) {
             throw new UserNotFoundException("User was not registered.");
         }
+
+
+        // Log out any active sessions.
+        try {
+            TransportSession session = sessionManager.getSession(jid);
+            if (session.isLoggedIn()) {
+                this.registrationLoggedOut(session);
+            }
+            sessionManager.removeSession(jid);
+        }
+        catch (NotFoundException e) {
+            // Ok then.
+        }
+        
         // For now, we're going to have to just nuke all of these.  Sorry.
         for (Registration reg : registrations) {
             registrationManager.deleteRegistration(reg);

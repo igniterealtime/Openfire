@@ -91,7 +91,7 @@
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 			<tr valign="middle">
-				<td width="1%">
+				<td valign="top" width="1%">
 					<input type="radio" name="kickPolicy" value="0" id="rb01"
 					 <%= ((kickPolicy==0) ? "checked" : "") %>>
 				</td>
@@ -101,7 +101,7 @@
 				</td>
 			</tr>
 			<tr valign="middle">
-				<td width="1%">
+				<td valign="top" width="1%">
 					<input type="radio" name="kickPolicy" value="<%= SessionManager.NEVER_KICK %>" id="rb02"
 					 <%= ((kickPolicy==SessionManager.NEVER_KICK) ? "checked" : "") %>>
 				</td>
@@ -111,7 +111,7 @@
 				</td>
 			</tr>
 			<tr valign="middle">
-				<td width="1%">
+				<td valign="top" width="1%">
 					<input type="radio" name="kickPolicy" value="1" id="rb04"
 					 <%= ((kickPolicy==1) ? "checked" : "") %>>
 				</td>
@@ -127,7 +127,7 @@
 		}
 	%>
 			<tr valign="middle">
-				<td width="1%">
+				<td valign="top" width="1%">
 					<input type="radio" name="kickPolicy" value="<%= Integer.MAX_VALUE %>" id="rb03"
 					 onfocus="this.form.kickValue.focus();"
 					 <%= ((assignedKickPolicy) ? "checked" : "") %>>

@@ -197,6 +197,8 @@
 
 </form>
 
+<% if (managerEnabled) { %>
+
 <br>
 
 <style type="text/css">
@@ -258,6 +260,9 @@
 %>
 </tbody>
 </table>
+
+
+<% } %>
 
 </body>
 </html>

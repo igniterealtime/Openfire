@@ -213,8 +213,8 @@
 	<div class="jive-contentBox">
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
-			<tr valign="middle">
-				<td width="1%" nowrap>
+			<tr>
+				<td width="1%" valign="top" nowrap>
 					<input type="radio" name="componentEnabled" value="false" id="rb01"
 					 <%= (!componentEnabled ? "checked" : "") %>>
 				</td>
@@ -224,8 +224,8 @@
 					</label>
 				</td>
 			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
+			<tr>
+				<td width="1%" valign="top" nowrap>
 					<input type="radio" name="componentEnabled" value="true" id="rb02"
 					 <%= (componentEnabled ? "checked" : "") %>>
 				</td>
@@ -269,6 +269,8 @@
 </form>
 <!-- END 'Services Enabled' -->
 
+<% if (componentEnabled) { %>
+
 <br>
 
 <!-- BEGIN 'Allowed to Connect' -->
@@ -280,7 +282,7 @@
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 
-			<tr valign="middle">
+			<tr valign="top">
 				<td width="1%" nowrap>
 					<input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.blacklist %>" id="rb03"
 					 <%= (ExternalComponentManager.PermissionPolicy.blacklist.toString().equals(permissionFilter) ? "checked" : "") %>>
@@ -291,7 +293,7 @@
 					</label>
 				</td>
 			</tr>
-			<tr valign="middle">
+			<tr valign="top">
 				<td width="1%" nowrap>
 					<input type="radio" name="permissionFilter" value="<%= ExternalComponentManager.PermissionPolicy.whitelist %>" id="rb04"
 					 <%= (ExternalComponentManager.PermissionPolicy.whitelist.toString().equals(permissionFilter) ? "checked" : "") %>>
@@ -445,6 +447,7 @@
 	</div>
 <!-- END 'Not Allowed to Connect' -->
 
+<% } %>
 
 </body>
 </html>

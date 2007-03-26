@@ -82,13 +82,49 @@
 } %>
 
 <form action="http-bind.jsp" method="post">
-    <div class="jive-contentBoxHeader">
-        <fmt:message key="httpbind.settings.enabled.legend"/>
-    </div>
-    <div class="jive-contentBox">
+    
+    <div class="jive-contentBox" style="-moz-border-radius: 3px;">
         <table cellpadding="3" cellspacing="0" border="0">
             <tbody>
-                <tr valign="middle">
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <input type="radio" name="httpBindEnabled" value="true" id="rb02"
+                                onclick="enabled = true; setEnabled();"
+                        <%= (isHttpBindEnabled ? "checked" : "") %>>
+                    </td>
+                    <td width="99%" colspan="2">
+                        <label for="rb02">
+                            <b>
+                                <fmt:message key="httpbind.settings.label_enable"/>
+                            </b> -
+                            <fmt:message key="httpbind.settings.label_enable_info"/>
+                        </label>
+
+                        <table border="0">
+                             <tr>
+                                <td>
+                                    <label for="port">
+                                    <fmt:message key="httpbind.settings.vanilla_port"/>
+                                    </label>
+                                </td><td>
+                                    <input id="port" type="text" size="5" maxlength="10" name="port"
+                                           value="<%=port%>" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label for="securePort">
+                                    <fmt:message key="httpbind.settings.secure_port"/>
+                                    </label>
+                                </td><td>
+                                    <input id="securePort" type="text" size="5" maxlength="10" name="securePort"
+                                           value="<%=securePort%>" />
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr valign="top">
                     <td width="1%" nowrap>
                         <input type="radio" name="httpBindEnabled" value="false" id="rb01"
                                onclick="enabled = false; setEnabled();"
@@ -103,50 +139,11 @@
                         </label>
                     </td>
                 </tr>
-                <tr valign="middle">
-                    <td width="1%" nowrap>
-                        <input type="radio" name="httpBindEnabled" value="true" id="rb02"
-                                onclick="enabled = true; setEnabled();"
-                        <%= (isHttpBindEnabled ? "checked" : "") %>>
-                    </td>
-                    <td width="99%" colspan="2">
-                        <label for="rb02">
-                            <b>
-                                <fmt:message key="httpbind.settings.label_enable"/>
-                            </b> -
-                            <fmt:message key="httpbind.settings.label_enable_info"/>
-                        </label>
-                    </td>
-                </tr>
-                <tr>
-                    <td width="1%">
-                        &nbsp;
-                    </td>
-                    <td colspan="2">
-                        <label for="port">
-                        <fmt:message key="httpbind.settings.vanilla_port"/>
-                        </label>
-                        <input id="port" type="text" size="5" maxlength="10" name="port"
-                               value="<%=port%>" />
-                    </td>
-                </tr>
-                <tr>
-                    <td width="1%">
-                        &nbsp;
-                    </td>
-                    <td colspan="2">
-                        <label for="securePort">
-                        <fmt:message key="httpbind.settings.secure_port"/>
-                        </label>
-                        <input id="securePort" type="text" size="5" maxlength="10" name="securePort"
-                               value="<%=securePort%>" />
-                    </td>
-                </tr>
             </tbody>
         </table>
-        <input type="submit" id="settingsUpdate" name="update"
-               value="<fmt:message key="global.save_settings" />">
     </div>
+    <input type="submit" id="settingsUpdate" name="update"
+               value="<fmt:message key="global.save_settings" />">
 </form>
 </body>
 </html>

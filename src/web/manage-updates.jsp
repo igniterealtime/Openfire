@@ -126,23 +126,23 @@ else if (updateSucess) { %>
 		<tbody>
 			<tr valign="middle">
 				<td width="1%" nowrap>
-					<input type="radio" name="serviceEnabled" value="false" id="rb01"
-					<%= (!serviceEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="manage-updates.label_disable"/></b> - <fmt:message key="manage-updates.label_disable_info"/>
-					</label>
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
 					<input type="radio" name="serviceEnabled" value="true" id="rb02"
 					<%= (serviceEnabled ? "checked" : "") %>>
 				</td>
 				<td width="99%">
 					<label for="rb02">
 					<b><fmt:message key="manage-updates.label_enable"/></b> - <fmt:message key="manage-updates.label_enable_info"/>
+					</label>
+				</td>
+			</tr>
+            <tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="serviceEnabled" value="false" id="rb01"
+					<%= (!serviceEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb01">
+					<b><fmt:message key="manage-updates.label_disable"/></b> - <fmt:message key="manage-updates.label_disable_info"/>
 					</label>
 				</td>
 			</tr>
@@ -157,23 +157,23 @@ else if (updateSucess) { %>
 		<tbody>
 			<tr valign="middle">
 				<td width="1%" nowrap>
-					<input type="radio" name="notificationsEnabled" value="false" id="rb03"
-					<%= (!notificationsEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb03">
-					<b><fmt:message key="manage-updates.notif.label_disable"/></b> - <fmt:message key="manage-updates.notif.label_disable_info"/>
-					</label>
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
 					<input type="radio" name="notificationsEnabled" value="true" id="rb04"
 					<%= (notificationsEnabled ? "checked" : "") %>>
 				</td>
 				<td width="99%">
 					<label for="rb04">
 					<b><fmt:message key="manage-updates.notif.label_enable"/></b> - <fmt:message key="manage-updates.notif.label_enable_info"/>
+					</label>
+				</td>
+			</tr>
+            <tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="notificationsEnabled" value="false" id="rb03"
+					<%= (!notificationsEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb03">
+					<b><fmt:message key="manage-updates.notif.label_disable"/></b> - <fmt:message key="manage-updates.notif.label_disable_info"/>
 					</label>
 				</td>
 			</tr>

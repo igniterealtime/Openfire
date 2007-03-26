@@ -220,9 +220,10 @@ public class HistoryStrategy {
     /**
      * Obtain the strategy type from string name. See the Type enumeration name
      * strings for the names strings supported. If nothing matches
-     * and parent != null DEFAULT is used, otherwise, NUMBER is used.
+     * and parent is not null, then the default strategy is used. Otherwise the number
+     * strategy is used.
      *
-     * @param typeName The text name of the strategy type
+     * @param typeName the text name of the strategy type.
      */
     public void setTypeFromString(String typeName) {
         try {

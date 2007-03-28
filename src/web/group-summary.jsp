@@ -11,7 +11,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.group.*,
+                 org.jivesoftware.openfire.group.*,
                  java.net.URLEncoder"
 %>
 

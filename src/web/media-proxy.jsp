@@ -10,10 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxyService" %>
-<%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxySession" %>
-<%@ page import="org.jivesoftware.wildfire.mediaproxy.RelaySession" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
+<%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxySession" %>
+<%@ page import="org.jivesoftware.openfire.mediaproxy.RelaySession" %>
 <%@ page import="java.util.Collection" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>

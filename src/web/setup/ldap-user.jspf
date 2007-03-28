@@ -5,9 +5,9 @@
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager" %>
-<%@ page import="org.jivesoftware.wildfire.user.UserManager" %>
-<%@ page import="org.jivesoftware.wildfire.ldap.LdapUserProvider" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.openfire.user.UserManager" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapUserProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -96,7 +96,7 @@
             if (save) {
                 manager.setUsernameField(usernameField);
                 if (searchFields != null) {
-                    if ("org.jivesoftware.wildfire.ldap.LdapUserProvider"
+                    if ("org.jivesoftware.openfire.ldap.LdapUserProvider"
                             .equals(JiveGlobals.getXMLProperty("provider.user.className"))) {
                         // Update current instance being used
                         ((LdapUserProvider) UserManager.getUserProvider()).setSearchFields(searchFields);
@@ -113,9 +113,9 @@
 
                 // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
                 JiveGlobals.setXMLProperty("provider.user.className",
-                        "org.jivesoftware.wildfire.ldap.LdapUserProvider");
+                        "org.jivesoftware.openfire.ldap.LdapUserProvider");
                 JiveGlobals.setXMLProperty("provider.auth.className",
-                        "org.jivesoftware.wildfire.ldap.LdapAuthProvider");
+                        "org.jivesoftware.openfire.ldap.LdapAuthProvider");
 
                 // Redirect
                 response.sendRedirect(nextPage + "?serverType=" + serverType);

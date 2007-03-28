@@ -1,10 +1,10 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.gateway.GatewayPlugin,
-                 org.jivesoftware.wildfire.gateway.Registration,
-                 org.jivesoftware.wildfire.gateway.RegistrationManager,
-                 org.jivesoftware.wildfire.session.ClientSession,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.gateway.GatewayPlugin,
+                 org.jivesoftware.openfire.gateway.Registration,
+                 org.jivesoftware.openfire.gateway.RegistrationManager,
+                 org.jivesoftware.openfire.session.ClientSession,
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>

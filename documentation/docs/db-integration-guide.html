@@ -101,7 +101,7 @@
 </p>
 
 <ul>
-    <li>provider.auth.className -- set the value to <tt>org.jivesoftware.wildfire.auth.JDBCAuthProvider</tt>.</li>
+    <li>provider.auth.className -- set the value to <tt>org.jivesoftware.openfire.auth.JDBCAuthProvider</tt>.</li>
     <li>jdbcAuthProvider.passwordSQL -- the SQL String to select a user's password. The SQL
         statement should contain a single "?" character, which will be dynamically replaced with
         a username when being executed.</li>
@@ -119,7 +119,7 @@
   ...
   &lt;provider&gt;
     &lt;auth&gt;
-      &lt;className&gt;org.jivesoftware.wildfire.auth.JDBCAuthProvider&lt;/className&gt;
+      &lt;className&gt;org.jivesoftware.openfire.auth.JDBCAuthProvider&lt;/className&gt;
     &lt;/auth&gt;
   &lt;/provider&gt;
   &lt;jdbcAuthProvider&gt;
@@ -155,7 +155,7 @@ you must also enable authentication integration (see above). Use the following s
 enable user integration.</p>
 
 <ul>
-    <li>provider.user.className -- set the value to <tt>org.jivesoftware.wildfire.user.JDBCUserProvider</tt>.</li>
+    <li>provider.user.className -- set the value to <tt>org.jivesoftware.openfire.user.JDBCUserProvider</tt>.</li>
     <li>jdbcUserProvider.loadUserSQL -- the SQL statement to load the name and email address of a user (in
         that order) given a username. The SQL statement should contain a single "?" character,
         which will be dynamically replaced with a username when being executed.</li>
@@ -179,10 +179,10 @@ enable user integration.</p>
   ...
   &lt;provider&gt;
     &lt;auth&gt;
-      &lt;className&gt;org.jivesoftware.wildfire.auth.JDBCAuthProvider&lt;/className&gt;
+      &lt;className&gt;org.jivesoftware.openfire.auth.JDBCAuthProvider&lt;/className&gt;
     &lt;/auth&gt;
     &lt;user&gt;
-      &lt;className&gt;org.jivesoftware.wildfire.user.JDBCUserProvider&lt;/className&gt;
+      &lt;className&gt;org.jivesoftware.openfire.user.JDBCUserProvider&lt;/className&gt;
     &lt;/user&gt;
   &lt;/provider&gt;
   &lt;jdbcAuthProvider&gt;
@@ -209,7 +209,7 @@ you must also enable authentication integration; you'll also likely want to enab
 integration (see above). Use the following settings to enable group integration.</p>
 
 <ul>
-    <li>provider.group.className -- set the value to <tt>org.jivesoftware.wildfire.group.JDBCGroupProvider</tt>.</li>
+    <li>provider.group.className -- set the value to <tt>org.jivesoftware.openfire.group.JDBCGroupProvider</tt>.</li>
     <li>jdbcGroupProvider.groupCountSQL -- the SQL statement to load the total number of groups in
         the database.</li>
     <li>jdbcGroupProvider.allGroupsSQL -- the SQL statement to load all groups in the database.</li>
@@ -236,13 +236,13 @@ integration (see above). Use the following settings to enable group integration.
   ...
   &lt;provider&gt;
     &lt;auth&gt;
-      &lt;className&gt;org.jivesoftware.wildfire.auth.JDBCAuthProvider&lt;/className&gt;
+      &lt;className&gt;org.jivesoftware.openfire.auth.JDBCAuthProvider&lt;/className&gt;
     &lt;/auth&gt;
     &lt;user&gt;
-      &lt;className&gt;org.jivesoftware.wildfire.user.JDBCUserProvider&lt;/className&gt;
+      &lt;className&gt;org.jivesoftware.openfire.user.JDBCUserProvider&lt;/className&gt;
     &lt;/user&gt;
     &lt;group&gt;
-      &lt;className&gt;org.jivesoftware.wildfire.group.JDBCGroupProvider&lt;/className&gt;
+      &lt;className&gt;org.jivesoftware.openfire.group.JDBCGroupProvider&lt;/className&gt;
     &lt;/group&gt;
   &lt;/provider&gt;
   &lt;jdbcAuthProvider&gt;

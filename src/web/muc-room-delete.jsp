@@ -9,7 +9,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.muc.MUCRoom,
+                 org.jivesoftware.openfire.muc.MUCRoom,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>

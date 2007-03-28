@@ -1,7 +1,7 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.plugin.SearchPlugin,
-                 org.jivesoftware.wildfire.user.*,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.plugin.SearchPlugin,
+                 org.jivesoftware.openfire.user.*,
                  org.jivesoftware.util.*"
 %>
 

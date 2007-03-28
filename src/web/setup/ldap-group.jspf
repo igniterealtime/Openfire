@@ -2,7 +2,7 @@
                  org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -110,7 +110,7 @@
 
             // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
             JiveGlobals.setXMLProperty("provider.group.className",
-                    "org.jivesoftware.wildfire.ldap.LdapGroupProvider");
+                    "org.jivesoftware.openfire.ldap.LdapGroupProvider");
 
             // Redirect
             response.sendRedirect(nextPage);

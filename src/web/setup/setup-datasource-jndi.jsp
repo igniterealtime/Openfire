@@ -14,8 +14,7 @@
                  javax.naming.Binding,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.database.JNDIDataSourceProvider,
-                 org.jivesoftware.database.DbConnectionManager,
-                 org.jivesoftware.database.JNDIDataSourceProvider" %>
+                 org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="org.jivesoftware.util.ClassUtils"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.sql.Connection"%>
@@ -23,7 +22,7 @@
 <%@ page import="java.sql.Statement"%>
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%
 	// Redirect if we've already run setup:
@@ -76,7 +75,7 @@
 <%
     boolean embeddedMode = false;
     try {
-        ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
+        ClassUtils.forName("org.jivesoftware.openfire.starter.ServerStarter");
         embeddedMode = true;
     }
     catch (Exception ignored) {}

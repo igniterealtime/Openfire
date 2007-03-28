@@ -2,8 +2,8 @@
                 org.jivesoftware.util.JiveGlobals,
                 org.jivesoftware.util.ParamUtils,
                 org.jivesoftware.util.StringUtils,
-                org.jivesoftware.wildfire.XMPPServer,
-                org.jivesoftware.wildfire.net.SSLConfig,
+                org.jivesoftware.openfire.XMPPServer,
+                org.jivesoftware.openfire.net.SSLConfig,
                 java.io.ByteArrayInputStream,
                 java.security.KeyStore,
                 java.security.PrivateKey,
@@ -13,8 +13,8 @@
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.wildfire.container.PluginManager" %>
-<%@ page import="org.jivesoftware.wildfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

@@ -11,7 +11,7 @@
 package org.jivesoftware.util;
 
 import junit.framework.TestCase;
-import org.jivesoftware.wildfire.stun.StunServerAddress;
+import org.jivesoftware.openfire.stun.StunServerAddress;
 
 import java.util.List;
 import java.util.ArrayList;

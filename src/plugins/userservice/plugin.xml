@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin>
-    <class>org.jivesoftware.wildfire.plugin.UserServicePlugin</class>
+    <class>org.jivesoftware.openfire.plugin.UserServicePlugin</class>
     <name>User Service</name>
     <description>Allows administration of users via HTTP requests.</description>
     <author>Justin Hunt</author>

@@ -12,26 +12,26 @@
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.StringUtils"
 %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.wildfire.update.Update"%>
-<%@ page import="org.jivesoftware.wildfire.update.UpdateManager"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.update.Update"%>
+<%@ page import="org.jivesoftware.openfire.update.UpdateManager"%>
 <%@ page import="java.text.DecimalFormat"%>
-<%@ page import="org.jivesoftware.wildfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor" %>
 <%@ page import="java.net.SocketAddress" %>
 <%@ page import="java.net.InetSocketAddress" %>
-<%@ page import="org.jivesoftware.wildfire.ServerPort" %>
-<%@ page import="org.jivesoftware.wildfire.filetransfer.proxy.FileTransferProxy" %>
-<%@ page import="org.jivesoftware.wildfire.http.HttpBindManager" %>
-<%@ page import="org.jivesoftware.wildfire.mediaproxy.MediaProxyService" %>
-<%@ page import="org.jivesoftware.wildfire.stun.STUNService" %>
-<%@ page import="org.jivesoftware.wildfire.session.ConnectionMultiplexerSession" %>
-<%@ page import="org.jivesoftware.wildfire.Connection" %>
-<%@ page import="org.jivesoftware.wildfire.session.ClientSession" %>
+<%@ page import="org.jivesoftware.openfire.ServerPort" %>
+<%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
+<%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
+<%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
+<%@ page import="org.jivesoftware.openfire.stun.STUNService" %>
+<%@ page import="org.jivesoftware.openfire.session.ConnectionMultiplexerSession" %>
+<%@ page import="org.jivesoftware.openfire.Connection" %>
+<%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
-<%@ page import="org.jivesoftware.wildfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.util.CertificateManager" %>
-<%@ page import="org.jivesoftware.wildfire.net.SSLConfig" %>
+<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

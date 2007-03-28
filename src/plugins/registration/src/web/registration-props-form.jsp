@@ -8,10 +8,10 @@
 <%@ page
    import="java.util.*,
            org.jivesoftware.admin.*,
-           org.jivesoftware.wildfire.XMPPServer,
-           org.jivesoftware.wildfire.user.*,
-           org.jivesoftware.wildfire.plugin.RegistrationPlugin,
-           org.jivesoftware.wildfire.group.*,
+           org.jivesoftware.openfire.XMPPServer,
+           org.jivesoftware.openfire.user.*,
+           org.jivesoftware.openfire.plugin.RegistrationPlugin,
+           org.jivesoftware.openfire.group.*,
            org.jivesoftware.util.*"
    errorPage="error.jsp"%>
 

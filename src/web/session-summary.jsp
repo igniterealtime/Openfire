@@ -10,9 +10,9 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.SessionResultFilter,
-                 org.jivesoftware.wildfire.session.ClientSession,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.SessionResultFilter,
+                 org.jivesoftware.openfire.session.ClientSession,
                  java.util.Collection"
     errorPage="error.jsp"
 %>
@@ -166,7 +166,7 @@
      filter.setSortOrder(order);
      filter.setStartIndex(start);
      filter.setNumResults(range);
-     Collection<org.jivesoftware.wildfire.session.ClientSession> sessions = sessionManager.getSessions(filter);
+     Collection<org.jivesoftware.openfire.session.ClientSession> sessions = sessionManager.getSessions(filter);
  %>
 
 <div class="jive-table">

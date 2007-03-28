@@ -84,12 +84,12 @@
     </filter-mapping>
 
     <listener>
-        <listener-class>org.jivesoftware.wildfire.XMPPContextListener</listener-class>
+        <listener-class>org.jivesoftware.openfire.XMPPContextListener</listener-class>
     </listener>
 
     <servlet>
         <servlet-name>PluginServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.container.PluginServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.container.PluginServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -110,7 +110,7 @@
 
     <servlet>
         <servlet-name>PluginIconServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.container.PluginIconServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
 

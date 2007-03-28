@@ -13,10 +13,10 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.ConnectionManager,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.multiplex.ConnectionMultiplexerManager,
+                 org.jivesoftware.openfire.ConnectionManager,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager,
                  java.net.InetAddress"
     errorPage="error.jsp"
 %>

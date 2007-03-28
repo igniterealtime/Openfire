@@ -57,7 +57,7 @@ static int GetPathToSelf(char **pathToSelfPtr)
 	return err;
 }
 
-static bool wildfireIsRunning()
+static bool openfireIsRunning()
 {
     FILE *ps;
     char buff[1024];
@@ -80,7 +80,7 @@ static bool wildfireIsRunning()
 static void toggleStartOpenfireAtBoot()
 {
 	CFURLRef propFile = CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
-													  CFSTR("/Library/LaunchDaemons/org.jivesoftware.wildfire.plist"),
+													  CFSTR("/Library/LaunchDaemons/org.jivesoftware.openfire.plist"),
 													  kCFURLPOSIXPathStyle,
 													  false);
 	CFDataRef xmlData;
@@ -112,7 +112,7 @@ static void toggleOpenfire()
 {
 	char *args[4];
 	args[0] = "launchctl";
-	if(wildfireIsRunning())
+	if(openfireIsRunning())
 		args[1] = "unload";
 	else
 		args[1] = "load";

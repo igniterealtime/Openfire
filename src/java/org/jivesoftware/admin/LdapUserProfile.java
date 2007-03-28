@@ -16,8 +16,8 @@ import org.dom4j.io.OutputFormat;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLWriter;
-import org.jivesoftware.wildfire.ldap.LdapManager;
-import org.jivesoftware.wildfire.ldap.LdapVCardProvider;
+import org.jivesoftware.openfire.ldap.LdapManager;
+import org.jivesoftware.openfire.ldap.LdapVCardProvider;
 
 import java.io.IOException;
 import java.io.StringWriter;

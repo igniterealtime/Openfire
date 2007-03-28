@@ -5,8 +5,8 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.user.*,
-                 org.jivesoftware.wildfire.plugin.RegistrationPlugin,
+<%@ page import="org.jivesoftware.openfire.user.*,
+                 org.jivesoftware.openfire.plugin.RegistrationPlugin,
                  org.jivesoftware.util.*,
                  org.jivesoftware.stringprep.Stringprep,
                  org.jivesoftware.stringprep.StringprepException,

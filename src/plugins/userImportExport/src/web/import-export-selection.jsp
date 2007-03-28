@@ -1,5 +1,5 @@
-<%@ page import="org.jivesoftware.wildfire.plugin.ImportExportPlugin,
-                 org.jivesoftware.wildfire.XMPPServer"
+<%@ page import="org.jivesoftware.openfire.plugin.ImportExportPlugin,
+                 org.jivesoftware.openfire.XMPPServer"
 %>
 
 <html>

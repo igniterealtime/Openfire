@@ -10,9 +10,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                   org.jivesoftware.wildfire.XMPPServer,
-                   org.jivesoftware.wildfire.audit.AuditManager,
-                 org.jivesoftware.wildfire.user.UserNotFoundException,
+                   org.jivesoftware.openfire.XMPPServer,
+                   org.jivesoftware.openfire.audit.AuditManager,
+                 org.jivesoftware.openfire.user.UserNotFoundException,
                  org.xmpp.packet.JID,
                  java.io.File"
     errorPage="error.jsp"

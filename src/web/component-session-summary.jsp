@@ -11,9 +11,9 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.session.ComponentSession,
-                 org.jivesoftware.wildfire.session.Session,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ComponentSession,
+                 org.jivesoftware.openfire.session.Session,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>

@@ -10,7 +10,7 @@
 package org.dom4j.io;
 
 import org.dom4j.*;
-import org.jivesoftware.wildfire.net.MXParser;
+import org.jivesoftware.openfire.net.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;

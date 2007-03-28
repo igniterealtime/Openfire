@@ -13,9 +13,9 @@ package org.jivesoftware.database;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
 
 import java.io.*;
 import java.sql.*;

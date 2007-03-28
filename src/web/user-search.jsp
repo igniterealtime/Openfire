@@ -4,7 +4,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
+                 org.jivesoftware.openfire.user.*,
                  java.util.HashMap,
                  java.util.Map,
                  java.net.URLEncoder"

@@ -158,7 +158,7 @@ end-users (all placed in the main plugin directory):
 </ul>
 
 <p>Your plugin class must be implement the
-<tt><a href="javadoc/org/jivesoftware/wildfire/container/Plugin.html">Plugin</a></tt>
+<tt><a href="javadoc/org/jivesoftware/openfire/container/Plugin.html">Plugin</a></tt>
 interface from the <a href="javadoc/index.html">Openfire API</a> as
 well as have a default (no argument) contructor. The Plugin interface has
 methods for initializing and destroying the plugin.
@@ -169,8 +169,8 @@ methods for initializing and destroying the plugin.
 <pre class="java">
 package org.example;
 
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
 
 import java.io.File;
 
@@ -406,7 +406,7 @@ points that are the most common:
  for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the
  example above); sub-domains are only used for routing within the XMPP server.
 
-    <li>Register a plugin as an <a href="javadoc/org/jivesoftware/wildfire/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
+    <li>Register a plugin as an <a href="javadoc/org/jivesoftware/openfire/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
   namespace. The following code snippet demonstrates how to register an IQHandler:
 
   <pre>
@@ -416,7 +416,7 @@ points that are the most common:
   iqRouter.addHandler(myHandler);
   </pre>
 
-    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/wildfire/interceptor/PacketInterceptor.html">
+    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/openfire/interceptor/PacketInterceptor.html">
     PacketInterceptor</a> to receive all packets being sent through the system and
     optionally reject them. For example, an interceptor could reject all messages that contained
     profanity or flag them for review by an administrator.</li>

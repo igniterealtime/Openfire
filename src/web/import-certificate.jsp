@@ -1,7 +1,7 @@
 <%@ page import="org.jivesoftware.util.CertificateManager,
                 org.jivesoftware.util.ParamUtils,
-                org.jivesoftware.wildfire.XMPPServer,
-                org.jivesoftware.wildfire.net.SSLConfig,
+                org.jivesoftware.openfire.XMPPServer,
+                org.jivesoftware.openfire.net.SSLConfig,
                 java.io.ByteArrayInputStream,
                 java.util.HashMap,
                 java.util.Map"

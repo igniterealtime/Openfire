@@ -10,10 +10,10 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.session.ClientSession,
-                 org.jivesoftware.wildfire.session.Session,
-                 org.jivesoftware.wildfire.user.User,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ClientSession,
+                 org.jivesoftware.openfire.session.Session,
+                 org.jivesoftware.openfire.user.User,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
                  java.util.Collection,

@@ -10,10 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.Connection,
-                 org.jivesoftware.wildfire.ConnectionManager,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.session.ClientSession"
+                 org.jivesoftware.openfire.Connection,
+                 org.jivesoftware.openfire.ConnectionManager,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.session.ClientSession"
     errorPage="error.jsp"
 %>
 
@@ -110,7 +110,7 @@
     // Set page vars
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     if (connectionManager.isClientListenerEnabled() && connectionManager.isClientSSLListenerEnabled()) {
-        if (Connection.TLSPolicy.required.equals(org.jivesoftware.wildfire.session.ClientSession.getTLSPolicy())) {
+        if (Connection.TLSPolicy.required.equals(org.jivesoftware.openfire.session.ClientSession.getTLSPolicy())) {
             clientSecurityRequired = "req";
             ssl = "available";
             tls = "required";

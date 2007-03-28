@@ -4,7 +4,7 @@
   Plugin configuration for the broadcast plugin.
 -->
 <plugin>
-    <class>org.jivesoftware.wildfire.plugin.UserCreationPlugin</class>
+    <class>org.jivesoftware.openfire.plugin.UserCreationPlugin</class>
     <name>User Creation</name>
     <description>Creates users and populates rosters.</description>
     <author>Jive Software</author>

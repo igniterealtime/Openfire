@@ -10,7 +10,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.muc.*,
+                 org.jivesoftware.openfire.muc.*,
                  org.xmpp.packet.IQ,
                  org.dom4j.Element,
                  java.net.URLEncoder"

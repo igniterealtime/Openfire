@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
-   <class>org.jivesoftware.wildfire.plugin.SubscriptionPlugin</class>
+   <class>org.jivesoftware.openfire.plugin.SubscriptionPlugin</class>
 
    <name>Subscription</name>
    <description>Automatically accepts or rejects subsription requests</description>

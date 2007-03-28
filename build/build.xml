@@ -329,7 +329,7 @@
         <!-- Make main Openfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
             <fileset dir="${compile.dir}" includes="**/*.class"
-                     excludes="org/jivesoftware/wildfire/starter/ServerStarter*.class,org/jivesoftware/wildfire/launcher/*.class"/>
+                     excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
@@ -342,15 +342,15 @@
         <!-- Make startup jar -->
         <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
             <fileset dir="${compile.dir}">
-                <include name="org/jivesoftware/wildfire/starter/ServerStarter*.class"/>
-                <include name="org/jivesoftware/wildfire/launcher/*.class"/>
-                <include name="org/jivesoftware/wildfire/starter/JiveClassLoader*.class"/>
+                <include name="org/jivesoftware/openfire/starter/ServerStarter*.class"/>
+                <include name="org/jivesoftware/openfire/launcher/*.class"/>
+                <include name="org/jivesoftware/openfire/starter/JiveClassLoader*.class"/>
             </fileset>
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif"/>
             <fileset dir="${lib.build.installer.dir}/images" includes="**/*.png"/>
             <manifest>
                 <attribute name="Main-Class"
-                           value="org.jivesoftware.wildfire.starter.ServerStarter"/>
+                           value="org.jivesoftware.openfire.starter.ServerStarter"/>
                 <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
             </manifest>
         </jar>
@@ -458,7 +458,7 @@
             </classpath>
             <arg line="-uriroot '${web.dir}'"/>
             <arg line="-d '${jspc.java.dest.dir}'"/>
-            <arg line="-p org.jivesoftware.wildfire.admin"/>
+            <arg line="-p org.jivesoftware.openfire.admin"/>
             <arg line="-webinc '${jspc.dest.dir}/web.partial.xml'"/>
         </java>
 
@@ -469,7 +469,7 @@
                 debug="on"
                 source="1.5"
                 target="1.5"
-                includes="org/jivesoftware/wildfire/admin/**/*.java"
+                includes="org/jivesoftware/openfire/admin/**/*.java"
                 >
             <src path="${jspc.java.dest.dir}"/>
             <classpath>
@@ -1269,7 +1269,7 @@
                             validateXml="false"
                             uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
                             outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
-                            package="org.jivesoftware.wildfire.plugin.@{plugin}"
+                            package="org.jivesoftware.openfire.plugin.@{plugin}"
                             webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
                             />
 

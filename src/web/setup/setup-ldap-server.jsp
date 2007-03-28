@@ -1,4 +1,4 @@
-<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%
     // Redirect if we've already run setup:
     if (!XMPPServer.getInstance().isSetupMode()) {

@@ -4,7 +4,7 @@
   Plugin configuration for the broadcast plugin.
 -->
 <plugin>
-    <class>org.jivesoftware.wildfire.plugin.BroadcastPlugin</class>
+    <class>org.jivesoftware.openfire.plugin.BroadcastPlugin</class>
     <name>Broadcast</name>
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>

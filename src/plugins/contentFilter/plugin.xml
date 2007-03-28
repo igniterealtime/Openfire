@@ -2,7 +2,7 @@
 <plugin>
 
     <!-- Main plugin class -->
-    <class>org.jivesoftware.wildfire.plugin.ContentFilterPlugin</class>
+    <class>org.jivesoftware.openfire.plugin.ContentFilterPlugin</class>
     
     <!-- Plugin meta-data -->
     <name>Content Filter</name>

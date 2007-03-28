@@ -4,7 +4,7 @@
   -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -20,7 +20,7 @@
 
 <%
     // Get parameters
-    boolean isLDAP = "org.jivesoftware.wildfire.ldap.LdapAuthProvider".equals(
+    boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
             JiveGlobals.getXMLProperty("provider.auth.className"));
     boolean next = request.getParameter("continue") != null;
     if (next) {

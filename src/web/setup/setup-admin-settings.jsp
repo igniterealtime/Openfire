@@ -7,11 +7,11 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.auth.AuthFactory,
-                 org.jivesoftware.wildfire.ldap.LdapManager,
-                 org.jivesoftware.wildfire.user.User" %>
-<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.auth.AuthFactory,
+                 org.jivesoftware.openfire.ldap.LdapManager,
+                 org.jivesoftware.openfire.user.User" %>
+<%@ page import="org.jivesoftware.openfire.user.UserManager"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.net.URLEncoder" %>

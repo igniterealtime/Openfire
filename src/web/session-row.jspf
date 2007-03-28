@@ -5,7 +5,7 @@
 
 <%@ page import="org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.wildfire.session.Session,
+                 org.jivesoftware.openfire.session.Session,
                  org.xmpp.packet.JID,
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
@@ -52,7 +52,7 @@
 
             <fmt:message key="session.details.streaming" />
 
-        <% } else if (_status == org.jivesoftware.wildfire.session.Session.STATUS_AUTHENTICATED) { %>
+        <% } else if (_status == org.jivesoftware.openfire.session.Session.STATUS_AUTHENTICATED) { %>
 
             <fmt:message key="session.details.authenticated" />
 

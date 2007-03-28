@@ -11,7 +11,7 @@
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.openfire.XMPPServer,
                  java.io.File,
                  java.lang.Double,
                  java.lang.Exception,

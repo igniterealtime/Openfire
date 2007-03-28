@@ -14,10 +14,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.Iterator,
-                 org.jivesoftware.wildfire.*,
+                 org.jivesoftware.openfire.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.component.ExternalComponentManager,
-                 org.jivesoftware.wildfire.component.ExternalComponentConfiguration"
+                 org.jivesoftware.openfire.component.ExternalComponentManager,
+                 org.jivesoftware.openfire.component.ExternalComponentConfiguration"
     errorPage="error.jsp"
 %>
 

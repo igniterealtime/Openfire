@@ -10,8 +10,8 @@
 
 <%@ page import="org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.group.Group,
-                 org.jivesoftware.wildfire.group.GroupAlreadyExistsException"
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupAlreadyExistsException"
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder"%>

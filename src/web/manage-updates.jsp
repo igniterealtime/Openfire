@@ -13,8 +13,8 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.update.UpdateManager,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.update.UpdateManager,
                  java.util.HashMap,
                  java.util.Map"
          errorPage="error.jsp"

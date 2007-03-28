@@ -7,7 +7,7 @@
 
 package org.xmpp.component;
 
-import org.jivesoftware.wildfire.IQResultListener;
+import org.jivesoftware.openfire.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 

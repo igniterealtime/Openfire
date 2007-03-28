@@ -7,12 +7,12 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.WebManager,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.container.Plugin,
-                 org.jivesoftware.wildfire.container.PluginManager,
-                 org.jivesoftware.wildfire.update.Update"
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.container.Plugin,
+                 org.jivesoftware.openfire.container.PluginManager,
+                 org.jivesoftware.openfire.update.Update"
         %>
-<%@ page import="org.jivesoftware.wildfire.update.UpdateManager" %>
+<%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.File" %>
 <%@ page import="java.io.FileReader" %>

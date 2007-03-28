@@ -39,7 +39,7 @@
     catch (ClassNotFoundException cnfe) {}
     // Check that the Openfire jar are installed:
     try {
-        ClassUtils.forName("org.jivesoftware.wildfire.XMPPServer");
+        ClassUtils.forName("org.jivesoftware.openfire.XMPPServer");
         jiveJarsInstalled = true;
     }
     catch (ClassNotFoundException cnfe) {}

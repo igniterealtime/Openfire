@@ -10,9 +10,9 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 org.jivesoftware.wildfire.muc.HistoryStrategy,
-                 org.jivesoftware.wildfire.muc.MultiUserChatServer"
+                 org.jivesoftware.openfire.*,
+                 org.jivesoftware.openfire.muc.HistoryStrategy,
+                 org.jivesoftware.openfire.muc.MultiUserChatServer"
     errorPage="error.jsp"
 %>
 

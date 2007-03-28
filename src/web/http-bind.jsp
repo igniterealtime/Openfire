@@ -11,7 +11,7 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="org.jivesoftware.util.Log" %>
-<%@ page import="org.jivesoftware.wildfire.http.HttpBindManager" %>
+<%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 

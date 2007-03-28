@@ -11,8 +11,8 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.session.ComponentSession"
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ComponentSession"
     errorPage="error.jsp"
 %>
 <%@ page import="java.text.NumberFormat" %>

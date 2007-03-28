@@ -6,9 +6,9 @@
 --%>
 
 <%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.user.*,
-                 org.jivesoftware.wildfire.XMPPServer,
-				     org.jivesoftware.wildfire.plugin.SubscriptionPlugin,
+                 org.jivesoftware.openfire.user.*,
+                 org.jivesoftware.openfire.XMPPServer,
+				     org.jivesoftware.openfire.plugin.SubscriptionPlugin,
                  org.jivesoftware.util.*"
 %>
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin>
-    <class>org.jivesoftware.wildfire.plugin.RegistrationPlugin</class>
+    <class>org.jivesoftware.openfire.plugin.RegistrationPlugin</class>
     <name>Registration</name>
     <description>Performs various actions whenever a new user account is created.</description>
     <author>Ryan Graham</author>

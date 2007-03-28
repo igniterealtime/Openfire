@@ -7,10 +7,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 org.jivesoftware.wildfire.update.UpdateManager,
-                 org.jivesoftware.wildfire.update.AvailablePlugin,
-                 org.jivesoftware.wildfire.container.PluginManager"
+                 org.jivesoftware.openfire.*,
+                 org.jivesoftware.openfire.update.UpdateManager,
+                 org.jivesoftware.openfire.update.AvailablePlugin,
+                 org.jivesoftware.openfire.container.PluginManager"
     errorPage="error.jsp"
 %>
 
@@ -245,7 +245,7 @@
         <li><b>Support.</b> Professional support by the hard-working and friendly Jive Software team.</li>
         <li>Best of all, by using Enterprise, you're directly supporting the Open Source project.</li>
 
-        <p>Interested? See the full <a href="http://www.jivesoftware.com/products/wildfire/features/enterprise.jsp">feature overview</a>.</p>
+        <p>Interested? See the full <a href="http://www.jivesoftware.com/products/openfire/features/enterprise.jsp">feature overview</a>.</p>
     </ul>
 
 

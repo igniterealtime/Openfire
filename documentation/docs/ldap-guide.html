@@ -144,9 +144,9 @@ servers, some of which are detailed below:
     <b>Main Settings</b><br><br>
 
     <li>provider.user.className <font color="red"><b>*</b></font> -- set the value to
-        "org.jivesoftware.wildfire.ldap.LdapUserProvider".</li>
+        "org.jivesoftware.openfire.ldap.LdapUserProvider".</li>
     <li>provider.auth.className <font color="red"><b>*</b></font> -- set the value to
-        "org.jivesoftware.wildfire.ldap.LdapAuthProvider".</li>
+        "org.jivesoftware.openfire.ldap.LdapAuthProvider".</li>
 
     <li>ldap.host <font color="red"><b>*</b></font> -- LDAP server host; e.g. localhost or
         machine.example.com, etc. It is possible to use many LDAP servers but all of them
@@ -214,7 +214,7 @@ servers, some of which are detailed below:
     <b>Group Settings</b><br><br>
 
     <li>provider.group.className <font color="red"><b>**</b></font> -- set the value to
-        "org.jivesoftware.wildfire.ldap.LdapGroupProvider".</li>
+        "org.jivesoftware.openfire.ldap.LdapGroupProvider".</li>
     <li>ldap.groupNameField <font color="red"><b>**</b></font> -- the field name that the groupname
         lookups will be performed on. If this property is not set, the default value is <tt>cn</tt>.</li>
     <li>ldap.groupMemberField -- the field name that holds the members in a group. If this property
@@ -292,14 +292,14 @@ servers, some of which are detailed below:
       &lt;/ldap&gt;
       &lt;provider&gt;
         &lt;user&gt;
-          &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapUserProvider&lt;/className&gt;
+          &lt;className&gt;org.jivesoftware.openfire.ldap.LdapUserProvider&lt;/className&gt;
         &lt;/user&gt;
 
         &lt;auth&gt;
-          &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapAuthProvider&lt;/className&gt;
+          &lt;className&gt;org.jivesoftware.openfire.ldap.LdapAuthProvider&lt;/className&gt;
         &lt;/auth&gt;
         &lt;group&gt;
-          &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapGroupProvider&lt;/className&gt;
+          &lt;className&gt;org.jivesoftware.openfire.ldap.LdapGroupProvider&lt;/className&gt;
 
         &lt;/group&gt;
       &lt;/provider&gt;
@@ -406,7 +406,7 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
 
       ...
       &lt;vcard&gt;
-        &lt;className&gt;org.jivesoftware.wildfire.ldap.LdapVCardProvider&lt;/className&gt;
+        &lt;className&gt;org.jivesoftware.openfire.ldap.LdapVCardProvider&lt;/className&gt;
       &lt;/vcard&gt;
       ...
     &lt;/provider&gt;

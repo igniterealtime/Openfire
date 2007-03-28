@@ -12,13 +12,13 @@
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.PresenceManager,
-                 org.jivesoftware.wildfire.group.Group,
-                 org.jivesoftware.wildfire.group.GroupManager"
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupManager"
 %>
-<%@ page import="org.jivesoftware.wildfire.user.User"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
+<%@ page import="org.jivesoftware.openfire.user.User"%>
+<%@ page import="org.jivesoftware.openfire.user.UserManager"%>
+<%@ page import="org.jivesoftware.openfire.user.UserNotFoundException"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>

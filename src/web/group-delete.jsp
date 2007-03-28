@@ -10,7 +10,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.group.Group,
+                 org.jivesoftware.openfire.group.Group,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>

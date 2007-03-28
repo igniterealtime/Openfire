@@ -12,7 +12,7 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.ldap.LdapManager;
+import org.jivesoftware.openfire.ldap.LdapManager;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;

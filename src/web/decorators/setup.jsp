@@ -17,7 +17,7 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.sql.Statement"%>
 <%@ page import="java.sql.SQLException"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
@@ -109,7 +109,7 @@
 
 <!-- BEGIN jive-header -->
 <div id="jive-header">
-	<div id="jive-logo" title="wildfire"></div>
+	<div id="jive-logo" title="openfire"></div>
 	<div id="jive-header-text"><fmt:message key="setup.title" /></div>
 	<div id="sidebar-top"></div>
 </div>

@@ -11,9 +11,9 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
 
 import java.text.DateFormat;
 import java.text.Format;

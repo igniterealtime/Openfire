@@ -13,9 +13,9 @@
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.wildfire.PresenceManager,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager"
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager"
 %><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="java.net.URLEncoder" %>

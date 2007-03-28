@@ -9,9 +9,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.handler.IQAuthHandler,
-                 org.jivesoftware.wildfire.handler.IQRegisterHandler,
-                 org.jivesoftware.wildfire.session.ClientSession,
+                 org.jivesoftware.openfire.handler.IQAuthHandler,
+                 org.jivesoftware.openfire.handler.IQRegisterHandler,
+                 org.jivesoftware.openfire.session.ClientSession,
                  java.util.HashMap"
     errorPage="error.jsp"
 %>
@@ -19,7 +19,7 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.util.regex.Pattern"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -69,7 +69,7 @@
     anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = org.jivesoftware.wildfire.session.ClientSession.getAllowedIPs().keySet().iterator();
+    Iterator<String> iter = org.jivesoftware.openfire.session.ClientSession.getAllowedIPs().keySet().iterator();
     if (iter.hasNext()) {
         buf.append(iter.next());
     }

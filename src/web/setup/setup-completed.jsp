@@ -18,7 +18,7 @@
 
 <!-- BEGIN jive-header -->
 <div id="jive-header">
-	<div id="jive-logo" title="wildfire"></div>
+	<div id="jive-logo" title="openfire"></div>
 	<div id="jive-header-text"><fmt:message key="setup.title" /></div>
 </div>
 <!-- END jive-header -->

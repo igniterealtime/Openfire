@@ -62,10 +62,10 @@
     </ldap>
     <provider>
         <user>
-            <className>org.jivesoftware.wildfire.ldap.LdapUserProvider</className>
+            <className>org.jivesoftware.openfire.ldap.LdapUserProvider</className>
         </user>
         <auth>
-            <className>org.jivesoftware.wildfire.ldap.LdapAuthenticationProvider</className>
+            <className>org.jivesoftware.openfire.ldap.LdapAuthenticationProvider</className>
         </auth>
     </provider>
     -->  

@@ -11,13 +11,13 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.AuthToken;
-import org.jivesoftware.wildfire.group.GroupManager;
-import org.jivesoftware.wildfire.muc.MultiUserChatServer;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
 
 import java.io.*;
 import java.net.URL;
@@ -112,7 +112,7 @@ public class WebManager extends WebBean {
      */
     public boolean isEmbedded() {
         try {
-            ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
+            ClassUtils.forName("org.jivesoftware.openfire.starter.ServerStarter");
             return true;
         }
         catch (Exception ignored) {

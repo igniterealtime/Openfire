@@ -6,7 +6,7 @@
 
     <servlet>
         <servlet-name>HttpBindServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.http.HttpBindServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.http.HttpBindServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -17,7 +17,7 @@
 
     <servlet>
         <servlet-name>JavaScriptServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.http.ResourceServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.http.ResourceServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -28,7 +28,7 @@
 
     <servlet>
         <servlet-name>FlashCrossDomain</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.http.FlashCrossDomainServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.http.FlashCrossDomainServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>

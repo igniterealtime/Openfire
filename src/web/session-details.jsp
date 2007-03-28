@@ -10,11 +10,11 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.PresenceManager,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.session.ClientSession,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserManager,
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ClientSession,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager,
                  java.text.NumberFormat,
                  java.util.Collection"
     errorPage="error.jsp"
@@ -38,8 +38,9 @@
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
-    org.jivesoftware.wildfire.session.ClientSession currentSess = sessionManager.getSession(address);
-    boolean isAnonymous = webManager.getXMPPServer().isLocal(address) && !UserManager.getInstance().isRegisteredUser(address.getNode());
+    org.jivesoftware.openfire.session.ClientSession currentSess = sessionManager.getSession(address);
+    boolean isAnonymous = webManager.getXMPPServer().isLocal(address) &&
+            !UserManager.getInstance().isRegisteredUser(address.getNode());
 
     // Get a presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();

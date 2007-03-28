@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin>
-    <class>org.jivesoftware.wildfire.plugin.StatisticPlugin</class>
+    <class>org.jivesoftware.openfire.plugin.StatisticPlugin</class>
     <name>Load Statistic</name>
     <description>Logs load statistics to a file</description>
     <author>Jive Software</author>

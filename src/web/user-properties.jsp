@@ -10,17 +10,17 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.PresenceManager,
-                 org.jivesoftware.wildfire.group.Group,
-                 org.jivesoftware.wildfire.user.User,
-                 org.jivesoftware.wildfire.user.UserNotFoundException"
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.Collection"%>
 <%@ page import="java.util.Iterator"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserManager"%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.user.UserManager"%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

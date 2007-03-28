@@ -9,7 +9,7 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.XMPPServer" %>
+                 org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Locale"%>
 <%@ page import="java.util.Map"%>

@@ -1,6 +1,6 @@
 <%@ page import="java.io.OutputStream,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.plugin.ImportExportPlugin"
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.plugin.ImportExportPlugin"
          contentType="application/x-download"%><%
     String fileName = request.getParameter("fileName");
     response.setContentType("application/x-download");

@@ -1,4 +1,4 @@
-package org.jivesoftware.wildfire.plugin;
+package org.jivesoftware.openfire.plugin;
 
 import junit.framework.TestCase;
 import org.dom4j.Document;

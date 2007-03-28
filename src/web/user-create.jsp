@@ -9,7 +9,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
+                 org.jivesoftware.openfire.user.*,
                  java.net.URLEncoder,
                  org.jivesoftware.stringprep.Stringprep,
                  org.jivesoftware.stringprep.StringprepException"

@@ -10,8 +10,8 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.muc.MUCRole,
-                 org.jivesoftware.wildfire.muc.MUCRoom,
+                 org.jivesoftware.openfire.muc.MUCRole,
+                 org.jivesoftware.openfire.muc.MUCRoom,
                  java.net.URLEncoder,
                  java.text.DateFormat"
     errorPage="error.jsp"

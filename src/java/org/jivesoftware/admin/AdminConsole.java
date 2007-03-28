@@ -12,8 +12,8 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.PluginManager;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;

@@ -1,21 +1,21 @@
-package org.jivesoftware.wildfire.plugin;
+package org.jivesoftware.openfire.plugin;
 
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.SharedGroupException;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.roster.Roster;
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.vcard.VCardManager;
+import org.jivesoftware.openfire.SharedGroupException;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.vcard.VCardManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 

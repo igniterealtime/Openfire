@@ -12,7 +12,7 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.*,
+                 org.jivesoftware.openfire.*,
                  java.util.HashMap,
                  java.util.Map"
     errorPage="error.jsp"

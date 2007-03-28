@@ -11,8 +11,6 @@
                  org.jivesoftware.database.EmbeddedConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.ConnectionProvider,
-                 org.jivesoftware.database.ConnectionProvider,
-                 org.jivesoftware.database.DbConnectionManager,
                  java.util.*" %>
 <%@ page import="java.io.File"%>
 <%@ page import="java.sql.Connection"%>
@@ -20,7 +18,7 @@
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.ClassUtils"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%
 	// Redirect if we've already run setup:
@@ -77,7 +75,7 @@
 <%
     boolean embeddedMode = false;
     try {
-        ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
+        ClassUtils.forName("org.jivesoftware.openfire.starter.ServerStarter");
         embeddedMode = true;
     }
     catch (Exception ignored) {}

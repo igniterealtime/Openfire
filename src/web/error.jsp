@@ -7,9 +7,9 @@
 <%@ page import="java.io.*,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.wildfire.auth.UnauthorizedException,
-                 org.jivesoftware.wildfire.user.UserNotFoundException,
-                 org.jivesoftware.wildfire.group.GroupNotFoundException"
+                 org.jivesoftware.openfire.auth.UnauthorizedException,
+                 org.jivesoftware.openfire.user.UserNotFoundException,
+                 org.jivesoftware.openfire.group.GroupNotFoundException"
     isErrorPage="true"
 %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

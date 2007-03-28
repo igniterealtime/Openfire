@@ -4,7 +4,7 @@
     <!-- Servlets -->
     <servlet>
         <servlet-name>UserServiceServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.plugin.userService.UserServiceServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.plugin.userService.UserServiceServlet</servlet-class>
     </servlet>
 
     <!-- Servlet mappings -->

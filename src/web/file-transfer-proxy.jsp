@@ -8,10 +8,10 @@
   - a copy of which is included in this distribution.
 --%>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.wildfire.filetransfer.proxy.FileTransferProxy" %>
+<%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

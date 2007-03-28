@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin>
-   <class>org.jivesoftware.wildfire.plugin.ImportExportPlugin</class>
+   <class>org.jivesoftware.openfire.plugin.ImportExportPlugin</class>
 
    <name>User Import Export</name>
    <description>Enables import and export of user data</description>

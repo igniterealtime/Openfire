@@ -1,5 +1,5 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 <%--
   -	$RCSfile$
   -	$Revision: $
@@ -31,7 +31,7 @@
     </head>
     <body>
     <%
-        boolean isLDAP = "org.jivesoftware.wildfire.ldap.LdapAuthProvider".equals(
+        boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
                 JiveGlobals.getXMLProperty("provider.auth.className"));
         StringBuilder sb = new StringBuilder();
         for (String host : LdapManager.getInstance().getHosts()) {

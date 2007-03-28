@@ -9,9 +9,9 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.session.OutgoingServerSession,
-                 org.jivesoftware.wildfire.session.Session,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.OutgoingServerSession,
+                 org.jivesoftware.openfire.session.Session,
                  java.util.*"
     errorPage="error.jsp"
 %>

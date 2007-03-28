@@ -8,7 +8,7 @@
         <servlet-name>dwr-invoker</servlet-name>
         <display-name>DWR Servlet</display-name>
         <description>Direct Web Remoter Servlet</description>
-        <servlet-class>org.jivesoftware.wildfire.gateway.web.GatewayDWR</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.gateway.web.GatewayDWR</servlet-class>
         <init-param>
             <param-name>LogLevel</param-name>
             <param-value>FATAL</param-value>

@@ -5,14 +5,14 @@
 --%>
 
 <%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.auth.AuthToken,
-                 org.jivesoftware.wildfire.auth.AuthFactory,
-                 org.jivesoftware.wildfire.auth.UnauthorizedException,
+                 org.jivesoftware.openfire.auth.AuthToken,
+                 org.jivesoftware.openfire.auth.AuthFactory,
+                 org.jivesoftware.openfire.auth.UnauthorizedException,
                  org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.*"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

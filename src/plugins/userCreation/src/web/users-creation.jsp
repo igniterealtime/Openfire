@@ -1,7 +1,7 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
 				 org.jivesoftware.util.TaskEngine,
-				 org.jivesoftware.wildfire.XMPPServer,
-				 org.jivesoftware.wildfire.plugin.UserCreationPlugin,
+				 org.jivesoftware.openfire.XMPPServer,
+				 org.jivesoftware.openfire.plugin.UserCreationPlugin,
                  java.util.HashMap,
                  java.util.Map"
 %>

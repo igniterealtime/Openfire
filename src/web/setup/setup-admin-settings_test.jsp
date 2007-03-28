@@ -1,5 +1,5 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
-<%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.wildfire.ldap.LdapManager, org.jivesoftware.wildfire.user.UserNotFoundException, org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.openfire.ldap.LdapManager, org.jivesoftware.openfire.user.UserNotFoundException, org.xmpp.packet.JID" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Map" %>
 

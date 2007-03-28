@@ -1,6 +1,6 @@
 <%@ page import="org.jivesoftware.util.ParamUtils"
          errorPage="error.jsp"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%--
   Created by IntelliJ IDEA.
   User: gato

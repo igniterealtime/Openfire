@@ -9,7 +9,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.*,
+                 org.jivesoftware.openfire.*,
                  java.util.HashMap,
                  java.util.Map,
                  java.text.DecimalFormat"
@@ -199,7 +199,7 @@
 					 <%= ((strategy==STORE) ? "checked" : "") %>>
 				</td>
 				<td width="99%">
-					<label for="rb03"><b><fmt:message key="offline.messages.store_option" /></b></label> - <fmt:message key="offline.messages.storage_wildfire" />
+					<label for="rb03"><b><fmt:message key="offline.messages.store_option" /></b></label> - <fmt:message key="offline.messages.storage_openfire" />
 				</td>
 			</tr>
 			<tr valign="top">

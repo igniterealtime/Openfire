@@ -1,6 +1,6 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.wildfire.ldap.LdapManager"%>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapManager"%>
 <%@ page import="java.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

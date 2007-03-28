@@ -10,7 +10,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.muc.MultiUserChatServer"
+                 org.jivesoftware.openfire.muc.MultiUserChatServer"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

@@ -4,7 +4,7 @@
     <!-- Servlets -->
     <servlet>
         <servlet-name>PresenceStatusServlet</servlet-name>
-        <servlet-class>org.jivesoftware.wildfire.plugin.presence.PresenceStatusServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.plugin.presence.PresenceStatusServlet</servlet-class>
     </servlet>
 
     <!-- Servlet mappings -->

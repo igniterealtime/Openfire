@@ -6,9 +6,9 @@
 --%>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.wildfire.stun.STUNService" %>
-<%@ page import="org.jivesoftware.wildfire.stun.StunServerAddress" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.stun.STUNService" %>
+<%@ page import="org.jivesoftware.openfire.stun.StunServerAddress" %>
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.util.List" %>
 

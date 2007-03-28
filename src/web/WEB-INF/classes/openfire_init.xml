@@ -10,6 +10,6 @@
  * <openfireHome>/var/openfire</openfireHome>
  *
  * For Windows this might be:
- * <openfireHome>c:\wildfire</openfireHome>
+ * <openfireHome>c:\openfire</openfireHome>
 -->
 <openfireHome></openfireHome>

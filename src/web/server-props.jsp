@@ -10,8 +10,8 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.ConnectionManager,
-                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.openfire.ConnectionManager,
+                 org.jivesoftware.openfire.XMPPServer,
                  java.net.InetAddress,
                  java.util.HashMap"
 %>

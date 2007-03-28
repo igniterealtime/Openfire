@@ -1,7 +1,7 @@
 <%@ page import="java.io.IOException,
                  java.util.*,
-                 org.jivesoftware.wildfire.plugin.ImportExportPlugin,
-                 org.jivesoftware.wildfire.XMPPServer,
+                 org.jivesoftware.openfire.plugin.ImportExportPlugin,
+                 org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.util.ParamUtils"
 %>
 

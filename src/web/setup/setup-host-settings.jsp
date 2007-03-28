@@ -9,7 +9,7 @@
                  java.util.Map,
                  java.util.HashMap,
                  java.net.InetAddress,
-                 org.jivesoftware.wildfire.XMPPServer"
+                 org.jivesoftware.openfire.XMPPServer"
 %>
 <%@ page import="java.net.UnknownHostException" %>
 

@@ -10,9 +10,9 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.wildfire.SessionManager,
-                 org.jivesoftware.wildfire.session.IncomingServerSession,
-                 org.jivesoftware.wildfire.session.OutgoingServerSession,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.IncomingServerSession,
+                 org.jivesoftware.openfire.session.OutgoingServerSession,
                 java.text.NumberFormat"
     errorPage="error.jsp"
 %>

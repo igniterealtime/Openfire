@@ -2,7 +2,7 @@
 <plugin>
 
     <!-- Main plugin class -->
-    <class>org.jivesoftware.wildfire.gateway.GatewayPlugin</class>
+    <class>org.jivesoftware.openfire.gateway.GatewayPlugin</class>
     
     <!-- Plugin meta-data -->
     <name>IM Gateway</name>

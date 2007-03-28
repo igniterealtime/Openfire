@@ -1,7 +1,7 @@
 <%@ page import="javax.servlet.jsp.JspWriter,
-                 org.jivesoftware.wildfire.XMPPServer,
-                 org.jivesoftware.wildfire.gateway.GatewayPlugin,
-                 org.jivesoftware.wildfire.gateway.TransportType"
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.gateway.GatewayPlugin,
+                 org.jivesoftware.openfire.gateway.TransportType"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
@@ -11,7 +11,7 @@
 <%@ page import="org.dom4j.Document" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="java.util.ArrayList" %>
-<%@ page import="org.jivesoftware.wildfire.gateway.PermissionManager" %>
+<%@ page import="org.jivesoftware.openfire.gateway.PermissionManager" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Iterator" %>
 

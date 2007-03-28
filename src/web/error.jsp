@@ -1,6 +1,6 @@
 <%@ page import="java.io.*,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.wildfire.auth.UnauthorizedException"
+                 org.jivesoftware.openfire.auth.UnauthorizedException"
     isErrorPage="true"
 %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

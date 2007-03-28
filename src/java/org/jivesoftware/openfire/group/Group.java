@@ -12,11 +12,11 @@
 package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.xmpp.packet.JID;
 
 import java.io.IOException;
@@ -233,12 +233,16 @@ public class Group implements Cacheable {
     }
 
     /**
-     * Returns true if the provided username belongs to a user that is part of the group.
+     * Returns true if the provided JID belongs to a user that is part of the group.
      *
      * @param user the JID address of the user to check.
      * @return true if the specified user is a group user.
      */
     public boolean isUser(JID user) {
+        // Make sure that we are always checking bare JIDs 
+        if (user != null && user.getResource() != null) {
+            user = new JID(user.toBareJID());
+        }
         return user != null && (members.contains(user) || administrators.contains(user));
     }
 

@@ -1,6 +1,5 @@
 # Set this to the path where openfire lives
-# If this is not set the script will look for /opt/openfire, then /usr/local/ope
-nfire
+# If this is not set the script will look for /opt/openfire, then /usr/local/openfire
 #OPENFIRE_HOME=""
 
 # If there is a different user you would like to run openfire as,

@@ -27,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
  * class is also responsible for encoding and decoding the encrypted data and place it into
  * the corresponding the {@link ByteBuffer}.
  *
+ * @author Artur Hefczyc
  * @author Hao Chen
  */
 public class TLSWrapper {

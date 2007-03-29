@@ -61,7 +61,7 @@
     <components />
   </files>
   <launchers>
-    <launcher name="Wildfire" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" swtApp="false">
+    <launcher name="Openfire" id="2" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/service-16x16.png" pngIcon32File="./images/service-32x32.png" macServiceDependencies="" swtApp="false">
       <executable name="${compiler:PRODUCT_NAME}-service" type="1" iconSet="true" iconFile="./images/service.ico" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="${compiler:APP_NAME}" jreLocation="" executionLevel="asInvoker">
         <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME}" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
@@ -71,7 +71,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -93,7 +93,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.launcher.Launcher" vmParameters="&quot;-Dappdir=${launcher:sys.launcherDirectory}&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="">
+      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="&quot;-Dappdir=${launcher:sys.launcherDirectory}&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -105,7 +105,7 @@
         <scriptLines />
       </customScript>
     </launcher>
-    <launcher name="wildfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/openfired-16x16.png" pngIcon32File="./images/openfired-32x32.png" macServiceDependencies="" swtApp="false">
+    <launcher name="openfired" id="15" external="false" excludeFromMenu="true" menuName="" icnsFile="" pngIcon16File="./images/openfired-16x16.png" pngIcon32File="./images/openfired-32x32.png" macServiceDependencies="" swtApp="false">
       <executable name="${compiler:PRODUCT_NAME}d" type="1" iconSet="true" iconFile="./images/openfired.ico" executableDir="bin" redirectStderr="false" stderrFile="error.log" redirectStdout="false" stdoutFile="output.log" failOnStderrOutput="true" executableMode="2" changeWorkingDirectory="true" workingDirectory="." singleInstance="true" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
         <versionInfo include="true" fileVersion="" fileDescription="${compiler:APP_NAME} Server" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
@@ -115,7 +115,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -127,7 +127,7 @@
         <scriptLines />
       </customScript>
     </launcher>
-    <launcher name="wildfire" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" swtApp="false">
+    <launcher name="openfire" id="22" external="false" excludeFromMenu="false" menuName="" icnsFile="" pngIcon16File="" pngIcon32File="" macServiceDependencies="" swtApp="false">
       <executable name="${compiler:PRODUCT_NAME}" type="1" iconSet="false" iconFile="" executableDir="bin" redirectStderr="true" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" failOnStderrOutput="true" executableMode="3" changeWorkingDirectory="true" workingDirectory="." singleInstance="false" serviceStartType="2" serviceDependencies="" serviceDescription="" jreLocation="" executionLevel="asInvoker">
         <versionInfo include="false" fileVersion="" fileDescription="" legalCopyright="" internalName="" />
       </executable>
@@ -137,7 +137,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.wildfire.starter.ServerStarter" vmParameters="" arguments="-DopenfireHome=$app_home -Dopenfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="" arguments="-DopenfireHome=$app_home -Dopenfire.lib.dir=$app_home/lib" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="true" />
         </classPath>

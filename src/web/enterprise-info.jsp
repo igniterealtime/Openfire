@@ -25,7 +25,7 @@
     boolean pluginExists = pluginManager != null && pluginManager.getPlugin("enterprise") != null;
     if (pluginExists) {
         // Redirect to the main Enterprise page.
-        response.sendRedirect("/plugins/enterprise/dashboard.jsp");
+        response.sendRedirect("/plugins/enterprise/stats-dashboard.jsp");
         return;
     }
 
@@ -96,7 +96,7 @@
     }
 
     function gotoEnterprise(){
-        window.location.href = "plugins/enterprise/index.jsp";
+        window.location.href = "plugins/enterprise/stats-dashboard.jsp";
     }
 
     function closeErrorMessage(){

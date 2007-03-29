@@ -54,6 +54,10 @@ class XMLLightweightParser {
     protected static final int INSIDE_PARAM_VALUE = 7;
     //  Status used when you are inside a cdata section
     protected static final int INSIDE_CDATA = 8;
+    // Status used when you are outside a tag/reading text
+    protected static final int OUTSIDE = 9;
+    
+    final String[] sstatus = {"INIT", "", "HEAD", "INSIDE", "PRETAIL", "TAIL", "VERIFY", "INSIDE_PARAM", "INSIDE_CDATA", "OUTSIDE"};
 
 
     // Current robot status
@@ -133,6 +137,7 @@ class XMLLightweightParser {
         head.setLength(0);
         insideRootTag = false;
         insideChildrenTag = false;
+        depth = 0;
     }
 
     /*
@@ -154,7 +159,6 @@ class XMLLightweightParser {
         // Robot.
         char ch;
         for (int i = 0; i < readByte; i++) {
-            //ch = rawByteBuffer[ i ];
             ch = buf[i];
             if (status == XMLLightweightParser.TAIL) {
                 // Looking for the close tag
@@ -199,6 +203,7 @@ class XMLLightweightParser {
             } else if (status == XMLLightweightParser.VERIFY_CLOSE_TAG) {
                 if (ch == '>') {
                     depth--;
+                    status = XMLLightweightParser.OUTSIDE;
                     if (depth < 1) {
                         // Found a tag in the form <tag />
                         int end = buffer.length() - readByte + (i + 1);
@@ -206,7 +211,7 @@ class XMLLightweightParser {
                         // Add message to the list
                         foundMsg(msg);
                         startLastMsg = end;
-                    }
+                    } 
                 } else if (ch == '<') {
                     status = XMLLightweightParser.PRETAIL;
                     insideChildrenTag = true;
@@ -222,7 +227,7 @@ class XMLLightweightParser {
                 if (ch == XMLLightweightParser.CDATA_END[cdataOffset]) {
                     cdataOffset++;
                     if (cdataOffset == XMLLightweightParser.CDATA_END.length) {
-                        status = XMLLightweightParser.INSIDE;
+                        status = XMLLightweightParser.OUTSIDE;
                         cdataOffset = 0;
                     }
                 } else {
@@ -238,10 +243,12 @@ class XMLLightweightParser {
                     }
                 } else {
                     cdataOffset = 0;
+                    status = XMLLightweightParser.INSIDE;
                 }
                 if (ch == '"') {
                     status = XMLLightweightParser.INSIDE_PARAM_VALUE;
                 } else if (ch == '>') {
+                    status = XMLLightweightParser.OUTSIDE;
                     if (insideRootTag && ("stream:stream>".equals(head.toString()) ||
                             ("?xml>".equals(head.toString())) || ("flash:stream>".equals(head.toString())))) {
                         // Found closing stream:stream
@@ -255,17 +262,17 @@ class XMLLightweightParser {
                         startLastMsg = end;
                     }
                     insideRootTag = false;
-                } else if (ch == '<') {
-                    status = XMLLightweightParser.PRETAIL;
-                    insideChildrenTag = true;
                 } else if (ch == '/') {
                     status = XMLLightweightParser.VERIFY_CLOSE_TAG;
                 }
             } else if (status == XMLLightweightParser.HEAD) {
                 if (ch == ' ' || ch == '>') {
-                    // Append > to head to facility the research of </tag>
+                    // Append > to head to allow searching </tag>
                     head.append(">");
-                    status = XMLLightweightParser.INSIDE;
+                    if(ch == '>')
+                        status = XMLLightweightParser.OUTSIDE;
+                    else
+                        status = XMLLightweightParser.INSIDE;
                     insideRootTag = true;
                     insideChildrenTag = false;
                     continue;
@@ -283,6 +290,12 @@ class XMLLightweightParser {
                 }
                 else {
                     startLastMsg++;
+                }
+            } else if (status == XMLLightweightParser.OUTSIDE) {
+                if (ch == '<') {
+                    status = XMLLightweightParser.PRETAIL;
+                    cdataOffset = 1;
+                    insideChildrenTag = true;
                 }
             }
         }

@@ -9,9 +9,9 @@
 # The script has currently been tested on Redhat Fedora Core 3,
 # but should theoretically work on most UNIX like systems
 #
-# before running this script make sure $WILDFIRE_HOME/bin/wildfire is
+# before running this script make sure $OPENFIRE_HOME/bin/openfire.sh is
 # executable by the user you want to run openfire as
-# (chmod +x $WILDFIRE_HOME/bin/wildfire)
+# (chmod +x $OPENFIRE_HOME/bin/openfire.sh)
 #
 # This script should be copied into /etc/init.d and linked into
 # your default runlevel directory.
@@ -20,28 +20,26 @@
 #
 # Link to the directory like follows
 # cd /etc/rc<num>.d
-# ln -s ../init.d/wildfired $90wildfired
+# ln -s ../init.d/openfired S99openfired
 #
 
-# Set this to tell this script where openfire lives
-# If this is not set the script will look for /opt/wildfire, then /usr/local/wildfire
-#export WILDFIRE_HOME=
+# Get config.
+test -f /etc/sysconfig/openfire && . /etc/sysconfig/openfire
 
-# If there is a different user you would like to run this script as,
-# change the following line
-export WILDFIRE_USER=jive
+# If openfire user is not set in sysconfig, set to jive.
+[ -z "$OPENFIRE_USER" ] && OPENFIRE_USER=jive
 
 # -----------------------------------------------------------------
 
 # If a openfire home variable has not been specified, try to determine it
-if [ ! $WILDFIRE_HOME ]; then
-	if [ -d "/opt/wildfire" ]; then
-		WILDFIRE_HOME="/opt/wildfire"
-	elif [ -d "/usr/local/wildfire" ]; then
-		WILDFIRE_HOME="/usr/local/wildfire"
+if [ ! $OPENFIRE_HOME ]; then
+	if [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
+		OPENFIRE_HOME="/usr/local/openfire"
 	else
 		echo "Could not find Openfire installation under /opt or /usr/local"
-		echo "Please specify the Openfire installation location in environment variable WILDFIRE_HOME"
+		echo "Please specify the Openfire installation location in environment variable OPENFIRE_HOME"
 		exit 1
 	fi
 fi
@@ -49,9 +47,9 @@ fi
 
 function execCommand() {
 	OLD_PWD=`pwd`
-	cd $WILDFIRE_HOME/bin
-	CMD="./wildfire.sh $1"
-	su -c "$CMD" $WILDFIRE_USER &
+	cd $OPENFIRE_HOME/bin
+	CMD="./openfire.sh $1"
+	su -c "$CMD" $OPENFIRE_USER &
 	sleep 1 # allows prompt to return
 	cd $OLD_PWD
 }
@@ -79,12 +77,12 @@ case "$1" in
 		start
 		;;
 	status) 
-		retval=$(pgrep -u $WILDFIRE_USER -f $WILDFIRE_HOME/bin/wildfire > /dev/null ; echo $?)
+		retval=$(pgrep -u $OPENFIRE_USER -f $OPENFIRE_HOME/bin/openfire.sh > /dev/null ; echo $?)
 		if [ "$retval" = "0" ] ; then 
-			echo "wildfire is running"
+			echo "openfire is running"
 			exit 0
 		else 
-			echo "wildfire is not running"
+			echo "openfire is not running"
 			exit 0
 		fi
 		;;

@@ -11,6 +11,7 @@
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
 darwin=false;
+linux=false;
 case "`uname`" in
   CYGWIN*) cygwin=true ;;
   Darwin*) darwin=true
@@ -18,6 +19,15 @@ case "`uname`" in
              JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
            fi
            ;;
+  Linux*) linux=true
+          jdks=`ls -r1d /usr/java/j*`
+          for jdk in $jdks; do
+            if [ -f "$jdk/bin/java" ]; then
+              JAVA_HOME="$jdk"
+              break
+            fi
+          done
+          ;;
 esac
 
 #if openfire home is not set or is not a directory

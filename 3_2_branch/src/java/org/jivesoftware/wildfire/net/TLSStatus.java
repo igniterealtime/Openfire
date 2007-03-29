@@ -14,6 +14,7 @@ package org.jivesoftware.wildfire.net;
 /**
  * A TLSStatus enum describing the current handshaking state of this TLS connection.
  * 
+ * @author Artur Hefczyc
  * @author Hao Chen
  */
 public enum TLSStatus {

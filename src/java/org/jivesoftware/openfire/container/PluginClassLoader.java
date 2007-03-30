@@ -11,8 +11,8 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.Log;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -76,6 +76,12 @@ public class PluginClassLoader {
             File i18nDir = new File(directory, "i18n");
             if(i18nDir.exists()){
                 list.add(i18nDir.toURL());
+            }
+
+            // Add web directory to classpath.
+            File webDir = new File(directory, "web");
+            if(webDir.exists()){
+                list.add(webDir.toURL());
             }
 
             // Add lib directory to classpath.

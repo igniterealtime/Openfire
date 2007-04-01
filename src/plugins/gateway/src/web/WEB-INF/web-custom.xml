@@ -3,6 +3,11 @@
 
 <web-app>
 
+    <!-- Listeners -->
+    <!--<listener>
+        <listener-class>org.apache.axis.transport.http.AxisHTTPSessionListener</listener-class>
+    </listener>-->
+
     <!-- Servlets -->
     <servlet>
         <servlet-name>dwr-invoker</servlet-name>
@@ -19,10 +24,42 @@
         </init-param>
     </servlet>
 
+    <!--<servlet>
+      <servlet-name>AxisServlet</servlet-name>
+      <display-name>Apache-Axis Servlet</display-name>
+      <servlet-class>org.jivesoftware.openfire.gateway.web.GatewayAxis</servlet-class>
+    </servlet>-->
+
     <!-- Servlet mappings -->
     <servlet-mapping>
         <servlet-name>dwr-invoker</servlet-name>
         <url-pattern>/dwr/*</url-pattern>
     </servlet-mapping>
+
+    <!--<servlet-mapping>
+        <servlet-name>AxisServlet</servlet-name>
+        <url-pattern>/servlet/AxisServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>AxisServlet</servlet-name>
+        <url-pattern>*.jws</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>AxisServlet</servlet-name>
+        <url-pattern>/services/*</url-pattern>
+    </servlet-mapping>-->
+
+    <!-- Mime mappings -->
+    <!--<mime-mapping>
+        <extension>wsdl</extension>
+        <mime-type>text/xml</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>xsd</extension>
+        <mime-type>text/xml</mime-type>
+    </mime-mapping>-->
 
 </web-app>

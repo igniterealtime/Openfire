@@ -1,0 +1,4 @@
+<service name="ConnectionTester" provider="java:RPC">
+	<parameter name="allowedMethods" value="*"/>
+	<parameter name="className" value="org.jivesoftware.openfire.gateway.web.ConnectionTester"/>
+</service>

@@ -4,6 +4,7 @@
                  org.jivesoftware.openfire.gateway.TransportType"
     errorPage="error.jsp"
 %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.dom4j.Element" %>
 <%@ page import="org.dom4j.Attribute" %>

@@ -8,6 +8,7 @@
                  org.xmpp.packet.JID"
     errorPage="error.jsp"
 %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Collection" %>

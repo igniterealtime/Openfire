@@ -298,6 +298,10 @@ public class HttpSessionManager {
             try {
                 elements = session.getPacketsToSend(20, TimeUnit.MILLISECONDS);
             }
+            catch(HttpConnectionClosedException he) {
+                /** the session has been closed **/
+                return;
+            }
             catch (Throwable t) {
                 /** Do nothing **/
             }

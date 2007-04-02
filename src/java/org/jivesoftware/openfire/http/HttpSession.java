@@ -58,7 +58,7 @@ public class HttpSession extends ClientSession {
 
     private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
-    private final Semaphore packetsToSendSemaphore = new Semaphore(1);
+    private Semaphore packetsToSendSemaphore = new Semaphore(1);
 
     private static final Comparator<HttpConnection> connectionComparator
             = new Comparator<HttpConnection>() {
@@ -377,8 +377,15 @@ public class HttpSession extends ClientSession {
      * @param time the quantity of time to wait for the queue to be free for consumption
      * @param timeUnit the unit of time related to the quanity
      * @return a collection of packets to be sent.
+     * @throws HttpConnectionClosedException when the session has been closed and is no longer
+     * available to send packets.
      */
-    public Collection<Element> getPacketsToSend(long time, TimeUnit timeUnit) {
+    public Collection<Element> getPacketsToSend(long time, TimeUnit timeUnit)
+            throws HttpConnectionClosedException
+    {
+        if(isClosed) {
+            throw new HttpConnectionClosedException("the connection has been closed");
+        }
         try {
             if (!packetsToSendSemaphore.tryAcquire(time, timeUnit)
                     || packetsToSend.size() <= 0) {
@@ -602,6 +609,7 @@ public class HttpSession extends ClientSession {
             listener.sessionClosed(this);
         }
         this.listeners.clear();
+        this.packetsToSendSemaphore = null;
     }
 
     private void failDelivery() {

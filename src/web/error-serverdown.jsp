@@ -26,7 +26,7 @@
 <html>
 <head>
  <title><%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.admin_console" /><%= (pageinfo.getTitle() != null ? (": "+pageinfo.getTitle()) : "") %></title>
- <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+ <meta http-equiv="content-type" content="text/html; charset=UTF-8">
  <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
 </head>
 

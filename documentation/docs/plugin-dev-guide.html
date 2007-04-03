@@ -341,8 +341,13 @@ procedure:
         &lt;fmt:message key="some.key.name" /&gt;
         </pre>
     </li>
-    You can also internationalize Strings in your Java files using the LocaleUtils class:<br>
-    <tt>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</tt>
+    <li>Internationalize Strings in your Java files using the LocaleUtils class:<br>
+        <tt>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</tt>
+    </li>
+    <li>Internationalize Strings in your plugin.xml file using the ${var} format:<br>
+        <tt>&lt;sidebar id="gateways" name="${plugin.sidebar.name}" description="${plugin.sidebar.description}"&gt;</tt><br>
+        <tt>&lt;description&gt;${plugin.description}&lt;/description&gt;</tt>
+    </li>
 </ul>
 </p>
 <h2>Using the Openfire Build Script</h2>

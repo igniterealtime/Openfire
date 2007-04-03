@@ -5,19 +5,19 @@
     <output url="file://$MODULE_DIR$/target/plugins-dev" />
     <exclude-output />
     <exclude-exploded />
-    <content url="file://$MODULE_DIR$/src/plugins">
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/broadcast/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/contentFilter/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/gateway/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/gateway/src/test/java" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/loadStats/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/presence/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/registration/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/search/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/userImportExport/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugins/userservice/src/java" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/src/plugins/enterprise" />
-      <excludeFolder url="file://$MODULE_DIR$/src/plugins/fastpath" />
+    <content url="file://$MODULE_DIR$/../../src/plugins">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/broadcast/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/contentFilter/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/gateway/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/gateway/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/loadStats/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/presence/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/registration/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/search/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/userImportExport/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/userservice/src/java" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/enterprise" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/fastpath" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -25,7 +25,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/xsdlib.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/userImportExport/lib/xsdlib.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -34,7 +34,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/msv.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/userImportExport/lib/msv.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -43,7 +43,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/relaxngDatatype.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/userImportExport/lib/relaxngDatatype.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -52,7 +52,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/isorelax.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/userImportExport/lib/isorelax.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -62,7 +62,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/userImportExport/lib/commons-fileupload-1.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/userImportExport/lib/commons-fileupload-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -71,7 +71,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/ymsg_network.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/ymsg_network.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -80,7 +80,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/picocontainer.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/picocontainer.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -89,7 +89,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/ymsg_support.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/ymsg_support.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -98,7 +98,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/irclib.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/irclib.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -107,7 +107,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/cindy.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/cindy.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -116,7 +116,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/jml.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jml.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -125,7 +125,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar-protocol.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/joscar-protocol.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -134,7 +134,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar-common.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/joscar-common.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -143,7 +143,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/joscar-client.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/joscar-client.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -152,7 +152,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/dwr.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/dwr.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -161,7 +161,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/axis.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/axis.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -170,7 +170,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/commons-discovery.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/commons-discovery.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -179,7 +179,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/jaxrpc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jaxrpc.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -188,7 +188,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/xml-apis.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/xml-apis.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -197,7 +197,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/wsdl4j.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/wsdl4j.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -206,7 +206,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/saaj.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/saaj.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -215,7 +215,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/plugins/gateway/lib/xercesImpl.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/xercesImpl.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

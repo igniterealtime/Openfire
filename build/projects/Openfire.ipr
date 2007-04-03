@@ -2,15 +2,12 @@
 <project version="4" relativePaths="true">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
-    <buildFile url="file://$PROJECT_DIR$/build/build.xml">
-      <additionalClassPath>
-        <entry dir="file://$PROJECT_DIR$/../../jive/apache-ant-1.6.5/lib" />
-      </additionalClassPath>
+    <buildFile url="file://$PROJECT_DIR$/../build.xml">
+      <additionalClassPath />
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
       <properties />
-      <executeOn event="beforeRun" target="openfire" runConfigurationType="Application" runConfigurationName="Openfire" />
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
@@ -303,9 +300,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Admin.iml" filepath="$PROJECT_DIR$/Admin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Openfire.iml" filepath="$PROJECT_DIR$/Openfire.iml" />
       <module fileurl="file://$PROJECT_DIR$/Plugins.iml" filepath="$PROJECT_DIR$/Plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/Spank.iml" filepath="$PROJECT_DIR$/Spank.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Openfire.iml" filepath="$PROJECT_DIR$/Openfire.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../src/test/throttletest/ThrottleTest.iml" filepath="$PROJECT_DIR$/../../src/test/throttletest/ThrottleTest.iml" />
     </modules>
   </component>
   <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="JDK 1.5.0" project-jdk-type="JavaSDK" />

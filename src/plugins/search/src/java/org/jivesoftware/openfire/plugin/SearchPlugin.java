@@ -75,6 +75,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         exculudedFields = StringUtils.stringToCollection(JiveGlobals.getProperty(EXCLUDEDFIELDS, ""));
         
         serverName = XMPPServer.getInstance().getServerInfo().getName();
+        userManager = UserManager.getInstance();
                
         // Some clients, such as Miranda, are hard-coded to search specific fields,
         // so we map those fields to the fields that Openfire actually supports.
@@ -124,10 +125,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         catch (Exception e) {
             componentManager.getLog().error(e);
         }
+        serviceName = null;
         userManager = null;
+        exculudedFields = null;
+        serverName = null;
         fieldLookup = null;
         reverseFieldLookup = null;
-        exculudedFields = null;
     }
 
     public void shutdown() {
@@ -160,8 +163,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
                     Element responseElement = replyPacket
                             .setChildElement("query", "http://jabber.org/protocol/disco#info");
-                    responseElement.addElement("identity").addAttribute("category", "search")
-                                                          .addAttribute("type", "text")
+                    responseElement.addElement("identity").addAttribute("category", "directory")
+                                                          .addAttribute("type", "user")
                                                           .addAttribute("name", "User Search");
                     responseElement.addElement("feature").addAttribute("var", "jabber:iq:search");
 
@@ -303,7 +306,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
     }
     
-    private  Hashtable<String, String> extractSearchQuery(Element incomingForm) {
+    private Hashtable<String, String> extractSearchQuery(Element incomingForm) {
         Hashtable<String, String> searchList = new Hashtable<String, String>();
         Element form = incomingForm.element(QName.get("x", "jabber:x:data"));
         if (form == null) {
@@ -457,7 +460,6 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
        // See if the installed provider supports searching. If not, workaround
        // by providing our own searching.
        try {
-           userManager = UserManager.getInstance();
            searchFields = new ArrayList<String>(userManager.getSearchFields());
        }
        catch (UnsupportedOperationException uoe) {

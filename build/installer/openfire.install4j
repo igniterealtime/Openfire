@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="4.0.4" transformSequenceNumber="1">
+<install4j version="4.0.5" transformSequenceNumber="1">
   <directoryPresets config="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" />
-  <application name="${compiler:APP_NAME}" distributionSourceDir="" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/release" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}" compression="9" lzmaCompression="true" pack200Compression="false" keepModificationTimes="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:VERSION_MAJOR}.${compiler:VERSION_MINOR}.${compiler:VERSION_REVISION}" allPathsRelative="true" backupOnSave="false" autoSave="true" convertDotsToUnderscores="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="true">
+  <application name="${compiler:APP_NAME}" distributionSourceDir="" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/release" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}" compression="9" lzmaCompression="true" pack200Compression="false" excludeSignedFromPacking="true" keepModificationTimes="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:VERSION_MAJOR}.${compiler:VERSION_MINOR}.${compiler:VERSION_REVISION}" allPathsRelative="true" backupOnSave="false" autoSave="true" convertDotsToUnderscores="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="true">
     <languages skipLanguageSelection="false">
       <principalLanguage id="en" customLocalizationFile="" />
       <additionalLanguages>
@@ -150,7 +150,7 @@
       </customScript>
     </launcher>
   </launchers>
-  <installerGui installerType="1" suggestPreviousProgramGroup="true" addOnAppId="" suggestPreviousLocations="true" allowUnattended="true" allowConsole="true" useCustomInstallerHeaderImage="true" customInstallerHeaderImage="./images/logo_small.png" useCustomUninstallerHeaderImage="true" customUninstallerHeaderImage="./images/logo_small.png" customSize="false" customWidth="500" customHeight="390" useCustomIcon="false" customIcnsFile="" customPngIcon16File="" customPngIcon32File="" customIcoFile="" vmParameters="" watermark="false" resizable="true">
+  <installerGui installerType="1" suggestPreviousProgramGroup="true" addOnAppId="" suggestPreviousLocations="true" allowUnattended="true" allowConsole="true" useCustomInstallerHeaderImage="true" customInstallerHeaderImage="./images/logo_small.png" useCustomUninstallerHeaderImage="true" customUninstallerHeaderImage="./images/logo_small.png" customSize="false" customWidth="500" customHeight="390" useCustomIcon="false" customIcnsFile="" customPngIcon16File="" customPngIcon32File="" customIcoFile="" vmParameters="" watermark="false" resizable="true" suppressProgressDialog="false">
     <customCode useInstalledFiles="false">
       <archive location="${compiler:RELEASE_FULL_PATH}/lib/startup.jar" />
     </customCode>
@@ -462,7 +462,7 @@
     </uninstallerStartup>
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="windows-x86-1.6.0_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="false">
+    <win32 name="Windows" id="3" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" includedJRE="windows-x86-1.6.0_01_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="false">
       <excludedLaunchers>
         <launcher id="22" />
       </excludedLaunchers>
@@ -479,7 +479,7 @@
       <excludedInstallerScreens />
       <excludedUninstallerScreens />
     </win32>
-    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="linux-x86-1.6.0" manualJREEntry="false" os="linux" arch="i386">
+    <linuxRPM name="Linux RPM" id="18" mediaFileName="" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" includedJRE="linux-x86-1.6.0" manualJREEntry="false" os="linux" arch="i386">
       <excludedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
@@ -507,7 +507,7 @@
         <scriptLines />
       </postUninstallScript>
     </linuxRPM>
-    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="${compiler:PRODUCT_NAME}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="" manualJREEntry="false">
+    <unixArchive name="Unix Archive" id="30" mediaFileName="" installDir="${compiler:PRODUCT_NAME}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" includedJRE="" manualJREEntry="false">
       <excludedLaunchers>
         <launcher id="2" />
         <launcher id="12" />
@@ -523,7 +523,7 @@
       </exclude>
       <variables />
     </unixArchive>
-    <win32Archive name="Windows Archive" id="31" mediaFileName="" installDir="${compiler:APP_SHORT_NAME}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" includedJRE="" manualJREEntry="false">
+    <win32Archive name="Windows Archive" id="31" mediaFileName="" installDir="${compiler:APP_SHORT_NAME}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" includedJRE="" manualJREEntry="false">
       <excludedLaunchers>
         <launcher id="22" />
       </excludedLaunchers>

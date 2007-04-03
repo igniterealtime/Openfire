@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<optionsconfig>
-    <leftpanel></leftpanel>
-    <rightpanel>
-        <item type="text" sysprop="plugin.gateway.irc.connecthost" var="host" desckey="gateway.web.settings.host" default="irc.freenode.net"/>
-        <item type="text" sysprop="plugin.gateway.irc.connectport" var="port" desckey="gateway.web.settings.port" default="7000"/>
-    </rightpanel>
-</optionsconfig>

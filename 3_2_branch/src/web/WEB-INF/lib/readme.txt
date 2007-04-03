@@ -1,1 +1,0 @@
-This directory is used for libraries used in the admin console only.

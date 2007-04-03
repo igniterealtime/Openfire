@@ -22,11 +22,11 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -472,7 +472,7 @@ public class UpdateManager extends BasicModule {
         XMPPServer server = XMPPServer.getInstance();
         Element xmlRequest = docFactory.createDocument().addElement("version");
         // Add current openfire version
-        Element openfire = xmlRequest.addElement("wildfire");
+        Element openfire = xmlRequest.addElement("openfire");
         openfire.addAttribute("current", server.getServerInfo().getVersion().getVersionString());
         return xmlRequest.asXML();
     }
@@ -493,7 +493,7 @@ public class UpdateManager extends BasicModule {
         xmlReader.setEncoding("UTF-8");
         Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
         // Parse response and keep info as Update objects
-        Element openfire = xmlResponse.element("wildfire");
+        Element openfire = xmlResponse.element("openfire");
         if (openfire != null) {
             // A new version of openfire was found
             String latestVersion = openfire.attributeValue("latest");
@@ -603,7 +603,7 @@ public class UpdateManager extends BasicModule {
     private void saveLatestServerInfo() {
         Element xmlResponse = docFactory.createDocument().addElement("version");
         if (serverUpdate != null) {
-            Element component = xmlResponse.addElement("wildfire");
+            Element component = xmlResponse.addElement("openfire");
             component.addAttribute("latest", serverUpdate.getLatestVersion());
             component.addAttribute("changelog", serverUpdate.getChangelog());
             component.addAttribute("url", serverUpdate.getURL());
@@ -746,7 +746,7 @@ public class UpdateManager extends BasicModule {
             }
         }
         // Parse info and recreate update information (if still required)
-        Element openfire = xmlResponse.getRootElement().element("wildfire");
+        Element openfire = xmlResponse.getRootElement().element("openfire");
         if (openfire != null) {
             String latestVersion = openfire.attributeValue("latest");
             String changelog = openfire.attributeValue("changelog");

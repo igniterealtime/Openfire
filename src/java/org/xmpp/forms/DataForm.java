@@ -74,6 +74,10 @@ public class DataForm extends PacketExtension {
         }
     }
 
+    public static boolean parseBoolean(String booleanString) throws ParseException {
+        return "1".equals(booleanString) || "true".equals(booleanString);
+    }
+
     /**
      * Returns the String representation of an Object to be used as a field value.
      *

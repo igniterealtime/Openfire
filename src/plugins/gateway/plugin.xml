@@ -5,8 +5,8 @@
     <class>org.jivesoftware.openfire.gateway.GatewayPlugin</class>
     
     <!-- Plugin meta-data -->
-    <name>IM Gateway</name>
-    <description>Provides gateway connectivity to the other public instant messaging networks</description>
+    <name>${gateway.name}</name>
+    <description>${gateway.description}</description>
     <author>Daniel Henninger</author>
     <version>1.0.1</version>
     <date>03/29/2007</date>
@@ -19,15 +19,15 @@
     <adminconsole>              
         <tab id="tab-server">
 		
-            <sidebar id="gateways" name="Gateways" description="Gateway setup">
+            <sidebar id="gateways" name="${gateway.web.gateways}" description="${gateway.web.gateways.desc}">
                 <item id="gateway-settings" 
-                      name="Settings"
+                      name="${gateway.web.settings}"
                       url="gateway-settings.jsp"
-                      description="Click to manage the service that provides access to other IM networks"/>
+                      description="${gateway.web.settings.desc}"/>
                 <item id="gateway-registrations" 
-                      name="Registrations"
+                      name="${gateway.web.registrations}"
                       url="gateway-registrations.jsp"
-                      description="Click to view and manage the user registrations to other IM networks"/>
+                      description="%{gateway.web.registrations.desc}"/>
             </sidebar>
 		
         </tab>

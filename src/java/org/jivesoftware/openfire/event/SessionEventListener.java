@@ -19,30 +19,32 @@ import org.jivesoftware.openfire.session.Session;
 public interface SessionEventListener {
 
     /**
-     * A session was created.
+     * Notification event indicating that a user has authenticated with the server. The
+     * authenticated user is not an anonymous user.
      *
-     * @param session the session.
+     * @param session the authenticated session of a non anonymous user.
      */
     public void sessionCreated(Session session);    
 
     /**
-     * A session was destroyed
+     * An authenticated session of a non anonymous user was destroyed.
      *
-     * @param session the session.
+     * @param session the authenticated session of a non anonymous user.
      */
     public void sessionDestroyed(Session session);
 
     /**
-     * An anonymous session was created.
+     * Notification event indicating that an anonymous user has authenticated with the server.
      *
-     * @param session the session.
+     * @param session the authenticated session of an anonymous user.
      */
     public void anonymousSessionCreated(Session session);
     
     /**
-     * An anonymous session was created.
-     *
-     * @param session the session.
+     /**
+      * An authenticated session of an anonymous user was destroyed.
+      *
+      * @param session the authenticated session of an anonymous user.
      */
     public void anonymousSessionDestroyed(Session session);
 }

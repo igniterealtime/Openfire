@@ -231,13 +231,15 @@
 
     <ul>
         <li>A commercial edition of Openfire that provides practical and valuable features along with professional support.</li>
-        <li>Delivered as a plugin that works with the Open Source edition.</li>
-        <li>Low per-user pricing.</li>
+        <li>Delivered as a plugin that extends the Open Source edition.</li>
+        <li>Affordable <a href="http://www.jivesoftware.com/pricing/clearspacepricing.jsp">per-user pricing</a> and the option of special bundled pricing with <a href="http://www.jivesoftware.com/products/clearspace/">Clearspace</a>.</li>
     </ul>
 
     <h3>Why use it?</h3>
     <ul>
         <li><b>Reporting:</b> What manager wouldn't love graphs like the one pictured to the right?</li>
+        <li><b>Advanced VoIP:</b> Integrate with your corporate phone system to place and receive SIP phone calls from inside Spark.</li>
+        <li><b>Browser-based IM Client:</b> Use the AJAX-based SparkWeb client on any web browser.</li>
         <li><b>Client Control:</b> Stop the client madness -- take control of versions, features and more.</li>
         <li><b>Archiving:</b> If "compliance" is a word your organization uses, you need this feature.</li>
         <li><b>Customer Chat:</b> Add click-to-chat to your website to generate leads, close sales,
@@ -245,7 +247,7 @@
         <li><b>Support.</b> Professional support by the hard-working and friendly Jive Software team.</li>
         <li>Best of all, by using Enterprise, you're directly supporting the Open Source project.</li>
 
-        <p>Interested? See the full <a href="http://www.jivesoftware.com/products/openfire/features/enterprise.jsp">feature overview</a>.</p>
+        <p>Interested? See the full <a href="http://www.jivesoftware.com/products/openfire/featuretour.jsp">feature overview</a>.</p>
     </ul>
 
 

@@ -5,3 +5,7 @@
 # If there is a different user you would like to run openfire as,
 # change the following line
 #OPENFIRE_USER="jive"
+
+# If you wish to change the location of the openfire pid file,
+# change the following line
+#OPENFIRE_PIDFILE="/var/run/openfired.pid"

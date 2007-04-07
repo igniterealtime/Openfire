@@ -1,15 +1,17 @@
-#!/bin/sh
-
-# openfired	stops and starts the openfire XMPP service
+#!/bin/bash
+#
+# openfired	Stops and starts the Openfire XMPP service.
 #
 # chkconfig: 2345 99 1
-# description: Used to start and stop the openfire XMPP server
+# description: Openfire is an XMPP server, which is a server that facilitates \
+#              XML based communication, such as chat.
+# config: /opt/openfire/conf/openfire.xml
+# pidfile: /var/run/openfired.pid
 # 
-# Script used to start openfire as daemon
-# The script has currently been tested on Redhat Fedora Core 3,
+# This script has currently been tested on Redhat and CentOS based systems,
 # but should theoretically work on most UNIX like systems
 #
-# before running this script make sure $OPENFIRE_HOME/bin/openfire.sh is
+# Before running this script make sure $OPENFIRE_HOME/bin/openfire.sh is
 # executable by the user you want to run openfire as
 # (chmod +x $OPENFIRE_HOME/bin/openfire.sh)
 #
@@ -24,10 +26,13 @@
 #
 
 # Get config.
-test -f /etc/sysconfig/openfire && . /etc/sysconfig/openfire
+[ -f /etc/sysconfig/openfire ] && . /etc/sysconfig/openfire
 
 # If openfire user is not set in sysconfig, set to jive.
 [ -z "$OPENFIRE_USER" ] && OPENFIRE_USER=jive
+
+# If pid file path is not set in sysconfig, set to /var/run/openfired.pid.
+[ -z "$OPENFIRE_PIDFILE" ] && OPENFIRE_PIDFILE=/var/run/openfired.pid
 
 # -----------------------------------------------------------------
 
@@ -44,23 +49,42 @@ if [ ! $OPENFIRE_HOME ]; then
 	fi
 fi
 
+RETVAL=0
+prog="openfired"
 
-function execCommand() {
+start() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_HOME/bin
-	CMD="./openfire.sh $1"
-	su -c "$CMD" $OPENFIRE_USER &
+
+        # Start daemons.
+        echo -n $"Starting $prog: "
+
+	CMD=./openfire.sh
+	su -s /bin/bash -c "$CMD" $OPENFIRE_USER &
+	RETVAL=$?
+
+	if [ $RETVAL -eq 0 -a ! -z "$OPENFIRE_PIDFILE" ]; then
+		echo $! > $OPENFIRE_PIDFILE
+	fi
+
+	echo
+
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/openfired
+
 	sleep 1 # allows prompt to return
 	cd $OLD_PWD
 }
 
-
-start() {
-	execCommand "start"
-}
-
 stop() {
-	execCommand "stop"
+	# Stop daemons.
+	echo -n $"Shutting down $prog: "
+
+	[ -f $OPENFILE_PIDFILE ] && kill `cat $OPENFIRE_PIDFILE`
+	RETVAL=$?
+	echo
+
+	[ $RETVAL -eq 0 -a -f $OPENFIRE_PIDFILE ] && rm -f $OPENFIRE_PIDFILE
+	[ $RETVAL -eq 0 -a -f /var/lock/subsys/openfired ] && rm -f /var/lock/subsys/openfired
 }
 
 

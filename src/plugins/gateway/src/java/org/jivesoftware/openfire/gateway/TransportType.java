@@ -49,6 +49,11 @@ public enum TransportType {
     xmpp,
 
     /**
+     * A gateway to Google Talk ('special' XMPP server)
+     */
+    gtalk,
+
+    /**
      * A gateway to IRC servers.
      */
     irc,

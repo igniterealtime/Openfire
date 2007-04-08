@@ -288,12 +288,6 @@ public class MSNListener extends MsnAdapter {
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsnProtocolException")) {
             Log.debug("MSN: Protocol exception: "+throwable.toString());
-//            Message m = new Message();
-//            m.setType(Message.Type.error);
-//            m.setTo(msnSession.getJIDWithHighestPriority());
-//            m.setFrom(msnSession.getTransport().getJID());
-//            m.setBody("MSN error: "+throwable.toString());
-//            msnSession.getTransport().sendPacket(m);
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsgNotSendException")) {
             msnSession.getTransport().sendMessage(
@@ -305,21 +299,9 @@ public class MSNListener extends MsnAdapter {
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.UnknownMessageException")) {
             Log.debug("MSN: Unknown message: "+throwable.toString());
-//            Message m = new Message();
-//            m.setType(Message.Type.error);
-//            m.setTo(msnSession.getJIDWithHighestPriority());
-//            m.setFrom(msnSession.getTransport().getJID());
-//            m.setBody("Unknown message from MSN: "+throwable.toString());
-//            msnSession.getTransport().sendPacket(m);
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.UnsupportedProtocolException")) {
             Log.debug("MSN: Protocol error: "+throwable.toString());
-//            Message m = new Message();
-//            m.setType(Message.Type.error);
-//            m.setTo(msnSession.getJIDWithHighestPriority());
-//            m.setFrom(msnSession.getTransport().getJID());
-//            m.setBody("MSN protocol error: "+throwable.toString());
-//            msnSession.getTransport().sendPacket(m);
         }
         else if (throwable.getClass().getName().equals("java.io.IOException")) {
             Log.debug("MSN: IO error: "+throwable.toString());
@@ -333,13 +315,6 @@ public class MSNListener extends MsnAdapter {
         }
         else {
             Log.debug("MSN: Unknown error: "+throwable.toString());
-//            Message m = new Message();
-//            m.setType(Message.Type.error);
-//            m.setTo(msnSession.getJIDWithHighestPriority());
-//            m.setFrom(msnSession.getTransport().getJID());
-//            m.setBody("Unknown error from MSN: "+throwable.toString());
-//            throwable.printStackTrace();
-//            msnSession.getTransport().sendPacket(m);
         }
     }
 

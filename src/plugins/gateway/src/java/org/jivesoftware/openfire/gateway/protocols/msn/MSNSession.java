@@ -62,7 +62,7 @@ public class MSNSession extends TransportSession {
 
         Log.debug("Creating MSN session for " + registration.getUsername());
         msnMessenger = MsnMessengerFactory.createMsnMessenger(registration.getUsername(), registration.getPassword());
-        ((BasicMessenger)msnMessenger).addSessionListener(new MsnSessionListener(this));
+        ((BasicMessenger)msnMessenger).addSessionListener(new MSNSessionListener(this));
         msnMessenger.setSupportedProtocol(new MsnProtocol[] { MsnProtocol.MSNP11 });
     }
 

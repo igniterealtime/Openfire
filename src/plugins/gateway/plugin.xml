@@ -19,15 +19,15 @@
     <adminconsole>              
         <tab id="tab-server">
 		
-            <sidebar id="gateways" name="${gateway.web.gateways}" description="${gateway.web.gateways.desc}">
+            <sidebar id="gateways" name="${gateway.gateways}" description="${gateway.gateways.desc}">
                 <item id="gateway-settings" 
-                      name="${gateway.web.settings}"
+                      name="${gateway.settings}"
                       url="gateway-settings.jsp"
-                      description="${gateway.web.settings.desc}"/>
+                      description="${gateway.settings.desc}"/>
                 <item id="gateway-registrations" 
-                      name="${gateway.web.registrations}"
+                      name="${gateway.registrations}"
                       url="gateway-registrations.jsp"
-                      description="%{gateway.web.registrations.desc}"/>
+                      description="%{gateway.registrations.desc}"/>
             </sidebar>
 		
         </tab>

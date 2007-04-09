@@ -25,9 +25,11 @@
             (GatewayPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("gateway");
     HashMap<String,Boolean> trEnabled = new HashMap<String,Boolean>();
     trEnabled.put("aim", plugin.getTransportInstance("aim").isEnabled());
+    trEnabled.put("gtalk", plugin.getTransportInstance("gtalk").isEnabled());
     trEnabled.put("icq", plugin.getTransportInstance("icq").isEnabled());
     trEnabled.put("irc", plugin.getTransportInstance("irc").isEnabled());
     trEnabled.put("msn", plugin.getTransportInstance("msn").isEnabled());
+    trEnabled.put("xmpp", plugin.getTransportInstance("xmpp").isEnabled());
     trEnabled.put("yahoo", plugin.getTransportInstance("yahoo").isEnabled());
 
     webManager.init(request, response, session, application, out);
@@ -65,6 +67,8 @@
         if (webManager.getPageProperty("gateway-registrations", "filterMSN", 0) != 0) { filteropts.add("msn"); }
         if (webManager.getPageProperty("gateway-registrations", "filterYAHOO", 0) != 0) { filteropts.add("yahoo"); }
         if (webManager.getPageProperty("gateway-registrations", "filterIRC", 0) != 0) { filteropts.add("irc"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterXMPP", 0) != 0) { filteropts.add("xmpp"); }
+        if (webManager.getPageProperty("gateway-registrations", "filterGTALK", 0) != 0) { filteropts.add("gtalk"); }
         if (webManager.getPageProperty("gateway-registrations", "filterSIGNEDON", 0) != 0) { filteropts.add("signedon"); }
     }
     else {
@@ -73,6 +77,8 @@
         filteropts.add("msn");
         filteropts.add("yahoo");
         filteropts.add("irc");
+        filteropts.add("gtalk");
+        filteropts.add("xmpp");
     }
 
     webManager.setPageProperty("gateway-registrations", "filterSET", 1);
@@ -81,6 +87,8 @@
     webManager.setPageProperty("gateway-registrations", "filterMSN", filteropts.contains("msn") ? 1 : 0);
     webManager.setPageProperty("gateway-registrations", "filterYAHOO", filteropts.contains("yahoo") ? 1 : 0);
     webManager.setPageProperty("gateway-registrations", "filterIRC", filteropts.contains("irc") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterGTALK", filteropts.contains("gtalk") ? 1 : 0);
+    webManager.setPageProperty("gateway-registrations", "filterXMPP", filteropts.contains("xmpp") ? 1 : 0);
     webManager.setPageProperty("gateway-registrations", "filterSIGNEDON", filteropts.contains("signedon") ? 1 : 0);
 
     int resCount = 0;
@@ -282,9 +290,11 @@
 			<select name="newRegistrationType" id="newRegistrationType" size="1">
 			<option value="0" SELECTED> -- select -- </option>
 			<% if (trEnabled.get("aim")) { %> <option value="aim"><fmt:message key="gateway.aim.shortservice" /></option> <% } %>
-			<% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("gtalk")) { %> <option value="gtalk"><fmt:message key="gateway.gtalk.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
 			<% if (trEnabled.get("irc")) { %> <option value="irc"><fmt:message key="gateway.irc.shortservice" /></option> <% } %>
             <% if (trEnabled.get("msn")) { %> <option value="msn"><fmt:message key="gateway.msn.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("xmpp")) { %> <option value="xmpp"><fmt:message key="gateway.xmpp.shortservice" /></option> <% } %>
             <% if (trEnabled.get("yahoo")) { %> <option value="yahoo"><fmt:message key="gateway.yahoo.shortservice" /></option> <% } %>
 			</select><br>
 			<strong><fmt:message key="gateway.web.registrations.gateway" /></strong>
@@ -379,7 +389,12 @@
 			<img src="images/aim.gif" border="0" alt="<fmt:message key="gateway.aim.shortservice" />">
 			<!--<span><fmt:message key="gateway.aim.shortservice" /></span>-->
 		</label>
-		<label for="filterICQcheckbox">
+        <label for="filterGTALKcheckbox">
+            <input type="checkbox" name="filter[]" value="gtalk" <%= ((filteropts.contains("gtalk")) ? "checked" : "") %> id="filterGTALKcheckbox">
+            <img src="images/gtalk.gif" border="0" alt="<fmt:message key="gateway.gtalk.shortservice" />">
+            <!--<span><fmt:message key="gateway.gtalk.shortservice" /></span>-->
+        </label>
+        <label for="filterICQcheckbox">
 			<input type="checkbox" name="filter[]" value="icq" <%= ((filteropts.contains("icq")) ? "checked" : "") %> id="filterICQcheckbox"> 
 			<img src="images/icq.gif" border="0" alt="<fmt:message key="gateway.icq.shortservice" />">
 			<!--<span><fmt:message key="gateway.icq.shortservice" /></span>-->
@@ -394,6 +409,11 @@
 			<img src="images/msn.gif" border="0" alt="<fmt:message key="gateway.msn.shortservice" />">
 			<!--<span><fmt:message key="gateway.msn.shortservice" /></span>-->
 		</label>
+        <label for="filterXMPPcheckbox">
+            <input type="checkbox" name="filter[]" value="xmpp" <%= ((filteropts.contains("xmpp")) ? "checked" : "") %> id="filterXMPPcheckbox">
+            <img src="images/xmpp.gif" border="0" alt="<fmt:message key="gateway.xmpp.shortservice" />">
+            <!--<span><fmt:message key="gateway.xmpp.shortservice" /></span>-->
+        </label>
         <label for="filterYAHOOcheckbox">
 			<input type="checkbox" name="filter[]" value="yahoo" <%= ((filteropts.contains("yahoo")) ? "checked" : "") %> id="filterYAHOOcheckbox"> 
 			<img src="images/yahoo.gif" border="0" alt="<fmt:message key="gateway.yahoo.shortservice" />"> 

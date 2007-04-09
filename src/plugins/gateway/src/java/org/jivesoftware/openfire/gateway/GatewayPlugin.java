@@ -81,6 +81,14 @@ public class GatewayPlugin implements Plugin {
         /* Set up MSN transport. */
         transports.put("msn", new TransportInstance(TransportType.msn, LocaleUtils.getLocalizedString("gateway.msn.name", "gateway"), "org.jivesoftware.openfire.gateway.protocols.msn.MSNTransport", componentManager));
         maybeStartService("msn");
+
+        /* Set up XMPP transport. */
+        transports.put("xmpp", new TransportInstance(TransportType.xmpp, LocaleUtils.getLocalizedString("gateway.xmpp.name", "gateway"), "org.jivesoftware.openfire.gateway.protocols.xmpp.XMPPTransport", componentManager));
+        maybeStartService("xmpp");
+
+        /* Set up GTalk transport. */
+        transports.put("gtalk", new TransportInstance(TransportType.gtalk, LocaleUtils.getLocalizedString("gateway.gtalk.name", "gateway"), "org.jivesoftware.openfire.gateway.protocols.xmpp.XMPPTransport", componentManager));
+        maybeStartService("gtalk");
     }
 
     public void destroyPlugin() {

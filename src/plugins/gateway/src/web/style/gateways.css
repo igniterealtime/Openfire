@@ -320,6 +320,14 @@ a.jive-gatewayButtonOn {
 	background: url(../images/aim-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
+.jive-gateway-GTALKon {
+	background: url(../images/gtalk.gif) no-repeat left;
+	background-position: 2px 1px;
+	}
+.jive-gateway-GTALKoff {
+	background: url(../images/gtalk-gray.gif) no-repeat left;
+	background-position: 2px 1px;
+	}
 .jive-gateway-ICQon {
 	background: url(../images/icq.gif) no-repeat left;
 	background-position: 2px 1px;
@@ -342,6 +350,14 @@ a.jive-gatewayButtonOn {
 	}
 .jive-gateway-MSNoff {
 	background: url(../images/msn-gray.gif) no-repeat left;
+	background-position: 2px 1px;
+	}
+.jive-gateway-XMPPon {
+	background: url(../images/xmpp.gif) no-repeat left;
+	background-position: 2px 1px;
+	}
+.jive-gateway-XMPPoff {
+	background: url(../images/xmpp-gray.gif) no-repeat left;
 	background-position: 2px 1px;
 	}
 .jive-gateway-YAHOOon {

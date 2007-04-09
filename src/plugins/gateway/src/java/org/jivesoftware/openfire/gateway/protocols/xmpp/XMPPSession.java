@@ -17,6 +17,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.Chat;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -53,6 +54,11 @@ public class XMPPSession extends TransportSession {
      */
     private XMPPConnection conn = null;
 
+    /**
+     * XMPP listener
+     */
+    private XMPPListener listener = null;
+
     /*
      * XMPP connection configuration
      */
@@ -61,10 +67,14 @@ public class XMPPSession extends TransportSession {
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
             try {
+                listener = new XMPPListener(this);
                 setLoginStatus(TransportLoginStatus.LOGGING_IN);
                 conn = new XMPPConnection(config);
                 conn.connect();
+                conn.addConnectionListener(listener);
                 conn.login(this.getRegistration().getUsername(), this.getRegistration().getPassword(), "IMGateway");
+                conn.getRoster().addRosterListener(listener);
+                conn.getChatManager().addChatListener(listener);
             }
             catch (XMPPException e) {
                 Log.error(getTransport().getType()+" user is not able to log in: "+this.getRegistration().getUsername(), e);
@@ -78,6 +88,9 @@ public class XMPPSession extends TransportSession {
     public void logOut() {
         if (this.isLoggedIn()) {
             setLoginStatus(TransportLoginStatus.LOGGING_OUT);
+            conn.removeConnectionListener(listener);
+            conn.getRoster().removeRosterListener(listener);
+            conn.getChatManager().removeChatListener(listener);
             conn.disconnect();
         }
         Presence p = new Presence(Presence.Type.unavailable);
@@ -92,19 +105,22 @@ public class XMPPSession extends TransportSession {
     }
 
     public void addContact(RosterItem item) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void removeContact(RosterItem item) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void updateContact(RosterItem item) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void sendMessage(JID jid, String message) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        Chat chat = conn.getChatManager().createChat(getTransport().convertJIDToID(jid), listener);
+        try {
+            chat.sendMessage(message);
+        }
+        catch (XMPPException e) {
+            // TODO: handle exception properly
+        }
     }
 
     public void sendServerMessage(String message) {
@@ -112,15 +128,12 @@ public class XMPPSession extends TransportSession {
     }
 
     public void sendChatState(JID jid, ChatStateType chatState) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void retrieveContactStatus(JID jid) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void resendContactStatuses(JID jid) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
 }

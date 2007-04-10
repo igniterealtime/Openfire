@@ -100,8 +100,16 @@
     <property name="jar.starter.name" value="startup.jar"/>
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
+
+    <property name="overlay.dir"   value="${basedir}/custom"/>
+    <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
+    <property name="overlay.web.dir"   value="${overlay.dir}/webapp"/>
+    <property name="overlay.properties.file"   value="overlay.properties"/>
+    <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>    
+
     <property name="javadoc.src.dir" value="${src.dir}/javadoc"/>
     <property name="javadoc.dest.dir" value="${work.dir}/javadoc"/>
+    <property name="jspc.jsp.src.dir" value="${work.dir}/jspc/jsp"/>
     <property name="jspc.dest.dir" value="${work.dir}/jspc"/>
     <property name="jspc.java.dest.dir" value="${work.dir}/jspc/java"/>
     <property name="jspc.classes.dest.dir" value="${work.dir}/jspc/classes"/>
@@ -238,6 +246,7 @@
         </tstamp>
 
         <mkdir dir="${work.dir}"/>
+        <mkdir dir="${overlay.compile.dir}"/>
 
         <!-- Setup the full version property correctly -->
         <if>
@@ -273,6 +282,32 @@
                 <path refid="compile.dependencies"/>
             </classpath>
         </javac>
+
+        <available file="${overlay.src.dir}" type="dir" property="overlay.source.found"/>
+        <if>
+            <equals arg1="${overlay.source.found}" arg2="true"/>
+            <then>
+
+                <mkdir dir="${overlay.compile.dir}"/>
+                <javac
+                        destdir="${overlay.compile.dir}"
+                        includeAntRuntime="no"
+                        debug="on"
+                        source="1.5"
+                        target="1.5"
+                        >
+                    <src path="${overlay.src.dir}"/>
+                    <patternset refid="compile.sources"/>
+                    <classpath>
+                        <path refid="compile.dependencies"/>
+                        <path location="${compile.dir}"/>
+                    </classpath>
+                </javac>
+
+            </then>
+            <else><echo>Nothing to compile from custom here </echo></else>
+        </if>
+
     </target>
 
     <!-- i18n ================================================================================== -->
@@ -283,6 +318,20 @@
         <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
               tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
 
+        <!-- if title override file exists, overwrite all i18n files -->
+        <available file="${overlay.dir}/${overlay.properties.file}" type="file" property="overlay.props.found"/>
+        <if>
+                <equals arg1="${overlay.props.found}" arg2="true"/>
+                <then>
+                  <echo>Found overlay file: ${overlay.dir}/${overlay.properties.file}</echo>
+		          <property file="${overlay.dir}/${overlay.properties.file}"/>
+                    <replace dir="${target.i18n.dir}">
+                        <replacefilter token="title = Wildfire" value="title=${title}"/>
+                        <replacefilter token="short.title = Wildfire" value="short.title=${short.title}"/>
+                    </replace>
+
+                </then>
+        </if>
     </target>
 
     <target name="plugins-dev">
@@ -329,7 +378,12 @@
         <!-- Make main Openfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
             <fileset dir="${compile.dir}" includes="**/*.class"
-                     excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class"/>
+                     excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class">
+                <!-- don't include files that have an overlay counterpart -->
+                 <present present="srconly" targetdir="${overlay.compile.dir}"/>
+            </fileset>
+            <!-- now include overlay files -->
+            <fileset dir="${overlay.compile.dir}" includes="**/*.class"/>                      
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
@@ -450,13 +504,33 @@
     </target>
     
     <target name="-jspc-impl" unless="no.jspc">
+
+        <!-- we're forced to create a temp dir to properly overwrite sources from overlay directory -->
+        <mkdir dir="${jspc.jsp.src.dir}"/>
+
+        <copy todir="${jspc.jsp.src.dir}">
+            <fileset dir="${web.dir}"/>
+        </copy>
+        <!-- copy overlay -->
+
+        <available file="${overlay.web.dir}" type="dir" property="overlay.webdir.found"/>
+        <if>
+            <equals arg1="${overlay.webdir.found}" arg2="true"/>
+            <then>
+                <copy todir="${jspc.jsp.src.dir}" overwrite="true">
+                    <fileset dir="${overlay.web.dir}"/>
+                </copy>
+            </then>
+        </if>
+
+
         <java classname="org.apache.jasper.JspC" fork="true">
             <classpath>
                 <pathelement location="${java.home}/../lib/tools.jar"/>
                 <pathelement path="${compile.dir}"/>
                 <path refid="jspc.dependencies"/>
             </classpath>
-            <arg line="-uriroot '${web.dir}'"/>
+            <arg line="-uriroot '${jspc.jsp.src.dir}'"/>
             <arg line="-d '${jspc.java.dest.dir}'"/>
             <arg line="-p org.jivesoftware.openfire.admin"/>
             <arg line="-webinc '${jspc.dest.dir}/web.partial.xml'"/>

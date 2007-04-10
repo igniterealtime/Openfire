@@ -11,9 +11,6 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.util.ConcurrentHashSet;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -24,6 +21,9 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.ConcurrentHashSet;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -194,10 +194,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 Roster roster = rosterManager.getRoster(username);
                 for (RosterItem item : roster.getRosterItems()) {
                     if (item.getRecvStatus() == RosterItem.RECV_SUBSCRIBE) {
-                        session.process(createSubscribePresence(item.getJid(), true));
-                    }
-                    else if (item.getRecvStatus() == RosterItem.RECV_UNSUBSCRIBE) {
-                        session.process(createSubscribePresence(item.getJid(), false));
+                        session.process(createSubscribePresence(item.getJid(),
+                                new JID(session.getAddress().toBareJID()), true));
+                    } else if (item.getRecvStatus() == RosterItem.RECV_UNSUBSCRIBE) {
+                        session.process(createSubscribePresence(item.getJid(),
+                                new JID(session.getAddress().toBareJID()), false));
                     }
                     if (item.getSubStatus() == RosterItem.SUB_TO
                             || item.getSubStatus() == RosterItem.SUB_BOTH) {
@@ -215,9 +216,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
-    public Presence createSubscribePresence(JID senderAddress, boolean isSubscribe) {
+    public Presence createSubscribePresence(JID senderAddress, JID targetJID, boolean isSubscribe) {
         Presence presence = new Presence();
         presence.setFrom(senderAddress);
+        presence.setTo(targetJID);
         if (isSubscribe) {
             presence.setType(Presence.Type.subscribe);
         }

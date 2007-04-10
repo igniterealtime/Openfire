@@ -14,7 +14,6 @@ package org.jivesoftware.openfire;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
@@ -44,6 +43,7 @@ import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -285,7 +285,7 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(3, 3, 0, Version.ReleaseStatus.Beta, 1);
+        version = new Version(3, 3, 0, Version.ReleaseStatus.Release, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -404,10 +404,8 @@ public class XMPPServer {
             pluginManager.start();
 
             // Log that the server has been started
-            List<String> params = new ArrayList<String>();
-            params.add(version.getVersionString());
-            params.add(JiveGlobals.formatDateTime(new Date()));
-            String startupBanner = LocaleUtils.getLocalizedString("startup.name", params);
+            String startupBanner = LocaleUtils.getLocalizedString("short.title") + " " + version.getVersionString() +
+                    " [" + JiveGlobals.formatDateTime(new Date()) + "]";
             Log.info(startupBanner);
             System.out.println(startupBanner);
 

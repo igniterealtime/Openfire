@@ -13,21 +13,19 @@ package org.jivesoftware.openfire.nio;
 import org.apache.mina.common.IdleStatus;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
-import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.nio.charset.Charset;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -128,6 +126,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
         // Update counter of read btyes
         updateReadBytesCounter(session);
+        //System.out.println("RCVD: " + message);
         // Let the stanza handler process the received stanza
         try {
             handler.process((String) message, parser);
@@ -142,6 +141,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         super.messageSent(session, message);
         // Update counter of written btyes
         updateWrittenBytesCounter(session);
+        //System.out.println("SENT: " + Charset.forName("UTF-8").decode(((ByteBuffer)message).buf()));
     }
 
     abstract NIOConnection createNIOConnection(IoSession session);

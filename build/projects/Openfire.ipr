@@ -302,7 +302,6 @@
       <module fileurl="file://$PROJECT_DIR$/Admin.iml" filepath="$PROJECT_DIR$/Admin.iml" />
       <module fileurl="file://$PROJECT_DIR$/Openfire.iml" filepath="$PROJECT_DIR$/Openfire.iml" />
       <module fileurl="file://$PROJECT_DIR$/Plugins.iml" filepath="$PROJECT_DIR$/Plugins.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Spank.iml" filepath="$PROJECT_DIR$/Spank.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../src/test/throttletest/ThrottleTest.iml" filepath="$PROJECT_DIR$/../../src/test/throttletest/ThrottleTest.iml" />
     </modules>
   </component>

@@ -118,73 +118,7 @@
 		//-->
 	</script>
     <link rel="stylesheet" href="style/global.css" type="text/css">
-    <style type="text/css">
-    #jive-loginBox {
-        display: block;
-        position: relative;
-        width: 500px;
-        text-align: left;
-        top: 148px;
-    }
-    #jive-loginLogo {
-        display: block;
-        position: relative;
-        width: 179px;
-        height: 53px;
-        margin: 12px 0px 0px 7px;
-        background: url('images/login_logo.gif') no-repeat;
-        float: left;
-        overflow: hidden;
-    }
-    #jive-loginHeader {
-        display: block;
-        position: relative;
-        width: 300px;
-        height: 40px;
-        margin: 25px 0px 10px 0px;
-        padding-top: 9px;
-        font-size: 20px;
-        color: #255480;
-        float: left;
-        overflow: hidden;
-    }
-    #jive-loginTable {
-        display: block;
-        position: relative;
-        clear: both;
-        width: auto;
-        margin: 10px 0px 0px 0px;
-        padding: 0px;
-
-    }
-    #jive-loginTable td.loginFormTable {
-        padding: 17px 17px 7px 18px;
-        background-color: #e1eaf1;
-        border: 1px solid #b6c5d3;
-        -moz-border-radius: 4px;
-    }
-    #jive-loginVersion {
-        color: #999999;
-        font-weight: normal;
-        font-size: 11px;
-        padding-top: 8px;
-    }
-
-    .jive-login-label {
-        font-size : 12px;
-        font-weight: bold;
-        color: #214c74;
-    }
-
-
-    BODY {
-        background-image : url(images/login_background.png);
-        background-repeat : repeat-x;
-        background-color : #fff;
-        padding : 0px;
-        margin : 0px;
-    }
-    </style>
+    <link rel="stylesheet" href="style/login.css" type="text/css">
 </head>
 
 <body>

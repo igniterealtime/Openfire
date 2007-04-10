@@ -11,18 +11,19 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * <p>Route message packets throughout the server.</p>
@@ -93,7 +94,15 @@ public class MessageRouter extends BasicModule {
                 }
 
                 try {
-                    routingTable.getBestRoute(recipientJID).process(packet);
+                    // Check if message was sent to a bare JID of a local user
+                    if (recipientJID != null && recipientJID.getResource() == null &&
+                            serverName.equals(recipientJID.getDomain())) {
+                        routeToBareJID(recipientJID, packet);
+                    }
+                    else {
+                        // Deliver stanza to best route
+                        routingTable.getBestRoute(recipientJID).process(packet);
+                    }
                 }
                 catch (Exception e) {
                     try {
@@ -125,6 +134,100 @@ public class MessageRouter extends BasicModule {
                 reply.setThread(packet.getThread());
                 reply.setBody(e.getRejectionMessage());
                 session.process(reply);
+            }
+        }
+    }
+
+    /**
+     * Deliver the message sent to the bare JID of a local user to the best connected resource. If the
+     * target user is not online then messages will be stored offline according to the offline strategy.
+     * However, if the user is connected from only one resource then the message will be delivered to
+     * that resource. In the case that the user is connected from many resources the logic will be the
+     * following:
+     * <ol>
+     *  <li>Select resources with highest priority</li>
+     *  <li>Select resources with highest show value (chat, available, away, xa, dnd)</li>
+     *  <li>Select resource with most recent activity</li>
+     * </ol>
+     *
+     * Admins can override the above logic and just send the message to all connected resources
+     * with highest priority by setting the system property <tt>route.all-resources</tt> to
+     * <tt>true</tt>.
+     *
+     * @param recipientJID the bare JID of the target local user.
+     * @param packet the message to send.
+     */
+    private void routeToBareJID(JID recipientJID, Message packet) {
+        List<ClientSession> sessions = sessionManager.getHighestPrioritySessions(recipientJID.getNode());
+        if (sessions.isEmpty()) {
+            // No session is available so store offline
+            messageStrategy.storeOffline(packet);
+        }
+        else if (sessions.size() == 1) {
+            // Found only one session so deliver message
+            sessions.get(0).process(packet);
+        }
+        else {
+            // Many sessions have the highest priority (be smart now) :)
+            if (!JiveGlobals.getBooleanProperty("route.all-resources", false)) {
+                // Sort sessions by show value (e.g. away, xa)
+                Collections.sort(sessions, new Comparator<ClientSession>() {
+
+                    public int compare(ClientSession o1, ClientSession o2) {
+                        int thisVal = getShowValue(o1);
+                        int anotherVal = getShowValue(o2);
+                        return (thisVal<anotherVal ? -1 : (thisVal==anotherVal ? 0 : 1));
+                    }
+
+                    /**
+                     * Priorities are: chat, available, away, xa, dnd.
+                     */
+                    private int getShowValue(ClientSession session) {
+                        Presence.Show show = session.getPresence().getShow();
+                        if (show == Presence.Show.chat) {
+                            return 1;
+                        }
+                        else if (show == null) {
+                            return 2;
+                        }
+                        else if (show == Presence.Show.away) {
+                            return 3;
+                        }
+                        else if (show == Presence.Show.xa) {
+                            return 4;
+                        }
+                        else {
+                            return 5;
+                        }
+                    }
+                });
+
+                // Get same sessions with same max show value
+                List<ClientSession> targets = new ArrayList<ClientSession>();
+                Presence.Show showFilter = sessions.get(0).getPresence().getShow();
+                for (ClientSession session : sessions) {
+                    if (session.getPresence().getShow() == showFilter) {
+                        targets.add(session);
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                // Get session with most recent activity (and highest show value)
+                Collections.sort(targets, new Comparator<ClientSession>() {
+                    public int compare(ClientSession o1, ClientSession o2) {
+                        return o1.getLastActiveDate().compareTo(o2.getLastActiveDate());
+                    }
+                });
+                // Deliver stanza to session with highest priority, highest show value and most recent activity
+                targets.get(0).process(packet);
+            }
+            else {
+                // Deliver stanza to all connected resources with highest priority
+                for (ClientSession session : sessions) {
+                    session.process(packet);
+                }
             }
         }
     }

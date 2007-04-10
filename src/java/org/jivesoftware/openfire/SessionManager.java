@@ -11,9 +11,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -27,6 +24,9 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -393,7 +393,8 @@ public class SessionManager extends BasicModule {
          *
          * @param filterAvailable flag that indicates if only available sessions should be
          *        considered.
-         * @return the default session for the user.
+         * @return the default session for the user or null if no session with presence priority
+         * greater than 0 was found.
          */
         ClientSession getDefaultSession(boolean filterAvailable) {
             if (priorityList.isEmpty()) {
@@ -401,19 +402,54 @@ public class SessionManager extends BasicModule {
             }
 
             if (!filterAvailable) {
-                return resources.get(priorityList.getFirst());
+                ClientSession session = resources.get(priorityList.getFirst());
+                // Only consider sessions with positive presence priorities 
+                if (session.getPresence().getPriority() >= 0) {
+                    return session;
+                }
+                return null;
             }
             else {
                 synchronized (priorityList) {
-                    for (int i=0; i < priorityList.size(); i++) {
-                        ClientSession s = resources.get(priorityList.get(i));
+                    for (String resource : priorityList) {
+                        ClientSession s = resources.get(resource);
                         if (s != null && s.getPresence().isAvailable()) {
-                            return s;
+                            // Only consider sessions with positive presence priorities
+                            if (s.getPresence().getPriority() >= 0) {
+                                return s;
+                            }
                         }
                     }
                 }
                 return null;
             }
+        }
+
+        /**
+         * Returns client sessions of the user that have the same highest priority.
+         *
+         * @return client sessions of the user that have the same highest priority.
+         */
+        List<ClientSession> getHighestPrioritySessions() {
+            if (priorityList.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<ClientSession> answer = new ArrayList<ClientSession>();
+            int highest = -1;
+            synchronized (priorityList) {
+                for (String resource : priorityList) {
+                    ClientSession s = resources.get(resource);
+                    if (s != null && s.getPresence().isAvailable()) {
+                        // Only consider sessions with positive presence priorities
+                        if (s.getPresence().getPriority() >= 0 && s.getPresence().getPriority() >= highest) {
+                            highest = s.getPresence().getPriority();
+                            answer.add(s);
+                        }
+                    }
+                }
+            }
+            return answer;
         }
 
         /**
@@ -740,10 +776,11 @@ public class SessionManager extends BasicModule {
                 // Update the order of the sessions based on the new presence of this session
                 sessionMap.sessionAvailable(session);
                 defaultSession = sessionMap.getDefaultSession(true);
-                JID node = new JID(defaultSession.getAddress().getNode(),
-                        defaultSession.getAddress().getDomain(), null);
-                // Add route to default session (used when no resource is specified)
-                routingTable.addRoute(node, defaultSession);
+                if (defaultSession != null) {
+                    // Add route to default session (used when no resource is specified)
+                    JID node = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
+                    routingTable.addRoute(node, defaultSession);
+                }
                 // Add route to the new session
                 routingTable.addRoute(session.getAddress(), session);
                 // Broadcast presence between the user's resources
@@ -841,9 +878,16 @@ public class SessionManager extends BasicModule {
                     sessionMap.sessionUnavailable(session);
                     // Update the route for the session's BARE address
                     Session defaultSession = sessionMap.getDefaultSession(true);
-                    routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
-                            defaultSession.getAddress().getDomain(), ""),
-                            defaultSession);
+                    JID jid =
+                            new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), "");
+                    if (defaultSession != null) {
+                        // Set the route to the bare JID to the session with highest priority
+                        routingTable.addRoute(jid, defaultSession);
+                    }
+                    else {
+                        // All sessions have a negative priority presence so delete the route to the bare JID
+                        routingTable.removeRoute(jid);
+                    }
                 }
             }
             catch (UserNotFoundException e) {
@@ -876,9 +920,30 @@ public class SessionManager extends BasicModule {
             defaultSession = resources.getDefaultSession(true);
         }
         // Update the route to the bareJID with the session with highest priority
-        routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
-                defaultSession.getAddress().getDomain(), ""),
-                defaultSession);
+        JID defaultAddress =
+                new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), "");
+        // Update the route to the bare JID
+        if (defaultSession != null) {
+            boolean hadDefault = routingTable.getRoute(defaultAddress) != null;
+            // Set the route to the bare JID to the session with highest priority
+            routingTable.addRoute(defaultAddress, defaultSession);
+            // Check if we need to deliver offline messages
+            if (!hadDefault) {
+                // User sessions had negative presence before this change so deliver messages
+                ClientSession session = resources.getSession(sender.getResource());
+                if (session != null && session.canFloodOfflineMessages()) {
+                    OfflineMessageStore messageStore = XMPPServer.getInstance().getOfflineMessageStore();
+                    Collection<OfflineMessage> messages = messageStore.getMessages(username, true);
+                    for (Message message : messages) {
+                        session.process(message);
+                    }
+                }
+            }
+        }
+        else {
+            // All sessions have a negative priority presence so delete the route to the bare JID
+            routingTable.removeRoute(defaultAddress);
+        }
     }
 
 
@@ -1234,6 +1299,20 @@ public class SessionManager extends BasicModule {
             copyUserSessions(username, sessionList);
         }
         return sessionList;
+    }
+
+    /**
+     * Returns client sessions of the user that have the same highest priority.
+     *
+     * @param username the user.
+     * @return client sessions of the user that have the same highest priority.
+     */
+    public List<ClientSession> getHighestPrioritySessions(String username) {
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            return sessionMap.getHighestPrioritySessions();
+        }
+        return Collections.emptyList();
     }
 
     /**

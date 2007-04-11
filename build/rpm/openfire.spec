@@ -1,7 +1,7 @@
 Summary: Openfire XMPP Server
 Name: openfire
 Version: 3.3.0
-# Release: beta
+Release: 1
 BuildRoot: %{_builddir}/%{name}-root
 Source0: %{name}_src_3_3_0.tar.gz
 Group: Applications/Communications

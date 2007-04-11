@@ -83,6 +83,11 @@ fi
 OPENFIRE_LIB="${OPENFIRE_HOME}/lib"
 OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dopenfire.lib.dir=${OPENFIRE_LIB}"
 
+# Override with bundled jre if it exists.
+if [ -f "$OPENFIRE_HOME/jre/bin/java" ]; then
+	JAVA_HOME="$OPENFIRE_HOME/jre"
+	JAVACMD="$OPENFIRE_HOME/jre/bin/java"
+fi
 
 if [ -z "$JAVACMD" ] ; then
   	if [ -n "$JAVA_HOME"  ] ; then
@@ -153,5 +158,5 @@ if $cygwin; then
   esac
 fi
 
-openfire_exec_command="exec \"$JAVACMD\" -server $OPENFIRE_OPTS -classpath \"$LOCALCLASSPATH\" -jar \"$OPENFIRE_LIB\"/startup.jar"
+openfire_exec_command="exec $JAVACMD -server $OPENFIRE_OPTS -classpath \"$LOCALCLASSPATH\" -jar \"$OPENFIRE_LIB/startup.jar\""
 eval $openfire_exec_command

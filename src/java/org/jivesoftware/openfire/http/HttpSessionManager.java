@@ -283,8 +283,8 @@ public class HttpSessionManager {
     }
 
     /**
-     * A runner that gurantees that the packets per a session will be sent and processed in the
-     * order in which they were received.
+     * A runner that gurantees that the packets per a session will be sent and
+     * processed in the order in which they were received.
      */
     private class HttpPacketSender implements Runnable {
         private HttpSession session;
@@ -294,41 +294,7 @@ public class HttpSessionManager {
         }
 
         public void run() {
-            Collection<Element> elements = null;
-            try {
-                elements = session.getPacketsToSend(20, TimeUnit.MILLISECONDS);
-            }
-            catch(HttpConnectionClosedException he) {
-                /** the session has been closed **/
-                return;
-            }
-            catch (Throwable t) {
-                /** Do nothing **/
-            }
-            if (elements == null) {
-                this.init();
-                return;
-            }
-
-            SessionPacketRouter router = new SessionPacketRouter(session);
-
-            try {
-                for (Element packet : elements) {
-                    try {
-                        router.route(packet);
-                    }
-                    catch (UnsupportedEncodingException e) {
-                        Log.error("Client provided unsupported encoding type in auth request", e);
-                    }
-                    catch (UnknownStanzaException e) {
-                        Log.error("Client provided unknown packet type", e);
-                    }
-                }
-            }
-            finally {
-                session.releasePacketsToSend();
-            }
-
+            session.sendPendingPackets();
         }
 
         private void init() {

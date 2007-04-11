@@ -17,10 +17,10 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
-import org.jivesoftware.openfire.XMPPServer;
 
 import java.io.*;
 import java.util.*;
@@ -463,7 +463,7 @@ public class PluginManager {
             }
         }
         catch (Throwable e) {
-            Log.error("Error loading plugin", e);
+            Log.error("Error loading plugin: " + pluginDir, e);
         }
     }
 

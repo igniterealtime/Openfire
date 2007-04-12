@@ -10,22 +10,22 @@
 		<string>/usr/local/wildfire/</string>
 	</dict>
 	<key>Label</key>
-	<string>org.jivesoftware.wildfire</string>
+	<string>org.jivesoftware.openfire</string>
 	<key>OnDemand</key>
 	<false/>
 	<key>Program</key>
-	<string>/usr/local/wildfire/bin/extra/wildfire-launchd-wrapper.sh</string>
+	<string>/usr/local/wildfire/bin/extra/openfire-launchd-wrapper.sh</string>
 	<key>RunAtLoad</key>
 	<false/>
 	<key>ServiceDescription</key>
-	<string>Wildfire</string>
+	<string>Openfire</string>
 	<key>StandardErrorPath</key>
-	<string>/usr/local/wildfire/logs/launchd.stderr</string>
+	<string>/usr/local/openfire/logs/launchd.stderr</string>
 	<key>StandardOutPath</key>
-	<string>/usr/local/wildfire/logs/launchd.stdout</string>
+	<string>/usr/local/openfire/logs/launchd.stdout</string>
 	<key>UserName</key>
-	<string>wildfire</string>
+	<string>openfire</string>
 	<key>WorkingDirectory</key>
-	<string>/usr/local/wildfire/lib</string>
+	<string>/usr/local/openfire/lib</string>
 </dict>
 </plist>

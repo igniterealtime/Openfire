@@ -1,13 +1,16 @@
 #!/bin/sh
 
-# stop wildfire
-/bin/launchctl unload /Library/LaunchDaemons/org.jivesoftware.wildfire.plist
+if [ -f /usr/local/openfire ]; then
+
+# stop openfire
+/bin/launchctl unload /Library/LaunchDaemons/org.jivesoftware.openfire.plist
 
 # preserve these files, they should never be upgraded
-cp /usr/local/wildfire/conf/wildfire.xml /tmp/
-cp -r /usr/local/wildfire/resources/security /tmp/
-cp -r /usr/local/wildfire/embedded-db /tmp/
-cp -r /usr/local/wildfire/enterprise /tmp/
-cp -r /usr/local/wildfire/plugins /tmp/
+cp /usr/local/openfire/conf/openfire.xml /tmp/
+cp -r /usr/local/openfire/resources/security /tmp/
+cp -r /usr/local/openfire/embedded-db /tmp/
+cp -r /usr/local/openfire/enterprise /tmp/
+cp -r /usr/local/openfire/plugins /tmp/
 
+fi
 

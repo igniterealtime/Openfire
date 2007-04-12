@@ -406,10 +406,6 @@ public class PluginManager {
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
                 if (adminElement != null) {
-                    if (parentPluginNode != null) {
-                        pluginName = parentPluginNode.getTextTrim();
-                    }
-
                     Element appName = (Element)adminElement.selectSingleNode(
                         "/plugin/adminconsole/global/appname");
                     if (appName != null) {

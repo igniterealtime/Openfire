@@ -6,24 +6,20 @@
 	<string>English</string>
 	<key>CFBundleExecutable</key>
 	<string>Openfire</string>
-	<key>CFBundleIconFile</key>
-	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>com.apple.prefpanel</string>
+	<string>com.jivesoftware.openfire</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
-	<key>CFBundleSignature</key>
-	<string>Jive Software</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
 	<key>NSMainNibFile</key>
 	<string>openfirePrefPane</string>
 	<key>NSPrefPaneIconFile</key>
-	<string>openfirePrefPaneLogo.tiff</string>
+	<string>openfire-logo-notext.tif</string>
 	<key>NSPrefPaneIconLabel</key>
 	<string>Openfire</string>
 	<key>NSPrincipalClass</key>

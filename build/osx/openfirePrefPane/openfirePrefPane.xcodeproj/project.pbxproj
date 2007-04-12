@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6305C7110BCEE09200D552C4 /* jivesoftware_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 6305C7100BCEE09200D552C4 /* jivesoftware_logo.png */; };
 		633BEA0B0B39DF03003AD355 /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */; };
 		633BEA7A0B39EB60003AD355 /* authTool.c in Sources */ = {isa = PBXBuildFile; fileRef = 633BEA790B39EB60003AD355 /* authTool.c */; };
 		633BEAAD0B39EEF8003AD355 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 633BEAAC0B39EEF8003AD355 /* CoreFoundation.framework */; };
 		6358CFF40B39F6B800BFA7DC /* HelperTool in CopyFiles */ = {isa = PBXBuildFile; fileRef = 633BEA760B39EB2B003AD355 /* HelperTool */; };
 		63A50BAD0BB338EF009E9FD0 /* openfire-logo-notext.tif in Resources */ = {isa = PBXBuildFile; fileRef = 63A50BAA0BB338EF009E9FD0 /* openfire-logo-notext.tif */; };
 		63A719E80BB339C4002929AA /* openfire-logo-notext.png in Resources */ = {isa = PBXBuildFile; fileRef = 63A719E60BB339C4002929AA /* openfire-logo-notext.png */; };
-		63A719E90BB339C4002929AA /* openfirePrefPanePref.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 63A719E70BB339C4002929AA /* openfirePrefPanePref.tiff */; };
 		650096350A60403400B6046A /* jivesoftware_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 650096340A60403400B6046A /* jivesoftware_logo.png */; };
 		65E2E73A0A5E8F2900DFFC2E /* openfire-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 65E2E7390A5E8F2900DFFC2E /* openfire-logo.png */; };
 		65E2E7C90A5EF1F200DFFC2E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 65E2E7C80A5EF1F200DFFC2E /* Security.framework */; };
@@ -55,13 +55,13 @@
 		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		32DBCFA20370C41700C91783 /* openfirePrefPane_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openfirePrefPane_Prefix.pch; sourceTree = "<group>"; };
+		6305C7100BCEE09200D552C4 /* jivesoftware_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = jivesoftware_logo.png; sourceTree = "<group>"; };
 		633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = /System/Library/Frameworks/SecurityInterface.framework; sourceTree = "<absolute>"; };
-		633BEA760B39EB2B003AD355 /* HelperTool */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HelperTool; sourceTree = BUILT_PRODUCTS_DIR; };
+		633BEA760B39EB2B003AD355 /* HelperTool */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = HelperTool; sourceTree = BUILT_PRODUCTS_DIR; };
 		633BEA790B39EB60003AD355 /* authTool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = authTool.c; sourceTree = "<group>"; };
 		633BEAAC0B39EEF8003AD355 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		63A50BAA0BB338EF009E9FD0 /* openfire-logo-notext.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = "openfire-logo-notext.tif"; sourceTree = "<group>"; };
 		63A719E60BB339C4002929AA /* openfire-logo-notext.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "openfire-logo-notext.png"; sourceTree = "<group>"; };
-		63A719E70BB339C4002929AA /* openfirePrefPanePref.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = openfirePrefPanePref.tiff; sourceTree = "<group>"; };
 		650096340A60403400B6046A /* jivesoftware_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = jivesoftware_logo.png; sourceTree = "<group>"; };
 		65E2E7390A5E8F2900DFFC2E /* openfire-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "openfire-logo.png"; sourceTree = "<group>"; };
 		65E2E7C80A5EF1F200DFFC2E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
@@ -122,7 +122,7 @@
 			children = (
 				63A50BAA0BB338EF009E9FD0 /* openfire-logo-notext.tif */,
 				63A719E60BB339C4002929AA /* openfire-logo-notext.png */,
-				63A719E70BB339C4002929AA /* openfirePrefPanePref.tiff */,
+				6305C7100BCEE09200D552C4 /* jivesoftware_logo.png */,
 				8D202CF70486D31800D8A456 /* Info.plist */,
 				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				65E2E7380A5E8F1600DFFC2E /* Images */,
@@ -269,7 +269,7 @@
 				650096350A60403400B6046A /* jivesoftware_logo.png in Resources */,
 				63A50BAD0BB338EF009E9FD0 /* openfire-logo-notext.tif in Resources */,
 				63A719E80BB339C4002929AA /* openfire-logo-notext.png in Resources */,
-				63A719E90BB339C4002929AA /* openfirePrefPanePref.tiff in Resources */,
+				6305C7110BCEE09200D552C4 /* jivesoftware_logo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

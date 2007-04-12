@@ -14,7 +14,7 @@
 	<key>OnDemand</key>
 	<false/>
 	<key>Program</key>
-	<string>/usr/local/wildfire/bin/extra/openfire-launchd-wrapper.sh</string>
+	<string>/usr/local/openfire/bin/extra/openfire-launchd-wrapper.sh</string>
 	<key>RunAtLoad</key>
 	<false/>
 	<key>ServiceDescription</key>

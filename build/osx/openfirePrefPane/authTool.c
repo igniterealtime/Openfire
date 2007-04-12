@@ -62,7 +62,7 @@ static bool openfireIsRunning()
     FILE *ps;
     char buff[1024];
     
-    if((ps=popen("/bin/ps auxww | fgrep -v 'fgrep' | fgrep wildfire/lib/startup.jar", "r")) == NULL)
+    if((ps=popen("/bin/ps auxww | fgrep -v 'fgrep' | fgrep openfire/lib/startup.jar", "r")) == NULL)
     {
         return false;
     }

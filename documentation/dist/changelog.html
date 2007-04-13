@@ -166,6 +166,9 @@ hr {
 
 <h2>3.3.0 -- <span style="font-weight: normal;">April 12, 2007</span></h2>
 
+<h3><font color="red"><b>!</b></font> Upgrade Information</h3>
+<ul>Due to the name change from Wildfire to Openfire you must follow the steps descibed in the <a href='http://wiki.igniterealtime.org/display/WILDFIRE/Wildfire+to+Openfire+Upgrade+Guide'>upgrade guide</a>.</ul>
+
 <h3>Openfire New Features</h3>
 <ul>
 <li>Renamed Wildfire to Openfire.</li>
@@ -175,19 +178,15 @@ hr {
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-420'>JM-420</a>] - Created ad-hoc command that forwards packets to components.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-868'>JM-868</a>] - Added favicon to admin console.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1021'>JM-1021</a>] - Added web folder to the plugin classloader.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1018'>JM-1018</a>] - Updated MINA library to latest version.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1024'>JM-1024</a>] - Updated JVM to 1.6.0_u1.</li>
 </ul>
 
 <h3>Openfire Bug Fixes</h3>
 <ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-991'>JM-991</a>] - Fixed XML parsing problem with />. <b>(1 vote)</b></li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1003'>JM-1003</a>] - Fixed XML parsing problem with open quotes. <b>(1 vote)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1022'>JM-1022</a>] - Fixed memory leaking problem in HttpBinding.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1009'>JM-1009</a>] - Messages sent to bare-JID addresses were sent to resources with negative priority.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-897'>JM-897</a>] - Client sessions were not always being counted correctly. <b>(3 votes)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1031'>JM-1031</a>] - Links were incorrect when using child plugins. Thanks to Guus der Kinderen.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1019'>JM-1019</a>] - Changed idle timeout to 6 minutes.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1004'>JM-1004</a>] - ComponentManager could be null after modules have been started.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1028'>JM-1028</a>] - Fixed NPE when no room name was specified when trying to register with room.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1023'>JM-1023</a>] - Unicode (UTF-8) charset is now used instead of ISO-8859-1 in admin console pages.</li>
@@ -196,17 +195,39 @@ hr {
 <h3>Openfire Enterprise</h3>
 <ul>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-93'>ENT-93</a>] - Added support for group chats archiving.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-101'>ENT-101</a>] - Transfers and invites across workgroups were failing.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-94'>ENT-94</a>] - Updated iText library to latest version.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-95'>ENT-95</a>] - Updated jRobin library to latest version.</li>
 </ul>
 
 <h3>Openfire Connection Manager Module</h3>
 <ul>
+<li>No changes</li>
+</ul>
+
+<h2>3.2.4 -- <span style="font-weight: normal;">March 29, 2007</span></h2>
+
+<h3>Wildfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1018'>JM-1018</a>] - Updated MINA library to latest version.</li>
+</ul>
+
+<h3>Wildfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-991'>JM-991</a>] - Fixed XML parsing problem with />. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1003'>JM-1003</a>] - Fixed XML parsing problem with open quotes. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1019'>JM-1019</a>] - Changed idle timeout to 6 minutes.</li>
+</ul>
+
+<h3>Wildfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-101'>ENT-101</a>] - Transfers and invites across workgroups were failing.</li>
+</ul>
+
+<h3>Wildfire Connection Manager Module</h3>
+<ul>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-991'>JM-991</a>] - Fixed XML parsing problem with />. <b>(1 vote)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1003'>JM-1003</a>] - Fixed XML parsing problem with open quotes. <b>(1 vote)</b></li>
 </ul>
-
 
 <h2>3.2.3 -- <span style="font-weight: normal;">March 15, 2007</span></h2>
 

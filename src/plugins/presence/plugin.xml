@@ -6,7 +6,7 @@
     <description>Exposes presence information through HTTP.</description>
     <author>Jive Software</author>
     <version>1.4.0</version>
-    <date>3/29/2007</date>
+    <date>4/12/2007</date>
     <minServerVersion>3.3.0</minServerVersion>
 	
     <adminconsole>		

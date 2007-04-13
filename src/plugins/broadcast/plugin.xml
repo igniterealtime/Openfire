@@ -9,7 +9,7 @@
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
     <version>1.6.0</version>
-    <date>3/29/2007</date>
+    <date>4/12/2007</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>3.3.0</minServerVersion>
 </plugin>

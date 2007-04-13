@@ -9,7 +9,7 @@
     <description>${gateway.description}</description>
     <author>Daniel Henninger</author>
     <version>1.0.1</version>
-    <date>03/29/2007</date>
+    <date>04/12/2007</date>
     <minServerVersion>3.3.0</minServerVersion>
     <databaseKey>gateway</databaseKey>
     <databaseVersion>2</databaseVersion>

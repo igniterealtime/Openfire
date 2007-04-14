@@ -12,8 +12,8 @@ joscar-common.jar      | svn-20070204
 joscar-protocol.jar    | svn-20070204 (patched [#2])
 picocontainer.jar      | 1.2.0
 saaj.jar               | 1.3
-smack.jar              | 3.0.0
-smackx.jar             | 3.0.0
+smack.jar              | 3.0.1
+smackx.jar             | 3.0.1
 xercesImpl.jar         | 2.6.2
 xml-apis.jar           | 2.6.2
 wsdl4j                 | 1.5.1
@@ -34,6 +34,7 @@ Patch Descriptions
 2) joscar patches
 - applied patches from Damian Minkov for numerous ICQ fixes
   http://groups.google.com/group/joscar-discuss/browse_thread/thread/e73fd2a3011cd0df
+- applied minor patch to get ICQ encoding fixed again
 
 3) dwr patches
 - Derek did something to DWR itself to make it work, I don't have details

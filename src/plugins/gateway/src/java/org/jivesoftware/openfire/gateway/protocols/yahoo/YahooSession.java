@@ -159,7 +159,7 @@ public class YahooSession extends TransportSession {
                         setLoginStatus(TransportLoginStatus.LOGGED_OUT);
                     }
                 }
-            }.run();
+            }.start();
         }
     }
 

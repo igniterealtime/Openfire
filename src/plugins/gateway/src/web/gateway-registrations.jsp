@@ -1,4 +1,5 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.gateway.GatewayPlugin,
@@ -136,7 +137,7 @@
         if (res.linestatus.equals("offline") && filteropts.contains("signedon")) { continue; }
 
         Date lastLogin = registration.getLastLogin();
-        res.lastLogin = ((lastLogin != null) ? lastLogin.toString() : "<i>never</i>");
+        res.lastLogin = ((lastLogin != null) ? lastLogin.toString() : "<i>"+LocaleUtils.getLocalizedString("gateway.web.registrations.never", "gateway")+"</i>");
 
         res.sessionActive = false;
         try {
@@ -342,14 +343,14 @@
 
                 <%  } %>
 		</select>
-		<span>per page</span>
+		<span><fmt:message key="gateway.web.registrations.perpage" /></span>
 	</form></div>
 	<!-- END results size -->
 
 
 	<!-- BEGIN pagination -->
 	<div class="jive-registrations-pagination">
-		<strong>Page:</strong> &nbsp; 
+		<strong><fmt:message key="gateway.web.registrations.page" />:</strong> &nbsp;
             <%
                 if (numPages > 1 && ((curPage) > 1)) {
             %>

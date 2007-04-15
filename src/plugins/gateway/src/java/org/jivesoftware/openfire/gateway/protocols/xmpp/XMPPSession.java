@@ -43,10 +43,13 @@ public class XMPPSession extends TransportSession {
         super(registration, jid, transport, priority);
 
         Log.debug("Creating "+getTransport().getType()+" session for " + registration.getUsername());
+        //XMPPConnection.DEBUG_ENABLED = true;
         config = new ConnectionConfiguration(
                 JiveGlobals.getProperty("plugin.gateway."+getTransport().getType()+".connecthost",
                         (getTransport().getType().equals(TransportType.gtalk) ? "talk.google.com" : "jabber.org")),
-                JiveGlobals.getIntProperty("plugin.gateway."+getTransport().getType()+".connectport", 5222));
+                JiveGlobals.getIntProperty("plugin.gateway."+getTransport().getType()+".connectport", 5222),
+                new JID(registration.getUsername()).getDomain());
+        listener = new XMPPListener(this);
     }
 
     /*
@@ -66,19 +69,22 @@ public class XMPPSession extends TransportSession {
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
-            try {
-                listener = new XMPPListener(this);
-                setLoginStatus(TransportLoginStatus.LOGGING_IN);
-                conn = new XMPPConnection(config);
-                conn.connect();
-                conn.addConnectionListener(listener);
-                conn.login(this.getRegistration().getUsername(), this.getRegistration().getPassword(), "IMGateway");
-                conn.getRoster().addRosterListener(listener);
-                conn.getChatManager().addChatListener(listener);
-            }
-            catch (XMPPException e) {
-                Log.error(getTransport().getType()+" user is not able to log in: "+this.getRegistration().getUsername(), e);
-            }
+            setLoginStatus(TransportLoginStatus.LOGGING_IN);
+            new Thread() {
+                public void run() {
+                    try {
+                        conn = new XMPPConnection(config);
+                        conn.connect();
+                        conn.addConnectionListener(listener);
+                        conn.login(getRegistration().getUsername(), getRegistration().getPassword(), "IMGateway");
+                        conn.getRoster().addRosterListener(listener);
+                        conn.getChatManager().addChatListener(listener);
+                    }
+                    catch (XMPPException e) {
+                        Log.error(getTransport().getType()+" user is not able to log in: "+getRegistration().getUsername(), e);
+                    }
+                }
+            }.start();
         }
     }
 

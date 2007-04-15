@@ -1,0 +1,150 @@
+#!/bin/sh
+#
+# openfired	Stops and starts the Openfire XMPP service.
+#
+# chkconfig: 2345 99 1
+# description: Openfire is an XMPP server, which is a server that facilitates \
+#              XML based communication, such as chat.
+# config: /opt/openfire/conf/openfire.xml
+# config: /etc/sysconfig/openfire
+# pidfile: /var/run/openfire.pid
+# 
+# This script has currently been tested on Redhat and CentOS based systems,
+# but should theoretically work on most UNIX like systems
+#
+# Before running this script make sure $OPENFIRE_HOME/bin/openfire.sh is
+# executable by the user you want to run openfire as
+# (chmod +x $OPENFIRE_HOME/bin/openfire.sh)
+#
+# This script should be copied into /etc/init.d and linked into
+# your default runlevel directory.
+# You can find your default runlevel directory by typing: 
+# grep default /etc/inittab
+#
+# Link to the directory like follows
+# cd /etc/rc<num>.d
+# ln -s ../init.d/openfired S99openfired
+#
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+RETVAL=0
+PROG="openfire"
+
+# Check that we are root ... so non-root users stop here
+[ "`id -u`" = 0 ] || exit 1
+
+# Get config.
+[ -f "/etc/sysconfig/$PROG" ] && . /etc/sysconfig/$PROG
+
+# If openfire user is not set in sysconfig, set to jive.
+[ -z "$OPENFIRE_USER" ] && OPENFIRE_USER=jive
+
+# If pid file path is not set in sysconfig, set to /var/run/openfired.pid.
+[ -z "$OPENFIRE_PIDFILE" ] && OPENFIRE_PIDFILE=/var/run/$PROG.pid
+
+# -----------------------------------------------------------------
+
+# If a openfire home variable has not been specified, try to determine it
+if [ -z "$OPENFIRE_HOME" ]; then
+	if [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
+		OPENFIRE_HOME="/usr/local/openfire"
+	else
+		echo "Could not find Openfire installation under /opt or /usr/local"
+		echo "Please specify the Openfire installation location in environment variable OPENFIRE_HOME"
+		exit 1
+	fi
+fi
+
+[ -z "$OPENFIRE_LOGDIR" ] && OPENFIRE_LOGDIR=$OPENFIRE_HOME/logs
+
+OPENFIRE_CMD="$OPENFIRE_HOME/bin/openfire.sh"
+[ -f "$OPENFIRE_CMD" ] || exit 1
+
+start() {
+	OLD_PWD=`pwd`
+	cd $OPENFIRE_LOGDIR
+
+        # Start daemons.
+        echo -n "Starting $PROG: "
+
+	su -s /bin/sh -c "$OPENFIRE_CMD" $OPENFIRE_USER > nohup.out 2>&1 &
+	RETVAL=$?
+
+	if [ $RETVAL -eq 0 -a ! -z "$OPENFIRE_PIDFILE" ]; then
+		echo $! > $OPENFIRE_PIDFILE
+	fi
+
+	echo
+
+	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/$PROG
+
+	sleep 1 # allows prompt to return
+	cd $OLD_PWD
+}
+
+stop() {
+	# Stop daemons.
+	echo -n "Shutting down $PROG: "
+
+	[ -f "$OPENFILE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
+	RETVAL=$?
+	echo
+
+	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
+	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/$PROG" ] && rm -f /var/lock/subsys/$PROG
+}
+
+restart() {
+	stop
+	sleep 10 # give it a few moments to shut down
+	start
+}
+
+condrestart() {
+	[ -e "/var/lock/subsys/$PROG" ] && restart
+	return 0
+}
+
+status() {
+	pid=`cat $OPENFIRE_PIDFILE 2>&1`
+	if [ "$?" = "1" ]; then
+		echo "openfire is not running"
+		RETVAL=0
+	else 
+		ps -p $pid > /dev/null 2>&1
+		if [ "$?" = "0" ]; then 
+			echo "openfire is running"
+			RETVAL=0
+		else 
+			echo "openfire is not running"
+			RETVAL=0
+		fi
+	fi
+}
+
+
+# Handle how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		restart
+		;;
+	condrestart)
+		condrestart
+		;;
+	status) 
+		status
+		;;
+	*)
+		echo "Usage $0 {start|stop|restart|status|condrestart}"
+		RETVAL=1
+esac
+
+exit $RETVAL

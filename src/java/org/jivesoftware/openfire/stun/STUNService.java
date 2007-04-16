@@ -34,15 +34,15 @@ import java.util.*;
  * @author Thiago Camargo
  */
 public class STUNService extends BasicModule {
-    
+
     private static final String ELEMENT_NAME = "stun";
     private static final String NAMESPACE = "google:jingleinfo";
     private static final String DEFAULT_EXTERNAL_ADDRESSES =
-                "stun.xten.net:3478;" +
-                "jivesoftware.com:3478;" +
-                "igniterealtime.org:3478;" +
-                "stun.fwdnet.net:3478";
-    
+            "stun.xten.net:3478;" +
+                    "jivesoftware.com:3478;" +
+                    "igniterealtime.org:3478;" +
+                    "stun.fwdnet.net:3478";
+
     private IQHandler stunIQHandler;
     private StunServer stunServer = null;
     private boolean enabled = false;
@@ -105,12 +105,10 @@ public class STUNService extends BasicModule {
                     //
                     if (enabled && !oldValue) {
                         startSTUNService();
-                    }
-                    else if (!enabled && oldValue) {
+                    } else if (!enabled && oldValue) {
                         stop();
                     }
-                }
-                else if (property.equals("stun.local.enabled")) {
+                } else if (property.equals("stun.local.enabled")) {
                     localEnabled = JiveGlobals.getBooleanProperty("stun.local.enabled", false);
                 }
             }
@@ -118,8 +116,7 @@ public class STUNService extends BasicModule {
             public void propertyDeleted(String property, Map<String, Object> params) {
                 if (property.equals("stun.enabled")) {
                     enabled = true;
-                }
-                else if (property.equals("stun.local.enabled")) {
+                } else if (property.equals("stun.local.enabled")) {
                     localEnabled = false;
                 }
             }
@@ -151,8 +148,7 @@ public class STUNService extends BasicModule {
             if (primary != null && secondary != null) {
                 stunServer = new StunServer(primaryPort, primary, secondaryPort, secondary);
                 stunServer.start();
-            }
-            else {
+            } else {
                 setLocalEnabled(false);
             }
         }
@@ -178,8 +174,10 @@ public class STUNService extends BasicModule {
     private void stopSTUNService() {
         XMPPServer server = XMPPServer.getInstance();
         server.getIQDiscoInfoHandler().removeServerFeature(NAMESPACE);
-        server.getIQRouter().removeHandler(stunIQHandler);
-        stunIQHandler = null;
+        if (stunIQHandler != null) {
+            server.getIQRouter().removeHandler(stunIQHandler);
+            stunIQHandler = null;
+        }
     }
 
     public void stop() {
@@ -250,7 +248,7 @@ public class STUNService extends BasicModule {
     /**
      * Set the service enable status.
      *
-     * @param enabled boolean to enable or disable
+     * @param enabled      boolean to enable or disable
      * @param localEnabled local Server enable or disable
      */
     public void setEnabled(boolean enabled, boolean localEnabled) {
@@ -259,8 +257,7 @@ public class STUNService extends BasicModule {
             if (isLocalEnabled()) {
                 startLocalServer();
             }
-        }
-        else {
+        } else {
             stopSTUNService();
         }
         this.enabled = enabled;
@@ -276,8 +273,7 @@ public class STUNService extends BasicModule {
         this.localEnabled = enabled;
         if (isLocalEnabled()) {
             startLocalServer();
-        }
-        else {
+        } else {
             stopLocal();
         }
     }
@@ -343,7 +339,7 @@ public class STUNService extends BasicModule {
      * Abstraction method used to convert a String into a STUN Server Address List
      *
      * @param addresses the String representation of server addresses with their
-     *      respective ports (server1:port1;server2:port2).
+     *                  respective ports (server1:port1;server2:port2).
      * @return STUN server addresses list.
      */
     private List<StunServerAddress> getStunServerAddresses(String addresses) {
@@ -376,59 +372,58 @@ public class STUNService extends BasicModule {
         }
 
         public IQ handleIQ(IQ iq) throws UnauthorizedException {
-                IQ reply = IQ.createResultIQ(iq);
-                Element childElement = iq.getChildElement();
-                String namespace = childElement.getNamespaceURI();
-                Element childElementCopy = iq.getChildElement().createCopy();
-                reply.setChildElement(childElementCopy);
+            IQ reply = IQ.createResultIQ(iq);
+            Element childElement = iq.getChildElement();
+            String namespace = childElement.getNamespaceURI();
+            Element childElementCopy = iq.getChildElement().createCopy();
+            reply.setChildElement(childElementCopy);
 
-               if (NAMESPACE.equals(namespace)) {
-                    if (isEnabled()) {
-                        Element stun = childElementCopy.addElement("stun");
-                        // If the local server is configured as a STUN server, send it as the first item.
-                        if (isLocalEnabled()) {
-                            StunServerAddress local;
-                            local = new StunServerAddress(primaryAddress, String.valueOf(primaryPort));
-                            if (!externalServers.contains(local)) {
-                                Element server = stun.addElement("server");
-                                server.addAttribute("host", local.getServer());
-                                server.addAttribute("udp", local.getPort());
-                            }
-                        }
-                        // Add any external STUN servers that are specified.
-                        for (StunServerAddress stunServerAddress : externalServers) {
+            if (NAMESPACE.equals(namespace)) {
+                if (isEnabled()) {
+                    Element stun = childElementCopy.addElement("stun");
+                    // If the local server is configured as a STUN server, send it as the first item.
+                    if (isLocalEnabled()) {
+                        StunServerAddress local;
+                        local = new StunServerAddress(primaryAddress, String.valueOf(primaryPort));
+                        if (!externalServers.contains(local)) {
                             Element server = stun.addElement("server");
-                            server.addAttribute("host", stunServerAddress.getServer());
-                            server.addAttribute("udp", stunServerAddress.getPort());
-                        }
-                        try {
-                            String ip = sessionManager.getSession(iq.getFrom()).getConnection().getInetAddress().getHostAddress();
-                            if (ip != null) {
-                                Element publicIp = childElementCopy.addElement("publicip");
-                                publicIp.addAttribute("ip", ip);
-                            }
-                        }
-                        catch (UnknownHostException e) {
-                            e.printStackTrace();
+                            server.addAttribute("host", local.getServer());
+                            server.addAttribute("udp", local.getPort());
                         }
                     }
+                    // Add any external STUN servers that are specified.
+                    for (StunServerAddress stunServerAddress : externalServers) {
+                        Element server = stun.addElement("server");
+                        server.addAttribute("host", stunServerAddress.getServer());
+                        server.addAttribute("udp", stunServerAddress.getPort());
+                    }
+                    try {
+                        String ip = sessionManager.getSession(iq.getFrom()).getConnection().getInetAddress().getHostAddress();
+                        if (ip != null) {
+                            Element publicIp = childElementCopy.addElement("publicip");
+                            publicIp.addAttribute("ip", ip);
+                        }
+                    }
+                    catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-                }
-                else {
-                    // Answer an error since the server can't handle the requested namespace
-                    reply.setError(PacketError.Condition.service_unavailable);
-                }
+            } else {
+                // Answer an error since the server can't handle the requested namespace
+                reply.setError(PacketError.Condition.service_unavailable);
+            }
 
-                try {
-                    Log.debug("RETURNED:" + reply.toXML());
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-                return reply;
+            try {
+                Log.debug("RETURNED:" + reply.toXML());
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            return reply;
         }
 
-         public IQHandlerInfo getInfo() {
+        public IQHandlerInfo getInfo() {
             return new IQHandlerInfo(ELEMENT_NAME, NAMESPACE);
         }
     }

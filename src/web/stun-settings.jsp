@@ -52,7 +52,7 @@
     boolean add = request.getParameter("add") != null;
     int remove = ParamUtils.getIntParameter(request, "remove", -1);
     boolean success = false;
-    boolean enabled = false;
+    boolean enabled = true;
     boolean localEnabled = false;
 
     String primaryAddress;
@@ -73,8 +73,7 @@
         secondaryAddress = ParamUtils.getParameter(request, "secondaryAddress", true);
         JiveGlobals.setProperty("stun.address.secondary", secondaryAddress);
 
-        enabled = ParamUtils.getBooleanParameter(request, "enabled", enabled);
-        JiveGlobals.setProperty("stun.enabled", String.valueOf(enabled));
+        enabled = JiveGlobals.getBooleanProperty("stun.enabled", enabled);
 
         localEnabled = ParamUtils.getBooleanParameter(request, "localEnabled", localEnabled);
         JiveGlobals.setProperty("stun.local.enabled", String.valueOf(localEnabled));
@@ -86,12 +85,10 @@
 
         success = stunService.isEnabled() == enabled && stunService.isLocalEnabled() == localEnabled;
 
-    }
-    else if (remove > -1) {
+    } else if (remove > -1) {
         stunService.removeExternalServer(remove);
         success = true;
-    }
-    else if (add) {
+    } else if (add) {
 
         String server = ParamUtils.getParameter(request, "externalServer", true);
         String port = ParamUtils.getParameter(request, "externalPort", true);
@@ -176,88 +173,102 @@
 
 
 <form action="" method="post" name="settings">
-<div class="jive-contentBoxHeader">
-    <fmt:message key="stun.settings.title"/>
-</div>
-<div class="jive-contentBox">
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="stun.settings.title"/>
+    </div>
+    <div class="jive-contentBox">
 
-<table cellpadding="3" cellspacing="5" border="0">
-<tbody>
-<tr>
-    <td align="left" colspan="2">
-        <fmt:message key="stun.settings.localenabled"/>
-        :&nbsp<input type="checkbox"
-                     name="localEnabled"
-    <%=stunService.isLocalEnabled()?"checked":""%>
-                     align="left">
-    </td>
-</tr>
-<tr>
-    <td align="left">
-        <fmt:message key="stun.settings.primaryaddress"/>:
-    </td><td>
-        <select size="1" name="primaryAddress">
-        <option value="CHOOSE">-- Select Address --</option>
-        <%
-            List<InetAddress> addresses = stunService.getAddresses();
-            for (InetAddress iaddress : addresses) {
-                String hostAddress = iaddress.getHostAddress();
-                boolean isPrimaryAddress = hostAddress.equals(stunService.getPrimaryAddress());
-        %>
-        <option value="<%= hostAddress %>" <% if(isPrimaryAddress) { %>selected <% } %> ><%= hostAddress %>
-        </option>
-        <% } %>
-    </td>
-</tr>
-<tr>
-    <td align="left">
-        <fmt:message key="stun.settings.secondaryaddress"/>:
-    </td><td>
-        <select size="1" name="secondaryAddress">
-        <option value="CHOOSE">-- Select Address --</option>
-        <%
-            for (InetAddress iaddress : addresses) {
-                String hostAddress = iaddress.getHostAddress();
-                boolean isSecondaryAddress = hostAddress.equals(stunService.getSecondaryAddress());
-        %>
-        <option value="<%= hostAddress %>" <% if(isSecondaryAddress) { %>selected <% } %> ><%= hostAddress %> 
-        </option>
-        <% } %>
-    </select>
-    </td>
-</tr>
-<tr>
-    <td align="left">
-        <fmt:message key="stun.settings.primaryport"/>:
-    </td><td>
-        <input type="text" size="6"
-                     maxlength="10"
-                     name="primaryPort"
-                     value="<%=stunService.getPrimaryPort()%>"
-                     align="left">
-    </td>
-</tr>
-<tr>
-    <td align="left">
-        <fmt:message key="stun.settings.secondaryport"/>:
-    </td><td>
-        <input type="text" size="6"
-                     maxlength="10"
-                     name="secondaryPort"
-                     value="<%=stunService.getSecondaryPort()%>"
-                     align="left">
-    </td>
-</tr>
-<tr>
-    <td>
-        <input type="hidden" name="save">
-        <input type="button" name="set" value="<fmt:message key="global.save_settings" />"
-               onclick="checkAndSubmit()">
-    </td>
-</tr>
-</tbody>
-</table>
-</div>
+        <table cellpadding="3" cellspacing="5" border="0">
+            <tbody>
+                <tr>
+                    <td align="left" colspan="2">
+                        <fmt:message key="stun.settings.localenabled"/>
+                        :&nbsp<input type="checkbox"
+                                     name="localEnabled"
+                    <%=stunService.isLocalEnabled()?"checked":""%>
+                                     align="left">
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <fmt:message key="stun.settings.primaryaddress"/>
+                        :
+                    </td>
+                    <td>
+                        <select size="1" name="primaryAddress">
+                            <option value="CHOOSE">-- Select Address --</option>
+                            <%
+
+
+                                List<InetAddress> addresses = stunService.getAddresses();
+                                for (InetAddress iaddress : addresses) {
+                                    String hostAddress = iaddress.getHostAddress();
+                                    boolean isPrimaryAddress = hostAddress.equals(stunService.getPrimaryAddress());
+
+
+                            %>
+                            <option value="<%= hostAddress %>" <% if (isPrimaryAddress) { %>
+                                    selected <% } %> ><%= hostAddress %>
+                            </option>
+                            <% } %>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <fmt:message key="stun.settings.secondaryaddress"/>
+                        :
+                    </td>
+                    <td>
+                        <select size="1" name="secondaryAddress">
+                            <option value="CHOOSE">-- Select Address --</option>
+                            <%
+                                for (InetAddress iaddress : addresses) {
+                                    String hostAddress = iaddress.getHostAddress();
+                                    boolean isSecondaryAddress = hostAddress.equals(stunService.getSecondaryAddress());
+                            %>
+                            <option value="<%= hostAddress %>" <% if (isSecondaryAddress) { %>
+                                    selected <% } %> ><%= hostAddress %>
+                            </option>
+                            <% } %>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <fmt:message key="stun.settings.primaryport"/>
+                        :
+                    </td>
+                    <td>
+                        <input type="text" size="6"
+                               maxlength="10"
+                               name="primaryPort"
+                               value="<%=stunService.getPrimaryPort()%>"
+                               align="left">
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <fmt:message key="stun.settings.secondaryport"/>
+                        :
+                    </td>
+                    <td>
+                        <input type="text" size="6"
+                               maxlength="10"
+                               name="secondaryPort"
+                               value="<%=stunService.getSecondaryPort()%>"
+                               align="left">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="hidden" name="save">
+                        <input type="button" name="set" value="<fmt:message key="global.save_settings" />"
+                               onclick="checkAndSubmit()">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </form>
 <form action="" method="post" name="add">
     <div class="jive-contentBoxHeader">

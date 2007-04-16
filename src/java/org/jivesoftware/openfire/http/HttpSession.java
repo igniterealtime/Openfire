@@ -56,6 +56,7 @@ public class HttpSession extends ClientSession {
     private long lastRequestID;
     private int maxRequests;
     private PacketDeliverer backupDeliverer;
+    private Double version = Double.NaN;
 
     private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
@@ -324,6 +325,42 @@ public class HttpSession extends ClientSession {
         }
     }
 
+    /**
+     * Sets the version of BOSH which the client implements. Currently, the only versions supported
+     * by Openfire are 1.5 and 1.6. Any versions less than or equal to 1.5 will be interpreted as
+     * 1.5 and any values greater than or equal to 1.6 will be interpreted as 1.6.
+     *
+     * @param version the version of BOSH which the client implements, represented as a Double,
+     * {major version}.{minor version}.
+     */
+    public void setVersion(double version) {
+        if(version <= 1.5) {
+            return;
+        }
+        else if(version >= 1.6) {
+            version = 1.6;
+        }
+        this.version = version;
+    }
+
+    /**
+     * Returns the BOSH version which this session utilizes. The version refers to the
+     * version of the XEP which the connecting client implements. If the client did not specify
+     * a version 1.5 is returned as this is the last version of the <a
+     * href="http://www.xmpp.org/extensions/xep-0124.html">XEP</a> that the client was not
+     * required to pass along its version information when creating a session.
+     *
+     * @return the version of the BOSH XEP which the client is utilizing.
+     */
+    public double getVersion() {
+        if (this.version != Double.NaN) {
+            return this.version;
+        }
+        else {
+            return 1.5;
+        }
+    }
+
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
             if (connection.getRequestId() == requestID) {
@@ -348,7 +385,8 @@ public class HttpSession extends ClientSession {
         catch (HttpBindTimeoutException e) {
             // This connection timed out we need to increment the request count
             if (connection.getRequestId() != lastRequestID + 1) {
-                throw new HttpBindException("Unexpected RID error.", true, 404);
+                throw new HttpBindException("Unexpected RID error.",
+                        BoshBindingError.itemNotFound);
             }
             lastRequestID = connection.getRequestId();
         }
@@ -427,7 +465,8 @@ public class HttpSession extends ClientSession {
             Delivered deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
                 Log.warn("Deliverable unavailable for " + rid);
-                throw new HttpBindException("Unexpected RID Error", true, 404);
+                throw new HttpBindException("Unexpected RID error.",
+                        BoshBindingError.itemNotFound);
             }
             connection.deliverBody(createDeliverable(deliverable.deliverables));
             return connection;
@@ -435,7 +474,8 @@ public class HttpSession extends ClientSession {
         else if (rid > (lastRequestID + hold + 1)) {
             // TODO handle the case of greater RID which basically has it wait
             Log.warn("Request " + rid + " > " + (lastRequestID + hold + 1) + ", ending session.");
-            throw new HttpBindException("Unexpected RID Error", true, 404);
+                throw new HttpBindException("Unexpected RID error.",
+                        BoshBindingError.itemNotFound);
         }
 
         if (packetsToBeSent.size() > 0) {
@@ -466,7 +506,7 @@ public class HttpSession extends ClientSession {
 
         if (isSecure && !connection.isSecure()) {
             throw new HttpBindException("Session was started from secure connection, all " +
-                    "connections on this session must be secured.", false, 403);
+                    "connections on this session must be secured.", BoshBindingError.badRequest);
         }
 
         connection.setSession(this);
@@ -540,7 +580,7 @@ public class HttpSession extends ClientSession {
         if (((time - lastPoll) / 1000) < maxPollingInterval) {
             throw new HttpBindException("Too frequent polling minimum interval is "
                     + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000),
-                    true, 403);
+                    BoshBindingError.policyViolation);
         }
         lastPoll = time;
     }

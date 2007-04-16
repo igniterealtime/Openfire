@@ -16,8 +16,6 @@ import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.SessionPacketRouter;
-import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.dom4j.*;
 
@@ -25,8 +23,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 
 /**
@@ -116,6 +112,7 @@ public class HttpSessionManager {
 
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
+        double version = getDoubleAttribute(rootNode.attributeValue("ver"), 1.5);
 
         HttpSession session = createSession(connection.getRequestId(), address);
         session.setWait(Math.min(wait, getMaxWait()));
@@ -126,6 +123,7 @@ public class HttpSessionManager {
         session.setInactivityTimeout(getInactivityTimeout());
         // Store language and version information in the connection.
         session.setLanaguage(language);
+        session.setVersion(version);
         try {
             connection.deliverBody(createSessionCreationResponse(session));
         }
@@ -134,7 +132,8 @@ public class HttpSessionManager {
         }
         catch (DocumentException e) {
             Log.error("Error creating document", e);
-            throw new HttpBindException("Internal server error", true, 500);
+            throw new HttpBindException("Internal server error",
+                    BoshBindingError.internalServerError);
         }
         return session;
     }
@@ -238,11 +237,23 @@ public class HttpSessionManager {
     }
 
     private static int getIntAttribute(String value, int defaultValue) {
-        if (value == null || "".equals(value)) {
+        if (value == null || "".equals(value.trim())) {
             return defaultValue;
         }
         try {
             return Integer.valueOf(value);
+        }
+        catch (Exception ex) {
+            return defaultValue;
+        }
+    }
+
+    private double getDoubleAttribute(String doubleValue, double defaultValue) {
+        if (doubleValue == null || "".equals(doubleValue.trim())) {
+            return defaultValue;
+        }
+        try {
+            return Double.parseDouble(doubleValue);
         }
         catch (Exception ex) {
             return defaultValue;
@@ -260,6 +271,9 @@ public class HttpSessionManager {
         response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
         response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
+        if(session.getVersion() >= 1.6) {
+            response.addAttribute("ver", String.valueOf(session.getVersion()));
+        }
 
         Element features = response.addElement("stream:features");
         for (Element feature : session.getAvailableStreamFeaturesElements()) {

@@ -15,20 +15,18 @@ package org.jivesoftware.openfire.http;
  *
  */
 public class HttpBindException extends Exception {
-    private boolean shouldCloseSession;
-    private int httpError;
+    private BoshBindingError error;
 
-    public HttpBindException(String message, boolean shouldCloseSession, int httpError) {
+    public HttpBindException(String message, BoshBindingError error) {
         super(message);
-        this.shouldCloseSession = shouldCloseSession;
-        this.httpError = httpError;
+        this.error = error;
     }
 
-    public int getHttpError() {
-        return httpError;
+    public BoshBindingError getBindingError() {
+        return error;
     }
 
     public boolean shouldCloseSession() {
-        return shouldCloseSession;
+        return error.getErrorType() == BoshBindingError.Type.terminal;
     }
 }

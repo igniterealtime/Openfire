@@ -13,6 +13,7 @@ package org.jivesoftware.openfire.http;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.dom4j.io.XMPPPacketReader;
@@ -80,18 +81,30 @@ public class HttpBindServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
+        boolean isScriptSyntaxEnabled =
+                JiveGlobals.getBooleanProperty("xmpp.httpbind.scriptSyntax.enabled", false);
+        if(!isScriptSyntaxEnabled) {
+            sendLegacyError(response, BoshBindingError.itemNotFound);
+            return;
+        }
+
         if (isContinuation(request, response)) {
             return;
         }
         String queryString = request.getQueryString();
         if (queryString == null || "".equals(queryString)) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "Unable to parse request content");
+            sendLegacyError(response, BoshBindingError.badRequest);
             return;
         }
         queryString = URLDecoder.decode(queryString, "utf-8");
 
         parseDocument(request, response, new ByteArrayInputStream(queryString.getBytes()));
+    }
+
+    private void sendLegacyError(HttpServletResponse response, BoshBindingError error)
+            throws IOException
+    {
+        response.sendError(error.getLegacyErrorCode());
     }
 
 
@@ -115,16 +128,14 @@ public class HttpBindServlet extends HttpServlet {
         }
         catch (Exception e) {
             Log.warn("Error parsing user request. [" + request.getRemoteAddr() + "]");
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "Unable to parse request content: " + e.getMessage());
+            sendLegacyError(response, BoshBindingError.badRequest);
             return;
         }
 
         Element node = document.getRootElement();
         if (node == null || !"body".equals(node.getName())) {
             Log.warn("Body missing from request content. [" + request.getRemoteAddr() + "]");
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "Body missing from request content.");
+            sendLegacyError(response, BoshBindingError.badRequest);
             return;
         }
 
@@ -151,13 +162,38 @@ public class HttpBindServlet extends HttpServlet {
                         request.getMethod());
             }
             catch (HttpBindException e) {
-                response.sendError(e.getHttpError(), e.getMessage());
-                if (e.shouldCloseSession()) {
-                    session.close();
-                }
+                sendError(request, response, e.getBindingError(), session);
             }
         }
         return true;
+    }
+
+    private void sendError(HttpServletRequest request, HttpServletResponse response,
+                           BoshBindingError bindingError, HttpSession session)
+            throws IOException
+    {
+        try {
+            if (session.getVersion() >= 1.6) {
+                respond(response, createErrorBody(bindingError.getErrorType().getType(),
+                        bindingError.getCondition()), request.getMethod());
+            }
+            else {
+                sendLegacyError(response, bindingError);
+            }
+        }
+        finally {
+            if (bindingError.getErrorType() == BoshBindingError.Type.terminal) {
+                session.close();
+            }
+        }
+    }
+
+    private String createErrorBody(String type, String condition) {
+        Element body = DocumentHelper.createElement("body");
+        body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        body.addAttribute("type", type);
+        body.addAttribute("condition", condition);
+        return body.asXML();
     }
 
     private void handleSessionRequest(String sid, HttpServletRequest request,
@@ -184,10 +220,7 @@ public class HttpBindServlet extends HttpServlet {
                         request.isSecure(), rootNode);
             }
             catch (HttpBindException e) {
-                response.sendError(e.getHttpError(), e.getMessage());
-                if (e.shouldCloseSession()) {
-                    session.close();
-                }
+                sendError(request, response, e.getBindingError(), session);
                 return;
             }
             catch (HttpConnectionClosedException nc) {
@@ -210,10 +243,7 @@ public class HttpBindServlet extends HttpServlet {
                             request.getMethod());
                 }
                 catch (HttpBindException e) {
-                    response.sendError(e.getHttpError(), e.getMessage());
-                    if (e.shouldCloseSession()) {
-                        session.close();
-                    }
+                    sendError(request, response, e.getBindingError(), session);
                 }
             }
         }

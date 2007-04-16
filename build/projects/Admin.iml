@@ -6,7 +6,7 @@
     <output url="file://$MODULE_DIR$/src/web/classes" />
     <exclude-output />
     <exclude-exploded />
-    <content url="file://$MODULE_DIR$/src/web" />
+    <content url="file://$MODULE_DIR$/../../src/web" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Openfire" exported="" />
@@ -434,8 +434,7 @@
     <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/src/web/WEB-INF/web.xml" optional="false" version="2.3" />
     <deploymentDescriptor name="context.xml" url="file://$MODULE_DIR$/src/web/META-INF/context.xml" optional="false" version="5.x" />
     <webroots>
-      <root url="file://$MODULE_DIR$/src/web" relative="/" />
-      <root url="file://$MODULE_DIR$/src/web/WEB-INF" relative="/WEB-INF" />
+      <root url="file://$MODULE_DIR$/../../src/web" relative="/" />
     </webroots>
   </component>
   <component name="WeblogicWebModuleProperties" />

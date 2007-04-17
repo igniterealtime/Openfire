@@ -276,14 +276,14 @@
                 <td width="1%">
                     <%= i %>
                 </td>
-                <td width="20%" align="left" valign="middle">
+                <td width="10%" align="left" valign="middle">
                     <%=proxySession.getCreator()%>
                 </td>
-                <td width="10%" align="left" valign="middle">
-                    <%=proxySession.getLocalPortA()%>
+                <td width="15%" align="left" valign="middle">
+                    <%=proxySession.getHostA()%>:<%=proxySession.getLocalPortA()%>
                 </td>
-                <td width="10%" align="left" valign="middle">
-                    <%=proxySession.getLocalPortB()%>
+                <td width="15%" align="left" valign="middle">
+                    <%=proxySession.getHostB()%>:<%=proxySession.getLocalPortB()%>
                 </td>
                 <td width="10%" align="left" valign="middle">
                     <%=proxySession.getLocalhost()%>

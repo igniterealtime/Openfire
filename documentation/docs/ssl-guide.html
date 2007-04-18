@@ -170,6 +170,13 @@ password as well using the keytool:</p>
 
 <p><tt>keytool -keypasswd -alias example.com -keystore keystore</tt>
 </p>
+
+<p>Keytool will create certificates using the DSA algorithm by default. Some clients
+expect the server to have RSA certificates or they will fail to use TLS/SSL. Therefore,
+it is a good idea to also create RSA certificates in your keystore. To create
+certificates with the RSA algorithm you need to specify the algorithm to use like this:</p>
+<p><tt>keytool -genkey -keystore keystore -alias example.com -keyalg RSA </tt></p>
+
 <h3>3. Obtain a CA signed certificate</h3>
 <p>
 If you decide to get a CA signed certificate, you must first export the

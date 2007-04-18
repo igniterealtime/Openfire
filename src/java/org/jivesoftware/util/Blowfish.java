@@ -14,13 +14,14 @@
 
 package org.jivesoftware.util;
 
-import java.util.*;
-import java.security.*;
+import java.security.MessageDigest;
+import java.util.Random;
 
 /**
  * A class that provides easy Blowfish encryption.<p>
  *
  * @author Markus Hahn <markus_hahn@gmx.net>
+ * @author Gaston Dombiak
  */
 public class Blowfish {
 
@@ -95,11 +96,13 @@ public class Blowfish {
             buf[nPos++] = bPadVal;
         }
 
-        // create the encryptor
-        m_bfish.setCBCIV(lNewCBCIV);
+        synchronized (m_bfish) {
+            // create the encryptor
+            m_bfish.setCBCIV(lNewCBCIV);
 
-        // encrypt the buffer
-        m_bfish.encrypt(buf);
+            // encrypt the buffer
+            m_bfish.encrypt(buf);
+        }
 
         // return the binhex string
         byte[] newCBCIV = new byte[BlowfishCBC.BLOCKSIZE];
@@ -136,9 +139,6 @@ public class Blowfish {
         if (nNumOfBytes < BlowfishCBC.BLOCKSIZE)
             return null;
 
-        // (got it)
-        m_bfish.setCBCIV(cbciv);
-
         // something left to decrypt?
         nLen -= BlowfishCBC.BLOCKSIZE;
         if (nLen == 0)
@@ -162,8 +162,13 @@ public class Blowfish {
             return null;
         }
 
-        // decrypt the buffer
-        m_bfish.decrypt(buf);
+        synchronized (m_bfish) {
+            // (got it)
+            m_bfish.setCBCIV(cbciv);
+
+            // decrypt the buffer
+            m_bfish.decrypt(buf);
+        }
 
         // get the last padding byte
         int nPadByte = (int)buf[buf.length - 1] & 0x0ff;
@@ -1344,7 +1349,7 @@ public class Blowfish {
                                        int nStartPos,
                                        int nNumOfBytes)
     {
-        StringBuffer sbuf = new StringBuffer();
+        StringBuilder sbuf = new StringBuilder();
         sbuf.setLength(nNumOfBytes << 1);
 
         int nPos = 0;
@@ -1446,7 +1451,7 @@ public class Blowfish {
             nNumOfBytes = nAvailCapacity;
         }
 
-        StringBuffer sbuf = new StringBuffer();
+        StringBuilder sbuf = new StringBuilder();
         sbuf.setLength(nNumOfBytes >> 1);
 
         int nSBufPos = 0;

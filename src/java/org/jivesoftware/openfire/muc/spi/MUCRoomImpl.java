@@ -864,7 +864,7 @@ public class MUCRoomImpl implements MUCRoom {
             MUCRole senderRole = null;
             JID senderAddress;
             if (message.getFrom() != null && message.getFrom().getResource() != null) {
-                senderRole = occupants.get(message.getFrom().getResource());
+                senderRole = occupants.get(message.getFrom().getResource().toLowerCase());
             }
             if (senderRole == null) {
                 // The room itself is sending the message
@@ -1536,7 +1536,7 @@ public class MUCRoomImpl implements MUCRoom {
     private void kickPresence(Presence kickPresence, JID actorJID) {
         MUCRole kickedRole;
         // Get the role to kick
-        kickedRole = occupants.get(kickPresence.getFrom().getResource());
+        kickedRole = occupants.get(kickPresence.getFrom().getResource().toLowerCase());
         if (kickedRole != null) {
             kickPresence = kickPresence.createCopy();
             // Add the actor's JID that kicked this user from the room

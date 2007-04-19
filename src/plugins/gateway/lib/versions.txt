@@ -10,6 +10,8 @@ jml.jar                | svn-20070225
 joscar-client.jar      | svn-20070204 (patched [#2])
 joscar-common.jar      | svn-20070204
 joscar-protocol.jar    | svn-20070204 (patched [#2])
+openymsg_network       | svn-20070419
+openymsg_support       | svn-20070419
 picocontainer.jar      | 1.2.0
 saaj.jar               | 1.3
 smack.jar              | 3.0.1

@@ -15,7 +15,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.gateway.*;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
-import ymsg.network.StatusConstants;
+import org.openymsg.network.Status;
 
 /**
  * Yahoo Transport Interface.
@@ -107,27 +107,27 @@ public class YahooTransport extends BaseTransport {
      * @param jabStatus Jabber presence type.
      * @return Yahoo status identifier.
      */
-    public long convertJabStatusToYahoo(PresenceType jabStatus) {
+    public Status convertJabStatusToYahoo(PresenceType jabStatus) {
         if (jabStatus == PresenceType.available) {
-            return StatusConstants.STATUS_AVAILABLE;
+            return Status.AVAILABLE;
         }
         else if (jabStatus == PresenceType.away) {
-            return StatusConstants.STATUS_BRB;
+            return Status.BRB;
         }
         else if (jabStatus == PresenceType.xa) {
-            return StatusConstants.STATUS_STEPPEDOUT;
+            return Status.STEPPEDOUT;
         }
         else if (jabStatus == PresenceType.dnd) {
-            return StatusConstants.STATUS_BUSY;
+            return Status.BUSY;
         }
         else if (jabStatus == PresenceType.chat) {
-            return StatusConstants.STATUS_AVAILABLE;
+            return Status.AVAILABLE;
         }
         else if (jabStatus == PresenceType.unavailable) {
-            return StatusConstants.STATUS_OFFLINE;
+            return Status.OFFLINE;
         }
         else {
-            return StatusConstants.STATUS_AVAILABLE;
+            return Status.AVAILABLE;
         }
     }
 
@@ -137,38 +137,38 @@ public class YahooTransport extends BaseTransport {
      * @param packet Presence packet to be set up.
      * @param yahooStatus Yahoo StatusConstants constant.
      */
-    public void setUpPresencePacket(Presence packet, long yahooStatus) {
-        if (yahooStatus == StatusConstants.STATUS_AVAILABLE) {
+    public void setUpPresencePacket(Presence packet, Status yahooStatus) {
+        if (yahooStatus == Status.AVAILABLE) {
             // We're good, leave the type as blank for available.
         }
-        else if (yahooStatus == StatusConstants.STATUS_BRB) {
+        else if (yahooStatus == Status.BRB) {
             packet.setShow(Presence.Show.away);
         }
-        else if (yahooStatus == StatusConstants.STATUS_BUSY) {
+        else if (yahooStatus == Status.BUSY) {
             packet.setShow(Presence.Show.dnd);
         }
-        else if (yahooStatus == StatusConstants.STATUS_IDLE) {
+        else if (yahooStatus == Status.IDLE) {
             packet.setShow(Presence.Show.away);
         }
-        else if (yahooStatus == StatusConstants.STATUS_OFFLINE) {
+        else if (yahooStatus == Status.OFFLINE) {
             packet.setType(Presence.Type.unavailable);
         }
-        else if (yahooStatus == StatusConstants.STATUS_NOTATDESK) {
+        else if (yahooStatus == Status.NOTATDESK) {
             packet.setShow(Presence.Show.away);
         }
-        else if (yahooStatus == StatusConstants.STATUS_NOTINOFFICE) {
+        else if (yahooStatus == Status.NOTINOFFICE) {
             packet.setShow(Presence.Show.away);
         }
-        else if (yahooStatus == StatusConstants.STATUS_ONPHONE) {
+        else if (yahooStatus == Status.ONPHONE) {
             packet.setShow(Presence.Show.away);
         }
-        else if (yahooStatus == StatusConstants.STATUS_ONVACATION) {
+        else if (yahooStatus == Status.ONVACATION) {
             packet.setShow(Presence.Show.xa);
         }
-        else if (yahooStatus == StatusConstants.STATUS_OUTTOLUNCH) {
+        else if (yahooStatus == Status.OUTTOLUNCH) {
             packet.setShow(Presence.Show.xa);
         }
-        else if (yahooStatus == StatusConstants.STATUS_STEPPEDOUT) {
+        else if (yahooStatus == Status.STEPPEDOUT) {
             packet.setShow(Presence.Show.away);
         }
         else {

@@ -14,19 +14,10 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
-import ymsg.network.YahooUser;
-import ymsg.network.StatusConstants;
-import ymsg.network.event.SessionChatEvent;
-import ymsg.network.event.SessionConferenceEvent;
-import ymsg.network.event.SessionErrorEvent;
-import ymsg.network.event.SessionEvent;
-import ymsg.network.event.SessionExceptionEvent;
-import ymsg.network.event.SessionFileTransferEvent;
-import ymsg.network.event.SessionFriendEvent;
-import ymsg.network.event.SessionListener;
-import ymsg.network.event.SessionNewMailEvent;
-import ymsg.network.event.SessionNotifyEvent;
-import ymsg.support.MessageDecoder;
+import org.openymsg.network.YahooUser;
+import org.openymsg.network.StatusConstants;
+import org.openymsg.network.event.*;
+import org.openymsg.support.MessageDecoder;
 
 import java.util.Arrays;
 
@@ -60,7 +51,7 @@ public class YahooSessionListener implements SessionListener {
     YahooSession yahooSession;
 
     /**
-     * @see ymsg.network.event.SessionListener#messageReceived(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#messageReceived(org.openymsg.network.event.SessionEvent)
      */
     public void messageReceived(SessionEvent event) {
         yahooSession.getTransport().sendMessage(
@@ -71,7 +62,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#offlineMessageReceived(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#offlineMessageReceived(org.openymsg.network.event.SessionEvent)
      */
     public void offlineMessageReceived(SessionEvent event) {
         yahooSession.getTransport().sendMessage(
@@ -82,7 +73,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#newMailReceived(ymsg.network.event.SessionNewMailEvent)
+     * @see org.openymsg.network.event.SessionListener#newMailReceived(org.openymsg.network.event.SessionNewMailEvent)
      */
     public void newMailReceived(SessionNewMailEvent event) {
         if (event.getMailCount() > 0) {
@@ -96,7 +87,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#friendsUpdateReceived(ymsg.network.event.SessionFriendEvent)
+     * @see org.openymsg.network.event.SessionListener#friendsUpdateReceived(org.openymsg.network.event.SessionFriendEvent)
      */
     public void friendsUpdateReceived(SessionFriendEvent event) {
         for (YahooUser user : event.getFriends()) {
@@ -115,7 +106,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#friendAddedReceived(ymsg.network.event.SessionFriendEvent)
+     * @see org.openymsg.network.event.SessionListener#friendAddedReceived(org.openymsg.network.event.SessionFriendEvent)
      */
     public void friendAddedReceived(SessionFriendEvent event) {
         Presence p = new Presence(Presence.Type.subscribe);
@@ -125,7 +116,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#friendRemovedReceived(ymsg.network.event.SessionFriendEvent)
+     * @see org.openymsg.network.event.SessionListener#friendRemovedReceived(org.openymsg.network.event.SessionFriendEvent)
      */
     public void friendRemovedReceived(SessionFriendEvent event) {
         Presence p = new Presence(Presence.Type.unsubscribe);
@@ -135,7 +126,26 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#connectionClosed(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#groupRenameReceived(org.openymsg.network.event.SessionGroupEvent)
+     */
+    public void groupRenameReceived(SessionGroupEvent sessionGroupEvent) {
+        // TODO: Handle this
+    }
+
+    /**
+     * @see org.openymsg.network.event.SessionListener#chatJoinReceived(org.openymsg.network.event.SessionChatEvent)
+     */
+    public void chatJoinReceived(SessionChatEvent sessionChatEvent) {
+    }
+
+    /**
+     * @see org.openymsg.network.event.SessionListener#chatExitReceived(org.openymsg.network.event.SessionChatEvent)
+     */
+    public void chatExitReceived(SessionChatEvent sessionChatEvent) {
+    }
+
+    /**
+     * @see org.openymsg.network.event.SessionListener#connectionClosed(org.openymsg.network.event.SessionEvent)
      */
     public void connectionClosed(SessionEvent event) {
         Log.debug(event.toString());
@@ -145,7 +155,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#fileTransferReceived(ymsg.network.event.SessionFileTransferEvent)
+     * @see org.openymsg.network.event.SessionListener#fileTransferReceived(org.openymsg.network.event.SessionFileTransferEvent)
      */
     public void fileTransferReceived(SessionFileTransferEvent event) {
         Log.debug(event.toString());
@@ -153,7 +163,7 @@ public class YahooSessionListener implements SessionListener {
 
 
     /**
-     * @see ymsg.network.event.SessionListener#listReceived(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#listReceived(org.openymsg.network.event.SessionEvent)
      */
     public void listReceived(SessionEvent event) {
         // We just got the entire contact list.  Lets sync up.
@@ -161,7 +171,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#buzzReceived(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#buzzReceived(org.openymsg.network.event.SessionEvent)
      */
     public void buzzReceived(SessionEvent event) {
         yahooSession.getTransport().sendMessage(
@@ -172,7 +182,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#errorPacketReceived(ymsg.network.event.SessionErrorEvent)
+     * @see org.openymsg.network.event.SessionListener#errorPacketReceived(org.openymsg.network.event.SessionErrorEvent)
      */
     public void errorPacketReceived(SessionErrorEvent event) {
         Log.error("Error from yahoo: "+event.getMessage()+", Code:"+event.getCode());
@@ -185,7 +195,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#inputExceptionThrown(ymsg.network.event.SessionExceptionEvent)
+     * @see org.openymsg.network.event.SessionListener#inputExceptionThrown(org.openymsg.network.event.SessionExceptionEvent)
      */
     public void inputExceptionThrown(SessionExceptionEvent event) {
         Log.error("Input error from yahoo: "+event.getMessage(), event.getException());
@@ -199,7 +209,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#notifyReceived(ymsg.network.event.SessionNotifyEvent)
+     * @see org.openymsg.network.event.SessionListener#notifyReceived(org.openymsg.network.event.SessionNotifyEvent)
      */
     public void notifyReceived(SessionNotifyEvent event) {
         Log.debug(event.toString());
@@ -212,7 +222,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#contactRequestReceived(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#contactRequestReceived(org.openymsg.network.event.SessionEvent)
      */
     public void contactRequestReceived(SessionEvent event) {
         Presence p = new Presence(Presence.Type.subscribe);
@@ -222,7 +232,7 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#contactRejectionReceived(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#contactRejectionReceived(org.openymsg.network.event.SessionEvent)
      */
     public void contactRejectionReceived(SessionEvent event) {
         // TODO: Is this correct?  unsubscribed for a rejection?
@@ -234,70 +244,56 @@ public class YahooSessionListener implements SessionListener {
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#conferenceInviteReceived(ymsg.network.event.SessionConferenceEvent)
+     * @see org.openymsg.network.event.SessionListener#conferenceInviteReceived(org.openymsg.network.event.SessionConferenceEvent)
      */
     public void conferenceInviteReceived(SessionConferenceEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#conferenceInviteDeclinedReceived(ymsg.network.event.SessionConferenceEvent)
+     * @see org.openymsg.network.event.SessionListener#conferenceInviteDeclinedReceived(org.openymsg.network.event.SessionConferenceEvent)
      */
     public void conferenceInviteDeclinedReceived(SessionConferenceEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#conferenceLogonReceived(ymsg.network.event.SessionConferenceEvent)
+     * @see org.openymsg.network.event.SessionListener#conferenceLogonReceived(org.openymsg.network.event.SessionConferenceEvent)
      */
     public void conferenceLogonReceived(SessionConferenceEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#conferenceLogoffReceived(ymsg.network.event.SessionConferenceEvent)
+     * @see org.openymsg.network.event.SessionListener#conferenceLogoffReceived(org.openymsg.network.event.SessionConferenceEvent)
      */
     public void conferenceLogoffReceived(SessionConferenceEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#conferenceMessageReceived(ymsg.network.event.SessionConferenceEvent)
+     * @see org.openymsg.network.event.SessionListener#conferenceMessageReceived(org.openymsg.network.event.SessionConferenceEvent)
      */
     public void conferenceMessageReceived(SessionConferenceEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#chatLogonReceived(ymsg.network.event.SessionChatEvent)
-     */
-    public void chatLogonReceived(SessionChatEvent event) {
-        Log.debug(event.toString());
-    }
-
-    /**
-     * @see ymsg.network.event.SessionListener#chatLogoffReceived(ymsg.network.event.SessionChatEvent)
-     */
-    public void chatLogoffReceived(SessionChatEvent event) {
-        Log.debug(event.toString());
-    }
-
-    /**
-     * @see ymsg.network.event.SessionListener#chatMessageReceived(ymsg.network.event.SessionChatEvent)
+     * @see org.openymsg.network.event.SessionListener#chatMessageReceived(org.openymsg.network.event.SessionChatEvent)
      */
     public void chatMessageReceived(SessionChatEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#chatUserUpdateReceived(ymsg.network.event.SessionChatEvent)
+     * @see org.openymsg.network.event.SessionListener#chatUserUpdateReceived(org.openymsg.network.event.SessionChatEvent)
      */
     public void chatUserUpdateReceived(SessionChatEvent event) {
         Log.debug(event.toString());
     }
 
     /**
-     * @see ymsg.network.event.SessionListener#chatConnectionClosed(ymsg.network.event.SessionEvent)
+     * @see org.openymsg.network.event.SessionListener#chatConnectionClosed(org.openymsg.network.event.SessionEvent)
      */
     public void chatConnectionClosed(SessionEvent event) {
         Log.debug(event.toString());

@@ -20,7 +20,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-import ymsg.network.*;
+import org.openymsg.network.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -101,7 +101,7 @@ public class YahooSession extends TransportSession {
                 public void run() {
                     try {
                         loginAttempts++;
-                        yahooSession.setStatus(StatusConstants.STATUS_AVAILABLE);
+                        yahooSession.setStatus(Status.AVAILABLE);
                         yahooSession.login(registration.getUsername(), registration.getPassword());
                         setLoginStatus(TransportLoginStatus.LOGGED_IN);
 
@@ -119,22 +119,21 @@ public class YahooSession extends TransportSession {
                     catch (LoginRefusedException e) {
                         yahooSession.reset();
                         String reason = LocaleUtils.getLocalizedString("gateway.yahoo.loginrefused", "gateway");
-                        switch((int)e.getStatus()) {
-                            case (int)StatusConstants.STATUS_BADUSERNAME:
-                                reason = LocaleUtils.getLocalizedString("gateway.yahoo.unknownuser", "gateway");
-                                break;
-                            case (int)StatusConstants.STATUS_BAD:
-                                reason = LocaleUtils.getLocalizedString("gateway.yahoo.badpassword", "gateway");
-                                break;
-                            case (int)StatusConstants.STATUS_LOCKED:
-                                AccountLockedException e2 = (AccountLockedException)e;
-                                if(e2.getWebPage() != null) {
-                                    reason = LocaleUtils.getLocalizedString("gateway.yahoo.accountlockedwithurl", "gateway", Arrays.asList(e2.getWebPage().toString()));
-                                }
-                                else {
-                                    reason = LocaleUtils.getLocalizedString("gateway.yahoo.accountlocked", "gateway");
-                                }
-                                break;
+                        AuthenticationState state = e.getStatus();
+                        if (state.equals(AuthenticationState.BADUSERNAME)) {
+                            reason = LocaleUtils.getLocalizedString("gateway.yahoo.unknownuser", "gateway");
+                        }
+                        else if (state.equals(AuthenticationState.BAD)) {
+                            reason = LocaleUtils.getLocalizedString("gateway.yahoo.badpassword", "gateway");
+                        }
+                        else if (state.equals(AuthenticationState.LOCKED)) {
+                            AccountLockedException e2 = (AccountLockedException)e;
+                            if(e2.getWebPage() != null) {
+                                reason = LocaleUtils.getLocalizedString("gateway.yahoo.accountlockedwithurl", "gateway", Arrays.asList(e2.getWebPage().toString()));
+                            }
+                            else {
+                                reason = LocaleUtils.getLocalizedString("gateway.yahoo.accountlocked", "gateway");
+                            }
                         }
 
                         Log.warn("Yahoo login failed for "+getJID()+": "+reason);
@@ -189,8 +188,7 @@ public class YahooSession extends TransportSession {
         // First we need to get a good mapping of users to what groups they are in.
         HashMap<String,ArrayList<String>> userToGroups = new HashMap<String,ArrayList<String>>();
         for (YahooGroup group : yahooSession.getGroups()) {
-            for (Enumeration e = group.getMembers().elements(); e.hasMoreElements();) {
-                YahooUser user = (YahooUser)e.nextElement();
+            for (YahooUser user : group.getMembers()) {
                 ArrayList<String> groups;
                 if (userToGroups.containsKey(user.getId())) {
                     groups = userToGroups.get(user.getId());
@@ -271,9 +269,10 @@ public class YahooSession extends TransportSession {
      */
     public void removeContact(RosterItem item) {
         String contact = getTransport().convertJIDToID(item.getJid());
+        YahooUser yUser = new YahooUser(contact);
         lockRoster(item.getJid().toString());
         for (YahooGroup yahooGroup : yahooSession.getGroups()) {
-            if (yahooGroup.getIndexOfFriend(contact) != -1) {
+            if (yahooGroup.contains(yUser)) {
                 try {
                     yahooSession.removeFriend(contact, yahooGroup.getName());
                     pseudoRoster.removeItem(contact);
@@ -311,6 +310,7 @@ public class YahooSession extends TransportSession {
      * @param groups List of groups contact should be in.
      */
     public void syncContactGroups(String contact, List<String> groups) {
+        YahooUser yUser = new YahooUser(contact);
         if (groups.size() == 0) {
             groups.add("Transport Buddies");
         }
@@ -334,7 +334,7 @@ public class YahooSession extends TransportSession {
         // Now we handle adds and removes, syncing the two lists.
         for (YahooGroup yahooGroup : yahooSession.getGroups()) {
             if (groups.contains(yahooGroup.getName())) {
-                if (yahooGroup.getIndexOfFriend(contact) == -1) {
+                if (yahooGroup.contains(yUser)) {
                     try {
                         Log.debug("Yahoo: Adding contact "+contact+" to existing group "+yahooGroup.getName());
                         yahooSession.addFriend(contact, yahooGroup.getName());
@@ -345,7 +345,7 @@ public class YahooSession extends TransportSession {
                 }
             }
             else {
-                if (yahooGroup.getIndexOfFriend(contact) != -1) {
+                if (yahooGroup.contains(yUser)) {
                     try {
                         Log.debug("Yahoo: Removing contact "+contact+" from group "+yahooGroup.getName());
                         yahooSession.removeFriend(contact, yahooGroup.getName());

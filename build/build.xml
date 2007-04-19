@@ -1554,7 +1554,7 @@
         <copy todir="${mac.pkg.dir}/usr/local/openfire">
             <fileset dir="${target.dir}/openfire">
                 <exclude name="**/openfired"/>
-                <exclude name="**/openfire-sysconfig"/>
+                <exclude name="**/redhat"/>
                 <exclude name="**/embedded-db*"/>
                 <exclude name="**/redhat-postinstall.sh"/>
             </fileset>

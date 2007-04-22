@@ -41,6 +41,7 @@ public class XMPPSession extends TransportSession {
      */
     public XMPPSession(Registration registration, JID jid, XMPPTransport transport, Integer priority) {
         super(registration, jid, transport, priority);
+        acctjid = new JID(registration.getUsername());
 
         Log.debug("Creating "+getTransport().getType()+" session for " + registration.getUsername());
         //XMPPConnection.DEBUG_ENABLED = true;
@@ -48,7 +49,9 @@ public class XMPPSession extends TransportSession {
                 JiveGlobals.getProperty("plugin.gateway."+getTransport().getType()+".connecthost",
                         (getTransport().getType().equals(TransportType.gtalk) ? "talk.google.com" : "jabber.org")),
                 JiveGlobals.getIntProperty("plugin.gateway."+getTransport().getType()+".connectport", 5222),
-                new JID(registration.getUsername()).getDomain());
+                acctjid.getDomain());
+        config.setCompressionEnabled(false);
+        config.setReconnectionAllowed(false);
         listener = new XMPPListener(this);
     }
 
@@ -67,6 +70,11 @@ public class XMPPSession extends TransportSession {
      */
     private ConnectionConfiguration config = null;
 
+    /**
+     * Accounts's jid associated with this session.
+     */
+    private JID acctjid = null;
+
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!this.isLoggedIn()) {
             setLoginStatus(TransportLoginStatus.LOGGING_IN);
@@ -76,7 +84,7 @@ public class XMPPSession extends TransportSession {
                         conn = new XMPPConnection(config);
                         conn.connect();
                         conn.addConnectionListener(listener);
-                        conn.login(getRegistration().getUsername(), getRegistration().getPassword(), "IMGateway");
+                        conn.login(acctjid.getNode(), getRegistration().getPassword(), "IMGateway");
                         conn.getRoster().addRosterListener(listener);
                         conn.getChatManager().addChatListener(listener);
                     }

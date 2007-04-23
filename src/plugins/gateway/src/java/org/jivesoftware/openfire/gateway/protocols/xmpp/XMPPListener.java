@@ -11,10 +11,8 @@
 package org.jivesoftware.openfire.gateway.protocols.xmpp;
 
 import org.jivesoftware.smack.*;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Presence;
-import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
-
 import java.util.Collection;
 
 /**
@@ -45,9 +43,10 @@ public class XMPPListener implements MessageListener, RosterListener, Connection
      * @param message Message received.
      */
     public void processMessage(Chat chat, org.jivesoftware.smack.packet.Message message) {
+        Log.debug("XMPP got message: "+message.toXML());
         xmppSession.getTransport().sendMessage(
                 xmppSession.getJIDWithHighestPriority(),
-                xmppSession.getTransport().convertIDToJID(message.getFrom()),
+                xmppSession.getTransport().convertIDToJID(xmppSession.getBareJID(message.getFrom())),
                 message.getBody()
         );
     }
@@ -65,10 +64,27 @@ public class XMPPListener implements MessageListener, RosterListener, Connection
     }
 
     public void presenceChanged(org.jivesoftware.smack.packet.Presence presence) {
-        Element presElem = DocumentHelper.createElement(presence.toXML());
-        Presence p = new Presence(presElem);
+        Presence p = new Presence();
+        if (presence.getType().equals(org.jivesoftware.smack.packet.Presence.Type.available)) {
+            // Nothing to do
+        }
+        else if (presence.getType().equals(org.jivesoftware.smack.packet.Presence.Type.unavailable)) {
+            p.setType(Presence.Type.unavailable);
+        }
+        else if (presence.getType().equals(org.jivesoftware.smack.packet.Presence.Type.subscribe)) {
+            p.setType(Presence.Type.subscribe);
+        }
+        else if (presence.getType().equals(org.jivesoftware.smack.packet.Presence.Type.subscribed)) {
+            p.setType(Presence.Type.subscribed);
+        }
+        else if (presence.getType().equals(org.jivesoftware.smack.packet.Presence.Type.unsubscribe)) {
+            p.setType(Presence.Type.unsubscribe);
+        }
+        else if (presence.getType().equals(org.jivesoftware.smack.packet.Presence.Type.unsubscribed)) {
+            p.setType(Presence.Type.unsubscribed);
+        }
         p.setTo(xmppSession.getJID());
-        p.setFrom(xmppSession.getTransport().convertIDToJID(presence.getFrom()));
+        p.setFrom(xmppSession.getTransport().convertIDToJID(xmppSession.getBareJID(presence.getFrom())));
         xmppSession.getTransport().sendPacket(p);
     }
 

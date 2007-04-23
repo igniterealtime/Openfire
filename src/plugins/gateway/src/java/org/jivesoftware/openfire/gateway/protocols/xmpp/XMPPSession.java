@@ -17,9 +17,10 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.Chat;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+
+import java.util.Date;
 
 /**
  * Represents an XMPP session.
@@ -87,6 +88,14 @@ public class XMPPSession extends TransportSession {
                         conn.login(acctjid.getNode(), getRegistration().getPassword(), "IMGateway");
                         conn.getRoster().addRosterListener(listener);
                         conn.getChatManager().addChatListener(listener);
+
+                        setLoginStatus(TransportLoginStatus.LOGGED_IN);
+                        Presence p = new Presence();
+                        p.setTo(getJIDWithHighestPriority());
+                        p.setFrom(getTransport().getJID());
+                        getTransport().sendPacket(p);
+
+                        getRegistration().setLastLogin(new Date());
                     }
                     catch (XMPPException e) {
                         Log.error(getTransport().getType()+" user is not able to log in: "+getRegistration().getUsername(), e);
@@ -128,13 +137,12 @@ public class XMPPSession extends TransportSession {
     }
 
     public void sendMessage(JID jid, String message) {
-        Chat chat = conn.getChatManager().createChat(getTransport().convertJIDToID(jid), listener);
-        try {
-            chat.sendMessage(message);
-        }
-        catch (XMPPException e) {
-            // TODO: handle exception properly
-        }
+        org.jivesoftware.smack.packet.Message m = new org.jivesoftware.smack.packet.Message();
+        m.setFrom(getRegistration().getUsername());
+        m.setTo(getTransport().convertJIDToID(jid));
+        m.setBody(message);
+        Log.debug("XMPP Sending Message: "+m.toXML());
+        conn.sendPacket(m);
     }
 
     public void sendServerMessage(String message) {
@@ -148,6 +156,10 @@ public class XMPPSession extends TransportSession {
     }
 
     public void resendContactStatuses(JID jid) {
+    }
+
+    public String getBareJID(String jid) {
+        return jid.substring(0, jid.indexOf("/"));
     }
 
 }

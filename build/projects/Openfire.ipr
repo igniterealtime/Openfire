@@ -7,9 +7,7 @@
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
-      <properties>
-        <property name="plugin" value="search" />
-      </properties>
+      <properties />
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">

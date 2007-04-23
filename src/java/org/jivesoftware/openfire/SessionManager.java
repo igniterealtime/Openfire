@@ -879,7 +879,7 @@ public class SessionManager extends BasicModule {
                     // Update the route for the session's BARE address
                     Session defaultSession = sessionMap.getDefaultSession(true);
                     JID jid =
-                            new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), "");
+                            new JID(session.getAddress().getNode(), session.getAddress().getDomain(), "");
                     if (defaultSession != null) {
                         // Set the route to the bare JID to the session with highest priority
                         routingTable.addRoute(jid, defaultSession);
@@ -920,8 +920,7 @@ public class SessionManager extends BasicModule {
             defaultSession = resources.getDefaultSession(true);
         }
         // Update the route to the bareJID with the session with highest priority
-        JID defaultAddress =
-                new JID(defaultSession.getAddress().getNode(), defaultSession.getAddress().getDomain(), "");
+        JID defaultAddress = new JID(sender.getNode(), sender.getDomain(), "");
         // Update the route to the bare JID
         if (defaultSession != null) {
             boolean hadDefault = routingTable.getRoute(defaultAddress) != null;

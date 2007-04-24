@@ -16,7 +16,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
-import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
@@ -50,7 +49,6 @@ public class SessionManager extends BasicModule {
 
     public static final int NEVER_KICK = -1;
 
-    private PresenceUpdateHandler presenceHandler;
     private PacketRouter router;
     private String serverName;
     private JID serverAddress;
@@ -1508,8 +1506,10 @@ public class SessionManager extends BasicModule {
                 if (sessionMap != null) {
                     synchronized (username.intern()) {
                         auth_removed = sessionMap.removeSession(session);
-                        // Decrement number of authenticated sessions (of non-anonymous users)
-                        userSessionsCounter.decrementAndGet();
+                        if (auth_removed) {
+                            // Decrement number of authenticated sessions (of non-anonymous users)
+                            userSessionsCounter.decrementAndGet();
+                        }
                     }
                     if (sessionMap.isEmpty()) {
                         sessions.remove(username);
@@ -1580,14 +1580,15 @@ public class SessionManager extends BasicModule {
             try {
                 ClientSession session = (ClientSession) handback;
                 try {
-                    if (session.getPresence().isAvailable() || !session.wasAvailable()) {
+                    if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&
+                            getSession(session.getAddress()) != null) {
                         // Send an unavailable presence to the user's subscribers
                         // Note: This gives us a chance to send an unavailable presence to the
                         // entities that the user sent directed presences
                         Presence presence = new Presence();
                         presence.setType(Presence.Type.unavailable);
                         presence.setFrom(session.getAddress());
-                        presenceHandler.process(presence, session);
+                        router.route(presence);
                     }
                 }
                 finally {
@@ -1685,7 +1686,6 @@ public class SessionManager extends BasicModule {
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        presenceHandler = server.getPresenceUpdateHandler();
         router = server.getPacketRouter();
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();

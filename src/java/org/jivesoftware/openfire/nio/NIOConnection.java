@@ -16,9 +16,6 @@ import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.CompressionFilter;
 import org.apache.mina.filter.SSLFilter;
 import org.dom4j.io.OutputFormat;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.XMLWriter;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -28,6 +25,9 @@ import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
 import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.XMLWriter;
 import org.xmpp.packet.Packet;
 
 import javax.net.ssl.KeyManager;
@@ -81,12 +81,20 @@ public class NIOConnection implements Connection {
      */
     private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
     private CharsetEncoder encoder;
+    /**
+     * Flag that specifies if the connection should be considered closed. Closing a NIO connection
+     * is an asynch operation so instead of waiting for the connection to be actually closed just
+     * keep this flag to avoid using the connection between #close was used and the socket is actually
+     * closed.
+     */
+    private boolean closed;
 
 
     public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
         encoder = Charset.forName(CHARSET).newEncoder();
+        closed = false;
     }
 
     public boolean validate() {
@@ -124,19 +132,23 @@ public class NIOConnection implements Connection {
     }
 
     public void close() {
-        boolean wasClosed = false;
+        boolean closedSuccessfully = false;
         synchronized (this) {
             if (!isClosed()) {
+                if (session != null) {
+                    session.setStatus(Session.STATUS_CLOSED);
+                }
                 try {
                     deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
                 } catch (Exception e) {
                     // Ignore
                 }
-                closeConnection();
-                wasClosed = true;
+                ioSession.close();
+                closed = true;
+                closedSuccessfully = true;
             }
         }
-        if (wasClosed) {
+        if (closedSuccessfully) {
             notifyCloseListeners();
         }
     }
@@ -145,10 +157,6 @@ public class NIOConnection implements Connection {
         deliverRawText("<stream:error><system-shutdown " +
                 "xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>");
         close();
-    }
-
-    private void closeConnection() {
-        ioSession.close();
     }
 
     /**
@@ -171,7 +179,7 @@ public class NIOConnection implements Connection {
 
     public boolean isClosed() {
         if (session == null) {
-            return !ioSession.isConnected();
+            return closed;
         }
         return session.getStatus() == Session.STATUS_CLOSED;
     }

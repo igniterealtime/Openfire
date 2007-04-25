@@ -66,4 +66,4 @@ fi
 %doc /opt/openfire/README.html 
 %doc /opt/openfire/changelog.html
 /etc/init.d/openfired
-%config(noreplace) /etc/sysconfig/openfire
+#%config(noreplace) /etc/sysconfig/openfire

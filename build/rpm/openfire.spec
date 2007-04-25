@@ -29,8 +29,8 @@ chmod 755 $RPM_BUILD_ROOT/etc/init.d/openfired
 # Make the startup script executable.
 chmod 755 $RPM_BUILD_ROOT/opt/openfire/bin/openfire.sh
 # Set up the sysconfig file.
-mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
-cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
+#mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
+#cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
 
 %pre
 if /usr/bin/id jive > /dev/null 2>&1 ; then

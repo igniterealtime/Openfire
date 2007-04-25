@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 #
 #		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
 #		Modified for Debian 
@@ -7,11 +7,12 @@
 # Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
 #
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/java
+JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:$JAVA_HOME/bin
+DAEMON=$JAVA_HOME/bin/java
 NAME=openfire
 DESC=openfire
-DAEMON_DIR=/opt/openfire
+DAEMON_DIR=/usr/share/openfire
 DAEMON_LIB=${DAEMON_DIR}/lib
 
 test -x $DAEMON || exit 0
@@ -25,20 +26,29 @@ DAEMON_OPTS="-server -DopenfireHome=${DAEMON_DIR} \
  -Dopenfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\
  -jar ${DAEMON_LIB}/startup.jar $DAEMON_OPTS"
 
-set -e
+#set -e
+
+#Helper functions
+start() {
+        start-stop-daemon --start --quiet --background --make-pidfile \
+                --pidfile /var/run/$NAME.pid --chuid openfire:openfire \
+                --exec $DAEMON -- $DAEMON_OPTS
+}
+
+stop() {
+        start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+		--exec $DAEMON --retry 4
+}
 
 case "$1" in
   start)
 	echo -n "Starting $DESC: "
-	start-stop-daemon --start --quiet --oknodo --background \
-		--pidfile /var/run/$NAME.pid --make-pidfile \
-		--exec $DAEMON -- $DAEMON_OPTS
+	start
 	echo "$NAME."
 	;;
   stop)
 	echo -n "Stopping $DESC: "
-	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON
+	stop
 	echo "$NAME."
 	;;
   restart|force-reload)
@@ -48,11 +58,12 @@ case "$1" in
 	#	just the same as "restart".
 	#
 	echo -n "Restarting $DESC: "
-	start-stop-daemon --stop --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
-	sleep 1
-	start-stop-daemon --start --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
+	#set +e
+	stop
+	#set -e
+	#sleep 1
+	start	
+	
 	echo "$NAME."
 	;;
   *)
@@ -64,3 +75,4 @@ case "$1" in
 esac
 
 exit 0
+

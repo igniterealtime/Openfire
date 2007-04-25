@@ -20,7 +20,9 @@ set -e
 
 case "$1" in
      purge)
-	rm -Rf /opt/openfire
+	rm -Rf /etc/openfire
+	rm -Rf /var/lib/openfire
+	rm -Rf /var/log/openfire
         ;; 
  
      remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)

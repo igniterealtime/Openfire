@@ -1,0 +1,17 @@
+diff -Nur openfire-3.3.0/src/java/org/jivesoftware/util/JiveGlobals.java openfire-3.3.0.new/src/java/org/jivesoftware/util/JiveGlobals.java
+--- openfire-3.3.0/src/java/org/jivesoftware/util/JiveGlobals.java	2007-04-12 12:36:59.000000000 +0200
++++ openfire-3.3.0.new/src/java/org/jivesoftware/util/JiveGlobals.java	2007-04-12 12:38:40.000000000 +0200
+@@ -243,10 +243,10 @@
+         if (!mh.exists()) {
+             Log.error("Error - the specified home directory does not exist (" + pathname + ")");
+         }
+-        else if (!mh.canRead() || !mh.canWrite()) {
++        else if (!mh.canRead()) {
+                 Log.error("Error - the user running this application can not read " +
+-                        "and write to the specified home directory (" + pathname + "). " +
+-                        "Please grant the executing user read and write permissions.");
++                        "to the specified home directory (" + pathname + "). " +
++                        "Please grant the executing user read permissions.");
+         }
+         else {
+             home = pathname;

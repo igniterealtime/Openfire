@@ -1,67 +1,25 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
 
-# Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-DESTINATION=${CURDIR}/debian/openfire/
+include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/ant.mk
 
-build: build-stamp
-build-stamp: 
-	dh_testdir
-	dh_installdirs
-	
-	ant -f build/build.xml
-	touch $@
+DEST := $(CURDIR)/debian/openfire
+TARGET := $(CURDIR)/target/openfire
+OPENFIRE := $(DEST)/usr/share/openfire
+ETCDIR := $(DEST)/etc/openfire
+LOGDIR := $(DEST)/var/log/openfire
+VARDIR := $(DEST)/var/lib/openfire
 
-clean:
-	dh_testdir
-	dh_testroot
+JAVA_HOME := /usr/lib/jvm/java-1.5.0-sun
+DEB_ANT_BUILDFILE := build/build.xml
+DEB_ANT_CLEAN_TARGET := clean
 	
-	rm -f build-stamp configure-stamp install-stamp
-	
-	-ant -f build/build.xml clean
-	
-	dh_clean 
-
-install: install-stamp
-install-stamp:
-	mv $(CURDIR)/target/openfire $(DESTINATION)/opt/
-	
-	# Move the conf-dir to etc an create a symlink back.
-	mv ${DESTINATION}/opt/openfire/conf ${DESTINATION}/etc/openfire
-	ln -s /etc/openfire ${DESTINATION}/opt/openfire/conf
-	
-	# Move the resource dir to etc and symlink back.
-	mv ${DESTINATION}/opt/openfire/resources/security ${DESTINATION}/etc/openfire/security
-	ln -s /etc/openfire/security ${DESTINATION}/opt/openfire/resources/security
-	
-	# Move the logs dir to /var/log an symlink back.
-	mv ${DESTINATION}/opt/openfire/logs ${DESTINATION}/var/log/openfire
-	ln -s /var/log/openfire ${DESTINATION}/opt/openfire/logs
-	
-	touch $@
-	
-
-# Build architecture-dependent files here.
-binary-indep: install
-	dh_testdir
-	dh_testroot
-	dh_installdocs
-	dh_installexamples
-	dh_installdebconf	
-	dh_installinit
-	dh_link
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep
-.PHONY: build clean binary-indep binary install configure
+install/openfire::
+	cp $(TARGET)/lib/*.jar $(OPENFIRE)/lib/
+	cp -r $(TARGET)/resources/database $(OPENFIRE)/resources/database
+	cp $(TARGET)/conf/openfire.xml $(ETCDIR)
+	cp -r $(TARGET)/resources/security $(ETCDIR)/security
+	cp -r $(TARGET)/plugins $(VARDIR)/plugins

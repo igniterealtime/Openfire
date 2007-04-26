@@ -101,13 +101,15 @@ abstract class Channel implements Runnable {
     /**
      * Remove every Listeners
      */
-    public void removeListener() {
+    public void removeListeners() {
         listeners.removeAll(listeners);
     }
 
     public void cancel() {
         this.enabled = false;
-        dataSocket.close();
+        if (dataSocket != null){
+            dataSocket.close();
+        }
     }
 
     /**

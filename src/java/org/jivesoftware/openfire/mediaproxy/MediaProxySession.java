@@ -238,10 +238,10 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
             Log.error(e);
         }
 
-        channelAtoB.removeListener();
-        channelAtoBControl.removeListener();
-        channelBtoA.removeListener();
-        channelBtoAControl.removeListener();
+        channelAtoB.removeListeners();
+        channelAtoBControl.removeListeners();
+        channelBtoA.removeListeners();
+        channelBtoAControl.removeListeners();
 
         try {
             channelAtoB.cancel();

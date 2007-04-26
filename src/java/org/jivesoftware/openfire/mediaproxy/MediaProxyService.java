@@ -205,7 +205,7 @@ public class MediaProxyService extends BasicModule
                                 publicIp.addAttribute("ip", ip);
                             }
                         } catch (UnknownHostException e) {
-                            e.printStackTrace();
+                            Log.error(e);
                         }
 
                     } else {

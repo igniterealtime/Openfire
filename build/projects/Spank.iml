@@ -5,7 +5,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <exclude-exploded />
-    <content url="file://$MODULE_DIR$/src/spank" />
+    <content url="file://$MODULE_DIR$/../../src/spank" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
@@ -425,9 +425,9 @@
       <attribute name="URI" value="&lt;N/A&gt;" />
       <url>jar://$APPLICATION_HOME_DIR$/lib/j2ee.jar!/</url>
     </containerElement>
-    <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/src/spank/WEB-INF/web.xml" optional="false" version="2.4" />
+    <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/../../src/spank/WEB-INF/web.xml" optional="false" version="2.4" />
     <webroots>
-      <root url="file://$MODULE_DIR$/src/spank/WEB-INF" relative="/WEB-INF" />
+      <root url="file://$MODULE_DIR$/../../src/spank/WEB-INF" relative="/WEB-INF" />
     </webroots>
   </component>
   <component name="WeblogicWebModuleProperties" />

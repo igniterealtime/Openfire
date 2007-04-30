@@ -12,14 +12,19 @@
 package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Matt Tucker
  */
-public class User implements Cacheable {
+public class User implements Cacheable, Externalizable {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveUserProp WHERE username=?";
@@ -91,6 +96,12 @@ public class User implements Cacheable {
             catch (Exception e) { Log.error(e); }
         }
         return propertyValue;
+    }
+
+    /**
+     * Constructor added for Externalizable. Do not use this constructor.
+     */
+    public User() {
     }
 
     /**
@@ -495,5 +506,26 @@ public class User implements Cacheable {
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
         }
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, username);
+        ExternalizableUtil.getInstance().writeSafeUTF(out, getName());
+        ExternalizableUtil.getInstance().writeBoolean(out, email != null);
+        if (email != null) {
+            ExternalizableUtil.getInstance().writeSafeUTF(out, email);
+        }
+        ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
+        ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        username = ExternalizableUtil.getInstance().readSafeUTF(in);
+        name = ExternalizableUtil.getInstance().readSafeUTF(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            email = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
+        creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
+        modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
     }
 }

@@ -12,12 +12,13 @@
 package org.jivesoftware.openfire.user;
 
 import org.dom4j.Element;
-import org.jivesoftware.stringprep.Stringprep;
-import org.jivesoftware.stringprep.StringprepException;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -73,6 +74,23 @@ public class UserManager implements IQResultListener {
             }
         };
         PropertyEventDispatcher.addListener(propListener);
+
+        UserEventListener userListener = new UserEventListener() {
+            public void userCreated(User user, Map<String, Object> params) {
+                // Do nothing
+            }
+
+            public void userDeleting(User user, Map<String, Object> params) {
+                // Do nothing
+            }
+
+            public void userModified(User user, Map<String, Object> params) {
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the user
+                userCache.put(user.getUsername(), user);
+            }
+        };
+        UserEventDispatcher.addListener(userListener);
     }
 
     /**

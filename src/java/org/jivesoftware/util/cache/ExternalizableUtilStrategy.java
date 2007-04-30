@@ -105,15 +105,15 @@ public interface ExternalizableUtilStrategy {
      */
     public long [] readLongArray(DataInput in) throws IOException;
 
-    public void writeLong(DataOutput out, long value);
+    public void writeLong(DataOutput out, long value) throws IOException;
 
-    public long readLong(DataInput in);
+    public long readLong(DataInput in) throws IOException;
 
-    public void writeBoolean(DataOutput out, boolean value);
+    public void writeBoolean(DataOutput out, boolean value) throws IOException;
 
-    public boolean readBoolean(DataInput in);
+    public boolean readBoolean(DataInput in) throws IOException;
 
-    public void writeSafeUTF(DataOutput out, String value);
+    public void writeSafeUTF(DataOutput out, String value) throws IOException;
 
-    public String readSafeUTF(DataInput in);
+    public String readSafeUTF(DataInput in) throws IOException;
 }

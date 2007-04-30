@@ -145,27 +145,27 @@ public class ExternalizableUtil {
         return strategy.readLongArray(in);
     }
 
-    public void writeLong(DataOutput out, long value) {
+    public void writeLong(DataOutput out, long value) throws IOException {
         strategy.writeLong(out, value);
     }
 
-    public long readLong(DataInput in) {
+    public long readLong(DataInput in) throws IOException {
         return strategy.readLong(in);
     }
 
-    public void writeBoolean(DataOutput out, boolean value) {
+    public void writeBoolean(DataOutput out, boolean value) throws IOException {
         strategy.writeBoolean(out, value);
     }
 
-    public boolean readBoolean(DataInput in) {
+    public boolean readBoolean(DataInput in) throws IOException {
         return strategy.readBoolean(in);
     }
 
-    public void writeSafeUTF(DataOutput out, String value) {
+    public void writeSafeUTF(DataOutput out, String value) throws IOException {
         strategy.writeSafeUTF(out, value);
     }
 
-    public String readSafeUTF(DataInput in) {
+    public String readSafeUTF(DataInput in) throws IOException {
         return strategy.readSafeUTF(in);
     }
 }

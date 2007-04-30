@@ -692,7 +692,10 @@
 
         <!-- Copy compiled plugins if we need to -->
         <if>
-            <equals arg1="${openfireHome.no.plugins}" arg2="false"/>
+            <and>
+                <equals arg1="${openfireHome.no.plugins}" arg2="false"/>
+                <available file="${plugin.dest.dir}" />
+            </and>
             <then>
                 <copy todir="${target.openfireHome}/plugins" failonerror="false">
                     <fileset dir="${plugin.dest.dir}"/>
@@ -825,11 +828,16 @@
             </filterset>
         </copy>
 
-        <copy todir="${release.src.out.dir}/src/plugins/enterprise/lib" failonerror="false">
-            <fileset dir="${work.dir}/plugins-dev/enterprise/target/lib">
-                <include name="*-lib.jar" />
-            </fileset>
-        </copy>
+        <if>
+            <available file="${work.dir}/plugins-dev/enterprise/target/lib" />
+            <then>
+                <copy todir="${release.src.out.dir}/src/plugins/enterprise/lib" failonerror="false">
+                    <fileset dir="${work.dir}/plugins-dev/enterprise/target/lib">
+                        <include name="*-lib.jar" />
+                    </fileset>
+                </copy>
+            </then>
+        </if>
 
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.src.out.dir}/resources/i18n">

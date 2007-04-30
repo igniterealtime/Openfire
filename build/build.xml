@@ -1272,17 +1272,27 @@
             </if>
 
             <!-- Copy anything in the plugin's lib dir to the target lib dir -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false"
-                  overwrite="${overwrite}">
-                <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*"/>
-            </copy>
+            <if>
+                <available file="@{pluginsrc}/@{plugin}/lib" />
+                <then>
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false"
+                          overwrite="${overwrite}">
+                        <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*"/>
+                    </copy>
+                </then>
+            </if>
 
             <!-- Copy web.xml to web-custom.xml -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false"
-                  overwrite="${overwrite}">
-                <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml"/>
-                <mapper type="glob" from="web.xml" to="web-custom.xml"/>
-            </copy>
+            <if>
+                <available file="@{pluginsrc}/@{plugin}/src/web/WEB-INF" />
+                <then>
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false"
+                          overwrite="${overwrite}">
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml"/>
+                        <mapper type="glob" from="web.xml" to="web-custom.xml"/>
+                    </copy>
+                </then>
+            </if>
 
             <!-- Copy the plugin.xml and documentation to the target dir, code below assumes it's there -->
             <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>

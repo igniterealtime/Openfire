@@ -1,0 +1,918 @@
+* html #footer {
+	margin: -30px 0 0 0;
+	}
+* html #main {
+	height: 100%;
+	}
+
+html {
+	height: 100%;
+	}
+body {
+	padding: 0;
+	margin: 0;
+	height: 100%;
+	}
+
+#main {
+	min-height:100%;
+	}
+
+#jive-main {
+    padding-bottom: 20px;
+    }
+
+BODY, DIV, P, TD, TH {
+    font-family : arial, helvetica, sans-serif;
+    font-size : 100%;
+    font-size : 10pt;
+}
+BODY {
+    margin : 0px;
+    padding : 0px;
+    background-color : #fff;
+}
+#jive-body {
+    background-image : url("../images/page-background_new.gif");
+    background-repeat : repeat-y;
+}
+
+a {
+	color: #34679a;
+}
+
+P {
+    margin-top : 0px;
+}
+FIELDSET DIV {
+    margin : 10px;
+    padding : 5px 3px 5px 0px;
+    width : 100%;
+}
+FIELDSET DIV .jive-table {
+    margin : 0px;
+    padding : 0px;
+}
+FIELDSET {
+    -moz-border-radius : 3px;
+    border-style : solid;
+    border-width : 1px;
+    border-color : #ccc;
+    width : 95%;
+}
+FIELDSET LEGEND {
+    color : #000;
+}
+
+
+/* --------------------------------------------- */
+/*  Header                                       */
+/* --------------------------------------------- */
+
+#jive-header {
+    width : 100%;
+    height : 90px;
+    border : 0px;
+    background-image : url("../images/header-background_new.gif");
+    background-repeat : repeat-x;
+    background-color : #FFFFFF;
+	min-width: 720px;
+}
+#jive-logo-image {
+	display: block;
+	position: relative;
+	top: 0px;
+	left: 0px;
+	color: #FFFFFF;
+	}
+#jive-logo-image_new {
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 350px;
+	height: 50px;
+	background: url("../images/header-title_new.gif") no-repeat;
+	color: #FFFFFF;
+	overflow: hidden;
+	}
+#jive-logo-image_new strong {
+	display: block;
+	position: relative;
+	margin: 0px 0px 0px 130px;
+	padding-top: 23px;
+	}
+#jive-secondary {
+    border-top : 1px #ccc solid;
+    background-color : #eee;
+    border-bottom : 1px #bbb solid;
+    padding : 6px;
+    padding-left : 12px;
+}
+#jive-header .info {
+	display: block;
+	position: absolute;
+	width: 220px;
+	right: 12px;
+	top: 10px;
+	/*float: right;*/
+    font-size: 8pt;
+    color: #FFFFFF;
+    padding: 0px 0px 0px 0px;
+    text-align: right;
+}
+#jive-header .info img {
+	margin: 0px 0px 4px 0px;
+	}
+#jive-content {
+	padding: 13px 20px 12px 20px;
+}
+
+/* --------------------------------------------- */
+/*  Main tabs                                    */
+/* --------------------------------------------- */
+
+#jive-header #jive-tabs {
+	display: block;
+	position: absolute;
+	top: 54px;
+	left: 60px;
+	height: 20px;
+	margin: 0px 0px 0px 0px;
+	white-space: nowrap;
+	}
+
+#jive-header #jive-tabs UL, #jive-header #jive-tabs LI {
+    display: inline;
+    padding: 0px;
+    margin: 0px;
+	white-space: nowrap;
+}
+#jive-header #jive-tabs LI {
+    font-family : verdana, arial, helvetica, sans-serif;
+    font-size : 8pt;
+    font-weight : bold;
+}
+#jive-header #jive-tabs LI A {
+	display: block;
+	float: left;
+    color : #FFFFFF;
+    text-decoration : none;
+    padding : 1px 7px 1px 7px;
+	margin-top: 2px;
+	margin-right: 4px;
+	background-color: #6788A6;
+}
+#jive-header #jive-tabs LI A:hover {
+    color : #fff;
+    text-decoration : underline;
+}
+#jive-header #jive-tabs .currentlink A {
+	margin-top: 0px;
+    color: #006699;
+    text-decoration: none;
+	background-color: #EAF1F8;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+#jive-header #jive-tabs .currentlink A:hover {
+	color: #006699;
+	text-decoration: none;
+	}
+
+/* --------------------------------------------- */
+/*  Logviewer tabs                               */
+/* --------------------------------------------- */
+
+#logviewer .jive-tabs TD {
+    font-family : verdana;
+    font-size : 8pt;
+}
+#logviewer .jive-tabs .jive-tab, .jive-tabs .jive-tab-active {
+    border : 1px #ccc solid;
+    white-space : nowrap;
+    padding : 4px 1em 4px 1em;
+    background-color : #ddd;
+}
+#logviewer .jive-tabs .jive-tab-active {
+    border-bottom : 1px #fff solid;
+    background-color : #fff;
+}
+#logviewer .jive-tabs .jive-spacer, .jive-tabs .jive-stretch {
+    border-bottom : 1px #ccc solid;
+}
+#logviewer .jive-tabs .jive-tab A, #logviewer .jive-tabs .jive-tab-active A {
+    text-decoration : none;
+    font-weight : bold;
+    color : #000;
+}
+#logviewer .jive-tabs .jive-tab A:hover, #logviewer .jive-tabs .jive-tab-active A:hover {
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Logout link                                  */
+/* --------------------------------------------- */
+
+#jive-header #jive-logout {
+	display: block;
+	position: absolute;
+	width: 175px;
+	right: 12px;
+	top: 53px;
+    white-space : nowrap;
+	text-align: right;
+}
+#jive-header #jive-logout A {
+    color : #FFFFFF;
+    font-size : 8pt;
+    font-weight : bold;
+    text-decoration : none;
+}
+#jive-header #jive-logout A:hover {
+    color : #FFFFFF;
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Titles                                       */
+/* --------------------------------------------- */
+
+#jive-main #jive-title {
+    font-size : 12pt;
+    font-weight : bold;
+    padding-bottom : 1em;
+}
+
+/* --------------------------------------------- */
+/*  Breadcrumbs                                  */
+/* --------------------------------------------- */
+
+#jive-main #jive-breadcrumbs {
+    font-size : 8pt;
+    /* font-weight : bold; */
+    font-family : verdana;
+    white-space : nowrap;
+    padding-top : 2px;
+}
+#jive-main #jive-breadcrumbs A {
+    color : #000;
+    text-decoration : none;
+}
+#jive-main #jive-breadcrumbs A:hover {
+    color : #000;
+    text-decoration : underline;
+}
+
+/* --------------------------------------------- */
+/*  Sidebar                                      */
+/* --------------------------------------------- */
+
+#jive-header #sidebar-top {
+	display: block;
+	position: absolute;
+	width: 169px;
+	height: 10px;
+	left: 0px;
+	top: 80px;
+	background: url("../images/sidebar_top.gif") no-repeat;
+	overflow: hidden;
+}
+#jive-main #jive-sidebar-box {
+    /*background-color : #eef;*/
+    /*border-right : 2px #ccf solid;*/
+}
+#jive-main #jive-sidebar {
+	width: 169px;
+    padding: 0px 0px 5px 0px;
+	margin-top: -15px;
+}
+#jive-main #jive-sidebar ul {
+	margin: 0px; /*removes indent IE and Opera*/
+	margin-left: 7px;
+	padding: 0px 0px 0px 0px; /*removes indent Mozilla and NN7*/
+	list-style-type: none; /*turns off display of bullet*/
+	font-family: verdana, Arial, Helvetica, sans-serif;
+	font-size: 8pt;
+}
+#jive-main #jive-sidebar li {
+	margin: 0px 5px 1px 0px;
+	width : 151px;
+}
+
+#jive-main #jive-sidebar a {
+	display: block;
+	padding: 2px 2px 2px 8px;
+	border: 1px solid #EAF1F8;
+	width: 151px;
+	-moz-border-radius: 3px;
+}
+html>body #jive-main #jive-sidebar a {
+	width: 140px;
+	}
+
+#jive-main #jive-sidebar a:link, #jive-main #jive-sidebar a:visited {
+	color: #003366;
+	text-decoration: none;
+}
+#jive-main #jive-sidebar a:hover {
+	border: 1px solid #34679A;
+	background-color: #FFFFFF;
+	text-decoration: none;
+}
+#jive-main #jive-sidebar .currentlink a,
+#jive-main #jive-sidebar .currentlink a:link,
+#jive-main #jive-sidebar .currentlink a:visited,
+#jive-main #jive-sidebar .currentlink a:hover
+{
+	border: 1px solid #34679A;
+	background-color: #5C7D9D;
+	color: #FFFFFF;
+	font-weight: bold;
+}
+#jive-main #jive-sidebar .category {
+    padding-top : 20px;
+    padding-bottom : 3px;
+    font-weight : bold;
+}
+
+#jive-main #jive-sidebar ul.subitems {
+	width: 150px;
+	background-color: #d4e1ed;
+	border: 1px solid #34679a;
+	list-style-type: disc;
+	-moz-border-radius: 4px;
+	margin: 0px 0px 1px 0px;
+	overflow: hidden;
+}
+#jive-main #jive-sidebar ul.subitems br {
+	display: none;
+}
+#jive-main #jive-sidebar ul.subitems li.category {
+	list-style-type: none;
+	display: block;
+	width: 150px;
+	padding: 2px 2px 2px 8px;
+	margin-left: 0px;
+	background-color: #5C7D9D;
+	border-bottom: 1px solid #34679a;
+	color: #FFFFFF;
+	font-weight: bold;
+	-moz-border-radius: 3px 3px 0px 0px;
+}
+#jive-main #jive-sidebar ul.subitems li {
+    margin-left: 25px;
+}
+#jive-main #jive-sidebar ul.subitems li a {
+    margin: 2px 0px 2px 0px;
+    padding: 1px 0px 1px 0px;
+	border: none;
+}
+#jive-main #jive-sidebar ul.subitems li a:hover {
+	background-color: transparent;
+	border: none;
+	text-decoration: underline;
+}
+#jive-main #jive-sidebar ul.subitems li.currentlink a,
+#jive-main #jive-sidebar ul.subitems li.currentlink a:visited ,
+#jive-main #jive-sidebar ul.subitems li.currentlink a:hover {
+	font-weight: bold;
+	color: #003366;
+	background-color: transparent;
+	border: none;
+}
+
+/* --------------------------------------------- */
+/*  Tasks                                        */
+/* --------------------------------------------- */
+
+#jive-runningtask {
+    margin-left : 1em;
+}
+
+/* --------------------------------------------- */
+/*  Back link                                    */
+/* --------------------------------------------- */
+a.jive-link-back {
+    font-size: 9pt;
+}
+a.jive-link-back span {
+    font-size: 10pt;
+}
+
+/* --------------------------------------------- */
+/*  Edit & Delete links                          */
+/* --------------------------------------------- */
+a.jive-link-edit,
+a.jive-link-delete {
+	display: block;
+    font-size: 8pt;
+	padding-left: 19px;
+	margin: 3px 5px 6px 0px;
+}
+a.jive-link-edit {
+	background: transparent url(../images/edit-16x16.gif) no-repeat left;
+}
+a.jive-link-delete {
+	background: transparent url(../images/delete-16x16.gif) no-repeat left;
+}
+
+/* --------------------------------------------- */
+/*  Hoizontal Rule                               */
+/* --------------------------------------------- */
+.jive-horizontalRule {
+	height: 1px;
+	background-color: #dcdcdc;
+	margin: 20px 0px 10px 0px;
+	padding: 0px;
+	overflow: hidden;
+	}
+
+
+
+
+
+/* --------------------------------------------- */
+/*  Older styles                                 */
+/* --------------------------------------------- */
+
+PRE, TT {
+    font-size : 10pt;
+    font-family : courier new, monospace;
+}
+
+/* Messages - errors, success and info */
+.jive-error TABLE, .jive-info TABLE, .jive-success TABLE {
+    border : 1px #ccc solid;
+}
+.jive-error TD, .jive-info TD, .jive-success TD {
+    padding : 3px;
+    vertical-align : top;
+}
+.jive-error-text, .jive-error .jive-icon-label, .jive-error-text A, .jive-error .jive-icon-label A {
+    color : #f00;
+}
+.jive-success-text, .jive-success .jive-icon-label, .jive-success-text A, .jive-success .jive-icon-label A {
+    color : #090;
+}
+.jive-info-text, .jive-info .jive-icon-label, .jive-info-text A, .jive-info .jive-icon-label A {
+    color : #306;
+}
+
+/* tables */
+.jive-table {
+    border-color : #ccc;
+    border-style : solid;
+    border-width : 1px 1px 0px 1px;
+}
+.jive-table .c1, fieldset .c1 {
+    width : 30%;
+}
+.jive-table TH, .jive-table TD, .jive-option-table TH, .jive-option-table TD {
+    padding : 6px;
+}
+.jive-table TH TH, .jive-table TD TD {
+    padding : 0px;
+}
+.jive-table TD.icon {
+    padding : 0 5px 0 3px;
+}
+.jive-table TH {
+    background-color : #f3f7fa;
+    border-bottom : 1px #ccc solid;
+    text-align : left;
+    font-family : verdana, arial, helvetica, sans-serif;
+    font-size : 8pt;
+    font-weight : bold;
+}
+.jive-table TH TABLE TH {
+    border-right : none;
+    border-bottom : none;
+}
+.jive-table TH TABLE TH a {
+    text-decoration : none;
+    color: #000;
+}
+
+.jive-table TR TD {
+    border-bottom : 1px #e3e3e3 solid;
+}
+.jive-table TD {
+    font-family : arial, helvetica, sans-serif;
+    font-size : 10pt;
+}
+.jive-table .jive-odd TD {
+    background-color : #fff;
+}
+.jive-table .jive-even TD {
+    background-color : #fbfbfb;
+}
+.jive-table TFOOT TD {
+    background-color : #eee;
+    font-family : verdana;
+	border-bottom: 1px solid #ccc;
+    font-size : 8pt;
+}
+.jive-table TD TD {
+    border-width : 0px;
+}
+.jive-table INPUT, .jive-table SELECT, .jive-option-table INPUT, .jive-option-table SELECT {
+    font-family : verdana;
+    font-size : 8pt;
+}
+
+.jive-description, .jive-description A, .jive-table .jive-date, .jive-description INPUT,
+.jive-description SELECT
+{
+    font-family : arial, helvetica, sans-serif;
+    font-size : 8pt;
+}
+
+.jive-label, .jive-option-table LABEL {
+    font-weight : bold;
+    padding-right : 10px;
+    white-space : nowrap;
+}
+.jive-label {
+    padding-right : 20px;
+    vertical-align : top;
+}
+
+.jive-buttons .jive-icon {
+    padding : 3px;
+}
+.jive-buttons .jive-icon-label {
+    padding : 3px;
+    white-space : nowrap;
+    padding-right : 1em;
+    font-size : 8pt;
+    font-family : verdana, arial, helvetica, sans-serif;
+}
+
+/* --------------------------------------------- */
+/*  Calendar styles                              */
+/* --------------------------------------------- */
+
+TABLE.calBgColor {
+    padding : 0px;
+}
+td.cal {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #000000;
+    background-color : #fff;
+    padding : 0px;
+}
+select.month {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #000000;
+    background: transparent;
+    width : 85px;
+}
+input.year {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #000000;
+    background: transparent;
+    width : 30px;
+}
+td.calDaysColor {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #ffffff;
+    background-color : #000000;
+}
+td.calWeekend {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #ffffff;
+    background-color : #d3d3d3;
+}
+td.calBgColor {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #ffffff;
+    background-color : #ffc;
+}
+.calBorderColor {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #ffffff;
+    background-color : #a9a9a9;
+}
+td.calHighlightColor {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #ffffff;
+    background-color : #ffffcc;
+}
+A.cal {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #000000;
+    background: transparent;
+    text-decoration : none;
+}
+A.cal:Hover {
+    font-family : Arial,Helvetica,Sans-serif;
+    font-size : 11px;
+    color : #FF0000;
+    background: transparent;
+    text-decoration : none;
+}
+.calDisabled {
+  font-family : Arial,Helvetica,Sans-serif;
+  font-size : 11px;
+  color : #808080;
+  background: transparent;
+  text-decoration : none;
+}
+
+/* --------------------------------------------- */
+/*  Quote original styles                        */
+/* --------------------------------------------- */
+
+.jive-quoteheader {
+    font-weight : bold;
+    width : 90%;
+    margin-left : 15px;
+}
+.jive-quote {
+    border : #d1d7dc 1px solid;
+    /* font-size : 11px; */
+    color : #444;
+    /* line-height : 125%; */
+    /* font-family : Verdana, Arial, Helvetica, sans-serif; */
+    background-color : #fafafa;
+    width : 90%;
+    margin-left : 15px;
+}
+
+
+.success {
+    color : #060;
+    font-weight : bold;
+    background-color : #cdf6cd;
+    padding : 5px;
+    border : 1px #029b00 solid;
+    margin-top : 10px;
+	margin-bottom: 20px;
+    padding-left : 28px;
+    background-image : url(../images/success-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+	-moz-border-radius: 3px;
+}
+.error {
+    color : #900;
+    font-weight : bold;
+    background-color : #EDB9B1;
+    padding : 5px;
+    border: 1px solid #BB8888;
+    margin-top : 10px;
+	margin-bottom: 20px;
+    padding-left : 28px;
+    background-image : url(../images/error-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+	-moz-border-radius: 3px;
+}
+
+.warning {
+    color : #915a15;
+    font-weight : bold;
+    background-color : #FFE9B2;
+    padding : 5px;
+    border: 1px solid #D9B04C;
+    margin-top : 10px;
+	margin-bottom: 20px;
+    padding-left : 28px;
+    background-image : url(../images/icon_warning-small.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+	-moz-border-radius: 3px;
+}
+
+
+
+/* --------------------------------------------- */
+/*  Content Box                                  */
+/* --------------------------------------------- */
+
+.jive-contentBox {
+    display: block;
+	margin: 0px 0px 20px 0px;
+	padding: 12px 10px 12px 10px;
+	border: 1px solid #ccc;
+	background-color: #fff;
+	-moz-border-radius:0px 0px 4px 4px ;
+	}
+.jive-contentBoxHeader {
+	display: block;
+	padding: 4px 4px 4px 6px;
+	margin: 8px 0px 0px 0px;
+	font-size: 9pt;
+	font-weight: bold;
+	background-color: #f3f7fa;
+	border: 1px solid #ccc;
+	border-bottom: none;
+	}
+.jive-contentBoxGrey {
+	/* commenting out the below, for now */
+	/*background: #f5f5f5 url(../images/setup_contentbox_bg.gif) repeat-x top;*/
+	background-color: #f9f9f9;
+	}
+.jive-contentBox h3 {
+	margin: 0px;
+	padding: 0px 0px 5px 0px;
+	font-size: 10pt;
+	color: #09345b;
+	}
+.jive-contentBox h4 {
+	margin: 0px 0px 4px 0px;
+	padding: 3px 0px 3px 4px;
+	color: #34679a;
+	background-color: #fcfcfc;
+	font-size: 10pt;
+	border: 1px solid #e9e9e9;
+	}
+.jive-contentBox form {
+	margin: 0px;
+	padding: 0px;
+	}
+.jive-contentBox table {
+	margin: 0px 0px 0px 0px;
+	padding: 0px;
+	}
+.jive-contentBox table td {
+	padding: 2px 2px 2px 2px;
+	}
+.jive-contentBox table th {
+	background-color: #f3f7fa;
+	padding: 4px;
+	}
+th.jive-table-th-center {
+	text-align: center;
+	}
+.jive-contentBox table td.jive-formLabel {
+	font-weight: bold;
+	text-align: right;
+	color: #09345b;
+	padding-right: 5px;
+	white-space: nowrap;
+	}
+
+.jive-contentBox-toolbox {
+	float: right;
+	margin-left: 20px;
+	}
+
+.jive-contentBox-plain {
+    display: block;
+	margin: 0px 0px 5px 0px;
+	padding: 12px 0px 12px 0px;
+}
+.jive-contentBox-plain h3 {
+	font-size: 14pt;
+	color: #34679a;
+	margin: 2px 0px 2px 0px;
+	}
+.jive-contentBox-plain p {
+	font-size: 9pt;
+	margin: 0px 0px 10px 0px;
+	}
+
+
+/* --------------------------------------------- */
+/*  Roster box (in Group Settings page)          */
+/* --------------------------------------------- */
+
+#jive-roster {
+    display: block;
+	width: 390px;
+	margin: 3px 0px 4px 0px;
+	padding: 12px;
+	border: 1px solid #dcdcdc;
+	background-color: #f9f9f9;
+	-moz-border-radius: 4px;
+	font-size: 9pt;
+	}
+#jive-roster b {
+	display: block;
+	font-size: 8pt;
+	color: #09345b;
+	padding: 0px 0px 3px 0px;
+	}
+
+
+
+/* --------------------------------------------- */
+/*  Roster box (in Group Settings page)          */
+/* --------------------------------------------- */
+.jive-enterprise-info img {
+    clear: both;
+    }
+.jive-enterprise-info h3 {
+    color: #34679a;
+    font-size: 13pt;
+    margin: 4px 0px 4px 0px;
+    padding: 0px;
+    }
+.jive-enterprise-info ul,
+.jive-enterprise-info ol {
+    margin: 0px 0px 20px 30px;
+    padding: 0px;
+    }
+.jive-enterprise-info ul li,
+.jive-enterprise-info ol li{
+    margin: 0px;
+    padding: 3px 0px 3px 0px;
+    }
+.jive-enterprise-info ul p {
+    padding: 20px 0px 10px 0px;
+    margin: 0px;
+    }
+
+.jive-enterprise-info-install {
+    clear: both;
+    margin: 0px 0px 0px 0px;
+    padding: 10px 0px 20px 0px;
+    }
+.jive-enterprise-info-install a.jive-enterprise-info-install-btn {
+    display: block;
+    float: left;
+    clear: both;
+    padding: 8px 20px 8px 20px;
+    margin: 0px;
+    font-weight: bold;
+    font-size: 10pt;
+    text-decoration: none;
+    color: #fff;
+    background: url(../images/enterprise-info-btn.gif) repeat-x center;
+    }
+.jive-enterprise-info-install p {
+    float: left;
+    clear: both;
+    padding: 5px 0px 20px 1px;
+    margin: 0px;
+    font-size: 8pt;
+    }
+
+.jive-enterprise-info {
+    font-size: 9pt;
+    }
+.jive-enterprise-info-close {
+    clear: both;
+    margin: 0px 0px 6px 0px;
+    padding: 20px 0px 20px 0px;
+    }
+
+.jive-enterprise-info-wait,
+.jive-enterprise-info-success {
+    clear: both;
+    padding: 4px 0px 140px 0px;
+    }
+.jive-enterprise-info-wait img,
+.jive-enterprise-info-wait strong {
+    float: left;
+    padding: 0px 2px 0px 2px;
+}
+.jive-enterprise-info-wait strong {
+    padding-top: 4px;
+    }
+
+.jive-enterprise-info-success strong {
+    background: transparent url(../images/success-16x16.gif) no-repeat left;
+    color: #106600;
+    padding-left: 20px;
+    }
+
+
+#footer {
+	position: relative;
+    width: 100%;
+	height: 30px;
+    background-image : url("../images/page-background_new.gif");
+    background-repeat : repeat-y;
+    margin-top: -30px;
+    }
+#footer_padding {
+    text-align: center;
+    padding-left: 165px;
+    }
+
+#footer_content {
+    width: 500px;
+    padding: 0;
+    height: 29px;
+    margin: 0 auto;
+    background-color: #eaf1f8;
+	border: 1px solid #b3d3f4;
+	border-bottom: none;
+	font-size: 8pt;
+    }
+#footer_content span {
+    display: block;
+    padding: 7px;
+    }

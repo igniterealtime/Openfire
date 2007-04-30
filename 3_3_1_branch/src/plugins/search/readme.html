@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>Search Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Search Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+<p>
+The search plugin adds Jabber Search <a href="http://www.xmpp.org/extensions/xep-0055.html">XEP-0055</a> 
+capabilities to Openfire. This plugin is designed to work with various Jabber clients to allow
+other users to search for users currently registered on the same server they are.
+</p>
+
+<h2>Installation</h2>
+<p>
+Copy the file, &quot;search.jar&quot; into the plugins directory of your Openfire installation. The plugin will
+then be automatically deployed. To upgrade to a new version: 1) go to the plugin screen of the Admin
+Console, 2) click on the delete icon on the same row as the currently installed search plugin, 3) 
+copy the new search.jar into the plugins directory of your Openfire installation.
+</p>
+
+<h2>Configuration</h2>
+<p>
+The search plugin is configured via the "Search Service Properites" sidebar item located under the "Server" tab
+in the Openfire Admin Console. By default, after the search plugin has been deployed all of its features
+are enabled. To enable or disable the plugin select the appropirate radio button and then click on the 
+"Save Properties" button. To change the service name enter the new name for the service and then click on the 
+"Save Properties" button. To disable a field from being searched by clients un-check the corresponding checkbox
+and click on the "Save Properties" button.
+</p>
+
+<h2>Using the Plugin</h2>
+<p>
+Use of this plugin varies from client to client; however, basic instructions for accessing the search screen
+for some of the more popular clients are listed below. On the search screen there is a single
+textfield with three checkboxes. In the textfield enter all or part of the user's name, username 
+and/or email that you want to find. As an example, if you want to find your friend John but don't know
+if his last name is spelled "Smith" or "Smyth", try entering "John S*" in the search field and making
+sure the name checkbox is selected. The "*" symbol acts as a wildcard so your search might return not 
+only "John Smith" but all the users whose name begins with "John S", i.e. "John Slater", "John Salazar", etc.
+<li>
+Admin Console - Navigate to the "Advance User Search" sidebar item located in under the "Users/Groups" tab.
+</li>
+<br>
+
+<li>
+Spark - Use the search field along the bottom portion of the main Spark window.
+</li>
+<br>
+
+<li>
+Exodus - After clicking on the magnifying glass with the red "+" sign, a screen will appear displaying the search 
+service that will be used which will be used. Click on the "Next" button and the search screen will
+be visible.
+</li>
+<br>
+
+<li>
+JAJC - After clicking on the "Jabber Browser" icon (the third icon from the left), a Jabber browser screen will appear and on the right-hand side, there  will be a list of services. Double-click on the "User Search"
+entry and a new screen will appear. Finally, on the left-hand side of the screen, click on the "Search" item to view the search screen.
+</li>
+<br>
+
+<li>
+Pandion (v2.1.2) - From the "Actions" menu click on "Add a contact...", on the screen that appears makes sure
+the "I want to search for someone." radio button is selected and then click on the "Next >" button to
+view the search screen.
+</li>
+<br>
+
+<li>
+Psi - On the lower left-hand corner of the client, click on the main Psi toolbar, select "Service Discovery", and click on your username. After the service discovery windowappears, select the "User Search" entry and  click on
+the magnifying glass at the top of the window to view the search screen.
+</li>
+</p>
+</body>
+</html>

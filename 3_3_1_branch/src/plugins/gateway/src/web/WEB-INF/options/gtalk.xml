@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel></leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.gtalk.connecthost" var="host" desckey="gateway.web.settings.host" default="talk.google.com"/>
+        <item type="text" sysprop="plugin.gateway.gtalk.connectport" var="port" desckey="gateway.web.settings.port" default="5222"/>
+    </rightpanel>
+</optionsconfig>

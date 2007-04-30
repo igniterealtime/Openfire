@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel></leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.icq.connecthost" var="host" desckey="gateway.web.settings.host" default="login.oscar.aol.com"/>
+        <item type="text" sysprop="plugin.gateway.icq.connectport" var="port" desckey="gateway.web.settings.port" default="5190"/>
+        <item type="text" sysprop="plugin.gateway.icq.encoding" var="encoding" desckey="gateway.web.settings.encoding" default="iso-8859-1"/>
+    </rightpanel>
+</optionsconfig>

@@ -1,0 +1,5 @@
+/etc/openfire
+/usr/share/openfire/lib
+/usr/share/openfire/resources
+/var/log/openfire
+/var/lib/openfire/embedded-db

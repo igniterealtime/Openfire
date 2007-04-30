@@ -1,0 +1,167 @@
+ <%--
+  -	$Revision$
+  -	$Date$
+--%>
+
+<%@ page import="org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.openfire.session.Session,
+                 org.xmpp.packet.JID,
+                 org.xmpp.packet.Presence"%>
+ <%@ page import="java.net.URLEncoder"%>
+
+ <%--
+   - This page is meant to be included in other pages. It assumes 2 variables:
+   -     * 'sess', a org.jivesoftware.xmpp.Session object
+   -     * 'count', an int representing the row number we're on.
+   -     * 'current', a boolean which indicates the current row the user is looking (pass in
+   -       false if there is no current row.
+   -     * 'linkURL', a String representing the JSP page to link to
+ --%>
+
+<%  if (current) { %>
+
+    <tr class="jive-current">
+
+<%  } else { %>
+
+    <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
+
+<%  } %>
+
+    <td width="1%" nowrap><%= count %></td>
+    <td width="10%" nowrap>
+        <%  String name = sess.getAddress().getNode(); %>
+            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"
+            ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
+    </td>
+    <td width="15%" nowrap>
+        <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>
+    </td>
+    <td>
+        <%  int _status = sess.getStatus();
+            if (_status == Session.STATUS_CLOSED) {
+        %>
+            <fmt:message key="session.details.close" />
+
+        <%  } else if (_status == Session.STATUS_CONNECTED) { %>
+
+            <fmt:message key="session.details.connect" />
+
+        <%  } else if (_status == Session.STATUS_STREAMING) { %>
+
+            <fmt:message key="session.details.streaming" />
+
+        <% } else if (_status == org.jivesoftware.openfire.session.Session.STATUS_AUTHENTICATED) { %>
+
+            <fmt:message key="session.details.authenticated" />
+
+        <%  } else { %>
+
+            <fmt:message key="session.details.unknown" />
+
+        <%  } %>
+    </td>
+    <%  if (sess.getConnection().isSecure()) { %>
+        <td width="1%">
+            <img src="images/lock.gif" width="16" height="16" border="0"
+            title="<fmt:message key="session.row.cliked_ssl" />">
+        </td>
+     <% } else { %>
+        <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+     <% } %>
+
+    <%  Presence.Show _show = sess.getPresence().getShow();
+        String _stat = sess.getPresence().getStatus();
+        if (_show == Presence.Show.away) {
+    %>
+        <td width="1%"
+            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />"
+            ></td>
+        <td width="46%">
+            <%  if (_stat != null) { %>
+
+                <%= _stat %>
+
+            <%  } else { %>
+
+                <fmt:message key="session.details.away" />
+
+            <%  } %>
+        </td>
+
+    <%  } else if (_show == Presence.Show.chat) { %>
+
+        <td width="1%"
+            ><img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />"
+            ></td>
+        <td width="46%">
+            <fmt:message key="session.details.chat_available" />
+        </td>
+
+    <%  } else if (_show == Presence.Show.dnd) { %>
+
+        <td width="1%"
+            ><img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />"
+            ></td>
+        <td width="46%">
+            <%  if (_stat != null) { %>
+
+                <%= sess.getPresence().getStatus() %>
+
+            <%  } else { %>
+
+                <fmt:message key="session.details.not_disturb" />
+
+            <%  } %>
+        </td>
+
+    <%  } else if (_show == null) { %>
+
+        <td width="1%"
+            ><img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.online" />"
+            ></td>
+        <td width="46%">
+            <fmt:message key="session.details.online" />
+        </td>
+
+    <%  } else if (_show == Presence.Show.xa) { %>
+
+        <td width="1%"
+            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />"
+            ></td>
+        <td width="46%">
+            <%  if (_stat != null) { %>
+
+                <%= sess.getPresence().getStatus() %>
+
+            <%  } else { %>
+
+                <fmt:message key="session.details.extended" />
+
+            <%  } %>
+        </td>
+
+    <%  } else { %>
+
+        <td colspan="2" width="46%">
+            <fmt:message key="session.details.unknown" />
+        </td>
+
+    <%  } %>
+
+    <td width="1%" nowrap>
+        <%= sess.getPresence().getPriority() %>
+    </td>
+
+    <td width="1%" nowrap>
+        <%= sess.getConnection().getInetAddress().getHostAddress() %>
+    </td>
+
+    <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
+        <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true"
+         title="<fmt:message key="session.row.cliked_kill_session" />"
+         onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
+         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+    </td>
+</tr>

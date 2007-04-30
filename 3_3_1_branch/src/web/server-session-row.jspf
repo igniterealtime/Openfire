@@ -1,0 +1,125 @@
+ <%--
+  -	$Revision$
+  -	$Date$
+--%>
+
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.openfire.session.IncomingServerSession,
+                 java.net.URLEncoder,
+                 java.util.Calendar,
+                 java.util.Date"%>
+
+ <%--
+   - This page is meant to be included in other pages. It assumes 4 variables:
+   -     * 'host', the name of the remote server
+   -     * 'inSession', an  IncomingServerSession object
+   -     * 'outSession', an OutgoingServerSession object
+   -     * 'count', an int representing the row number we're on.
+ --%>
+
+<% // Show the secured icon only if ALL sessions are secure
+    boolean isSecured = true;
+    // Check if all incoming sessions are secured
+    for (org.jivesoftware.openfire.session.IncomingServerSession inSession : inSessions) {
+        if (!inSession.getConnection().isSecure()) {
+            isSecured = false;
+            break;
+        }
+    }
+    // Check if outgoing session is secured (only if incoming sessions are secured)
+    if (isSecured && outSession != null) {
+        isSecured = outSession.getConnection().isSecure();
+    }
+%>
+<tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
+    <td width="1%" nowrap><%= count %></td>
+    <td width="47%" nowrap>
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+            <td width="1%" ><img src="getFavicon?host=<%=host%>" width="16" height="16"></td>
+            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= host %></a></td>
+            </tr>
+        </table>
+    </td>
+    <%  if (isSecured) { %>
+    <td width="1%">
+        <img src="images/lock.gif" width="16" height="16" border="0">
+    </td>
+     <% } else { %>
+    <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+     <% } %>
+    <% if (!inSessions.isEmpty() && outSession == null) { %>
+        <td width="1%">
+            <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.incoming" />">
+        </td>
+        <td width="10%"><fmt:message key="server.session.connection.incoming" /></td>
+    <% } else if (inSessions.isEmpty() && outSession != null) { %>
+        <td width="1%">
+            <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.outgoing" />">
+        </td>
+        <td width="10%"><fmt:message key="server.session.connection.outgoing" /></td>
+    <% } else { %>
+        <td width="1%">
+            <img src="images/both_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.both" />">
+        </td>
+        <td width="10%"><fmt:message key="server.session.connection.both" /></td>
+    <% } %>
+
+    <% Date creationDate = null;
+        Date lastActiveDate = null;
+        if (!inSessions.isEmpty() && outSession == null) {
+            for (IncomingServerSession inSession : inSessions) {
+                if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+                    // Use the creation date of the oldest incoming session
+                    creationDate = inSession.getCreationDate();
+                }
+                if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+                    // Use the last active date of the newest incoming session
+                    lastActiveDate = inSession.getLastActiveDate();
+                }
+            }
+        }
+        else if (inSessions.isEmpty() && outSession != null) {
+            creationDate = outSession.getCreationDate();
+            lastActiveDate = outSession.getLastActiveDate();
+        }
+        else {
+            for (IncomingServerSession inSession : inSessions) {
+                if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+                    // Use the creation date of the oldest incoming session
+                    creationDate = inSession.getCreationDate();
+                }
+                if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+                    // Use the last active date of the newest incoming session
+                    lastActiveDate = inSession.getLastActiveDate();
+                }
+            }
+            creationDate = creationDate.before(outSession.getCreationDate()) ? creationDate : outSession.getCreationDate();
+            lastActiveDate = lastActiveDate.after(outSession.getLastActiveDate()) ? lastActiveDate : outSession.getLastActiveDate();
+        }
+        Calendar creationCal = Calendar.getInstance();
+        creationCal.setTime(creationDate);
+
+        Calendar lastActiveCal = Calendar.getInstance();
+        lastActiveCal.setTime(lastActiveDate);
+
+        Calendar nowCal = Calendar.getInstance();
+
+        boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+        boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+    %>
+
+    <td align="center" width="20%" nowrap>
+        <%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
+    </td>
+    <td align="center" width="20%" nowrap>
+        <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
+    </td>
+
+    <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
+        <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true"
+         title="<fmt:message key="session.row.cliked_kill_session" />"
+         onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
+         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+    </td>
+</tr>

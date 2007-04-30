@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Subscription Plugin Readme</title>
+	<style type="text/css">
+	  BODY {
+	     font-size : 100%;
+	  }
+
+	  BODY, TD, TH {
+	     font-family : tahoma, verdana, arial, helvetica, sans-serif;
+	     font-size : 0.8em;
+	  }
+
+	  H2 {
+	     font-size : 10pt;
+	     font-weight : bold;
+	  }
+
+     A:hover {
+	     text-decoration : none;
+	  }
+     
+	  H1 {
+	     font-family : tahoma, arial, helvetica, sans-serif;
+	     font-size : 1.4em;
+	     font-weight: bold;
+	     border-bottom : 1px #ccc solid;
+	     padding-bottom : 2px;
+	  }
+
+	  TT {
+	     font-family : courier new;
+	     font-weight : bold;
+	     color : #060;
+	  }
+     
+	  PRE {
+	     font-family : courier new;
+	     font-size : 100%;
+	  }
+	</style>
+</head>
+<body>
+
+<h1>
+Subscription Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+<p>
+This plugin can be configuured to automatically accept or reject subscription requests. When set to accept 
+subscription requests users will be able to add someone to their roster (aka "Buddy List" or "Contacts")
+without having to wait for a manual subscription acceptance from the requested user. Conversely, when the 
+plugin is set to reject subscription requests users will not be able to add people to their roster.
+</p>
+
+<h2>Installation</h2>
+<p>
+Copy the file, subscription.jar into the plugins directory of your Openfire installation. The plugin will
+then be automatically deployed. To upgrade to a new version: 1) go to the plugin screen of the Admin
+Console, 2) click on the delete icon on the same row as the currently installed subscription plugin, 3) 
+copy the new subscription.jar into the plugins directory of your Openfire installation.
+</p>
+
+<h2>Configuration</h2>
+<p>
+The subscription plugin is configured via Subscription Properties sidebar item which can found under the 
+Sever tab in Openfire Admin Console. The subscription plugin can be configured in the following ways:
+<ul>
+<p>
+<li>Disabled (Default setting) - Subscription requests will not be intercepted.</li>
+</p>
+<p>
+<li>Accept - Subscription requests will be intercepted and accepted.</li>
+<ul>
+<li>Local - Only subscription requests sent by users <u>who have</u> an account on the Openfire server on which
+the plugin is installed, will be intercepted and accepted.</li>
+<li>All - All subscription requests, regardless of which server the user account resides on, will be 
+intercepted and accepted. Selecting this level can make Openfire vulnerable to spIM*.</li>
+</ul>
+</p>
+<p>
+<li>Reject - Subscription requests will be intercepted and rejected. NOTE: At the time of this writing the latest
+release of Spark (v1.1.4) has an <a href="http://www.igniterealtime.org/issues/browse/SPARK-300">issue</a> where 
+subscription rejection packets are not processed properly so this feature will not work correctly with Spark. To have
+the plugin attempt to work around this issue create a "plugin.subscription.sparkCheck" system property and set its 
+value to "true".</li>
+<ul>
+<li>Local - Only subscription requests sent by users <u>who do not have</u> an account on the Openfire server on which
+the plugin is installed, will be intercepted and rejected.</li>
+<li>All - All subscription requests, regardless of which server the user account resides on, will be 
+intercepted and rejected.</li>
+</ul>
+</p>
+</ul>
+It is also possible to create a "white list" of users. The users in the list still maintain full control over accepting
+and rejecting subscription requests.
+</p>
+
+<h2>Using the Plugin</h2>
+<p>
+Once the plugin has been installed and configured there is no additional steps are required to use the plugin.
+</p>
+
+<br>
+<p>
+* spIM is unsolicited messages sent via an instant messaging system; similiar in nature to email SPAM.
+</p>
+</body>
+</html>

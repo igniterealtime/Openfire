@@ -1,0 +1,30 @@
+#!/bin/sh
+
+if [ -f /tmp/openfire.xml ]; then 
+	mv /tmp/openfire.xml /usr/local/openfire/conf/
+fi
+
+if [ -f /tmp/security ]; then
+	mv /tmp/security /usr/local/openfire/resources/
+fi
+
+if [ -f /tmp/embedded-db ]; then
+    mv /tmp/embedded-db /usr/local/openfire/embedded-db
+fi
+
+if [ -f /tmp/enterprise ]; then
+    mv /tmp/enterprise /usr/local/openfire/enterprise
+fi
+
+if [ -f /tmp/plugins ]; then
+    mv /tmp/plugins /usr/local/openfire/plugins
+fi
+
+OPENFIRE_HOME=/usr/local/openfire/
+OPENFIRE_GID=`cat /private/tmp/openfiregid`
+rm /private/tmp/openfiregid
+
+chown -R openfire $OPENFIRE_HOME
+chgrp -R $OPENFIRE_GID $OPENFIRE_HOME
+
+/bin/launchctl load /Library/LaunchDaemons/org.jivesoftware.openfire.plist

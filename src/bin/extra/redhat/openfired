@@ -6,7 +6,7 @@
 # description: Openfire is an XMPP server, which is a server that facilitates \
 #              XML based communication, such as chat.
 # config: /opt/openfire/conf/openfire.xml
-# config: /etc/sysconfig/openfire
+# config: /etc/sysconfig/openfired
 # pidfile: /var/run/openfire.pid
 # 
 # This script has currently been tested on Redhat, CentOS, and Fedora  based
@@ -20,13 +20,12 @@
 # Initialization
 PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
-PROG="openfire"
 
 # Check that we are root ... so non-root users stop here.
 [ "`id -u`" = 0 ] || exit 1
 
 # Get config.
-[ -f "/etc/sysconfig/$PROG" ] && . /etc/sysconfig/$PROG
+[ -f "/etc/sysconfig/openfired" ] && . /etc/sysconfig/openfired
 
 # If openfire user is not set in sysconfig, set to daemon.
 [ -z "$OPENFIRE_USER" ] && OPENFIRE_USER="daemon"
@@ -45,7 +44,7 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
 	else
 		echo "Could not find Openfire installation under /opt or /usr/local."
 		echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
-		echo "in /etc/sysconfig/$PROG."
+		echo "in /etc/sysconfig/openfire."
 		exit 1
 	fi
 fi
@@ -105,7 +104,7 @@ start() {
 	cd $OPENFIRE_LOGDIR
 
         # Start daemons.
-        echo -n "Starting $PROG: "
+        echo -n "Starting openfire: "
 
 	su -s /bin/sh -c "$OPENFIRE_RUN_CMD" $OPENFIRE_USER > nohup.out 2>&1 &
 	RETVAL=$?
@@ -116,7 +115,7 @@ start() {
 
 	echo
 
-	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/$PROG
+	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfired
 
 	sleep 1 # allows prompt to return
 	cd $OLD_PWD
@@ -124,14 +123,14 @@ start() {
 
 stop() {
 	# Stop daemons.
-	echo -n "Shutting down $PROG: "
+	echo -n "Shutting down openfire: "
 
 	[ -f "$OPENFILE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
 	RETVAL=$?
 	echo
 
 	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
-	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/$PROG" ] && rm -f /var/lock/subsys/$PROG
+	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfired" ] && rm -f /var/lock/subsys/openfired
 }
 
 restart() {
@@ -141,7 +140,7 @@ restart() {
 }
 
 condrestart() {
-	[ -e "/var/lock/subsys/$PROG" ] && restart
+	[ -e "/var/lock/subsys/openfired" ] && restart
 	return 0
 }
 
@@ -177,11 +176,14 @@ case "$1" in
 	condrestart)
 		condrestart
 		;;
+	reload)
+		restart
+		;;
 	status) 
 		status
 		;;
 	*)
-		echo "Usage $0 {start|stop|restart|status|condrestart}"
+		echo "Usage $0 {start|stop|restart|status|condrestart|reload}"
 		RETVAL=1
 esac
 

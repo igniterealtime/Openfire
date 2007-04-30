@@ -6,8 +6,10 @@ BuildRoot: %{_builddir}/%{name}-root
 Source0: %{name}_src_3_3_0.tar.gz
 Group: Applications/Communications
 Vendor: Jive Software
+Packager: Jive Software
 License: GPL
-Requires: jdk >= 1.5.0
+# May reevaluate this at some point.
+#Requires: jdk >= 1.5.0
 URL: http://www.igniterealtime.org/
 
 %description
@@ -24,28 +26,23 @@ and delivers an innovative feature set.
 rm $RPM_BUILD_ROOT/opt/openfire/logs/stderr.out
 # Set up the init script.
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
-cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/openfired $RPM_BUILD_ROOT/etc/init.d/openfired
+cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/redhat/openfired $RPM_BUILD_ROOT/etc/init.d/openfired
 chmod 755 $RPM_BUILD_ROOT/etc/init.d/openfired
 # Make the startup script executable.
 chmod 755 $RPM_BUILD_ROOT/opt/openfire/bin/openfire.sh
 # Set up the sysconfig file.
-#mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
-#cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
+mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
+cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/redhat/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
 
-%pre
-if /usr/bin/id jive > /dev/null 2>&1 ; then
-	: # user already exists
-else
-	/usr/sbin/groupadd -r jive
-	/usr/sbin/useradd -r -g jive -d /opt/openfire -s /bin/bash -c "jive" jive
-	/usr/sbin/usermod -G jive jive
-fi
+%preun
+[ -x "/etc/init.d/openfired" ] && /etc/init.d/openfired stop
+/sbin/chkconfig --del openfired
 
 %post
 /sbin/chkconfig --add openfired
 
 %files
-%defattr(-,jive,jive)
+%defattr(-,daemon,daemon)
 %dir /opt/openfire
 /opt/openfire/bin
 %dir /opt/openfire/conf
@@ -66,4 +63,8 @@ fi
 %doc /opt/openfire/README.html 
 %doc /opt/openfire/changelog.html
 /etc/init.d/openfired
-#%config(noreplace) /etc/sysconfig/openfire
+%config(noreplace) /etc/sysconfig/openfire
+
+%changelog
+* Sun Apr 12 2007 Jive Software <nobody@jivesoftware.com>
+- Openfire 3.3.0 build.

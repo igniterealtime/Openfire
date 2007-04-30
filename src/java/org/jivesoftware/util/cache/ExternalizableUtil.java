@@ -41,7 +41,29 @@ public class ExternalizableUtil {
     public static ExternalizableUtil getInstance() {
         return instance;
     }
-    
+
+
+    /**
+     * Sets the implementation to use for serializing and deserializing
+     * objects. 
+     *
+     * @param strategy the new strategy to use.
+     */
+    public void setStrategy(ExternalizableUtilStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    /**
+     * Returns the implementation to use for serializing and deserializing
+     * objects.
+     *
+     * @return the implementation to use for serializing and deserializing
+     * objects.
+     */
+    public ExternalizableUtilStrategy getStrategy() {
+        return strategy;
+    }
+
     /**
      * Hidding constructor. We only want one single instance.
      */

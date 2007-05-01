@@ -4,6 +4,9 @@ import org.dom4j.Element;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheManager;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * A Privacy list manager creates, gets, updates and removes privacy lists. Loaded lists
  * are kept in memory using a cache that will keep them at most for 6 hours.
@@ -13,9 +16,30 @@ import org.jivesoftware.util.cache.CacheManager;
 public class PrivacyListManager {
 
     private static final PrivacyListManager instance = new PrivacyListManager();
+    private static Cache<String, PrivacyList> listsCache;
 
     private PrivacyListProvider provider = new PrivacyListProvider();
-    private Cache listsCache;
+
+    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<PrivacyListEventListener>();
+
+    static {
+        PrivacyListEventListener eventListener = new PrivacyListEventListener() {
+            public void privacyListCreated(PrivacyList list) {
+                // Do nothing
+            }
+
+            public void privacyListDeleting(String listName) {
+                // Do nothing
+            }
+
+            public void privacyListModified(PrivacyList list) {
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                listsCache.put(getCacheKey(list.getUserJID().getNode(), list.getName()), list);
+            }
+        };
+        instance.addListener(eventListener);
+    }
 
     /**
      * Returns the unique instance of this class.
@@ -48,6 +72,10 @@ public class PrivacyListManager {
         listsCache.put(getCacheKey(username, listName), list);
         // Save new  list to database
         provider.createPrivacyList(username, list);
+        // Trigger event that a new privacy list has been created
+        for (PrivacyListEventListener listener : listeners) {
+            listener.privacyListCreated(list);
+        }
         return list;
     }
 
@@ -60,12 +88,16 @@ public class PrivacyListManager {
      * @param listName the name of the list being deleted.
      */
     public void deletePrivacyList(String username, String listName) {
+        // Trigger event that a privacy list is being deleted
+        for (PrivacyListEventListener listener : listeners) {
+            listener.privacyListDeleting(listName);
+        }
         // Remove the list from the cache
         listsCache.remove(getCacheKey(username, listName));
         // Delete the privacy list from the DB
         provider.deletePrivacyList(username, listName);
         // Check if deleted list was the default list
-        PrivacyList defaultList = (PrivacyList) listsCache.get(getDefaultCacheKey(username));
+        PrivacyList defaultList = listsCache.get(getDefaultCacheKey(username));
         if (defaultList != null && listName.equals(defaultList.getName())) {
             listsCache.remove(getDefaultCacheKey(username));
         }
@@ -81,6 +113,10 @@ public class PrivacyListManager {
         for (String listName : provider.getPrivacyLists(username).keySet()) {
             // Remove the list from the cache
             listsCache.remove(getCacheKey(username, listName));
+            // Trigger event that a privacy list is being deleted
+            for (PrivacyListEventListener listener : listeners) {
+                listener.privacyListDeleting(listName);
+            }
         }
         // Delete user privacy lists from the DB
         provider.deletePrivacyLists(username);
@@ -97,10 +133,10 @@ public class PrivacyListManager {
     public PrivacyList getDefaultPrivacyList(String username) {
         // Check if we have the default list in the cache
         String cacheKey = getDefaultCacheKey(username);
-        PrivacyList list = (PrivacyList) listsCache.get(cacheKey);
+        PrivacyList list = listsCache.get(cacheKey);
         if (list == null) {
             synchronized (username.intern()) {
-                list = (PrivacyList) listsCache.get(cacheKey);
+                list = listsCache.get(cacheKey);
                 if (list == null) {
                     // Load default list from the database
                     list = provider.loadDefaultPrivacyList(username);
@@ -125,7 +161,7 @@ public class PrivacyListManager {
     public PrivacyList getPrivacyList(String username, String listName) {
         // Check if we have a list in the cache
         String cacheKey = getCacheKey(username, listName);
-        PrivacyList list = (PrivacyList) listsCache.get(cacheKey);
+        PrivacyList list = listsCache.get(cacheKey);
         if (list == null) {
             // Load the list from the database
             list = provider.loadPrivacyList(username, listName);
@@ -159,16 +195,44 @@ public class PrivacyListManager {
     }
 
     /**
+     * Registers a listener to receive events when a privacy list is created, updated or deleted.
+     *
+     * @param listener the listener.
+     */
+    public void addListener(PrivacyListEventListener listener) {
+        if (listener == null) {
+            throw new NullPointerException();
+        }
+        listeners.add(listener);
+    }
+
+    /**
+     * Unregisters a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    public void removeListener(PrivacyListEventListener listener) {
+        listeners.remove(listener);
+    }
+
+    /**
      * Returns the key to use to locate a privacy list in the cache.
      */
-    private String getCacheKey(String username, String listName) {
+    private static String getCacheKey(String username, String listName) {
         return username + listName;
     }
 
     /**
      * Returns the key to use to locate default privacy lists in the cache.
      */
-    private String getDefaultCacheKey(String username) {
+    private static String getDefaultCacheKey(String username) {
         return getCacheKey(username, "__d_e_f_a_u_l_t__");
+    }
+
+    void dispatchModifiedEvent(PrivacyList privacyList) {
+        // Trigger event that a privacy list has been modified
+        for (PrivacyListEventListener listener : listeners) {
+            listener.privacyListModified(privacyList);
+        }
     }
 }

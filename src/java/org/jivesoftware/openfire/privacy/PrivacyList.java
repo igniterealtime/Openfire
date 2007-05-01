@@ -13,15 +13,21 @@ package org.jivesoftware.openfire.privacy;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.Log;
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +44,32 @@ import java.util.List;
  *
  * @author Gaston Dombiak
  */
-public class PrivacyList implements Cacheable {
+public class PrivacyList implements Cacheable, Externalizable {
+
+    /**
+     * Reuse the same factory for all the connections.
+     */
+    private static XmlPullParserFactory factory = null;
+    private static ThreadLocal<XMPPPacketReader> localParser = null;
+
+    static {
+        try {
+            factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
+            factory.setNamespaceAware(true);
+        }
+        catch (XmlPullParserException e) {
+            Log.error("Error creating a parser factory", e);
+        }
+        // Create xmpp parser to keep in each thread
+        localParser = new ThreadLocal<XMPPPacketReader>() {
+            protected XMPPPacketReader initialValue() {
+                XMPPPacketReader parser = new XMPPPacketReader();
+                factory.setNamespaceAware(true);
+                parser.setXPPFactory(factory);
+                return parser;
+            }
+        };
+    }
 
     private JID userJID;
     private String name;
@@ -46,12 +77,27 @@ public class PrivacyList implements Cacheable {
     private List<PrivacyItem> items = new ArrayList<PrivacyItem>();
     private Roster roster;
 
+    /**
+     * Constructor added for Externalizable. Do not use this constructor.
+     */
+    public PrivacyList() {
+    }
+
     public PrivacyList(String username, String name, boolean isDefault, Element listElement) {
         this.userJID = XMPPServer.getInstance().createJID(username, null);
         this.name = name;
         this.isDefault = isDefault;
         // Set the new list items
         updateList(listElement);
+    }
+
+    /**
+     * Returns the JID of the user that owns this privacy list.
+     *
+     * @return the JID of the user that owns this privacy list.
+     */
+    public JID getUserJID() {
+        return userJID;
     }
 
     /**
@@ -81,6 +127,8 @@ public class PrivacyList implements Cacheable {
      */
     public void setDefaultList(boolean isDefault) {
         this.isDefault = isDefault;
+        // Trigger event that this list has been modified
+        PrivacyListManager.getInstance().dispatchModifiedEvent(this);
     }
 
     /**
@@ -137,6 +185,17 @@ public class PrivacyList implements Cacheable {
      * @param listElement the element containing a list of items.
      */
     public void updateList(Element listElement) {
+        updateList(listElement, true);
+    }
+
+    /**
+     * Sets the new list items based on the specified Element. The Element must contain
+     * a list of item elements.
+     *
+     * @param listElement the element containing a list of items.
+     * @param notify true if a provicy list modified event will be triggered.
+     */
+    private void updateList(Element listElement, boolean notify) {
         // Reset the list of items of this list
         items = new ArrayList<PrivacyItem>();
 
@@ -159,6 +218,10 @@ public class PrivacyList implements Cacheable {
         }
         // Sort items collections
         Collections.sort(items);
+        if (notify) {
+            // Trigger event that this list has been modified
+            PrivacyListManager.getInstance().dispatchModifiedEvent(this);
+        }
     }
 
     public int getCachedSize() {
@@ -189,6 +252,24 @@ public class PrivacyList implements Cacheable {
         }
         else {
             return false;
+        }
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, userJID.toString());
+        ExternalizableUtil.getInstance().writeBoolean(out, isDefault);
+        ExternalizableUtil.getInstance().writeSafeUTF(out, asElement().asXML());
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        userJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+        isDefault = ExternalizableUtil.getInstance().readBoolean(in);
+        String xml = ExternalizableUtil.getInstance().readSafeUTF(in);
+        try {
+            Element element = localParser.get().read(new StringReader(xml)).getRootElement();
+            updateList(element, false);
+        } catch (Exception e) {
+            Log.error("Error while parsing Privacy Property", e);
         }
     }
 }

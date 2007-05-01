@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# openfired	Stops and starts the Openfire XMPP service.
+# openfire	Stops and starts the Openfire XMPP service.
 #
 # chkconfig: 2345 99 1
 # description: Openfire is an XMPP server, which is a server that facilitates \
 #              XML based communication, such as chat.
-# config: /opt/openfire/conf/openfire.xml
-# config: /etc/sysconfig/openfired
+# config: /usr/local/openfire/conf/openfire.xml
+# config: /etc/sysconfig/openfire
 # pidfile: /var/run/openfire.pid
 # 
 # This script has currently been tested on Redhat, CentOS, and Fedora  based
@@ -25,22 +25,22 @@ RETVAL=0
 [ "`id -u`" = 0 ] || exit 1
 
 # Get config.
-[ -f "/etc/sysconfig/openfired" ] && . /etc/sysconfig/openfired
+[ -f "/etc/sysconfig/openfire" ] && . /etc/sysconfig/openfire
 
 # If openfire user is not set in sysconfig, set to daemon.
 [ -z "$OPENFIRE_USER" ] && OPENFIRE_USER="daemon"
 
-# If pid file path is not set in sysconfig, set to /var/run/openfired.pid.
+# If pid file path is not set in sysconfig, set to /var/run/openfire.pid.
 [ -z "$OPENFIRE_PIDFILE" ] && OPENFIRE_PIDFILE="/var/run/${PROG}.pid"
 
 # -----------------------------------------------------------------
 
 # If a openfire home variable has not been specified, try to determine it.
 if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
-	if [ -d "/opt/openfire" ]; then
-		OPENFIRE_HOME="/opt/openfire"
-	elif [ -d "/usr/local/openfire" ]; then
+	if [ -d "/usr/local/openfire" ]; then
 		OPENFIRE_HOME="/usr/local/openfire"
+	elif [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
 	else
 		echo "Could not find Openfire installation under /opt or /usr/local."
 		echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
@@ -115,7 +115,7 @@ start() {
 
 	echo
 
-	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfired
+	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfire
 
 	sleep 1 # allows prompt to return
 	cd $OLD_PWD
@@ -130,7 +130,7 @@ stop() {
 	echo
 
 	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
-	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfired" ] && rm -f /var/lock/subsys/openfired
+	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
 }
 
 restart() {
@@ -140,7 +140,7 @@ restart() {
 }
 
 condrestart() {
-	[ -e "/var/lock/subsys/openfired" ] && restart
+	[ -e "/var/lock/subsys/openfire" ] && restart
 	return 0
 }
 

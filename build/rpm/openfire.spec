@@ -22,49 +22,60 @@ and delivers an innovative feature set.
 %build
 
 %install
+# Need to evaluate this.  Required, but need to figure out logistics.
+#rm -rf $RPM_BUILD_ROOT
+# We prefer /usr/local to /opt.
+mkdir -p $RPM_BUILD_ROOT/usr/local
+mv $RPM_BUILD_ROOT/opt/openfire $RPM_BUILD_ROOT/usr/local/openfire
+rmdir $RPM_BUILD_ROOT/opt
 # There's no need to package this.
-rm $RPM_BUILD_ROOT/opt/openfire/logs/stderr.out
+rm $RPM_BUILD_ROOT/usr/local/openfire/logs/stderr.out
 # Set up the init script.
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
-cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/redhat/openfired $RPM_BUILD_ROOT/etc/init.d/openfired
-chmod 755 $RPM_BUILD_ROOT/etc/init.d/openfired
+cp $RPM_BUILD_ROOT/usr/local/openfire/bin/extra/redhat/openfire $RPM_BUILD_ROOT/etc/init.d/openfire
+chmod 755 $RPM_BUILD_ROOT/etc/init.d/openfire
 # Make the startup script executable.
-chmod 755 $RPM_BUILD_ROOT/opt/openfire/bin/openfire.sh
+chmod 755 $RPM_BUILD_ROOT/usr/local/openfire/bin/openfire.sh
 # Set up the sysconfig file.
 mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
-cp $RPM_BUILD_ROOT/opt/openfire/bin/extra/redhat/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
+cp $RPM_BUILD_ROOT/usr/local/openfire/bin/extra/redhat/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
+# Create /etc based config directory.
+mkdir -p $RPM_BUILD_ROOT/etc/openfire
+
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %preun
-[ -x "/etc/init.d/openfired" ] && /etc/init.d/openfired stop
-/sbin/chkconfig --del openfired
+[ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire stop
+/sbin/chkconfig --del openfire
 
 %post
-/sbin/chkconfig --add openfired
+/sbin/chkconfig --add openfire
 
 %files
 %defattr(-,daemon,daemon)
-%dir /opt/openfire
-/opt/openfire/bin
-%dir /opt/openfire/conf
-%config(noreplace) /opt/openfire/conf/openfire.xml
-/opt/openfire/lib
-%dir /opt/openfire/logs
-/opt/openfire/plugins
-%dir /opt/openfire/resources
-/opt/openfire/resources/database
-/opt/openfire/resources/i18n
-/opt/openfire/resources/nativeAuth
-/opt/openfire/resources/spank
-%dir /opt/openfire/resources/security
-%config(noreplace) /opt/openfire/resources/security/keystore
-%config(noreplace) /opt/openfire/resources/security/truststore
-%doc /opt/openfire/documentation
-%doc /opt/openfire/LICENSE.html 
-%doc /opt/openfire/README.html 
-%doc /opt/openfire/changelog.html
-/etc/init.d/openfired
+%dir /usr/local/openfire
+/usr/local/openfire/bin
+%dir /usr/local/openfire/conf
+%config(noreplace) /usr/local/openfire/conf/openfire.xml
+/usr/local/openfire/lib
+%dir /usr/local/openfire/logs
+/usr/local/openfire/plugins
+%dir /usr/local/openfire/resources
+/usr/local/openfire/resources/database
+/usr/local/openfire/resources/i18n
+/usr/local/openfire/resources/nativeAuth
+/usr/local/openfire/resources/spank
+%dir /usr/local/openfire/resources/security
+%config(noreplace) /usr/local/openfire/resources/security/keystore
+%config(noreplace) /usr/local/openfire/resources/security/truststore
+%doc /usr/local/openfire/documentation
+%doc /usr/local/openfire/LICENSE.html 
+%doc /usr/local/openfire/README.html 
+%doc /usr/local/openfire/changelog.html
+/etc/init.d/openfire
 %config(noreplace) /etc/sysconfig/openfire
 
 %changelog
-* Sun Apr 12 2007 Jive Software <nobody@jivesoftware.com>
-- Openfire 3.3.0 build.
+* Mon Apr 30 2007 Daniel Henninger <jadestorm@nc.rr.com> 3.3.1
+- Initial RPM creation.

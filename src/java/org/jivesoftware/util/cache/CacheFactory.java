@@ -49,9 +49,9 @@ public class CacheFactory {
 
     static {
         localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
-                "com.jivesoftware.base.coherence.cache.CoherenceLocalCacheFactory");
+                "com.jivesoftware.util.cache.CoherenceLocalCacheFactory");
         clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
-                "com.jivesoftware.base.coherence.cache.CoherenceClusteredCacheFactory");
+                "com.jivesoftware.util.cache.CoherenceClusteredCacheFactory");
     }
 
     private CacheFactory() {
@@ -120,7 +120,7 @@ public class CacheFactory {
      * @return true if this instance is configured to run in a cluster.
      */
     public static boolean isClusteringConfigured() {
-        return JiveGlobals.getBooleanProperty(CLUSTER_PROPERTY_NAME);
+        return JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME, false);
 
     }
 
@@ -144,7 +144,7 @@ public class CacheFactory {
         if (enabled == clusteringEnabled) {
             return;
         }
-        JiveGlobals.setProperty(CLUSTER_PROPERTY_NAME, String.valueOf(enabled));
+        JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, String.valueOf(enabled));
         if (!enabled) {
             clusteringEnabled = false;
 
@@ -166,7 +166,7 @@ public class CacheFactory {
             // Reload Jive properties. This will ensure that this nodes copy of the
             // properties starts correct.
             //TODO see if there is something analagous in openfire
-//            DbJiveProperties.getInstance().init();
+//           DbJiveProperties.getInstance().init();
             startClustering();
         }
     }
@@ -270,86 +270,6 @@ public class CacheFactory {
         }
     }
 
-    /**
-     * Saves current cache settings to local properties.
-     */
-    public static void saveCacheSettings() {
-        for (Cache toSave : caches.values()) {
-            setMaxSizeProperty(toSave.getName(), toSave.getMaxCacheSize());
-            setMaxLifetimeProperty(toSave.getName(), toSave.getMaxLifetime());
-        }
-    }
-
-    /**
-     * Sets a local property which overrides the maximum cache size as configured in coherence-cache-config.xml for the
-     * supplied cache name.
-     * @param cacheName the name of the cache to store a value for.
-     * @param size the maximum cache size.
-     */
-    public static void setMaxSizeProperty(String cacheName, int size) {
-        cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setProperty("cache." + cacheName + ".size", Integer.toString(size));
-    }
-
-    /**
-     * Sets a local property which overrides the maximum cache entry lifetime as configured in coherence-cache-config.xml
-     * for the supplied cache name.
-     * @param cacheName the name of the cache to store a value for.
-     * @param lifetime the maximum cache entry lifetime.
-     */
-    public static void setMaxLifetimeProperty(String cacheName, long lifetime) {
-        cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setProperty("cache." + cacheName + ".maxLifetime", Long.toString(lifetime));
-    }
-
-    /**
-     * If a local property is found for the supplied name which specifies a value for cache size, it is returned. Otherwise,
-     * the defaultSize argument is returned.
-     * @param cacheName the name of the cache to look up a corresponding property for.
-     * @param defaultSize the value to return if no property is set.
-     * @return either the property value or the default value.
-     */
-    public static int getMaxSizeFromProperty(String cacheName, int defaultSize) {
-        String propName = "cache." + cacheName.replaceAll(" ", "") + ".size";
-        String sizeProp = JiveGlobals.getProperty(propName);
-        if (sizeProp != null) {
-            try {
-                return Integer.parseInt(sizeProp);
-            }
-            catch (NumberFormatException nfe) {
-                Log.warn("Unable to parse " + propName + " using default value of " + defaultSize);
-                return defaultSize;
-            }
-        }
-        else {
-            return defaultSize;
-        }
-    }
-
-     /**
-     * If a local property is found for the supplied name which specifies a value for cache entry lifetime, it is returned.
-     * Otherwise, the defaultLifetime argument is returned.
-     * @param cacheName the name of the cache to look up a corresponding property for.
-     * @param defaultLifetime the value to return if no property is set.
-     * @return either the property value or the default value.
-     */
-    public static long getMaxLifetimeFromProperty(String cacheName, long defaultLifetime) {
-        String propName = "cache." + cacheName.replaceAll(" ", "") + ".maxLifetime";
-        String lifetimeProp = JiveGlobals.getProperty(propName);
-        if (lifetimeProp != null) {
-            try {
-                return Long.parseLong(lifetimeProp);
-            }
-            catch (NumberFormatException nfe) {
-                Log.warn("Unable to parse " + propName + " using default value of " + defaultLifetime);
-                return defaultLifetime;
-            }
-        }
-        else {
-            return defaultLifetime;
-        }
-    }
-
     public static synchronized void initialize() throws InitializationException {
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class
@@ -379,7 +299,7 @@ public class CacheFactory {
             return;
         }
         // See if clustering should be enabled.
-        String enabled = JiveGlobals.getProperty(CLUSTER_PROPERTY_NAME);
+        String enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME);
 
         // If the user tried to turn on clustering, make sure they're actually allowed to.
         if (Boolean.valueOf(enabled)) {

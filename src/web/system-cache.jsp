@@ -1,4 +1,4 @@
-<%@ page import="org.jivesoftware.util.Cache"%>
+<%@ page import="org.jivesoftware.util.cache.Cache"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="java.text.DecimalFormat"%>
 <%--
@@ -90,17 +90,17 @@
     </head>
     <body>
 
-<%  // Get parameters
+<% // Get parameters
     boolean doClearCache = request.getParameter("clear") != null;
-    int refresh = ParamUtils.getIntParameter(request,"refresh",-1);
-    int[] cacheIDs = ParamUtils.getIntParameters(request,"cacheID",-1);
+    int refresh = ParamUtils.getIntParameter(request, "refresh", -1);
+    int[] cacheIDs = ParamUtils.getIntParameters(request, "cacheID", -1);
 
     // Get the list of existing caches
     Cache[] caches = webManager.getCaches();
 
     // Clear one or multiple caches if requested.
     if (doClearCache) {
-        for (int i=0; i<cacheIDs.length; i++) {
+        for (int i = 0; i < cacheIDs.length; i++) {
             caches[cacheIDs[i]].clear();
         }
     }

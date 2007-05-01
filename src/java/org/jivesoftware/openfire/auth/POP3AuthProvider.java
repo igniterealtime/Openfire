@@ -12,6 +12,8 @@
 package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;

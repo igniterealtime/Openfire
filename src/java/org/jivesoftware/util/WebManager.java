@@ -18,6 +18,8 @@ import org.jivesoftware.openfire.muc.MultiUserChatServer;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 
 import java.io.*;
 import java.net.URL;

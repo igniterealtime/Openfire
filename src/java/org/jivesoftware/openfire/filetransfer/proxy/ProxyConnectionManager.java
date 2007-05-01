@@ -11,6 +11,8 @@
 package org.jivesoftware.openfire.filetransfer.proxy;
 
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.DefaultCache;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferRejectedException;
@@ -58,7 +60,7 @@ public class ProxyConnectionManager {
 
     public ProxyConnectionManager(FileTransferManager manager) {
         String cacheName = "File Transfer";
-        connectionMap = new Cache<String, ProxyTransfer>(cacheName, -1, 1000 * 60 * 10);
+        connectionMap = new DefaultCache<String, ProxyTransfer>(cacheName, -1, 1000 * 60 * 10);
 
         className = JiveGlobals.getProperty("provider.transfer.proxy",
                 "org.jivesoftware.openfire.filetransfer.proxy.DefaultProxyTransfer");

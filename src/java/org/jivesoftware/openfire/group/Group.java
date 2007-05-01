@@ -14,8 +14,8 @@ package org.jivesoftware.openfire.group;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 

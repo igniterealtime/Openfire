@@ -11,7 +11,8 @@
 package org.jivesoftware.openfire.filetransfer;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.DefaultCache;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -58,7 +59,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         size = JiveGlobals.getIntProperty("cache." + propertiesName + ".size", size);
         expirationTime = (long) JiveGlobals.getIntProperty(
                 "cache." + propertiesName + ".expirationTime", (int) expirationTime);
-        return new Cache<String, FileTransfer>(name, size, expirationTime);
+        return new DefaultCache<String, FileTransfer>(name, size, expirationTime);
     }
 
     /**

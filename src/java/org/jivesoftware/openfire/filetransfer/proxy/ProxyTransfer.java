@@ -9,7 +9,7 @@
  */
 package org.jivesoftware.openfire.filetransfer.proxy;
 
-import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.openfire.filetransfer.FileTransferProgress;
 
 import java.io.IOException;

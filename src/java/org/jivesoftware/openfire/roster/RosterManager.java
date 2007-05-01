@@ -11,8 +11,8 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;

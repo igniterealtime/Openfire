@@ -10,7 +10,7 @@
  */
 package org.jivesoftware.openfire.filetransfer.proxy;
 
-import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.cache.CacheSizes;
 
 import java.util.concurrent.Future;
 import java.io.IOException;

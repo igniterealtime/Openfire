@@ -11,9 +11,9 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.cache.Cacheable;
 
 /**
  * Represents a set of permissions that an entity has for an object in the system. For example,

@@ -12,8 +12,8 @@
 package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;

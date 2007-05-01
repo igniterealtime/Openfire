@@ -11,8 +11,8 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.IntEnum;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;

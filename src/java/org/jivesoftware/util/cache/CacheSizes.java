@@ -9,7 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.util;
+package org.jivesoftware.util.cache;
+
+import org.jivesoftware.util.cache.Cacheable;
 
 import java.util.Map;
 import java.util.Collection;

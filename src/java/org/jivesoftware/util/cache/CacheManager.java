@@ -7,7 +7,11 @@
  * Use is subject to license terms.
  */
 
-package org.jivesoftware.util;
+package org.jivesoftware.util.cache;
+
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -73,7 +77,7 @@ public class CacheManager {
             size = JiveGlobals.getIntProperty("cache." + propertiesName + ".size", size);
             expirationTime = (long) JiveGlobals.getIntProperty(
                     "cache." + propertiesName + ".expirationTime", (int) expirationTime);
-            cache = new Cache<K,V>(name, size, expirationTime);
+            cache = new DefaultCache<K,V>(name, size, expirationTime);
             caches.put(name, cache);
         }
         return cache;

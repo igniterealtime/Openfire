@@ -10,8 +10,8 @@
  */
 package org.jivesoftware.openfire.filetransfer;
 
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CacheSizes;
 
 import java.io.Serializable;
 

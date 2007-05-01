@@ -1,8 +1,8 @@
 package org.jivesoftware.openfire.privacy;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 
 /**
  * A Privacy list manager creates, gets, updates and removes privacy lists. Loaded lists

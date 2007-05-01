@@ -12,8 +12,8 @@
 package org.jivesoftware.openfire.privacy;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.user.UserNotFoundException;

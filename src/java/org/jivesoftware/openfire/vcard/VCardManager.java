@@ -13,6 +13,8 @@ package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;

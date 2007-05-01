@@ -19,6 +19,8 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 

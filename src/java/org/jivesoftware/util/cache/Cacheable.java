@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.util;
+package org.jivesoftware.util.cache;
 
 /**
  * Interface that defines the necessary behavior for objects added to a Cache.
@@ -22,7 +22,7 @@ package org.jivesoftware.util;
  * speedy.
  *
  * @author Jive Software
- * @see org.jivesoftware.util.Cache
+ * @see org.jivesoftware.util.cache.Cache
  */
 public interface Cacheable extends java.io.Serializable {
 

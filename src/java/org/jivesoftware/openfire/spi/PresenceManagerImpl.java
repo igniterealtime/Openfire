@@ -16,6 +16,8 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.SessionManager;

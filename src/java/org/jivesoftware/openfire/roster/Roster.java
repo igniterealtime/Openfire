@@ -12,8 +12,8 @@
 package org.jivesoftware.openfire.roster;
 
 import org.jivesoftware.database.JiveID;
-import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;

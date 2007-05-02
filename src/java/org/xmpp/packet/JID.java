@@ -10,8 +10,9 @@ package org.xmpp.packet;
 import org.jivesoftware.stringprep.IDNA;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ import java.util.Map;
  *
  * @author Matt Tucker
  */
-public class JID implements Comparable, Serializable {
+public class JID implements Comparable, Serializable, Externalizable {
 
     // Stringprep operations are very expensive. Therefore, we cache node, domain and
     // resource values that have already had stringprep applied so that we can check
@@ -202,6 +203,12 @@ public class JID implements Comparable, Serializable {
             stringprepCache.put(answer, null);
         }
         return answer;
+    }
+
+    /**
+     * Constructor added for Externalizable. Do not use this constructor.
+     */
+    public JID() {
     }
 
     /**
@@ -542,5 +549,20 @@ public class JID implements Comparable, Serializable {
         protected boolean removeEldestEntry(Map.Entry eldest) {
             return size() > maxSize;
         }
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, toString());
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        String jid = ExternalizableUtil.getInstance().readSafeUTF(in);
+        String[] parts = getParts(jid);
+
+        this.node = parts[0];
+        this.domain = parts[1];
+        this.resource = parts[2];
+        // Cache the bare and full JID String representation
+        updateCache();
     }
 }

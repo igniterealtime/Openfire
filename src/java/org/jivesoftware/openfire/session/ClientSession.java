@@ -11,9 +11,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -27,6 +24,9 @@ import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
@@ -94,12 +94,12 @@ public class ClientSession extends Session {
      * Privacy list that overrides the default privacy list. This list affects only this
      * session and only for the duration of the session.
      */
-    private PrivacyList activeList;
+    private String activeList;
     /**
      * Default privacy list used for the session's user. This list is processed if there
      * is no active list set for the session.
      */
-    private PrivacyList defaultList;
+    private String defaultList;
 
     static {
         // Fill out the allowedIPs with the system property
@@ -396,7 +396,14 @@ public class ClientSession extends Session {
      * @return the Privacy list that overrides the default privacy list.
      */
     public PrivacyList getActiveList() {
-        return activeList;
+        if (activeList != null) {
+            try {
+                return PrivacyListManager.getInstance().getPrivacyList(getUsername(), activeList);
+            } catch (UserNotFoundException e) {
+                Log.error(e);
+            }
+        }
+        return null;
     }
 
     /**
@@ -406,7 +413,7 @@ public class ClientSession extends Session {
      * @param activeList the Privacy list that overrides the default privacy list.
      */
     public void setActiveList(PrivacyList activeList) {
-        this.activeList = activeList;
+        this.activeList = activeList != null ? activeList.getName() : null;
     }
 
     /**
@@ -416,18 +423,24 @@ public class ClientSession extends Session {
      * @return the default Privacy list used for the session's user.
      */
     public PrivacyList getDefaultList() {
-        return defaultList;
+        if (defaultList != null) {
+            try {
+                return PrivacyListManager.getInstance().getPrivacyList(getUsername(), defaultList);
+            } catch (UserNotFoundException e) {
+                Log.error(e);
+            }
+        }
+        return null;
     }
 
     /**
      * Sets the default Privacy list used for the session's user. This list is
      * processed if there is no active list set for the session.
      *
-     *
      * @param defaultList the default Privacy list used for the session's user.
      */
     public void setDefaultList(PrivacyList defaultList) {
-        this.defaultList = defaultList;
+        this.defaultList = defaultList != null ? defaultList.getName() : null;
     }
 
     /**
@@ -711,16 +724,17 @@ public class ClientSession extends Session {
      * @return true if the specified packet must be blocked.
      */
     public boolean canProcess(Packet packet) {
-        if (activeList != null) {
+        PrivacyList list = getActiveList();
+        if (list != null) {
             // If a privacy list is active then make sure that the packet is not blocked
-            return !activeList.shouldBlockPacket(packet);
+            return !list.shouldBlockPacket(packet);
         }
-        else if (defaultList != null) {
+        else {
+            list = getDefaultList();
             // There is no active list so check if there exists a default list and make
             // sure that the packet is not blocked
-            return !defaultList.shouldBlockPacket(packet);
+            return list == null || !list.shouldBlockPacket(packet);
         }
-        return true;
     }
 
     void deliver(Packet packet) throws UnauthorizedException {

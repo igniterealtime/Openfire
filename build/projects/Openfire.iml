@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
-    <output url="file://$MODULE_DIR$/work/classes" />
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <output url="file://$MODULE_DIR$/../../make/work/classes" />
     <exclude-output />
     <exclude-exploded />
+    <output-test url="file://$MODULE_DIR$/test/classes" />
     <content url="file://$MODULE_DIR$/../..">
       <sourceFolder url="file://$MODULE_DIR$/../../src/i18n" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/resources" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/throttletest/src" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

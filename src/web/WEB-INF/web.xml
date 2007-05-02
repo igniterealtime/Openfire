@@ -102,12 +102,8 @@
     <servlet>
         <servlet-name>dwr-invoker</servlet-name>
         <servlet-class>uk.ltd.getahead.dwr.DWRServlet</servlet-class>
-        <init-param>
-            <param-name>debug</param-name>
-            <param-value>true</param-value>
-        </init-param>
     </servlet>
-
+ 
     <servlet>
         <servlet-name>PluginIconServlet</servlet-name>
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>

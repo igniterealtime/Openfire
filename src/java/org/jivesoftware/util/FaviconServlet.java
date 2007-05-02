@@ -16,7 +16,7 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -79,8 +79,8 @@ public class FaviconServlet extends HttpServlet {
             e.printStackTrace();
         }
         // Initialize caches.
-        missesCache = CacheManager.initializeCache("Favicon Misses", "faviconMisses", 128 * 1024);
-        hitsCache = CacheManager.initializeCache("Favicon Hits", "faviconHits", 128 * 1024);
+        missesCache = CacheFactory.createCache("Favicon Misses");
+        hitsCache = CacheFactory.createCache("Favicon Hits");
     }
 
     /**

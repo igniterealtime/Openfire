@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -357,14 +358,12 @@ public class WebManager extends WebBean {
     }
 
     public Cache[] getCaches() {
-        List<Cache> caches = new ArrayList<Cache>(CacheManager.getCaches());
-        Collections.sort(caches, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                Cache cache1 = (Cache)o1;
-                Cache cache2 = (Cache)o2;
+        Cache[] caches =CacheFactory.getAllCaches();
+        Arrays.sort(caches, new Comparator<Cache>() {
+            public int compare(Cache cache1, Cache cache2) {
                 return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
             }
         });
-        return caches.toArray(new Cache[]{});
+        return caches;
     }
 }

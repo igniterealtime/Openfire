@@ -13,8 +13,7 @@ package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
-import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.xmpp.packet.IQ;
@@ -87,8 +86,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         super("Multicast Packet Router");
 
         String cacheName = "Multicast Service";
-        CacheManager.initializeCache(cacheName, "multicast", 128 * 1024, JiveConstants.DAY);
-        cache = CacheManager.getCache(cacheName);
+        cache = CacheFactory.createCache(cacheName);
     }
 
     public void route(Packet packet) {

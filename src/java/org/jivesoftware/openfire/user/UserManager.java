@@ -14,13 +14,14 @@ package org.jivesoftware.openfire.user;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -47,11 +48,9 @@ public class UserManager implements IQResultListener {
 
     static {
         // Initialize caches.
-        userCache = CacheManager.initializeCache("User", "userCache", 512 * 1024,
-                JiveConstants.MINUTE*30);
-        remoteUsersCache = CacheManager.initializeCache("Remote Users Existence", "remoteUsersCache",
-                512 * 1024, JiveConstants.MINUTE*30);
-        CacheManager.initializeCache("Roster", "username2roster", 512 * 1024);
+        userCache = CacheFactory.createCache("User");
+        remoteUsersCache = CacheFactory.createCache("Remote Users Exixtence");
+
         // Load a user provider.
         initProvider();
 

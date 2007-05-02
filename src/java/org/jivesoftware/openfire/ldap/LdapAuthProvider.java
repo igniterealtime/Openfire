@@ -13,7 +13,7 @@ package org.jivesoftware.openfire.ldap;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -48,12 +48,8 @@ public class LdapAuthProvider implements AuthProvider {
     public LdapAuthProvider() {
         manager = LdapManager.getInstance();
         if (JiveGlobals.getXMLProperty("ldap.authCache.enabled", false)) {
-            int maxSize = JiveGlobals.getXMLProperty("ldap.authCache.size", 512*1024);
-            long maxLifetime = (long)JiveGlobals.getXMLProperty("ldap.authCache.maxLifetime",
-                    (int)JiveConstants.HOUR * 2);
             String cacheName = "LDAP Authentication";
-            CacheManager.initializeCache(cacheName, "ldap", maxSize, maxLifetime);
-            authCache = CacheManager.getCache(cacheName);
+            authCache = CacheFactory.createCache(cacheName);
         }
     }
 

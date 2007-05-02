@@ -2,7 +2,7 @@ package org.jivesoftware.openfire.privacy;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -53,8 +53,7 @@ public class PrivacyListManager {
     private PrivacyListManager() {
         // Create the cache of privacy lists
         String cacheName = "Privacy Lists";
-        CacheManager.initializeCache(cacheName, "listsCache",512 * 1024);
-        listsCache = CacheManager.getCache(cacheName);
+        listsCache = CacheFactory.createCache(cacheName);
     }
 
     /**

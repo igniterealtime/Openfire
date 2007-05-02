@@ -13,6 +13,7 @@ package org.jivesoftware.openfire.filetransfer;
 import org.dom4j.Element;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.DefaultCache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -49,17 +50,8 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
      */
     public DefaultFileTransferManager() {
         super("File Transfer Manager");
-        fileTransferMap = createCache(CACHE_NAME, "fileTransfer", 128 * 1024, 1000 * 60 * 10);
+        fileTransferMap = CacheFactory.createCache(CACHE_NAME);
         InterceptorManager.getInstance().addInterceptor(new MetaFileTransferInterceptor());
-    }
-
-    private Cache<String, FileTransfer> createCache(String name, String propertiesName, int size,
-                                                    long expirationTime)
-    {
-        size = JiveGlobals.getIntProperty("cache." + propertiesName + ".size", size);
-        expirationTime = (long) JiveGlobals.getIntProperty(
-                "cache." + propertiesName + ".expirationTime", (int) expirationTime);
-        return new DefaultCache<String, FileTransfer>(name, size, expirationTime);
     }
 
     /**

@@ -13,7 +13,7 @@ package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -79,12 +79,8 @@ public class POP3AuthProvider implements AuthProvider {
      */
     public POP3AuthProvider() {
         if (Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authCache.enabled"))) {
-            int maxSize = JiveGlobals.getXMLProperty("pop3.authCache.size", 512*1024);
-            long maxLifetime = (long)JiveGlobals.getXMLProperty("pop3.authCache.maxLifetime",
-								(int)JiveConstants.HOUR);
             String cacheName = "POP3 Authentication";
-            CacheManager.initializeCache(cacheName, "pop3", maxSize, maxLifetime);
-            authCache = CacheManager.getCache(cacheName);
+            authCache = CacheFactory.createCache(cacheName);
         }
 
         useSSL = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.ssl"));

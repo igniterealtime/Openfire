@@ -17,7 +17,7 @@ import org.dom4j.DocumentHelper;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.SessionManager;
@@ -469,8 +469,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         super.initialize(server);
         this.server = server;
 
-        offlinePresenceCache = CacheManager.initializeCache("Offline Presence Cache", "offlinePresence", 512*1024);
-        lastActivityCache = CacheManager.initializeCache("Last Activity Cache", "lastActivity", 128*1024);
+        offlinePresenceCache = CacheFactory.createCache("Offline Presence Cache");
+        lastActivityCache = CacheFactory.createCache("Last Activity Cache");
 
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();

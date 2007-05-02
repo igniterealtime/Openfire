@@ -11,15 +11,15 @@
 
 package org.jivesoftware.openfire.group;
 
+import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
 import org.xmpp.packet.JID;
 
 import java.util.Collection;
@@ -55,13 +55,11 @@ public class GroupManager {
 
     private GroupManager() {
         // Initialize caches.
-        groupCache = CacheManager.initializeCache("Group", "group", 1024 * 1024,
-                JiveConstants.MINUTE*15);
+        groupCache = CacheFactory.createCache("Group");
 
         // A cache for meta-data around groups: count, group names, groups associated with
         // a particular user
-        groupMetaCache = CacheManager.initializeCache("Group Metadata Cache", "groupMeta",
-                512 * 1024, JiveConstants.MINUTE*15);
+        groupMetaCache = CacheFactory.createCache("Group Metadata Cache");
 
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",

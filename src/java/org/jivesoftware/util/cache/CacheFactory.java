@@ -10,6 +10,12 @@ package org.jivesoftware.util.cache;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.InitializationException;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -146,28 +152,13 @@ public class CacheFactory {
         }
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, String.valueOf(enabled));
         if (!enabled) {
-            clusteringEnabled = false;
-
-            CacheFactoryStrategy clusteredFactory = cacheFactoryStrategy;
-            cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass)
-                    .newInstance();
-
-            // Loop through clustered caches and change them to local caches.
-            for (String cacheName : caches.keySet()) {
-                CacheWrapper wrapper = (CacheWrapper) caches.get(cacheName);
-                wrapper.setWrappedCache(cacheFactoryStrategy.createCache(cacheName));
-            }
-
-            // Stop the cluster
-            clusteredFactory.stopCluster();
-            fireClusteringStopped();
+            stopClustering();
         }
         else {
             // Reload Jive properties. This will ensure that this nodes copy of the
             // properties starts correct.
-            //TODO see if there is something analagous in openfire
-//           DbJiveProperties.getInstance().init();
-            startClustering();
+           JiveProperties.getInstance().init();
+           startClustering();
         }
     }
 
@@ -245,9 +236,9 @@ public class CacheFactory {
      * as the system will have to do extra work to recover from a non-clean shutdown.
      * If clustering is not enabled, this method will do nothing.
      */
-    public static synchronized void shutdownClusteringService() {
+    public static synchronized void shutdown() {
         Log.debug("Shutting down clustered cache service.");
-        cacheFactoryStrategy.stopCluster();
+        stopClustering();
     }
 
     public static void addClusteringListener(ClusteringListener listener) {
@@ -311,9 +302,15 @@ public class CacheFactory {
             private volatile boolean destroyed = false;
 
             public void run() {
+                XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                    public void serverStarted() {}
+
+                    public void serverStopping() {
+                        destroyed = true;
+                    }
+                });
 
                 // Run the timer indefinitely.
-                //TODO set the destroyed flag through some listener
                 while (!destroyed) {
                     // Publish cache stats for this cluster node (assuming clustering is
                     // enabled and there are stats to publish).
@@ -357,6 +354,29 @@ public class CacheFactory {
         }
         catch (Exception e) {
             Log.error("Unable to start clustering - continuing in local mode", e);
+        }
+    }
+
+    private static void stopClustering() {
+        try {
+            CacheFactoryStrategy clusteredFactory = cacheFactoryStrategy;
+            cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass)
+                    .newInstance();
+
+            // Loop through clustered caches and change them to local caches.
+            for (String cacheName : caches.keySet()) {
+                CacheWrapper wrapper = (CacheWrapper) caches.get(cacheName);
+                wrapper.setWrappedCache(cacheFactoryStrategy.createCache(cacheName));
+            }
+
+            clusteringEnabled = false;
+
+            // Stop the cluster
+            clusteredFactory.stopCluster();
+            fireClusteringStopped();
+        }
+        catch (Exception e) {
+            Log.error("Unable to stop clustering - continuing in clustered mode", e);
         }
     }
 

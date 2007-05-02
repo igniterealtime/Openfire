@@ -12,7 +12,7 @@ package org.jivesoftware.openfire.http;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -33,8 +33,7 @@ public class ResourceServlet extends HttpServlet {
     private static long expiresOffset = 3600 * 24 * 10;	// 10 days util client cache expires
     private boolean debug = false;
     private boolean disableCompression = false;
-    private static Cache<String, byte[]> cache = CacheManager.initializeCache(
-            "Javascript Cache", "javascript", 128 * 1024, expiresOffset);
+    private static Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
 
     public void init(ServletConfig config) throws ServletException {
         super.init(config);

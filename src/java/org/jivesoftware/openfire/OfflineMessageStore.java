@@ -18,7 +18,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -93,8 +93,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         super("Offline Message Store");
         dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
                 TimeZone.getTimeZone("UTC"));
-        sizeCache = CacheManager.initializeCache("Offline Message Size", "offlinemessage",
-                1024 * 100, JiveConstants.HOUR * 12);
+        sizeCache = CacheFactory.createCache("Offline Message Size");
     }
 
     /**

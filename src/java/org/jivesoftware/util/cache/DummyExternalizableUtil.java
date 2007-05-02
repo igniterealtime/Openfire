@@ -12,7 +12,9 @@ package org.jivesoftware.util.cache;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -149,5 +151,16 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
     public String readSafeUTF(DataInput in) {
         // Do nothing
         return "";
+    }
+
+    public void writeExternalizableCollection(DataOutput out, Collection<? extends Externalizable> value)
+            throws IOException {
+        // Do nothing
+    }
+
+    public int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value,
+                                            ClassLoader loader) throws IOException {
+        // Do nothing
+        return 0;
     }
 }

@@ -13,7 +13,9 @@ package org.jivesoftware.util.cache;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -189,5 +191,32 @@ public class ExternalizableUtil {
 
     public String readSafeUTF(DataInput in) throws IOException {
         return strategy.readSafeUTF(in);
+    }
+
+    /**
+     * Writes a collection of Externalizable objects. The collection passed as a parameter
+     * must be a collection and not a <tt>null</null> value.
+     *
+     * @param out   the output stream.
+     * @param value the collection of Externalizable objects. This value must not be null.
+     * @throws IOException if an error occurs.
+     */
+    public void writeExternalizableCollection(DataOutput out, Collection<? extends Externalizable> value) throws IOException {
+        strategy.writeExternalizableCollection(out, value);
+    }
+
+    /**
+     * Reads a collection of Externalizable objects and adds them to the collection passed as a parameter. The
+     * collection passed as a parameter must be a collection and not a <tt>null</null> value.
+     *
+     * @param in the input stream.
+     * @param value the collection of Externalizable objects. This value must not be null.
+     * @param loader class loader to use to build elements inside of the serialized collection.
+     * @throws IOException if an error occurs.
+     * @return the number of elements added to the collection.
+     */
+    public int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value, ClassLoader loader)
+            throws IOException {
+        return strategy.readExternalizableCollection(in, value, loader);
     }
 }

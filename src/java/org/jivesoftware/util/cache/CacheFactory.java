@@ -55,7 +55,7 @@ public class CacheFactory {
 
     static {
         localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
-                "com.jivesoftware.util.cache.CoherenceLocalCacheFactory");
+                "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
         clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
                 "com.jivesoftware.util.cache.CoherenceClusteredCacheFactory");
     }

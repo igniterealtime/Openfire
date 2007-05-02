@@ -11,15 +11,15 @@
 
 package org.jivesoftware.openfire.group;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheManager;
 import org.xmpp.packet.JID;
 
 import java.util.Collection;
@@ -96,22 +96,37 @@ public class GroupManager {
                         groupMetaCache.clear();
                     }
                 }
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                groupCache.put(group.getName(), group);
             }
 
             public void memberAdded(Group group, Map params) {
                 groupMetaCache.clear();
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                groupCache.put(group.getName(), group);
             }
 
             public void memberRemoved(Group group, Map params) {
                 groupMetaCache.clear();
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                groupCache.put(group.getName(), group);
             }
 
             public void adminAdded(Group group, Map params) {
                 groupMetaCache.clear();
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                groupCache.put(group.getName(), group);
             }
 
             public void adminRemoved(Group group, Map params) {
                 groupMetaCache.clear();
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                groupCache.put(group.getName(), group);
             }
         });
 

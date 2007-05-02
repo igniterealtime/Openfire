@@ -14,12 +14,16 @@ package org.jivesoftware.openfire.group;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Matt Tucker
  */
-public class Group implements Cacheable {
+public class Group implements Cacheable, Externalizable {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveGroupProp WHERE groupName=?";
@@ -86,6 +90,12 @@ public class Group implements Cacheable {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return groupNames;
+    }
+
+    /**
+     * Constructor added for Externalizable. Do not use this constructor.
+     */
+    public Group() {
     }
 
     /**
@@ -320,16 +330,16 @@ public class Group implements Cacheable {
         }
 
         public Iterator<JID> iterator() {
-            return new Iterator() {
+            return new Iterator<JID>() {
 
                 Iterator<JID> iter = users.iterator();
-                Object current = null;
+                JID current = null;
 
                 public boolean hasNext() {
                     return iter.hasNext();
                 }
 
-                public Object next() {
+                public JID next() {
                     current = iter.next();
                     return current;
                 }
@@ -342,7 +352,7 @@ public class Group implements Cacheable {
                     if (provider.isReadOnly()) {
                         return;
                     }
-                    JID user = (JID)current;
+                    JID user = current;
                     // Remove the user from the collection in memory.
                     iter.remove();
                     // Remove the group user from the backend store.
@@ -602,5 +612,25 @@ public class Group implements Cacheable {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, name);
+        if (description != null) {
+            ExternalizableUtil.getInstance().writeSafeUTF(out, description);
+        }
+        ExternalizableUtil.getInstance().writeExternalizableCollection(out, members);
+        ExternalizableUtil.getInstance().writeExternalizableCollection(out, administrators);
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = ExternalizableUtil.getInstance().readSafeUTF(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            description = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
+        members= new HashSet<JID>();
+        administrators = new HashSet<JID>();
+        ExternalizableUtil.getInstance().readExternalizableCollection(in, members, getClass().getClassLoader());
+        ExternalizableUtil.getInstance().readExternalizableCollection(in, administrators, getClass().getClassLoader());
     }
 }

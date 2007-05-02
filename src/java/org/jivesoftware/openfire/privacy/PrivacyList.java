@@ -75,7 +75,6 @@ public class PrivacyList implements Cacheable, Externalizable {
     private String name;
     private boolean isDefault;
     private List<PrivacyItem> items = new ArrayList<PrivacyItem>();
-    private Roster roster;
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -146,6 +145,7 @@ public class PrivacyList implements Cacheable, Externalizable {
             return false;
         }
         // Iterate over the rules and check each rule condition
+        Roster roster = getRoster();
         for (PrivacyItem item : items) {
             if (item.matchesCondition(packet, roster, userJID)) {
                 if (item.isAllow()) {
@@ -205,13 +205,10 @@ public class PrivacyList implements Cacheable, Externalizable {
             items.add(newItem);
             // If the user's roster is required to evaluation whether a packet must be blocked
             // then ensure that the roster is available
-            if (roster == null && newItem.isRosterRequired()) {
-                try {
-                    roster = XMPPServer.getInstance().getRosterManager().getRoster(userJID.getNode());
-                }
-                catch (UserNotFoundException e) {
-                    Log.warn("Privacy item removed since roster of user was not found: " +
-                            userJID.getNode());
+            if (newItem.isRosterRequired()) {
+                Roster roster = getRoster();
+                if (roster == null) {
+                    Log.warn("Privacy item removed since roster of user was not found: " + userJID.getNode());
                     items.remove(newItem);
                 }
             }
@@ -224,6 +221,15 @@ public class PrivacyList implements Cacheable, Externalizable {
         }
     }
 
+    private Roster getRoster() {
+        try {
+            return XMPPServer.getInstance().getRosterManager().getRoster(userJID.getNode());
+        } catch (UserNotFoundException e) {
+            Log.warn("Roster not found for user: " + userJID);
+        }
+        return null;
+    }
+
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -233,9 +239,6 @@ public class PrivacyList implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfString(name);                  // name
         size += CacheSizes.sizeOfBoolean();                     // isDefault
         size += CacheSizes.sizeOfCollection(items);             // items of the list
-        if (roster != null) {
-            size += roster.getCachedSize();                     // add size of roster
-        }
         return size;
     }
 

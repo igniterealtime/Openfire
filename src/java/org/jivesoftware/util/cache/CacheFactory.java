@@ -237,8 +237,16 @@ public class CacheFactory {
      * If clustering is not enabled, this method will do nothing.
      */
     public static synchronized void shutdown() {
-        Log.debug("Shutting down clustered cache service.");
-        stopClustering();
+        if (!clusteringEnabled) {
+            return;
+        }
+        // See if clustering should be enabled.
+        String enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME);
+
+        if (Boolean.valueOf(enabled)) {
+            Log.debug("Shutting down clustered cache service.");
+            stopClustering();
+        }
     }
 
     public static void addClusteringListener(ClusteringListener listener) {

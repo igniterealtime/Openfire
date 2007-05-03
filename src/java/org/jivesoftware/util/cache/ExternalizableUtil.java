@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods to assist in working with the Externalizable interfaces. This class
@@ -177,6 +178,14 @@ public class ExternalizableUtil {
         return strategy.readLong(in);
     }
 
+    public void writeInt(DataOutput out, int value) throws IOException {
+        strategy.writeInt(out, value);
+    }
+
+    public int readInt(DataInput in) throws IOException {
+        return strategy.readInt(in);
+    }
+
     public void writeBoolean(DataOutput out, boolean value) throws IOException {
         strategy.writeBoolean(out, value);
     }
@@ -218,5 +227,78 @@ public class ExternalizableUtil {
     public int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value, ClassLoader loader)
             throws IOException {
         return strategy.readExternalizableCollection(in, value, loader);
+    }
+
+    /**
+     * Writes a Map of String key and value pairs. This method handles the
+     * case when the Map is <tt>null</tt>.
+     *
+     * @param out       the output stream.
+     * @param map       the Map of String key and Externalizable value pairs.
+     * @throws java.io.IOException if an error occurs.
+     */
+    public void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException {
+        strategy.writeExternalizableMap(out, map);
+    }
+
+    /**
+     * Reads a Map of String key and value pairs. This method will return
+     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     *
+     * @param in the input stream.
+     * @param map a Map of String key and Externalizable value pairs.
+     * @param loader class loader to use to build elements inside of the serialized collection.
+     * @throws IOException if an error occurs.
+     * @return the number of elements added to the collection.
+     */
+    public int readExternalizableMap(DataInput in, Map<String, ? extends Externalizable> map, ClassLoader loader) throws IOException {
+        return strategy.readExternalizableMap(in, map, loader);
+    }
+
+    /**
+     * Writes a Map of String key and Set of Strings value pairs. This method DOES NOT handle the
+     * case when the Map is <tt>null</tt>.
+     *
+     * @param out       the output stream.
+     * @param map       the Map of String key and Set of Strings value pairs.
+     * @throws java.io.IOException if an error occurs.
+     */
+    public void writeStringsMap(DataOutput out, Map<String, Set<String>> map) throws IOException {
+        strategy.writeStringsMap(out, map);
+    }
+
+    /**
+     * Reads a Map of String key and Set of Strings value pairs.
+     *
+     * @param in the input stream.
+     * @param map a Map of String key and Set of Strings value pairs.
+     * @return number of elements added to the collection.
+     * @throws IOException if an error occurs.
+     */
+    public int readStringsMap(DataInput in, Map<String, Set<String>> map) throws IOException {
+        return strategy.readStringsMap(in, map);
+    }
+
+    /**
+     * Writes content of collection of strings to the output stream.
+     *
+     * @param out           the output stream.
+     * @param collection    the Collection of Strings.
+     * @throws IOException if an error occurs.
+     */
+    public void writeStrings(DataOutput out, Collection<String> collection) throws IOException {
+        strategy.writeStrings(out, collection);
+    }
+
+    /**
+     * Reads the string array from the input stream and adds them to the specified collection. 
+     *
+     * @param in the input stream.
+     * @param collection the collection to add the read strings from the input stream.
+     * @return number of elements added to the collection.
+     * @throws IOException if an error occurs.
+     */
+    public int readStrings(DataInput in, Collection<String> collection) throws IOException {
+        return strategy.readStrings(in, collection);
     }
 }

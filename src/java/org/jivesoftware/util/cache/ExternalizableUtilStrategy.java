@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface that allows to provide different ways for implementing serialization of objects.
@@ -123,4 +124,20 @@ public interface ExternalizableUtilStrategy {
 
     int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value, ClassLoader loader)
             throws IOException;
+
+    void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException;
+
+    int readExternalizableMap(DataInput in, Map<String, ? extends Externalizable> map, ClassLoader loader) throws IOException;
+
+    void writeStringsMap(DataOutput out, Map<String, Set<String>> map)  throws IOException;
+
+    int readStringsMap(DataInput in, Map<String, Set<String>> map) throws IOException;
+
+    void writeStrings(DataOutput out, Collection<String> collection) throws IOException;
+
+    int readStrings(DataInput in, Collection<String> collection) throws IOException;
+
+    void writeInt(DataOutput out, int value) throws IOException;
+
+    int readInt(DataInput in) throws IOException;
 }

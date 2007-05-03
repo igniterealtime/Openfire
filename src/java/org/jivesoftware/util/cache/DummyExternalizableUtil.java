@@ -14,10 +14,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.Externalizable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Dummy implementation that does nothing. The open source version of the server uses this
@@ -160,6 +157,43 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
 
     public int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value,
                                             ClassLoader loader) throws IOException {
+        // Do nothing
+        return 0;
+    }
+
+    public void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException {
+        // Do nothing
+    }
+
+    public int readExternalizableMap(DataInput in, Map<String, ? extends Externalizable> map, ClassLoader loader)
+            throws IOException {
+        // Do nothing
+        return 0;
+    }
+
+    public void writeStringsMap(DataOutput out, Map<String, Set<String>> map) throws IOException {
+        // Do nothing
+    }
+
+    public int readStringsMap(DataInput in, Map<String, Set<String>> map) throws IOException {
+        // Do nothing
+        return 0;
+    }
+
+    public void writeStrings(DataOutput out, Collection<String> collection) throws IOException {
+        // Do nothing
+    }
+
+    public int readStrings(DataInput in, Collection<String> collection) throws IOException {
+        // Do nothing
+        return 0;
+    }
+
+    public void writeInt(DataOutput out, int value) {
+        // Do nothing
+    }
+
+    public int readInt(DataInput in) {
         // Do nothing
         return 0;
     }

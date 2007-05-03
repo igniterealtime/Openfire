@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -295,6 +296,13 @@ public class XMPPServer {
         }
 
         loader = Thread.currentThread().getContextClassLoader();
+
+        try {
+            CacheFactory.initialize();
+        } catch (InitializationException e) {
+            e.printStackTrace();
+            Log.error(e);
+        }
 
         initialized = true;
     }

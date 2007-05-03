@@ -11,17 +11,22 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.IntEnum;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.IntEnum;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 /**
@@ -39,7 +44,7 @@ import java.util.*;
  *
  * @author Gaston Dombiak
  */
-public class RosterItem implements Cacheable {
+public class RosterItem implements Cacheable, Externalizable {
 
     public static class SubType extends IntEnum {
         protected SubType(String name, int value) {
@@ -137,6 +142,12 @@ public class RosterItem implements Cacheable {
      */
     private long rosterID;
 
+    /**
+     * Constructor added for Externalizable. Do not use this constructor.
+     */
+    public RosterItem() {
+    }
+
     public RosterItem(long id,
                                 JID jid,
                                 SubType subStatus,
@@ -168,9 +179,9 @@ public class RosterItem implements Cacheable {
     }
 
     /**
-     * <p>Create a roster item from the data in another one.</p>
+     * Create a roster item from the data in another one.
      *
-     * @param item
+     * @param item Item that contains the info of the roster item.
      */
     public RosterItem(org.xmpp.packet.Roster.Item item) {
         this(item.getJID(),
@@ -317,9 +328,10 @@ public class RosterItem implements Cacheable {
     }
 
     /**
-     * <p>Set the current groups for the item.</p>
+     * Set the current groups for the item.
      *
      * @param groups The new lists of groups the item belongs to.
+     * @throws org.jivesoftware.openfire.SharedGroupException if trying to remove shared group.
      */
     public void setGroups(List<String> groups) throws SharedGroupException {
         if (groups == null) {
@@ -507,6 +519,7 @@ public class RosterItem implements Cacheable {
      * <p>A convenience for getting the item and setting each attribute.</p>
      *
      * @param item The item who's settings will be copied into the cached copy
+     * @throws org.jivesoftware.openfire.SharedGroupException if trying to remove shared group.
      */
     public void setAsCopyOf(org.xmpp.packet.Roster.Item item) throws SharedGroupException {
         setGroups(new LinkedList<String>(item.getGroups()));
@@ -521,5 +534,35 @@ public class RosterItem implements Cacheable {
         size += CacheSizes.sizeOfInt(); // askStatus
         size += CacheSizes.sizeOfLong(); // id
         return size;
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, jid.toString());
+        ExternalizableUtil.getInstance().writeBoolean(out, nickname != null);
+        if (nickname != null) {
+            ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
+        }
+        ExternalizableUtil.getInstance().writeStrings(out, groups);
+        ExternalizableUtil.getInstance().writeStrings(out, sharedGroups);
+        ExternalizableUtil.getInstance().writeStrings(out, invisibleSharedGroups);
+        ExternalizableUtil.getInstance().writeInt(out, recvStatus.getValue());
+        ExternalizableUtil.getInstance().writeInt(out, subStatus.getValue());
+        ExternalizableUtil.getInstance().writeInt(out, askStatus.getValue());
+        ExternalizableUtil.getInstance().writeLong(out, rosterID);
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        jid = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
+        this.groups = new LinkedList<String>();
+        ExternalizableUtil.getInstance().readStrings(in, groups);
+        ExternalizableUtil.getInstance().readStrings(in, sharedGroups);
+        ExternalizableUtil.getInstance().readStrings(in, invisibleSharedGroups);
+        recvStatus = RecvType.getTypeFromInt(ExternalizableUtil.getInstance().readInt(in));
+        subStatus = SubType.getTypeFromInt(ExternalizableUtil.getInstance().readInt(in));
+        askStatus = AskType.getTypeFromInt(ExternalizableUtil.getInstance().readInt(in));
+        rosterID = ExternalizableUtil.getInstance().readLong(in);
     }
 }

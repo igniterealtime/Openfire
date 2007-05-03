@@ -12,10 +12,6 @@
 package org.jivesoftware.openfire.roster;
 
 import org.jivesoftware.database.JiveID;
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.group.Group;
@@ -26,10 +22,19 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Gaston Dombiak
  */
 @JiveID(JiveConstants.ROSTER)
-public class Roster implements Cacheable {
+public class Roster implements Cacheable, Externalizable {
 
     /**
      * Roster item cache - table: key jabberid string; value roster item.
@@ -70,6 +75,12 @@ public class Roster implements Cacheable {
 
 
     /**
+     * Constructor added for Externalizable. Do not use this constructor.
+     */
+    public Roster() {
+    }
+
+    /**
      * Create a roster for the given user, pulling the existing roster items
      * out of the backend storage provider. The roster will also include items that
      * belong to the user's shared groups.<p>
@@ -87,6 +98,7 @@ public class Roster implements Cacheable {
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         rosterManager = XMPPServer.getInstance().getRosterManager();
         sessionManager = SessionManager.getInstance();
+        routingTable = XMPPServer.getInstance().getRoutingTable();
         this.username = username;
 
         // Get the shared groups of this user
@@ -553,9 +565,6 @@ public class Roster implements Cacheable {
      * @param packet The presence packet to broadcast
      */
     public void broadcastPresence(Presence packet) {
-        if (routingTable == null) {
-            routingTable = XMPPServer.getInstance().getRoutingTable();
-        }
         if (routingTable == null) {
             return;
         }
@@ -1091,5 +1100,23 @@ public class Roster implements Cacheable {
 
     private JID getUserJID() {
         return XMPPServer.getInstance().createJID(getUsername(), null);
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, username);
+        ExternalizableUtil.getInstance().writeExternalizableMap(out, rosterItems);
+        ExternalizableUtil.getInstance().writeStringsMap(out, implicitFrom);
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        presenceManager = XMPPServer.getInstance().getPresenceManager();
+        rosterManager = XMPPServer.getInstance().getRosterManager();
+        sessionManager = SessionManager.getInstance();
+        rosterItemProvider =  RosterItemProvider.getInstance();
+        routingTable = XMPPServer.getInstance().getRoutingTable();
+
+        username = ExternalizableUtil.getInstance().readSafeUTF(in);
+        ExternalizableUtil.getInstance().readExternalizableMap(in, rosterItems, getClass().getClassLoader());
+        ExternalizableUtil.getInstance().readStringsMap(in, implicitFrom);
     }
 }

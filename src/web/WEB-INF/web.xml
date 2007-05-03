@@ -24,7 +24,8 @@
         <init-param>
             <param-name>excludes</param-name>
             <param-value>
-                login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp</param-value>
+                login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp
+            </param-value>
         </init-param>
     </filter>
 
@@ -83,6 +84,12 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <servlet-name>dwr-invoker</servlet-name>
+    </filter-mapping>
+
+
     <listener>
         <listener-class>org.jivesoftware.openfire.XMPPContextListener</listener-class>
     </listener>
@@ -103,7 +110,7 @@
         <servlet-name>dwr-invoker</servlet-name>
         <servlet-class>uk.ltd.getahead.dwr.DWRServlet</servlet-class>
     </servlet>
- 
+
     <servlet>
         <servlet-name>PluginIconServlet</servlet-name>
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
@@ -122,7 +129,7 @@
         <url-pattern>/getFavicon</url-pattern>
     </servlet-mapping>
 
-     <servlet-mapping>
+    <servlet-mapping>
         <servlet-name>PluginIconServlet</servlet-name>
         <url-pattern>/geticon</url-pattern>
     </servlet-mapping>

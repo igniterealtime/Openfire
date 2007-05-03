@@ -105,7 +105,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
      */
     public static void setMaxSizeProperty(String cacheName, int size) {
         cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setXMLProperty("cache." + cacheName + ".size", Integer.toString(size));
+        JiveGlobals.setProperty("cache." + cacheName + ".size", Integer.toString(size));
     }
 
     /**
@@ -116,7 +116,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
      */
     public static void setMaxLifetimeProperty(String cacheName, long lifetime) {
         cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setXMLProperty(("cache." + cacheName + ".maxLifetime"), Long.toString(lifetime));
+        JiveGlobals.setProperty(("cache." + cacheName + ".maxLifetime"), Long.toString(lifetime));
     }
 
     /**
@@ -128,7 +128,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
      */
     public static int getMaxSizeFromProperty(String cacheName, int defaultSize) {
         String propName = "cache." + cacheName.replaceAll(" ", "") + ".size";
-        String sizeProp = JiveGlobals.getXMLProperty(propName);
+        String sizeProp = JiveGlobals.getProperty(propName);
         if (sizeProp != null) {
             try {
                 return Integer.parseInt(sizeProp);
@@ -152,7 +152,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
      */
     public static long getMaxLifetimeFromProperty(String cacheName, long defaultLifetime) {
         String propName = "cache." + cacheName.replaceAll(" ", "") + ".maxLifetime";
-        String lifetimeProp = JiveGlobals.getXMLProperty(propName);
+        String lifetimeProp = JiveGlobals.getProperty(propName);
         if (lifetimeProp != null) {
             try {
                 return Long.parseLong(lifetimeProp);

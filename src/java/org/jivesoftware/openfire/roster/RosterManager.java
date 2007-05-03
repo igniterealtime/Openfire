@@ -11,9 +11,6 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SharedGroupException;
@@ -30,6 +27,9 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -345,6 +345,35 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         super.initialize(server);
         this.server = server;
         this.routingTable = server.getRoutingTable();
+
+        RosterEventDispatcher.addListener(new RosterEventListener() {
+            public void rosterLoaded(Roster roster) {
+                // Do nothing
+            }
+
+            public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
+                // Do nothing
+                return true;
+            }
+
+            public void contactAdded(Roster roster, RosterItem item) {
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                rosterCache.put(roster.getUsername(), roster);
+            }
+
+            public void contactUpdated(Roster roster, RosterItem item) {
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                rosterCache.put(roster.getUsername(), roster);
+            }
+
+            public void contactDeleted(Roster roster, RosterItem item) {
+                // Set object again in cache. This is done so that other cluster nodes
+                // get refreshed with latest version of the object
+                rosterCache.put(roster.getUsername(), roster);
+            }
+        });
     }
 
     /**

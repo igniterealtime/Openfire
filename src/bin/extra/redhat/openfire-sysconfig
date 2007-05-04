@@ -1,6 +1,6 @@
 # Set this to the path where openfire lives.
-# If this is not set the script will look for /opt/openfire, then
-# /usr/local/openfire.
+# If this is not set the script will look for /usr/local/openfire, then
+# /opt/openfire.
 #OPENFIRE_HOME=""
 
 # If there is a different user you would like to run openfire as,
@@ -9,7 +9,7 @@
 
 # If you wish to change the location of the openfire pid file,
 # change the following line.
-#OPENFIRE_PIDFILE="/var/run/openfired.pid"
+#OPENFIRE_PIDFILE="/var/run/openfire.pid"
 
 # If you wish to explictly specific the location of the log directory,
 # you can set it here.  Note that this applies to the logs generated outside

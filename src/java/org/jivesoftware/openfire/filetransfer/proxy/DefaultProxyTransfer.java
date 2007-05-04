@@ -11,6 +11,7 @@
 package org.jivesoftware.openfire.filetransfer.proxy;
 
 import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.Log;
 
 import java.util.concurrent.Future;
 import java.io.IOException;
@@ -109,28 +110,48 @@ public class DefaultProxyTransfer implements ProxyTransfer {
     }
 
     public void doTransfer() throws IOException {
-        if(!isActivatable()) {
+        if (!isActivatable()) {
             throw new IOException("Transfer missing party");
         }
-        InputStream in = getInputStream();
-        OutputStream out = new ProxyOutputStream(getOutputStream());
+        InputStream in = null;
+        OutputStream out = null;
 
-        final byte[] b = new byte[BUFFER_SIZE];
-        int count = 0;
-        amountWritten = 0;
+        try {
+            in = getInputStream();
+            out = new ProxyOutputStream(getOutputStream());
 
-        do {
-            // write to the output stream
-            out.write(b, 0, count);
+            final byte[] b = new byte[BUFFER_SIZE];
+            int count = 0;
+            amountWritten = 0;
 
-            amountWritten += count;
+            do {
+                // write to the output stream
+                out.write(b, 0, count);
 
-            // read more bytes from the input stream
-            count = in.read(b);
-        } while (count >= 0);
+                amountWritten += count;
 
-        getInputStream().close();
-        getOutputStream().close();
+                // read more bytes from the input stream
+                count = in.read(b);
+            } while (count >= 0);
+        }
+        finally {
+            if (in != null) {
+                try {
+                    in.close();
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
+            }
+        }
     }
 
     public int getCachedSize() {

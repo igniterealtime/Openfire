@@ -7,22 +7,19 @@
  */
 package org.jivesoftware.util.cache;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.InitializationException;
-import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.container.Plugin;
-import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginClassLoader;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.util.InitializationException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.Log;
 
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.*;
 
 /**
  * Creates Cache objects. The returned caches will either be local or clustered
@@ -301,10 +298,10 @@ public class CacheFactory {
             return;
         }
         // See if clustering should be enabled.
-        String enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME);
+        boolean enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME, false);
 
         // If the user tried to turn on clustering, make sure they're actually allowed to.
-        if (Boolean.valueOf(enabled)) {
+        if (enabled) {
             startClustering();
         }
 

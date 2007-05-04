@@ -49,6 +49,7 @@ public class PluginManager {
     private Map<String, Plugin> plugins;
     private Map<Plugin, PluginClassLoader> classloaders;
     private Map<Plugin, File> pluginDirs;
+    private Map<String, File> pluginFiles;
     private ScheduledExecutorService executor = null;
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
     private Map<Plugin, List<String>> parentPluginMap;
@@ -66,6 +67,7 @@ public class PluginManager {
         this.pluginDirectory = pluginDir;
         plugins = new ConcurrentHashMap<String, Plugin>();
         pluginDirs = new HashMap<Plugin, File>();
+        pluginFiles = new HashMap<String, File>();
         classloaders = new HashMap<Plugin, PluginClassLoader>();
         pluginDevelopment = new HashMap<Plugin, PluginDevEnvironment>();
         parentPluginMap = new HashMap<Plugin, List<String>>();
@@ -108,6 +110,7 @@ public class PluginManager {
         }
         plugins.clear();
         pluginDirs.clear();
+        pluginFiles.clear();
         classloaders.clear();
         pluginDevelopment.clear();
         childPluginMap.clear();
@@ -187,6 +190,16 @@ public class PluginManager {
      */
     public File getPluginDirectory(Plugin plugin) {
         return pluginDirs.get(plugin);
+    }
+
+    /**
+     * Returns the JAR or WAR file that created the plugin.
+     *
+     * @param name the name of the plugin.
+     * @return the plugin JAR or WAR file.
+     */
+    public File getPluginFile(String name) {
+        return pluginFiles.get(name);
     }
 
     /**
@@ -971,6 +984,9 @@ public class PluginManager {
                 // The lib directory of the plugin may contain Pack200 versions of the JAR
                 // file. If so, unpack them.
                 unpackArchives(new File(dir, "lib"));
+
+                // Store the JAR/WAR file that created the plugin folder
+                pluginFiles.put(pluginName, file);
             }
             catch (Exception e) {
                 Log.error(e);
@@ -1060,7 +1076,12 @@ public class PluginManager {
                     }
                 }
             }
-            return dir.delete();
+            boolean deleted = dir.delete();
+            if (deleted) {
+                // Remove the JAR/WAR file that created the plugin folder
+                pluginFiles.remove(dir.getName());
+            }
+            return deleted;
         }
     }
 

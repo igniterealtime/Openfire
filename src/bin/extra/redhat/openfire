@@ -129,7 +129,7 @@ stop() {
 	# Stop daemons.
 	echo -n "Shutting down openfire: "
 
-	[ -f "$OPENFILE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
+	[ -f "$OPENFIRE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
 	RETVAL=$?
 	echo
 

@@ -33,7 +33,7 @@ public class MediaProxy implements SessionListener {
 
     final private Map<String, MediaProxySession> sessions = new ConcurrentHashMap<String, MediaProxySession>();
 
-    private String localhost;
+    private String ipAddress;
 
     private int minPort = 10000;
     private int maxPort = 20000;
@@ -46,10 +46,10 @@ public class MediaProxy implements SessionListener {
     /**
      * Contruct a MediaProxy instance that will listen on a specific network interface.
      *
-     * @param localhost the IP of the locahost that will listen for packets.
+     * @param ipAddress the IP address on this server that will listen for packets.
      */
-    public MediaProxy(String localhost) {
-        this.localhost = localhost;
+    public MediaProxy(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     /**
@@ -58,7 +58,7 @@ public class MediaProxy implements SessionListener {
      * @return the host that listens for incomming packets.
      */
     public String getPublicIP() {
-        return localhost;
+        return ipAddress;
     }
 
     /**
@@ -201,7 +201,7 @@ public class MediaProxy implements SessionListener {
     public ProxyCandidate addRelayAgent(String id, String creator, String hostA, int portA,
             String hostB, int portB)
     {
-        RelaySession session = new RelaySession(id, creator, localhost, hostA, portA, hostB, portB, minPort, maxPort);
+        RelaySession session = new RelaySession(id, creator, ipAddress, hostA, portA, hostB, portB, minPort, maxPort);
         sessions.put(id, session);
         session.addKeepAlive(idleTime);
         session.addLifeTime(lifetime);
@@ -227,7 +227,7 @@ public class MediaProxy implements SessionListener {
      * @return the added ProxyCandidate
      */
     public ProxyCandidate addRelayAgent(String id, String creator) {
-        return addRelayAgent(id, creator, localhost, 40000, localhost, 40004);
+        return addRelayAgent(id, creator, ipAddress, 40000, ipAddress, 40004);
     }
 
     /**

@@ -65,7 +65,11 @@ public class MediaProxyService extends BasicModule
         super.initialize(server);
 
         sessionManager = server.getSessionManager();
-        mediaProxy = new MediaProxy(server.getServerInfo().getName());
+        // In some cases, the domain name of the server may not be the actual address of the machine
+        // (ie, when using DNS SRV records). In that case, the "mediaproxy.externalip" property should be
+        // set to the IP address of the actual server where the media proxy is listening.
+        String ipAddress = JiveGlobals.getProperty("mediaproxy.externalip", server.getServerInfo().getName());
+        mediaProxy = new MediaProxy(ipAddress);
 
         String defaultName = "rtpbridge";
         serviceName = JiveGlobals.getProperty("mediaproxy.serviceName", defaultName);

@@ -1118,6 +1118,32 @@
         </copy>
     </target>
 
+    <!-- installer.rpm-rhx ========================================================================= -->
+    <property name="target.rpm-rhx" value="${work.dir}/rpm-rhx" />
+    <target name="installer.rpm-rhx" depends="init, dist.init" description="Builds a rpm of openfire for RHX.">
+        <antcall target="dist.src"/>
+
+        <mkdir dir="${target.rpm-rhx}/SPECS" />
+        <mkdir dir="${target.rpm-rhx}/SOURCES" />
+        <mkdir dir="${target.rpm-rhx}/BUILD" />
+        <mkdir dir="${target.rpm-rhx}/SRPMS" />
+        <mkdir dir="${target.rpm-rhx}/RPMS" />
+
+        <copy todir="${target.rpm-rhx}/SPECS" file="${basedir}/build/rpm-rhx/openfire.spec" />
+        <copy todir="${target.rpm-rhx}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+
+        <rpm specFile="openfire.spec"
+             topDir="${target.rpm-rhx}"
+             command="-ba"
+             failOnError="true"
+             />
+             
+        <copy todir="${release.dest.dir}" >
+            <fileset dir="${target.rpm-rhx}/SRPMS" />
+            <fileset dir="${target.rpm-rhx}/RPMS/i386" />
+        </copy>
+    </target>
+
     <!-- plugins =============================================================================== -->
     <target name="plugins" description="Builds all plugins">
         <!-- Call jar task, can't do this is as a 'depends' call of this target because

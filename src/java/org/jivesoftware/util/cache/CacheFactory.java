@@ -13,6 +13,9 @@ import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -343,10 +346,24 @@ public class CacheFactory {
         t.start();
     }
 
+    private static ClassLoader getClusteredCacheStrategyClassLoader(String pluginName) {
+        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        Plugin enterprisePlugin = pluginManager.getPlugin(pluginName);
+        PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(enterprisePlugin);
+        if (pluginLoader != null) {
+            return pluginLoader.getClassLoader();
+        }
+        else {
+            Log.warn("Unable to find PluginClassloader for plugin: " + pluginName + " in CacheFactory.");
+            return Thread.currentThread().getContextClassLoader();
+        }
+    }
+
     private static void startClustering() {
         clusteringEnabled = false;
         try {
-            cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass)
+            cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
+                    getClusteredCacheStrategyClassLoader("enterprise"))
                     .newInstance();
             boolean clusterStarted = cacheFactoryStrategy.startCluster();
             if (clusterStarted) {

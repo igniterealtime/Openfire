@@ -37,12 +37,14 @@ RETVAL=0
 
 # If a openfire home variable has not been specified, try to determine it.
 if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
-	if [ -d "/usr/local/openfire" ]; then
+	if [ -d "/usr/share/openfire" ]; then
+		OPENFIRE_HOME="/usr/share/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
 		OPENFIRE_HOME="/usr/local/openfire"
 	elif [ -d "/opt/openfire" ]; then
 		OPENFIRE_HOME="/opt/openfire"
 	else
-		echo "Could not find Openfire installation under /opt or /usr/local."
+		echo "Could not find Openfire installation under /opt, /usr/share, or /usr/local."
 		echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
 		echo "in /etc/sysconfig/openfire."
 		exit 1
@@ -55,6 +57,8 @@ fi
 # Attempt to locate java installation.
 if [ -z "$JAVA_HOME" ]; then
 	if [ -d "${OPENFIRE_HOME}/jre" ]; then
+		JAVA_HOME="${OPENFIRE_HOME}/jre"
+	elif [ -d "/etc/alternatives/jre" ]; then
 		JAVA_HOME="${OPENFIRE_HOME}/jre"
 	else
 		jdks=`ls -r1d /usr/java/j*`

@@ -373,6 +373,10 @@ public class CacheFactory {
                 clusteringEnabled = true;
                 fireClusteringStarted();
             }
+            else {
+                // Revert to local cache factory if cluster fails to start
+                cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
+            }
         }
         catch (Exception e) {
             Log.error("Unable to start clustering - continuing in local mode", e);

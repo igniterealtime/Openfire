@@ -347,12 +347,10 @@ public class PluginManager {
 
                         if (classes.exists()) {
                             dev.setClassesDir(classes);
-                            pluginLoader.addURL(classes.getAbsoluteFile().toURL());
+                            pluginLoader.addURLFile(classes.getAbsoluteFile().toURL());
                         }
                     }
                 }
-
-                pluginLoader.initialize();
 
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
@@ -536,11 +534,6 @@ public class PluginManager {
         }
         catch (Exception e) {
             Log.error(e);
-        }
-        PluginClassLoader classLoader = classloaders.get(plugin);
-        // Destroy class loader if defined, which it won't be if this is a child plugin.
-        if (classLoader != null) {
-            classLoader.destroy();
         }
         plugins.remove(pluginName);
         pluginDirs.remove(plugin);

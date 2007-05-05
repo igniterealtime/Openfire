@@ -20,18 +20,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xml.sax.SAXException;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -39,6 +27,12 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -481,9 +475,7 @@ public class PluginServlet extends HttpServlet {
 
         PluginClassLoader pluginClassloader = pluginManager.getPluginClassloader(plugin);
 
-        Collection col = pluginClassloader.getURLS();
-        for (Object aCol : col) {
-            URL url = (URL)aCol;
+        for (URL url : pluginClassloader.getURLs()) {
             File file = new File(url.getFile());
 
             classpath.append(file.getAbsolutePath()).append(";");

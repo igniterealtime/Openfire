@@ -348,7 +348,7 @@ public class CacheFactory {
         Plugin enterprisePlugin = pluginManager.getPlugin(pluginName);
         PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(enterprisePlugin);
         if (pluginLoader != null) {
-            return pluginLoader.getClassLoader();
+            return pluginLoader;
         }
         else {
             Log.warn("Unable to find PluginClassloader for plugin: " + pluginName + " in CacheFactory.");

@@ -15,11 +15,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 
-import java.text.DateFormat;
-import java.text.Format;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
+import java.text.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -430,7 +426,7 @@ public class LocaleUtils {
             throw new NullPointerException("Plugin could not be located: " + pluginName);
         }
 
-        ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin).getClassLoader();
+        ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
         try {
             ResourceBundle bundle = ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
             return getLocalizedString(key, locale, arguments, bundle);
@@ -461,7 +457,7 @@ public class LocaleUtils {
             throw new NullPointerException("Plugin could not be located.");
         }
 
-        ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin).getClassLoader();
+        ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
         return ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
     }
 

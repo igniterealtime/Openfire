@@ -412,7 +412,10 @@ public class PluginManager {
                 }
 
                 // Init the plugin.
+                ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
+                Thread.currentThread().setContextClassLoader(pluginLoader);
                 plugin.initializePlugin(this, pluginDir);
+                Thread.currentThread().setContextClassLoader(oldLoader);
 
                 // If there a <adminconsole> section defined, register it.
                 Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");

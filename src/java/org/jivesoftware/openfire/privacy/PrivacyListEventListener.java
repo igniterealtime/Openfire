@@ -12,11 +12,12 @@
 package org.jivesoftware.openfire.privacy;
 
 /**
- /**
-  * Interface to listen for privacy list events. Use the
-  * {@link PrivacyListManager#addListener(PrivacyListEventListener)}
-  * method to register for events.
-  *
+ * /**
+ * Interface to listen for privacy list events. Use the
+ * {@link PrivacyListManager#addListener(PrivacyListEventListener)}
+ * method to register for events.
+ *
+ * @author Gaston Dombiak
  */
 public interface PrivacyListEventListener {
 

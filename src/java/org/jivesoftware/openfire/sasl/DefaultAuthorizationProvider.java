@@ -30,7 +30,7 @@ import java.util.Collection;
  * @author Jay Kline
  */
 public class DefaultAuthorizationProvider extends AbstractAuthorizationProvider
-        implements AuthorizationProvider {
+        implements AuthorizationPolicy {
 
     private static final String MATCH_AUTHORIZED =
             "SELECT username FROM jiveSASLAuthorized WHERE username=? AND authorized=?";

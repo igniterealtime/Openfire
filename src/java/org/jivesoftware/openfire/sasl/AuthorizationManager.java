@@ -42,8 +42,8 @@ import java.util.StringTokenizer;
  */
 public class AuthorizationManager {
 
-    private static ArrayList<AuthorizationProvider> providers =
-            new ArrayList<AuthorizationProvider>();
+    private static ArrayList<AuthorizationPolicy> providers =
+            new ArrayList<AuthorizationPolicy>();
     private static AuthorizationManager instance = new AuthorizationManager();
 
     static {
@@ -54,8 +54,8 @@ public class AuthorizationManager {
                 String s_provider = st.nextToken();
                 try {
                     Class c_provider = ClassUtils.forName(s_provider);
-                    AuthorizationProvider provider =
-                            (AuthorizationProvider) (c_provider.newInstance());
+                    AuthorizationPolicy provider =
+                            (AuthorizationPolicy) (c_provider.newInstance());
                     Log.debug("AuthorizationManager: Loaded " + s_provider);
                     providers.add(provider);
                 } catch (Exception e) {
@@ -81,7 +81,7 @@ public class AuthorizationManager {
      *
      * @return the current AuthorizationProvider.
      */
-    public static Collection<AuthorizationProvider> getAuthorizationProviders() {
+    public static Collection<AuthorizationPolicy> getAuthorizationProviders() {
         return providers;
     }
 
@@ -102,7 +102,7 @@ public class AuthorizationManager {
      */
 
     public static boolean authorize(String authorId, String authenId) {
-        for (AuthorizationProvider ap : providers) {
+        for (AuthorizationPolicy ap : providers) {
             if (ap.authorize(authorId, authenId)) {
                 return true;
             }

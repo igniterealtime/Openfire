@@ -36,7 +36,7 @@ import java.util.Collection;
  *
  * @author Jay Kline
  */
-public class UnixK5LoginProvider extends AbstractAuthorizationProvider implements AuthorizationProvider {
+public class UnixK5LoginProvider extends AbstractAuthorizationProvider implements AuthorizationPolicy {
 
     /**
      * Returns true if the principal is explicity authorized to the JID

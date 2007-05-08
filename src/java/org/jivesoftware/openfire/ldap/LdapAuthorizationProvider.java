@@ -13,7 +13,7 @@ package org.jivesoftware.openfire.ldap;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.sasl.AbstractAuthorizationProvider;
-import org.jivesoftware.openfire.sasl.AuthorizationProvider;
+import org.jivesoftware.openfire.sasl.AuthorizationPolicy;
 import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attribute;
@@ -38,7 +38,7 @@ import java.util.Enumeration;
  *
  * @author Jay Kline
  */
-public class LdapAuthorizationProvider extends AbstractAuthorizationProvider implements AuthorizationProvider  {
+public class LdapAuthorizationProvider extends AbstractAuthorizationProvider implements AuthorizationPolicy {
 
     private LdapManager manager;
     private String usernameField;

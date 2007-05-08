@@ -12,24 +12,24 @@
 package org.jivesoftware.openfire.sasl;
 
 /**
- * This policy will authorize any principal who's username matches exactly 
- * the username of the JID. This means when cross realm authentication is 
+ * This policy will authorize any principal who's username matches exactly
+ * the username of the JID. This means when cross realm authentication is
  * allowed, user@REALM_A.COM and user@REALM_B.COM could both authorize as
  * user@servername, so there is some risk here. But if usernames across the
  *
  * @author Jay Kline
  */
-public class LazyAuthorizationPolicy extends AbstractAuthorizationPolicy implements AuthorizationProvider {
+public class LooseAuthorizationPolicy implements AuthorizationPolicy {
 
     /**
      * Returns true if the principal is explicity authorized to the JID
      *
-     * @param username The username requested.
+     * @param username  The username requested.
      * @param principal The principal requesting the username.
      * @return true is the user is authorized to be principal
      */
     public boolean authorize(String username, String principal) {
-        return (principal.startsWith(username+"@"));
+        return (principal.startsWith(username + "@"));
     }
 
     /**
@@ -38,7 +38,7 @@ public class LazyAuthorizationPolicy extends AbstractAuthorizationPolicy impleme
      * @return The short name of the Policy
      */
     public String name() {
-        return "Lazy";
+        return "Loose Authorization Policy";
     }
 
     /**

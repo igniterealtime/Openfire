@@ -198,7 +198,7 @@ public class OSCARSession extends TransportSession {
         // Now, lets clean up any groups this contact should no longer be a member of.
         for (BuddyItem buddy : buddies.values()) {
             if (buddy.getScreenname().equalsIgnoreCase(contact)) {
-                if (buddy.getGroupId() == 0 && !grouplist.equals(DEFAULT_AIM_GROUP)) {
+                if (buddy.getGroupId() == 0 && !grouplist.contains(DEFAULT_AIM_GROUP)) {
                     // Ok this group is the "main group", but contact isn't in it.
                     Log.debug("Removing "+buddy+" from main group");
                     request(new DeleteItemsCmd(buddy.toSsiItem()));

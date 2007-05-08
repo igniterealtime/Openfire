@@ -202,7 +202,7 @@ public class CacheFactory {
             }
         }
 
-        cacheFactoryStrategy.doClusterTask(buildClusterTask(task));
+        cacheFactoryStrategy.doClusterTask(task);
     }
 
     /**
@@ -222,7 +222,7 @@ public class CacheFactory {
             }
         }
 
-        return cacheFactoryStrategy.doSynchronousClusterTask(buildClusterTask(task), includeLocalMember);
+        return cacheFactoryStrategy.doSynchronousClusterTask(task, includeLocalMember);
     }
 
 
@@ -404,27 +404,6 @@ public class CacheFactory {
         catch (Exception e) {
             Log.error("Unable to stop clustering - continuing in clustered mode", e);
         }
-    }
-
-    /**
-     * Creates a new Cluster Task that will execute the wrapped task and ensure
-     * that any DAO context is also closed after the execution of the task.
-     *
-     * @param task the cluster task to wrap.
-     * @return new Cluster Task that will execute the wrapped task.
-     */
-    public static ClusterTask buildClusterTask(final ClusterTask task) {
-        return new ClusterTask() {
-            ClusterTask taskToRun = task;
-
-            public void run() {
-                task.run();
-            }
-
-            public Object getResult() {
-                return task.getResult();
-            }
-        };
     }
 
 

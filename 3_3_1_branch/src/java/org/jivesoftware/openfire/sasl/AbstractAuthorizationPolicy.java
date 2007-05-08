@@ -33,7 +33,7 @@ package org.jivesoftware.openfire.sasl;
  *
  * @author Jay Kline
  */
-public abstract class AbstractAuthorizationPolicy implements AuthorizationProvider {
+public abstract class AbstractAuthorizationPolicy implements AuthorizationPolicy {
 
     /**
      * Returns true if the principal is explicity authorized to the JID
@@ -44,18 +44,6 @@ public abstract class AbstractAuthorizationPolicy implements AuthorizationProvid
      */
     public abstract boolean authorize(String username, String principal);
 
-    /**
-     * Returns the short name of the Policy
-     *
-     * @return The short name of the Policy
-     */
-    public abstract String name();
 
-    /**
-     * Returns a description of the Policy
-     *
-     * @return The description of the Policy.
-     */
-    public abstract String description();
 
 }

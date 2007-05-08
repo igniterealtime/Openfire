@@ -36,7 +36,7 @@ import java.util.Collection;
  *
  * @author Jay Kline
  */
-public abstract class AbstractAuthorizationProvider implements AuthorizationProvider {
+public abstract class AbstractAuthorizationProvider implements AuthorizationPolicy {
 
     /**
      * Returns true if the principal is explicity authorized to the JID

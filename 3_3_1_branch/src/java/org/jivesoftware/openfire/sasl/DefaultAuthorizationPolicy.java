@@ -22,8 +22,7 @@ import org.jivesoftware.openfire.XMPPServer;
  *
  * @author Jay Kline
  */
-public class DefaultAuthorizationPolicy extends AbstractAuthorizationPolicy
-        implements AuthorizationProvider {
+public class DefaultAuthorizationPolicy  implements AuthorizationPolicy {
 
     private String serverName;
 

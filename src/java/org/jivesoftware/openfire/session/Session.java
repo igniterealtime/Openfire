@@ -11,16 +11,15 @@
 
 package org.jivesoftware.openfire.session;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
@@ -76,11 +75,6 @@ public abstract class Session implements RoutableChannelHandler {
      */
     protected Connection conn;
 
-    /**
-     * The authentication token for this session.
-     */
-    protected AuthToken authToken;
-
     protected SessionManager sessionManager;
 
     private String serverName;
@@ -100,7 +94,9 @@ public abstract class Session implements RoutableChannelHandler {
     /**
      * Creates a session with an underlying connection and permission protection.
      *
-     * @param connection The connection we are proxying
+     * @param serverName domain of the XMPP server where the new session belongs.
+     * @param connection The connection we are proxying.
+     * @param streamID unique identifier for this session.
      */
     public Session(String serverName, Connection connection, StreamID streamID) {
         conn = connection;
@@ -129,6 +125,8 @@ public abstract class Session implements RoutableChannelHandler {
      * server packet router to determine if a packet should be sent to the handler.
      * Handlers that are working on behalf of the server should use the generic server
      * hostname address (e.g. server.com).
+     *
+     * @param address the new address of this session.
      */
     public void setAddress(JID address){
         this.address = address;

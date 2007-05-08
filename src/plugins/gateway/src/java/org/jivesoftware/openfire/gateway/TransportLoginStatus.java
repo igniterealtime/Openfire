@@ -20,23 +20,33 @@ package org.jivesoftware.openfire.gateway;
 public enum TransportLoginStatus {
 
     /**
-     * Not logged in
+     * Not logged in - not logged into the remote service at all
      */
     LOGGED_OUT,
 
     /**
-     * Currently logging in
+     * Currently logging in - in the process of logging into the remote service
      */
     LOGGING_IN,
 
     /**
-     * Logged in
+     * Logged in - active session that should be completely functional
      */
     LOGGED_IN,
 
     /**
-     * Logging out
+     * Logging out - in the process of logging out of the remote service
      */
-    LOGGING_OUT
+    LOGGING_OUT,
+
+    /**
+     * Disconnected - automatically disconnected for some reason, similar to LOGGED_OUT
+     */
+    DISCONNECTED,
+
+    /**
+     * Reconnecting - in the process of automatically reconnecting, similar to LOGGING_IN
+     */
+    RECONNECTING
 
 }

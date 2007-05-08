@@ -15,6 +15,7 @@ import net.sf.cindy.Session;
 import net.sf.cindy.Message;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.openfire.gateway.TransportLoginStatus;
 
 /**
  * MSN Session Listener Interface.
@@ -50,7 +51,8 @@ public class MSNSessionListener extends SessionAdapter {
                     LocaleUtils.getLocalizedString("gateway.msn.otherloggedin", "gateway"),
                     org.xmpp.packet.Message.Type.error
             );
-            msnSession.logOut();
+            msnSession.setLoginStatus(TransportLoginStatus.DISCONNECTED);
+            msnSession.sessionDisconnectedNoReconnect();
         }
         else if (message.toString().startsWith("OUT SDH")) {
             // Forced disconnect from server for maintenance
@@ -60,7 +62,8 @@ public class MSNSessionListener extends SessionAdapter {
                     LocaleUtils.getLocalizedString("gateway.msn.disconnect", "gateway"),
                     org.xmpp.packet.Message.Type.error
             );
-            msnSession.logOut();
+            msnSession.setLoginStatus(TransportLoginStatus.DISCONNECTED);
+            msnSession.sessionDisconnectedNoReconnect();
         }
     }
 

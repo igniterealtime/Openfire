@@ -84,8 +84,8 @@ public class OSCARTransport extends BaseTransport {
      */
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         TransportSession session = new OSCARSession(registration, jid, this, priority);
-        this.getSessionManager().startThread(session);
-        ((OSCARSession)session).logIn(presenceType, verboseStatus);
+        session.setLoginStatus(TransportLoginStatus.LOGGING_IN);
+        session.logIn(presenceType, verboseStatus);
         return session;
     }
 
@@ -95,10 +95,8 @@ public class OSCARTransport extends BaseTransport {
      * @param session The session to be disconnected.
      */
     public void registrationLoggedOut(TransportSession session) {
-        ((OSCARSession)session).logOut();
-        session.sessionDone();
-        // Just in case.
-        session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        session.setLoginStatus(TransportLoginStatus.LOGGING_OUT);
+        session.logOut();
     }
 
 }

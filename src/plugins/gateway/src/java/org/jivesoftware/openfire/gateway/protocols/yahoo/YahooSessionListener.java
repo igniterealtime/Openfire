@@ -12,6 +12,7 @@ package org.jivesoftware.openfire.gateway.protocols.yahoo;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.openfire.gateway.TransportLoginStatus;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 import org.openymsg.network.YahooUser;
@@ -150,7 +151,8 @@ public class YahooSessionListener implements SessionListener {
     public void connectionClosed(SessionEvent event) {
         Log.debug(event.toString());
         if (yahooSession.isLoggedIn()) {
-            yahooSession.logOut();                            
+            yahooSession.setLoginStatus(TransportLoginStatus.DISCONNECTED);
+            yahooSession.sessionDisconnectedNoReconnect();
         }
     }
 

@@ -94,9 +94,9 @@ public class IRCSession extends TransportSession {
      * @param verboseStatus Initial full status information.
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
-        setLoginStatus(TransportLoginStatus.LOGGED_IN);
         try {
             conn.connect();
+            setLoginStatus(TransportLoginStatus.LOGGED_IN);
         }
         catch (IOException e) {
             Log.error("IO error while connecting to IRC: ", e);
@@ -107,10 +107,16 @@ public class IRCSession extends TransportSession {
      * Logs the session out of IRC.
      */
     public void logOut() {
-        setLoginStatus(TransportLoginStatus.LOGGING_OUT);
-        ircListener.setSilenced(true);
-        conn.doQuit();
-        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        if (isLoggedIn()) {
+            ircListener.setSilenced(true);
+            conn.doQuit();
+            sessionDisconnectedNoReconnect();
+        }
+    }
+
+    public void cleanUp() {
+        ircListener.getTimer().cancel();
+        conn.close();
     }
 
     /**

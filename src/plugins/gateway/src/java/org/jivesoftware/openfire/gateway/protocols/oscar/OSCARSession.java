@@ -90,7 +90,6 @@ public class OSCARSession extends TransportSession {
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
         if (!isLoggedIn()) {
-            setLoginStatus(TransportLoginStatus.LOGGING_IN);
             loginConn = new LoginConnection(new ConnDescriptor(
                     JiveGlobals.getProperty(propertyPrefix+".connecthost", "login.oscar.aol.com"),
                     JiveGlobals.getIntProperty(propertyPrefix+".connectport", 5190)),
@@ -107,40 +106,39 @@ public class OSCARSession extends TransportSession {
 
     public synchronized void logOut() {
         if (isLoggedIn()) {
-            setLoginStatus(TransportLoginStatus.LOGGING_OUT);
-            if (loginConn != null) {
-                loginConn.disconnect();
-                loginConn = null;
+            cleanUp();
+            sessionDisconnectedNoReconnect();
+        }
+    }
+
+    public synchronized void cleanUp() {
+        if (loginConn != null) {
+            loginConn.disconnect();
+            loginConn = null;
+        }
+        if (bosConn != null) {
+            bosConn.disconnect();
+            bosConn = null;
+        }
+        for (ServiceConnection conn : getServiceConnections()) {
+            try {
+                conn.disconnect();
             }
-            if (bosConn != null) {
-                bosConn.disconnect();
-                bosConn = null;
+            catch (Exception e) {
+                // Ignore.
             }
-            for (ServiceConnection conn : getServiceConnections()) {
-                try {
-                    conn.disconnect();
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
-                try {
-                    services.remove(conn);
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
-                try {
-                    snacMgr.unregister(conn);
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
+            try {
+                services.remove(conn);
             }
-            Presence p = new Presence(Presence.Type.unavailable);
-            p.setTo(getJID());
-            p.setFrom(getTransport().getJID());
-            getTransport().sendPacket(p);
-            setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+            catch (Exception e) {
+                // Ignore.
+            }
+            try {
+                snacMgr.unregister(conn);
+            }
+            catch (Exception e) {
+                // Ignore.
+            }
         }
     }
 
@@ -424,7 +422,7 @@ public class OSCARSession extends TransportSession {
         m.setFrom(getTransport().getJID());
         m.setBody(LocaleUtils.getLocalizedString("gateway.oscar.disconnected", "gateway"));
         getTransport().sendPacket(m);
-        logOut();
+        sessionDisconnected();
     }
 
     /**

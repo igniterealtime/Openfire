@@ -66,11 +66,6 @@ public class YahooSession extends TransportSession {
     private PseudoRoster pseudoRoster;
 
     /**
-     * How many attempts have been made so far?
-     */
-    private Integer loginAttempts = 0;
-
-    /**
      * Yahoo session
      */
     private final Session yahooSession;
@@ -95,12 +90,10 @@ public class YahooSession extends TransportSession {
         this.presenceType = presenceType;
         this.verboseStatus = verboseStatus;
         final PresenceType pType = presenceType;
-        if (!isLoggedIn() && getLoginStatus() != TransportLoginStatus.LOGGING_IN && loginAttempts <= 3) {
-            setLoginStatus(TransportLoginStatus.LOGGING_IN);
+        if (!isLoggedIn()) {
             new Thread() {
                 public void run() {
                     try {
-                        loginAttempts++;
                         yahooSession.setStatus(Status.AVAILABLE);
                         yahooSession.login(registration.getUsername(), registration.getPassword());
                         setLoginStatus(TransportLoginStatus.LOGGED_IN);
@@ -166,8 +159,13 @@ public class YahooSession extends TransportSession {
      * Log out of Yahoo.
      */
     public void logOut() {
-        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
-        loginAttempts = 0;
+        if (isLoggedIn()) {
+            cleanUp();
+            sessionDisconnectedNoReconnect();
+        }
+    }
+
+    public void cleanUp() {
         try {
             yahooSession.logout();
         }
@@ -175,10 +173,6 @@ public class YahooSession extends TransportSession {
             Log.debug("Failed to log out from Yahoo.");
         }
         yahooSession.reset();
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getJID());
-        p.setFrom(getTransport().getJID());
-        getTransport().sendPacket(p);
     }
 
     /**

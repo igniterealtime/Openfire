@@ -11,10 +11,14 @@
 package org.jivesoftware.openfire.gateway;
 
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -110,6 +114,11 @@ public abstract class TransportSession implements Runnable {
      * Supported features.
      */
     public ArrayList<SupportedFeature> supportedFeatures = new ArrayList<SupportedFeature>();
+
+    /**
+     * Number of reconnection attempts made.
+     */
+    public Integer reconnectionAttempts = 0;
 
     /**
      * Associates a resource with the session, and tracks it's priority.
@@ -379,6 +388,9 @@ public abstract class TransportSession implements Runnable {
      */
     public void setLoginStatus(TransportLoginStatus status) {
         loginStatus = status;
+        if (status.equals(TransportLoginStatus.LOGGED_IN)) {
+            reconnectionAttempts = 0;
+        }
     }
 
     /**
@@ -411,6 +423,44 @@ public abstract class TransportSession implements Runnable {
      */
     public void sessionDone() {
         validSession = false;
+    }
+
+    /**
+     * Should be called when a session has been disconnected.
+     *
+     * This can be anything from a standard logout to a forced disconnect from the server.
+     */
+    public void sessionDisconnected() {
+        reconnectionAttempts++;
+        cleanUp();
+        if (reconnectionAttempts > JiveGlobals.getIntProperty("plugin.gateway."+getTransport().getType()+"reconnectattempts", 3)) {
+            sessionDisconnectedNoReconnect();
+        }
+        else {
+            setLoginStatus(TransportLoginStatus.RECONNECTING);
+            ClientSession session = XMPPServer.getInstance().getSessionManager().getSession(getJIDWithHighestPriority());
+            logIn(getTransport().getPresenceType(session.getPresence()), null);
+        }
+    }
+
+    /**
+     * Should be called when a session has been disconnected but no reconnect attempt should be made.
+     *
+     * It is also called internally by sessionDisconnected to handle total failed attempt.
+     */
+    public void sessionDisconnectedNoReconnect() {
+        Log.debug("Disconnecting session "+getJID()+" from "+getTransport().getJID());
+        Presence p = new Presence(Presence.Type.unavailable);
+        p.setTo(getJID());
+        p.setFrom(getTransport().getJID());
+        getTransport().sendPacket(p);
+        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        try {
+            getTransport().notifyRosterOffline(getJID());
+        }
+        catch (UserNotFoundException e) {
+            // Don't care
+        }
     }
 
     /**
@@ -485,5 +535,27 @@ public abstract class TransportSession implements Runnable {
      * @param jid JID to have the presence packets sent to.
      */
     public abstract void resendContactStatuses(JID jid);
+
+    /**
+     * Should be called when the service is to be logged into.
+     *
+     * This is expected to check for current logged in status and log in if appropriate.
+     *
+     * @param presenceType Initial status (away, available, etc) to be set upon logging in.
+     * @param verboseStatus Descriptive status to be set upon logging in.
+     */
+    public abstract void logIn(PresenceType presenceType, String verboseStatus);
+
+    /**
+     * Should be called when the service is to be disconnected from.
+     *
+     * This is expected to check for current logged in status and log out if appropriate.
+     */
+    public abstract void logOut();
+
+    /**
+     * Clean up session pieces for either a log out or in preparation for a reconnection.
+     */
+    public abstract void cleanUp();
 
 }

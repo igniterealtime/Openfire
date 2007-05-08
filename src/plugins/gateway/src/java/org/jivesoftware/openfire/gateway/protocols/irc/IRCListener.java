@@ -38,7 +38,7 @@ public class IRCListener implements IRCEventListener {
     /**
      * Timer to check for online status.
      */
-    private Timer timer = new Timer();
+    public Timer timer = new Timer();
 
     /**
      * Interval at which status is checked.
@@ -90,13 +90,7 @@ public class IRCListener implements IRCEventListener {
 
     public void onDisconnected() {
         Log.debug("IRC disconnected");
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getSession().getJID());
-        p.setFrom(getSession().getTransport().getJID());
-        getSession().getTransport().sendPacket(p);
-        getSession().getConnection().close();
-        timer.cancel();
-        getSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        getSession().sessionDisconnected();
     }
 
     public void onError(String string) {
@@ -192,12 +186,7 @@ public class IRCListener implements IRCEventListener {
 
     public void onQuit(IRCUser ircUser, String string) {
         Log.debug("IRC quit: "+ircUser+", "+string);
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getSession().getJID());
-        p.setFrom(getSession().getTransport().getJID());
-        getSession().getTransport().sendPacket(p);
-        getSession().getConnection().close();
-        getSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        getSession().sessionDisconnectedNoReconnect();
     }
 
     public void onReply(int i, String string, String string1) {
@@ -252,6 +241,10 @@ public class IRCListener implements IRCEventListener {
                 getSession().getConnection().doIson(buddyList);
             }
         }
+    }
+
+    public Timer getTimer() {
+        return timer;
     }
 
 }

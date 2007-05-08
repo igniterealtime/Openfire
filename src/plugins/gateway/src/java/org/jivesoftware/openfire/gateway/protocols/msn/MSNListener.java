@@ -284,7 +284,8 @@ public class MSNListener extends MsnAdapter {
                     LocaleUtils.getLocalizedString("gateway.msn.passwordincorrect", "gateway"),
                     Message.Type.error
             );
-            msnSession.logOut();
+            msnSession.setLoginStatus(TransportLoginStatus.DISCONNECTED);
+            msnSession.sessionDisconnectedNoReconnect();
         }
         else if (throwable.getClass().getName().equals("net.sf.jml.exception.MsnProtocolException")) {
             Log.debug("MSN: Protocol exception: "+throwable.toString());
@@ -311,7 +312,8 @@ public class MSNListener extends MsnAdapter {
                     LocaleUtils.getLocalizedString("gateway.msn.disconnect", "gateway"),
                     Message.Type.error
             );
-            msnSession.logOut();
+            msnSession.setLoginStatus(TransportLoginStatus.DISCONNECTED);
+            msnSession.sessionDisconnected();
         }
         else {
             Log.debug("MSN: Unknown error: "+throwable.toString());

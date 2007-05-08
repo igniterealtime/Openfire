@@ -17,7 +17,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.gateway.TransportLoginStatus;
 import org.jivesoftware.openfire.gateway.TransportType;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.Presence;
 
 import net.kano.joscar.*;
 import net.kano.joscar.flap.*;
@@ -66,8 +65,8 @@ public class LoginConnection extends BaseFlapConnection {
             m.setFrom(this.getMainSession().getTransport().getJID());
             m.setTo(this.getMainSession().getJIDWithHighestPriority());
             m.setBody(LocaleUtils.getLocalizedString("gateway.oscar.connectionfailed", "gateway")+" " + e.getReason());
-            this.getMainSession().getTransport().sendPacket(m);
-            this.getMainSession().logOut();
+            getMainSession().getTransport().sendPacket(m);
+            getMainSession().sessionDisconnected();
         }
         else if (e.getNewState() == ClientFlapConn.STATE_NOT_CONNECTED) {
             //TODO: Do we need to catch these?
@@ -166,13 +165,7 @@ public class LoginConnection extends BaseFlapConnection {
                 m.setFrom(getMainSession().getTransport().getJID());
                 m.setBody(errormsg);
                 getMainSession().getTransport().sendPacket(m);
-
-                Presence p = new Presence();
-                p.setTo(getMainSession().getJID());
-                p.setFrom(getMainSession().getTransport().getJID());
-                p.setType(Presence.Type.unavailable);
-                getMainSession().getTransport().sendPacket(p);
-                getMainSession().setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+                getMainSession().sessionDisconnectedNoReconnect();
             }
             else {
                 Log.debug("Got something else?");

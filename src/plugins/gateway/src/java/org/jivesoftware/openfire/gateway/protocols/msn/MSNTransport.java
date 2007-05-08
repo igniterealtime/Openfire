@@ -10,7 +10,6 @@
 
 package org.jivesoftware.openfire.gateway.protocols.msn;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.gateway.*;
 import org.xmpp.packet.JID;
@@ -81,10 +80,9 @@ public class MSNTransport extends BaseTransport {
      * @param verboseStatus Longer status description.
      */
     public TransportSession registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
-        Log.debug("Logging in to MSN gateway.");
         TransportSession session = new MSNSession(registration, jid, this, priority);
-        this.getSessionManager().startThread(session);
-        ((MSNSession)session).logIn(presenceType, verboseStatus);
+        session.setLoginStatus(TransportLoginStatus.LOGGING_IN);
+        session.logIn(presenceType, verboseStatus);
         return session;
     }
 
@@ -94,11 +92,8 @@ public class MSNTransport extends BaseTransport {
      * @param session The session to be disconnected.
      */
     public void registrationLoggedOut(TransportSession session) {
-        Log.debug("Logging out of MSN gateway.");
-        ((MSNSession)session).logOut();
-        session.sessionDone();
-        // Just in case.
-        session.setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+        session.setLoginStatus(TransportLoginStatus.LOGGING_OUT);
+        session.logOut();
     }
 
     /**

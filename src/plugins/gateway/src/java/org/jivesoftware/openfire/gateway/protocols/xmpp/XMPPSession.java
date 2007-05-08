@@ -77,8 +77,7 @@ public class XMPPSession extends TransportSession {
     private JID acctjid = null;
 
     public void logIn(PresenceType presenceType, String verboseStatus) {
-        if (!this.isLoggedIn()) {
-            setLoginStatus(TransportLoginStatus.LOGGING_IN);
+        if (!isLoggedIn()) {
             new Thread() {
                 public void run() {
                     try {
@@ -105,22 +104,18 @@ public class XMPPSession extends TransportSession {
         }
     }
 
-    /**
-     * Log out of MSN.
-     */
     public void logOut() {
-        if (this.isLoggedIn()) {
-            setLoginStatus(TransportLoginStatus.LOGGING_OUT);
-            conn.removeConnectionListener(listener);
-            conn.getRoster().removeRosterListener(listener);
-            conn.getChatManager().removeChatListener(listener);
-            conn.disconnect();
+        if (isLoggedIn()) {
+            cleanUp();
+            sessionDisconnectedNoReconnect();
         }
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getJID());
-        p.setFrom(getTransport().getJID());
-        getTransport().sendPacket(p);
-        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+    }
+
+    public void cleanUp() {
+        conn.removeConnectionListener(listener);
+        conn.getRoster().removeRosterListener(listener);
+        conn.getChatManager().removeChatListener(listener);
+        conn.disconnect();
     }
     
 

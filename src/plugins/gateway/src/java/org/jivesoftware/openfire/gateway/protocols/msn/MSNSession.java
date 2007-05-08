@@ -93,10 +93,9 @@ public class MSNSession extends TransportSession {
      * @param verboseStatus Long representation of status.
      */
     public void logIn(PresenceType presenceType, String verboseStatus) {
-        if (!this.isLoggedIn()) {
+        if (!isLoggedIn()) {
             try {
                 Log.debug("Logging in to MSN session for " + msnMessenger.getOwner().getEmail());
-                setLoginStatus(TransportLoginStatus.LOGGING_IN);
                 msnMessenger.getOwner().setInitStatus(((MSNTransport)getTransport()).convertJabStatusToMSN(presenceType));
                 msnMessenger.setLogIncoming(false);
                 msnMessenger.setLogOutgoing(false);
@@ -115,15 +114,16 @@ public class MSNSession extends TransportSession {
      * Log out of MSN.
      */
     public void logOut() {
-        if (this.isLoggedIn()) {
-            setLoginStatus(TransportLoginStatus.LOGGING_OUT);            
-            msnMessenger.logout();
+        Log.debug("Logging out of MSN");
+        if (isLoggedIn()) {
+            Log.debug("No really.");
+            cleanUp();
+            sessionDisconnectedNoReconnect();
         }
-        Presence p = new Presence(Presence.Type.unavailable);
-        p.setTo(getJID());
-        p.setFrom(getTransport().getJID());
-        getTransport().sendPacket(p);
-        setLoginStatus(TransportLoginStatus.LOGGED_OUT);
+    }
+
+    public void cleanUp() {
+        msnMessenger.logout();
     }
 
     /**

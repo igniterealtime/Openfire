@@ -1120,6 +1120,7 @@
 
     <!-- installer.rpm-rhx ========================================================================= -->
     <property name="target.rpm-rhx" value="${work.dir}/rpm-rhx" />
+    <property name="rpm-rhx.spec.file" value="${basedir}/build/rpm-rhx/openfire.spec" />
     <target name="installer.rpm-rhx" depends="init, dist.init" description="Builds a rpm of openfire for RHX.">
         <antcall target="dist.src"/>
 
@@ -1129,7 +1130,7 @@
         <mkdir dir="${target.rpm-rhx}/SRPMS" />
         <mkdir dir="${target.rpm-rhx}/RPMS" />
 
-        <copy todir="${target.rpm-rhx}/SPECS" file="${basedir}/build/rpm-rhx/openfire.spec" />
+        <copy tofile="${target.rpm-rhx}/SPECS/openfire.spec" file="${rpm-rhx.spec.file}" />
         <copy todir="${target.rpm-rhx}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
 
         <rpm specFile="openfire.spec"
@@ -1137,7 +1138,7 @@
              command="-ba"
              failOnError="true"
              />
-             
+
         <copy todir="${release.dest.dir}" >
             <fileset dir="${target.rpm-rhx}/SRPMS" />
             <fileset dir="${target.rpm-rhx}/RPMS/i386" />

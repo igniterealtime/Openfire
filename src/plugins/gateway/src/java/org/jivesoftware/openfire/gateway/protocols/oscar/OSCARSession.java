@@ -105,10 +105,8 @@ public class OSCARSession extends TransportSession {
     }
 
     public synchronized void logOut() {
-        if (isLoggedIn()) {
-            cleanUp();
-            sessionDisconnectedNoReconnect();
-        }
+        cleanUp();
+        sessionDisconnectedNoReconnect();
     }
 
     public synchronized void cleanUp() {

@@ -159,10 +159,8 @@ public class YahooSession extends TransportSession {
      * Log out of Yahoo.
      */
     public void logOut() {
-        if (isLoggedIn()) {
-            cleanUp();
-            sessionDisconnectedNoReconnect();
-        }
+        cleanUp();
+        sessionDisconnectedNoReconnect();
     }
 
     public void cleanUp() {

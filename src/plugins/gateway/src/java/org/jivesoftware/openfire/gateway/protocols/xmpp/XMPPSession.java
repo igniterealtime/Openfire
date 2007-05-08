@@ -105,10 +105,8 @@ public class XMPPSession extends TransportSession {
     }
 
     public void logOut() {
-        if (isLoggedIn()) {
-            cleanUp();
-            sessionDisconnectedNoReconnect();
-        }
+        cleanUp();
+        sessionDisconnectedNoReconnect();
     }
 
     public void cleanUp() {

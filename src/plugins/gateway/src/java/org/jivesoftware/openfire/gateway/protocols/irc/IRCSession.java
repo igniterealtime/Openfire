@@ -107,11 +107,10 @@ public class IRCSession extends TransportSession {
      * Logs the session out of IRC.
      */
     public void logOut() {
-        if (isLoggedIn()) {
-            ircListener.setSilenced(true);
-            conn.doQuit();
-            sessionDisconnectedNoReconnect();
-        }
+        ircListener.setSilenced(true);
+        conn.doQuit();
+        cleanUp();
+        sessionDisconnectedNoReconnect();
     }
 
     public void cleanUp() {

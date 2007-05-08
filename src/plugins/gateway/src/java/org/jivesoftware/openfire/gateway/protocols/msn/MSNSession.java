@@ -114,12 +114,8 @@ public class MSNSession extends TransportSession {
      * Log out of MSN.
      */
     public void logOut() {
-        Log.debug("Logging out of MSN");
-        if (isLoggedIn()) {
-            Log.debug("No really.");
-            cleanUp();
-            sessionDisconnectedNoReconnect();
-        }
+        cleanUp();
+        sessionDisconnectedNoReconnect();
     }
 
     public void cleanUp() {

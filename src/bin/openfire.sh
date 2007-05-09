@@ -20,13 +20,15 @@ case "`uname`" in
            fi
            ;;
   Linux*) linux=true
-          jdks=`ls -r1d /usr/java/j*`
-          for jdk in $jdks; do
-            if [ -f "$jdk/bin/java" ]; then
-              JAVA_HOME="$jdk"
-              break
-            fi
-          done
+          if [ -z "$JAVA_HOME" ]; then
+            jdks=`ls -r1d /usr/java/j*`
+            for jdk in $jdks; do
+              if [ -f "$jdk/bin/java" ]; then
+                JAVA_HOME="$jdk"
+                break
+              fi
+            done
+          fi
           ;;
 esac
 

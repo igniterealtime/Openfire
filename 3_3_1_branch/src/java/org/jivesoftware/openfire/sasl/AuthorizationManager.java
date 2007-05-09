@@ -11,13 +11,14 @@
 
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.StringTokenizer;
+import org.jivesoftware.util.StringUtils;
 
 /**
  * Manages the AuthorizationProvider objects.
@@ -42,48 +43,28 @@ import java.util.StringTokenizer;
  */
 public class AuthorizationManager {
 
-    private static ArrayList<AuthorizationPolicy> providers =
-            new ArrayList<AuthorizationPolicy>();
     private static AuthorizationManager instance = new AuthorizationManager();
+    private static AuthorizationPolicy authorizationProvider;
 
     static {
-        String classList = JiveGlobals.getXMLProperty("provider.authorization.classList");
-        if (classList != null) {
-            StringTokenizer st = new StringTokenizer(classList, " ,\t\n\r\f");
-            while (st.hasMoreTokens()) {
-                String s_provider = st.nextToken();
-                try {
-                    Class c_provider = ClassUtils.forName(s_provider);
-                    AuthorizationPolicy provider =
-                            (AuthorizationPolicy) (c_provider.newInstance());
-                    Log.debug("AuthorizationManager: Loaded " + s_provider);
-                    providers.add(provider);
-                } catch (Exception e) {
-                    Log.error("Error loading AuthorizationProvider: " + s_provider + "\n" + e);
-                }
+        String className = JiveGlobals.getXMLProperty("provider.authorization.className");
+        if (className != null) {
+            try {
+                Class c_provider = ClassUtils.forName(className);
+                AuthorizationPolicy provider = (AuthorizationPolicy)(c_provider.newInstance());
+                Log.debug("AuthorizationManager: Loaded " + provider);
+                authorizationProvider = provider;
+            }
+            catch (Exception e) {
+                Log.error("Error loading AuthorizationProvider: " + className + "\n" + e);
             }
         }
-        if (providers.isEmpty()) {
+
+        if (authorizationProvider == null) {
             Log.debug("No AuthorizationProvider's found. Loading DefaultAuthorizationPolicy");
-            providers.add(new DefaultAuthorizationPolicy());
         }
     }
 
-    private AuthorizationManager() {
-
-    }
-
-    /**
-     * Returns the currently-installed AuthorizationProvider. Warning: You
-     * should not be calling the AuthorizationProvider directly to perform
-     * authorizations, it will not take into account the policy selected in
-     * the <tt>openfire.xml</tt>.  Use @see{authorize} in this class, instead.
-     *
-     * @return the current AuthorizationProvider.
-     */
-    public static Collection<AuthorizationPolicy> getAuthorizationProviders() {
-        return providers;
-    }
 
     /**
      * Returns a singleton AuthorizationManager instance.
@@ -94,19 +75,53 @@ public class AuthorizationManager {
         return instance;
     }
 
+    private AuthorizationManager() {
+
+    }
+
+
     /**
      * Authorize the authenticated used to the requested username.  This uses the
-     * selected the selected AuthenticationProviders.
+     * GSSAPIAuthProvider if it is the specified provider.
      *
+     * @param username  the username.
+     * @param principal the principal.
      * @return true if the user is authorized.
      */
-
-    public static boolean authorize(String authorId, String authenId) {
-        for (AuthorizationPolicy ap : providers) {
-            if (ap.authorize(authorId, authenId)) {
-                return true;
+    public static boolean authorize(String username, String principal) {
+        boolean authorized = false;
+        if (authorizationProvider != null) {
+            authorized = authorizationProvider.authorize(username, principal);
+            if (!authorized) {
+                return false;
             }
         }
-        return false;
+
+        // If the user is authorized, we want to check if the user is listed as a
+        // member of the <code>UserProvider</code>, and if not, add the user (if writable).
+        // See if the user exists in the database. If not, automatically create them.
+        UserManager userManager = UserManager.getInstance();
+        try {
+            userManager.getUser(username);
+        }
+        catch (UserNotFoundException userNotFound) {
+            try {
+                Log.debug("Automatically creating new user account for " + username);
+                // Create user; use a random password for better safety in the future.
+                // Note that we have to go to the user provider directly -- because the
+                // provider is read-only, UserManager will usually deny access to createUser.
+                UserProvider userProvider = UserManager.getUserProvider();
+                if (userProvider.isReadOnly()) {
+                    Log.error("Error: Unable to add the user. The UserProvider is not writable.");
+                }
+                UserManager.getUserProvider().createUser(username, StringUtils.randomString(8),
+                        null, null);
+                return true;
+            }
+            catch (UserAlreadyExistsException uaee) {
+                // Ignore.
+            }
+        }
+        return true;
     }
 }

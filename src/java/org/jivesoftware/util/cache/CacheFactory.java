@@ -358,11 +358,12 @@ public class CacheFactory {
 
     private static void startClustering() {
         clusteringEnabled = false;
+        boolean clusterStarted = false;
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
                     getClusteredCacheStrategyClassLoader("enterprise"))
                     .newInstance();
-            boolean clusterStarted = cacheFactoryStrategy.startCluster();
+            clusterStarted = cacheFactoryStrategy.startCluster();
             if (clusterStarted) {
                 // Loop through local caches and switch them to clustered cache.
                 for (String cacheName : caches.keySet()) {
@@ -373,13 +374,17 @@ public class CacheFactory {
                 clusteringEnabled = true;
                 fireClusteringStarted();
             }
-            else {
-                // Revert to local cache factory if cluster fails to start
-                cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
-            }
         }
         catch (Exception e) {
             Log.error("Unable to start clustering - continuing in local mode", e);
+        }
+        if (!clusterStarted) {
+            // Revert to local cache factory if cluster fails to start
+            try {
+                cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
+            } catch (Exception e) {
+                Log.error("Fatal error - Failed to join the cluster and failed to use local cache", e);
+            }
         }
     }
 

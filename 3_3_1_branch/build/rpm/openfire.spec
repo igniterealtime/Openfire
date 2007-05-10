@@ -9,6 +9,7 @@ Group: Applications/Communications
 Vendor: Jive Software
 Packager: Jive Software
 License: GPL
+AutoReqProv: no
 URL: http://www.igniterealtime.org/
 
 %define prefix /opt

@@ -15,14 +15,14 @@ import java.util.Collection;
 
 /**
  * Provider for authorization. Unlike the AbstractAuthorizationPolicy
- * class, this is intended for classes that need a more "heavyweight" 
+ * class, this is intended for classes that need a more "heavyweight"
  * solution, often that requires consulting some storage or external
  * entity about each specific case.  This class allows individual mappings
  * between authenticated principals and usernames, and if the storage
  * mechanism allows it, management of those mappings.
  *
- * Users that wish to integrate with their own authorization 
- * system must extend this class and implement the 
+ * Users that wish to integrate with their own authorization
+ * system must extend this class and implement the
  * AuthorizationProvider interface then register the class
  * with Openfire in the <tt>openfire.xml</tt> file. An entry
  * in that file would look like the following:
@@ -46,7 +46,7 @@ public abstract class AbstractAuthorizationProvider implements AuthorizationPoli
      * @return true is the user is authorized to be principal
      */
     public abstract boolean authorize(String username, String principal);
-    
+
     /**
      * Returns a String Collection of principals that are authorized to use
      * the named user.
@@ -55,16 +55,16 @@ public abstract class AbstractAuthorizationProvider implements AuthorizationPoli
      * @return A String Collection of principals that are authorized.
      */
     public abstract Collection<String> getAuthorized(String username);
-    
+
     /**
      * Returns true if this AuthorizationProvider supports changing the
      * list of authorized principals for users.
      *
-     * @return true if updating the list of authorized principals is 
+     * @return true if updating the list of authorized principals is
      *      supported by this AuthorizationProvider.
      */
     public abstract boolean isWritable();
-    
+
     /**
      * Add a single authorized principal to use the named user.
      *
@@ -73,7 +73,7 @@ public abstract class AbstractAuthorizationProvider implements AuthorizationPoli
      * @throws UnsupportedOperationException If this AuthorizationProvider cannot be updated.
      */
     public abstract void addAuthorized(String username, String principal) throws UnsupportedOperationException;
-    
+
     /**
      * Add a Collection of users authorized to use the named user.
      *
@@ -82,7 +82,7 @@ public abstract class AbstractAuthorizationProvider implements AuthorizationPoli
      * @throws UnsupportedOperationException If this AuthorizationProvider cannot be updated.
      */
     public abstract void addAuthorized(String username, Collection<String> principals) throws UnsupportedOperationException;
-    
+
     /**
      * Set the users authorized to use the named user. All existing principals listed
      * will be removed.
@@ -99,7 +99,7 @@ public abstract class AbstractAuthorizationProvider implements AuthorizationPoli
      * @return The short name of the Policy
      */
     public abstract String name();
-    
+
     /**
      * Returns a description of the Policy
      *

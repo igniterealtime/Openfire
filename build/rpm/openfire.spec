@@ -81,6 +81,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %post
 /sbin/chkconfig --add openfire
+chown -R daemon:daemon %{homedir}
 
 %files
 %defattr(-,daemon,daemon)

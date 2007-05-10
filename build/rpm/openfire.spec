@@ -110,7 +110,9 @@ chown -R daemon:daemon %{homedir}
 %dir %{homedir}/resources/nativeAuth
 %dir %{homedir}/resources/nativeAuth/linux-i386
 %{homedir}/resources/nativeAuth/linux-i386/*
-%{homedir}/resources/security
+%dir %{homedir}/resources/security
+%config(noreplace) %{homedir}/resources/security/keystore
+%config(noreplace) %{homedir}/resources/security/truststore
 %doc %{homedir}/documentation
 %doc %{homedir}/LICENSE.html 
 %doc %{homedir}/README.html 

@@ -65,7 +65,7 @@ public class AuthorizationManager {
         }
         if (authorizationPolicies.isEmpty()) {
             Log.debug("No AuthorizationProvider's found. Loading DefaultAuthorizationPolicy");
-          //  authorizationPolicies.add(new GSSAPIAuthorizationProvider());
+            authorizationPolicies.add(new GSSAPIAuthorizationProvider());
         }
     }
 

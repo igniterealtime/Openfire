@@ -5,7 +5,7 @@
 # chkconfig: 2345 99 1
 # description: Openfire is an XMPP server, which is a server that facilitates \
 #              XML based communication, such as chat.
-# config: /usr/local/openfire/conf/openfire.xml
+# config: /opt/openfire/conf/openfire.xml
 # config: /etc/sysconfig/openfire
 # pidfile: /var/run/openfire.pid
 # 

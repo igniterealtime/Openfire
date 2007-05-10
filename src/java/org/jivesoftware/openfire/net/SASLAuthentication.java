@@ -15,10 +15,6 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -26,28 +22,38 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
 import java.io.UnsupportedEncodingException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
  * actually performing the SASL authentication.<p>
- *
+ * <p/>
  * The list of available SASL mechanisms is determined by:
  * <ol>
- *      <li>The type of {@link org.jivesoftware.openfire.user.UserProvider} being used since
- *      some SASL mechanisms require the server to be able to retrieve user passwords</li>
- *      <li>Whether anonymous logins are enabled or not.</li>
- *      <li>Whether shared secret authentication is enabled or not.</li>
- *      <li>Whether the underlying connection has been secured or not.</li>
+ * <li>The type of {@link org.jivesoftware.openfire.user.UserProvider} being used since
+ * some SASL mechanisms require the server to be able to retrieve user passwords</li>
+ * <li>Whether anonymous logins are enabled or not.</li>
+ * <li>Whether shared secret authentication is enabled or not.</li>
+ * <li>Whether the underlying connection has been secured or not.</li>
  * </ol>
  *
  * @author Hao Chen
@@ -94,7 +100,8 @@ public class SASLAuthentication {
         }
     }
 
-    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
+    @SuppressWarnings({"UnnecessarySemicolon"})
+    // Support for QDox Parser
     public enum Status {
         /**
          * Entity needs to respond last challenge. Session is still negotiating
@@ -174,7 +181,7 @@ public class SASLAuthentication {
      * if the entity is expected to send a response to a challenge.
      *
      * @param session the session that is authenticating with the server.
-     * @param doc the stanza sent by the authenticating entity.
+     * @param doc     the stanza sent by the authenticating entity.
      * @return value that indicates whether the authentication has finished either successfully
      *         or not or if the entity is expected to send a response to a challenge.
      * @throws UnsupportedEncodingException If UTF-8 charset is not supported.
@@ -244,7 +251,7 @@ public class SASLAuthentication {
                     break;
                 case RESPONSE:
                     // Store the requested SASL mechanism by the client
-                    mechanism = (String) session.getSessionData("SaslMechanism");
+                    mechanism = (String)session.getSessionData("SaslMechanism");
                     if (mechanism.equalsIgnoreCase("PLAIN") &&
                             mechanisms.contains("PLAIN")) {
                         status = doPlainAuthentication(session, doc);
@@ -256,7 +263,7 @@ public class SASLAuthentication {
                         status = doSharedSecretAuthentication(session, doc);
                     }
                     else if (mechanisms.contains(mechanism)) {
-                        SaslServer ss = (SaslServer) session.getSessionData("SaslServer");
+                        SaslServer ss = (SaslServer)session.getSessionData("SaslServer");
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
@@ -469,10 +476,10 @@ public class SASLAuthentication {
             return Status.authenticated;
         }
         // Check that hostname matches the one provided in a certificate
-        SocketConnection connection = (SocketConnection) session.getConnection();
+        SocketConnection connection = (SocketConnection)session.getConnection();
         try {
             for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                if (CertificateManager.getPeerIdentities((X509Certificate) certificate)
+                if (CertificateManager.getPeerIdentities((X509Certificate)certificate)
                         .contains(hostname)) {
                     authenticationSuccessful(session, hostname, null);
                     return Status.authenticated;
@@ -487,8 +494,7 @@ public class SASLAuthentication {
     }
 
     private static Status doSharedSecretAuthentication(Session session, Element doc)
-            throws UnsupportedEncodingException
-    {
+            throws UnsupportedEncodingException {
         String secretDigest;
         String response = doc.getTextTrim();
         if (response == null || response.length() == 0) {
@@ -528,7 +534,7 @@ public class SASLAuthentication {
     }
 
     private static void authenticationSuccessful(Session session, String username,
-            byte[] successData) {
+                                                 byte[] successData) {
         StringBuilder reply = new StringBuilder(80);
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
         if (successData != null) {
@@ -541,7 +547,7 @@ public class SASLAuthentication {
         session.getConnection().deliverRawText(reply.toString());
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
-            ((ClientSession) session).setAuthToken(new AuthToken(username));
+            ((ClientSession)session).setAuthToken(new AuthToken(username));
         }
         else if (session instanceof IncomingServerSession) {
             String hostname = username;
@@ -549,7 +555,7 @@ public class SASLAuthentication {
             session.setAddress(new JID(null, hostname, null));
             // Add the validated domain as a valid domain. The remote server can
             // now send packets from this address
-            ((IncomingServerSession) session).addValidatedDomain(hostname);
+            ((IncomingServerSession)session).addValidatedDomain(hostname);
         }
     }
 
@@ -559,7 +565,7 @@ public class SASLAuthentication {
         reply.append("<not-authorized/></failure>");
         session.getConnection().deliverRawText(reply.toString());
         // Give a number of retries before closing the connection
-        Integer retries = (Integer) session.getSessionData("authRetries");
+        Integer retries = (Integer)session.getSessionData("authRetries");
         if (retries == null) {
             retries = 1;
         }
@@ -567,7 +573,7 @@ public class SASLAuthentication {
             retries = retries + 1;
         }
         session.setSessionData("authRetries", retries);
-        if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3) ) {
+        if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3)) {
             // Close the connection
             session.getConnection().close();
         }
@@ -576,7 +582,7 @@ public class SASLAuthentication {
     /**
      * Adds a new SASL mechanism to the list of supported SASL mechanisms by the server. The
      * new mechanism will be offered to clients and connection managers as stream features.<p>
-     *
+     * <p/>
      * Note: this method simply registers the SASL mechanism to be advertised as a supported
      * mechanism by Openfire. Actual SASL handling is done by Java itself, so you must add
      * the provider to Java.
@@ -607,7 +613,7 @@ public class SASLAuthentication {
     public static Set<String> getSupportedMechanisms() {
         Set<String> answer = new HashSet<String>(mechanisms);
         // Clean up not-available mechanisms
-        for (Iterator<String> it=answer.iterator(); it.hasNext();) {
+        for (Iterator<String> it = answer.iterator(); it.hasNext();) {
             String mech = it.next();
             if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
                 // Check if the user provider in use supports passwords retrieval. Accessing
@@ -652,8 +658,7 @@ public class SASLAuthentication {
                         mech.equals("DIGEST-MD5") ||
                         mech.equals("CRAM-MD5") ||
                         mech.equals("GSSAPI") ||
-                        mech.equals("JIVE-SHAREDSECRET")) 
-                {
+                        mech.equals("JIVE-SHAREDSECRET")) {
                     Log.debug("SASLAuthentication: Added " + mech + " to mech list");
                     mechanisms.add(mech);
                 }
@@ -661,12 +666,9 @@ public class SASLAuthentication {
 
             if (mechanisms.contains("GSSAPI")) {
                 if (JiveGlobals.getXMLProperty("sasl.gssapi.config") != null) {
-                    System.setProperty("java.security.krb5.debug",
-                            JiveGlobals.getXMLProperty("sasl.gssapi.debug", "false"));
-                    System.setProperty("java.security.auth.login.config",
-                            JiveGlobals.getXMLProperty("sasl.gssapi.config"));
-                    System.setProperty("javax.security.auth.useSubjectCredsOnly",
-                            JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
+                    System.setProperty("java.security.krb5.debug", JiveGlobals.getXMLProperty("sasl.gssapi.debug", "false"));
+                    System.setProperty("java.security.auth.login.config", JiveGlobals.getXMLProperty("sasl.gssapi.config"));
+                    System.setProperty("javax.security.auth.useSubjectCredsOnly", JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
                 }
                 else {
                     //Not configured, remove the option.

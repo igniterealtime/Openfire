@@ -43,7 +43,7 @@ public class GSSAPIAuthorizationProvider implements AuthorizationPolicy {
          * identity. In practice however, GSSAPI will provide both. (Note: Ive
          * not done extensive testing on this)
          */
-        strict
+        strict;
     }
 
     public GSSAPIAuthorizationProvider() {

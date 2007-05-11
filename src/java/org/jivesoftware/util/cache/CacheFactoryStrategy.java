@@ -53,11 +53,12 @@ public interface CacheFactoryStrategy {
     boolean isSeniorClusterMember();
 
     /**
-     * Returns a string uniquely identifying this member within the cluster.
+     * Returns a byte[] that uniquely identifies this member within the cluster or <tt>null</tt>
+     * when not in a cluster.
      *
-     * @return a string uniquely identifying this member within the cluster.
+     * @return a byte[] that uniquely identifies this member within the cluster or null when not in a cluster.
      */
-    String getClusterMemberID();
+    byte[] getClusterMemberID();
 
     /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be

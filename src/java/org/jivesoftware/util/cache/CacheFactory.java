@@ -131,11 +131,12 @@ public class CacheFactory {
     }
 
     /**
-     * Returns a string uniquely identifying this member of the cluster.
+     * Returns a byte[] that uniquely identifies this member within the cluster or <tt>null</tt>
+     * when not in a cluster.
      *
-     * @return a string uniquely identifying this member of the cluster.
+     * @return a byte[] that uniquely identifies this member within the cluster or null when not in a cluster.
      */
-    public static String getClusterMemberID() {
+    public static byte[] getClusterMemberID() {
         return cacheFactoryStrategy.getClusterMemberID();
     }
 

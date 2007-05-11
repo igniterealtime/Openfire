@@ -7,14 +7,14 @@
  */
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveConstants;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * CacheFactoryStrategy for use in Openfire. It creates and manages local caches, and it's cluster
@@ -77,8 +77,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return true;
     }
 
-    public String getClusterMemberID() {
-        return "";
+    public byte[] getClusterMemberID() {
+        return null;
     }
 
     public void doClusterTask(final ClusterTask task) {

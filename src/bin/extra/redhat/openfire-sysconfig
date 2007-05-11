@@ -18,6 +18,10 @@
 # it will default to $OPENFIRE_HOME/logs.
 #OPENFIRE_LOGDIR="/some/where/logs"
 
+# If you wish to set any specific options to pass to the JVM, you can
+# set them with the following variable.
+#OPENFIRE_OPTS="-Xmx1024m"
+
 # If you wish to override the auto-detected JAVA_HOME variable, uncomment
 # and change the following line.
 #JAVA_HOME=/usr/java/default

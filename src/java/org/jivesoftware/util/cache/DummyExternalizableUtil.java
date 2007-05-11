@@ -141,6 +141,15 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
         return false;
     }
 
+    public void writeByteArray(DataOutput out, byte[] value) throws IOException {
+        // Do nothing
+    }
+
+    public byte[] readByteArray(DataInput in) throws IOException {
+        // Do nothing
+        return new byte[0];
+    }
+
     public void writeSafeUTF(DataOutput out, String value) {
         // Do nothing
     }

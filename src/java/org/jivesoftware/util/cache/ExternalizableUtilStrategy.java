@@ -116,6 +116,10 @@ public interface ExternalizableUtilStrategy {
 
     boolean readBoolean(DataInput in) throws IOException;
 
+    void writeByteArray(DataOutput out, byte[] value) throws IOException;
+
+    byte[] readByteArray(DataInput in) throws IOException;
+
     void writeSafeUTF(DataOutput out, String value) throws IOException;
 
     String readSafeUTF(DataInput in) throws IOException;

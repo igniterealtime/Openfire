@@ -194,6 +194,14 @@ public class ExternalizableUtil {
         return strategy.readBoolean(in);
     }
 
+    public void writeByteArray(DataOutput out, byte[] value) throws IOException {
+        strategy.writeByteArray(out, value);
+    }
+
+    public byte[] readByteArray(DataInput in) throws IOException {
+        return strategy.readByteArray(in);
+    }
+
     public void writeSafeUTF(DataOutput out, String value) throws IOException {
         strategy.writeSafeUTF(out, value);
     }

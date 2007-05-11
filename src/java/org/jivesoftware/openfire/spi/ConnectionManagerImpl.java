@@ -21,14 +21,16 @@ import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
 import org.apache.mina.transport.socket.nio.SocketSessionConfig;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
 import org.jivesoftware.openfire.nio.XMPPCodecFactory;
+import org.jivesoftware.util.*;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -64,8 +66,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private XMPPServer server;
     private String localIPAddress = null;
 
-    // Used to know if the sockets can be started (the connection manager has been started)
-    private boolean isStarted = false;
     // Used to know if the sockets have been started
     private boolean isSocketStarted = false;
 
@@ -74,13 +74,24 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         ports = new ArrayList<ServerPort>(4);
     }
 
-    private void createSocket() {
-        if (!isStarted || isSocketStarted || sessionManager == null || deliverer == null ||
-                router == null ||
-                serverName == null)
-        {
+    private synchronized void createSocket() {
+        if (isSocketStarted || sessionManager == null || deliverer == null || router == null || serverName == null) {
             return;
         }
+        // Check if plugins have been loaded
+        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        if (!pluginManager.isExecuted()) {
+            pluginManager.addPluginManagerListener(new PluginManagerListener() {
+                public void pluginsMonitored() {
+                    // Stop listening for plugin events
+                    XMPPServer.getInstance().getPluginManager().removePluginManagerListener(this);
+                    // Start listeners
+                    createSocket();
+                }
+            });
+            return;
+        }
+
         isSocketStarted = true;
 
         // Setup port info
@@ -669,7 +680,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             ioThreads + 1, ioThreads + 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>() );
         socketAcceptor = new SocketAcceptor(ioThreads, ioExecutor);
         // Set that it will be possible to bind a socket if there is a connection in the timeout state
-        SocketAcceptorConfig socketAcceptorConfig = (SocketAcceptorConfig) socketAcceptor.getDefaultConfig();
+        SocketAcceptorConfig socketAcceptorConfig = socketAcceptor.getDefaultConfig();
         socketAcceptorConfig.setReuseAddress(true);
         // Set the listen backlog (queue) length. Default is 50.
         socketAcceptorConfig.setBacklog(JiveGlobals.getIntProperty("xmpp.socket.backlog", 50));
@@ -700,7 +711,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public void start() {
         super.start();
-        isStarted = true;
         serverName = server.getServerInfo().getName();
         createSocket();
         SocketSendingTracker.getInstance().start();

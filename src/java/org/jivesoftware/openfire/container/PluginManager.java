@@ -49,6 +49,10 @@ public class PluginManager {
     private Map<String, Plugin> plugins;
     private Map<Plugin, PluginClassLoader> classloaders;
     private Map<Plugin, File> pluginDirs;
+    /**
+     * Keep track of plugin names and their unzipped files. This list is updated when plugin
+     * is exploded and not when is loaded.
+     */
     private Map<String, File> pluginFiles;
     private ScheduledExecutorService executor = null;
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
@@ -57,6 +61,7 @@ public class PluginManager {
     private Set<String> devPlugins;
     private PluginMonitor pluginMonitor;
     private Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<PluginListener>();
+    private Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<PluginManagerListener>();
 
     /**
      * Constructs a new plugin manager.
@@ -200,6 +205,20 @@ public class PluginManager {
      */
     public File getPluginFile(String name) {
         return pluginFiles.get(name);
+    }
+
+    /**
+     * Returns true if at least one attempt to load plugins has been done. A true value does not mean
+     * that available plugins have been loaded nor that plugins to be added in the future are already
+     * loaded. :)<p>
+     *
+     * TODO Current version does not consider child plugins that may be loaded in a second attempt. It either
+     * TODO consider plugins that were found but failed to be loaded due to some error.
+     *
+     * @return true if at least one attempt to load plugins has been done.
+     */
+    public boolean isExecuted() {
+        return pluginMonitor.executed;
     }
 
     /**
@@ -480,6 +499,12 @@ public class PluginManager {
     private void firePluginCreatedEvent(String name, Plugin plugin) {
         for(PluginListener listener : pluginListeners) {
             listener.pluginCreated(name, plugin);
+        }
+    }
+
+    private void firePluginsMonitored() {
+        for(PluginManagerListener listener : pluginManagerListeners) {
+            listener.pluginsMonitored();
         }
     }
 
@@ -794,6 +819,12 @@ public class PluginManager {
          */
         private boolean running = false;
 
+        /**
+         * True if the monitor has been executed at least once. After the first iteration in {@link #run}
+         * this variable will always be true.
+         * */
+        private boolean executed = false;
+
         public void run() {
             // If the task is already running, return.
             synchronized (this) {
@@ -833,6 +864,8 @@ public class PluginManager {
                         jarFile.getName().length() - 4).toLowerCase();
                     // See if the JAR has already been exploded.
                     File dir = new File(pluginDirectory, pluginName);
+                    // Store the JAR/WAR file that created the plugin folder
+                    pluginFiles.put(pluginName, jarFile);
                     // If the JAR hasn't been exploded, do so.
                     if (!dir.exists()) {
                         unzipPlugin(pluginName, jarFile, dir);
@@ -925,6 +958,14 @@ public class PluginManager {
                         loadPlugin(dirFile);
                     }
                 }
+                // Set that at least one iteration was done. That means that "all available" plugins
+                // have been loaded by now.
+                if (!XMPPServer.getInstance().isSetupMode()) {
+                    executed = true;
+                }
+
+                // Trigger event that plugins have been monitored
+                firePluginsMonitored();
             }
             catch (Throwable e) {
                 Log.error(e);
@@ -980,9 +1021,6 @@ public class PluginManager {
                 // The lib directory of the plugin may contain Pack200 versions of the JAR
                 // file. If so, unpack them.
                 unpackArchives(new File(dir, "lib"));
-
-                // Store the JAR/WAR file that created the plugin folder
-                pluginFiles.put(pluginName, file);
             }
             catch (Exception e) {
                 Log.error(e);
@@ -1087,5 +1125,16 @@ public class PluginManager {
 
     public void removePluginListener(PluginListener listener) {
         pluginListeners.remove(listener);
+    }
+
+    public void addPluginManagerListener(PluginManagerListener listener) {
+        pluginManagerListeners.add(listener);
+        if (isExecuted()) {
+            firePluginsMonitored();
+        }
+    }
+
+    public void removePluginManagerListener(PluginManagerListener listener) {
+        pluginManagerListeners.remove(listener);
     }
 }

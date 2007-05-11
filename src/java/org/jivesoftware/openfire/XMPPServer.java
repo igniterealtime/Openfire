@@ -97,6 +97,7 @@ public class XMPPServer {
     private Date startDate;
     private Date stopDate;
     private boolean initialized = false;
+    private byte[] nodeID;
 
     /**
      * All modules loaded by this server
@@ -195,6 +196,28 @@ public class XMPPServer {
     }
 
     /**
+     * Returns an ID that uniquely identifies this server in a cluster. When not running in cluster mode
+     * the returned value is always the same. However, when in cluster mode the value should be set
+     * when joining the cluster and must be unique even upon restarts of this node.
+     *
+     * @return an ID that uniquely identifies this server in a cluster.
+     */
+    public byte[] getNodeID() {
+        return nodeID == null ? new byte[] {1} : nodeID;
+    }
+
+    /**
+     * Sets an ID that uniquely identifies this server in a cluster. When not running in cluster mode
+     * the returned value is always the same. However, when in cluster mode the value should be set
+     * when joining the cluster and must be unique even upon restarts of this node.
+     *
+     * @param nodeID an ID that uniquely identifies this server in a cluster or null if not in a cluster.
+     */
+    public void setNodeID(byte[] nodeID) {
+        this.nodeID = nodeID;
+    }
+
+    /**
      * Returns true if the given address matches a component service JID.
      *
      * @param jid the JID to check.
@@ -286,7 +309,7 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(3, 3, 1, Version.ReleaseStatus.Release, 1);
+        version = new Version(3, 4, 0, Version.ReleaseStatus.Alpha, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

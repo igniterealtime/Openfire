@@ -98,6 +98,7 @@ public class XMPPServer {
     private Date stopDate;
     private boolean initialized = false;
     private byte[] nodeID;
+    private static final byte[] DEFAULT_NODE_ID = new byte[0];
 
     /**
      * All modules loaded by this server
@@ -203,7 +204,7 @@ public class XMPPServer {
      * @return an ID that uniquely identifies this server in a cluster.
      */
     public byte[] getNodeID() {
-        return nodeID == null ? new byte[] {1} : nodeID;
+        return nodeID == null ? DEFAULT_NODE_ID : nodeID;
     }
 
     /**

@@ -35,6 +35,15 @@ public class ClientRoute implements Cacheable, Externalizable {
     }
 
 
+    public byte[] getNodeID() {
+        return nodeID;
+    }
+
+
+    public boolean isAvailable() {
+        return available;
+    }
+
     public ClientRoute(byte[] nodeID, boolean available) {
         this.nodeID = nodeID;
         this.available = available;

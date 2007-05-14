@@ -27,6 +27,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
     public static final int DEFAULT_MAX_CACHE_SIZE = 1024 * 256;
     public static final long DEFAULT_MAX_CACHE_LIFETIME = 6 * JiveConstants.HOUR;
+    private static final byte[] EMPTY_ID = new byte[0];
 
     /**
      * This map contains property names which were used to store cache configuration data
@@ -127,7 +128,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     public byte[] getClusterMemberID() {
-        return null;
+        return new byte[0];
     }
 
     public void doClusterTask(final ClusterTask task) {

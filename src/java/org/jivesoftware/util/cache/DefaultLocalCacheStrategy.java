@@ -63,6 +63,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("File Transfer", "transferProxy");
         cacheNames.put("POP3 Authentication", "pop3");
         cacheNames.put("LDAP Authentication", "ldap");
+        cacheNames.put("Routing Servers Cache", "routeServer");
+        cacheNames.put("Routing Components Cache", "routeComponent");
+        cacheNames.put("Routing Users Cache", "routeUser");
+        cacheNames.put("Routing AnonymousUsers Cache", "routeAnonymousUser");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
@@ -92,6 +96,14 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.vcardCache.size", 512 * 1024l);
         cacheProps.put("cache.faviconHits.size", 128 * 1024l);
         cacheProps.put("cache.faviconMisses.size", 128 * 1024l);
+        cacheProps.put("cache.routeServer.size", -1l);
+        cacheProps.put("cache.routeServer.expirationTime", -1l);
+        cacheProps.put("cache.routeComponent.size", -1l);
+        cacheProps.put("cache.routeComponent.expirationTime", -1l);
+        cacheProps.put("cache.routeUser.size", -1l);
+        cacheProps.put("cache.routeUser.expirationTime", -1l);
+        cacheProps.put("cache.routeAnonymousUser.size", -1l);
+        cacheProps.put("cache.routeAnonymousUser.expirationTime", -1l);
     }
 
 

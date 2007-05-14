@@ -11,6 +11,8 @@
 
 package org.jivesoftware.openfire.spi;
 
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.Externalizable;
@@ -24,7 +26,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class ClientRoute implements Externalizable {
+public class ClientRoute implements Cacheable, Externalizable {
 
     private byte[] nodeID;
     private boolean available;
@@ -36,6 +38,16 @@ public class ClientRoute implements Externalizable {
     public ClientRoute(byte[] nodeID, boolean available) {
         this.nodeID = nodeID;
         this.available = available;
+    }
+
+    public int getCachedSize() {
+        // Approximate the size of the object in bytes by calculating the size
+        // of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();      // overhead of object
+        size += nodeID.length;                  // Node ID
+        size += CacheSizes.sizeOfBoolean();     // available
+        return size;
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

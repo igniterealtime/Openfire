@@ -19,12 +19,13 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheManager;
 import org.jivesoftware.util.cache.CacheFactory;
 
 import java.io.*;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.StringTokenizer;
 
 /**
  * A utility bean for Openfire admin console pages.

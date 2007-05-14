@@ -11,13 +11,6 @@
 
 package org.jivesoftware.util.cache;
 
-import org.jivesoftware.util.*;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.util.*;
-
 /**
  * General purpose cache. It stores objects associated with unique keys in
  * memory for fast access. All keys and values added to the cache must
@@ -64,7 +57,7 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
      *
      * @return the maximum size of the cache in bytes.
      */
-    int getMaxCacheSize();
+    long getMaxCacheSize();
 
     /**
      * Sets the maximum size of the cache in bytes. If the cache grows larger

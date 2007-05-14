@@ -7,13 +7,13 @@
  */
 package org.jivesoftware.util.cache;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LinkedListNode;
+import org.jivesoftware.util.Log;
 
-import java.util.*;
-import java.io.ObjectOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.*;
 
 /**
  * Default, non-distributed implementation of the Cache interface.
@@ -62,7 +62,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
     /**
      * Maximum size in bytes that the cache can grow to.
      */
-    private int maxCacheSize;
+    private long maxCacheSize;
 
     /**
      * Maintains the current size of the cache in bytes.
@@ -99,7 +99,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      * @param maxLifetime the maximum amount of time objects can exist in
      *      cache before being deleted. -1 means objects never expire.
      */
-    public DefaultCache(String name, int maxSize, long maxLifetime) {
+    public DefaultCache(String name, long maxSize, long maxLifetime) {
         this.name = name;
         this.maxCacheSize = maxSize;
         this.maxLifetime = maxLifetime;
@@ -468,7 +468,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the maximum size of the cache (-1 indicates unlimited max size).
      */
-    public int getMaxCacheSize() {
+    public long getMaxCacheSize() {
         return maxCacheSize;
     }
 

@@ -7,7 +7,9 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Acts as a proxy for a Cache implementation. The Cache implementation can be switched on the fly,
@@ -39,7 +41,7 @@ public class CacheWrapper<K, V> implements Cache<K, V> {
         cache.setName(name);
     }
 
-    public int getMaxCacheSize() {
+    public long getMaxCacheSize() {
         return cache.getMaxCacheSize();
     }
 

@@ -33,6 +33,11 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
      * in local xml properties in previous versions.
      */
     private static final Map<String, String> cacheNames = new HashMap<String, String>();
+    /**
+     * Default properties to use for local caches. Default properties can be overridden
+     * by setting the corresponding system properties.
+     */
+    private static final Map<String, Long> cacheProps = new HashMap<String, Long>();
 
 
     public DefaultLocalCacheStrategy() {
@@ -54,6 +59,39 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Roster", "username2roster");
         cacheNames.put("User", "userCache");
         cacheNames.put("VCard", "vcardCache");
+        cacheNames.put("File Transfer Cache", "fileTransfer");
+        cacheNames.put("File Transfer", "transferProxy");
+        cacheNames.put("POP3 Authentication", "pop3");
+        cacheNames.put("LDAP Authentication", "ldap");
+
+        cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
+        cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
+        cacheProps.put("cache.multicast.size", 128 * 1024l);
+        cacheProps.put("cache.multicast.expirationTime", JiveConstants.DAY);
+        cacheProps.put("cache.offlinemessage.size", 100 * 1024l);
+        cacheProps.put("cache.offlinemessage.expirationTime", JiveConstants.HOUR * 12);
+        cacheProps.put("cache.pop3.size", 512 * 1024l);
+        cacheProps.put("cache.pop3.expirationTime", JiveConstants.HOUR);
+        cacheProps.put("cache.transferProxy.size", -1l);
+        cacheProps.put("cache.transferProxy.expirationTime", 1000 * 60 * 10l);
+        cacheProps.put("cache.group.size", 1024 * 1024l);
+        cacheProps.put("cache.group.expirationTime", JiveConstants.MINUTE * 15);
+        cacheProps.put("cache.groupMeta.size", 512 * 1024l);
+        cacheProps.put("cache.groupMeta.expirationTime", JiveConstants.MINUTE * 15);
+        cacheProps.put("cache.javascript.size", 128 * 1024l);
+        cacheProps.put("cache.javascript.expirationTime", 3600 * 24 * 10l);
+        cacheProps.put("cache.ldap.size", 512 * 1024l);
+        cacheProps.put("cache.ldap.expirationTime", JiveConstants.HOUR * 2);
+        cacheProps.put("cache.listsCache.size", 512 * 1024l);
+        cacheProps.put("cache.offlinePresence.size", 512 * 1024l);
+        cacheProps.put("cache.lastActivity.size", 128 * 1024l);
+        cacheProps.put("cache.userCache.size", 512 * 1024l);
+        cacheProps.put("cache.userCache.expirationTime", JiveConstants.MINUTE * 30);
+        cacheProps.put("cache.remoteUsersCache.size", 512 * 1024l);
+        cacheProps.put("cache.remoteUsersCache.expirationTime", JiveConstants.MINUTE * 30);
+        cacheProps.put("cache.vcardCache.size", 512 * 1024l);
+        cacheProps.put("cache.faviconHits.size", 128 * 1024l);
+        cacheProps.put("cache.faviconMisses.size", 128 * 1024l);
     }
 
 
@@ -69,8 +107,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         if (propname == null) {
             propname = name;
         }
-        return new DefaultCache(name, getMaxSizeFromProperty(propname, DEFAULT_MAX_CACHE_SIZE),
-                getMaxLifetimeFromProperty(propname, DEFAULT_MAX_CACHE_LIFETIME));
+        return new DefaultCache(name, getMaxSizeFromProperty(propname), getMaxLifetimeFromProperty(propname));
     }
 
     public boolean isSeniorClusterMember() {
@@ -120,13 +157,13 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     /**
-     * If a local property is found for the supplied name which specifies a value for cache size, it is returned. Otherwise,
-     * the defaultSize argument is returned.
+     * If a local property is found for the supplied name which specifies a value for cache size, it is returned.
+     * Otherwise, the defaultSize argument is returned.
+     * 
      * @param cacheName the name of the cache to look up a corresponding property for.
-     * @param defaultSize the value to return if no property is set.
      * @return either the property value or the default value.
      */
-    public static int getMaxSizeFromProperty(String cacheName, int defaultSize) {
+    private static long getMaxSizeFromProperty(String cacheName) {
         String propName = "cache." + cacheName.replaceAll(" ", "") + ".size";
         String sizeProp = JiveGlobals.getProperty(propName);
         if (sizeProp != null) {
@@ -134,23 +171,22 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
                 return Integer.parseInt(sizeProp);
             }
             catch (NumberFormatException nfe) {
-                Log.warn("Unable to parse " + propName + " using default value of " + defaultSize);
-                return defaultSize;
+                Log.warn("Unable to parse " + propName + " using default value.");
             }
         }
-        else {
-            return defaultSize;
-        }
+        // Check if there is a default size value for this cache 
+        Long defaultSize = cacheProps.get(propName);
+        return defaultSize == null ? DEFAULT_MAX_CACHE_SIZE : defaultSize;
     }
 
      /**
-     * If a local property is found for the supplied name which specifies a value for cache entry lifetime, it is returned.
-     * Otherwise, the defaultLifetime argument is returned.
+     * If a local property is found for the supplied name which specifies a value for cache entry lifetime, it
+      * is returned. Otherwise, the defaultLifetime argument is returned.
+      *
      * @param cacheName the name of the cache to look up a corresponding property for.
-     * @param defaultLifetime the value to return if no property is set.
      * @return either the property value or the default value.
      */
-    public static long getMaxLifetimeFromProperty(String cacheName, long defaultLifetime) {
+    private static long getMaxLifetimeFromProperty(String cacheName) {
         String propName = "cache." + cacheName.replaceAll(" ", "") + ".maxLifetime";
         String lifetimeProp = JiveGlobals.getProperty(propName);
         if (lifetimeProp != null) {
@@ -158,12 +194,11 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
                 return Long.parseLong(lifetimeProp);
             }
             catch (NumberFormatException nfe) {
-                Log.warn("Unable to parse " + propName + " using default value of " + defaultLifetime);
-                return defaultLifetime;
+                Log.warn("Unable to parse " + propName + " using default value.");
             }
         }
-        else {
-            return defaultLifetime;
-        }
+         // Check if there is a default lifetime value for this cache
+         Long defaultLifetime = cacheProps.get(propName);
+         return defaultLifetime == null ? DEFAULT_MAX_CACHE_LIFETIME : defaultLifetime;
     }
 }

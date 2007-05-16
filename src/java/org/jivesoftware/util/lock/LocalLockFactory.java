@@ -30,8 +30,7 @@ import java.util.concurrent.locks.Condition;
  */
 public class LocalLockFactory implements LockFactory {
 
-    private Map<Object, ReentrantLock> locks = new ConcurrentHashMap<Object, ReentrantLock>();
-	private Map<Object, Integer> counts = new ConcurrentHashMap<Object, Integer>();
+    private Map<Object, LockAndCount> locks = new ConcurrentHashMap<Object, LockAndCount>();
 
     public Lock getLock(Object key) {
         Object lockKey = key;
@@ -43,62 +42,48 @@ public class LocalLockFactory implements LockFactory {
     }
 
 	private void acquireLock(Object key) {
-		ReentrantLock lock;
-		synchronized (key) {
-			lock = lookupLockForAcquire(key);
-		}
+		ReentrantLock lock = lookupLockForAcquire(key);
 		lock.lock();
 	}
 
 	private void releaseLock(Object key) {
-		ReentrantLock lock;
-		synchronized (key) {
-			lock = lookupLockForRelease(key);
-			if (lock.getHoldCount() <= 1 && !counts.containsKey(key)) {
-				locks.remove(key);
-			}
-		}
+		ReentrantLock lock = lookupLockForRelease(key);
 		lock.unlock();
 	}
 
 	private ReentrantLock lookupLockForAcquire(Object key) {
-		ReentrantLock lock = locks.get(key);
-		if (lock == null) {
-			lock = new ReentrantLock();
-			locks.put(key, lock);
-		}
+        synchronized(key) {
+            LockAndCount lac = locks.get(key);
+            if (lac == null) {
+                lac = new LockAndCount(new ReentrantLock());
+                lac.count = 1;
+                locks.put(key, lac);
+            }
+            else {
+                lac.count++;
+            }
 
-		Integer count = counts.get(key);
-		if (count == null) {
-			counts.put(key, 1);
-		}
-		else {
-			counts.put(key, ++count);
-		}
-
-		return lock;
-	}
+            return lac.lock;
+        }
+    }
 
 	private ReentrantLock lookupLockForRelease(Object key) {
-		ReentrantLock lock = locks.get(key);
-		if (lock == null) {
-			throw new IllegalStateException("No lock found for object " + key);
-		}
+        synchronized(key) {
+            LockAndCount lac = locks.get(key);
+            if (lac == null) {
+                throw new IllegalStateException("No lock found for object " + key);
+            }
 
-		Integer count = counts.get(key);
-		if (count == null) {
-			throw new IllegalStateException("No count found for object " + key);
-		}
+            if (lac.count <= 1) {
+                locks.remove(key);
+            }
+            else {
+                lac.count--;
+            }
 
-		if (count == 1) {
-			counts.remove(key);
-		}
-		else {
-			counts.put(key, --count);
-		}
-
-		return lock;
-	}
+            return lac.lock;
+        }
+    }
 
 
     private class LocalLock implements Lock {
@@ -133,4 +118,13 @@ public class LocalLockFactory implements LockFactory {
 		}
 
 	}
+
+    private static class LockAndCount {
+        final ReentrantLock lock;
+        int count;
+
+        LockAndCount(ReentrantLock lock) {
+            this.lock = lock;
+        }
+    }
 }

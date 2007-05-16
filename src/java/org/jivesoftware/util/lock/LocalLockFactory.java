@@ -17,8 +17,10 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Condition;
 
 /**
  * LockFactory to be used when not running in cluster mode. The locks returned by this
@@ -28,45 +30,107 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class LocalLockFactory implements LockFactory {
 
-    private TimerTask maintenanceTask;
-    private Map<Object, WeakReference<Lock>> locks = new ConcurrentHashMap<Object, WeakReference<Lock>>();
+    private Map<Object, ReentrantLock> locks = new ConcurrentHashMap<Object, ReentrantLock>();
+	private Map<Object, Integer> counts = new ConcurrentHashMap<Object, Integer>();
 
     public Lock getLock(Object key) {
-        WeakReference<Lock> lockRef;
-        Lock lock;
         Object lockKey = key;
         if (key instanceof String) {
             lockKey = ((String) key).intern();
         }
-        synchronized (lockKey) {
-            lockRef = locks.get(key);
-            lock = lockRef != null ? lockRef.get() : null;
-            if (lockRef == null || lock == null) {
-                lock = new ReentrantLock(true);
-                lockRef = new WeakReference<Lock>(lock);
-                locks.put(key, lockRef);
-            }
-        }
-        return lock;
+
+		return new LocalLock(lockKey);
     }
 
-    public void start() {
-        // Remove entries in the locks Map that are no longer used
-        maintenanceTask = new TimerTask() {
-            public void run() {
-                for (Map.Entry<Object, WeakReference<Lock>> entry : locks.entrySet()) {
-                    if (entry.getValue().get() == null) {
-                        locks.remove(entry.getKey());
-                    }
-                }
-            }
-        };
-        TaskEngine.getInstance().scheduleAtFixedRate(maintenanceTask, 30000, 60000);
-    }
+	private void acquireLock(Object key) {
+		ReentrantLock lock;
+		synchronized (key) {
+			lock = lookupLockForAcquire(key);
+		}
+		lock.lock();
+	}
 
-    public void shutdown() {
-        TaskEngine.getInstance().cancelScheduledTask(maintenanceTask);
-        // Clean up existing locks
-        locks.clear();
-    }
+	private void releaseLock(Object key) {
+		ReentrantLock lock;
+		synchronized (key) {
+			lock = lookupLockForRelease(key);
+			if (lock.getHoldCount() <= 1 && !counts.containsKey(key)) {
+				locks.remove(key);
+			}
+		}
+		lock.unlock();
+	}
+
+	private ReentrantLock lookupLockForAcquire(Object key) {
+		ReentrantLock lock = locks.get(key);
+		if (lock == null) {
+			lock = new ReentrantLock();
+			locks.put(key, lock);
+		}
+
+		Integer count = counts.get(key);
+		if (count == null) {
+			counts.put(key, 1);
+		}
+		else {
+			counts.put(key, ++count);
+		}
+
+		return lock;
+	}
+
+	private ReentrantLock lookupLockForRelease(Object key) {
+		ReentrantLock lock = locks.get(key);
+		if (lock == null) {
+			throw new IllegalStateException("No lock found for object " + key);
+		}
+
+		Integer count = counts.get(key);
+		if (count == null) {
+			throw new IllegalStateException("No count found for object " + key);
+		}
+
+		if (count == 1) {
+			counts.remove(key);
+		}
+		else {
+			counts.put(key, --count);
+		}
+
+		return lock;
+	}
+
+
+    private class LocalLock implements Lock {
+		private final Object key;
+
+		LocalLock(Object key) {
+			this.key = key;
+		}
+
+		public void lock(){
+			acquireLock(key);
+		}
+
+		public void	unlock() {
+			releaseLock(key);
+		}
+
+        public void	lockInterruptibly(){
+			throw new UnsupportedOperationException();
+		}
+
+		public Condition newCondition(){
+			throw new UnsupportedOperationException();
+		}
+
+		public boolean 	tryLock() {
+			throw new UnsupportedOperationException();
+		}
+
+		public boolean 	tryLock(long time, TimeUnit unit) {
+			throw new UnsupportedOperationException();
+		}
+
+	}
 }

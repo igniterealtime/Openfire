@@ -29,16 +29,4 @@ public interface LockFactory {
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
     Lock getLock(Object key);
-
-    /**
-     * Message sent when a new factory is set to the {@link org.jivesoftware.util.lock.LockManager}.
-     * Implementors could start maintenance tasks.
-     */
-    void start();
-
-    /**
-     * Message sent when an already used factory by {@link org.jivesoftware.util.lock.LockManager}
-     * is replaced by another factory. Implementors should stop maintenance tasks.
-     */
-    void shutdown();
 }

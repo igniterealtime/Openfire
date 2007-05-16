@@ -43,16 +43,8 @@ public class LockManager {
      *
      * @param lockFactory the new lock factory to use for creating new Locks.
      */
-    public static void setLockFactory(LockFactory lockFactory) {
-        // Shutdown old factory
-        if (LockManager.lockFactory != null) {
-            LockManager.lockFactory.shutdown();
-        }
+    public static void setLockFactory(LockFactory lockFactory) {        
         LockManager.lockFactory = lockFactory;
-        // Start new factory
-        if (LockManager.lockFactory != null) {
-            LockManager.lockFactory.start();
-        }
     }
 
     /**

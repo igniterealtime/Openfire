@@ -3,11 +3,11 @@ package org.apache.mina.management;
 import org.apache.mina.common.*;
 import org.apache.mina.filter.executor.ExecutorFilter;
 
-import java.util.Queue;
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.net.SocketAddress;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Collects statistics of an {@link org.apache.mina.common.IoService}. It's polling all the sessions of a given
@@ -115,14 +115,12 @@ public class MINAStatCollector {
 
             polledSessions = new ConcurrentLinkedQueue<IoSession>();
 
-            for ( Iterator iter = service.getManagedServiceAddresses().iterator(); iter.hasNext(); )
-            {
-                SocketAddress element = ( SocketAddress ) iter.next();
-
-                for ( Iterator iter2 = service.getManagedSessions( element ).iterator(); iter2.hasNext(); )
-                {
-                    addSession( ( IoSession ) iter2.next() );
-
+            Set<SocketAddress> addresses = service.getManagedServiceAddresses();
+            if (addresses != null) {
+                for (SocketAddress element : addresses) {
+                    for (IoSession ioSession : service.getManagedSessions(element)) {
+                        addSession(ioSession);
+                    }
                 }
             }
 

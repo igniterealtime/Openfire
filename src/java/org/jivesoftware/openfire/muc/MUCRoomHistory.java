@@ -12,9 +12,9 @@
 package org.jivesoftware.openfire.muc;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -156,8 +156,7 @@ public final class MUCRoomHistory {
         if (nickname != null && nickname.trim().length() > 0) {
             JID roomJID = room.getRole().getRoleAddress();
             // Recreate the sender address based on the nickname and room's JID
-            message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(),
-                    nickname));
+            message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(), nickname, true));
         }
         else {
             // Set the room as the sender of the message

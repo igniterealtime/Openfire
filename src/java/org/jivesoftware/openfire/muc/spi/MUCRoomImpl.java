@@ -13,12 +13,12 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -937,7 +937,7 @@ public class MUCRoomImpl implements MUCRoom {
 
         public JID getRoleAddress() {
             if (crJID == null) {
-                crJID = new JID(room.getName(), server.getServiceDomain(), "");
+                crJID = new JID(room.getName(), server.getServiceDomain(), "", true);
             }
             return crJID;
         }

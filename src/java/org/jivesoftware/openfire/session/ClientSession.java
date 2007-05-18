@@ -496,12 +496,12 @@ public class ClientSession extends Session {
     public void setAuthToken(AuthToken auth, String resource) {
         setAddress(new JID(auth.getUsername(), getServerName(), resource));
         authToken = auth;
-
-        sessionManager.addSession(this);
         setStatus(Session.STATUS_AUTHENTICATED);
 
         // Set default privacy list for this session
         setDefaultList(PrivacyListManager.getInstance().getDefaultPrivacyList(auth.getUsername()));
+        // Add session to the session manager. The session will be added to the routing table as well
+        sessionManager.addSession(this);
     }
 
     /**
@@ -512,9 +512,10 @@ public class ClientSession extends Session {
     public void setAnonymousAuth() {
         // Anonymous users have a full JID. Use the random resource as the JID's node
         String resource = getAddress().getResource();
-        setAddress(new JID(resource, getServerName(), resource));
-        sessionManager.addAnonymousSession(this);
+        setAddress(new JID(resource, getServerName(), resource, true));
         setStatus(Session.STATUS_AUTHENTICATED);
+        // Add session to the session manager. The session will be added to the routing table as well
+        sessionManager.addAnonymousSession(this);
     }
 
     /**

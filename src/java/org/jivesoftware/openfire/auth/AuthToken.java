@@ -23,6 +23,7 @@ public class AuthToken {
 
     private static final long serialVersionUID = 01L;
     private String username;
+    private Boolean anonymous;
 
     /**
      * Constucts a new AuthToken with the specified username.
@@ -48,6 +49,9 @@ public class AuthToken {
      * @return true if this token is the anonymous AuthToken.
      */
     public boolean isAnonymous() {
-        return username == null || !UserManager.getInstance().isRegisteredUser(username);
+        if (anonymous == null) {
+            anonymous = username == null || !UserManager.getInstance().isRegisteredUser(username);
+        }
+        return anonymous;
     }
 }

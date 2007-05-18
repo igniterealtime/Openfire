@@ -178,10 +178,8 @@ public class Group implements Cacheable, Externalizable {
      * @param description the description of the group.
      */
     public void setDescription(String description) {
-        if (description == this.description ||
-                (description != null && description.equals(this.description)) ||
-                provider.isReadOnly())
-        {
+        if (description == this.description || (description != null && description.equals(this.description)) ||
+                provider.isReadOnly()) {
             // Do nothing
             return;
         }
@@ -616,6 +614,7 @@ public class Group implements Cacheable, Externalizable {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, name);
+        ExternalizableUtil.getInstance().writeBoolean(out, description != null);
         if (description != null) {
             ExternalizableUtil.getInstance().writeSafeUTF(out, description);
         }

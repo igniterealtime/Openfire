@@ -269,14 +269,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
                 List<String> sessions = usersSessions.get(route.toBareJID());
-                // Select only available sessions
-                for (String jid : sessions) {
-                    ClientRoute clientRoute = usersCache.get(jid);
-                    if (clientRoute == null) {
-                        clientRoute = anonymousUsersCache.get(jid);
-                    }
-                    if (clientRoute != null && clientRoute.isAvailable()) {
-                        jids.add(new JID(jid));
+                if (sessions != null) {
+                    // Select only available sessions
+                    for (String jid : sessions) {
+                        ClientRoute clientRoute = usersCache.get(jid);
+                        if (clientRoute == null) {
+                            clientRoute = anonymousUsersCache.get(jid);
+                        }
+                        if (clientRoute != null && clientRoute.isAvailable()) {
+                            jids.add(new JID(jid));
+                        }
                     }
                 }
             }
@@ -290,14 +292,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
         else {
             // Packet sent to remote server
-            byte[] nodeID = serversCache.get(route.getDomain());
-            if (nodeID != null) {
-                jids.add(route);
-            }
-            else {
-                // TODO Decide if we want to return address of remote server we don't have a route to
-                jids.add(route);
-            }
+            jids.add(route);
         }
         return jids;
     }

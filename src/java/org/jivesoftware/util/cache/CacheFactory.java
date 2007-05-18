@@ -263,9 +263,9 @@ public class CacheFactory {
             return;
         }
         // See if clustering should be enabled.
-        String enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME);
+        boolean enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME, false);
 
-        if (Boolean.valueOf(enabled)) {
+        if (enabled) {
             Log.debug("Shutting down clustered cache service.");
             stopClustering();
         }
@@ -394,6 +394,9 @@ public class CacheFactory {
                 }
 
                 clusteringEnabled = true;
+                // Set the ID of this cluster node
+                XMPPServer.getInstance().setNodeID(CacheFactory.getClusterMemberID());
+                // Fire event that cluster has been started
                 fireClusteringStarted();
             }
         }
@@ -423,9 +426,12 @@ public class CacheFactory {
             }
 
             clusteringEnabled = false;
+            // Reset the node ID
+            XMPPServer.getInstance().setNodeID(null);
 
             // Stop the cluster
             clusteredFactory.stopCluster();
+            // Fire event that cluster has been stopped
             fireClusteringStopped();
         }
         catch (Exception e) {

@@ -11,12 +11,12 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
@@ -67,7 +67,7 @@ public class OfflineMessageStrategy extends BasicModule {
 
     public void storeOffline(Message message) {
         if (message != null) {
-            // Do nothing if the message was sent to the server itself or to an anonymous user
+            // Do nothing if the message was sent to the server itself, an anonymous user or a non-existent user
             JID recipientJID = message.getTo();
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
                     recipientJID.getNode() == null ||

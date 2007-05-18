@@ -13,8 +13,6 @@ package org.jivesoftware.openfire.mediaproxy;
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -23,14 +21,16 @@ import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-import java.util.*;
-import java.net.UnknownHostException;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.*;
 
 /**
  * A proxy service for UDP traffic such as RTP. It provides Jingle transport candidates
@@ -94,7 +94,7 @@ public class MediaProxyService extends BasicModule
             } catch (SocketException e) {
             }
 
-            routingTable.addRoute(getAddress(), this);
+            routingTable.addComponentRoute(getAddress(), this);
             XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         } else {
             if (echo != null) echo.cancel();
@@ -106,7 +106,7 @@ public class MediaProxyService extends BasicModule
         super.stop();
         mediaProxy.stopProxy();
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(getAddress());
         if (echo != null) echo.cancel();
     }
 

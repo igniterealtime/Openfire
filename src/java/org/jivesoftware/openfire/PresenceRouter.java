@@ -11,8 +11,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
@@ -20,10 +18,9 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.*;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -132,11 +129,11 @@ public class PresenceRouter extends BasicModule {
 
                     // The user sent a directed presence to an entity
                     // Broadcast it to all connected resources
-                    for (ChannelHandler route : routingTable.getRoutes(recipientJID)) {
+                    for (JID jid : routingTable.getRoutes(recipientJID)) {
                         // Register the sent directed presence
-                        updateHandler.directedPresenceSent(packet, route, recipientJID.toString());
+                        updateHandler.directedPresenceSent(packet, jid, recipientJID.toString());
                         // Route the packet
-                        route.process(packet);
+                        routingTable.routePacket(jid, packet);
                     }
                 }
 
@@ -151,11 +148,7 @@ public class PresenceRouter extends BasicModule {
             else if (Presence.Type.probe == type) {
                 // Handle a presence probe sent by a remote server
                 if (!XMPPServer.getInstance().isLocal(recipientJID)) {
-                    // Target is a component of the server so forward it
-                    ChannelHandler route = routingTable.getRoute(recipientJID);
-                    if (route != null) {
-                        route.process(packet);
-                    }
+                    routingTable.routePacket(recipientJID, packet);
                 }
                 else {
                     // Handle probe to a local user
@@ -165,10 +158,7 @@ public class PresenceRouter extends BasicModule {
             else {
                 // It's an unknown or ERROR type, just deliver it because there's nothing
                 // else to do with it
-                ChannelHandler route = routingTable.getRoute(recipientJID);
-                if (route != null) {
-                    route.process(packet);
-                }
+                routingTable.routePacket(recipientJID, packet);
             }
 
         }
@@ -193,5 +183,14 @@ public class PresenceRouter extends BasicModule {
         presenceManager = server.getPresenceManager();
         multicastRouter = server.getMulticastRouter();
         sessionManager = server.getSessionManager();
+    }
+
+    /**
+     * Notification message indicating that a packet has failed to be routed to the receipient.
+     *
+     * @param packet Presence packet that failed to be sent to the receipient.
+     */
+    public void routingFailed(Packet packet) {
+        // presence packets are dropped silently
     }
 }

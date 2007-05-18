@@ -75,7 +75,7 @@ public class Route extends Packet {
     }
 
     /**
-     * Sets the wrapped stanza by this Route packet. Route packets may have a single child
+     * Sets the wrapped stanza by this Route packet. ClientRoute packets may have a single child
      * element. This is a convenience method to avoid manipulating this underlying packet's
      * Element instance directly.
      *

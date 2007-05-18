@@ -13,16 +13,14 @@ package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutableChannelHandler;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.server.OutgoingSessionPromise;
-import org.jivesoftware.openfire.session.Session;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -425,13 +423,7 @@ public abstract class SocketReader implements Runnable {
             return false;
         }
         // Check if the host matches a subdomain of this host
-        RoutableChannelHandler route = routingTable.getRoute(new JID(host));
-        if (route == null || route instanceof OutgoingSessionPromise) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return !routingTable.hasComponentRoute(new JID(host));
     }
 
     /**

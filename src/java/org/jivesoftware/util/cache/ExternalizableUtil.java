@@ -11,10 +11,7 @@
 
 package org.jivesoftware.util.cache;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -200,6 +197,14 @@ public class ExternalizableUtil {
 
     public byte[] readByteArray(DataInput in) throws IOException {
         return strategy.readByteArray(in);
+    }
+
+    public void writeSerializable(DataOutput out, Serializable value) throws IOException {
+        strategy.writeSerializable(out, value);
+    }
+
+    public Serializable readSerializable(DataInput in) throws IOException {
+        return strategy.readSerializable(in);
     }
 
     public void writeSafeUTF(DataOutput out, String value) throws IOException {

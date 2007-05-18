@@ -14,9 +14,6 @@ package org.jivesoftware.openfire.server;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.DNSUtil;
@@ -26,6 +23,9 @@ import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -496,13 +496,7 @@ public class ServerDialback {
         // trick is useful when subdomains of this server are registered in the DNS so remote
         // servers may establish connections directly to a subdomain of this server
         if (host_unknown && recipient.contains(serverName)) {
-            RoutableChannelHandler route = routingTable.getRoute(new JID(recipient));
-            if (route == null || route instanceof OutgoingSessionPromise) {
-                host_unknown = true;
-            }
-            else {
-                host_unknown = false;
-            }
+            host_unknown = !routingTable.hasComponentRoute(new JID(recipient));
         }
         return host_unknown;
     }

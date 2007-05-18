@@ -18,10 +18,7 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 import java.util.*;
 
@@ -100,8 +97,8 @@ public class MessageRouter extends BasicModule {
                         routeToBareJID(recipientJID, packet);
                     }
                     else {
-                        // Deliver stanza to best route
-                        routingTable.getBestRoute(recipientJID).process(packet);
+                        // Deliver stanza to requested route
+                        routingTable.routePacket(recipientJID, packet);
                     }
                 }
                 catch (Exception e) {
@@ -278,5 +275,14 @@ public class MessageRouter extends BasicModule {
         sessionManager = server.getSessionManager();
         multicastRouter = server.getMulticastRouter();
         serverName = server.getServerInfo().getName();
+    }
+
+    /**
+     * Notification message indicating that a packet has failed to be routed to the receipient.
+     *
+     * @param packet Message packet that failed to be sent to the receipient.
+     */
+    public void routingFailed(Packet packet) {
+        messageStrategy.storeOffline((Message) packet);
     }
 }

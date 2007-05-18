@@ -10,10 +10,7 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +116,10 @@ public interface ExternalizableUtilStrategy {
     void writeByteArray(DataOutput out, byte[] value) throws IOException;
 
     byte[] readByteArray(DataInput in) throws IOException;
+
+    void writeSerializable(DataOutput out, Serializable value) throws IOException;
+
+    Serializable readSerializable(DataInput in) throws IOException;
 
     void writeSafeUTF(DataOutput out, String value) throws IOException;
 

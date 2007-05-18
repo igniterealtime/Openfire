@@ -576,17 +576,16 @@ public class Roster implements Cacheable, Externalizable {
         }
         // Broadcast presence to subscribed entities
         for (RosterItem item : rosterItems.values()) {
-            if (item.getSubStatus() == RosterItem.SUB_BOTH
-                    || item.getSubStatus() == RosterItem.SUB_FROM) {
+            if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
                 packet.setTo(item.getJid());
                 if (list != null && list.shouldBlockPacket(packet)) {
                     // Outgoing presence notifications are blocked for this contact
                     continue;
                 }
-                JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null);
-                for (ChannelHandler session : routingTable.getRoutes(searchNode)) {
+                JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null, true);
+                for (JID jid : routingTable.getRoutes(searchNode)) {
                     try {
-                        session.process(packet);
+                        routingTable.routePacket(jid, packet);
                     }
                     catch (Exception e) {
                         // Theoretically only happens if session has been closed.
@@ -602,9 +601,9 @@ public class Roster implements Cacheable, Externalizable {
                 // Outgoing presence notifications are blocked for this contact
                 continue;
             }
-            for (ChannelHandler session : routingTable.getRoutes(new JID(contact))) {
+            for (JID jid: routingTable.getRoutes(new JID(contact))) {
                 try {
-                    session.process(packet);
+                    routingTable.routePacket(jid, packet);
                 }
                 catch (Exception e) {
                     // Theoretically only happens if session has been closed.

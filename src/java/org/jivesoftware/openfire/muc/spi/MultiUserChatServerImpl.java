@@ -13,7 +13,6 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -29,14 +28,15 @@ import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.*;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -295,7 +295,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public JID getAddress() {
-        return new JID(null, getServiceDomain(), null);
+        return new JID(null, getServiceDomain(), null, true);
     }
 
     /**
@@ -801,7 +801,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void start() {
         super.start();
         // Add the route to this service
-        routingTable.addRoute(getAddress(), this);
+        routingTable.addComponentRoute(getAddress(), this);
         ArrayList<String> params = new ArrayList<String>();
         params.clear();
         params.add(getServiceDomain());
@@ -822,7 +822,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public void stop() {
         super.stop();
         // Remove the route to this service
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(getAddress());
         timer.cancel();
         logAllConversation();
         // Remove the statistics.

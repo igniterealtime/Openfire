@@ -13,10 +13,6 @@ package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
@@ -32,6 +28,10 @@ import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -391,7 +391,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void start() {
         super.start();
         // Add the route to this service
-        routingTable.addRoute(getAddress(), this);
+        routingTable.addComponentRoute(getAddress(), this);
         // Start the pubsub engine
         engine.start();
         ArrayList<String> params = new ArrayList<String>();
@@ -403,7 +403,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void stop() {
         super.stop();
         // Remove the route to this service
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(getAddress());
         // Stop the pubsub engine. This will gives us the chance to
         // save queued items to the database.
         engine.shutdown();

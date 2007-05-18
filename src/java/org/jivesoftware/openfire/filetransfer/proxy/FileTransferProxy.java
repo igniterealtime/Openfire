@@ -13,10 +13,6 @@ package org.jivesoftware.openfire.filetransfer.proxy;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -26,6 +22,10 @@ import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -196,7 +196,7 @@ public class FileTransferProxy extends BasicModule
 
     private void startProxy() {
         connectionManager.processConnections(bindInterface, getProxyPort());
-        routingTable.addRoute(getAddress(), this);
+        routingTable.addComponentRoute(getAddress(), this);
         XMPPServer server = XMPPServer.getInstance();
 
         server.getIQDiscoItemsHandler().addServerItemsProvider(this);
@@ -207,7 +207,7 @@ public class FileTransferProxy extends BasicModule
 
         XMPPServer.getInstance().getIQDiscoItemsHandler()
                 .removeComponentItem(getAddress().toString());
-        routingTable.removeRoute(getAddress());
+        routingTable.removeComponentRoute(getAddress());
         connectionManager.disable();
     }
 

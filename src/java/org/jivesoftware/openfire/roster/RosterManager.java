@@ -11,7 +11,6 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
@@ -719,10 +718,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             presence.setType(Presence.Type.unsubscribe);
         }
         try {
-            ChannelHandler handler = routingTable.getRoute(recipient);
-            if (handler != null) {
-                handler.process(presence);
-            }
+            routingTable.routePacket(recipient, presence);
         }
         catch (UnauthorizedException e) {
             // Do nothing

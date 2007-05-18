@@ -14,12 +14,12 @@ package org.jivesoftware.openfire.muc.spi;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.ElementUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
@@ -117,6 +117,7 @@ public class MUCRoleImpl implements MUCRole {
         this.role = role;
         this.affiliation = affiliation;
         // Cache the user's session (will only work for local users)
+        //TODO Probably remove this instance variable that was added for optimization
         this.session = XMPPServer.getInstance().getSessionManager().getSession(presence.getFrom());
 
         extendedInformation =

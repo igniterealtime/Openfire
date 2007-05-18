@@ -11,7 +11,10 @@
 
 package org.jivesoftware.openfire;
 
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 import java.util.List;
 
@@ -74,74 +77,166 @@ import java.util.List;
 public interface RoutingTable {
 
     /**
-     * <p>Add a route to the routing table.</p>
-     * <p>A single access method allows you to add any of the acceptable
-     * route to the table. It is expected that routes are added and removed
-     * on a relatively rare occassion so routing tables should be optimized
-     * for lookup speed.</p>
+     * Adds a route to the routing table for the specified outoing server session. When running
+     * inside of a cluster this message <tt>must</tt> be sent from the cluster node that is
+     * actually holding the physical connectoin to the remote server.
      *
-     * @param node        The route's destination node
-     * @param destination The destination object for this route
+     * @param route the address associated to the route.
+     * @param destination the outgoing server session.
      */
-    void addRoute(JID node, RoutableChannelHandler destination);
+    void addServerRoute(JID route, RoutableChannelHandler destination);
 
     /**
-     * <p>Obtain a route to a packet handler for the given node.</p>
-     * <p>If a route doesn't exist, the method returns null.</p>
+     * Adds a route to the routing table for the specified internal or external component. When
+     * running inside of a cluster this message <tt>must</tt> be sent from the cluster node
+     * that is actually hosting the component.
      *
-     * @param node The address we want a route to
-     * @return The handler corresponding to the route, or null indicating no route exists
+     * @param route the address associated to the route.
+     * @param destination the component.
      */
-    RoutableChannelHandler getRoute(JID node);
+    void addComponentRoute(JID route, RoutableChannelHandler destination);
 
     /**
-     * <p>Obtain all child routes for the given node.</p>
-     * <p>See the class documentation for the matching algorithm of child routes for
-     * any given node. If a route doesn't exist, the method returns an empty iterator (not null).</p>
+     * Adds a route to the routing table for the specified client session. The client
+     * session will be added as soon as the user has finished authenticating with the server.
+     * Moreover, when the user becomes available or unavailable then the routing table will
+     * get updated again. When running inside of a cluster this message <tt>must</tt> be sent
+     * from the cluster node that is actually holding the client session.
      *
-     * @param node The address we want a route to
-     * @return An iterator over all applicable routes
+     * @param route the address associated to the route.
+     * @param destination the client session.
      */
-    List<ChannelHandler> getRoutes(JID node);
+    void addClientRoute(JID route, ClientSession destination);
 
     /**
-     * <p>Obtain a route to a handler at the given node falling back to a user branch if no resource leaf exists.</p>
-     * <p>Matching differs slightly from getRoute() which does matching according
-     * to the general matching algorithm described in the class notes. This method
-     * searches using the standard matching rules, and if that does not find a
-     * match and the address name component is not null, or empty, searches again
-     * with the resource set to null (wild card). This is essentially a convenience
-     * for falling back to the best route to a user node when a specific resource
-     * is not available.</p>
-     * <p>For example, consider we're searching for a route to user@server.com/work.
-     * There is no route to that resource but a session is available at
-     * user@server.com/home. The routing table will contain entries for user@server.com
-     * and user@server.com/home. getBestLocalRoute() will first do a search for
-     * user@server.com/work and not find a match. It will then do another search
-     * on user@server.com and find the alias for the session user@server.com/home
-     * (the alias must be maintained by the session manager for the highest priority
-     * resource for any given user). In most cases, the caller doesn't care as long
-     * as they get a legitimate route to the user, so this behavior is 'better' than
-     * the exact matching used in getLocalRoute().</p>
-     * <p>However, it is important to note that sometimes you don't want the best route
-     * to a node. In the previous example, if the packet is an error packet, it is
-     * probably only relevant to the sending session. If a route to that particular
-     * session can't be found, the error should not be sent to another session logged
-     * into the account.</p>
-     * <p/>
-     * <p>If a route doesn't exist, the method returns null.</p>
+     * Routes a packet to the specified address. The packet destination can be a
+     * user on the local server, a component, or a foreign server.<p>
      *
-     * @param node The address we want a route to
-     * @return The Session corresponding to the route, or null indicating no route exists
+     * When routing a packet to a remote server then a new outgoing connection
+     * will be created to the remote server if none was found and the packet
+     * will be delivered. If an existing outgoing connection already exists then
+     * it will be used for delivering the packet. Moreover, when runing inside of a cluster
+     * the node that has the actual outgoing connection will be requested to deliver
+     * the requested packet.<p>
+     *
+     * Packets routed to components will only be sent if the internal or external
+     * component is connected to the server. Moreover, when runing inside of a cluster
+     * the node that is hosting the component will be requested to deliver the requested
+     * packet.<p>
+     *
+     * Packets routed to users will be delivered if the user is connected to the server. Depending
+     * on the packet type and the sender of the packet only available or all user sessions could
+     * be considered. For instance, {@link org.xmpp.packet.Message Messages} and
+     * {@link org.xmpp.packet.Presence Presences} are only sent to available client sessions whilst
+     * {@link org.xmpp.packet.IQ IQs} originated to the server can be sent to available or unavailable
+     * sessions. When runing inside of a cluster the node that is hosting the user session will be
+     * requested to deliver the requested packet.<p>
+     *
+     * @param jid the receipient of the packet to route.
+     * @param packet the packet to route.
+     * @throws UnauthorizedException if not allowed to process the packet.
+     * @throws PacketException thrown if the packet is malformed (results in the sender's
+     *      session being shutdown).
      */
-    ChannelHandler getBestRoute(JID node);
+    void routePacket(JID jid, Packet packet) throws PacketException, UnauthorizedException;
 
     /**
-     * <p>Remove a route from the routing table.</p>
-     * <p>If a route doesn't exist, the method returns null.</p>
+     * Returns true if a registered user or anonymous user with the specified full JID is
+     * currently logged. When running inside of a cluster a true value will be returned
+     * as long as the user is connecte to any cluster node.
      *
-     * @param node The address we want a route to
-     * @return The destination object previously registered under the given address, or null if none existed
+     * @param jid the full JID of the user.
+     * @return true if a registered user or anonymous user with the specified full JID is
+     * currently logged.
      */
-    ChannelHandler removeRoute(JID node);
+    boolean hasClientRoute(JID jid);
+
+    /**
+     * Returns true if an outgoing server session exists to the specified remote server.
+     * The JID can be a full JID or a bare JID since only the domain of the specified
+     * address will be used to look up the route.<p>
+     *
+     * When running inside of a cluster the look up will be done in all the cluster. So
+     * as long as a node has a connection to the remote server a true value will be
+     * returned.
+     *
+     * @param jid JID that specifies the remote server address.
+     * @return true if an outgoing server session exists to the specified remote server.
+     */
+    boolean hasServerRoute(JID jid);
+
+    /**
+     * Returns true if an internal or external component is hosting the specified address.
+     * The JID can be a full JID or a bare JID since only the domain of the specified
+     * address will be used to look up the route.<p>
+     *
+     * When running inside of a cluster the look up will be done in all the cluster. So
+     * as long as a node is hosting the component  a true value will be returned.
+     *
+     * @param jid JID that specifies the component address.
+     * @return true if an internal or external component is hosting the specified address.
+     */
+    boolean hasComponentRoute(JID jid);
+
+    /**
+     * Returns the list of routes associated to the specified route address. When asking
+     * for routes to a remote server then the requested JID will be included as the only
+     * value of the returned collection. It is indifferent if an outgoing session to the
+     * specified remote server exists or not.<p>
+     *
+     * When asking for routes to client sessions the specified route address could either
+     * be a full JID of a bare JID. In the case of a full JID, a single element will be
+     * included in the answer in case the specified full JID exists or an empty collection
+     * if the full JID does not exist. Moreover, when passing a bare JID a list of full
+     * JIDs will be returned for each available resource associated to the bare JID. In
+     * any case, only JIDs of <tt>available</tt> client sessions are returned.<p>
+     *
+     * When asking for routes to components a single element will be returned in the answer
+     * only if an internal or external component is found for the specified route address.
+     * If no component was found then an empty collection will be returned.
+     *
+     * @param route The address we want a route to.
+     * @return list of routes associated to the specified route address.
+     */
+    List<JID> getRoutes(JID route);
+
+    /**
+     * Returns true if a route of a client session has been successfully removed. When running
+     * inside of a cluster this message <tt>must</tt> be sent from the cluster node that is
+     * actually hosting the client session.
+     *
+     * @param route the route to remove.
+     * @return true if a route of a client session has been successfully removed.
+     */
+    boolean removeClientRoute(JID route);
+
+    /**
+     * Returns true if a route to an outoing server has been successfully removed. When running
+     * inside of a cluster this message <tt>must</tt> be sent from the cluster node that is
+     * actually holding the physical connectoin to the remote server. 
+     *
+     * @param route the route to remove.
+     * @return true if the route was successfully removed.
+     */
+    boolean removeServerRoute(JID route);
+
+    /**
+     * Returns true if a route of a component has been successfully removed. Both internal
+     * and external components have a route in the table. When running inside of a cluster
+     * this message <tt>must</tt> be sent from the cluster node that is actually hosting the
+     * component.
+     *
+     * @param route the route to remove.
+     * @return true if a route of a component has been successfully removed.
+     */
+    boolean removeComponentRoute(JID route);
+
+    /**
+     * Sets the {@link RemotePacketRouter} to use for deliverying packets to entities hosted
+     * in remote nodes of the cluster.
+     *
+     * @param remotePacketRouter the RemotePacketRouter to use for deliverying packets to entities hosted
+     *        in remote nodes of the cluster.
+     */
+    void setRemotePacketRouter(RemotePacketRouter remotePacketRouter);
 }

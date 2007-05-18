@@ -11,8 +11,6 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
@@ -21,6 +19,8 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
@@ -120,14 +120,12 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
 
                 // Do not forward the packet to the recipient if the presence is of type subscribed
                 // and the recipient user has not changed its subscription state.
-                if (!(type == Presence.Type.subscribed && recipientRoster != null &&
-                        !recipientSubChanged)) {
+                if (!(type == Presence.Type.subscribed && recipientRoster != null && !recipientSubChanged)) {
 
                     // If the user is already subscribed to the *local* user's presence then do not 
                     // forward the subscription request and instead send an auto-reply on behalf
                     // of the user
-                    if (type == Presence.Type.subscribe && recipientRoster != null &&
-                        !recipientSubChanged) {
+                    if (type == Presence.Type.subscribe && recipientRoster != null && !recipientSubChanged) {
                         try {
                             RosterItem.SubType subType = recipientRoster.getRosterItem(senderJID)
                                     .getSubStatus();
@@ -151,13 +149,13 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // a module, the module will be able to handle the packet. If the handler is a
                     // Session the packet will be routed to the client. If a route cannot be found
                     // then the packet will be delivered based on its recipient and sender.
-                    List<ChannelHandler> handlers = routingTable.getRoutes(recipientJID);
-                    if (!handlers.isEmpty()) {
-                        for (ChannelHandler handler : handlers) {
+                    List<JID> jids = routingTable.getRoutes(recipientJID);
+                    if (!jids.isEmpty()) {
+                        for (JID jid : jids) {
                             Presence presenteToSend = presence.createCopy();
                             // Stamp the presence with the user's bare JID as the 'from' address
                             presenteToSend.setFrom(senderJID.toBareJID());
-                            handler.process(presenteToSend);
+                            routingTable.routePacket(jid, presenteToSend);
                         }
                     }
                     else {

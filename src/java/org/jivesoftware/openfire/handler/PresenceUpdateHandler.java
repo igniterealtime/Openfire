@@ -26,7 +26,10 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -69,8 +72,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler {
 
-    private Map<String, WeakHashMap<ChannelHandler, Set<String>>> directedPresences;
+    private Map<String, Map<String, Set<String>>> directedPresences;
 
+    private RoutingTable routingTable;
     private RosterManager rosterManager;
     private XMPPServer localServer;
     private PresenceManager presenceManager;
@@ -81,7 +85,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     public PresenceUpdateHandler() {
         super("Presence update handler");
-        directedPresences = new ConcurrentHashMap<String, WeakHashMap<ChannelHandler, Set<String>>>();
+        directedPresences = new ConcurrentHashMap<String, Map<String, Set<String>>>();
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
@@ -123,7 +127,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             else {
                 presence = presence.createCopy();
                 if (session != null) {
-                    presence.setFrom(new JID(null, session.getServerName(), null));
+                    presence.setFrom(new JID(null, session.getServerName(), null, true));
                     presence.setTo(session.getAddress());
                 }
                 else {
@@ -155,7 +159,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 Session session = sessionManager.getSession(presence.getFrom());
                 presence = presence.createCopy();
                 if (session != null) {
-                    presence.setFrom(new JID(null, session.getServerName(), null));
+                    presence.setFrom(new JID(null, session.getServerName(), null, true));
                     presence.setTo(session.getAddress());
                 }
                 else {
@@ -308,16 +312,16 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * registry of sent directed presences by the user.
      *
      * @param update  the directed Presence sent by the user to an entity.
-     * @param handler the handler that routed the presence to the entity.
-     * @param jid     the jid that the handler has processed
+     * @param handlerJID the JID of the handler that will receive/handle/process the sent packet.
+     * @param jid     the receipient specified in the packet to handle.
      */
-    public void directedPresenceSent(Presence update, ChannelHandler handler, String jid) {
+    public void directedPresenceSent(Presence update, JID handlerJID, String jid) {
         if (update.getFrom() == null) {
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
             boolean keepTrack = false;
-            WeakHashMap<ChannelHandler, Set<String>> map;
+            Map<String, Set<String>> map;
             String name = update.getFrom().getNode();
             if (name != null && !"".equals(name)) {
                 // Keep track of all directed presences if roster service is disabled
@@ -354,55 +358,56 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 keepTrack = true;
             }
             if (keepTrack) {
-                map = directedPresences.get(update.getFrom().toString());
-                if (map == null) {
-                    // We are using a set to avoid duplicate jids in case the user
-                    // sends several directed presences to the same handler. The Map also
-                    // ensures that if the user sends several presences to the same handler
-                    // we will have only one entry in the Map
-                    map = new WeakHashMap<ChannelHandler, Set<String>>();
-                    map.put(handler, new ConcurrentHashSet<String>());
-                    directedPresences.put(update.getFrom().toString(), map);
-                }
+                String sender = update.getFrom().toString();
+                map = directedPresences.get(sender);
                 if (Presence.Type.unavailable.equals(update.getType())) {
-                    // It's a directed unavailable presence
-                    if (handler instanceof ClientSession) {
-                        // Client sessions will receive only presences to the same JID (the
-                        // address of the session) so remove the handler from the map
-                        map.remove(handler);
-                        if (map.isEmpty()) {
-                            // Remove the user from the registry since the list of directed
-                            // presences is empty
-                            directedPresences.remove(update.getFrom().toString());
+                    if (map != null) {
+                        // It's a directed unavailable presence
+                        if (routingTable.hasClientRoute(handlerJID)) {
+                            // Client sessions will receive only presences to the same JID (the
+                            // address of the session) so remove the handler from the map
+                            map.remove(handlerJID.toString());
+                            if (map.isEmpty()) {
+                                // Remove the user from the registry since the list of directed
+                                // presences is empty
+                                directedPresences.remove(sender);
+                            }
                         }
-                    }
-                    else {
-                        // A service may receive presences for many JIDs so in this case we
-                        // just need to remove the jid that has received a directed
-                        // unavailable presence
-                        Set<String> jids = map.get(handler);
-                        if (jids != null) {
-                            jids.remove(jid);
-                            if (jids.isEmpty()) {
-                                map.remove(handler);
-                                if (map.isEmpty()) {
-                                    // Remove the user from the registry since the list of directed
-                                    // presences is empty
-                                    directedPresences.remove(update.getFrom().toString());
+                        else {
+                            // A service may receive presences for many JIDs so in this case we
+                            // just need to remove the jid that has received a directed
+                            // unavailable presence
+                            Set<String> jids = map.get(handlerJID.toString());
+                            if (jids != null) {
+                                jids.remove(jid);
+                                if (jids.isEmpty()) {
+                                    map.remove(handlerJID.toString());
+                                    if (map.isEmpty()) {
+                                        // Remove the user from the registry since the list of directed
+                                        // presences is empty
+                                        directedPresences.remove(sender);
+                                    }
                                 }
                             }
                         }
-
                     }
                 }
                 else {
+                    if (map == null) {
+                        // We are using a set to avoid duplicate jids in case the user
+                        // sends several directed presences to the same handler. The Map also
+                        // ensures that if the user sends several presences to the same handler
+                        // we will have only one entry in the Map
+                        map = new ConcurrentHashMap<String, Set<String>>();
+                        directedPresences.put(sender, map);
+                    }
                     // Add the handler to the list of handler that processed the directed
                     // presence sent by the user. This handler will be used to send
                     // the unavailable presence when the user goes offline
-                    if (map.get(handler) == null) {
-                        map.put(handler, new ConcurrentHashSet<String>());
+                    if (map.get(handlerJID.toString()) == null) {
+                        map.put(handlerJID.toString(), new ConcurrentHashSet<String>());
                     }
-                    map.get(handler).add(jid);
+                    map.get(handlerJID.toString()).add(jid);
                 }
             }
         }
@@ -420,19 +425,20 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
         if (localServer.isLocal(update.getFrom())) {
             // Remove the registry of directed presences of this user
-            Map<ChannelHandler, Set<String>> map = directedPresences.remove(update.getFrom().toString());
+            Map<String, Set<String>> map = directedPresences.remove(update.getFrom().toString());
             if (map != null) {
                 // Iterate over all the entities that the user sent a directed presence
-                for (ChannelHandler handler : new HashSet<ChannelHandler>(map.keySet())) {
+                for (String handler : new HashSet<String>(map.keySet())) {
+                    JID handlerJID = new JID(handler);
                     Set<String> jids = map.get(handler);
                     if (jids == null) {
                         continue;
                     }
                     for (String jid : jids) {
                         Presence presence = update.createCopy();
-                        presence.setTo(new JID(jid));
+                        presence.setTo(jid);
                         try {
-                            handler.process(presence);
+                            routingTable.routePacket(handlerJID, presence);
                         }
                         catch (UnauthorizedException ue) {
                             Log.error(ue);
@@ -444,8 +450,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     public boolean hasDirectPresence(Session session, JID recipientJID) {
-        Map<ChannelHandler, Set<String>> map =
-                directedPresences.get(session.getAddress().toString());
+        Map<String, Set<String>> map = directedPresences.get(session.getAddress().toString());
         if (map != null) {
             String recipient = recipientJID.toBareJID();
             for (Set<String> fullJIDs : map.values()) {
@@ -468,6 +473,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
         userManager = server.getUserManager();
+        routingTable = server.getRoutingTable();
+        // TODO Add as route listener (to remove direct presences info for removed routes)
     }
 
 }

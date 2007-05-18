@@ -743,6 +743,8 @@ public class SessionManager extends BasicModule {
         preAuthenticatedSessions.remove(session.getStreamID().toString());
         // Increment counter of authenticated sessions
         userSessionsCounter.incrementAndGet();
+        // Add session to the routing table (routing table will know session is not available yet)
+        routingTable.addClientRoute(session.getAddress(), session);
         // Fire session created event.
         SessionEventDispatcher
                 .dispatchEvent(session, SessionEventDispatcher.EventType.session_created);
@@ -760,11 +762,11 @@ public class SessionManager extends BasicModule {
         if (anonymousSessions.containsValue(session)) {
             // Anonymous session always have resources so we only need to add one route. That is
             // the route to the anonymous session
-            routingTable.addRoute(session.getAddress(), session);
+            routingTable.addClientRoute(session.getAddress(), session);
         }
         else {
             // A non-anonymous session is now available
-            Session defaultSession;
+            ClientSession defaultSession;
             try {
                 SessionMap sessionMap = sessions.get(session.getUsername());
                 if (sessionMap == null) {
@@ -776,11 +778,11 @@ public class SessionManager extends BasicModule {
                 defaultSession = sessionMap.getDefaultSession(true);
                 if (defaultSession != null) {
                     // Add route to default session (used when no resource is specified)
-                    JID node = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
-                    routingTable.addRoute(node, defaultSession);
+                    JID node = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null, true);
+                    routingTable.addClientRoute(node, defaultSession);
                 }
                 // Add route to the new session
-                routingTable.addRoute(session.getAddress(), session);
+                routingTable.addClientRoute(session.getAddress(), session);
                 // Broadcast presence between the user's resources
                 broadcastPresenceOfOtherResource(session);
             }
@@ -847,8 +849,8 @@ public class SessionManager extends BasicModule {
     public void sessionUnavailable(ClientSession session) {
         if (session.getAddress() != null && routingTable != null &&
                 session.getAddress().toBareJID().trim().length() != 0) {
-            // Remove route to the removed session (anonymous or not)
-            routingTable.removeRoute(session.getAddress());
+            // Update route to unavailable session (anonymous or not)
+            routingTable.addClientRoute(session.getAddress(), session);
             try {
                 if (session.getUsername() == null) {
                     // Do nothing since this is an anonymous session
@@ -858,33 +860,32 @@ public class SessionManager extends BasicModule {
                 // If sessionMap is null, which is an irregular case, try to clean up the routes to
                 // the user from the routing table
                 if (sessionMap == null) {
-                    JID userJID = new JID(session.getUsername(), serverName, "");
-                    if (routingTable.getRoute(userJID) != null) {
+                    JID userJID = new JID(session.getUsername(), serverName, "", true);
+                    if (routingTable.hasClientRoute(userJID)) {
                         // Remove the route for the session's BARE address
-                        routingTable.removeRoute(new JID(session.getAddress().getNode(),
-                                session.getAddress().getDomain(), ""));
+                        routingTable.removeClientRoute(new JID(session.getAddress().getNode(),
+                                session.getAddress().getDomain(), "", true));
                     }
                 }
                 // If all the user sessions are gone then remove the route to the default session
                 else if (sessionMap.getAvailableSessions().isEmpty()) {
                     // Remove the route for the session's BARE address
-                    routingTable.removeRoute(new JID(session.getAddress().getNode(),
-                            session.getAddress().getDomain(), ""));
+                    routingTable.removeClientRoute(new JID(session.getAddress().getNode(),
+                            session.getAddress().getDomain(), "", true));
                 }
                 else {
                     // Update the order of the sessions based on the new presence of this session
                     sessionMap.sessionUnavailable(session);
                     // Update the route for the session's BARE address
-                    Session defaultSession = sessionMap.getDefaultSession(true);
-                    JID jid =
-                            new JID(session.getAddress().getNode(), session.getAddress().getDomain(), "");
+                    ClientSession defaultSession = sessionMap.getDefaultSession(true);
+                    JID jid = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), "", true);
                     if (defaultSession != null) {
                         // Set the route to the bare JID to the session with highest priority
-                        routingTable.addRoute(jid, defaultSession);
+                        routingTable.addClientRoute(jid, defaultSession);
                     }
                     else {
                         // All sessions have a negative priority presence so delete the route to the bare JID
-                        routingTable.removeRoute(jid);
+                        routingTable.removeClientRoute(jid);
                     }
                 }
             }
@@ -905,7 +906,7 @@ public class SessionManager extends BasicModule {
             // Do nothing if the session belongs to an anonymous user
             return;
         }
-        Session defaultSession;
+        ClientSession defaultSession;
         String username = sender.getNode();
         SessionMap resources = sessions.get(username);
         if (resources == null) {
@@ -918,12 +919,12 @@ public class SessionManager extends BasicModule {
             defaultSession = resources.getDefaultSession(true);
         }
         // Update the route to the bareJID with the session with highest priority
-        JID defaultAddress = new JID(sender.getNode(), sender.getDomain(), "");
+        JID defaultAddress = new JID(sender.getNode(), sender.getDomain(), "", true);
         // Update the route to the bare JID
         if (defaultSession != null) {
-            boolean hadDefault = routingTable.getRoute(defaultAddress) != null;
+            boolean hadDefault = routingTable.hasClientRoute(defaultAddress);
             // Set the route to the bare JID to the session with highest priority
-            routingTable.addRoute(defaultAddress, defaultSession);
+            routingTable.addClientRoute(defaultAddress, defaultSession);
             // Check if we need to deliver offline messages
             if (!hadDefault) {
                 // User sessions had negative presence before this change so deliver messages
@@ -939,7 +940,7 @@ public class SessionManager extends BasicModule {
         }
         else {
             // All sessions have a negative priority presence so delete the route to the bare JID
-            routingTable.removeRoute(defaultAddress);
+            routingTable.removeClientRoute(defaultAddress);
         }
     }
 
@@ -995,11 +996,13 @@ public class SessionManager extends BasicModule {
     }
 
     public boolean isAnonymousRoute(String username) {
+        // TODO Ask the routing table for this. Should we have user and anon caches in routing table? Or some kind of flag?
         // JID's node and resource are the same for anonymous sessions
         return anonymousSessions.containsKey(username);
     }
 
     public boolean isActiveRoute(String username, String resource) {
+        //TODO Check anonymous sessions in RT. Check for not available sessions here. Check for available sessions in RT. 
         boolean hasRoute = false;
 
         // Check if there is an anonymous session
@@ -1057,6 +1060,8 @@ public class SessionManager extends BasicModule {
      * @return the <code>Session</code> associated with the JID data.
      */
     public ClientSession getSession(String username, String domain, String resource) {
+        //TODO Check available(anonymous or not) sessions in RT. Check for not available(anonymous or not)/preAuthenticated/ sessions here.
+        //TODO For sessions in SM return real object. RT should return real object for local sessions and surrogates for remote ones. Check usage of returned object 
         // Return null if the JID's data belongs to a foreign server. If the server is
         // shutting down then serverName will be null so answer null too in this case.
         if (serverName == null || !serverName.equals(domain)) {
@@ -1286,10 +1291,6 @@ public class SessionManager extends BasicModule {
         }
     }
 
-    public Iterator getAnonymousSessions() {
-        return Collections.unmodifiableCollection(anonymousSessions.values()).iterator();
-    }
-
     public Collection<ClientSession> getSessions(String username) {
         List<ClientSession> sessionList = new ArrayList<ClientSession>();
         if (username != null) {
@@ -1329,6 +1330,7 @@ public class SessionManager extends BasicModule {
      * @return number of client sessions that are authenticated with the server using a non-anoymous user.
      */
     public int getUserSessionsCount() {
+        //TODO Merge getUserSessionsCount() and getAnonymousSessionCount() and move it to routing table
         return userSessionsCounter.get();
     }
 
@@ -1349,6 +1351,7 @@ public class SessionManager extends BasicModule {
     }
 
     public int getAnonymousSessionCount() {
+        //TODO Merge getUserSessionsCount() and getAnonymousSessionCount() and move it to routing table
         return anonymousSessions.size();
     }
 
@@ -1452,6 +1455,7 @@ public class SessionManager extends BasicModule {
      * @throws UnauthorizedException if not allowed to perform the operation.
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
+        // TODO Move responsibility to routing table
         for (SessionMap sessionMap : sessions.values()) {
             sessionMap.broadcast(packet);
         }
@@ -1490,6 +1494,10 @@ public class SessionManager extends BasicModule {
         if (session == null || serverName == null) {
             return false;
         }
+
+        // Remove route to the removed session (anonymous or not)
+        routingTable.removeClientRoute(session.getAddress());
+
         boolean auth_removed = false;
         if (anonymousSessions.remove(session.getAddress().getResource()) != null) {
             // Fire session event.
@@ -1530,7 +1538,7 @@ public class SessionManager extends BasicModule {
         if (presence.isAvailable()) {
             Presence offline = new Presence();
             offline.setFrom(session.getAddress());
-            offline.setTo(new JID(null, serverName, null));
+            offline.setTo(new JID(null, serverName, null, true));
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
@@ -1546,6 +1554,8 @@ public class SessionManager extends BasicModule {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
         preAuthenticatedSessions.remove(session.getAddress().getResource());
+        // Add session to the routing table (routing table will know session is not available yet)
+        routingTable.addClientRoute(session.getAddress(), session);
         // Fire session event.
         SessionEventDispatcher.dispatchEvent(session,
                 SessionEventDispatcher.EventType.anonymous_session_created);
@@ -1656,7 +1666,7 @@ public class SessionManager extends BasicModule {
             for (String hostname : session.getHostnames()) {
                 unregisterOutgoingServerSession(hostname);
                 // Remove the route to the session using the hostname
-                XMPPServer.getInstance().getRoutingTable().removeRoute(new JID(hostname));
+                XMPPServer.getInstance().getRoutingTable().removeServerRoute(new JID(hostname));
             }
         }
     }

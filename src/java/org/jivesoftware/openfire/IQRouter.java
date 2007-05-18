@@ -12,8 +12,6 @@
 package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -24,10 +22,9 @@ import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -244,10 +241,9 @@ public class IQRouter extends BasicModule {
         try {
             // Check for registered components, services or remote servers
             if (recipientJID != null) {
-                RoutableChannelHandler serviceRoute = routingTable.getRoute(recipientJID);
-                if (serviceRoute != null && !(serviceRoute instanceof ClientSession)) {
+                if (routingTable.hasComponentRoute(recipientJID) || routingTable.hasServerRoute(recipientJID)) {
                     // A component/service/remote server was found that can handle the Packet
-                    serviceRoute.process(packet);
+                    routingTable.routePacket(recipientJID, packet);
                     return;
                 }
             }
@@ -266,10 +262,9 @@ public class IQRouter extends BasicModule {
                 }
                 else {
                     // Check if communication to local users is allowed
-                    if (recipientJID != null &&
-                            userManager.isRegisteredUser(recipientJID.getNode())) {
-                        PrivacyList list = PrivacyListManager.getInstance()
-                                .getDefaultPrivacyList(recipientJID.getNode());
+                    if (recipientJID != null && userManager.isRegisteredUser(recipientJID.getNode())) {
+                        PrivacyList list =
+                                PrivacyListManager.getInstance().getDefaultPrivacyList(recipientJID.getNode());
                         if (list != null && list.shouldBlockPacket(packet)) {
                             // Communication is blocked
                             if (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType()) {
@@ -300,41 +295,10 @@ public class IQRouter extends BasicModule {
                         handler.process(packet);
                     }
                 }
-
             }
             else {
                 // JID is of the form <node@domain/resource>
-                boolean handlerFound = false;
-                // IQ packets should be sent to users even before they send an available presence.
-                // So if the target address belongs to this server then use the sessionManager
-                // instead of the routingTable since unavailable clients won't have a route to them
-                if (XMPPServer.getInstance().isLocal(recipientJID)) {
-                    ClientSession session = sessionManager.getSession(recipientJID);
-                    if (session != null) {
-                        if (session.canProcess(packet)) {
-                            session.process(packet);
-                            handlerFound = true;
-                        }
-                    }
-                    else {
-                        Log.info("Packet sent to unreachable address " + packet);
-                    }
-                }
-                else {
-                    ChannelHandler route = routingTable.getRoute(recipientJID);
-                    if (route != null) {
-                        route.process(packet);
-                        handlerFound = true;
-                    }
-                    else {
-                        Log.info("Packet sent to unreachable address " + packet);
-                    }
-                }
-                // If a route to the target address was not found then try to answer a
-                // service_unavailable error code to the sender of the IQ packet
-                if (!handlerFound && IQ.Type.result != packet.getType() && IQ.Type.error != packet.getType()) {
-                    sendErrorPacket(packet, PacketError.Condition.service_unavailable);
-                }
+                routingTable.routePacket(recipientJID, packet);
             }
         }
         catch (Exception e) {
@@ -349,8 +313,7 @@ public class IQRouter extends BasicModule {
         }
     }
 
-    private void sendErrorPacket(IQ originalPacket, PacketError.Condition condition)
-            throws UnauthorizedException {
+    private void sendErrorPacket(IQ originalPacket, PacketError.Condition condition) {
         if (IQ.Type.error == originalPacket.getType()) {
             Log.error("Cannot reply an IQ error to another IQ error: " + originalPacket);
             return;
@@ -364,23 +327,11 @@ public class IQRouter extends BasicModule {
             handle(reply);
             return;
         }
-        // Locate a route to the sender of the IQ and ask it to process
-        // the packet. Use the routingTable so that routes to remote servers
-        // may be found
-        ChannelHandler route = routingTable.getRoute(originalPacket.getFrom());
-        if (route != null) {
-            route.process(reply);
-        }
-        else {
-            // No root was found so try looking for local sessions that have never
-            // sent an available presence or haven't authenticated yet
-            Session session = sessionManager.getSession(originalPacket.getFrom());
-            if (session != null) {
-                session.process(reply);
-            }
-            else {
-                Log.warn("Error packet could not be delivered " + reply);
-            }
+        // Route the error packet to the original sender of the IQ.
+        try {
+            routingTable.routePacket(reply.getTo(), reply);
+        } catch (UnauthorizedException e) {
+            // Should never happen
         }
     }
 
@@ -397,5 +348,23 @@ public class IQRouter extends BasicModule {
             }
         }
         return handler;
+    }
+
+    /**
+     * Notification message indicating that a packet has failed to be routed to the receipient.
+     *
+     * @param packet IQ packet that failed to be sent to the receipient.
+     */
+    public void routingFailed(Packet packet) {
+        IQ iq = (IQ) packet;
+        // If a route to the target address was not found then try to answer a
+        // service_unavailable error code to the sender of the IQ packet
+        if (IQ.Type.result != iq.getType() && IQ.Type.error != iq.getType()) {
+            Log.info("Packet sent to unreachable address " + packet);
+            sendErrorPacket(iq, PacketError.Condition.service_unavailable);
+        }
+        else {
+            Log.warn("Error or result packet could not be delivered " + packet);
+        }
     }
 }

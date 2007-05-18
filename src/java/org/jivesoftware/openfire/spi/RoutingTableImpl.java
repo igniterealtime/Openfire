@@ -11,262 +11,361 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.ChannelHandler;
-import org.jivesoftware.openfire.RoutableChannelHandler;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.xmpp.packet.JID;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.lock.LockManager;
+import org.xmpp.packet.*;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 /**
- * <p>Uses simple Maps for table storage.</p>
- * <p>Leaves in the tree are indicated by a PacketHandler, while branches are stored in Maps.
- * Traverse the tree according to an XMPPAddress' fields (host -> name -> resource) and when you
- * hit a PacketHandler, you have found the handler for that node and all sub-nodes. </p>
+ * Routing table that stores routes to client sessions, outgoing server sessions
+ * and components. As soon as a user authenticates with the server its client session
+ * will be added to the routing table. Whenever the client session becomes available
+ * or unavailable the routing table will be updated too.<p>
  *
- * @author Iain Shigeoka
+ * When running inside of a cluster the routing table will also keep references to routes
+ * hosted in other cluster nodes. A {@link RemotePacketRouter} will be use to route packets
+ * to routes hosted in other cluster nodes.<p>
+ *
+ * Failure to route a packet will end up sending {@link IQRouter#routingFailed(org.xmpp.packet.Packet)},
+ * {@link MessageRouter#routingFailed(org.xmpp.packet.Packet)} or
+ * {@link PresenceRouter#routingFailed(org.xmpp.packet.Packet)} depending on the packet type
+ * that tried to be sent.
+ *
+ * @author Gaston Dombiak
  */
 public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     /**
-     * We need a three level tree built of hashtables: host -> name -> resource
+     * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      */
-    private Map routes = new ConcurrentHashMap();
+    private Cache<String, byte[]> serversCache;
+    /**
+     * Cache (unlimited, never expire) that holds sessions of external components connected to the server.
+     */
+    private Cache<String, byte[]> componentsCache;
+    /**
+     * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
+     */
+    private Cache<String, ClientRoute> usersCache;
+    /**
+     * Cache (unlimited, never expire) that holds sessions of anoymous user that have authenticated with the server.
+     */
+    private Cache<String, ClientRoute> anonymousUsersCache;
+    /**
+     * Cache (unlimited, never expire) that holds list of connected resources of authenticated users
+     * (includes anonymous). Key: bare jid, Value: List of full JIDs.
+     */
+    private Cache<String, List<String>> usersSessions;
 
     private String serverName;
-    private InternalComponentManager componentManager;
+    private XMPPServer server;
+    private LocalRoutingTable localRoutingTable;
+    private RemotePacketRouter remotePacketRouter;
+    private IQRouter iqRouter;
+    private MessageRouter messageRouter;
+    private PresenceRouter presenceRouter;
 
     public RoutingTableImpl() {
         super("Routing table");
+        serversCache = CacheFactory.createCache("Routing Servers Cache");
+        componentsCache = CacheFactory.createCache("Routing Components Cache");
+        usersCache = CacheFactory.createCache("Routing Users Cache");
+        anonymousUsersCache = CacheFactory.createCache("Routing AnonymousUsers Cache");
+        usersSessions = CacheFactory.createCache("Routing User Sessions");
+        localRoutingTable = new LocalRoutingTable();
     }
 
-    public void addRoute(JID node, RoutableChannelHandler destination) {
+    public void addServerRoute(JID route, RoutableChannelHandler destination) {
+        String address = destination.getAddress().getDomain();
+        localRoutingTable.addRoute(address, destination);
+        serversCache.put(address, server.getNodeID());
+    }
 
-        String nodeJID = node.getNode() == null ? "" : node.getNode();
-        String resourceJID = node.getResource() == null ? "" : node.getResource();
+    public void addComponentRoute(JID route, RoutableChannelHandler destination) {
+        String address = destination.getAddress().getDomain();
+        localRoutingTable.addRoute(address, destination);
+        componentsCache.put(address, server.getNodeID());
+    }
 
-        if (destination instanceof ClientSession) {
-            Object nameRoutes = routes.get(node.getDomain());
-            if (nameRoutes == null) {
-                // No route to the requested domain. Create a new entry in the table
-                synchronized (node.getDomain().intern()) {
-                    // Check again if a route exists now that we have a lock
-                    nameRoutes = routes.get(node.getDomain());
-                    if (nameRoutes == null) {
-                        // Still nothing so create a new entry in the map for domain
-                        nameRoutes = new ConcurrentHashMap();
-                        routes.put(node.getDomain(), nameRoutes);
-                    }
+    public void addClientRoute(JID route, ClientSession destination) {
+        String address = destination.getAddress().toString();
+        boolean available = destination.getPresence().isAvailable();
+        localRoutingTable.addRoute(address, destination);
+        if (destination.getAuthToken().isAnonymous()) {
+            anonymousUsersCache.put(address, new ClientRoute(server.getNodeID(), available));
+            // Add the session to the list of user sessions
+            if (route.getResource() != null && !available) {
+                Lock lock = LockManager.getLock(route.toBareJID());
+                try {
+                    lock.lock();
+                    usersSessions.put(route.toBareJID(), Arrays.asList(route.toString()));
+                }
+                finally {
+                    lock.unlock();
                 }
             }
-            // Check if there is something associated with the node of the JID
-            Object resourceRoutes = ((Map) nameRoutes).get(nodeJID);
-            if (resourceRoutes == null) {
-                // Nothing was found so create a new entry for this node (a.k.a. user)
-                synchronized (nodeJID.intern()) {
-                    resourceRoutes = ((Map) nameRoutes).get(nodeJID);
-                    if (resourceRoutes == null) {
-                        resourceRoutes = new ConcurrentHashMap();
-                        ((Map) nameRoutes).put(nodeJID, resourceRoutes);
-                    }
-                }
-            }
-            // Add the connected resource to the node's Map
-            ((Map) resourceRoutes).put(resourceJID, destination);
         }
         else {
-            routes.put(node.getDomain(), destination);
-        }
-    }
-
-    public RoutableChannelHandler getRoute(JID node) {
-        if (node == null) {
-            return null;
-        }
-        return getRoute(node.toString(), node.getNode() == null ? "" : node.getNode(),
-                node.getDomain(), node.getResource() == null ? "" : node.getResource());
-    }
-
-    private RoutableChannelHandler getRoute(String jid, String node, String domain,
-            String resource) {
-        RoutableChannelHandler route = null;
-
-        // Check if the address belongs to a remote server
-        if (!serverName.equals(domain) && routes.get(domain) == null &&
-                componentManager.getComponent(domain) == null) {
-            // Return a promise of a remote session. This object will queue packets pending
-            // to be sent to remote servers
-            return OutgoingSessionPromise.getInstance();
-        }
-
-        try {
-            Object nameRoutes = routes.get(domain);
-            if (nameRoutes instanceof ChannelHandler) {
-                route = (RoutableChannelHandler) nameRoutes;
-            }
-            else if (nameRoutes != null) {
-                Object resourceRoutes = ((Map) nameRoutes).get(node);
-                if (resourceRoutes instanceof ChannelHandler) {
-                    route = (RoutableChannelHandler) resourceRoutes;
+            usersCache.put(address, new ClientRoute(server.getNodeID(), available));
+            // Add the session to the list of user sessions
+            if (route.getResource() != null && !available) {
+                Lock lock = LockManager.getLock(route.toBareJID());
+                try {
+                    lock.lock();
+                    List<String> jids = usersSessions.get(route.toBareJID());
+                    if (jids == null) {
+                        jids = new ArrayList<String>();
+                    }
+                    jids.add(route.toString());
+                    usersSessions.put(route.toBareJID(), jids);
                 }
-                else if (resourceRoutes != null) {
-                    route = (RoutableChannelHandler) ((Map) resourceRoutes).get(resource);
+                finally {
+                    lock.unlock();
+                }
+            }
+        }
+    }
+
+    public void routePacket(JID jid, Packet packet) throws UnauthorizedException, PacketException {
+        boolean routed = false;
+        JID address = packet.getTo();
+        if (address == null) {
+            throw new PacketException("To address cannot be null.");
+        }
+
+        if (serverName.equals(jid.getDomain())) {
+            boolean onlyAvailable = true;
+            if (packet instanceof IQ) {
+                onlyAvailable = packet.getFrom() != null;
+            }
+            else if (packet instanceof Message) {
+                onlyAvailable = true;
+            }
+            else if (packet instanceof Presence) {
+                onlyAvailable = true;
+            }
+
+            // Packet sent to local user
+            ClientRoute clientRoute = usersCache.get(jid.toString());
+            if (clientRoute == null) {
+                clientRoute = anonymousUsersCache.get(jid.toString());
+            }
+            if (clientRoute != null) {
+                if (onlyAvailable && !clientRoute.isAvailable()) {
+                    // Packet should only be sent to available sessions and the route is not available
+                    routed = false;
                 }
                 else {
-                    route = null;
-                }
-            }
-        }
-        catch (Exception e) {
-            if (Log.isDebugEnabled()) {
-                Log.debug("Route not found for JID: " + jid, e);
-            }
-        }
-
-        return route;
-    }
-
-    public List<ChannelHandler> getRoutes(JID node) {
-        // Check if the address belongs to a remote server
-        if (!serverName.equals(node.getDomain()) && routes.get(node.getDomain()) == null &&
-                componentManager.getComponent(node) == null) {
-            // Return a promise of a remote session. This object will queue packets pending
-            // to be sent to remote servers
-            List<ChannelHandler> list = new ArrayList<ChannelHandler>();
-            list.add(OutgoingSessionPromise.getInstance());
-            return list;
-        }
-
-        LinkedList list = null;
-        Object nameRoutes = routes.get(node.getDomain());
-        if (nameRoutes != null) {
-            if (nameRoutes instanceof ChannelHandler) {
-                list = new LinkedList();
-                list.add(nameRoutes);
-            }
-            else if (node.getNode() == null) {
-                list = new LinkedList();
-                getRoutes(list, (Map) nameRoutes);
-            }
-            else {
-                Object resourceRoutes = ((Map) nameRoutes).get(node.getNode());
-                if (resourceRoutes != null) {
-                    if (resourceRoutes instanceof ChannelHandler) {
-                        list = new LinkedList();
-                        list.add(resourceRoutes);
-                    }
-                    else if (node.getResource() == null || node.getResource().length() == 0) {
-                        list = new LinkedList();
-                        getRoutes(list, (Map) resourceRoutes);
+                    if (clientRoute.getNodeID() == server.getNodeID()) {
+                        // This is a route to a local user hosted in this node
+                        localRoutingTable.getRoute(jid.toString()).process(packet);
+                        routed = true;
                     }
                     else {
-                        Object entry = ((Map) resourceRoutes).get(node.getResource());
-                        if (entry != null) {
-                            list = new LinkedList();
-                            list.add(entry);
+                        // This is a route to a local user hosted in other node
+                        if (remotePacketRouter != null) {
+                            routed = remotePacketRouter.routePacket(clientRoute.getNodeID(), jid, packet);
                         }
                     }
                 }
             }
         }
-        if (list == null) {
-            return Collections.emptyList();
-        }
-        else {
-            return list;
-        }
-    }
-
-    /**
-     * Recursive method to iterate through the given table (and any embedded map)
-     * and stuff non-Map values into the given list.<p>
-     *
-     * There should be no recursion problems since the routing table is at most 3 levels deep.
-     *
-     * @param list  The list to stuff entries into
-     * @param table The hashtable who's values should be entered into the list
-     */
-    private void getRoutes(LinkedList list, Map table) {
-        Iterator entryIter = table.values().iterator();
-        while (entryIter.hasNext()) {
-            Object entry = entryIter.next();
-            if (entry instanceof ConcurrentHashMap) {
-                getRoutes(list, (Map)entry);
-            }
-            else {
-                // Do not include the same entry many times. This could be the case when the same 
-                // session is associated with the bareJID and with a given resource
-                if (!list.contains(entry)) {
-                    list.add(entry);
-                }
-            }
-        }
-    }
-
-    public ChannelHandler getBestRoute(JID node) {
-        ChannelHandler route = getRoute(node);
-        if (route == null) {
-            // Try looking for a route based on the bare JID
-            String nodeJID = node.getNode() == null ? "" : node.getNode();
-            route = getRoute(node.toBareJID(), nodeJID, node.getDomain(), "");
-        }
-        return route;
-    }
-
-    public ChannelHandler removeRoute(JID node) {
-
-        ChannelHandler route = null;
-        String nodeJID = node.getNode() == null ? "" : node.getNode();
-        String resourceJID = node.getResource() == null ? "" : node.getResource();
-
-        try {
-            Object nameRoutes = routes.get(node.getDomain());
-            if (nameRoutes instanceof ConcurrentHashMap) {
-                Object resourceRoutes = ((Map) nameRoutes).get(nodeJID);
-                if (resourceRoutes instanceof ConcurrentHashMap) {
-                    // Remove the requested resource for this user
-                    route = (ChannelHandler) ((Map) resourceRoutes).remove(resourceJID);
-                    if (((Map) resourceRoutes).isEmpty()) {
-                        ((Map) nameRoutes).remove(nodeJID);
-                        if (((Map) nameRoutes).isEmpty()) {
-                            routes.remove(node.getDomain());
-                        }
-                    }
+        else if (jid.getDomain().contains(serverName)) {
+            // Packet sent to component hosted in this server
+            byte[] nodeID = componentsCache.get(jid.getDomain());
+            if (nodeID != null) {
+                if (nodeID == server.getNodeID()) {
+                    // This is a route to a local component hosted in this node
+                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                    routed = true;
                 }
                 else {
-                    // Remove the unique route to this node
-                    ((Map) nameRoutes).remove(nodeJID);
-                }
-            }
-            else if (nameRoutes != null) {
-                // The retrieved route points to a RoutableChannelHandler
-                if (("".equals(nodeJID) && "".equals(resourceJID)) ||
-                        ((RoutableChannelHandler) nameRoutes).getAddress().equals(node)) {
-                    // Remove the route to this domain
-                    routes.remove(node.getDomain());
+                    // This is a route to a local component hosted in other node
+                    if (remotePacketRouter != null) {
+                        routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                    }
                 }
             }
         }
-        catch (Exception e) {
-            Log.error("Error removing route", e);
+        else {
+            // Packet sent to remote server
+            byte[] nodeID = serversCache.get(jid.getDomain());
+            if (nodeID != null) {
+                if (nodeID == server.getNodeID()) {
+                    // This is a route to a remote server connected from this node
+                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                    routed = true;
+                }
+                else {
+                    // This is a route to a remote server connected from other node
+                    if (remotePacketRouter != null) {
+                        routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                    }
+                }
+            }
+            else {
+                // Return a promise of a remote session. This object will queue packets pending
+                // to be sent to remote servers
+                // TODO Make sure that creating outgoing connections is thread-safe across cluster nodes 
+                OutgoingSessionPromise.getInstance().process(packet);
+                routed = true;
+            }
         }
-        return route;
+
+        if (!routed) {
+            if (Log.isDebugEnabled()) {
+                Log.debug("Failed to route packet to JID: " + jid + " packet: " + packet);
+            }
+            if (packet instanceof IQ) {
+                iqRouter.routingFailed(packet);
+            }
+            else if (packet instanceof Message) {
+                messageRouter.routingFailed(packet);
+            }
+            else if (packet instanceof Presence) {
+                presenceRouter.routingFailed(packet);
+            }
+        }
+    }
+
+    public boolean hasClientRoute(JID jid) {
+        return usersCache.get(jid.toString()) != null || anonymousUsersCache.get(jid.toString()) != null;
+    }
+
+    public boolean hasServerRoute(JID jid) {
+        return serversCache.get(jid.getDomain()) != null;
+    }
+
+    public boolean hasComponentRoute(JID jid) {
+        return componentsCache.get(jid.getDomain()) != null;
+    }
+
+    public List<JID> getRoutes(JID route) {
+        // TODO Refactor API to be able to get c2s sessions available only/all
+        List<JID> jids = new ArrayList<JID>();
+        if (serverName.equals(route.getDomain())) {
+            // Address belongs to local user
+            if (route.getResource() != null) {
+                // Address is a full JID of a user
+                ClientRoute clientRoute = usersCache.get(route.toString());
+                if (clientRoute == null) {
+                    clientRoute = anonymousUsersCache.get(route.toString());
+                }
+                if (clientRoute != null && clientRoute.isAvailable()) {
+                    jids.add(route);
+                }
+            }
+            else {
+                // Address is a bare JID so return all AVAILABLE resources of user
+                List<String> sessions = usersSessions.get(route.toBareJID());
+                // Select only available sessions
+                for (String jid : sessions) {
+                    ClientRoute clientRoute = usersCache.get(jid);
+                    if (clientRoute == null) {
+                        clientRoute = anonymousUsersCache.get(jid);
+                    }
+                    if (clientRoute != null && clientRoute.isAvailable()) {
+                        jids.add(new JID(jid));
+                    }
+                }
+            }
+        }
+        else if (route.getDomain().contains(serverName)) {
+            // Packet sent to component hosted in this server
+            byte[] nodeID = componentsCache.get(route.getDomain());
+            if (nodeID != null) {
+                jids.add(route);
+            }
+        }
+        else {
+            // Packet sent to remote server
+            byte[] nodeID = serversCache.get(route.getDomain());
+            if (nodeID != null) {
+                jids.add(route);
+            }
+            else {
+                // TODO Decide if we want to return address of remote server we don't have a route to
+                jids.add(route);
+            }
+        }
+        return jids;
+    }
+
+    public boolean removeClientRoute(JID route) {
+        boolean anonymous = false;
+        String address = route.toString();
+        ClientRoute clientRoute = usersCache.remove(address);
+        if (clientRoute == null) {
+            clientRoute = anonymousUsersCache.remove(address);
+            anonymous = true;
+        }
+        if (clientRoute != null && route.getResource() != null) {
+            Lock lock = LockManager.getLock(route.toBareJID());
+            try {
+                lock.lock();
+                if (anonymous) {
+                    usersSessions.remove(route.toBareJID());
+                }
+                else {
+                    List<String> jids = usersSessions.get(route.toBareJID());
+                    if (jids != null) {
+                        jids.remove(route.toString());
+                        if (!jids.isEmpty()) {
+                            usersSessions.put(route.toBareJID(), jids);
+                        }
+                        else {
+                            usersSessions.remove(route.toBareJID());
+                        }
+                    }
+                }
+            }
+            finally {
+                lock.unlock();
+            }
+        }
+        localRoutingTable.removeRoute(address);
+        return clientRoute != null;
+    }
+
+    public boolean removeServerRoute(JID route) {
+        String address = route.getDomain();
+        boolean removed = serversCache.remove(address) != null;
+        localRoutingTable.removeRoute(address);
+        return removed;
+    }
+
+    public boolean removeComponentRoute(JID route) {
+        String address = route.getDomain();
+        boolean removed = componentsCache.remove(address) != null;
+        localRoutingTable.removeRoute(address);
+        return removed;
+    }
+
+    public void setRemotePacketRouter(RemotePacketRouter remotePacketRouter) {
+        this.remotePacketRouter = remotePacketRouter;
     }
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
+        this.server = server;
         serverName = server.getServerInfo().getName();
+        iqRouter = server.getIQRouter();
+        messageRouter = server.getMessageRouter();
+        presenceRouter = server.getPresenceRouter();
     }
 
     public void start() throws IllegalStateException {
         super.start();
-        componentManager = InternalComponentManager.getInstance();
     }
 }

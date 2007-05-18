@@ -1454,7 +1454,7 @@
                  be manually added to this list.
             -->
             <property name="pack200.excludes"
-                      value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+                      value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar,tangosol.jar"/>
 
             <for param="jar">
                 <path>

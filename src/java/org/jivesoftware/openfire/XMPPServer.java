@@ -891,11 +891,11 @@ public class XMPPServer {
             module.stop();
             module.destroy();
         }
-        modules.clear();
         // Stop all plugins
         if (pluginManager != null) {
             pluginManager.shutdown();
         }
+        modules.clear();
         // Stop the Db connection manager.
         DbConnectionManager.destroyConnectionProvider();
         // hack to allow safe stopping

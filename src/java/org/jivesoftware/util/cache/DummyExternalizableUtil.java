@@ -10,10 +10,7 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -148,6 +145,15 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
     public byte[] readByteArray(DataInput in) throws IOException {
         // Do nothing
         return new byte[0];
+    }
+
+    public void writeSerializable(DataOutput out, Serializable value) throws IOException {
+        // Do nothing
+    }
+
+    public Serializable readSerializable(DataInput in) throws IOException {
+        // Do nothing
+        return null;
     }
 
     public void writeSafeUTF(DataOutput out, String value) {

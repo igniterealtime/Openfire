@@ -13,9 +13,6 @@ package org.jivesoftware.openfire.net;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -23,6 +20,9 @@ import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
 import javax.net.ssl.SSLSession;
@@ -166,6 +166,10 @@ public class SocketConnection implements Connection {
             writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
+    }
+
+    public void addCompression() {
+        // WARNING: We do not support adding compression for incoming traffic but not for outgoing traffic.
     }
 
     public void startCompression() {

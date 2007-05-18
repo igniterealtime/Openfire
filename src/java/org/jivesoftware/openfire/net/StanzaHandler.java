@@ -12,13 +12,13 @@ package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
@@ -450,10 +450,13 @@ public abstract class StanzaHandler {
             connection.deliverRawText(error);
             return false;
         } else {
+            // Start using compression for incoming traffic
+            connection.addCompression();
+
             // Indicate client that he can proceed and compress the socket
             connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
 
-            // Start using compression
+            // Start using compression for outgoing traffic
             connection.startCompression();
             return true;
         }

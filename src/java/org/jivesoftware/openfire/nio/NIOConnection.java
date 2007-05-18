@@ -314,13 +314,18 @@ public class NIOConnection implements Connection {
         }
     }
 
-    public void startCompression() {
+    public void addCompression() {
         IoFilterChain chain = ioSession.getFilterChain();
         String baseFilter = "org.apache.mina.common.ExecutorThreadModel";
         if (chain.contains("tls")) {
             baseFilter = "tls";
         }
-        chain.addAfter(baseFilter, "compression", new CompressionFilter(CompressionFilter.COMPRESSION_MAX));
+        chain.addAfter(baseFilter, "compression", new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
+    }
+
+    public void startCompression() {
+        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get("compression");
+        ioFilter.setCompressOutbound(true);
     }
 
     public boolean isFlashClient() {

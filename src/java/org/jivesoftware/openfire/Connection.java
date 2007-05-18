@@ -258,8 +258,16 @@ public interface Connection {
     void startTLS(boolean clientMode, String remoteServer) throws Exception;
 
     /**
-     * Start using compression for this connection. Compression will only be available after TLS
-     * has been negotiated. This means that a connection can never be using compression before
+     * Adds the compression filter to the connection but only filter incoming traffic. Do not filter
+     * outgoing traffic since we still need to send an uncompressed stanza to the client indicating
+     * that he can start compressing the traffic. After we sent the uncompresses stanza we can
+     * start compression outgoing traffic as well.
+     */
+    void addCompression();
+
+    /**
+     * Start compressing outgoing traffic for this connection. Compression will only be available after
+     * TLS has been negotiated. This means that a connection can never be using compression before
      * TLS. However, it is possible to use compression without TLS.
      */
     void startCompression();

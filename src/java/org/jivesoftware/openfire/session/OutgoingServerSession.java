@@ -16,9 +16,6 @@ import com.jcraft.jzlib.ZInputStream;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.DNSUtil;
@@ -29,6 +26,9 @@ import org.jivesoftware.openfire.server.RemoteServerConfiguration;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
@@ -403,6 +403,7 @@ public class OutgoingServerSession extends Session {
                             Element answer = reader.parseDocument().getRootElement();
                             if ("compressed".equals(answer.getName())) {
                                 // Server confirmed that we can use zlib compression
+                                connection.addCompression();
                                 connection.startCompression();
                                 Log.debug("OS - Stream compression was successful with " + hostname);
                                 // Stream compression was successful so initiate a new stream
@@ -569,10 +570,7 @@ public class OutgoingServerSession extends Session {
                 reply.setFrom(packet.getTo());
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                ChannelHandler route = routingTable.getRoute(reply.getTo());
-                if (route != null) {
-                    route.process(reply);
-                }
+                routingTable.routePacket(reply.getTo(), reply);
             }
             else if (packet instanceof Presence) {
                 Presence reply = new Presence();
@@ -580,10 +578,7 @@ public class OutgoingServerSession extends Session {
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                ChannelHandler route = routingTable.getRoute(reply.getTo());
-                if (route != null) {
-                    route.process(reply);
-                }
+                routingTable.routePacket(reply.getTo(), reply);
             }
             else if (packet instanceof Message) {
                 Message reply = new Message();
@@ -593,10 +588,7 @@ public class OutgoingServerSession extends Session {
                 reply.setType(((Message)packet).getType());
                 reply.setThread(((Message)packet).getThread());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                ChannelHandler route = routingTable.getRoute(reply.getTo());
-                if (route != null) {
-                    route.process(reply);
-                }
+                routingTable.routePacket(reply.getTo(), reply);
             }
         }
         catch (UnauthorizedException e) {
@@ -664,7 +656,7 @@ public class OutgoingServerSession extends Session {
             // was already registered nothing happens
             sessionManager.registerOutgoingServerSession(hostname, this);
             // Add a new route for this new session
-            XMPPServer.getInstance().getRoutingTable().addRoute(new JID(hostname), this);
+            XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(hostname), this);
         }
     }
 

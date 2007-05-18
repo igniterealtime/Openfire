@@ -13,9 +13,9 @@ package org.jivesoftware.openfire.net;
 
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.StreamError;
 
@@ -196,10 +196,13 @@ abstract class SocketReadingMode {
             return false;
         }
         else {
+            // Start using compression for incoming traffic
+            socketReader.connection.addCompression();
+
             // Indicate client that he can proceed and compress the socket
             socketReader.connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
 
-            // Start using compression
+            // Start using compression for outgoing traffic
             socketReader.connection.startCompression();
             return true;
         }

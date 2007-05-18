@@ -11,12 +11,12 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,6 +108,10 @@ public abstract class VirtualConnection implements Connection {
     }
 
     public void startTLS(boolean clientMode, String remoteServer) throws Exception {
+        //Ignore
+    }
+
+    public void addCompression() {
         //Ignore
     }
 

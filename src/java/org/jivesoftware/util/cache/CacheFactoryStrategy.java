@@ -69,6 +69,17 @@ public interface CacheFactoryStrategy {
      */
     void doClusterTask(final ClusterTask task);
 
+
+    /**
+     * Invokes a task on other the specified cluster member in an asynchronous fashion. If clustering is not
+     * enabled, this method will do nothing.
+     *
+     * @param task the task to be invoked on the specified cluster member.
+     * @param nodeID the byte array that identifies the target cluster member.
+     * @return false if not in a cluster or specified cluster node was not found.
+     */
+    boolean doClusterTask(ClusterTask task, byte[] nodeID);
+
     /**
      * Invokes a task on other cluster members synchronously and returns the result as a Collection
      * (method will not return until the task has been executed on each cluster member).

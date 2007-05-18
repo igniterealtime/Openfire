@@ -207,6 +207,27 @@ public class CacheFactory {
     }
 
     /**
+     * Invokes a task on a given cluster member in an asynchronous fashion. If clustering is not enabled,
+     * this method will do nothing.
+     *
+     * @param task the task to be invoked on the specified cluster member.
+     * @param nodeID the byte array that identifies the target cluster member.
+     * @return false if not in a cluster or specified cluster node was not found.
+     */
+    public static boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
+        if (!clusteringEnabled) {
+            return false;
+        }
+        synchronized(CacheFactory.class) {
+            if (!clusteringEnabled) {
+                return false;
+            }
+        }
+
+        return cacheFactoryStrategy.doClusterTask(task, nodeID);
+    }
+
+    /**
      * Invokes a task on other cluster members synchronously and returns the result as a Collection
      * (method will not return until the task has been executed on each cluster member).
      * The task will not be executed on the local cluster member. If clustering is not enabled,

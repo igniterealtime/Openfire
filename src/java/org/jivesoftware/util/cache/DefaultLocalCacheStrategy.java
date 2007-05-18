@@ -27,7 +27,6 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
     public static final int DEFAULT_MAX_CACHE_SIZE = 1024 * 256;
     public static final long DEFAULT_MAX_CACHE_LIFETIME = 6 * JiveConstants.HOUR;
-    private static final byte[] EMPTY_ID = new byte[0];
 
     /**
      * This map contains property names which were used to store cache configuration data
@@ -68,6 +67,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Routing Components Cache", "routeComponent");
         cacheNames.put("Routing Users Cache", "routeUser");
         cacheNames.put("Routing AnonymousUsers Cache", "routeAnonymousUser");
+        cacheNames.put("Routing User Sessions", "routeUserSessions");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
@@ -105,6 +105,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.routeUser.expirationTime", -1l);
         cacheProps.put("cache.routeAnonymousUser.size", -1l);
         cacheProps.put("cache.routeAnonymousUser.expirationTime", -1l);
+        cacheProps.put("cache.routeUserSessions.size", -1l);
+        cacheProps.put("cache.routeUserSessions.expirationTime", -1l);
     }
 
 
@@ -132,6 +134,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     public void doClusterTask(final ClusterTask task) {
+    }
+
+    public boolean doClusterTask(ClusterTask task, byte[] nodeID) {
+        return false;
     }
 
     public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {

@@ -218,6 +218,9 @@ public class NIOConnection implements Connection {
                 // Message it will be stored offline
                 backupDeliverer.deliver(packet);
             }
+            else {
+                session.incrementServerPacketCount();
+            }
         }
     }
 

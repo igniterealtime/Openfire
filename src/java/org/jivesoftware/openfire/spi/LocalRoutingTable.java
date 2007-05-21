@@ -12,7 +12,11 @@
 package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
+import org.jivesoftware.openfire.session.ClientSession;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,6 +49,21 @@ class LocalRoutingTable {
      */
     RoutableChannelHandler getRoute(String address) {
         return routes.get(address);
+    }
+
+    /**
+     * Returns the client sessions that are connected to this JVM.
+     *
+     * @return the client sessions that are connected to this JVM.
+     */
+    Collection<RoutableChannelHandler> getClientRoutes() {
+        List<RoutableChannelHandler> sessions = new ArrayList<RoutableChannelHandler>();
+        for (RoutableChannelHandler route : routes.values()) {
+            if (route instanceof ClientSession) {
+                sessions.add(route);
+            }
+        }
+        return sessions;
     }
 
     /**

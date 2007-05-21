@@ -12,6 +12,7 @@
 package org.jivesoftware.openfire;
 
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 /**
@@ -31,4 +32,12 @@ public interface RemotePacketRouter {
      * @return true if the remote node was found.
      */
     boolean routePacket(byte[] nodeID, JID receipient, Packet packet);
+
+    /**
+     * Brodcasts the specified message to all local client sessions of each cluster node.
+     * The current cluster node is not going to be included.
+     *
+     * @param packet the message to broadcast.
+     */
+    void broadcastPacket(Message packet);
 }

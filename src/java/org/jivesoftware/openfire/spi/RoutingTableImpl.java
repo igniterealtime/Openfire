@@ -137,6 +137,22 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
     }
 
+    public void broadcastPacket(Message packet, boolean onlyLocal) {
+        // Send the message to client sessions connected to this JVM
+        for(RoutableChannelHandler session : localRoutingTable.getClientRoutes()) {
+            try {
+                session.process(packet);
+            } catch (UnauthorizedException e) {
+                // Should never happen
+            }
+        }
+
+        // Check if we need to broadcast the message to client sessions connected to remote cluter nodes
+        if (!onlyLocal && remotePacketRouter != null) {
+            remotePacketRouter.broadcastPacket(packet);
+        }
+    }
+
     public void routePacket(JID jid, Packet packet) throws UnauthorizedException, PacketException {
         boolean routed = false;
         JID address = packet.getTo();

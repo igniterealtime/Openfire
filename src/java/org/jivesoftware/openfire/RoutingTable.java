@@ -14,6 +14,7 @@ package org.jivesoftware.openfire;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 import java.util.List;
@@ -239,4 +240,13 @@ public interface RoutingTable {
      *        in remote nodes of the cluster.
      */
     void setRemotePacketRouter(RemotePacketRouter remotePacketRouter);
+
+    /**
+     * Broadcasts the specified message to connected client sessions to the local node or
+     * across the cluster. Both available and unavailable client sessions will receive the message.
+     *
+     * @param packet the message to broadcast.
+     * @param onlyLocal true if only client sessions connecte to the local JVM will get the message.
+     */
+    void broadcastPacket(Message packet, boolean onlyLocal);
 }

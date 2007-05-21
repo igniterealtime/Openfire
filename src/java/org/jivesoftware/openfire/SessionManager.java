@@ -1454,15 +1454,8 @@ public class SessionManager extends BasicModule {
      * @param packet the packet to be broadcast.
      * @throws UnauthorizedException if not allowed to perform the operation.
      */
-    public void broadcast(Packet packet) throws UnauthorizedException {
-        // TODO Move responsibility to routing table
-        for (SessionMap sessionMap : sessions.values()) {
-            sessionMap.broadcast(packet);
-        }
-
-        for (Session session : anonymousSessions.values()) {
-            session.process(packet);
-        }
+    public void broadcast(Message packet) throws UnauthorizedException {
+        routingTable.broadcastPacket(packet, false);
     }
 
     /**

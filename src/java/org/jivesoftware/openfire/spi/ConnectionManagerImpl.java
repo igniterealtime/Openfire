@@ -74,10 +74,27 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         ports = new ArrayList<ServerPort>(4);
     }
 
-    private synchronized void createSocket() {
+    private synchronized void createListeners() {
         if (isSocketStarted || sessionManager == null || deliverer == null || router == null || serverName == null) {
             return;
         }
+        // Create the port listener for s2s communication
+        createServerListener(localIPAddress);
+        // Create the port listener for Connections Multiplexers
+        createConnectionManagerListener();
+        // Create the port listener for external components
+        createComponentListener(localIPAddress);
+        // Create the port listener for clients
+        createClientListeners();
+        // Create the port listener for secured clients
+        createClientSSLListeners();
+    }
+
+    private synchronized void startListeners() {
+        if (isSocketStarted || sessionManager == null || deliverer == null || router == null || serverName == null) {
+            return;
+        }
+
         // Check if plugins have been loaded
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         if (!pluginManager.isExecuted()) {
@@ -86,7 +103,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     // Stop listening for plugin events
                     XMPPServer.getInstance().getPluginManager().removePluginManagerListener(this);
                     // Start listeners
-                    createSocket();
+                    startListeners();
                 }
             });
             return;
@@ -104,11 +121,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
         // Start the port listener for s2s communication
-        startServerListener(localIPAddress);
+        startServerListener();
         // Start the port listener for Connections Multiplexers
         startConnectionManagerListener(localIPAddress);
         // Start the port listener for external components
-        startComponentListener(localIPAddress);
+        startComponentListener();
         // Start the port listener for clients
         startClientListeners(localIPAddress);
         // Start the port listener for secured clients
@@ -117,7 +134,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         startHTTPBindListeners();
     }
 
-    private void startServerListener(String localIPAddress) {
+    private void createServerListener(String localIPAddress) {
         // Start servers socket unless it's been disabled.
         if (isServerListenerEnabled()) {
             int port = getServerListenerPort();
@@ -127,6 +144,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ports.add(serverSocketThread.getServerPort());
                 serverSocketThread.setDaemon(true);
                 serverSocketThread.setPriority(Thread.MAX_PRIORITY);
+            }
+            catch (Exception e) {
+                System.err.println("Error creating server listener on port " + port + ": " +
+                        e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            }
+        }
+    }
+
+    private void startServerListener() {
+        // Start servers socket unless it's been disabled.
+        if (isServerListenerEnabled()) {
+            int port = getServerListenerPort();
+            try {
                 serverSocketThread.start();
 
                 List<String> params = new ArrayList<String>();
@@ -149,11 +180,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void startConnectionManagerListener(String localIPAddress) {
+    private void createConnectionManagerListener() {
         // Start multiplexers socket unless it's been disabled.
         if (isConnectionManagerListenerEnabled()) {
-            int port = getConnectionManagerListenerPort();
-
             // Create SocketAcceptor with correct number of processors
             multiplexerSocketAcceptor = buildSocketAcceptor();
             // Customize Executor that will be used by processors to process incoming stanzas
@@ -166,6 +195,14 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             multiplexerSocketAcceptor.getDefaultConfig().setThreadModel(threadModel);
             // Add the XMPP codec filter
             multiplexerSocketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
+
+        }
+    }
+
+    private void startConnectionManagerListener(String localIPAddress) {
+        // Start multiplexers socket unless it's been disabled.
+        if (isConnectionManagerListenerEnabled()) {
+            int port = getConnectionManagerListenerPort();
 
             try {
                 // Listen on a specific network interface if it has been set.
@@ -206,7 +243,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void startComponentListener(String localIPAddress) {
+    private void createComponentListener(String localIPAddress) {
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled()) {
             int port = getComponentListenerPort();
@@ -216,6 +253,21 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ports.add(componentSocketThread.getServerPort());
                 componentSocketThread.setDaemon(true);
                 componentSocketThread.setPriority(Thread.MAX_PRIORITY);
+
+            }
+            catch (Exception e) {
+                System.err.println("Error starting component listener on port " + port + ": " +
+                        e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            }
+        }
+    }
+
+    private void startComponentListener() {
+        // Start components socket unless it's been disabled.
+        if (isComponentListenerEnabled()) {
+            int port = getComponentListenerPort();
+            try {
                 componentSocketThread.start();
 
                 List<String> params = new ArrayList<String>();
@@ -238,10 +290,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void startClientListeners(String localIPAddress) {
+    private void createClientListeners() {
         // Start clients plain socket unless it's been disabled.
         if (isClientListenerEnabled()) {
-            int port = getClientListenerPort();
             // Create SocketAcceptor with correct number of processors
             socketAcceptor = buildSocketAcceptor();
             // Customize Executor that will be used by processors to process incoming stanzas
@@ -255,7 +306,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             socketAcceptor.getDefaultConfig().setThreadModel(threadModel);
             // Add the XMPP codec filter
             socketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
+        }
+    }
 
+    private void startClientListeners(String localIPAddress) {
+        // Start clients plain socket unless it's been disabled.
+        if (isClientListenerEnabled()) {
+            int port = getClientListenerPort();
             try {
                 // Listen on a specific network interface if it has been set.
                 String interfaceName = JiveGlobals.getXMLProperty("network.interface");
@@ -296,7 +353,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void startClientSSLListeners(String localIPAddress) {
+    private void createClientSSLListeners() {
         // Start clients SSL unless it's been disabled.
         if (isClientSSLListenerEnabled()) {
             int port = getClientSSLListenerPort();
@@ -347,6 +404,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 sslSocketAcceptor.getFilterChain().addFirst("tls", new SSLFilter(sslContext));
 
+            }
+            catch (Exception e) {
+                System.err.println("Error starting SSL XMPP listener on port " + port + ": " +
+                        e.getMessage());
+                Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
+            }
+        }
+    }
+
+    private void startClientSSLListeners(String localIPAddress) {
+        // Start clients SSL unless it's been disabled.
+        if (isClientSSLListenerEnabled()) {
+            int port = getClientSSLListenerPort();
+            try {
                 // Listen on a specific network interface if it has been set.
                 String interfaceName = JiveGlobals.getXMLProperty("network.interface");
                 InetAddress bindInterface = null;
@@ -400,6 +471,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
         stopClientSSLListeners();
+        createClientSSLListeners();
         startClientSSLListeners(localIPAddress);
     }
 
@@ -449,6 +521,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (enabled) {
             JiveGlobals.setProperty("xmpp.socket.plain.active", "true");
             // Start the port listener for clients
+            createClientListeners();
             startClientListeners(localIPAddress);
         }
         else {
@@ -470,6 +543,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (enabled) {
             JiveGlobals.setProperty("xmpp.socket.ssl.active", "true");
             // Start the port listener for secured clients
+            createClientSSLListeners();
             startClientSSLListeners(localIPAddress);
         }
         else {
@@ -497,7 +571,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (enabled) {
             JiveGlobals.setProperty("xmpp.component.socket.active", "true");
             // Start the port listener for external components
-            startComponentListener(localIPAddress);
+            createComponentListener(localIPAddress);
+            startComponentListener();
         }
         else {
             JiveGlobals.setProperty("xmpp.component.socket.active", "false");
@@ -518,7 +593,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (enabled) {
             JiveGlobals.setProperty("xmpp.server.socket.active", "true");
             // Start the port listener for s2s communication
-            startServerListener(localIPAddress);
+            createServerListener(localIPAddress);
+            startServerListener();
         }
         else {
             JiveGlobals.setProperty("xmpp.server.socket.active", "false");
@@ -539,6 +615,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (enabled) {
             JiveGlobals.setProperty("xmpp.multiplex.socket.active", "true");
             // Start the port listener for s2s communication
+            createConnectionManagerListener();
             startConnectionManagerListener(localIPAddress);
         }
         else {
@@ -562,6 +639,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopClientListeners();
         if (isClientListenerEnabled()) {
             // Start the port listener for clients
+            createClientListeners();
             startClientListeners(localIPAddress);
         }
     }
@@ -588,6 +666,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopClientSSLListeners();
         if (isClientSSLListenerEnabled()) {
             // Start the port listener for secured clients
+            createClientSSLListeners();
             startClientSSLListeners(localIPAddress);
         }
     }
@@ -606,7 +685,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopComponentListener();
         if (isComponentListenerEnabled()) {
             // Start the port listener for external components
-            startComponentListener(localIPAddress);
+            createComponentListener(localIPAddress);
+            startComponentListener();
         }
     }
 
@@ -624,7 +704,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopServerListener();
         if (isServerListenerEnabled()) {
             // Start the port listener for s2s communication
-            startServerListener(localIPAddress);
+            createServerListener(localIPAddress);
+            startServerListener();
         }
     }
 
@@ -646,6 +727,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopConnectionManagerListener();
         if (isConnectionManagerListenerEnabled()) {
             // Start the port listener for connection managers
+            createConnectionManagerListener();
             startConnectionManagerListener(localIPAddress);
         }
     }
@@ -712,7 +794,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void start() {
         super.start();
         serverName = server.getServerInfo().getName();
-        createSocket();
+        createListeners();
+        startListeners();
         SocketSendingTracker.getInstance().start();
         CertificateManager.addListener(this);
     }

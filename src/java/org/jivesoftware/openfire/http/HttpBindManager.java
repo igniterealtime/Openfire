@@ -14,8 +14,10 @@ package org.jivesoftware.openfire.http;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.handler.DefaultHandler;
+import org.mortbay.jetty.handler.ContextHandler;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -58,7 +60,7 @@ public final class HttpBindManager {
     private CertificateListener certificateListener;
 
     private HttpSessionManager httpSessionManager;
-    
+
     private ContextHandlerCollection contexts;
 
     public static HttpBindManager getInstance() {
@@ -132,7 +134,8 @@ public final class HttpBindManager {
             if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*")) {
                 if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
                         XMPPServer.getInstance().getServerInfo().getName())) {
-                    Log.warn("HTTP binding: Using RSA certificates but they are not valid for the hosted domain");
+                    Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
+                            "the hosted domain");
                 }
 
                 SslSocketConnector sslConnector = new JiveSslConnector();
@@ -222,8 +225,7 @@ public final class HttpBindManager {
     }
 
     private synchronized void changeHttpBindPorts(int unsecurePort, int securePort)
-            throws Exception
-    {
+            throws Exception {
         if (unsecurePort < 0 && securePort < 0) {
             throw new IllegalArgumentException("At least one port must be greater than zero.");
         }
@@ -264,15 +266,33 @@ public final class HttpBindManager {
         if (httpsConnector != null) {
             httpBindServer.addConnector(httpsConnector);
         }
-        createWebAppContext();
-        httpBindServer.setHandlers(new Handler[] { contexts, new DefaultHandler() });
+
+        createBoshHandler(contexts, "/http-bind");
+        loadStaticDirectory(contexts);
+
+        httpBindServer.setHandlers(new Handler[]{contexts, new DefaultHandler()});
     }
 
-    private WebAppContext createWebAppContext() {
-        WebAppContext context = new WebAppContext(contexts, JiveGlobals.getHomeDirectory() +
-                File.separator + "resources" + File.separator + "spank", "/");
-        context.setWelcomeFiles(new String[]{"index.html"});
-        return context;
+    private void createBoshHandler(ContextHandlerCollection contexts, String boshPath) {
+        ServletHandler handler = new ServletHandler();
+        handler.addServletWithMapping(HttpBindServlet.class, "/");
+
+        ContextHandler boshContextHandler = new ContextHandler(contexts, boshPath);
+        boshContextHandler.setHandler(handler);
+    }
+
+    private void loadStaticDirectory(ContextHandlerCollection contexts) {
+        File spankDirectory = new File(JiveGlobals.getHomeDirectory() + File.separator
+                + "resources" + File.separator + "spank");
+        if (spankDirectory.exists()) {
+            if (spankDirectory.canRead()) {
+                WebAppContext context = new WebAppContext(contexts, spankDirectory.getPath(), "/");
+                context.setWelcomeFiles(new String[]{"index.html"});
+            }
+            else {
+                Log.warn("Openfire cannot read the directory: " + spankDirectory);
+            }
+        }
     }
 
     public ContextHandlerCollection getContexts() {
@@ -348,7 +368,7 @@ public final class HttpBindManager {
     }
 
     private synchronized void restartServer() {
-        if(httpBindServer != null) {
+        if (httpBindServer != null) {
             try {
                 httpBindServer.stop();
             }
@@ -428,7 +448,7 @@ public final class HttpBindManager {
         }
 
         public void certificateDeleted(KeyStore keyStore, String alias) {
-                restartServer();
+            restartServer();
         }
 
         public void certificateSigned(KeyStore keyStore, String alias,

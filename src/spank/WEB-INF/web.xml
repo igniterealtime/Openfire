@@ -4,36 +4,4 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 
-    <servlet>
-        <servlet-name>HttpBindServlet</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.http.HttpBindServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>HttpBindServlet</servlet-name>
-        <url-pattern>/http-bind/</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>JavaScriptServlet</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.http.ResourceServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>JavaScriptServlet</servlet-name>
-        <url-pattern>/scripts/</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>FlashCrossDomain</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.http.FlashCrossDomainServlet</servlet-class>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>FlashCrossDomain</servlet-name>
-        <url-pattern>/crossdomain.xml</url-pattern>
-    </servlet-mapping>
-
 </web-app>

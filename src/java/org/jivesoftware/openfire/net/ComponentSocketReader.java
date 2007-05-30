@@ -12,12 +12,13 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ComponentSession;
+import org.jivesoftware.openfire.session.LocalComponentSession;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.PacketError;
@@ -49,7 +50,7 @@ public class ComponentSocketReader extends SocketReader {
     protected boolean processUnknowPacket(Element doc) {
         // Handle subsequent bind packets
         if ("bind".equals(doc.getName())) {
-            ComponentSession componentSession = (ComponentSession) session;
+            LocalComponentSession componentSession = (LocalComponentSession) session;
             // Get the external component of this session
             ComponentSession.ExternalComponent component = componentSession.getExternalComponent();
             String initialDomain = component.getInitialSubdomain();
@@ -113,7 +114,7 @@ public class ComponentSocketReader extends SocketReader {
             IOException {
         if ("jabber:component:accept".equals(namespace)) {
             // The connected client is a component so create a ComponentSession
-            session = ComponentSession.createSession(serverName, reader, connection);
+            session = LocalComponentSession.createSession(serverName, reader, connection);
             return true;
         }
         return false;

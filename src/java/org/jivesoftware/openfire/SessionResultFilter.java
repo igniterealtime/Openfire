@@ -53,13 +53,6 @@ public class SessionResultFilter {
     public static final int NO_RESULT_LIMIT = -1;
 
     // ############################################################
-    // Packet limit search criteria
-    // ############################################################
-    /**
-     * Represents no result limit (infinite results).
-     */
-    public static final long NO_PACKET_LIMIT = -1;
-    // ############################################################
     // Sort fields
     // ############################################################
     public static final int SORT_USER = 0;
@@ -71,6 +64,8 @@ public class SessionResultFilter {
     /**
      * Creates a default SessionResultFilter: no filtering with results sorted
      * by user (ascending).
+     *
+     * @return default SessionResultFilter.
      */
     public static SessionResultFilter createDefaultSessionFilter() {
         SessionResultFilter resultFilter = new SessionResultFilter();
@@ -81,10 +76,6 @@ public class SessionResultFilter {
 
     private int sortField = SORT_LAST_ACTIVITY_DATE;
     private int sortOrder = DESCENDING;
-    private long clientPacketRangeMin = NO_PACKET_LIMIT;
-    private long clientPacketRangeMax = NO_PACKET_LIMIT;
-    private long serverPacketRangeMin = NO_PACKET_LIMIT;
-    private long serverPacketRangeMax = NO_PACKET_LIMIT;
 
     private String username = null;
 
@@ -103,222 +94,6 @@ public class SessionResultFilter {
     private Date creationDateRangeMax = null;
     private Date lastActivityDateRangeMin = null;
     private Date lastActivityDateRangeMax = null;
-
-    /**
-     * Returns the username that results will be filtered on. The method will
-     * return <tt>null</tt> if no user to filter on has been specified.
-     *
-     * @return the username that results will be filtered on.
-     */
-    public String getUsername() {
-        return username;
-    }
-
-    /**
-     * Sets the username that results will be filtered on. By default, no filtering on
-     * username will take place. To avoid filtering on username pass in <tt>null</tt>.
-     *
-     * @param username the user ID to filter on.
-     */
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    /**
-     * Returns the creation date that represents the lower boundary for
-     * sessions to be filtered on. If this value has not been set, the method
-     * will return null.
-     *
-     * @return a Date representing the lower bound for creation dates to filter on.
-     */
-    public Date getCreationDateRangeMin() {
-        return creationDateRangeMin;
-    }
-
-    /**
-     * Sets the date that represents the lower boundary for sessions to
-     * be selected by the result filter. If this value is not set the results filter will
-     * be unbounded for the earliest creation date selected.
-     *
-     * @param creationDateRangeMin Date representing the filter lowest value of
-     *                             the creation date to be selected.
-     */
-    public void setCreationDateRangeMin(Date creationDateRangeMin) {
-        this.creationDateRangeMin = creationDateRangeMin;
-    }
-
-    /**
-     * Returns a date that represents the upper boundry for sessions to
-     * be selected by the result filter. If this value is not set it will return null
-     * and the results filter will be unbounded for the latest creation date selected.
-     *
-     * @return a Date representing the filter highest value of the creation date to be
-     *      selected.
-     */
-    public Date getCreationDateRangeMax() {
-        return creationDateRangeMax;
-    }
-
-    /**
-     * Sets a date that represents the upper boundry for sessions to
-     * be selected by the result filter. If this value is not set the results
-     * filter will be unbounded for the latest creation date selected.
-     *
-     * @param creationDateRangeMax Date representing the filter lowest value of
-     *      the creation date range.
-     */
-    public void setCreationDateRangeMax(Date creationDateRangeMax) {
-        this.creationDateRangeMax = creationDateRangeMax;
-    }
-
-    /**
-     * Returns a date that represents the lower boundary for session
-     * to be selected by the result filter. If this value is not set it will
-     * return null and the results filter will be unbounded for the earliest
-     * last activity date selected.
-     *
-     * @return a Date representing the filter lowest value of the last activity date
-     *      range.
-     */
-    public Date getLastActivityDateRangeMin() {
-        return lastActivityDateRangeMin;
-    }
-
-    /**
-     * Sets a date that represents the lower boundary for sessions to
-     * be selected by the result filter. If this value is not set the results
-     * filter will be unbounded for the earliest last activity date selected.
-     *
-     * @param lastActivityDateRangeMin Date representing the filter lowest value of
-     *      the last activity date to be selected.
-     */
-    public void setLastActivityDateRangeMin(Date lastActivityDateRangeMin) {
-        this.lastActivityDateRangeMin = lastActivityDateRangeMin;
-    }
-
-    /**
-     * Returns a date that represents the upper boundry for sessions to
-     * be selected by the result filter. If this value is not set it will return null
-     * and the results filter will be unbounded for the latest activity date selected.
-     *
-     * @return a Date representing the filter highest value of the last activity date to be
-     *      selected.
-     */
-    public Date getLastActivityDateRangeMax() {
-        return lastActivityDateRangeMax;
-    }
-
-    /**
-     * Sets a date that represents the upper boundry for sessions to
-     * be selected by the result filter. If this value is not set the results filter will
-     * be unbounded for the latest activity date selected.
-     *
-     * @param lastActivityDateRangeMax Date representing the filter lowest value of
-     *      the last activity date range.
-     */
-    public void setLastActivityDateRangeMax(Date lastActivityDateRangeMax) {
-        this.lastActivityDateRangeMax = lastActivityDateRangeMax;
-    }
-
-    /**
-     * Returns the lower boundary on client packets for sessions to be selected
-     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
-     * there is no lower packet limit.
-     *
-     * @return the lower limit of client packets allowed for sessions to meet this
-     *      filter requirement.
-     */
-    public long getClientPacketRangeMin() {
-        return clientPacketRangeMin;
-    }
-
-    /**
-     * Sets the lower boundary on client packets for sessions to be selected
-     * by the result filter. If this value is not set (using the value
-     * {@link #NO_PACKET_LIMIT}), the results filter will have no lower bounds
-     * for client packets selected.
-     *
-     * @param min the lower limit of client packets allowed for sessions to meet
-     *      this filter requirement.
-     */
-    public void setClientPacketRangeMin(long min) {
-        this.clientPacketRangeMin = min;
-    }
-
-    /**
-     * Returns the upper boundary on client packets for sessions to be selected
-     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
-     * there is no upper packet limit.
-     *
-     * @return the upper limit of client packets allowed for sessions to meet this
-     *      filter requirement.
-     */
-    public long getClientPacketRangeMax() {
-        return clientPacketRangeMax;
-    }
-
-    /**
-     * Sets the upper boundary on client packets for sessions to be selected
-     * by the result filter. If this value is not set (using the value
-     * {@link #NO_PACKET_LIMIT}), the results filter will have no upper bounds
-     * for client packets selected.
-     *
-     * @param max the upper limit of client packets allowed for sessions to meet
-     *      this filter requirement.
-     */
-    public void setClientPacketRangeMax(long max) {
-        this.clientPacketRangeMax = max;
-    }
-
-    /**
-     * Returns the lower boundary on server packets for sessions to be selected
-     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
-     * there is no lower packet limit.
-     *
-     * @return the lower limit of server packets allowed for sessions to meet this
-     *      filter requirement.
-     */
-    public long getServerPacketRangeMin() {
-        return serverPacketRangeMin;
-    }
-
-    /**
-     * Sets the lower boundary on server packets for sessions to be selected
-     * by the result filter. If this value is not set (using the value
-     * {@link #NO_PACKET_LIMIT}), the results filter will have no lower bounds
-     * for server packets selected.
-     *
-     * @param min the lower limit of server packets allowed for sessions to meet
-     *      this filter requirement.
-     */
-    public void setServerPacketRangeMin(long min) {
-        this.serverPacketRangeMin = min;
-    }
-
-    /**
-     * Returns the upper boundary on server packets for sessions to be selected
-     * by the result filter. A value of {@link #NO_PACKET_LIMIT} will be returned if
-     * there is no upper packet limit.
-     *
-     * @return the upper limit of server packets allowed for sessions to meet this
-     *      filter requirement.
-     */
-    public long getServerPacketRangeMax() {
-        return serverPacketRangeMax;
-    }
-
-    /**
-     * Sets the upper boundary on server packets for sessions to be selected
-     * by the result filter. If this value is not set (using the value
-     * {@link #NO_PACKET_LIMIT}), the results filter will have no upper bounds
-     * for server packets selected.
-     *
-     * @param max the upper limit of server packets allowed for sessions to meet
-     *      this filter requirement.
-     */
-    public void setServerPacketRangeMax(long max) {
-        this.serverPacketRangeMax = max;
-    }
 
     /**
      * Returns the currently selected sort field. The default value is

@@ -8,11 +8,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.SessionManager,
+<%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.IncomingServerSession,
                  org.jivesoftware.openfire.session.OutgoingServerSession,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
                 java.text.NumberFormat"
     errorPage="error.jsp"
 %>
@@ -91,13 +91,13 @@
         </td>
         <td>
         <% if (!inSessions.isEmpty()) { %>
-            <%= inSessions.get(0).getConnection().getInetAddress().getHostAddress() %>
+            <%= inSessions.get(0).getHostAddress() %>
             /
-            <%= inSessions.get(0).getConnection().getInetAddress().getHostName() %>
+            <%= inSessions.get(0).getHostName() %>
         <% } else if (outSession != null) { %>
-            <%= outSession.getConnection().getInetAddress().getHostAddress() %>
+            <%= outSession.getHostAddress() %>
             /
-            <%= outSession.getConnection().getInetAddress().getHostName() %>
+            <%= outSession.getHostName() %>
         <% } %>
         </td>
     </tr>
@@ -119,7 +119,7 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
     </tr>
     <tr>
-        <%  if (inSession.getConnection().isSecure()) { %>
+        <%  if (inSession.isSecure()) { %>
             <td width="1%">
                 <img src="images/lock.gif" width="16" height="16" border="0">
             </td>
@@ -165,7 +165,7 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
-        <%  if (outSession.getConnection().isSecure()) { %>
+        <%  if (outSession.isSecure()) { %>
         <td width="1%">
             <img src="images/lock.gif" width="16" height="16" border="0">
         </td>

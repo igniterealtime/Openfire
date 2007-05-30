@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.net;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -33,7 +34,7 @@ import java.util.Map;
  */
 public abstract class VirtualConnection implements Connection {
 
-    protected Session session;
+    protected LocalSession session;
 
     final private Map<ConnectionCloseListener, Object> listeners =
             new HashMap<ConnectionCloseListener, Object>();
@@ -129,7 +130,7 @@ public abstract class VirtualConnection implements Connection {
         return true;
     }
 
-    public void init(Session session) {
+    public void init(LocalSession session) {
         this.session = session;
     }
 

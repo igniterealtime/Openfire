@@ -15,6 +15,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -59,7 +60,7 @@ public abstract class StanzaHandler {
     /**
      * Session associated with the socket reader.
      */
-    protected Session session;
+    protected LocalSession session;
     /**
      * Server name for which we are attending clients.
      */
@@ -112,7 +113,7 @@ public abstract class StanzaHandler {
 
         // Verify if end of stream was requested
         if (stanza.equals("</stream:stream>")) {
-            session.getConnection().close();
+            session.close();
             return;
         }
         // Ignore <?xml version="1.0"?> stanzas sent by clients
@@ -258,7 +259,7 @@ public abstract class StanzaHandler {
             if (!processUnknowPacket(doc)) {
                 Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
                         doc.asXML());
-                session.getConnection().close();
+                session.close();
             }
         }
     }

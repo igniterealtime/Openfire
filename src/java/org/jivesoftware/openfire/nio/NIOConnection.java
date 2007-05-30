@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
 import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -33,7 +34,6 @@ import org.xmpp.packet.Packet;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -55,7 +55,7 @@ public class NIOConnection implements Connection {
      */
     public static final String CHARSET = "UTF-8";
 
-    private Session session;
+    private LocalSession session;
     private IoSession ioSession;
 
     private ConnectionCloseListener closeListener;
@@ -123,8 +123,16 @@ public class NIOConnection implements Connection {
         }
     }
 
-    public InetAddress getInetAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress();
+    public byte[] getAddress() throws UnknownHostException {
+        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getAddress();
+    }
+
+    public String getHostAddress() throws UnknownHostException {
+        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostAddress();
+    }
+
+    public String getHostName() throws UnknownHostException {
+        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
     }
 
     public PacketDeliverer getPacketDeliverer() {
@@ -173,7 +181,7 @@ public class NIOConnection implements Connection {
         }
     }
 
-    public void init(Session owner) {
+    public void init(LocalSession owner) {
         session = owner;
     }
 

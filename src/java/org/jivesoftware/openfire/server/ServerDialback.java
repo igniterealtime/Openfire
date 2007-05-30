@@ -21,7 +21,8 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -137,7 +138,7 @@ public class ServerDialback {
      * @param port port of the Receiving Server.
      * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
      */
-    public OutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
+    public LocalOutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
         String realHostname = null;
         int realPort = port;
         try {
@@ -186,8 +187,7 @@ public class ServerDialback {
                 if (authenticateDomain(socketReader, domain, hostname, id)) {
                     // Domain was validated so create a new OutgoingServerSession
                     StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                    OutgoingServerSession session = new OutgoingServerSession(domain, connection,
-                            socketReader, streamID);
+                    LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, socketReader, streamID);
                     connection.init(session);
                     // Set the hostname as the address of the session
                     session.setAddress(new JID(null, hostname, null));
@@ -306,7 +306,7 @@ public class ServerDialback {
      * Returns a new {@link IncomingServerSession} with a domain validated by the Authoritative
      * Server. New domains may be added to the returned IncomingServerSession after they have
      * been validated. See
-     * {@link IncomingServerSession#validateSubsequentDomain(org.dom4j.Element)}. The remote
+     * {@link LocalIncomingServerSession#validateSubsequentDomain(org.dom4j.Element)}. The remote
      * server will be able to send packets through this session whose domains were previously
      * validated.<p>
      *
@@ -319,7 +319,7 @@ public class ServerDialback {
      * @throws IOException if an I/O error occurs while communicating with the remote server.
      * @throws XmlPullParserException if an error occurs while parsing XML packets.
      */
-    public IncomingServerSession createIncomingSession(XMPPPacketReader reader) throws IOException,
+    public LocalIncomingServerSession createIncomingSession(XMPPPacketReader reader) throws IOException,
             XmlPullParserException {
         XmlPullParser xpp = reader.getXPPParser();
         StringBuilder sb;
@@ -343,7 +343,7 @@ public class ServerDialback {
                         String hostname = doc.attributeValue("from");
                         String recipient = doc.attributeValue("to");
                         // Create a server Session for the remote server
-                        IncomingServerSession session = sessionManager.
+                        LocalIncomingServerSession session = sessionManager.
                                 createIncomingServerSession(connection, streamID);
                         // Set the first validated domain as the address of the session
                         session.setAddress(new JID(null, hostname, null));
@@ -434,8 +434,7 @@ public class ServerDialback {
         else {
             // Check if the remote server already has a connection to the target domain/subdomain
             boolean alreadyExists = false;
-            for (IncomingServerSession session : sessionManager
-                    .getIncomingServerSessions(hostname)) {
+            for (IncomingServerSession session : sessionManager.getIncomingServerSessions(hostname)) {
                 if (recipient.equals(session.getLocalDomain())) {
                     alreadyExists = true;
                 }

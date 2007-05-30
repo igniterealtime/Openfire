@@ -16,7 +16,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketHandler;
 import org.jivesoftware.openfire.multiplex.Route;
-import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
 import org.jivesoftware.openfire.session.Session;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -95,15 +95,13 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
             // Process stanza wrapped by the route packet
             processRoute(new Route(doc));
             return true;
-        }
-        else if ("handshake".equals(tag)) {
-            if (!((ConnectionMultiplexerSession)session).authenticate(doc.getStringValue())) {
-                session.getConnection().close();
+        } else if ("handshake".equals(tag)) {
+            if (!((LocalConnectionMultiplexerSession) session).authenticate(doc.getStringValue())) {
+                session.close();
             }
             return true;
-        }
-        else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
-            session.getConnection().close();
+        } else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
+            session.close();
             return true;
         }
         return false;
@@ -125,7 +123,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {
             // The connected client is a connection manager so create a ConnectionMultiplexerSession
-            session = ConnectionMultiplexerSession.createSession(serverName, xpp, connection);
+            session = LocalConnectionMultiplexerSession.createSession(serverName, xpp, connection);
             if (session != null) {
                 packetHandler = new MultiplexerPacketHandler(session.getAddress().getDomain());
             }

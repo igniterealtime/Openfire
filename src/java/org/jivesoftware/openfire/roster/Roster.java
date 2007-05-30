@@ -13,7 +13,6 @@ package org.jivesoftware.openfire.roster;
 
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.privacy.PrivacyList;
@@ -656,12 +655,7 @@ public class Roster implements Cacheable, Externalizable {
         if (sessionManager == null) {
             sessionManager = SessionManager.getInstance();
         }
-        try {
-            sessionManager.userBroadcast(username, roster);
-        }
-        catch (UnauthorizedException e) {
-            // Do nothing. We should never end here.
-        }
+        sessionManager.userBroadcast(username, roster);
     }
 
     /**

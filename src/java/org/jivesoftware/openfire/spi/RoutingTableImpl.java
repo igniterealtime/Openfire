@@ -15,16 +15,15 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -37,10 +36,9 @@ import java.util.concurrent.locks.Lock;
  * hosted in other cluster nodes. A {@link RemotePacketRouter} will be use to route packets
  * to routes hosted in other cluster nodes.<p>
  *
- * Failure to route a packet will end up sending {@link IQRouter#routingFailed(org.xmpp.packet.Packet)},
- * {@link MessageRouter#routingFailed(org.xmpp.packet.Packet)} or
- * {@link PresenceRouter#routingFailed(org.xmpp.packet.Packet)} depending on the packet type
- * that tried to be sent.
+ * Failure to route a packet will end up sending {@link IQRouter#routingFailed(JID, Packet)},
+ * {@link MessageRouter#routingFailed(JID, Packet)} or {@link PresenceRouter#routingFailed(JID, Packet)}
+ * depending on the packet type that tried to be sent.
  *
  * @author Gaston Dombiak
  */
@@ -48,23 +46,28 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
+     * Key: server domain, Value: nodeID
      */
     private Cache<String, byte[]> serversCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of external components connected to the server.
+     * Key: component domain, Value: nodeID
      */
     private Cache<String, byte[]> componentsCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
+     * Key: full JID, Value: {nodeID, available/unavailable}
      */
     private Cache<String, ClientRoute> usersCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of anoymous user that have authenticated with the server.
+     * Key: full JID, Value: {nodeID, available/unavailable}
      */
     private Cache<String, ClientRoute> anonymousUsersCache;
     /**
      * Cache (unlimited, never expire) that holds list of connected resources of authenticated users
-     * (includes anonymous). Key: bare jid, Value: List of full JIDs.
+     * (includes anonymous).
+     * Key: bare JID, Value: list of full JIDs of the user
      */
     private Cache<String, List<String>> usersSessions;
 
@@ -86,7 +89,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         localRoutingTable = new LocalRoutingTable();
     }
 
-    public void addServerRoute(JID route, RoutableChannelHandler destination) {
+    public void addServerRoute(JID route, LocalOutgoingServerSession destination) {
         String address = destination.getAddress().getDomain();
         localRoutingTable.addRoute(address, destination);
         serversCache.put(address, server.getNodeID());
@@ -98,7 +101,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         componentsCache.put(address, server.getNodeID());
     }
 
-    public void addClientRoute(JID route, ClientSession destination) {
+    public void addClientRoute(JID route, LocalClientSession destination) {
         String address = destination.getAddress().toString();
         boolean available = destination.getPresence().isAvailable();
         localRoutingTable.addRoute(address, destination);
@@ -139,12 +142,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public void broadcastPacket(Message packet, boolean onlyLocal) {
         // Send the message to client sessions connected to this JVM
-        for(RoutableChannelHandler session : localRoutingTable.getClientRoutes()) {
-            try {
-                session.process(packet);
-            } catch (UnauthorizedException e) {
-                // Should never happen
-            }
+        for(ClientSession session : localRoutingTable.getClientRoutes()) {
+            session.process(packet);
         }
 
         // Check if we need to broadcast the message to client sessions connected to remote cluter nodes
@@ -153,7 +152,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
     }
 
-    public void routePacket(JID jid, Packet packet) throws UnauthorizedException, PacketException {
+    public void routePacket(JID jid, Packet packet) throws PacketException {
         boolean routed = false;
         JID address = packet.getTo();
         if (address == null) {
@@ -161,37 +160,52 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
 
         if (serverName.equals(jid.getDomain())) {
-            boolean onlyAvailable = true;
-            if (packet instanceof IQ) {
-                onlyAvailable = packet.getFrom() != null;
-            }
-            else if (packet instanceof Message) {
-                onlyAvailable = true;
-            }
-            else if (packet instanceof Presence) {
-                onlyAvailable = true;
-            }
-
-            // Packet sent to local user
-            ClientRoute clientRoute = usersCache.get(jid.toString());
-            if (clientRoute == null) {
-                clientRoute = anonymousUsersCache.get(jid.toString());
-            }
-            if (clientRoute != null) {
-                if (onlyAvailable && !clientRoute.isAvailable()) {
-                    // Packet should only be sent to available sessions and the route is not available
-                    routed = false;
+            if (jid.getResource() == null) {
+                // Packet sent to a bare JID of a user
+                if (packet instanceof Message) {
+                    // Find best route of local user
+                    routed = routeToBareJID(jid, (Message) packet);
                 }
                 else {
-                    if (clientRoute.getNodeID() == server.getNodeID()) {
-                        // This is a route to a local user hosted in this node
-                        localRoutingTable.getRoute(jid.toString()).process(packet);
-                        routed = true;
+                    throw new PacketException("Cannot route packet of type IQ or Presence to bare JID: " + packet);
+                }
+            }
+            else {
+                // Packet sent to local user (full JID)
+                boolean onlyAvailable = true;
+                if (packet instanceof IQ) {
+                    onlyAvailable = packet.getFrom() != null;
+                }
+                else if (packet instanceof Message) {
+                    onlyAvailable = true;
+                }
+                else if (packet instanceof Presence) {
+                    onlyAvailable = true;
+                }
+                ClientRoute clientRoute = usersCache.get(jid.toString());
+                if (clientRoute == null) {
+                    clientRoute = anonymousUsersCache.get(jid.toString());
+                }
+                if (clientRoute != null) {
+                    if (onlyAvailable && !clientRoute.isAvailable()) {
+                        // Packet should only be sent to available sessions and the route is not available
+                        routed = false;
                     }
                     else {
-                        // This is a route to a local user hosted in other node
-                        if (remotePacketRouter != null) {
-                            routed = remotePacketRouter.routePacket(clientRoute.getNodeID(), jid, packet);
+                        if (clientRoute.getNodeID() == server.getNodeID()) {
+                            // This is a route to a local user hosted in this node
+                            try {
+                                localRoutingTable.getRoute(jid.toString()).process(packet);
+                                routed = true;
+                            } catch (UnauthorizedException e) {
+                                Log.error(e);
+                            }
+                        }
+                        else {
+                            // This is a route to a local user hosted in other node
+                            if (remotePacketRouter != null) {
+                                routed = remotePacketRouter.routePacket(clientRoute.getNodeID(), jid, packet);
+                            }
                         }
                     }
                 }
@@ -203,8 +217,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             if (nodeID != null) {
                 if (nodeID == server.getNodeID()) {
                     // This is a route to a local component hosted in this node
-                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                    routed = true;
+                    try {
+                        localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                        routed = true;
+                    } catch (UnauthorizedException e) {
+                        Log.error(e);
+                    }
                 }
                 else {
                     // This is a route to a local component hosted in other node
@@ -220,8 +238,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             if (nodeID != null) {
                 if (nodeID == server.getNodeID()) {
                     // This is a route to a remote server connected from this node
-                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                    routed = true;
+                    try {
+                        localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                        routed = true;
+                    } catch (UnauthorizedException e) {
+                        Log.error(e);
+                    }
                 }
                 else {
                     // This is a route to a remote server connected from other node
@@ -244,19 +266,222 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                 Log.debug("Failed to route packet to JID: " + jid + " packet: " + packet);
             }
             if (packet instanceof IQ) {
-                iqRouter.routingFailed(packet);
+                iqRouter.routingFailed(jid, packet);
             }
             else if (packet instanceof Message) {
-                messageRouter.routingFailed(packet);
+                messageRouter.routingFailed(jid, packet);
             }
             else if (packet instanceof Presence) {
-                presenceRouter.routingFailed(packet);
+                presenceRouter.routingFailed(jid, packet);
             }
         }
     }
 
+    /**
+     * Deliver the message sent to the bare JID of a local user to the best connected resource. If the
+     * target user is not online then messages will be stored offline according to the offline strategy.
+     * However, if the user is connected from only one resource then the message will be delivered to
+     * that resource. In the case that the user is connected from many resources the logic will be the
+     * following:
+     * <ol>
+     *  <li>Select resources with highest priority</li>
+     *  <li>Select resources with highest show value (chat, available, away, xa, dnd)</li>
+     *  <li>Select resource with most recent activity</li>
+     * </ol>
+     *
+     * Admins can override the above logic and just send the message to all connected resources
+     * with highest priority by setting the system property <tt>route.all-resources</tt> to
+     * <tt>true</tt>.
+     *
+     * @param recipientJID the bare JID of the target local user.
+     * @param packet the message to send.
+     * @return true if at least one target session was found
+     */
+    private boolean routeToBareJID(JID recipientJID, Message packet) {
+        List<ClientSession> sessions = new ArrayList<ClientSession>();
+        // Get existing AVAILABLE sessions of this user
+        for (JID address : getRoutes(recipientJID)) {
+            ClientSession session = getClientRoute(address);
+            if (session != null) {
+                sessions.add(session);
+            }
+        }
+        sessions = getHighestPrioritySessions(sessions);
+        if (sessions.isEmpty()) {
+            // No session is available so store offline
+            return false;
+        }
+        else if (sessions.size() == 1) {
+            // Found only one session so deliver message
+            sessions.get(0).process(packet);
+        }
+        else {
+            // Many sessions have the highest priority (be smart now) :)
+            if (!JiveGlobals.getBooleanProperty("route.all-resources", false)) {
+                // Sort sessions by show value (e.g. away, xa)
+                Collections.sort(sessions, new Comparator<ClientSession>() {
+
+                    public int compare(ClientSession o1, ClientSession o2) {
+                        int thisVal = getShowValue(o1);
+                        int anotherVal = getShowValue(o2);
+                        return (thisVal<anotherVal ? -1 : (thisVal==anotherVal ? 0 : 1));
+                    }
+
+                    /**
+                     * Priorities are: chat, available, away, xa, dnd.
+                     */
+                    private int getShowValue(ClientSession session) {
+                        Presence.Show show = session.getPresence().getShow();
+                        if (show == Presence.Show.chat) {
+                            return 1;
+                        }
+                        else if (show == null) {
+                            return 2;
+                        }
+                        else if (show == Presence.Show.away) {
+                            return 3;
+                        }
+                        else if (show == Presence.Show.xa) {
+                            return 4;
+                        }
+                        else {
+                            return 5;
+                        }
+                    }
+                });
+
+                // Get same sessions with same max show value
+                List<ClientSession> targets = new ArrayList<ClientSession>();
+                Presence.Show showFilter = sessions.get(0).getPresence().getShow();
+                for (ClientSession session : sessions) {
+                    if (session.getPresence().getShow() == showFilter) {
+                        targets.add(session);
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                // Get session with most recent activity (and highest show value)
+                Collections.sort(targets, new Comparator<ClientSession>() {
+                    public int compare(ClientSession o1, ClientSession o2) {
+                        return o1.getLastActiveDate().compareTo(o2.getLastActiveDate());
+                    }
+                });
+                // Deliver stanza to session with highest priority, highest show value and most recent activity
+                targets.get(0).process(packet);
+            }
+            else {
+                // Deliver stanza to all connected resources with highest priority
+                for (ClientSession session : sessions) {
+                    session.process(packet);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns the sessions that had the highest presence priority greater than zero.
+     *
+     * @param sessions the list of user sessions that filter and get the ones with highest priority.
+     * @return the sessions that had the highest presence priority greater than zero or empty collection
+     *         if all were negative.
+     */
+    private List<ClientSession> getHighestPrioritySessions(List<ClientSession> sessions) {
+        int highest = Integer.MIN_VALUE;
+        // Get the highest priority amongst the sessions
+        for (ClientSession session : sessions) {
+            int priority = session.getPresence().getPriority();
+            if (priority >= 0 && priority > highest) {
+                highest = priority;
+            }
+        }
+        // Answer an empty collection if all have negative priority
+        if (highest == Integer.MIN_VALUE) {
+            return Collections.emptyList();
+        }
+        // Get sessions that have the highest priority
+        List<ClientSession> answer = new ArrayList<ClientSession>(sessions.size());
+        for (ClientSession session : sessions) {
+            if (session.getPresence().getPriority() == highest) {
+                answer.add(session);
+            }
+        }
+        return answer;
+    }
+
+    public ClientSession getClientRoute(JID jid) {
+        // Check if this session is hosted by this cluster node
+        ClientSession session = (ClientSession) localRoutingTable.getRoute(jid.toString());
+        if (session == null) {
+            // The session is not in this JVM so assume remote
+            RemoteSessionLocator locator = server.getRemoteSessionLocator();
+            if (locator != null) {
+                // Check if the session is hosted by other cluster node
+                ClientRoute route = usersCache.get(jid.toString());
+                if (route == null) {
+                    route = anonymousUsersCache.get(jid.toString());
+                }
+                if (route != null) {
+                    session = locator.getClientSession(route.getNodeID(), jid);
+                }
+            }
+        }
+        return session;
+    }
+
+    public Collection<ClientSession> getClientsRoutes() {
+        // Add sessions hosted by this cluster node
+        Collection<ClientSession> sessions = new ArrayList<ClientSession>(localRoutingTable.getClientRoutes());
+        // Add sessions not hosted by this JVM
+        RemoteSessionLocator locator = server.getRemoteSessionLocator();
+        if (locator != null) {
+            // Add sessions of non-anonymous users hosted by other cluster nodes
+            for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
+                ClientRoute route = entry.getValue();
+                if (route.getNodeID() != server.getNodeID()) {
+                    sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                }
+            }
+            // Add sessions of anonymous users hosted by other cluster nodes
+            for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
+                ClientRoute route = entry.getValue();
+                if (route.getNodeID() != server.getNodeID()) {
+                    sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                }
+            }
+        }
+        return sessions;
+    }
+
+    public OutgoingServerSession getServerRoute(JID jid) {
+        // Check if this session is hosted by this cluster node
+        OutgoingServerSession session = (OutgoingServerSession) localRoutingTable.getRoute(jid.getDomain());
+        if (session == null) {
+            // The session is not in this JVM so assume remote
+            RemoteSessionLocator locator = server.getRemoteSessionLocator();
+            if (locator != null) {
+                // Check if the session is hosted by other cluster node
+                byte[] nodeID = serversCache.get(jid.getDomain());
+                if (nodeID != null) {
+                    session = locator.getOutgoingServerSession(nodeID, jid);
+                }
+            }
+        }
+        return session;
+    }
+
+    public Collection<String> getServerHostnames() {
+        return serversCache.keySet();
+    }
+
     public boolean hasClientRoute(JID jid) {
-        return usersCache.get(jid.toString()) != null || anonymousUsersCache.get(jid.toString()) != null;
+        return usersCache.get(jid.toString()) != null || isAnonymousRoute(jid);
+    }
+
+    public boolean isAnonymousRoute(JID jid) {
+        return anonymousUsersCache.get(jid.toString()) != null;
     }
 
     public boolean hasServerRoute(JID jid) {
@@ -378,5 +603,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public void start() throws IllegalStateException {
         super.start();
+        localRoutingTable.start();
+    }
+
+    public void stop() {
+        super.stop();
+        localRoutingTable.stop();
     }
 }

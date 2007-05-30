@@ -8,18 +8,18 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.handler.IQAuthHandler,
                  org.jivesoftware.openfire.handler.IQRegisterHandler,
-                 org.jivesoftware.openfire.session.ClientSession,
-                 java.util.HashMap"
+                 org.jivesoftware.openfire.session.LocalClientSession,
+                 org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Iterator"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.StringTokenizer"%>
-<%@ page import="java.util.regex.Pattern"%>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="java.util.regex.Pattern" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -60,7 +60,7 @@
                 newMap.put(address, "");
             }
         }
-        ClientSession.setAllowedIPs(newMap);
+        LocalClientSession.setAllowedIPs(newMap);
     }
 
     // Reset the value of page vars:
@@ -69,12 +69,12 @@
     anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = org.jivesoftware.openfire.session.ClientSession.getAllowedIPs().keySet().iterator();
+    Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getAllowedIPs().keySet().iterator();
     if (iter.hasNext()) {
         buf.append(iter.next());
     }
     while (iter.hasNext()) {
-        buf.append(", ").append((String) iter.next());
+        buf.append(", ").append(iter.next());
     }
     allowedIPs = buf.toString();
 %>

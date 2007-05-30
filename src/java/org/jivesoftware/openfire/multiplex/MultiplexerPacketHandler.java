@@ -14,11 +14,12 @@ package org.jivesoftware.openfire.multiplex;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.SessionPacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -149,8 +150,7 @@ public class MultiplexerPacketHandler {
                     "id-required", "http://jabber.org/protocol/connectionmanager#errors"));
             sendErrorPacket(route, PacketError.Condition.bad_request, extraError);
         }
-        ClientSession session = multiplexerManager
-                .getClientSession(connectionManagerDomain, streamID);
+        LocalClientSession session = multiplexerManager.getClientSession(connectionManagerDomain, streamID);
         if (session == null) {
             // Specified Client Session does not exist
             sendErrorPacket(route, PacketError.Condition.item_not_found, null);

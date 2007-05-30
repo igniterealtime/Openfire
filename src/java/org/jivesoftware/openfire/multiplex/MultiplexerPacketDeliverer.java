@@ -12,14 +12,14 @@
 package org.jivesoftware.openfire.multiplex;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.OfflineMessageStrategy;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -63,7 +63,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
             // Try getting another session to the same connection manager 
             ConnectionMultiplexerSession session =
                     multiplexerManager.getMultiplexerSession(connectionManagerDomain);
-            if (session == null || session.getConnection().isClosed()) {
+            if (session == null || session.isClosed()) {
                 // No other session was found so handle unprocessed packet
                 handleUnprocessedPacket(packet);
             }

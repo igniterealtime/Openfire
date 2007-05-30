@@ -12,12 +12,16 @@
 package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.TaskEngine;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -56,11 +60,11 @@ class LocalRoutingTable {
      *
      * @return the client sessions that are connected to this JVM.
      */
-    Collection<RoutableChannelHandler> getClientRoutes() {
-        List<RoutableChannelHandler> sessions = new ArrayList<RoutableChannelHandler>();
+    Collection<ClientSession> getClientRoutes() {
+        List<ClientSession> sessions = new ArrayList<ClientSession>();
         for (RoutableChannelHandler route : routes.values()) {
             if (route instanceof ClientSession) {
-                sessions.add(route);
+                sessions.add((ClientSession) route);
             }
         }
         return sessions;
@@ -75,4 +79,61 @@ class LocalRoutingTable {
         routes.remove(address);
     }
 
+    public void start() {
+        // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
+        int period = 3 * 60 * 1000;
+        TaskEngine.getInstance().scheduleAtFixedRate(new ServerCleanupTask(), period, period);
+    }
+
+    public void stop() {
+        try {
+            // Send the close stream header to all connected connections
+            for (RoutableChannelHandler route : routes.values()) {
+                if (route instanceof LocalSession) {
+                    LocalSession session = (LocalSession) route;
+                    try {
+                        // Notify connected client that the server is being shut down
+                        session.getConnection().systemShutdown();
+                    }
+                    catch (Throwable t) {
+                        // Ignore.
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            // Ignore.
+        }
+    }
+
+    /**
+     * Task that closes idle server sessions.
+     */
+    private class ServerCleanupTask extends TimerTask {
+        /**
+         * Close outgoing server sessions that have been idle for a long time.
+         */
+        public void run() {
+            // Do nothing if this feature is disabled
+            int idleTime = SessionManager.getInstance().getServerSessionIdleTime();
+            if (idleTime == -1) {
+                return;
+            }
+            final long deadline = System.currentTimeMillis() - idleTime;
+            for (RoutableChannelHandler route : routes.values()) {
+                // Check outgoing server sessions
+                if (route instanceof OutgoingServerSession) {
+                    Session session = (Session) route;
+                    try {
+                        if (session.getLastActiveDate().getTime() < deadline) {
+                            session.close();
+                        }
+                    }
+                    catch (Throwable e) {
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    }
+                }
+            }
+        }
+    }
 }

@@ -8,13 +8,13 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.PresenceManager,
+<%@ page import="org.jivesoftware.openfire.PresenceManager,
                  org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.ClientSession,
                  org.jivesoftware.openfire.user.User,
                  org.jivesoftware.openfire.user.UserManager,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
                  java.text.NumberFormat,
                  java.util.Collection"
     errorPage="error.jsp"
@@ -137,12 +137,6 @@
                 <fmt:message key="session.details.connect" />
 
             <%
-                } else if (status == Session.STATUS_STREAMING) {
-            %>
-
-                <fmt:message key="session.details.streaming" />
-
-            <%
                 } else if (status == Session.STATUS_AUTHENTICATED) {
             %>
 
@@ -254,9 +248,9 @@
             <fmt:message key="session.details.hostname" />
         </td>
         <td>
-            <%= currentSess.getConnection().getInetAddress().getHostAddress() %>
+            <%= currentSess.getHostAddress() %>
             /
-            <%= currentSess.getConnection().getInetAddress().getHostName() %>
+            <%= currentSess.getHostName() %>
         </td>
     </tr>
 </tbody>

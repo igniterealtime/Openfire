@@ -18,7 +18,6 @@ import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -92,17 +91,32 @@ public class ClientSessionConnection extends VirtualConnection {
             sb.append(text);
             sb.append("</route>");
             // Deliver the wrapped stanza
-            multiplexerSession.getConnection().deliverRawText(sb.toString());
+            multiplexerSession.deliverRawText(sb.toString());
         }
     }
 
-    public InetAddress getInetAddress() throws UnknownHostException {
+    public byte[] getAddress() throws UnknownHostException {
+        return null;
+    }
+
+    public String getHostAddress() throws UnknownHostException {
         //TODO Future version may return actual IP client address. We would need to pass this info
         // Return IP address of the connection manager that the client used to log in
         ConnectionMultiplexerSession multiplexerSession =
                 multiplexerManager.getMultiplexerSession(connectionManagerName);
         if (multiplexerSession != null) {
-            return multiplexerSession.getConnection().getInetAddress();
+            return multiplexerSession.getHostAddress();
+        }
+        return null;
+    }
+
+    public String getHostName() throws UnknownHostException {
+        //TODO Future version may return actual IP client address. We would need to pass this info
+        // Return IP address of the connection manager that the client used to log in
+        ConnectionMultiplexerSession multiplexerSession =
+                multiplexerManager.getMultiplexerSession(connectionManagerName);
+        if (multiplexerSession != null) {
+            return multiplexerSession.getHostName();
         }
         return null;
     }

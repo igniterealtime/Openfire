@@ -11,12 +11,15 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -85,7 +88,7 @@ public interface RoutingTable {
      * @param route the address associated to the route.
      * @param destination the outgoing server session.
      */
-    void addServerRoute(JID route, RoutableChannelHandler destination);
+    void addServerRoute(JID route, LocalOutgoingServerSession destination);
 
     /**
      * Adds a route to the routing table for the specified internal or external component. When
@@ -107,7 +110,7 @@ public interface RoutingTable {
      * @param route the address associated to the route.
      * @param destination the client session.
      */
-    void addClientRoute(JID route, ClientSession destination);
+    void addClientRoute(JID route, LocalClientSession destination);
 
     /**
      * Routes a packet to the specified address. The packet destination can be a
@@ -135,22 +138,33 @@ public interface RoutingTable {
      *
      * @param jid the receipient of the packet to route.
      * @param packet the packet to route.
-     * @throws UnauthorizedException if not allowed to process the packet.
      * @throws PacketException thrown if the packet is malformed (results in the sender's
      *      session being shutdown).
      */
-    void routePacket(JID jid, Packet packet) throws PacketException, UnauthorizedException;
+    void routePacket(JID jid, Packet packet) throws PacketException;
 
     /**
      * Returns true if a registered user or anonymous user with the specified full JID is
      * currently logged. When running inside of a cluster a true value will be returned
-     * as long as the user is connecte to any cluster node.
+     * as long as the user is connected to any cluster node.
+     *
+     * // TODO Should we care about available or not available????
      *
      * @param jid the full JID of the user.
      * @return true if a registered user or anonymous user with the specified full JID is
      * currently logged.
      */
     boolean hasClientRoute(JID jid);
+
+    /**
+     * Returns true if an anonymous user with the specified full JID is currently logged.
+     * When running inside of a cluster a true value will be returned as long as the
+     * user is connected to any cluster node.
+     *
+     * @param jid the full JID of the anonymous user.
+     * @return true if an anonymous user with the specified full JID is currently logged.
+     */
+    boolean isAnonymousRoute(JID jid);
 
     /**
      * Returns true if an outgoing server session exists to the specified remote server.
@@ -178,6 +192,47 @@ public interface RoutingTable {
      * @return true if an internal or external component is hosting the specified address.
      */
     boolean hasComponentRoute(JID jid);
+
+    /**
+     * Returns the client session associated to the specified XMPP address or <tt>null</tt>
+     * if none was found. When running inside of a cluster and a remote node is hosting
+     * the client session then a session surrage will be returned.
+     *
+     * @param jid the address of the session.
+     * @return the client session associated to the specified XMPP address or null if none was found.
+     */
+    ClientSession getClientRoute(JID jid);
+
+    /**
+     * Returns collection of client sessions authenticated with the server. When running inside
+     * of a cluster the returned sessions will include sessions connected to this JVM and also
+     * other cluster nodes.
+     *
+     * TODO Prevent usage of this message and change original requirement to avoid having to load all sessions.
+     * TODO This may not scale when hosting millions of sessions.
+     *
+     * @return collection of client sessions authenticated with the server.
+     */
+    Collection<ClientSession> getClientsRoutes();
+
+    /**
+     * Returns the outgoing server session associated to the specified XMPP address or <tt>null</tt>
+     * if none was found. When running inside of a cluster and a remote node is hosting
+     * the session then a session surrage will be returned.
+     *
+     * @param jid the address of the session.
+     * @return the outgoing server session associated to the specified XMPP address or null if none was found.
+     */
+    OutgoingServerSession getServerRoute(JID jid);
+
+    /**
+     * Returns a collection with the hostnames of the remote servers that currently may receive
+     * packets sent from this server.
+     *
+     * @return a collection with the hostnames of the remote servers that currently may receive
+     *         packets sent from this server.
+     */
+    Collection<String> getServerHostnames();
 
     /**
      * Returns the list of routes associated to the specified route address. When asking

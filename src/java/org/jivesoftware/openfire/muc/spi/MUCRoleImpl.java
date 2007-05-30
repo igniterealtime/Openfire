@@ -117,7 +117,6 @@ public class MUCRoleImpl implements MUCRole {
         this.role = role;
         this.affiliation = affiliation;
         // Cache the user's session (will only work for local users)
-        //TODO Probably remove this instance variable that was added for optimization
         this.session = XMPPServer.getInstance().getSessionManager().getSession(presence.getFrom());
 
         extendedInformation =

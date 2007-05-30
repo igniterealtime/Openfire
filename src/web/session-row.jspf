@@ -3,9 +3,9 @@
   -	$Date$
 --%>
 
-<%@ page import="org.jivesoftware.util.LocaleUtils,
+<%@ page import="org.jivesoftware.openfire.session.Session,
+                 org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.openfire.session.Session,
                  org.xmpp.packet.JID,
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
@@ -48,10 +48,6 @@
 
             <fmt:message key="session.details.connect" />
 
-        <%  } else if (_status == Session.STATUS_STREAMING) { %>
-
-            <fmt:message key="session.details.streaming" />
-
         <% } else if (_status == org.jivesoftware.openfire.session.Session.STATUS_AUTHENTICATED) { %>
 
             <fmt:message key="session.details.authenticated" />
@@ -62,7 +58,7 @@
 
         <%  } %>
     </td>
-    <%  if (sess.getConnection().isSecure()) { %>
+    <%  if (sess.isSecure()) { %>
         <td width="1%">
             <img src="images/lock.gif" width="16" height="16" border="0"
             title="<fmt:message key="session.row.cliked_ssl" />">
@@ -155,7 +151,7 @@
     </td>
 
     <td width="1%" nowrap>
-        <%= sess.getConnection().getInetAddress().getHostAddress() %>
+        <%= sess.getHostAddress() %>
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">

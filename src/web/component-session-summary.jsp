@@ -9,11 +9,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.SessionManager,
+<%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.ComponentSession,
                  org.jivesoftware.openfire.session.Session,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
@@ -56,7 +56,7 @@
         try {
             Session sess = sessionManager.getComponentSession(jid);
             if (sess != null) {
-                sess.getConnection().close();
+                sess.close();
             }
             // wait one second
             Thread.sleep(1000L);
@@ -176,7 +176,7 @@
         </td>
         <td align="center" width="15%" nowrap>
             <%= componentSession.getExternalComponent().getName() %>
-        </td>
+        </td>                                                                                  n
         <td align="center" width="10%" nowrap>
             <%= componentSession.getExternalComponent().getCategory() %>
         </td>

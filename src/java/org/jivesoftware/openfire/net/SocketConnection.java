@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -30,8 +31,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.channels.Channels;
 import java.util.Collection;
 import java.util.Date;
@@ -83,7 +84,7 @@ public class SocketConnection implements Connection {
      */
     private PacketDeliverer backupDeliverer;
 
-    private Session session;
+    private LocalSession session;
     private boolean secure;
     private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
@@ -224,7 +225,7 @@ public class SocketConnection implements Connection {
         return !isClosed();
     }
 
-    public void init(Session owner) {
+    public void init(LocalSession owner) {
         session = owner;
     }
 
@@ -241,8 +242,16 @@ public class SocketConnection implements Connection {
         listeners.remove(listener);
     }
 
-    public InetAddress getInetAddress() {
-        return socket.getInetAddress();
+    public byte[] getAddress() throws UnknownHostException {
+        return socket.getInetAddress().getAddress();
+    }
+
+    public String getHostAddress() throws UnknownHostException {
+        return socket.getInetAddress().getHostAddress();
+    }
+
+    public String getHostName() throws UnknownHostException {
+        return socket.getInetAddress().getHostName();
     }
 
     /**

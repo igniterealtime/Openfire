@@ -8,12 +8,12 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.Connection,
+<%@ page import="org.jivesoftware.openfire.Connection,
                  org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.openfire.session.ClientSession"
+                 org.jivesoftware.openfire.session.LocalClientSession,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
 
@@ -39,7 +39,7 @@
 
             // Enable 5222 port and make TLS required
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
+            LocalClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             // Enable 5223 port (old SSL port)
             XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
         } else if ("notreq".equals(clientSecurityRequired)) {
@@ -47,7 +47,7 @@
 
             // Enable 5222 port and make TLS optional
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            ClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
+            LocalClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
             // Enable 5223 port (old SSL port)
             XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
         } else if ("custom".equals(clientSecurityRequired)) {
@@ -59,11 +59,11 @@
             // Enable port 5222 and configure TLS policy
             XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
             if ("notavailable".equals(tls)) {
-                ClientSession.setTLSPolicy(Connection.TLSPolicy.disabled);
+                LocalClientSession.setTLSPolicy(Connection.TLSPolicy.disabled);
             } else if ("optional".equals(tls)) {
-                ClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
+                LocalClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
             } else {
-                ClientSession.setTLSPolicy(Connection.TLSPolicy.required);
+                LocalClientSession.setTLSPolicy(Connection.TLSPolicy.required);
             }
         }
 
@@ -110,11 +110,11 @@
     // Set page vars
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     if (connectionManager.isClientListenerEnabled() && connectionManager.isClientSSLListenerEnabled()) {
-        if (Connection.TLSPolicy.required.equals(org.jivesoftware.openfire.session.ClientSession.getTLSPolicy())) {
+        if (Connection.TLSPolicy.required.equals(LocalClientSession.getTLSPolicy())) {
             clientSecurityRequired = "req";
             ssl = "available";
             tls = "required";
-        } else if (Connection.TLSPolicy.optional.equals(ClientSession.getTLSPolicy())) {
+        } else if (Connection.TLSPolicy.optional.equals(LocalClientSession.getTLSPolicy())) {
             clientSecurityRequired = "notreq";
             ssl = "available";
             tls = "optional";
@@ -126,8 +126,8 @@
     } else {
         clientSecurityRequired = "custom";
         ssl = connectionManager.isClientSSLListenerEnabled() ? "available" : "notavailable";
-        tls = Connection.TLSPolicy.disabled.equals(ClientSession.getTLSPolicy()) ? "notavailable" :
-                ClientSession.getTLSPolicy().toString();
+        tls = Connection.TLSPolicy.disabled.equals(LocalClientSession.getTLSPolicy()) ? "notavailable" :
+                LocalClientSession.getTLSPolicy().toString();
     }
 
     boolean tlsEnabled = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);

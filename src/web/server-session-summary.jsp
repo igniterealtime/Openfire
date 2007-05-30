@@ -8,10 +8,10 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.SessionManager,
+<%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.OutgoingServerSession,
                  org.jivesoftware.openfire.session.Session,
+                 org.jivesoftware.util.ParamUtils,
                  java.util.*"
     errorPage="error.jsp"
 %>
@@ -54,12 +54,12 @@
     if (close) {
         try {
             for (Session sess : sessionManager.getIncomingServerSessions(hostname)) {
-                sess.getConnection().close();
+                sess.close();
             }
 
             Session sess = sessionManager.getOutgoingServerSession(hostname);
             if (sess != null) {
-                sess.getConnection().close();
+                sess.close();
             }
             // wait one second
             Thread.sleep(1000L);

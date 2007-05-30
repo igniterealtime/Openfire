@@ -11,11 +11,11 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
@@ -67,7 +67,7 @@ public class ClientStanzaHandler extends StanzaHandler {
             throws XmlPullParserException {
         if ("jabber:client".equals(namespace)) {
             // The connected client is a regular client so create a ClientSession
-            session = ClientSession.createSession(serverName, xpp, connection);
+            session = LocalClientSession.createSession(serverName, xpp, connection);
             return true;
         }
         return false;

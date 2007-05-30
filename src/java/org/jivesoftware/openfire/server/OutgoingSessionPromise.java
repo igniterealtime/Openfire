@@ -14,8 +14,7 @@ package org.jivesoftware.openfire.server;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
@@ -116,6 +115,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         }
                     }
                     catch (InterruptedException e) {
+                        // Do nothing
                     }
                     catch (Exception e) {
                         Log.error(e);
@@ -195,7 +195,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
         private void sendPacket(Packet packet) throws Exception {
             // Create a connection to the remote server from the domain where the packet has been sent
-            boolean created = OutgoingServerSession
+            boolean created = LocalOutgoingServerSession
                     .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
             if (created) {
                 // A connection to the remote server was created so get the route and send the packet
@@ -222,7 +222,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             try {
                 if (packet instanceof IQ) {
                     IQ reply = new IQ();
-                    reply.setID(((IQ) packet).getID());
+                    reply.setID(packet.getID());
                     reply.setTo(from);
                     reply.setFrom(to);
                     reply.setChildElement(((IQ) packet).getChildElement().createCopy());
@@ -247,8 +247,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     reply.setError(PacketError.Condition.remote_server_not_found);
                     routingTable.routePacket(reply.getTo(), reply);
                 }
-            }
-            catch (UnauthorizedException e) {
             }
             catch (Exception e) {
                 Log.warn("Error returning error to sender. Original packet: " + packet, e);

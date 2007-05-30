@@ -9,10 +9,10 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.SessionManager,
-                 org.jivesoftware.openfire.session.ComponentSession"
+<%@ page import="org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ComponentSession,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
 <%@ page import="java.text.NumberFormat" %>
@@ -141,9 +141,9 @@
             <fmt:message key="session.details.hostname" />
         </td>
         <td>
-            <%= componentSession.getConnection().getInetAddress().getHostAddress() %>
+            <%= componentSession.getHostAddress() %>
             /
-            <%= componentSession.getConnection().getInetAddress().getHostName() %>
+            <%= componentSession.getHostName() %>
         </td>
     </tr>
 </tbody>

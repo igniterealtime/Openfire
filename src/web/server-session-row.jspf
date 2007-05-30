@@ -3,8 +3,8 @@
   -	$Date$
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.openfire.session.IncomingServerSession,
+<%@ page import="org.jivesoftware.openfire.session.IncomingServerSession,
+                 org.jivesoftware.util.JiveGlobals,
                  java.net.URLEncoder,
                  java.util.Calendar,
                  java.util.Date"%>
@@ -21,14 +21,14 @@
     boolean isSecured = true;
     // Check if all incoming sessions are secured
     for (org.jivesoftware.openfire.session.IncomingServerSession inSession : inSessions) {
-        if (!inSession.getConnection().isSecure()) {
+        if (!inSession.isSecure()) {
             isSecured = false;
             break;
         }
     }
     // Check if outgoing session is secured (only if incoming sessions are secured)
     if (isSecured && outSession != null) {
-        isSecured = outSession.getConnection().isSecure();
+        isSecured = outSession.isSecure();
     }
 %>
 <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">

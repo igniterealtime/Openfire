@@ -166,10 +166,7 @@ public class PresenceRouter extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             Session session = sessionManager.getSession(packet.getFrom());
             if (session != null) {
-                Connection conn = session.getConnection();
-                if (conn != null) {
-                    conn.close();
-                }
+                session.close();
             }
         }
     }
@@ -188,9 +185,10 @@ public class PresenceRouter extends BasicModule {
     /**
      * Notification message indicating that a packet has failed to be routed to the receipient.
      *
+     * @param receipient address of the entity that failed to receive the packet.
      * @param packet Presence packet that failed to be sent to the receipient.
      */
-    public void routingFailed(Packet packet) {
+    public void routingFailed(JID receipient, Packet packet) {
         // presence packets are dropped silently
     }
 }

@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -49,7 +50,7 @@ public abstract class SocketReader implements Runnable {
     /**
      * Session associated with the socket reader.
      */
-    protected Session session;
+    protected LocalSession session;
     /**
      * Reference to the physical connection.
      */

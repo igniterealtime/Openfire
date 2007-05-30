@@ -12,21 +12,23 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.ConnectionManager,
+<%@ page import="org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager,
-                 java.net.InetAddress"
+                 org.jivesoftware.openfire.session.ConnectionMultiplexerSession,
+                 org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Collection"%>
 <%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
+<%@ page import="java.util.List"%>
+<%@ page import="java.util.Map" %>
 
 <html>
-    <head>
-        <title><fmt:message key="connection-manager.settings.title"/></title>
+<head>
+    <title>
+        <fmt:message key="connection-manager.settings.title"/></title>
         <meta name="pageID" content="connection-managers-settings"/>
     </head>
     <body>
@@ -244,14 +246,18 @@
     <tr>
         <td width="100%" colspan="3" align="center" nowrap><fmt:message key="connection-manager.details.no-managers-connected" /></td>
     </tr>
-<%  }
-    else {
-        for (String managerName : connectionManagers) {
-            InetAddress ipAddress = sessionManager.getConnectionMultiplexerInetAddress(managerName);
+<% } else {
+    for (String managerName : connectionManagers) {
+        List<ConnectionMultiplexerSession> sessions = sessionManager.getConnectionMultiplexerSessions(managerName);
+        if (sessions.isEmpty()) {
+            continue;
+        }
+        String hostAddress = sessions.get(0).getHostAddress();
+        String hostName = sessions.get(0).getHostName();
 %>
 <tr>
     <td><img src="images/connection-manager_16x16.gif" width="16" height="16" border="0" alt="" align="absmiddle"><%= managerName%></td>
-    <td><%= ipAddress.getHostAddress() %> / <%= ipAddress.getHostName() %></td>
+    <td><%= hostAddress %> / <%= hostName %></td>
     <td align="center"><%= multiplexerManager.getNumConnectedClients(managerName)%></td>
 </tr>
 <%

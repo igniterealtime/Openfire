@@ -13,7 +13,7 @@ package org.jivesoftware.openfire;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.xmpp.packet.*;
 
 import java.io.UnsupportedEncodingException;
@@ -26,19 +26,13 @@ import java.io.UnsupportedEncodingException;
  */
 public class SessionPacketRouter implements PacketRouter {
 
-    private ClientSession session;
+    private LocalClientSession session;
     private PacketRouter router;
-    private SessionManager sessionManager;
     private boolean skipJIDValidation = false;
 
-    public SessionPacketRouter() {
-        this(null);
-    }
-
-    public SessionPacketRouter(ClientSession session) {
+    public SessionPacketRouter(LocalClientSession session) {
         this.session = session;
         router = XMPPServer.getInstance().getPacketRouter();
-        sessionManager = SessionManager.getInstance();
     }
 
 
@@ -100,36 +94,21 @@ public class SessionPacketRouter implements PacketRouter {
     }
 
     public void route(IQ packet) {
-        if(session == null) {
-            session = sessionManager.getSession(packet.getFrom());
-            if(session == null) {
-                router.route(packet);
-            }
-        }
+        router.route(packet);
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
     public void route(Message packet) {
-        if(session == null) {
-            session = sessionManager.getSession(packet.getFrom());
-            if(session == null) {
-                router.route(packet);
-            }
-        }
+        router.route(packet);
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
     public void route(Presence packet) {
-        if(session == null) {
-            session = sessionManager.getSession(packet.getFrom());
-            if(session == null) {
-                router.route(packet);
-            }
-        }
+        router.route(packet);
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();

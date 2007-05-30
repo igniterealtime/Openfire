@@ -9,14 +9,15 @@ package org.jivesoftware.openfire.stun;
 
 import de.javawi.jstun.test.demo.StunServer;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.container.BasicModule;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -24,7 +25,10 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
 
 /**
  * STUN server and service module. It provides address discovery for p2p sessions to be
@@ -398,7 +402,7 @@ public class STUNService extends BasicModule {
                         server.addAttribute("udp", stunServerAddress.getPort());
                     }
                     try {
-                        String ip = sessionManager.getSession(iq.getFrom()).getConnection().getInetAddress().getHostAddress();
+                        String ip = sessionManager.getSession(iq.getFrom()).getHostAddress();
                         if (ip != null) {
                             Element publicIp = childElementCopy.addElement("publicip");
                             publicIp.addAttribute("ip", ip);

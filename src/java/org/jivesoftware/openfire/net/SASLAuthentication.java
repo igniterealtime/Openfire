@@ -15,17 +15,15 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -127,7 +125,7 @@ public class SASLAuthentication {
         sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         if (session instanceof IncomingServerSession) {
             // Server connections dont follow the same rules as clients
-            if (session.getConnection().isSecure()) {
+            if (session.isSecure()) {
                 // Offer SASL EXTERNAL only if TLS has already been negotiated
                 sb.append("<mechanism>EXTERNAL</mechanism>");
             }
@@ -152,7 +150,7 @@ public class SASLAuthentication {
                 new Namespace("", "urn:ietf:params:xml:ns:xmpp-sasl")));
         if (session instanceof IncomingServerSession) {
             // Server connections dont follow the same rules as clients
-            if (session.getConnection().isSecure()) {
+            if (session.isSecure()) {
                 // Offer SASL EXTERNAL only if TLS has already been negotiated
                 Element mechanism = mechs.addElement("mechanism");
                 mechanism.setText("EXTERNAL");
@@ -179,7 +177,7 @@ public class SASLAuthentication {
      *         or not or if the entity is expected to send a response to a challenge.
      * @throws UnsupportedEncodingException If UTF-8 charset is not supported.
      */
-    public static Status handle(Session session, Element doc) throws UnsupportedEncodingException {
+    public static Status handle(LocalSession session, Element doc) throws UnsupportedEncodingException {
         Status status;
         String mechanism;
         if (doc.getNamespace().asXML().equals(SASL_NAMESPACE)) {
@@ -386,7 +384,7 @@ public class SASLAuthentication {
     }
 
 
-    private static Status doAnonymousAuthentication(Session session) {
+    private static Status doAnonymousAuthentication(LocalSession session) {
         if (XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
             // Just accept the authentication :)
             authenticationSuccessful(session, null, null);
@@ -399,7 +397,7 @@ public class SASLAuthentication {
         }
     }
 
-    private static Status doPlainAuthentication(Session session, Element doc)
+    private static Status doPlainAuthentication(LocalSession session, Element doc)
             throws UnsupportedEncodingException {
         String username;
         String password;
@@ -444,7 +442,7 @@ public class SASLAuthentication {
         }
     }
 
-    private static Status doExternalAuthentication(Session session, Element doc)
+    private static Status doExternalAuthentication(LocalSession session, Element doc)
             throws UnsupportedEncodingException {
         // Only accept EXTERNAL SASL for s2s. At this point the connection has already
         // been secured using TLS
@@ -486,7 +484,7 @@ public class SASLAuthentication {
         return Status.failed;
     }
 
-    private static Status doSharedSecretAuthentication(Session session, Element doc)
+    private static Status doSharedSecretAuthentication(LocalSession session, Element doc)
             throws UnsupportedEncodingException
     {
         String secretDigest;
@@ -524,10 +522,10 @@ public class SASLAuthentication {
                 "<challenge xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append(challenge_b64);
         reply.append("</challenge>");
-        session.getConnection().deliverRawText(reply.toString());
+        session.deliverRawText(reply.toString());
     }
 
-    private static void authenticationSuccessful(Session session, String username,
+    private static void authenticationSuccessful(LocalSession session, String username,
             byte[] successData) {
         StringBuilder reply = new StringBuilder(80);
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
@@ -538,10 +536,10 @@ public class SASLAuthentication {
         else {
             reply.append("/>");
         }
-        session.getConnection().deliverRawText(reply.toString());
+        session.deliverRawText(reply.toString());
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
-            ((ClientSession) session).setAuthToken(new AuthToken(username));
+            ((LocalClientSession) session).setAuthToken(new AuthToken(username));
         }
         else if (session instanceof IncomingServerSession) {
             String hostname = username;
@@ -549,15 +547,15 @@ public class SASLAuthentication {
             session.setAddress(new JID(null, hostname, null));
             // Add the validated domain as a valid domain. The remote server can
             // now send packets from this address
-            ((IncomingServerSession) session).addValidatedDomain(hostname);
+            ((LocalIncomingServerSession) session).addValidatedDomain(hostname);
         }
     }
 
-    private static void authenticationFailed(Session session) {
+    private static void authenticationFailed(LocalSession session) {
         StringBuilder reply = new StringBuilder(80);
         reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append("<not-authorized/></failure>");
-        session.getConnection().deliverRawText(reply.toString());
+        session.deliverRawText(reply.toString());
         // Give a number of retries before closing the connection
         Integer retries = (Integer) session.getSessionData("authRetries");
         if (retries == null) {
@@ -569,7 +567,7 @@ public class SASLAuthentication {
         session.setSessionData("authRetries", retries);
         if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3) ) {
             // Close the connection
-            session.getConnection().close();
+            session.close();
         }
     }
 

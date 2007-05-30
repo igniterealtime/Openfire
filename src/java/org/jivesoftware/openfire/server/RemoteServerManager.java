@@ -11,12 +11,12 @@
 package org.jivesoftware.openfire.server;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -70,11 +70,11 @@ public class RemoteServerManager {
         addConfiguration(config);
         // Check if the remote server was connected and proceed to close the connection
         for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
-            session.getConnection().close();
+            session.close();
         }
         Session session = SessionManager.getInstance().getOutgoingServerSession(domain);
         if (session != null) {
-            session.getConnection().close();
+            session.close();
         }
     }
 
@@ -103,21 +103,11 @@ public class RemoteServerManager {
 
         if (PermissionPolicy.blacklist == getPermissionPolicy()) {
             // Anyone can access except those entities listed in the blacklist
-            if (Permission.blocked == permission) {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return Permission.blocked != permission;
         }
         else {
             // Access is limited to those present in the whitelist
-            if (Permission.allowed == permission) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return Permission.allowed == permission;
         }
     }
 
@@ -330,16 +320,15 @@ public class RemoteServerManager {
         // Check if the connected servers can remain connected to the server
         for (String hostname : SessionManager.getInstance().getIncomingServers()) {
             if (!canAccess(hostname)) {
-                for (Session session : SessionManager.getInstance()
-                        .getIncomingServerSessions(hostname)) {
-                    session.getConnection().close();
+                for (Session session : SessionManager.getInstance().getIncomingServerSessions(hostname)) {
+                    session.close();
                 }
             }
         }
         for (String hostname : SessionManager.getInstance().getOutgoingServers()) {
             if (!canAccess(hostname)) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(hostname);
-                session.getConnection().close();
+                session.close();
             }
         }
     }

@@ -8,11 +8,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.SessionManager,
+<%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.SessionResultFilter,
                  org.jivesoftware.openfire.session.ClientSession,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
                  java.util.Collection"
     errorPage="error.jsp"
 %>
@@ -57,14 +57,14 @@
     SessionManager sessionManager = webManager.getSessionManager();
 
     // Get the session count
-    int sessionCount = sessionManager.getUserSessionsCount() + sessionManager.getAnonymousSessionCount();
+    int sessionCount = sessionManager.getUserSessionsCount();
 
     // Close a connection if requested
     if (close) {
         JID address = new JID(jid);
         try {
             Session sess = sessionManager.getSession(address);
-            sess.getConnection().close();
+            sess.close();
             // wait one second
             Thread.sleep(1000L);
         }
@@ -166,7 +166,7 @@
      filter.setSortOrder(order);
      filter.setStartIndex(start);
      filter.setNumResults(range);
-     Collection<org.jivesoftware.openfire.session.ClientSession> sessions = sessionManager.getSessions(filter);
+     Collection<ClientSession> sessions = sessionManager.getSessions(filter);
  %>
 
 <div class="jive-table">
@@ -233,10 +233,6 @@
         boolean current = false; // needed in session-row.jspf
         String linkURL = "session-details.jsp";
         for (ClientSession sess : sessions) {
-            if (sess.getAuthToken() == null) {
-                // Double check: Ignore non-authenticated sessions
-                continue;
-            }
             count++;
     %>
         <%@ include file="session-row.jspf" %>

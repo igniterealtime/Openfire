@@ -68,6 +68,11 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Routing Users Cache", "routeUser");
         cacheNames.put("Routing AnonymousUsers Cache", "routeAnonymousUser");
         cacheNames.put("Routing User Sessions", "routeUserSessions");
+        cacheNames.put("Session Manager Counters", "sessManagerCounters");
+        cacheNames.put("Components Sessions", "componentsSessions");
+        cacheNames.put("Connection Managers Sessions", "connManagerSessions");
+        cacheNames.put("Incoming Server Sessions", "incServerSessions");
+        cacheNames.put("Sessions by Hostname", "sessionsHostname");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
@@ -107,6 +112,16 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.routeAnonymousUser.expirationTime", -1l);
         cacheProps.put("cache.routeUserSessions.size", -1l);
         cacheProps.put("cache.routeUserSessions.expirationTime", -1l);
+        cacheProps.put("cache.sessManagerCounters.size", -1l);
+        cacheProps.put("cache.sessManagerCounters.expirationTime", -1l);
+        cacheProps.put("cache.componentsSessions.size", -1l);
+        cacheProps.put("cache.componentsSessions.expirationTime", -1l);
+        cacheProps.put("cache.connManagerSessions.size", -1l);
+        cacheProps.put("cache.connManagerSessions.expirationTime", -1l);
+        cacheProps.put("cache.incServerSessions.size", -1l);
+        cacheProps.put("cache.incServerSessions.expirationTime", -1l);
+        cacheProps.put("cache.sessionsHostname.size", -1l);
+        cacheProps.put("cache.sessionsHostname.expirationTime", -1l);
     }
 
 

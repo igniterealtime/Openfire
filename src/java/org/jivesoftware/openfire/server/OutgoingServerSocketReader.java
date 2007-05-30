@@ -13,8 +13,8 @@ package org.jivesoftware.openfire.server;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.util.Log;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -132,7 +132,7 @@ public class OutgoingServerSocketReader {
     private void closeSession() {
         open = false;
         if (session != null) {
-            session.getConnection().close();
+            session.close();
         }
     }
 }

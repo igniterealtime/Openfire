@@ -9,13 +9,13 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.Connection,
-                 org.jivesoftware.openfire.PrivateStorage"
+<%@ page import="org.jivesoftware.openfire.Connection,
+                 org.jivesoftware.openfire.PrivateStorage,
+                 org.jivesoftware.openfire.session.LocalClientSession,
+                 org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -29,20 +29,22 @@
 </head>
 <body>
 
-<%  // Get parameters:
+<% // Get parameters:
     boolean update = request.getParameter("update") != null;
-    boolean clientEnabled = ParamUtils.getBooleanParameter(request,"clientEnabled");
-    boolean serverEnabled = ParamUtils.getBooleanParameter(request,"serverEnabled");
+    boolean clientEnabled = ParamUtils.getBooleanParameter(request, "clientEnabled");
+    boolean serverEnabled = ParamUtils.getBooleanParameter(request, "serverEnabled");
 
     // Get an audit manager:
     PrivateStorage privateStorage = webManager.getPrivateStore();
 
     if (update) {
         // Update c2s compression policy
-        ClientSession.setCompressionPolicy(clientEnabled ? Connection.CompressionPolicy.optional : Connection.CompressionPolicy.disabled);
+        LocalClientSession.setCompressionPolicy(
+                clientEnabled ? Connection.CompressionPolicy.optional : Connection.CompressionPolicy.disabled);
         // Update s2s compression policy
-        JiveGlobals.setProperty("xmpp.server.compression.policy", serverEnabled ? Connection.CompressionPolicy.optional.toString() : Connection.CompressionPolicy.disabled.toString());
-    %>
+        JiveGlobals.setProperty("xmpp.server.compression.policy", serverEnabled ?
+                Connection.CompressionPolicy.optional.toString() : Connection.CompressionPolicy.disabled.toString());
+%>
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
@@ -58,7 +60,7 @@
     }
 
     // Set page vars
-    clientEnabled = Connection.CompressionPolicy.optional == ClientSession.getCompressionPolicy();
+    clientEnabled = Connection.CompressionPolicy.optional == LocalClientSession.getCompressionPolicy();
     serverEnabled = Connection.CompressionPolicy.optional.toString().equals(JiveGlobals.getProperty("xmpp.server.compression.policy", Connection.CompressionPolicy.disabled.toString()));
 %>
 

@@ -11,7 +11,9 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.net.SocketPacketWriteHandler;
@@ -29,9 +31,6 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
      */
     protected SocketPacketWriteHandler deliverHandler;
 
-    private OfflineMessageStrategy messageStrategy;
-    private SessionManager sessionManager;
-
     public PacketDelivererImpl() {
         super("Packet Delivery");
     }
@@ -48,17 +47,9 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         deliverHandler.process(packet);
     }
 
-    public void initialize(XMPPServer server) {
-        super.initialize(server);
-        messageStrategy = server.getOfflineMessageStrategy();
-        sessionManager = server.getSessionManager();
-    }
-
     public void start() throws IllegalStateException {
         super.start();
-        deliverHandler =
-                new SocketPacketWriteHandler(sessionManager,
-                        XMPPServer.getInstance().getRoutingTable(), messageStrategy);
+        deliverHandler = new SocketPacketWriteHandler(XMPPServer.getInstance().getRoutingTable());
     }
 
     public void stop() {

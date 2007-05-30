@@ -13,13 +13,10 @@ package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
 
 /**
  * This ChannelHandler writes packet data to connections.
@@ -30,22 +27,11 @@ import org.xmpp.packet.Presence;
 public class SocketPacketWriteHandler implements ChannelHandler {
 
     private XMPPServer server;
-    private SessionManager sessionManager;
-    private OfflineMessageStrategy messageStrategy;
     private RoutingTable routingTable;
-    private IQRouter iqRouter;
-    private MessageRouter messageRouter;
-    private PresenceRouter presenceRouter;
 
-    public SocketPacketWriteHandler(SessionManager sessionManager, RoutingTable routingTable,
-            OfflineMessageStrategy messageStrategy) {
-        this.sessionManager = sessionManager;
-        this.messageStrategy = messageStrategy;
+    public SocketPacketWriteHandler(RoutingTable routingTable) {
         this.routingTable = routingTable;
         this.server = XMPPServer.getInstance();
-        iqRouter = server.getIQRouter();
-        messageRouter = server.getMessageRouter();
-        presenceRouter = server.getPresenceRouter();
     }
 
      public void process(Packet packet) throws UnauthorizedException, PacketException {
@@ -61,34 +47,11 @@ public class SocketPacketWriteHandler implements ChannelHandler {
                 routingTable.routePacket(packet.getFrom(), packet);
             }
             else {
-                Session session = sessionManager.getBestRoute(recipient);
-                if (session == null) {
-                    handleUnprocessedPacket(packet);
-                }
-                else {
-                    try {
-                        session.process(packet);
-                    }
-                    catch (Exception e) {
-                        // do nothing
-                    }
-                }
+                routingTable.routePacket(recipient, packet);
             }
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error.deliver") + "\n" + packet.toString(), e);
-        }
-    }
-
-    private void handleUnprocessedPacket(Packet packet) {
-        if (packet instanceof Message) {
-            messageRouter.routingFailed(packet);
-        }
-        else if (packet instanceof Presence) {
-            presenceRouter.routingFailed(packet);
-        }
-        else {
-            iqRouter.routingFailed(packet);
         }
     }
 }

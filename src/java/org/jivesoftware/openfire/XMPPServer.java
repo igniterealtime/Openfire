@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.stun.STUNService;
 import org.jivesoftware.openfire.transport.TransportHandler;
@@ -119,6 +120,7 @@ public class XMPPServer {
 
     private PluginManager pluginManager;
     private InternalComponentManager componentManager;
+    private RemoteSessionLocator remoteSessionLocator;
 
     /**
      * True if in setup mode
@@ -1310,4 +1312,23 @@ public class XMPPServer {
         return (InternalComponentManager) modules.get(InternalComponentManager.class);
     }
 
+    /**
+     * Returns the locator to use to find sessions hosted in other cluster nodes. When not running
+     * in a cluster a <tt>null</tt> value is returned.
+     *
+     * @return the locator to use to find sessions hosted in other cluster nodes.
+     */
+    public RemoteSessionLocator getRemoteSessionLocator() {
+        return remoteSessionLocator;
+    }
+
+    /**
+     * Sets the locator to use to find sessions hosted in other cluster nodes. When not running
+     * in a cluster set a <tt>null</tt> value.
+     *
+     * @param remoteSessionLocator the locator to use to find sessions hosted in other cluster nodes.
+     */
+    public void setRemoteSessionLocator(RemoteSessionLocator remoteSessionLocator) {
+        this.remoteSessionLocator = remoteSessionLocator;
+    }
 }

@@ -12,13 +12,13 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
@@ -149,7 +149,7 @@ public class ServerSocketReader extends SocketReader {
     protected boolean processUnknowPacket(Element doc) {
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
-            if (!((IncomingServerSession) session).validateSubsequentDomain(doc)) {
+            if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
                 open = false;
             }
             return true;
@@ -157,7 +157,7 @@ public class ServerSocketReader extends SocketReader {
         else if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
             // The Receiving Server is reusing an existing connection for sending the
             // Authoritative Server a request for verification of a key
-            ((IncomingServerSession) session).verifyReceivedKey(doc);
+            ((LocalIncomingServerSession) session).verifyReceivedKey(doc);
             return true;
         }
         return false;
@@ -184,7 +184,7 @@ public class ServerSocketReader extends SocketReader {
             open = false;
             throw new PacketRejectedException("Packet with no TO or FROM attributes");
         }
-        else if (!((IncomingServerSession) session).isValidDomain(packet.getFrom().getDomain())) {
+        else if (!((LocalIncomingServerSession) session).isValidDomain(packet.getFrom().getDomain())) {
             Log.debug("Closing IncomingServerSession due to packet with invalid domain: " +
                     packet.toXML());
             // Send a stream error saying that the packet includes an invalid FROM
@@ -208,7 +208,7 @@ public class ServerSocketReader extends SocketReader {
             IOException {
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
-            session = IncomingServerSession.createSession(serverName, reader, connection);
+            session = LocalIncomingServerSession.createSession(serverName, reader, connection);
             return true;
         }
         return false;

@@ -15,21 +15,22 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.SessionPacketRouter;
-import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.io.UnsupportedEncodingException;
 
 /**
  * A session represents a serious of interactions with an XMPP client sending packets using the HTTP
@@ -39,7 +40,7 @@ import java.io.UnsupportedEncodingException;
  *
  * @author Alexander Wenckus
  */
-public class HttpSession extends ClientSession {
+public class HttpSession extends LocalClientSession {
     private int wait;
     private int hold = 0;
     private String language;
@@ -707,8 +708,16 @@ public class HttpSession extends ClientSession {
             ((HttpSession) session).closeConnection();
         }
 
-        public InetAddress getInetAddress() {
-            return address;
+        public byte[] getAddress() throws UnknownHostException {
+            return address.getAddress();
+        }
+
+        public String getHostAddress() throws UnknownHostException {
+            return address.getHostAddress();
+        }
+
+        public String getHostName() throws UnknownHostException {
+            return address.getHostName();
         }
 
         public void systemShutdown() {

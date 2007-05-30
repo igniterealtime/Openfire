@@ -14,8 +14,6 @@ package org.jivesoftware.openfire.handler;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.SessionManager;
@@ -34,6 +32,8 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -236,7 +236,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             // Take a quick nap so that the client can process the result
                             Thread.sleep(10);
                             // Close the user's connection
-                            session.getConnection().close();
+                            session.close();
                             // The reply has been sent so clean up the variable
                             reply = null;
                         }

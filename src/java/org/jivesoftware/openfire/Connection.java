@@ -12,10 +12,9 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.xmpp.packet.Packet;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -40,15 +39,53 @@ public interface Connection {
      *
      * @param session the session that owns this connection
      */
-    public void init(Session session);
+    public void init(LocalSession session);
 
     /**
-     * Returns the InetAddress describing the connection.
+     * Returns the raw IP address of this <code>InetAddress</code>
+     * object. The result is in network byte order: the highest order
+     * byte of the address is in <code>getAddress()[0]</code>.
      *
-     * @return the InetAddress describing the underlying connection properties.
+     * @return  the raw IP address of this object.
      * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
-    public InetAddress getInetAddress() throws UnknownHostException;
+    public byte[] getAddress() throws UnknownHostException;
+
+    /**
+     * Returns the IP address string in textual presentation.
+     *
+     * @return  the raw IP address in a string format.
+     * @throws java.net.UnknownHostException if IP address of host could not be determined.
+     */
+    public String getHostAddress() throws UnknownHostException;
+
+    /**
+     * Gets the host name for this IP address.
+     *
+     * <p>If this InetAddress was created with a host name,
+     * this host name will be remembered and returned;
+     * otherwise, a reverse name lookup will be performed
+     * and the result will be returned based on the system
+     * configured name lookup service. If a lookup of the name service
+     * is required, call
+     * {@link java.net.InetAddress#getCanonicalHostName() getCanonicalHostName}.
+     *
+     * <p>If there is a security manager, its
+     * <code>checkConnect</code> method is first called
+     * with the hostname and <code>-1</code>
+     * as its arguments to see if the operation is allowed.
+     * If the operation is not allowed, it will return
+     * the textual representation of the IP address.
+     *
+     * @return  the host name for this IP address, or if the operation
+     *    is not allowed by the security check, the textual
+     *    representation of the IP address.
+     * @throws java.net.UnknownHostException if IP address of host could not be determined.
+     *
+     * @see java.net.InetAddress#getCanonicalHostName
+     * @see SecurityManager#checkConnect
+     */
+    public String getHostName() throws UnknownHostException;
 
     /**
      * Close this session including associated socket connection. The order of

@@ -11,13 +11,13 @@
 package org.jivesoftware.openfire.component;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permission;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -74,7 +74,7 @@ public class ExternalComponentManager {
         String domain = subdomain + "." + XMPPServer.getInstance().getServerInfo().getName();
         Session session = SessionManager.getInstance().getComponentSession(domain);
         if (session != null) {
-            session.getConnection().close();
+            session.close();
         }
     }
 
@@ -340,7 +340,7 @@ public class ExternalComponentManager {
         for (ComponentSession session : SessionManager.getInstance().getComponentSessions()) {
             for (String domain : session.getExternalComponent().getSubdomains()) {
                 if (!canAccess(domain)) {
-                    session.getConnection().close();
+                    session.close();
                     break;
                 }
             }

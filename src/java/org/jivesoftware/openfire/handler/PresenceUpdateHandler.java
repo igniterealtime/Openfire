@@ -17,7 +17,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -89,10 +89,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
-        process((Presence) packet, sessionManager.getSession(packet.getFrom()));
+        process((Presence) packet, (LocalClientSession) sessionManager.getSession(packet.getFrom()));
     }
 
-    public void process(Presence presence, ClientSession session) throws UnauthorizedException, PacketException {
+    private void process(Presence presence, LocalClientSession session) throws UnauthorizedException, PacketException {
         try {
             Presence.Type type = presence.getType();
             // Available
@@ -187,7 +187,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @param session The session being updated
      * @throws UserNotFoundException If the user being updated does not exist
      */
-    private void initSession(ClientSession session)  throws UserNotFoundException {
+    private void initSession(LocalClientSession session) throws UserNotFoundException {
 
         // Only user sessions need to be authenticated
         if (userManager.isRegisteredUser(session.getAddress().getNode())) {
@@ -245,7 +245,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      *
      * @param update The update to broadcast
      */
-    private void broadcastUpdate(Presence update) throws PacketException {
+    private void broadcastUpdate(Presence update) {
         if (update.getFrom() == null) {
             return;
         }
@@ -437,12 +437,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     for (String jid : jids) {
                         Presence presence = update.createCopy();
                         presence.setTo(jid);
-                        try {
-                            routingTable.routePacket(handlerJID, presence);
-                        }
-                        catch (UnauthorizedException ue) {
-                            Log.error(ue);
-                        }
+                        routingTable.routePacket(handlerJID, presence);
                     }
                 }
             }

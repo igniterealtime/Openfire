@@ -11,11 +11,11 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
@@ -60,7 +60,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
                 }
                 catch (Exception de) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), de);
-                    sessionManager.getSession(iq.getFrom()).getConnection().close();
+                    sessionManager.getSession(iq.getFrom()).close();
                 }
             }
         }

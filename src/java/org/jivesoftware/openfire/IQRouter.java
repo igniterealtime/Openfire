@@ -12,7 +12,6 @@
 package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
@@ -75,7 +74,8 @@ public class IQRouter extends BasicModule {
         if (packet == null) {
             throw new NullPointerException();
         }
-        ClientSession session = sessionManager.getSession(packet.getFrom());
+        JID sender = packet.getFrom();
+        ClientSession session = sessionManager.getSession(sender);
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
@@ -87,7 +87,7 @@ public class IQRouter extends BasicModule {
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.bad_request);
-                sessionManager.getSession(packet.getFrom()).process(reply);
+                session.process(reply);
                 Log.warn("User tried to authenticate with this server using an unknown receipient: " +
                         packet);
             }
@@ -104,7 +104,7 @@ public class IQRouter extends BasicModule {
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.not_authorized);
-                sessionManager.getSession(packet.getFrom()).process(reply);
+                session.process(reply);
             }
             // Invoke the interceptors after we have processed the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
@@ -305,10 +305,7 @@ public class IQRouter extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             Session session = sessionManager.getSession(packet.getFrom());
             if (session != null) {
-                Connection conn = session.getConnection();
-                if (conn != null) {
-                    conn.close();
-                }
+                session.close();
             }
         }
     }
@@ -328,11 +325,7 @@ public class IQRouter extends BasicModule {
             return;
         }
         // Route the error packet to the original sender of the IQ.
-        try {
-            routingTable.routePacket(reply.getTo(), reply);
-        } catch (UnauthorizedException e) {
-            // Should never happen
-        }
+        routingTable.routePacket(reply.getTo(), reply);
     }
 
     private IQHandler getHandler(String namespace) {
@@ -353,9 +346,10 @@ public class IQRouter extends BasicModule {
     /**
      * Notification message indicating that a packet has failed to be routed to the receipient.
      *
+     * @param receipient address of the entity that failed to receive the packet.
      * @param packet IQ packet that failed to be sent to the receipient.
      */
-    public void routingFailed(Packet packet) {
+    public void routingFailed(JID receipient, Packet packet) {
         IQ iq = (IQ) packet;
         // If a route to the target address was not found then try to answer a
         // service_unavailable error code to the sender of the IQ packet

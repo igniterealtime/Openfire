@@ -204,7 +204,7 @@ public class MediaProxyService extends BasicModule
                         childElementCopy.remove(candidateElement);
                         Element publicIp = childElementCopy.addElement("publicip");
                         try {
-                            String ip = sessionManager.getSession(iq.getFrom()).getConnection().getInetAddress().getHostAddress();
+                            String ip = sessionManager.getSession(iq.getFrom()).getHostAddress();
                             if (ip != null) {
                                 publicIp.addAttribute("ip", ip);
                             }

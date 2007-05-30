@@ -358,12 +358,7 @@ public class IQPrivacyHandler extends IQHandler
         IQ pushPacket = new IQ(IQ.Type.set);
         Element child = pushPacket.setChildElement("query", "jabber:iq:privacy");
         child.addElement("list").addAttribute("name", list.getName());
-        try {
-            sessionManager.userBroadcast(from.getNode(), pushPacket);
-        }
-        catch (UnauthorizedException e) {
-            // Ignore
-        }
+        sessionManager.userBroadcast(from.getNode(), pushPacket);
 
         return result;
     }

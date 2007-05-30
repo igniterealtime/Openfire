@@ -12,15 +12,16 @@
 package org.jivesoftware.openfire.handler;
 
 import org.dom4j.Element;
-import org.jivesoftware.stringprep.StringprepException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -41,7 +42,8 @@ import org.xmpp.packet.StreamError;
 public class IQBindHandler extends IQHandler {
 
     private IQHandlerInfo info;
-    private XMPPServer localServer;
+    private String serverName;
+    private RoutingTable routingTable;
 
     public IQBindHandler() {
         super("Resource Binding handler");
@@ -49,7 +51,7 @@ public class IQBindHandler extends IQHandler {
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
-        ClientSession session = sessionManager.getSession(packet.getFrom());
+        LocalClientSession session = (LocalClientSession) sessionManager.getSession(packet.getFrom());
         // If no session was found then answer an error (if possible)
         if (session == null) {
             Log.error("Error during resource binding. Session not found in " +
@@ -94,22 +96,16 @@ public class IQBindHandler extends IQHandler {
             String username = authToken.getUsername().toLowerCase();
             // If a session already exists with the requested JID, then check to see
             // if we should kick it off or refuse the new connection
-            if (sessionManager.isActiveRoute(username, resource)) {
-                ClientSession oldSession;
+            ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource));
+            if (oldSession != null) {
                 try {
-                    String domain = localServer.getServerInfo().getName();
-                    oldSession = sessionManager.getSession(username, domain, resource);
                     oldSession.incrementConflictCount();
                     int conflictLimit = sessionManager.getConflictKickLimit();
-                    if (conflictLimit != SessionManager.NEVER_KICK &&
-                            oldSession.getConflictCount() > conflictLimit) {
-                        Connection conn = oldSession.getConnection();
-                        if (conn != null) {
-                            // Kick out the old connection that is conflicting with the new one
-                            StreamError error = new StreamError(StreamError.Condition.conflict);
-                            conn.deliverRawText(error.toXML());
-                            conn.close();
-                        }
+                    if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
+                        // Kick out the old connection that is conflicting with the new one
+                        StreamError error = new StreamError(StreamError.Condition.conflict);
+                        oldSession.deliverRawText(error.toXML());
+                        oldSession.close();
                     }
                     else {
                         reply.setChildElement(packet.getChildElement().createCopy());
@@ -135,8 +131,9 @@ public class IQBindHandler extends IQHandler {
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        localServer = server;
-    }
+        routingTable = server.getRoutingTable();
+        serverName = server.getServerInfo().getName();
+     }
 
     public IQHandlerInfo getInfo() {
         return info;

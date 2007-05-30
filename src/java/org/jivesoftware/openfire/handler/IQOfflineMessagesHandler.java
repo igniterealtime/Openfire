@@ -13,8 +13,6 @@ package org.jivesoftware.openfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.*;
@@ -22,8 +20,10 @@ import org.jivesoftware.openfire.forms.DataForm;
 import org.jivesoftware.openfire.forms.FormField;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -49,6 +49,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     private IQDiscoInfoHandler infoHandler;
     private IQDiscoItemsHandler itemsHandler;
 
+    private RoutingTable routingTable;
     private SessionManager sessionManager;
     private UserManager userManager;
     private OfflineMessageStore messageStore;
@@ -63,18 +64,17 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         IQ reply = IQ.createResultIQ(packet);
         Element offlineRequest = packet.getChildElement();
 
+        JID from = packet.getFrom();
         if (offlineRequest.element("purge") != null) {
             // User requested to delete all offline messages
-            messageStore.deleteMessages(packet.getFrom().getNode());
+            messageStore.deleteMessages(from.getNode());
         }
         else if (offlineRequest.element("fetch") != null) {
             // Mark that offline messages shouldn't be sent when the user becomes available
-            stopOfflineFlooding(packet.getFrom());
-            ClientSession session = sessionManager.getSession(packet.getFrom());
+            stopOfflineFlooding(from);
             // User requested to receive all offline messages
-            for (OfflineMessage offlineMessage : messageStore.getMessages(
-                    packet.getFrom().getNode(), false)) {
-                sendOfflineMessage(offlineMessage, session);
+            for (OfflineMessage offlineMessage : messageStore.getMessages(from.getNode(), false)) {
+                sendOfflineMessage(from, offlineMessage);
             }
         }
         else {
@@ -91,29 +91,27 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
                 }
                 if ("view".equals(item.attributeValue("action"))) {
                     // User requested to receive specific message
-                    OfflineMessage offlineMsg = messageStore.getMessage(packet.getFrom().getNode(),
-                            creationDate);
+                    OfflineMessage offlineMsg = messageStore.getMessage(from.getNode(), creationDate);
                     if (offlineMsg != null) {
-                        ClientSession session = sessionManager.getSession(packet.getFrom());
-                        sendOfflineMessage(offlineMsg, session);
+                        sendOfflineMessage(from, offlineMsg);
                     }
                 }
                 else if ("remove".equals(item.attributeValue("action"))) {
                     // User requested to delete specific message
-                    messageStore.deleteMessage(packet.getFrom().getNode(), creationDate);
+                    messageStore.deleteMessage(from.getNode(), creationDate);
                 }
             }
         }
         return reply;
     }
 
-    private void sendOfflineMessage(OfflineMessage offlineMessage, ClientSession session) {
+    private void sendOfflineMessage(JID receipient, OfflineMessage offlineMessage) {
         Element offlineInfo = offlineMessage.addChildElement("offline", NAMESPACE);
         synchronized (dateFormat) {
             offlineInfo.addElement("item").addAttribute("node",
                     dateFormat.format(offlineMessage.getCreationDate()));
         }
-        session.process(offlineMessage);
+        routingTable.routePacket(receipient, offlineMessage);
     }
 
     public IQHandlerInfo getInfo() {
@@ -187,6 +185,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
         userManager = server.getUserManager();
+        routingTable = server.getRoutingTable();
     }
 
     public void start() throws IllegalStateException {
@@ -202,7 +201,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     private void stopOfflineFlooding(JID senderJID) {
-        ClientSession session = sessionManager.getSession(senderJID);
+        LocalClientSession session = (LocalClientSession) sessionManager.getSession(senderJID);
         if (session != null) {
             session.setOfflineFloodStopped(true);
         }

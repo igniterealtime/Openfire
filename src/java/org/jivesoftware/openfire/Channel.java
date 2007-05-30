@@ -11,9 +11,9 @@
 
 package org.jivesoftware.openfire;
 
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.Packet;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -86,7 +86,7 @@ public class Channel<T extends Packet> {
                    
                         try {
                             Session session = SessionManager.getInstance().getSession(packet.getFrom());
-                            session.getConnection().close();
+                            session.close();
                         }
                         catch (Exception e1) {
                            Log.error(e1);

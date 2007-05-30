@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -156,7 +157,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
         catch (UnauthorizedException e) {
             try {
-                Session session = sessionManager.getSession(presence.getFrom());
+                LocalSession session = (LocalSession) sessionManager.getSession(presence.getFrom());
                 presence = presence.createCopy();
                 if (session != null) {
                     presence.setFrom(new JID(null, session.getServerName(), null, true));

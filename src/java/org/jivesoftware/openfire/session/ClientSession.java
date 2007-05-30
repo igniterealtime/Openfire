@@ -13,7 +13,6 @@ package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
@@ -100,9 +99,8 @@ public interface ClientSession extends Session {
      * Set the presence of this session
      *
      * @param presence The presence for the session
-     * @return The old priority of the session or null if not authenticated
      */
-    public Presence setPresence(Presence presence);
+    public void setPresence(Presence presence);
 
     /**
      * Returns the number of conflicts detected on this session.
@@ -121,16 +119,4 @@ public interface ClientSession extends Session {
      * Increments the conflict by one.
      */
     public void incrementConflictCount();
-
-    /**
-     * Returns true if the specified packet must not be blocked based on the active or default
-     * privacy list rules. The active list will be tried first. If none was found then the
-     * default list is going to be used. If no default list was defined for this user then
-     * allow the packet to flow.
-     *
-     * @param packet the packet to analyze if it must be blocked.
-     * @return true if the specified packet must be blocked.
-     */
-    public boolean canProcess(Packet packet);
-
 }

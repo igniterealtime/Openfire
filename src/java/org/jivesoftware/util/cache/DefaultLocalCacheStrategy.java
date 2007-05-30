@@ -159,6 +159,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return Collections.emptyList();
     }
 
+    public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
+        return null;
+    }
+
     public void updateCacheStats(Map<String, Cache> caches) {
     }
 

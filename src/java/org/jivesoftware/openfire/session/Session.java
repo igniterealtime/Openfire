@@ -52,16 +52,6 @@ public interface Session extends RoutableChannelHandler {
     public JID getAddress();
 
     /**
-     * Sets the new address of this session. The address is used by services like the core
-     * server packet router to determine if a packet should be sent to the handler.
-     * Handlers that are working on behalf of the server should use the generic server
-     * hostname address (e.g. server.com).
-     *
-     * @param address the new address of this session.
-     */
-    public void setAddress(JID address);
-
-    /**
      * Obtain the current status of this session.
      *
      * @return The status code for this session
@@ -75,13 +65,6 @@ public interface Session extends RoutableChannelHandler {
      * @return This session's assigned stream ID
      */
     public StreamID getStreamID();
-
-    /**
-     * Obtain the name of the server this session belongs to.
-     *
-     * @return the server name.
-     */
-    public String getServerName();
 
     /**
      * Obtain the date the session was created.

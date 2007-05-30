@@ -624,9 +624,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * Set the presence of this session
      *
      * @param presence The presence for the session
-     * @return The old priority of the session or null if not authenticated
      */
-    public Presence setPresence(Presence presence) {
+    public void setPresence(Presence presence) {
         Presence oldPresence = this.presence;
         this.presence = presence;
         if (oldPresence.isAvailable() && !this.presence.isAvailable()) {
@@ -657,7 +656,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             // Notify listeners that the show or status value of the presence has changed
             PresenceEventDispatcher.presenceChanged(this, presence);
         }
-        return oldPresence;
     }
 
     /**

@@ -192,7 +192,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                         routed = false;
                     }
                     else {
-                        if (clientRoute.getNodeID() == server.getNodeID()) {
+                        if (Arrays.equals(clientRoute.getNodeID(), server.getNodeID())) {
                             // This is a route to a local user hosted in this node
                             try {
                                 localRoutingTable.getRoute(jid.toString()).process(packet);
@@ -215,7 +215,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             // Packet sent to component hosted in this server
             byte[] nodeID = componentsCache.get(jid.getDomain());
             if (nodeID != null) {
-                if (nodeID == server.getNodeID()) {
+                if (Arrays.equals(nodeID, server.getNodeID())) {
                     // This is a route to a local component hosted in this node
                     try {
                         localRoutingTable.getRoute(jid.getDomain()).process(packet);
@@ -236,7 +236,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             // Packet sent to remote server
             byte[] nodeID = serversCache.get(jid.getDomain());
             if (nodeID != null) {
-                if (nodeID == server.getNodeID()) {
+                if (Arrays.equals(nodeID, server.getNodeID())) {
                     // This is a route to a remote server connected from this node
                     try {
                         localRoutingTable.getRoute(jid.getDomain()).process(packet);
@@ -440,14 +440,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             // Add sessions of non-anonymous users hosted by other cluster nodes
             for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
                 ClientRoute route = entry.getValue();
-                if (route.getNodeID() != server.getNodeID()) {
+                if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
                     sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
                 }
             }
             // Add sessions of anonymous users hosted by other cluster nodes
             for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
                 ClientRoute route = entry.getValue();
-                if (route.getNodeID() != server.getNodeID()) {
+                if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
                     sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
                 }
             }

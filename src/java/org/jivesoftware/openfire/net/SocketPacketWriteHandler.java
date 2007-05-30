@@ -42,7 +42,7 @@ public class SocketPacketWriteHandler implements ChannelHandler {
                 routingTable.routePacket(recipient, packet);
             }
             // The target domain belongs to the local server
-            if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
+            else if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
                 // no TO was found so send back the packet to the sender
                 routingTable.routePacket(packet.getFrom(), packet);
             }

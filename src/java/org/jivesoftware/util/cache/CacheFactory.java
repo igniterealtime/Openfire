@@ -247,6 +247,23 @@ public class CacheFactory {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, includeLocalMember);
     }
 
+    /**
+     * Invokes a task on a given cluster member synchronously and returns the result of
+     * the remote operation. If clustering is not enabled, this method will return null.
+     *
+     * @param task        the ClusterTask object to be invoked on a given cluster member.
+     * @param nodeID      the byte array that identifies the target cluster member.
+     * @return result of remote operation or null if operation failed or operation returned null.
+     */
+    public static Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
+        synchronized(CacheFactory.class) {
+            if (!clusteringEnabled) {
+                return null;
+            }
+        }
+
+        return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
+    }
 
     /**
      * Shuts down the clustering service. This method should be called when the Jive

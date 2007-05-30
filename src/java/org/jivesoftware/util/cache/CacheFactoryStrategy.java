@@ -93,6 +93,16 @@ public interface CacheFactoryStrategy {
     Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember);
 
     /**
+     * Invokes a task on a given cluster member synchronously and returns the result of
+     * the remote operation. If clustering is not enabled, this method will return null.
+     *
+     * @param task        the ClusterTask object to be invoked on a given cluster member.
+     * @param nodeID      the byte array that identifies the target cluster member.
+     * @return result of remote operation or null if operation failed or operation returned null.
+     */
+    Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID);
+
+    /**
      * Updates the statistics of the specified caches and publishes them into
      * a cache for statistics. The statistics cache is already known to the application
      * but this could change in the future (?). When not in cluster mode then

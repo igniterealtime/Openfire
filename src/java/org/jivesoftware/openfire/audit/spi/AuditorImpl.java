@@ -13,10 +13,10 @@ package org.jivesoftware.openfire.audit.spi;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.Auditor;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -400,9 +400,6 @@ public class AuditorImpl implements Auditor {
                     // an incorrect value since we are setting a fake JID until the user actually
                     // authenticates with the server.
                     packet.setFrom((String) null);
-                    break;
-                case Session.STATUS_STREAMING:
-                    element.addAttribute("status", "stream");
                     break;
                 default:
                     element.addAttribute("status", "unknown");

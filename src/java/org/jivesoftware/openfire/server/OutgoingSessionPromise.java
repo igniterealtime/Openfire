@@ -17,12 +17,14 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
@@ -195,8 +197,16 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
         private void sendPacket(Packet packet) throws Exception {
             // Create a connection to the remote server from the domain where the packet has been sent
-            boolean created = LocalOutgoingServerSession
-                    .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
+            boolean created;
+            // Make sure that only one cluster node is creating the outgoing connection
+            Lock lock = LockManager.getLock(domain + "oss");
+            try {
+                lock.lock();
+                created = LocalOutgoingServerSession
+                        .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
+            } finally {
+                lock.unlock();
+            }
             if (created) {
                 // A connection to the remote server was created so get the route and send the packet
                 routingTable.routePacket(packet.getTo(), packet);

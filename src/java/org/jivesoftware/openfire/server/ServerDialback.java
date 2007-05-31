@@ -27,6 +27,9 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.lock.LockManager;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -37,6 +40,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -65,9 +69,11 @@ public class ServerDialback {
      */
     protected static String CHARSET = "UTF-8";
     /**
-     * Secret key to be used for encoding and decoding keys used for authentication.
+     * Cache (unlimited, never expire) that holds the secret key to be used for
+     * encoding and decoding keys used for authentication.
+     * Key: constant hard coded value, Value: random generated string
      */
-    private static final String secretKey = StringUtils.randomString(10);
+    private static Cache<String, String> secretKeyCache;
 
     private static XmlPullParserFactory FACTORY = null;
 
@@ -78,6 +84,7 @@ public class ServerDialback {
         catch (XmlPullParserException e) {
             Log.error("Error creating a parser factory", e);
         }
+        secretKeyCache = CacheFactory.createCache("Secret Keys Cache");
     }
 
     private Connection connection;
@@ -245,7 +252,7 @@ public class ServerDialback {
      */
     public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String domain,
             String hostname, String id) {
-        String key = AuthFactory.createDigest(id, secretKey);
+        String key = AuthFactory.createDigest(id, getSecretkey());
         Log.debug("OS - Sent dialback key to host: " + hostname + " id: " + id + " from domain: " +
                 domain);
 
@@ -655,7 +662,7 @@ public class ServerDialback {
 
         // Verify the received key
         // Created the expected key based on the received ID value and the shared secret
-        String expectedKey = AuthFactory.createDigest(id, secretKey);
+        String expectedKey = AuthFactory.createDigest(id, getSecretkey());
         boolean verified = expectedKey.equals(key);
 
         // Send the result of the key verification
@@ -672,6 +679,29 @@ public class ServerDialback {
                 " id: " +
                 id);
         return verified;
+    }
+
+    /**
+     * Returns the secret key that was randomly generated. When running inside of a cluster
+     * the key will be unique to all cluster nodes.
+     *
+     * @return the secret key that was randomly generated.
+     */
+    private static String getSecretkey() {
+        String key = "secretKey";
+        Lock lock = LockManager.getLock(key);
+        try {
+            lock.lock();
+            String secret = secretKeyCache.get(key);
+            if (secret == null) {
+                secret = StringUtils.randomString(10);
+                secretKeyCache.put(key, secret);
+            }
+            return secret;
+        }
+        finally {
+            lock.unlock();
+        }
     }
 }
 

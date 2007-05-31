@@ -73,6 +73,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Connection Managers Sessions", "connManagerSessions");
         cacheNames.put("Incoming Server Sessions", "incServerSessions");
         cacheNames.put("Sessions by Hostname", "sessionsHostname");
+        cacheNames.put("Secret Keys Cache", "secretKeys");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
@@ -122,6 +123,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.incServerSessions.expirationTime", -1l);
         cacheProps.put("cache.sessionsHostname.size", -1l);
         cacheProps.put("cache.sessionsHostname.expirationTime", -1l);
+        cacheProps.put("cache.secretKeys.size", -1l);
+        cacheProps.put("cache.secretKeys.expirationTime", -1l);
     }
 
 

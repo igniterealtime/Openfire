@@ -91,9 +91,12 @@ public interface RoutingTable {
     void addServerRoute(JID route, LocalOutgoingServerSession destination);
 
     /**
-     * Adds a route to the routing table for the specified internal or external component. When
-     * running inside of a cluster this message <tt>must</tt> be sent from the cluster node
-     * that is actually hosting the component.
+     * Adds a route to the routing table for the specified internal or external component. <p>
+     *
+     * When running inside of a cluster this message <tt>must</tt> be sent from the cluster
+     * node that is actually hosting the component. The component may be available in all
+     * or some of cluster nodes. The routing table will keep track of all nodes hosting
+     * the component. 
      *
      * @param route the address associated to the route.
      * @param destination the component.
@@ -126,7 +129,8 @@ public interface RoutingTable {
      * Packets routed to components will only be sent if the internal or external
      * component is connected to the server. Moreover, when runing inside of a cluster
      * the node that is hosting the component will be requested to deliver the requested
-     * packet.<p>
+     * packet. It will be first checked if the component is available in this JVM and if not
+     * then the first cluster node found hosting the component will be used.<p>
      *
      * Packets routed to users will be delivered if the user is connected to the server. Depending
      * on the packet type and the sender of the packet only available or all user sessions could

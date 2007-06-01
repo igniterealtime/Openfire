@@ -37,7 +37,7 @@ public class CacheFactory {
     public static String LOCAL_CACHE_PROPERTY_NAME = "cache.clustering.local.class";
     public static String CLUSTERED_CACHE_PROPERTY_NAME = "cache.clustering.clustered.class";
 
-    private static boolean clusteringEnabled = false;
+    private static boolean clusteringStarted = false;
 
     /**
      * Storage for all caches that get created.
@@ -117,8 +117,8 @@ public class CacheFactory {
      *
      * @return true if this node is currently a member of a cluster.
      */
-    public static boolean isClusteringEnabled() {
-        return clusteringEnabled;
+    public static boolean isClusteringStarted() {
+        return clusteringStarted;
     }
 
     /**
@@ -148,7 +148,7 @@ public class CacheFactory {
      * @throws Exception if an error occurs while using the new cache type.
      */
     public static synchronized void setClusteringEnabled(boolean enabled) throws Exception {
-        if (enabled == clusteringEnabled) {
+        if (enabled == clusteringStarted) {
             return;
         }
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, String.valueOf(enabled));
@@ -179,7 +179,7 @@ public class CacheFactory {
      */
     public static boolean isSeniorClusterMember() {
         synchronized(CacheFactory.class) {
-            if (!isClusteringEnabled()) {
+            if (!isClusteringStarted()) {
                 return true;
             }
         }
@@ -194,11 +194,11 @@ public class CacheFactory {
      * @param task the task to be invoked on all other cluster members.
      */
     public static void doClusterTask(final ClusterTask task) {
-        if (!clusteringEnabled) {
+        if (!clusteringStarted) {
             return;
         }
         synchronized(CacheFactory.class) {
-            if (!clusteringEnabled) {
+            if (!clusteringStarted) {
                 return;
             }
         }
@@ -215,11 +215,11 @@ public class CacheFactory {
      * @return false if not in a cluster or specified cluster node was not found.
      */
     public static boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
-        if (!clusteringEnabled) {
+        if (!clusteringStarted) {
             return false;
         }
         synchronized(CacheFactory.class) {
-            if (!clusteringEnabled) {
+            if (!clusteringStarted) {
                 return false;
             }
         }
@@ -239,7 +239,7 @@ public class CacheFactory {
      */
     public static Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
         synchronized(CacheFactory.class) {
-            if (!clusteringEnabled) {
+            if (!clusteringStarted) {
                 return Collections.emptyList();
             }
         }
@@ -257,7 +257,7 @@ public class CacheFactory {
      */
     public static Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
         synchronized(CacheFactory.class) {
-            if (!clusteringEnabled) {
+            if (!clusteringStarted) {
                 return null;
             }
         }
@@ -276,7 +276,7 @@ public class CacheFactory {
      * If clustering is not enabled, this method will do nothing.
      */
     public static synchronized void shutdown() {
-        if (!clusteringEnabled) {
+        if (!clusteringStarted) {
             return;
         }
         // See if clustering should be enabled.
@@ -333,7 +333,7 @@ public class CacheFactory {
      */
     public static synchronized void startup() {
 
-        if (clusteringEnabled) {
+        if (clusteringStarted) {
             return;
         }
         // See if clustering should be enabled.
@@ -396,7 +396,7 @@ public class CacheFactory {
     }
 
     private static void startClustering() {
-        clusteringEnabled = false;
+        clusteringStarted = false;
         boolean clusterStarted = false;
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
@@ -410,7 +410,7 @@ public class CacheFactory {
                     wrapper.setWrappedCache(cacheFactoryStrategy.createCache(cacheName));
                 }
 
-                clusteringEnabled = true;
+                clusteringStarted = true;
                 // Set the ID of this cluster node
                 XMPPServer.getInstance().setNodeID(CacheFactory.getClusterMemberID());
                 // Fire event that cluster has been started
@@ -442,7 +442,7 @@ public class CacheFactory {
                 wrapper.setWrappedCache(cacheFactoryStrategy.createCache(cacheName));
             }
 
-            clusteringEnabled = false;
+            clusteringStarted = false;
             // Reset the node ID
             XMPPServer.getInstance().setNodeID(null);
 

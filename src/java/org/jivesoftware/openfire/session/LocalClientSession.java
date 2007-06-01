@@ -59,9 +59,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     private static Map<String,String> allowedIPs = new HashMap<String,String>();
 
-    private static Connection.TLSPolicy tlsPolicy;
-	private static Connection.CompressionPolicy compressionPolicy;
-
     /**
      * The authentication token for this session.
      */
@@ -109,15 +106,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             String address = tokens.nextToken().trim();
             allowedIPs.put(address, "");
         }
-        // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty("xmpp.client.tls.policy",
-                Connection.TLSPolicy.optional.toString());
-        tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
-
-        // Set the Compression policy stored as a system property
-        policyName = JiveGlobals.getProperty("xmpp.client.compression.policy",
-                Connection.CompressionPolicy.optional.toString());
-        compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
     }
 
     /**
@@ -246,6 +234,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             catch (Exception e) {
                 Log.error(e);
             }
+            Connection.TLSPolicy tlsPolicy = getTLSPolicy();
             if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
                 Log.error("Client session rejected. TLS is required but no certificates " +
                         "were created.");
@@ -259,7 +248,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy(compressionPolicy);
+        connection.setCompressionPolicy(getCompressionPolicy());
 
         // Create a ClientSession for this user.
         LocalClientSession session = SessionManager.getInstance().createClientSession(connection);
@@ -353,6 +342,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return whether TLS is mandatory, optional or is disabled.
      */
     public static SocketConnection.TLSPolicy getTLSPolicy() {
+        // Set the TLS policy stored as a system property
+        String policyName = JiveGlobals.getProperty("xmpp.client.tls.policy", Connection.TLSPolicy.optional.toString());
+        SocketConnection.TLSPolicy tlsPolicy;
+        try {
+            tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
+        } catch (IllegalArgumentException e) {
+            Log.error("Error parsing xmpp.client.tls.policy: " + policyName, e);
+            tlsPolicy = Connection.TLSPolicy.optional;
+        }
         return tlsPolicy;
     }
 
@@ -366,8 +364,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param policy whether TLS is mandatory, optional or is disabled.
      */
     public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
-        tlsPolicy = policy;
-        JiveGlobals.setProperty("xmpp.client.tls.policy", tlsPolicy.toString());
+        JiveGlobals.setProperty("xmpp.client.tls.policy", policy.toString());
     }
 
     /**
@@ -376,6 +373,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return whether compression is optional or is disabled.
      */
     public static SocketConnection.CompressionPolicy getCompressionPolicy() {
+        // Set the Compression policy stored as a system property
+        String policyName = JiveGlobals
+                .getProperty("xmpp.client.compression.policy", Connection.CompressionPolicy.optional.toString());
+        SocketConnection.CompressionPolicy compressionPolicy;
+        try {
+            compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+        } catch (IllegalArgumentException e) {
+            Log.error("Error parsing xmpp.client.compression.policy: " + policyName, e);
+            compressionPolicy = Connection.CompressionPolicy.optional;
+        }
         return compressionPolicy;
     }
 
@@ -385,8 +392,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param policy whether compression is optional or is disabled.
      */
     public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
-        compressionPolicy = policy;
-        JiveGlobals.setProperty("xmpp.client.compression.policy", compressionPolicy.toString());
+        JiveGlobals.setProperty("xmpp.client.compression.policy", policy.toString());
     }
 
     /**

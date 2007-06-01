@@ -53,7 +53,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
      * Cache (unlimited, never expire) that holds sessions of external components connected to the server.
      * Key: component domain, Value: nodeID
      */
-    private Cache<String, byte[]> componentsCache;
+    private Cache<String, Set<byte[]>> componentsCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
@@ -98,7 +98,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
         String address = destination.getAddress().getDomain();
         localRoutingTable.addRoute(address, destination);
-        componentsCache.put(address, server.getNodeID());
+        Lock lock = LockManager.getLock(address + "rt");
+        try {
+            lock.lock();
+            Set<byte[]> nodes = componentsCache.get(address);
+            if (nodes == null) {
+                nodes = new HashSet<byte[]>();
+            }
+            nodes.add(server.getNodeID());
+            componentsCache.put(address, nodes);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void addClientRoute(JID route, LocalClientSession destination) {
@@ -213,21 +224,41 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
         else if (jid.getDomain().contains(serverName)) {
             // Packet sent to component hosted in this server
-            byte[] nodeID = componentsCache.get(jid.getDomain());
-            if (nodeID != null) {
-                if (Arrays.equals(nodeID, server.getNodeID())) {
-                    // This is a route to a local component hosted in this node
-                    try {
-                        localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                        routed = true;
-                    } catch (UnauthorizedException e) {
-                        Log.error(e);
-                    }
+            // First check if the component is being hosted in this JVM
+            RoutableChannelHandler route = localRoutingTable.getRoute(jid.getDomain());
+            if (route != null) {
+                try {
+                    route.process(packet);
+                    routed = true;
+                } catch (UnauthorizedException e) {
+                    Log.error(e);
                 }
-                else {
-                    // This is a route to a local component hosted in other node
-                    if (remotePacketRouter != null) {
-                        routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+            }
+            else {
+                // Check if other cluster nodes are hosting this component
+                Set<byte[]> nodes = componentsCache.get(jid.getDomain());
+                if (nodes != null) {
+                    for (byte[] nodeID : nodes) {
+                        if (Arrays.equals(nodeID, server.getNodeID())) {
+                            // This is a route to a local component hosted in this node (route
+                            // could have been added after our previous check)
+                            try {
+                                localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                                routed = true;
+                                break;
+                            } catch (UnauthorizedException e) {
+                                Log.error(e);
+                            }
+                        }
+                        else {
+                            // This is a route to a local component hosted in other node
+                            if (remotePacketRouter != null) {
+                                routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                                if (routed) {
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -526,8 +557,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         }
         else if (route.getDomain().contains(serverName)) {
             // Packet sent to component hosted in this server
-            byte[] nodeID = componentsCache.get(route.getDomain());
-            if (nodeID != null) {
+            if (componentsCache.containsKey(route.getDomain())) {
                 jids.add(route);
             }
         }
@@ -583,7 +613,23 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public boolean removeComponentRoute(JID route) {
         String address = route.getDomain();
-        boolean removed = componentsCache.remove(address) != null;
+        boolean removed = false;
+        Lock lock = LockManager.getLock(address + "rt");
+        try {
+            lock.lock();
+            Set<byte[]> nodes = componentsCache.get(address);
+            if (nodes != null) {
+                removed = nodes.remove(server.getNodeID());
+                if (nodes.isEmpty()) {
+                    componentsCache.remove(address);
+                }
+                else {
+                    componentsCache.put(address, nodes);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
         localRoutingTable.removeRoute(address);
         return removed;
     }

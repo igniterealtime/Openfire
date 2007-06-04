@@ -400,10 +400,10 @@ public class CertificateManager {
         List<X509Certificate> newCerts;
         if (certs.size() == 1) {
             // Reply has only one certificate
-            newCerts = establishCertChain(keyStore, trustStore, certificate, certs.get(0), trustCACerts);
+            newCerts = establishCertChain(keyStore, trustStore, null, certs.get(0), trustCACerts);
         } else {
             // Reply has a chain of certificates
-            newCerts = validateReply(keyStore, trustStore, alias, certificate, certs, trustCACerts, validateRoot);
+            newCerts = validateReply(keyStore, trustStore, alias, null, certs, trustCACerts, validateRoot);
         }
         if (newCerts != null) {
             keyStore.setKeyEntry(alias, privKey, keyPassword.toCharArray(),
@@ -638,20 +638,24 @@ public class CertificateManager {
             throws Exception {
         // order the certs in the reply (bottom-up).
         int i;
-        PublicKey userPubKey = userCert.getPublicKey();
-        for (i = 0; i < replyCerts.size(); i++) {
-            if (userPubKey.equals(replyCerts.get(i).getPublicKey())) {
-                break;
+        X509Certificate tmpCert;
+        if (userCert != null) {
+            PublicKey userPubKey = userCert.getPublicKey();
+            for (i = 0; i < replyCerts.size(); i++) {
+                if (userPubKey.equals(replyCerts.get(i).getPublicKey())) {
+                    break;
+                }
             }
-        }
-        if (i == replyCerts.size()) {
-            throw new Exception(
-                    "Certificate reply does not contain public key for <alias>: " + alias);
+            if (i == replyCerts.size()) {
+                throw new Exception(
+                        "Certificate reply does not contain public key for <alias>: " + alias);
+            }
+
+            tmpCert = replyCerts.get(0);
+            replyCerts.set(0, replyCerts.get(i));
+            replyCerts.set(i, tmpCert);
         }
 
-        X509Certificate tmpCert = replyCerts.get(0);
-        replyCerts.set(0, replyCerts.get(i));
-        replyCerts.set(i, tmpCert);
         Principal issuer = replyCerts.get(0).getIssuerDN();
 
         for (i = 1; i < replyCerts.size() - 1; i++) {

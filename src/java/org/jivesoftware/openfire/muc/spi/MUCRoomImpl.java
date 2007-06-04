@@ -1380,7 +1380,7 @@ public class MUCRoomImpl implements MUCRoom {
             if (reason != null && reason.length() > 0) {
                 Element invite = frag.element("invite");
                 if (invite == null) {
-                    invite.addElement("invite");
+                    invite = frag.addElement("invite");
                 }
                 invite.addElement("reason").setText(reason);
             }

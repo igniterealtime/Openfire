@@ -34,18 +34,39 @@ import java.util.*;
  */
 public class UserManager implements IQResultListener {
 
-    /**
-     * Cache of local users.
-     */
-    private static Cache<String, User> userCache;
-    /**
-     * Cache if a local or remote user exists.
-     */
-    private static Cache<String, Boolean> remoteUsersCache;
-    private static UserProvider provider;
-    private static UserManager instance = new UserManager();
+    // Wrap this guy up so we can mock out the UserManager class.
+    private static class UserManagerContainer {
+        private static UserManager instance = new UserManager();
+    }
 
-    static {
+    /**
+     * Returns the currently-installed UserProvider. <b>Warning:</b> in virtually all
+     * cases the user provider should not be used directly. Instead, the appropriate
+     * methods in UserManager should be called. Direct access to the user provider is
+     * only provided for special-case logic.
+     *
+     * @return the current UserProvider.
+     */
+    public static UserProvider getUserProvider() {
+        return UserManagerContainer.instance.provider;
+    }
+
+    /**
+     * Returns a singleton UserManager instance.
+     *
+     * @return a UserManager instance.
+     */
+    public static UserManager getInstance() {
+        return UserManagerContainer.instance;
+    }
+
+    /** Cache of local users. */
+    private Cache<String, User> userCache;
+    /** Cache if a local or remote user exists. */
+    private Cache<String, Boolean> remoteUsersCache;
+    private UserProvider provider;
+
+    private UserManager() {
         // Initialize caches.
         userCache = CacheFactory.createCache("User");
         remoteUsersCache = CacheFactory.createCache("Remote Users Existence");
@@ -91,30 +112,6 @@ public class UserManager implements IQResultListener {
             }
         };
         UserEventDispatcher.addListener(userListener);
-    }
-
-    /**
-     * Returns the currently-installed UserProvider. <b>Warning:</b> in virtually all
-     * cases the user provider should not be used directly. Instead, the appropriate
-     * methods in UserManager should be called. Direct access to the user provider is
-     * only provided for special-case logic.
-     *
-     * @return the current UserProvider.
-     */
-    public static UserProvider getUserProvider() {
-        return provider;
-    }
-
-    /**
-     * Returns a singleton UserManager instance.
-     *
-     * @return a UserManager instance.
-     */
-    public static UserManager getInstance() {
-        return instance;
-    }
-
-    private UserManager() {
     }
 
     /**
@@ -394,7 +391,7 @@ public class UserManager implements IQResultListener {
         }
     }
 
-    private static void initProvider() {
+    private void initProvider() {
         String className = JiveGlobals.getXMLProperty("provider.user.className",
                 "org.jivesoftware.openfire.user.DefaultUserProvider");
         // Check if we need to reset the provider class

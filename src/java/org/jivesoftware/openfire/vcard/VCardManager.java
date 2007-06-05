@@ -188,6 +188,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      * read-only vCard.
      *
      * @return the vCard of a given user.
+     * @param username the username of the user whose vCard is being retrieved.
      */
     public Element getVCard(String username) {
         Element vCardElement = getOrLoadVCard(username);
@@ -224,6 +225,16 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      */
     public void removeListener(VCardListener listener) {
         listeners.remove(listener);
+    }
+
+    /**
+     * Returns true if vCards are read-only. When vCards are read-only and #setVCard is called an
+     * unsupported operation exception is thrown.
+     * 
+     * @return true if vCards are read-only.
+     */
+    public boolean isReadOnly() {
+        return provider.isReadOnly();
     }
 
     /**

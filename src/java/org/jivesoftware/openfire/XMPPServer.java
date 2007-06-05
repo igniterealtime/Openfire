@@ -1302,6 +1302,16 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the <code>VCardManager</code> registered with this server. The
+     * <code>VCardManager</code> was registered with the server as a module while starting up
+     * the server.
+     * @return the <code>VCardManager</code> registered with this server.
+     */
+    public VCardManager getVCardManager() {
+        return VCardManager.getInstance();
+    }
+
+    /**
      * Returns the <code>InternalComponentManager</code> registered with this server. The
      * <code>InternalComponentManager</code> was registered with the server as a module while starting up
      * the server.

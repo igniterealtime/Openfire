@@ -12,18 +12,16 @@
 package org.jivesoftware.openfire.plugin;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -193,12 +191,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 }
                 return;
             }
-            try {
-                sessionManager.broadcast(message);
-            }
-            catch (UnauthorizedException ue) {
-                Log.error(ue);
-            }
+            sessionManager.broadcast(message);
         }
         // See if the name is a group.
         else {

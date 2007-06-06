@@ -11,7 +11,11 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -37,6 +41,14 @@ import java.util.Collection;
 public interface IncomingServerSession extends Session {
 
     /**
+     * Cache (unlimited, never expire) that holds domains, subdomains and virtual
+     * hostnames of the remote server that were validated with this server for each
+     * incoming server session.
+     * Key: stream ID, Value: Domains and subdomains of the remote server that were
+     * validated with this server.
+     */
+    static Cache<String, Set<String>> validatedDomainsCache = CacheFactory.createCache("Validated Domains");
+    /**
      * Returns a collection with all the domains, subdomains and virtual hosts that where
      * validated. The remote server is allowed to send packets from any of these domains,
      * subdomains and virtual hosts.
@@ -55,5 +67,4 @@ public interface IncomingServerSession extends Session {
      *         when validating the session.
      */
     public String getLocalDomain();
-
 }

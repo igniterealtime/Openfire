@@ -301,6 +301,15 @@ public interface RoutingTable {
     void setRemotePacketRouter(RemotePacketRouter remotePacketRouter);
 
     /**
+     * Returns the {@link RemotePacketRouter} to use for deliverying packets to entities hosted
+     * in remote nodes of the cluster or <tt>null</tt> if none was set.
+     *
+     * @return the RemotePacketRouter to use for deliverying packets to entities hosted
+     *        in remote nodes of the cluster.
+     */
+    RemotePacketRouter getRemotePacketRouter();
+
+    /**
      * Broadcasts the specified message to connected client sessions to the local node or
      * across the cluster. Both available and unavailable client sessions will receive the message.
      *

@@ -15,6 +15,8 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
@@ -57,7 +59,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Gaston Dombiak
  */
 public class MultiUserChatServerImpl extends BasicModule implements MultiUserChatServer,
-        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler {
+        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, RoutableChannelHandler, ClusterEventListener {
 
     private static final FastDateFormat dateFormatter = FastDateFormat
             .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
@@ -533,7 +535,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return user;
     }
 
-    public void serverBroadcast(String msg) throws UnauthorizedException {
+    public void serverBroadcast(String msg) {
         for (MUCRoom room : rooms.values()) {
             room.serverBroadcast(msg);
         }
@@ -796,6 +798,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         router = server.getPacketRouter();
         // Configure the handler of iq:register packets
         registerHandler = new IQMUCRegisterHandler(this);
+        // Listen to cluster events
+        ClusterManager.addListener(this);
     }
 
     public void start() {
@@ -834,7 +838,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
     }
 
-    public void enableService(boolean enabled) {
+    public void enableService(boolean enabled, boolean persistent) {
         if (isServiceEnabled() == enabled) {
             // Do nothing if the service status has not changed
             return;
@@ -846,7 +850,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // Stop the service/module
             stop();
         }
-        JiveGlobals.setProperty("xmpp.muc.enabled", Boolean.toString(enabled));
+        if (persistent) {
+            JiveGlobals.setProperty("xmpp.muc.enabled", Boolean.toString(enabled));
+        }
         serviceEnabled = enabled;
         if (enabled) {
             // Start the service/module
@@ -915,6 +921,21 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         // Increment counter of outgoing messages with the number of room occupants
         // that received the message
         outMessages.addAndGet(numOccupants);
+    }
+
+    public void joinedCluster() {
+        // Disable the service until we know that we are the senior cluster member
+        enableService(false, false);
+    }
+
+    public void leftCluster() {
+        // Offer the service when not running in a cluster
+        enableService(true, false);
+    }
+
+    public void markedAsSeniorClusterMember() {
+        // Offer the service since we are the senior cluster member
+        enableService(true, false);
     }
 
     public Iterator<DiscoServerItem> getItems() {

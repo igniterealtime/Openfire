@@ -17,6 +17,8 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
@@ -45,7 +47,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Tucker
  */
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
-        DiscoItemsProvider, RoutableChannelHandler, PubSubService {
+        DiscoItemsProvider, RoutableChannelHandler, PubSubService, ClusterEventListener {
 
     /**
      * the chat service's hostname
@@ -107,6 +109,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Private component that actually performs the pubsub work.
      */
     private PubSubEngine engine = null;
+
+    /**
+     * Flag that indicates if the service is enabled.
+     */
+    private boolean serviceEnabled = true;
 
     public PubSubModule() {
         super("Publish Subscribe Service");
@@ -386,6 +393,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         else {
             rootCollectionNode = (CollectionNode) getNode(rootNodeID);
         }
+        // Listen to cluster events
+        ClusterManager.addListener(this);
     }
 
     public void start() {
@@ -407,6 +416,42 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Stop the pubsub engine. This will gives us the chance to
         // save queued items to the database.
         engine.shutdown();
+    }
+
+    private void enableService(boolean enabled) {
+        if (serviceEnabled == enabled) {
+            // Do nothing if the service status has not changed
+            return;
+        }
+        XMPPServer server = XMPPServer.getInstance();
+        if (!enabled) {
+            // Disable disco information
+            server.getIQDiscoItemsHandler().removeServerItemsProvider(this);
+            // Stop the service/module
+            stop();
+        }
+        serviceEnabled = enabled;
+        if (enabled) {
+            // Start the service/module
+            start();
+            // Enable disco information
+            server.getIQDiscoItemsHandler().addServerItemsProvider(this);
+        }
+    }
+
+    public void joinedCluster() {
+        // Disable the service until we know that we are the senior cluster member
+        enableService(false);
+    }
+
+    public void leftCluster() {
+        // Offer the service when not running in a cluster
+        enableService(true);
+    }
+
+    public void markedAsSeniorClusterMember() {
+        // Offer the service since we are the senior cluster member
+        enableService(true);
     }
 
     public Iterator<DiscoServerItem> getItems() {

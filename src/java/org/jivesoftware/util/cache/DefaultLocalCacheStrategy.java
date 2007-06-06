@@ -74,6 +74,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Incoming Server Sessions", "incServerSessions");
         cacheNames.put("Sessions by Hostname", "sessionsHostname");
         cacheNames.put("Secret Keys Cache", "secretKeys");
+        cacheNames.put("Validated Domains", "validatedDomains");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
@@ -125,6 +126,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.sessionsHostname.expirationTime", -1l);
         cacheProps.put("cache.secretKeys.size", -1l);
         cacheProps.put("cache.secretKeys.expirationTime", -1l);
+        cacheProps.put("cache.validatedDomains.size", -1l);
+        cacheProps.put("cache.validatedDomains.expirationTime", -1l);
     }
 
 
@@ -155,7 +158,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     public boolean doClusterTask(ClusterTask task, byte[] nodeID) {
-        return false;
+        throw new IllegalStateException("Cluster service is not available");
     }
 
     public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
@@ -163,7 +166,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
-        return null;
+        throw new IllegalStateException("Cluster service is not available");
     }
 
     public void updateCacheStats(Map<String, Cache> caches) {

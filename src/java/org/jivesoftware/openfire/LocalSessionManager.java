@@ -87,7 +87,7 @@ class LocalSessionManager {
         return connnectionManagerSessions;
     }
 
-    public LocalIncomingServerSession getIncomingServerSessions(String streamID) {
+    public LocalIncomingServerSession getIncomingServerSession(String streamID) {
         return incomingServerSessions.get(streamID);
     }
 

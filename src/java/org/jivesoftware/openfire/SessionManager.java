@@ -421,11 +421,12 @@ public class SessionManager extends BasicModule {
      * @param hostname the hostname that is being served by the remote server.
      * @param session the session to unregiser.
      */
-    private void unregisterIncomingServerSession(String hostname, IncomingServerSession session) {
+    public void unregisterIncomingServerSession(String hostname, IncomingServerSession session) {
         // Remove local track of the incoming server session connected to this JVM
         localSessionManager.removeIncomingServerSessions(session.getStreamID().getID());
         // Remove track of the nodeID hosting the incoming server session
         incomingServerSessionsCache.remove(session.getStreamID().getID());
+
         // Remove from list of sockets/sessions coming from the remote hostname
         Lock lock = LockManager.getLock(hostname);
         try {
@@ -690,6 +691,16 @@ public class SessionManager extends BasicModule {
     }
 
     /**
+     * Returns the incoming server session hosted by this JVM that matches the specified stream ID.
+     *
+     * @param streamID the stream ID that identifies the incoming server session hosted by this JVM.
+     * @return the incoming server session hosted by this JVM or null if none was found.
+     */
+    public LocalIncomingServerSession getIncomingServerSession(String streamID) {
+        return localSessionManager.getIncomingServerSession(streamID);
+    }
+
+    /**
      * Returns the list of sessions that were originated by a remote server. The list will be
      * ordered chronologically.  IncomingServerSession can only receive packets from the remote
      * server but are not capable of sending packets to the remote server.
@@ -717,7 +728,7 @@ public class SessionManager extends BasicModule {
             List<IncomingServerSession> sessions = new ArrayList<IncomingServerSession>();
             for (String streamID : streamIDs) {
                 // Search in local hosted sessions
-                IncomingServerSession session = localSessionManager.getIncomingServerSessions(streamID);
+                IncomingServerSession session = localSessionManager.getIncomingServerSession(streamID);
                 RemoteSessionLocator locator = server.getRemoteSessionLocator();
                 if (session == null && locator != null) {
                     // Get the node hosting this session
@@ -900,9 +911,32 @@ public class SessionManager extends BasicModule {
             return false;
         }
 
-        // Remove route to the removed session (anonymous or not)
         boolean anonymous = session.getAuthToken().isAnonymous();
-        boolean removed = routingTable.removeClientRoute(session.getAddress());
+        return removeSession(session, session.getAddress(), anonymous, false);
+    }
+
+    /**
+     * Removes a session.
+     *
+     * @param session the session or null when session is derived from fullJID.
+     * @param fullJID the address of the session.
+     * @param anonymous true if the authenticated user is anonymous.
+     * @param forceUnavailable true if an unavailable presence must be created and routed.
+     * @return true if the requested session was successfully removed.
+     */
+    public boolean removeSession(ClientSession session, JID fullJID, boolean anonymous, boolean forceUnavailable) {
+        // Do nothing if server is shutting down. Note: When the server
+        // is shutting down the serverName will be null.
+        if (serverName == null) {
+            return false;
+        }
+
+        if (session == null) {
+            session = getSession(fullJID);
+        }
+
+        // Remove route to the removed session (anonymous or not)
+        boolean removed = routingTable.removeClientRoute(fullJID);
 
         if (removed) {
             // Fire session event.
@@ -918,12 +952,11 @@ public class SessionManager extends BasicModule {
 
         // Remove the session from the pre-Authenticated sessions list (if present)
         boolean preauth_removed =
-                localSessionManager.getPreAuthenticatedSessions().remove(session.getAddress().getResource()) != null;
+                localSessionManager.getPreAuthenticatedSessions().remove(fullJID.getResource()) != null;
         // If the user is still available then send an unavailable presence
-        Presence presence = session.getPresence();
-        if (presence.isAvailable()) {
+        if (forceUnavailable || session.getPresence().isAvailable()) {
             Presence offline = new Presence();
-            offline.setFrom(session.getAddress());
+            offline.setFrom(fullJID);
             offline.setTo(new JID(null, serverName, null, true));
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
@@ -1042,6 +1075,7 @@ public class SessionManager extends BasicModule {
             for (String hostname : session.getValidatedDomains()) {
                 unregisterIncomingServerSession(hostname, session);
             }
+            LocalIncomingServerSession.releaseValidatedDomains(session.getStreamID().getID());
         }
     }
 

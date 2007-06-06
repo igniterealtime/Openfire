@@ -65,6 +65,26 @@ public interface ClientSession extends Session {
     public String getUsername() throws UserNotFoundException;
 
     /**
+     * Flag indicating if this session has been initialized once coming
+     * online. Session initialization occurs after the session receives
+     * the first "available" presence update from the client. Initialization
+     * actions include pushing offline messages, presence subscription requests,
+     * and presence statuses to the client. Initialization occurs only once
+     * following the first available presence transition.
+     *
+     * @return True if the session has already been initializsed
+     */
+    public boolean isInitialized();
+
+    /**
+     * Sets the initialization state of the session.
+     *
+     * @param isInit True if the session has been initialized
+     * @see #isInitialized
+     */
+    public void setInitialized(boolean isInit);
+
+    /**
      * Returns true if the offline messages of the user should be sent to the user when
      * the user becomes online. If the user sent a disco request with node
      * "http://jabber.org/protocol/offline" before the available presence then do not

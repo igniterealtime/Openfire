@@ -11,7 +11,6 @@
 
 package org.jivesoftware.openfire.muc;
 
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
@@ -258,7 +257,7 @@ public interface MultiUserChatServer extends Component {
      * 
      * @param msg The message to broadcast.
      */
-    void serverBroadcast(String msg) throws UnauthorizedException;
+    void serverBroadcast(String msg);
 
     /**
      * Returns the total chat time of all rooms combined.
@@ -297,11 +296,12 @@ public interface MultiUserChatServer extends Component {
      * the disco#items list. Moreover, service discovery features will be disabled. 
      *
      * @param enabled true if the service is enabled.
+     * @param persistent true if the new setting will persist accorss restarts.
      */
-    void enableService(boolean enabled);
+    void enableService(boolean enabled, boolean persistent);
 
     /**
-     * Returns true if the MUC service is available. Use {@link #enableService(boolean)} to
+     * Returns true if the MUC service is available. Use {@link #enableService(boolean, boolean)} to
      * enable or disable the service.
      *
      * @return true if the MUC service is available.

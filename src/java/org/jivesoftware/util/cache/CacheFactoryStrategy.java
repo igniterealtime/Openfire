@@ -99,6 +99,7 @@ public interface CacheFactoryStrategy {
      * @param task        the ClusterTask object to be invoked on a given cluster member.
      * @param nodeID      the byte array that identifies the target cluster member.
      * @return result of remote operation or null if operation failed or operation returned null.
+     * @throws IllegalStateException if requested node was not found.
      */
     Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID);
 

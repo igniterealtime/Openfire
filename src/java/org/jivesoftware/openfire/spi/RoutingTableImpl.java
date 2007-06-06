@@ -50,8 +50,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
      */
     private Cache<String, byte[]> serversCache;
     /**
-     * Cache (unlimited, never expire) that holds sessions of external components connected to the server.
-     * Key: component domain, Value: nodeID
+     * Cache (unlimited, never expire) that holds components connected to the server.
+     * Key: component domain, Value: list of nodeIDs hosting the component
      */
     private Cache<String, Set<byte[]>> componentsCache;
     /**
@@ -636,6 +636,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public void setRemotePacketRouter(RemotePacketRouter remotePacketRouter) {
         this.remotePacketRouter = remotePacketRouter;
+    }
+
+    public RemotePacketRouter getRemotePacketRouter() {
+        return remotePacketRouter;
     }
 
     public void initialize(XMPPServer server) {

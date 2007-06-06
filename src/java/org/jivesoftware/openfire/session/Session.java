@@ -67,6 +67,13 @@ public interface Session extends RoutableChannelHandler {
     public StreamID getStreamID();
 
     /**
+     * Obtain the name of the server this session belongs to.
+     *
+     * @return the server name.
+     */
+    public String getServerName();
+    
+    /**
      * Obtain the date the session was created.
      *
      * @return the session's creation date.

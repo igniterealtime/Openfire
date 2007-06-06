@@ -9,6 +9,7 @@ package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -33,7 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class CacheFactory {
 
-    public static String CLUSTER_PROPERTY_NAME = "cache.clustering.enabled";
     public static String LOCAL_CACHE_PROPERTY_NAME = "cache.clustering.local.class";
     public static String CLUSTERED_CACHE_PROPERTY_NAME = "cache.clustering.clustered.class";
 
@@ -122,15 +122,6 @@ public class CacheFactory {
     }
 
     /**
-     * Returns true if this instance is configured to run in a cluster.
-     * @return true if this instance is configured to run in a cluster.
-     */
-    public static boolean isClusteringConfigured() {
-        return JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME, false);
-
-    }
-
-    /**
      * Returns a byte[] that uniquely identifies this member within the cluster or <tt>null</tt>
      * when not in a cluster.
      *
@@ -151,7 +142,7 @@ public class CacheFactory {
         if (enabled == clusteringStarted) {
             return;
         }
-        JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, String.valueOf(enabled));
+        ClusterManager.setClusteringEnabled(enabled);
         if (!enabled) {
             stopClustering();
         }
@@ -212,19 +203,19 @@ public class CacheFactory {
      *
      * @param task the task to be invoked on the specified cluster member.
      * @param nodeID the byte array that identifies the target cluster member.
-     * @return false if not in a cluster or specified cluster node was not found.
+     * @throws IllegalStateException if requested node was not found or not running in a cluster. 
      */
-    public static boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
+    public static void doClusterTask(final ClusterTask task, byte[] nodeID) {
         if (!clusteringStarted) {
-            return false;
+            throw new IllegalStateException("Cluster service is not available");
         }
         synchronized(CacheFactory.class) {
             if (!clusteringStarted) {
-                return false;
+                throw new IllegalStateException("Cluster service is not available");
             }
         }
 
-        return cacheFactoryStrategy.doClusterTask(task, nodeID);
+        cacheFactoryStrategy.doClusterTask(task, nodeID);
     }
 
     /**
@@ -254,11 +245,12 @@ public class CacheFactory {
      * @param task        the ClusterTask object to be invoked on a given cluster member.
      * @param nodeID      the byte array that identifies the target cluster member.
      * @return result of remote operation or null if operation failed or operation returned null.
+     * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */
     public static Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
         synchronized(CacheFactory.class) {
             if (!clusteringStarted) {
-                return null;
+                throw new IllegalStateException("Cluster service is not available");
             }
         }
 
@@ -280,7 +272,7 @@ public class CacheFactory {
             return;
         }
         // See if clustering should be enabled.
-        boolean enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME, false);
+        boolean enabled = ClusterManager.isClusteringEnabled();
 
         if (enabled) {
             Log.debug("Shutting down clustered cache service.");
@@ -337,7 +329,7 @@ public class CacheFactory {
             return;
         }
         // See if clustering should be enabled.
-        boolean enabled = JiveGlobals.getXMLProperty(CLUSTER_PROPERTY_NAME, false);
+        boolean enabled = ClusterManager.isClusteringEnabled();
 
         // If the user tried to turn on clustering, make sure they're actually allowed to.
         if (enabled) {

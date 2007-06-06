@@ -19,7 +19,9 @@ import org.jivesoftware.util.lock.LocalLockFactory;
 import org.jivesoftware.util.lock.LockManager;
 
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A cluster manager is responsible for triggering events related to clustering.
@@ -31,6 +33,44 @@ public class ClusterManager {
 
     private static String CLUSTER_PROPERTY_NAME = "cache.clustering.enabled";
     private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
+    private static BlockingQueue<EventType> events = new LinkedBlockingQueue<EventType>();
+
+    static {
+        Thread thread = new Thread("ClusterManager events dispatcher") {
+            public void run() {
+                try {
+                    EventType eventType = events.take();
+                    for (ClusterEventListener listener : listeners) {
+                        try {
+                            switch (eventType) {
+                                case joined_cluster: {
+                                    listener.joinedCluster();
+                                    break;
+                                }
+                                case left_cluster: {
+                                    listener.leftCluster();
+                                    break;
+                                }
+                                case marked_senior_cluster_member: {
+                                    listener.markedAsSeniorClusterMember();
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
+                        }
+                        catch (Exception e) {
+                            Log.error(e);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Log.warn(e);
+                }
+            }
+        };
+        thread.setDaemon(true);
+        thread.start();
+    }
 
     /**
      * Registers a listener to receive events.
@@ -55,34 +95,16 @@ public class ClusterManager {
 
 
     /**
-     * Dispatches an event to all listeners.
+     * Dispatches an event to all listeners. The dispatch will occur in another thread
+     * to avoid potential deadlocks in Coherence.
      *
      * @param eventType the event type.
      */
     public static void dispatchEvent(EventType eventType) {
-        // TODO Dispath events in another thread to prevent deadlocks in coherence 
-        for (ClusterEventListener listener : listeners) {
-            try {
-                switch (eventType) {
-                    case joined_cluster: {
-                        listener.joinedCluster();
-                        break;
-                    }
-                    case left_cluster: {
-                        listener.leftCluster();
-                        break;
-                    }
-                    case marked_senior_cluster_member: {
-                        listener.markedAsSeniorClusterMember();
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
+        try {
+            events.put(eventType);
+        } catch (InterruptedException e) {
+            // Should never happen
         }
     }
 

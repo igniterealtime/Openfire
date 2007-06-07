@@ -14,7 +14,7 @@ import org.xmpp.packet.Packet;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -83,7 +83,7 @@ public abstract class LocalSession implements Session {
         String id = streamID.getID();
         this.address = new JID(null, serverName, id, true);
         this.sessionManager = SessionManager.getInstance();
-        sessionData = new TreeMap<String, Object>();
+        sessionData = new ConcurrentHashMap<String, Object>();
     }
 
     /**

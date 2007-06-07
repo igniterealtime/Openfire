@@ -13,10 +13,7 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
@@ -60,11 +57,41 @@ class LocalRoutingTable {
      *
      * @return the client sessions that are connected to this JVM.
      */
-    Collection<ClientSession> getClientRoutes() {
-        List<ClientSession> sessions = new ArrayList<ClientSession>();
+    Collection<LocalClientSession> getClientRoutes() {
+        List<LocalClientSession> sessions = new ArrayList<LocalClientSession>();
         for (RoutableChannelHandler route : routes.values()) {
-            if (route instanceof ClientSession) {
-                sessions.add((ClientSession) route);
+            if (route instanceof LocalClientSession) {
+                sessions.add((LocalClientSession) route);
+            }
+        }
+        return sessions;
+    }
+
+    /**
+     * Returns the outgoing server sessions that are connected to this JVM.
+     *
+     * @return the outgoing server sessions that are connected to this JVM.
+     */
+    Collection<LocalOutgoingServerSession> getServerRoutes() {
+        List<LocalOutgoingServerSession> sessions = new ArrayList<LocalOutgoingServerSession>();
+        for (RoutableChannelHandler route : routes.values()) {
+            if (route instanceof LocalOutgoingServerSession) {
+                sessions.add((LocalOutgoingServerSession) route);
+            }
+        }
+        return sessions;
+    }
+
+    /**
+     * Returns the external component sessions that are connected to this JVM.
+     *
+     * @return the external component sessions that are connected to this JVM.
+     */
+    Collection<RoutableChannelHandler> getComponentRoute() {
+        List<RoutableChannelHandler> sessions = new ArrayList<RoutableChannelHandler>();
+        for (RoutableChannelHandler route : routes.values()) {
+            if (!(route instanceof LocalOutgoingServerSession || route instanceof LocalClientSession)) {
+                sessions.add(route);
             }
         }
         return sessions;

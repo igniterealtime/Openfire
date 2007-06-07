@@ -923,9 +923,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         outMessages.addAndGet(numOccupants);
     }
 
-    public void joinedCluster() {
+    public void joinedCluster(byte[] oldNodeID) {
         // Disable the service until we know that we are the senior cluster member
         enableService(false, false);
+    }
+
+    public void leavingCluster() {
+        // Do nothing
     }
 
     public void leftCluster() {

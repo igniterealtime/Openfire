@@ -20,7 +20,6 @@ import org.jivesoftware.util.Log;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Creates Cache objects. The returned caches will either be local or clustered
@@ -44,11 +43,6 @@ public class CacheFactory {
      */
     private static Map<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
 
-    /**
-     * List of registered listeners to be notified when clustering is enabled or disabled.
-     */
-    private static List<ClusteringListener> listeners = new CopyOnWriteArrayList<ClusteringListener>();
-
     private static String localCacheFactoryClass;
     private static String clusteredCacheFactoryClass;
     private static CacheFactoryStrategy cacheFactoryStrategy;
@@ -67,7 +61,7 @@ public class CacheFactory {
      * Returns an array of all caches in the system.
      * @return an array of all caches in the system.
      */
-    public static synchronized Cache[] getAllCaches() {
+    public static Cache[] getAllCaches() {
         List<Cache> values = new ArrayList<Cache>();
         for (Cache cache : caches.values()) {
             values.add(cache);
@@ -280,26 +274,6 @@ public class CacheFactory {
         }
     }
 
-    public static void addClusteringListener(ClusteringListener listener) {
-        listeners.add(listener);
-    }
-
-    public static void removeClusteringListener(ClusteringListener listener) {
-        listeners.remove(listener);
-    }
-
-    private static void fireClusteringStarted() {
-        for (ClusteringListener listener : listeners) {
-            (listener).clusteringStarted();
-        }
-    }
-
-    private static void fireClusteringStopped() {
-        for (ClusteringListener listener : listeners) {
-            (listener).clusteringStopped();
-        }
-    }
-
     public static synchronized void initialize() throws InitializationException {
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class
@@ -389,30 +363,16 @@ public class CacheFactory {
 
     private static void startClustering() {
         clusteringStarted = false;
-        boolean clusterStarted = false;
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
                     getClusteredCacheStrategyClassLoader("enterprise"))
                     .newInstance();
-            clusterStarted = cacheFactoryStrategy.startCluster();
-            if (clusterStarted) {
-                // Loop through local caches and switch them to clustered cache.
-                for (String cacheName : caches.keySet()) {
-                    CacheWrapper wrapper = (CacheWrapper) caches.get(cacheName);
-                    wrapper.setWrappedCache(cacheFactoryStrategy.createCache(cacheName));
-                }
-
-                clusteringStarted = true;
-                // Set the ID of this cluster node
-                XMPPServer.getInstance().setNodeID(CacheFactory.getClusterMemberID());
-                // Fire event that cluster has been started
-                fireClusteringStarted();
-            }
+            clusteringStarted = cacheFactoryStrategy.startCluster();
         }
         catch (Exception e) {
             Log.error("Unable to start clustering - continuing in local mode", e);
         }
-        if (!clusterStarted) {
+        if (!clusteringStarted) {
             // Revert to local cache factory if cluster fails to start
             try {
                 cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
@@ -428,35 +388,39 @@ public class CacheFactory {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass)
                     .newInstance();
 
-            // Loop through clustered caches and change them to local caches.
-            for (String cacheName : caches.keySet()) {
-                CacheWrapper wrapper = (CacheWrapper) caches.get(cacheName);
-                wrapper.setWrappedCache(cacheFactoryStrategy.createCache(cacheName));
-            }
-
             clusteringStarted = false;
             // Reset the node ID
             XMPPServer.getInstance().setNodeID(null);
 
             // Stop the cluster
             clusteredFactory.stopCluster();
-            // Fire event that cluster has been stopped
-            fireClusteringStopped();
         }
         catch (Exception e) {
             Log.error("Unable to stop clustering - continuing in clustered mode", e);
         }
     }
 
-
     /**
-     * Listener interface for any object which needs to be notified when clustering starts or stops
+     * Notification message indicating that this JVM has joined a cluster.
      */
-    public static interface ClusteringListener {
-
-        public void clusteringStarted();
-
-        public void clusteringStopped();
+    public static void joinedCluster() {
+        // Loop through local caches and switch them to clustered cache (migrate content)
+        for (Cache cache : getAllCaches()) {
+            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+            Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+            cacheWrapper.setWrappedCache(clusteredCache);
+        }
     }
 
+    /**
+     * Notification message indicating that this JVM has left the cluster.
+     */
+    public static void leftCluster() {
+        // Loop through clustered caches and change them to local caches (migrate content)
+        for (Cache cache : getAllCaches()) {
+            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+            Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+            cacheWrapper.setWrappedCache(standaloneCache);
+        }
+    }
 }

@@ -439,9 +439,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
     }
 
-    public void joinedCluster() {
+    public void joinedCluster(byte[] oldNodeID) {
         // Disable the service until we know that we are the senior cluster member
         enableService(false);
+    }
+
+    public void leavingCluster() {
+        // Do nothing
     }
 
     public void leftCluster() {

@@ -20,14 +20,32 @@ package org.jivesoftware.openfire.cluster;
 public interface ClusterEventListener {
 
     /**
-     * Notification event indication that this JVM is now part of a cluster. The
-     * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} will now return
-     * a new value.<p>
+     * Notification event indicating that this JVM is now part of a cluster. At this point the
+     * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} holds the new nodeID value.<p>
      *
      * When joining the cluster as the senior cluster member the {@link #markedAsSeniorClusterMember()}
-     * event will be sent right after this event.
+     * event will be sent right after this event.<p>
+     *
+     * At this point the CacheFactory holds clustered caches. That means that modifications
+     * to the caches will be reflected in the cluster. The clustered caches were just
+     * obtained from the cluster and no local cached data was automatically moved.<p>
+     *
+     * @param oldNodeID nodeID used by this JVM before joining the cluster.
      */
-    void joinedCluster();
+    void joinedCluster(byte[] oldNodeID);
+
+    /**
+     * Notification event indicating that this JVM is about to leave the cluster. This could
+     * happen when disabling clustering support, removing the enterprise plugin that provides
+     * clustering support or even shutdown the server.<p>
+     *
+     * At this point the CacheFactory is still holding clustered caches. That means that
+     * modifications to the caches will be reflected in the cluster.<p>
+     *
+     * Use {@link org.jivesoftware.openfire.XMPPServer#isShuttingDown()} to figure out if the
+     * server is being shutdown.
+     */
+    void leavingCluster();
 
     /**
      * Notification event indicating that this JVM is no longer part of the cluster. This could
@@ -39,7 +57,10 @@ public interface ClusterEventListener {
      * get the <tt>left cluster event</tt> and <tt>joined cluster events</tt>. That means that
      * caches will be reset and thus will need to be repopulated again with fresh data from this JVM.
      * This also includes the case where this JVM was the senior cluster member and when the islands
-     * met again then this JVM stopped being the senior member.
+     * met again then this JVM stopped being the senior member.<p>
+     *
+     * At this point the CacheFactory holds local caches. That means that modifications to
+     * the caches will only affect this JVM.
      */
     void leftCluster();
 
@@ -52,7 +73,7 @@ public interface ClusterEventListener {
      * island will have its own senior cluster member. However, when the islands meet again there
      * could only be one senior cluster member so one of the senior cluster members will stop playing
      * that role. When that happens the JVM no longer playing that role will receive the
-     * {@link #leftCluster()} and {@link #joinedCluster()} events.
+     * {@link #leftCluster()} and {@link #joinedCluster(byte[])} events.
      */
     void markedAsSeniorClusterMember();
 }

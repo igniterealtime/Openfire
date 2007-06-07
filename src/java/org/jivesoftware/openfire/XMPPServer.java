@@ -131,6 +131,7 @@ public class XMPPServer {
             "org.jivesoftware.openfire.starter.ServerStarter";
     private static final String WRAPPER_CLASSNAME =
             "org.tanukisoftware.wrapper.WrapperManager";
+    private boolean shuttingDown;
 
     /**
      * Returns a singleton instance of XMPPServer.
@@ -877,6 +878,7 @@ public class XMPPServer {
      * Makes a best effort attempt to shutdown the server
      */
     private void shutdownServer() {
+        shuttingDown = true;
         // Notify server listeners that the server is about to be stopped
         for (XMPPServerListener listener : listeners) {
             listener.serverStopping();
@@ -902,6 +904,15 @@ public class XMPPServer {
         DbConnectionManager.destroyConnectionProvider();
         // hack to allow safe stopping
         Log.info("Openfire stopped");
+    }
+
+    /**
+     * Returns true if the server is being shutdown.
+     *
+     * @return true if the server is being shutdown.
+     */
+    public boolean isShuttingDown() {
+        return shuttingDown;
     }
 
     /**

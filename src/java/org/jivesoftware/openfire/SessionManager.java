@@ -46,6 +46,10 @@ import java.util.concurrent.locks.Lock;
  */
 public class SessionManager extends BasicModule {
 
+    public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
+    public static final String CM_CACHE_NAME = "Connection Managers Sessions";
+    public static final String ISS_CACHE_NAME = "Incoming Server Sessions";
+
     public static final int NEVER_KICK = -1;
 
     private XMPPServer server;
@@ -1149,9 +1153,9 @@ public class SessionManager extends BasicModule {
 
         // Initialize caches.
         countersCache = CacheFactory.createCache("Session Manager Counters");
-        componentSessionsCache = CacheFactory.createCache("Components Sessions");
-        multiplexerSessionsCache = CacheFactory.createCache("Connection Managers Sessions");
-        incomingServerSessionsCache = CacheFactory.createCache("Incoming Server Sessions");
+        componentSessionsCache = CacheFactory.createCache(COMPONENT_SESSION_CACHE_NAME);
+        multiplexerSessionsCache = CacheFactory.createCache(CM_CACHE_NAME);
+        incomingServerSessionsCache = CacheFactory.createCache(ISS_CACHE_NAME);
         hostnameSessionsCache = CacheFactory.createCache("Sessions by Hostname");
     }
 

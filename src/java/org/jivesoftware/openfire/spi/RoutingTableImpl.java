@@ -13,7 +13,10 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
@@ -42,7 +45,12 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Gaston Dombiak
  */
-public class RoutingTableImpl extends BasicModule implements RoutingTable {
+public class RoutingTableImpl extends BasicModule implements RoutingTable, ClusterEventListener {
+
+    public static final String C2S_CACHE_NAME = "Routing Users Cache";
+    public static final String ANONYMOUS_C2S_CACHE_NAME = "Routing AnonymousUsers Cache";
+    public static final String S2S_CACHE_NAME = "Routing Servers Cache";
+    public static final String COMPONENT_CACHE_NAME = "Routing Components Cache";
 
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
@@ -69,7 +77,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
      * (includes anonymous).
      * Key: bare JID, Value: list of full JIDs of the user
      */
-    private Cache<String, List<String>> usersSessions;
+    private Cache<String, Collection<String>> usersSessions;
 
     private String serverName;
     private XMPPServer server;
@@ -81,10 +89,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
 
     public RoutingTableImpl() {
         super("Routing table");
-        serversCache = CacheFactory.createCache("Routing Servers Cache");
-        componentsCache = CacheFactory.createCache("Routing Components Cache");
-        usersCache = CacheFactory.createCache("Routing Users Cache");
-        anonymousUsersCache = CacheFactory.createCache("Routing AnonymousUsers Cache");
+        serversCache = CacheFactory.createCache(S2S_CACHE_NAME);
+        componentsCache = CacheFactory.createCache(COMPONENT_CACHE_NAME);
+        usersCache = CacheFactory.createCache(C2S_CACHE_NAME);
+        anonymousUsersCache = CacheFactory.createCache(ANONYMOUS_C2S_CACHE_NAME);
         usersSessions = CacheFactory.createCache("Routing User Sessions");
         localRoutingTable = new LocalRoutingTable();
     }
@@ -137,9 +145,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                 Lock lock = LockManager.getLock(route.toBareJID());
                 try {
                     lock.lock();
-                    List<String> jids = usersSessions.get(route.toBareJID());
+                    Collection<String> jids = usersSessions.get(route.toBareJID());
                     if (jids == null) {
-                        jids = new ArrayList<String>();
+                        jids = new HashSet<String>();
                     }
                     jids.add(route.toString());
                     usersSessions.put(route.toBareJID(), jids);
@@ -540,7 +548,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
             }
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
-                List<String> sessions = usersSessions.get(route.toBareJID());
+                Collection<String> sessions = usersSessions.get(route.toBareJID());
                 if (sessions != null) {
                     // Select only available sessions
                     for (String jid : sessions) {
@@ -584,7 +592,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
                     usersSessions.remove(route.toBareJID());
                 }
                 else {
-                    List<String> jids = usersSessions.get(route.toBareJID());
+                    Collection<String> jids = usersSessions.get(route.toBareJID());
                     if (jids != null) {
                         jids.remove(route.toString());
                         if (!jids.isEmpty()) {
@@ -649,6 +657,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
         iqRouter = server.getIQRouter();
         messageRouter = server.getMessageRouter();
         presenceRouter = server.getPresenceRouter();
+        // Listen to cluster events
+        ClusterManager.addListener(this);
     }
 
     public void start() throws IllegalStateException {
@@ -659,5 +669,61 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable {
     public void stop() {
         super.stop();
         localRoutingTable.stop();
+    }
+
+    public void joinedCluster(byte[] oldNodeID) {
+        // Add outgoing server sessions hosted locally to the cache (using new nodeID)
+        for (LocalOutgoingServerSession session : localRoutingTable.getServerRoutes()) {
+            addServerRoute(session.getAddress(), session);
+        }
+
+        // Add component sessions hosted locally to the cache (using new nodeID) and remove traces to old nodeID
+        for (RoutableChannelHandler route : localRoutingTable.getComponentRoute()) {
+            addComponentRoute(route.getAddress(), route);
+        }
+
+        // Add client sessions hosted locally to the cache (using new nodeID)
+        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+            addClientRoute(session.getAddress(), session);
+        }
+
+        // Broadcast presence of local sessions to remote sessions when subscribed to presence
+        // Probe presences of remote sessions when subscribed to presence of local session
+        // Send pending subscription requests to local sessions from remote sessions
+        // Deliver offline messages sent to local sessions that were unavailable in other nodes
+        // Send available presences of local sessions to other resources of the same user
+        PresenceUpdateHandler presenceUpdateHandler = XMPPServer.getInstance().getPresenceUpdateHandler();
+        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+            // Simulate that the local session has just became available
+            session.setInitialized(false);
+            // Simulate that current session presence has just been received
+            presenceUpdateHandler.process(session.getPresence());
+        }
+    }
+
+    public void leavingCluster() {
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do nothing since local sessions will be closed. Local session manager
+            // and local routing table will be correctly updated thus updating the
+            // other cluster nodes correctly
+        }
+        else {
+            // This JVM is leaving the cluster but will continue to work. That means
+            // that clients connected to this JVM will be able to keep talking.
+            // In other words, their sessions will not be closed (and not removed from
+            // the routing table or the session manager). However, other nodes should
+            // get their routing tables correctly updated.
+            // TODO Implement this. Remove local sessions from caches
+        }
+    }
+
+    public void leftCluster() {
+        if (!XMPPServer.getInstance().isShuttingDown()) {
+            // TODO Implement this. Add local sessions to caches
+        }
+    }
+
+    public void markedAsSeniorClusterMember() {
+        // Do nothing
     }
 }

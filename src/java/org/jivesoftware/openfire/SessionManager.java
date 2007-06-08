@@ -899,6 +899,7 @@ public class SessionManager extends BasicModule {
     public void userBroadcast(String username, Packet packet) throws PacketException {
         // TODO broadcast to ALL sessions of the user and not only available
         for (JID address : routingTable.getRoutes(new JID(username, serverName, null))) {
+            packet.setTo(address);
             routingTable.routePacket(address, packet);
         }
     }

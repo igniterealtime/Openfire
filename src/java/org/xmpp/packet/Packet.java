@@ -69,15 +69,27 @@ public abstract class Packet {
         // Apply stringprep profiles to the "to" and "from" values.
         String to = element.attributeValue("to");
         if (to != null) {
-            String[] parts = JID.getParts(to);
-            toJID = new JID(parts[0], parts[1], parts[2], skipValidation);
-            element.addAttribute("to",  toJID.toString());
+            if (to.length() == 0) {
+                // Remove empty TO values
+                element.addAttribute("to", null);
+            }
+            else {
+                String[] parts = JID.getParts(to);
+                toJID = new JID(parts[0], parts[1], parts[2], skipValidation);
+                element.addAttribute("to", toJID.toString());
+            }
         }
         String from = element.attributeValue("from");
         if (from != null) {
-            String[] parts = JID.getParts(from);
-            fromJID = new JID(parts[0], parts[1], parts[2], true);
-            element.addAttribute("from",  fromJID.toString());
+            if (from.length() == 0) {
+                // Remove empty FROM values
+                element.addAttribute("from", null);
+            }
+            else {
+                String[] parts = JID.getParts(from);
+                fromJID = new JID(parts[0], parts[1], parts[2], true);
+                element.addAttribute("from", fromJID.toString());
+            }
         }
     }
 
@@ -119,7 +131,7 @@ public abstract class Packet {
      */
     public JID getTo() {
         String to = element.attributeValue("to");
-        if (to == null) {
+        if (to == null || to.length() == 0) {
             return null;
         }
         else {
@@ -179,7 +191,7 @@ public abstract class Packet {
      */
     public JID getFrom() {
         String from = element.attributeValue("from");
-        if (from == null) {
+        if (from == null || from.length() == 0) {
             return null;
         }
         else {

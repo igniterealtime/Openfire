@@ -193,13 +193,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // Packet sent to local user (full JID)
                 boolean onlyAvailable = true;
                 if (packet instanceof IQ) {
-                    onlyAvailable = packet.getFrom() != null;
+                    onlyAvailable = packet.getFrom() != null && !serverName.equals(packet.getFrom().toString());
                 }
                 else if (packet instanceof Message) {
-                    onlyAvailable = true;
+                    onlyAvailable = packet.getFrom() == null || !serverName.equals(packet.getFrom().toString());
                 }
                 else if (packet instanceof Presence) {
-                    onlyAvailable = true;
+                    onlyAvailable = packet.getFrom() == null || !serverName.equals(packet.getFrom().toString());
                 }
                 ClientRoute clientRoute = usersCache.get(jid.toString());
                 if (clientRoute == null) {

@@ -75,13 +75,14 @@ public class IQvCardHandler extends IQHandler {
         IQ result = IQ.createResultIQ(packet);
         IQ.Type type = packet.getType();
         if (type.equals(IQ.Type.set)) {
-            if(vCardManager.isReadOnly()) {
+            JID userJid = packet.getFrom();
+            if(vCardManager.isReadOnly() || !server.isLocal(userJid)) {
                 result.setChildElement(packet.getChildElement().createCopy());
                 result.setError(PacketError.Condition.not_allowed);
             }
             else {
                 try {
-                    User user = userManager.getUser(packet.getFrom().getNode());
+                    User user = userManager.getUser(userJid.getNode());
                     Element vcard = packet.getChildElement();
                     vCardManager.setVCard(user.getUsername(), vcard);
                 }

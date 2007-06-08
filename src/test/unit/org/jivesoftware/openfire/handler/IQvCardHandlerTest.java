@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 import static org.junit.Assert.*;
 import org.dom4j.Element;
@@ -82,6 +83,31 @@ public class IQvCardHandlerTest {
     }
 
     @Test
+    public void testVCardHandlerSetUserNotLocal() throws UnauthorizedException {
+        IQ vCardSet = new IQ(IQ.Type.set);
+        vCardSet.setFrom("test@example.com");
+        vCardSet.setChildElement("vCard", "vcard-temp");
+
+        final VCardManager vCardManager = context.mock(VCardManager.class);
+
+        IQvCardHandler vCardHandler = new IQvCardHandler();
+        context.checking(new Expectations() {{
+            one(xmppServer).getVCardManager();
+            will(returnValue(vCardManager));
+
+            one(vCardManager).isReadOnly();
+            will(returnValue(false));
+
+            one(xmppServer).isLocal(with(a(JID.class)));
+            will(returnValue(false));
+        }});
+        vCardHandler.initialize(xmppServer);
+
+        IQ result = vCardHandler.handleIQ(vCardSet);
+        assertEquals(result.getType(), IQ.Type.error);
+    }
+
+    @Test
     public void testVCardHandlerSet() throws UnauthorizedException {
         IQ vCardSet = new IQ(IQ.Type.set);
         vCardSet.setFrom("test@test.com");
@@ -97,6 +123,9 @@ public class IQvCardHandlerTest {
 
             one(vCardManager).isReadOnly();
             will(returnValue(false));
+
+            one(xmppServer).isLocal(new JID("test@test.com"));
+            will(returnValue(true));
 
             try {
                 one(userManager).getUser(with(a(String.class)));
@@ -120,4 +149,16 @@ public class IQvCardHandlerTest {
         IQ result = vCardHandler.handleIQ(vCardSet);
         assertEquals(result.getType(), IQ.Type.result);
     }
+//
+//    @Test
+//    public void testVCardHandlerGetNotFound() {
+//        IQ vCardSet = new IQ(IQ.Type.get);
+//        vCardSet.setFrom("test@test.com");
+//        vCardSet.setChildElement("vCard", "vcard-temp");
+//
+//        context.checking(new Expectations(){{
+//            one(xmppServer).isLocal(new JID("test@test.com"));
+//             will(returnValue(true));
+//        }});
+//    }
 }

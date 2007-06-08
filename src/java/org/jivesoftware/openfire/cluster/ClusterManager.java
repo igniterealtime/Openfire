@@ -135,7 +135,7 @@ public class ClusterManager {
             events.put(event);
             if (!asynchronous) {
                 while (!event.isProcessed()) {
-                    Thread.sleep(100);
+                    Thread.sleep(50);
                 }
             }
         } catch (InterruptedException e) {
@@ -171,12 +171,20 @@ public class ClusterManager {
      * This also includes the case where this JVM was the senior cluster member and when the islands
      * met again then this JVM stopped being the senior member.<p>
      * <p/>
-     * This event will be triggered in another thread. This will avoid potential deadlocks
+     * This event could be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
+     *
+     * @param asynchronous true if event will be triggered in background
      */
-    public static void fireLeftCluster() {
+    public static void fireLeftCluster(boolean asynchronous) {
         try {
-            events.put(new Event(EventType.left_cluster, null));
+            Event event = new Event(EventType.left_cluster, null);
+            events.put(event);
+            if (!asynchronous) {
+                while (!event.isProcessed()) {
+                    Thread.sleep(50);
+                }
+            }
         } catch (InterruptedException e) {
             // Should never happen
         }
@@ -191,7 +199,7 @@ public class ClusterManager {
      * island will have its own senior cluster member. However, when the islands meet again there
      * could only be one senior cluster member so one of the senior cluster members will stop playing
      * that role. When that happens the JVM no longer playing that role will receive the
-     * {@link #fireLeftCluster()} and {@link #fireJoinedCluster(byte[],boolean)} events.<p>
+     * {@link #fireLeftCluster(boolean)} and {@link #fireJoinedCluster(byte[],boolean)} events.<p>
      * <p/>
      * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.

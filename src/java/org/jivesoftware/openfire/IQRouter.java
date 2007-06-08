@@ -255,7 +255,7 @@ public class IQRouter extends BasicModule {
                     namespace = childElement.getNamespaceURI();
                 }
                 if (namespace == null) {
-                    if (packet.getType() != IQ.Type.result) {
+                    if (packet.getType() != IQ.Type.result && packet.getType() != IQ.Type.error) {
                         // Do nothing. We can't handle queries outside of a valid namespace
                         Log.warn("Unknown packet " + packet);
                     }

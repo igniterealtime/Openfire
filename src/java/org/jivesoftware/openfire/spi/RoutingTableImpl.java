@@ -173,11 +173,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     public void routePacket(JID jid, Packet packet) throws PacketException {
         boolean routed = false;
-        JID address = packet.getTo();
-        if (address == null) {
-            throw new PacketException("To address cannot be null.");
-        }
-
         if (serverName.equals(jid.getDomain())) {
             if (jid.getResource() == null) {
                 // Packet sent to a bare JID of a user
@@ -191,22 +186,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             else {
                 // Packet sent to local user (full JID)
-                boolean onlyAvailable = true;
-                if (packet instanceof IQ) {
-                    onlyAvailable = packet.getFrom() != null && !serverName.equals(packet.getFrom().toString());
-                }
-                else if (packet instanceof Message) {
-                    onlyAvailable = packet.getFrom() == null || !serverName.equals(packet.getFrom().toString());
-                }
-                else if (packet instanceof Presence) {
-                    onlyAvailable = packet.getFrom() == null || !serverName.equals(packet.getFrom().toString());
-                }
                 ClientRoute clientRoute = usersCache.get(jid.toString());
                 if (clientRoute == null) {
                     clientRoute = anonymousUsersCache.get(jid.toString());
                 }
                 if (clientRoute != null) {
-                    if (onlyAvailable && !clientRoute.isAvailable()) {
+                    if (!clientRoute.isAvailable() && routeOnlyAvailable(packet)) {
                         // Packet should only be sent to available sessions and the route is not available
                         routed = false;
                     }
@@ -314,6 +299,31 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 presenceRouter.routingFailed(jid, packet);
             }
         }
+    }
+
+    /**
+     * Returns true if the specified packet must only be route to available client sessions.
+     *
+     * @param packet the packet to route.
+     * @return true if the specified packet must only be route to available client sessions.
+     */
+    private boolean routeOnlyAvailable(Packet packet) {
+        boolean onlyAvailable = true;
+        JID from = packet.getFrom();
+        boolean hasSender = from != null;
+        if (packet instanceof IQ) {
+            onlyAvailable = hasSender && !(serverName.equals(from.getDomain()) && from.getResource() == null) &&
+                    !componentsCache.containsKey(from.toString());
+        }
+        else if (packet instanceof Message) {
+            onlyAvailable = !hasSender ||
+                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.toString()));
+        }
+        else if (packet instanceof Presence) {
+            onlyAvailable = !hasSender ||
+                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.toString()));
+        }
+        return onlyAvailable;
     }
 
     /**

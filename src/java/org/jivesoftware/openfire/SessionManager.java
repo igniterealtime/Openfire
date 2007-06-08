@@ -12,6 +12,7 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
+import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -915,7 +916,9 @@ public class SessionManager extends BasicModule {
             return false;
         }
 
-        boolean anonymous = session.getAuthToken().isAnonymous();
+        AuthToken authToken = session.getAuthToken();
+        // Consider session anonymous (for this matter) if we are closing a session that never authenticated
+        boolean anonymous = authToken == null || authToken.isAnonymous();
         return removeSession(session, session.getAddress(), anonymous, false);
     }
 

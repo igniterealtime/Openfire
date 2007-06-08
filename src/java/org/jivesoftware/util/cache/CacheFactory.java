@@ -163,11 +163,6 @@ public class CacheFactory {
      * @return true if this cluster member is the senior or if clustering is not enabled.
      */
     public static boolean isSeniorClusterMember() {
-        synchronized(CacheFactory.class) {
-            if (!isClusteringStarted()) {
-                return true;
-            }
-        }
         return cacheFactoryStrategy.isSeniorClusterMember();
     }
 

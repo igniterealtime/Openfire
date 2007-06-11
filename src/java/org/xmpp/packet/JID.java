@@ -42,7 +42,7 @@ public class JID implements Comparable, Serializable, Externalizable {
     // Stringprep operations are very expensive. Therefore, we cache node, domain and
     // resource values that have already had stringprep applied so that we can check
     // incoming values against the cache.
-    private static Map stringprepCache = Collections.synchronizedMap(new Cache(10000));
+    private static Map<String,Object> stringprepCache = Collections.synchronizedMap(new Cache(10000));
 
     private String node;
     private String domain;
@@ -347,7 +347,7 @@ public class JID implements Comparable, Serializable, Externalizable {
                 // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
                 if (this.node != null && this.node.length()*2 > 1023) {
                     throw new IllegalArgumentException("Node cannot be larger than 1023 bytes. " +
-                            "Size is " + (node.length() * 2) + " bytes.");
+                            "Size is " + (this.node.length() * 2) + " bytes.");
                 }
                 stringprepCache.put(this.node, null);
             }
@@ -537,7 +537,7 @@ public class JID implements Comparable, Serializable, Externalizable {
      * A simple cache class that extends LinkedHashMap. It uses an LRU policy to
      * keep the cache at a maximum size.
      */
-    private static class Cache extends LinkedHashMap {
+    private static class Cache extends LinkedHashMap<String,Object> {
 
         private int maxSize;
 

@@ -154,10 +154,6 @@ public class Message extends Packet {
             }
             return;
         }
-        // Do nothing if the new body is null
-        if (body == null) {
-            return;
-        }
         if (bodyElement == null) {
             bodyElement = element.addElement("body");
         }

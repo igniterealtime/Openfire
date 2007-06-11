@@ -37,7 +37,7 @@ import java.util.Map;
  *
  * @author Matt Tucker
  */
-public class JID implements Comparable, Serializable, Externalizable {
+public class JID implements Comparable<JID>, Serializable, Externalizable {
 
     // Stringprep operations are very expensive. Therefore, we cache node, domain and
     // resource values that have already had stringprep applied so that we can check
@@ -497,12 +497,7 @@ public class JID implements Comparable, Serializable, Externalizable {
         return true;
     }
 
-    public int compareTo(Object o) {
-        if (!(o instanceof JID)) {
-            throw new ClassCastException("Ojbect not instanceof JID: " + o);
-        }
-        JID jid = (JID)o;
-
+    public int compareTo(JID jid) {
         // Comparison order is domain, node, resource.
         int compare = domain.compareTo(jid.domain);
         if (compare == 0 && node != null && jid.node != null) {

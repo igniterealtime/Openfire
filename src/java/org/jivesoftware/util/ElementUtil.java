@@ -1,12 +1,9 @@
 package org.jivesoftware.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
 import org.dom4j.Element;
 import org.dom4j.Node;
+
+import java.util.*;
 
 /**
  * <p>We use a simple
@@ -91,44 +88,39 @@ public class ElementUtil {
      * @return true if the specified property is included in the XML hierarchy.
      */
     public static boolean includesProperty(Element element, String name) {
-        String value = null;
+        String[] propName = parsePropertyName(name);
 
-        if (value == null) {
-            String[] propName = parsePropertyName(name);
+        // Grab the attribute if there is one
+        String lastName = propName[propName.length - 1];
+        String attName = null;
+        int attributeIndex = lastName.indexOf(':');
+        if (attributeIndex >= 0) {
+            propName[propName.length - 1] = lastName.substring(0, attributeIndex);
+            attName = lastName.substring(attributeIndex + 1);
+        }
 
-            // Grab the attribute if there is one
-            String lastName = propName[propName.length - 1];
-            String attName = null;
-            int attributeIndex = lastName.indexOf(':');
-            if (attributeIndex >= 0) {
-                propName[propName.length - 1] = lastName.substring(0, attributeIndex);
-                attName = lastName.substring(attributeIndex + 1);
-            }
-
-            // Search for this property by traversing down the XML hierarchy.
-            int i = propName[0].equals(element.getName()) ? 1 : 0;
-            for (; i < propName.length; i++) {
-                element = element.element(propName[i]);
-                if (element == null) {
-                    break;
-                }
-            }
-
-            if (element != null) {
-                if (attName == null){
-                    // The property exists so return true
-                    return true;
-                } else {
-                    // The property exists if the attribute exists in the element
-                    return element.attribute(attName) != null;
-                }
-            }
-            else {
-                // The property does not exist so return false
-                return false;
+        // Search for this property by traversing down the XML hierarchy.
+        int i = propName[0].equals(element.getName()) ? 1 : 0;
+        for (; i < propName.length; i++) {
+            element = element.element(propName[i]);
+            if (element == null) {
+                break;
             }
         }
-        return true;
+
+        if (element != null) {
+            if (attName == null){
+                // The property exists so return true
+                return true;
+            } else {
+                // The property exists if the attribute exists in the element
+                return element.attribute(attName) != null;
+            }
+        }
+        else {
+            // The property does not exist so return false
+            return false;
+        }
     }
 
     /**

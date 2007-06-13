@@ -91,6 +91,10 @@ class LocalSessionManager {
         return incomingServerSessions.get(streamID);
     }
 
+    public Collection<LocalIncomingServerSession> getIncomingServerSessions() {
+        return incomingServerSessions.values();
+    }
+
     public void addIncomingServerSessions(String streamID, LocalIncomingServerSession  session) {
         incomingServerSessions.put(streamID, session);
     }

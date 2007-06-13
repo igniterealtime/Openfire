@@ -22,7 +22,6 @@ import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Packet;
@@ -33,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -57,6 +55,12 @@ import java.util.concurrent.locks.Lock;
  * @author Gaston Dombiak
  */
 public class LocalIncomingServerSession extends LocalSession implements IncomingServerSession {
+    /**
+     * List of domains, subdomains and virtual hostnames of the remote server that were
+     * validated with this server. The remote server is allowed to send packets to this
+     * server from any of the validated domains.
+     */
+    private Set<String> validatedDomains = new HashSet<String>();
 
     /**
      * Domains or subdomain of this server that was used by the remote server
@@ -193,22 +197,6 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         return session;
     }
 
-    /**
-     * Removes the list of validate domains for the specified session. This is usually required
-     * when an incoming server session is closed.
-     *
-     * @param streamID the streamID that identifies the incoming server session. 
-     */
-    public static void releaseValidatedDomains(String streamID) {
-        Lock lock = LockManager.getLock(streamID);
-        try {
-            lock.lock();
-            validatedDomainsCache.remove(streamID);
-        } finally {
-            lock.unlock();
-        }
-    }
-
     public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID) {
         super(serverName, connection, streamID);
     }
@@ -273,18 +261,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
      * @return domains, subdomains and virtual hosts that where validated.
      */
     public Collection<String> getValidatedDomains() {
-        String streamID = getStreamID().getID();
-        Lock lock = LockManager.getLock(streamID);
-        try {
-            lock.lock();
-            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
-            if (validatedDomains == null) {
-                return Collections.emptyList();
-            }
-            return Collections.unmodifiableCollection(validatedDomains);
-        } finally {
-            lock.unlock();
-        }
+        return Collections.unmodifiableCollection(validatedDomains);
     }
 
     /**
@@ -294,24 +271,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
      * @param domain the new validated domain, subdomain or virtual host to add.
      */
     public void addValidatedDomain(String domain) {
-        boolean added;
-        String streamID = getStreamID().getID();
-        Lock lock = LockManager.getLock(streamID);
-        try {
-            lock.lock();
-            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
-            if (validatedDomains == null) {
-                validatedDomains = new HashSet<String>();
-            }
-            added = validatedDomains.add(domain);
-            if (added) {
-                validatedDomainsCache.put(streamID, validatedDomains);
-            }
-        } finally {
-            lock.unlock();
-        }
-
-        if (added) {
+        if (validatedDomains.add(domain)) {
             // Register the new validated domain for this server session in SessionManager
             SessionManager.getInstance().registerIncomingServerSession(domain, this);
         }
@@ -326,27 +286,9 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
      *        validated domains.
      */
     public void removeValidatedDomain(String domain) {
-        String streamID = getStreamID().getID();
-        Lock lock = LockManager.getLock(streamID);
-        try {
-            lock.lock();
-            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
-            if (validatedDomains == null) {
-                validatedDomains = new HashSet<String>();
-            }
-            validatedDomains.remove(domain);
-            if (!validatedDomains.isEmpty()) {
-                validatedDomainsCache.put(streamID, validatedDomains);
-            }
-            else {
-                validatedDomainsCache.remove(streamID);
-            }
-        } finally {
-            lock.unlock();
-        }
-
+        validatedDomains.remove(domain);
         // Unregister the validated domain for this server session in SessionManager
-        SessionManager.getInstance().unregisterIncomingServerSessions(domain);
+        SessionManager.getInstance().unregisterIncomingServerSession(domain, this);
     }
 
     /**

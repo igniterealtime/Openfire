@@ -49,8 +49,9 @@ public interface ClusterEventListener {
 
     /**
      * Notification event indicating that this JVM is no longer part of the cluster. This could
-     * happen when disabling clustering support or removing the enterprise plugin that provides
-     * clustering support.<p>
+     * happen when disabling clustering support, removing the enterprise plugin that provides
+     * clustering support or connection to cluster got lost. If connection to cluster was lost
+     * then this event will not be predated by the {@link #leavingCluster()} event.<p>
      *
      * Moreover, if we were in a "split brain" scenario (ie. separated cluster islands) and the
      * island were this JVM belonged was marked as "old" then all nodes of that island will

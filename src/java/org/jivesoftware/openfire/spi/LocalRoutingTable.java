@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
+import org.xmpp.packet.JID;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -131,6 +132,10 @@ class LocalRoutingTable {
         catch (Exception e) {
             // Ignore.
         }
+    }
+
+    public boolean isLocalRoute(JID jid) {
+        return routes.containsKey(jid.toString());
     }
 
     /**

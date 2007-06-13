@@ -123,7 +123,7 @@ public class ClusterManager {
      * When joining the cluster as the senior cluster member the {@link #fireMarkedAsSeniorClusterMember()}
      * event will be sent right after this event.<p>
      * <p/>
-     * This event could be triggered in another thread. This will avoid potential deadlocks
+     * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
      *
      * @param oldNodeID    nodeID used by this JVM before joining the cluster.
@@ -148,12 +148,17 @@ public class ClusterManager {
      * happen when disabling clustering support, removing the enterprise plugin that provides
      * clustering support or even shutdown the server.<p>
      * <p/>
-     * This event will be triggered in another thread. This will avoid potential deadlocks
-     * in Coherence.
+     * This event will be triggered in another thread but won't return until all listeners have
+     * been alerted. This will give listeners the chance to use the cluster for any clean up
+     * operation before the node actually leaves the cluster.
      */
     public static void fireLeavingCluster() {
         try {
-            events.put(new Event(EventType.leaving_cluster, null));
+            Event event = new Event(EventType.leaving_cluster, null);
+            events.put(event);
+            while (!event.isProcessed()) {
+                Thread.sleep(50);
+            }
         } catch (InterruptedException e) {
             // Should never happen
         }
@@ -171,7 +176,7 @@ public class ClusterManager {
      * This also includes the case where this JVM was the senior cluster member and when the islands
      * met again then this JVM stopped being the senior member.<p>
      * <p/>
-     * This event could be triggered in another thread. This will avoid potential deadlocks
+     * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
      *
      * @param asynchronous true if event will be triggered in background

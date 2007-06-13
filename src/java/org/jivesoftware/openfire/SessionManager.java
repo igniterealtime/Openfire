@@ -14,6 +14,8 @@ package org.jivesoftware.openfire;
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
@@ -45,7 +47,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Derek DeMoro
  */
-public class SessionManager extends BasicModule {
+public class SessionManager extends BasicModule implements ClusterEventListener {
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
@@ -93,6 +95,20 @@ public class SessionManager extends BasicModule {
      * Key: remote hostname (domain/subdomain), Value: list of stream IDs that identify each socket.
      */
     private Cache<String, List<String>> hostnameSessionsCache;
+
+    /**
+     * Cache (unlimited, never expire) that holds domains, subdomains and virtual
+     * hostnames of the remote server that were validated with this server for each
+     * incoming server session.
+     * Key: stream ID, Value: Domains and subdomains of the remote server that were
+     * validated with this server.<p>
+     *
+     * This same information is stored in {@link LocalIncomingServerSession} but the
+     * reason for this duplication is that when running in a cluster other nodes
+     * will have access to this clustered cache even in the case of this node going
+     * down. 
+     */
+    private Cache<String, Set<String>> validatedDomainsCache;
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
@@ -371,9 +387,10 @@ public class SessionManager extends BasicModule {
      */
     public void registerIncomingServerSession(String hostname, LocalIncomingServerSession session) {
         // Keep local track of the incoming server session connected to this JVM
-        localSessionManager.addIncomingServerSessions(session.getStreamID().getID(), session);
+        String streamID = session.getStreamID().getID();
+        localSessionManager.addIncomingServerSessions(streamID, session);
         // Keep track of the nodeID hosting the incoming server session
-        incomingServerSessionsCache.put(session.getStreamID().getID(), server.getNodeID());
+        incomingServerSessionsCache.put(streamID, server.getNodeID());
         // Update list of sockets/sessions coming from the same remote hostname
         Lock lock = LockManager.getLock(hostname);
         try {
@@ -382,41 +399,26 @@ public class SessionManager extends BasicModule {
             if (streamIDs == null) {
                 streamIDs = new ArrayList<String>();
             }
-            streamIDs.add(session.getStreamID().getID());
+            streamIDs.add(streamID);
             hostnameSessionsCache.put(hostname, streamIDs);
         }
         finally {
             lock.unlock();
         }
-    }
-
-    /**
-     * Unregisters the server sessions originated by a remote server with the specified hostname.
-     * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
-     * the same IncomingServerSession may be associated with many keys. The remote server may have
-     * many sessions established with this server (eg. to the server itself and to subdomains
-     * hosted by this server).
-     *
-     * @param hostname the hostname that is being served by the remote server.
-     */
-    public void unregisterIncomingServerSessions(String hostname) {
-        List<String> streamIDs;
-        // Remove list of sockets/sessions coming from the remote hostname
-        Lock lock = LockManager.getLock(hostname);
+        // Add to clustered cache
+        lock = LockManager.getLock(streamID);
         try {
             lock.lock();
-            streamIDs = hostnameSessionsCache.remove(hostname);
-        }
-        finally {
-            lock.unlock();
-        }
-        if (streamIDs != null) {
-            for (String streamID : streamIDs) {
-                // Remove local track of the incoming server session connected to this JVM
-                localSessionManager.removeIncomingServerSessions(streamID);
-                // Remove track of the nodeID hosting the incoming server session
-                incomingServerSessionsCache.remove(streamID);
+            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+            if (validatedDomains == null) {
+                validatedDomains = new HashSet<String>();
             }
+            boolean added = validatedDomains.add(hostname);
+            if (added) {
+                validatedDomainsCache.put(streamID, validatedDomains);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -428,9 +430,10 @@ public class SessionManager extends BasicModule {
      */
     public void unregisterIncomingServerSession(String hostname, IncomingServerSession session) {
         // Remove local track of the incoming server session connected to this JVM
-        localSessionManager.removeIncomingServerSessions(session.getStreamID().getID());
+        String streamID = session.getStreamID().getID();
+        localSessionManager.removeIncomingServerSessions(streamID);
         // Remove track of the nodeID hosting the incoming server session
-        incomingServerSessionsCache.remove(session.getStreamID().getID());
+        incomingServerSessionsCache.remove(streamID);
 
         // Remove from list of sockets/sessions coming from the remote hostname
         Lock lock = LockManager.getLock(hostname);
@@ -438,7 +441,7 @@ public class SessionManager extends BasicModule {
             lock.lock();
             List<String> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs != null) {
-                streamIDs.remove(session.getStreamID().getID());
+                streamIDs.remove(streamID);
                 if (streamIDs.isEmpty()) {
                     hostnameSessionsCache.remove(hostname);
                 }
@@ -448,6 +451,50 @@ public class SessionManager extends BasicModule {
             }
         }
         finally {
+            lock.unlock();
+        }
+        // Remove from clustered cache
+        lock = LockManager.getLock(streamID);
+        try {
+            lock.lock();
+            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+            if (validatedDomains == null) {
+                validatedDomains = new HashSet<String>();
+            }
+            validatedDomains.remove(hostname);
+            if (!validatedDomains.isEmpty()) {
+                validatedDomainsCache.put(streamID, validatedDomains);
+            }
+            else {
+                validatedDomainsCache.remove(streamID);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns a collection with all the domains, subdomains and virtual hosts that where
+     * validated. The remote server is allowed to send packets from any of these domains,
+     * subdomains and virtual hosts.<p>
+     *
+     * Content is stored in a clustered cache so that even in the case of the node hosting
+     * the sessions is lost we can still have access to this info to be able to perform
+     * proper clean up logic.
+     *
+     * @param streamID id that uniquely identifies the session.
+     * @return domains, subdomains and virtual hosts that where validated.
+     */
+    public Collection<String> getValidatedDomains(String streamID) {
+        Lock lock = LockManager.getLock(streamID);
+        try {
+            lock.lock();
+            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+            if (validatedDomains == null) {
+                return Collections.emptyList();
+            }
+            return Collections.unmodifiableCollection(validatedDomains);
+        } finally {
             lock.unlock();
         }
     }
@@ -652,7 +699,7 @@ public class SessionManager extends BasicModule {
      * @return a list that contains all client sessions connected to the server.
      */
     public Collection<ClientSession> getSessions() {
-        return routingTable.getClientsRoutes();
+        return routingTable.getClientsRoutes(false);
     }
 
 
@@ -1083,7 +1130,6 @@ public class SessionManager extends BasicModule {
             for (String hostname : session.getValidatedDomains()) {
                 unregisterIncomingServerSession(hostname, session);
             }
-            LocalIncomingServerSession.releaseValidatedDomains(session.getStreamID().getID());
         }
     }
 
@@ -1161,6 +1207,9 @@ public class SessionManager extends BasicModule {
         multiplexerSessionsCache = CacheFactory.createCache(CM_CACHE_NAME);
         incomingServerSessionsCache = CacheFactory.createCache(ISS_CACHE_NAME);
         hostnameSessionsCache = CacheFactory.createCache("Sessions by Hostname");
+        validatedDomainsCache = CacheFactory.createCache("Validated Domains");
+        // Listen to cluster events
+        ClusterManager.addListener(this);
     }
 
 
@@ -1349,4 +1398,154 @@ public class SessionManager extends BasicModule {
         }
     }
 
+    public void joinedCluster(byte[] oldNodeID) {
+        restoreCacheContent();
+    }
+
+    public void leavingCluster() {
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do nothing since local sessions will be closed. Local session manager
+            // and local routing table will be correctly updated thus updating the
+            // other cluster nodes correctly
+        }
+        else {
+            // This JVM is leaving the cluster but will continue to work. That means
+            // that clients connected to this JVM will be able to keep talking.
+            // In other words, their sessions will not be closed (and not removed from
+            // the routing table or the session manager). However, other nodes should
+            // get their session managers correctly updated.
+
+            // Remove external component sessions hosted locally to the cache (using new nodeID)
+            for (Session session : localSessionManager.getComponentsSessions()) {
+                componentSessionsCache.remove(session.getAddress().toString());
+            }
+
+            // Remove connection multiplexer sessions hosted locally to the cache (using new nodeID)
+            for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
+                multiplexerSessionsCache.remove(address);
+            }
+
+            // Remove incoming server sessions hosted locally to the cache (using new nodeID)
+            for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
+                String streamID = session.getStreamID().getID();
+                incomingServerSessionsCache.remove(streamID);
+                for (String hostname : session.getValidatedDomains()) {
+                    // Update list of sockets/sessions coming from the same remote hostname
+                    Lock lock = LockManager.getLock(hostname);
+                    try {
+                        lock.lock();
+                        List<String> streamIDs = hostnameSessionsCache.get(hostname);
+                        streamIDs.remove(streamID);
+                        if (streamIDs.isEmpty()) {
+                            hostnameSessionsCache.remove(hostname);
+                        }
+                        else {
+                            hostnameSessionsCache.put(hostname, streamIDs);
+                        }
+                    }
+                    finally {
+                        lock.unlock();
+                    }
+                    // Remove from clustered cache
+                    lock = LockManager.getLock(streamID);
+                    try {
+                        lock.lock();
+                        Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+                        if (validatedDomains == null) {
+                            validatedDomains = new HashSet<String>();
+                        }
+                        validatedDomains.remove(hostname);
+                        if (!validatedDomains.isEmpty()) {
+                            validatedDomainsCache.put(streamID, validatedDomains);
+                        }
+                        else {
+                            validatedDomainsCache.remove(streamID);
+                        }
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            }
+
+            // Update counters of client sessions
+            for (ClientSession session : routingTable.getClientsRoutes(true)) {
+                // Increment the counter of user sessions
+                decrementCounter("conncounter");
+                if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                    // Increment counter of authenticated sessions
+                    decrementCounter("usercounter");
+                }
+            }
+        }
+    }
+
+    public void leftCluster() {
+        if (!XMPPServer.getInstance().isShuttingDown()) {
+            // Add local sessions to caches
+            restoreCacheContent();
+        }
+    }
+
+    public void markedAsSeniorClusterMember() {
+        // Do nothing
+    }
+
+    private void restoreCacheContent() {
+        // Add external component sessions hosted locally to the cache (using new nodeID)
+        for (Session session : localSessionManager.getComponentsSessions()) {
+            componentSessionsCache.put(session.getAddress().toString(), server.getNodeID());
+        }
+
+        // Add connection multiplexer sessions hosted locally to the cache (using new nodeID)
+        for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
+            multiplexerSessionsCache.put(address, server.getNodeID());
+        }
+
+        // Add incoming server sessions hosted locally to the cache (using new nodeID)
+        for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
+            String streamID = session.getStreamID().getID();
+            incomingServerSessionsCache.put(streamID, server.getNodeID());
+            for (String hostname : session.getValidatedDomains()) {
+                // Update list of sockets/sessions coming from the same remote hostname
+                Lock lock = LockManager.getLock(hostname);
+                try {
+                    lock.lock();
+                    List<String> streamIDs = hostnameSessionsCache.get(hostname);
+                    if (streamIDs == null) {
+                        streamIDs = new ArrayList<String>();
+                    }
+                    streamIDs.add(streamID);
+                    hostnameSessionsCache.put(hostname, streamIDs);
+                }
+                finally {
+                    lock.unlock();
+                }
+                // Add to clustered cache
+                lock = LockManager.getLock(streamID);
+                try {
+                    lock.lock();
+                    Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+                    if (validatedDomains == null) {
+                        validatedDomains = new HashSet<String>();
+                    }
+                    boolean added = validatedDomains.add(hostname);
+                    if (added) {
+                        validatedDomainsCache.put(streamID, validatedDomains);
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+        }
+
+        // Update counters of client sessions
+        for (ClientSession session : routingTable.getClientsRoutes(true)) {
+            // Increment the counter of user sessions
+            incrementCounter("conncounter");
+            if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                // Increment counter of authenticated sessions
+                incrementCounter("usercounter");
+            }
+        }
+    }
 }

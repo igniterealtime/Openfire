@@ -75,6 +75,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Sessions by Hostname", "sessionsHostname");
         cacheNames.put("Secret Keys Cache", "secretKeys");
         cacheNames.put("Validated Domains", "validatedDomains");
+        cacheNames.put("Directed Presences", "directedPresences");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.expirationTime", 1000 * 60 * 10l);
@@ -128,6 +129,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.secretKeys.expirationTime", -1l);
         cacheProps.put("cache.validatedDomains.size", -1l);
         cacheProps.put("cache.validatedDomains.expirationTime", -1l);
+        cacheProps.put("cache.directedPresences.size", -1l);
+        cacheProps.put("cache.directedPresences.expirationTime", -1l);
     }
 
 

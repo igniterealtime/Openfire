@@ -279,7 +279,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             else {
                 // Return a promise of a remote session. This object will queue packets pending
                 // to be sent to remote servers
-                // TODO Make sure that creating outgoing connections is thread-safe across cluster nodes 
                 OutgoingSessionPromise.getInstance().process(packet);
                 routed = true;
             }
@@ -480,24 +479,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return session;
     }
 
-    public Collection<ClientSession> getClientsRoutes() {
+    public Collection<ClientSession> getClientsRoutes(boolean onlyLocal) {
         // Add sessions hosted by this cluster node
         Collection<ClientSession> sessions = new ArrayList<ClientSession>(localRoutingTable.getClientRoutes());
-        // Add sessions not hosted by this JVM
-        RemoteSessionLocator locator = server.getRemoteSessionLocator();
-        if (locator != null) {
-            // Add sessions of non-anonymous users hosted by other cluster nodes
-            for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
-                ClientRoute route = entry.getValue();
-                if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
-                    sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+        if (!onlyLocal) {
+            // Add sessions not hosted by this JVM
+            RemoteSessionLocator locator = server.getRemoteSessionLocator();
+            if (locator != null) {
+                // Add sessions of non-anonymous users hosted by other cluster nodes
+                for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
+                    ClientRoute route = entry.getValue();
+                    if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
+                        sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                    }
                 }
-            }
-            // Add sessions of anonymous users hosted by other cluster nodes
-            for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
-                ClientRoute route = entry.getValue();
-                if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
-                    sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                // Add sessions of anonymous users hosted by other cluster nodes
+                for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
+                    ClientRoute route = entry.getValue();
+                    if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
+                        sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                    }
                 }
             }
         }
@@ -531,6 +532,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     public boolean isAnonymousRoute(JID jid) {
         return anonymousUsersCache.get(jid.toString()) != null;
+    }
+
+    public boolean isLocalRoute(JID jid) {
+        return localRoutingTable.isLocalRoute(jid);
     }
 
     public boolean hasServerRoute(JID jid) {
@@ -682,20 +687,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public void joinedCluster(byte[] oldNodeID) {
-        // Add outgoing server sessions hosted locally to the cache (using new nodeID)
-        for (LocalOutgoingServerSession session : localRoutingTable.getServerRoutes()) {
-            addServerRoute(session.getAddress(), session);
-        }
-
-        // Add component sessions hosted locally to the cache (using new nodeID) and remove traces to old nodeID
-        for (RoutableChannelHandler route : localRoutingTable.getComponentRoute()) {
-            addComponentRoute(route.getAddress(), route);
-        }
-
-        // Add client sessions hosted locally to the cache (using new nodeID)
-        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
-            addClientRoute(session.getAddress(), session);
-        }
+        restoreCacheContent();
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence
         // Probe presences of remote sessions when subscribed to presence of local session
@@ -722,18 +714,106 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // that clients connected to this JVM will be able to keep talking.
             // In other words, their sessions will not be closed (and not removed from
             // the routing table or the session manager). However, other nodes should
-            // get their routing tables correctly updated.
-            // TODO Implement this. Remove local sessions from caches
+            // get their routing tables correctly updated so we need to temporarily
+            // remove the content from the cache so other cluster nodes are correctly
+            // updated. Local content will be restored to cache in #leftCluster
+
+            // In the case of an abnormal disconnection from the cluster this event will
+            // not be triggered so it is up to the cluster nodes to know how to clean up
+            // their caches from the local data added by this JVM
+
+            // Remove outgoing server sessions hosted locally from the cache (using new nodeID)
+            for (LocalOutgoingServerSession session : localRoutingTable.getServerRoutes()) {
+                String address = session.getAddress().getDomain();
+                serversCache.remove(address);
+            }
+
+            // Remove component sessions hosted locally from the cache (using new nodeID) and remove traces to old nodeID
+            for (RoutableChannelHandler componentRoute : localRoutingTable.getComponentRoute()) {
+                JID route = componentRoute.getAddress();
+                String address = route.getDomain();
+                Lock lock = LockManager.getLock(address + "rt");
+                try {
+                    lock.lock();
+                    Set<byte[]> nodes = componentsCache.get(address);
+                    if (nodes != null) {
+                        nodes.remove(server.getNodeID());
+                        if (nodes.isEmpty()) {
+                            componentsCache.remove(address);
+                        }
+                        else {
+                            componentsCache.put(address, nodes);
+                        }
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            // Remove client sessions hosted locally from the cache (using new nodeID)
+            for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+                boolean anonymous = false;
+                JID route = session.getAddress();
+                String address = route.toString();
+                ClientRoute clientRoute = usersCache.remove(address);
+                if (clientRoute == null) {
+                    clientRoute = anonymousUsersCache.remove(address);
+                    anonymous = true;
+                }
+                if (clientRoute != null && route.getResource() != null) {
+                    Lock lock = LockManager.getLock(route.toBareJID());
+                    try {
+                        lock.lock();
+                        if (anonymous) {
+                            usersSessions.remove(route.toBareJID());
+                        }
+                        else {
+                            Collection<String> jids = usersSessions.get(route.toBareJID());
+                            if (jids != null) {
+                                jids.remove(route.toString());
+                                if (!jids.isEmpty()) {
+                                    usersSessions.put(route.toBareJID(), jids);
+                                }
+                                else {
+                                    usersSessions.remove(route.toBareJID());
+                                }
+                            }
+                        }
+                    }
+                    finally {
+                        lock.unlock();
+                    }
+                }
+            }
         }
     }
 
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
-            // TODO Implement this. Add local sessions to caches
+            // Add local sessions to caches
+            restoreCacheContent();
         }
     }
 
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
+
+    private void restoreCacheContent() {
+        // Add outgoing server sessions hosted locally to the cache (using new nodeID)
+        for (LocalOutgoingServerSession session : localRoutingTable.getServerRoutes()) {
+            addServerRoute(session.getAddress(), session);
+        }
+
+        // Add component sessions hosted locally to the cache (using new nodeID) and remove traces to old nodeID
+        for (RoutableChannelHandler route : localRoutingTable.getComponentRoute()) {
+            addComponentRoute(route.getAddress(), route);
+        }
+
+        // Add client sessions hosted locally to the cache (using new nodeID)
+        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+            addClientRoute(session.getAddress(), session);
+        }
+    }
+
 }

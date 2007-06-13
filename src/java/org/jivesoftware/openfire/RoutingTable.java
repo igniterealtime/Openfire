@@ -171,6 +171,19 @@ public interface RoutingTable {
     boolean isAnonymousRoute(JID jid);
 
     /**
+     * Returns true if the specified address belongs to a route that is hosted by this JVM.
+     * When running inside of a cluster each cluster node will host routes to local resources.
+     * A false value could either mean that the route is not hosted by this JVM but other
+     * cluster node or that there is no route to the specified address. Use
+     * {@link XMPPServer#isLocal(org.xmpp.packet.JID)} to figure out if the address
+     * belongs to tge domain hosted by this server.
+     *
+     * @param jid the address of the route.
+     * @return true if the specified address belongs to a route that is hosted by this JVM.
+     */
+    boolean isLocalRoute(JID jid);
+
+    /**
      * Returns true if an outgoing server session exists to the specified remote server.
      * The JID can be a full JID or a bare JID since only the domain of the specified
      * address will be used to look up the route.<p>
@@ -215,9 +228,10 @@ public interface RoutingTable {
      * TODO Prevent usage of this message and change original requirement to avoid having to load all sessions.
      * TODO This may not scale when hosting millions of sessions.
      *
+     * @param onlyLocal true if only client sessions connected to this JVM must be considered.
      * @return collection of client sessions authenticated with the server.
      */
-    Collection<ClientSession> getClientsRoutes();
+    Collection<ClientSession> getClientsRoutes(boolean onlyLocal);
 
     /**
      * Returns the outgoing server session associated to the specified XMPP address or <tt>null</tt>

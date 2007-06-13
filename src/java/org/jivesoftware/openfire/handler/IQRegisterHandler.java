@@ -37,6 +37,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.StreamError;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -236,7 +237,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             // Take a quick nap so that the client can process the result
                             Thread.sleep(10);
                             // Close the user's connection
-                            session.close();
+                            final StreamError error = new StreamError(StreamError.Condition.not_authorized);
+                            for (ClientSession sess : sessionManager.getSessions(user.getUsername()) )
+                            {
+                                sess.deliverRawText(error.toXML());
+                                sess.close();
+                            }
                             // The reply has been sent so clean up the variable
                             reply = null;
                         }

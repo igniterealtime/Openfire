@@ -72,7 +72,7 @@ public class GSSAPIAuthorizationProvider implements AuthorizationPolicy {
         // Handle authorization policy
         if (currentPolicy == AuthPolicy.strict) {
             String serverName = XMPPServer.getInstance().getServerInfo().getName();
-            return (principal.equals(username) || principal.equals(username + "@" + serverName));
+            return (principal.equals(username) || principal.equals(username + "@" + serverName.toUpperCase()));
         }
         else if (currentPolicy == AuthPolicy.loose) {
             return (principal.startsWith(username + "@"));

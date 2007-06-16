@@ -36,16 +36,12 @@ import java.util.Set;
  *
  * @author Gaston Dombiak
  */
-public class RemoteDirectedPresence implements Externalizable {
+public class DirectedPresence implements Externalizable {
     /**
      * ID of the node that received the request to send a directed presence. This is the
      * node ID that hosts the sender.
      */
     private byte[] nodeID;
-    /**
-     * Full JID of the sender of the directed presence
-     */
-    private String sender;
     /**
      * Full JID of the entity that received the directed presence.
      * E.g.: paul@js.com/Spark or conference.js.com
@@ -57,21 +53,16 @@ public class RemoteDirectedPresence implements Externalizable {
      */
     private Set<String> receivers = new HashSet<String>();
 
-    public RemoteDirectedPresence() {
+    public DirectedPresence() {
     }
 
-    public RemoteDirectedPresence(String sender, JID handlerJID) {
-        this.sender = sender;
+    public DirectedPresence(JID handlerJID) {
         this.handler = handlerJID;
         this.nodeID = XMPPServer.getInstance().getNodeID();
     }
 
     public byte[] getNodeID() {
         return nodeID;
-    }
-
-    public String getSender() {
-        return sender;
     }
 
     public JID getHandler() {
@@ -96,14 +87,12 @@ public class RemoteDirectedPresence implements Externalizable {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID);
-        ExternalizableUtil.getInstance().writeSafeUTF(out, sender);
         ExternalizableUtil.getInstance().writeSafeUTF(out, handler.toString());
         ExternalizableUtil.getInstance().writeStrings(out, receivers);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         nodeID = ExternalizableUtil.getInstance().readByteArray(in);
-        sender = ExternalizableUtil.getInstance().readSafeUTF(in);
         handler = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
         ExternalizableUtil.getInstance().readStrings(in, receivers);
     }

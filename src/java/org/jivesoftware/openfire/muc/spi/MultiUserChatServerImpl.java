@@ -923,18 +923,30 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         outMessages.addAndGet(numOccupants);
     }
 
-    public void joinedCluster(byte[] oldNodeID) {
+    public void joinedCluster() {
         // Disable the service until we know that we are the senior cluster member
         enableService(false, false);
+        //TODO Do not disable the service. All nodes will host the service (unless it was disabled before)
+        //TODO Merge rooms existing in the cluster with the ones of the new node
+        //TODO For rooms that exist in cluster and in new node then send presences of remote occupants to LOCAL occupants
     }
 
-    public void leavingCluster() {
-        // Do nothing
+    public void joinedCluster(byte[] nodeID) {
+        //TODO Merge rooms existing in the cluster with the ones of the new node
+        //TODO For rooms that exist in cluster and in new node then send presences of new remote occupants to LOCAL occupants
     }
 
     public void leftCluster() {
         // Offer the service when not running in a cluster
         enableService(true, false);
+        //TODO Do not mess with service enablement! :)
+        //TODO Send unavailable presences of leaving remote occupants to LOCAL occupants
+        //TODO Remove rooms with no occupants (should happen with previous step)?
+    }
+
+    public void leftCluster(byte[] nodeID) {
+        //TODO Send unavailable presences of leaving remote occupants to LOCAL occupants
+        //TODO Remove rooms with no occupants (should happen with previous step)?
     }
 
     public void markedAsSeniorClusterMember() {

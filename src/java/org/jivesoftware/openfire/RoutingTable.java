@@ -234,6 +234,14 @@ public interface RoutingTable {
     Collection<ClientSession> getClientsRoutes(boolean onlyLocal);
 
     /**
+     * Returns the ID of the node that is hosting the specified client session.
+     *
+     * @param jid the address of the specified client session.
+     * @return the ID of the node that is hosting the specified client session or null if not found.
+     */
+    byte[] getNodeIDForClientRoute(JID jid);
+
+    /**
      * Returns the outgoing server session associated to the specified XMPP address or <tt>null</tt>
      * if none was found. When running inside of a cluster and a remote node is hosting
      * the session then a session surrage will be returned.

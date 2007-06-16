@@ -29,29 +29,24 @@ public interface ClusterEventListener {
      * At this point the CacheFactory holds clustered caches. That means that modifications
      * to the caches will be reflected in the cluster. The clustered caches were just
      * obtained from the cluster and no local cached data was automatically moved.<p>
-     *
-     * @param oldNodeID nodeID used by this JVM before joining the cluster.
      */
-    void joinedCluster(byte[] oldNodeID);
+    void joinedCluster();
 
     /**
-     * Notification event indicating that this JVM is about to leave the cluster. This could
-     * happen when disabling clustering support, removing the enterprise plugin that provides
-     * clustering support or even shutdown the server.<p>
+     * Notification event indicating that another JVM is now part of a cluster.<p>
      *
-     * At this point the CacheFactory is still holding clustered caches. That means that
-     * modifications to the caches will be reflected in the cluster.<p>
+     * At this point the CacheFactory of the new node holds clustered caches. That means
+     * that modifications to the caches of this JVM will be reflected in the cluster and
+     * in particular in the new node.
      *
-     * Use {@link org.jivesoftware.openfire.XMPPServer#isShuttingDown()} to figure out if the
-     * server is being shutdown.
+     * @param nodeID ID of the node that joined the cluster.
      */
-    void leavingCluster();
+    void joinedCluster(byte[] nodeID);
 
     /**
      * Notification event indicating that this JVM is no longer part of the cluster. This could
      * happen when disabling clustering support, removing the enterprise plugin that provides
-     * clustering support or connection to cluster got lost. If connection to cluster was lost
-     * then this event will not be predated by the {@link #leavingCluster()} event.<p>
+     * clustering support or connection to cluster got lost.<p>
      *
      * Moreover, if we were in a "split brain" scenario (ie. separated cluster islands) and the
      * island were this JVM belonged was marked as "old" then all nodes of that island will
@@ -66,6 +61,25 @@ public interface ClusterEventListener {
     void leftCluster();
 
     /**
+     * Notification event indicating that another JVM is no longer part of the cluster. This could
+     * happen when disabling clustering support, removing the enterprise plugin that provides
+     * clustering support or connection to cluster got lost.<p>
+     *
+     * Moreover, if we were in a "split brain" scenario (ie. separated cluster islands) and the
+     * island were the other JVM belonged was marked as "old" then all nodes of that island will
+     * get the <tt>left cluster event</tt> and <tt>joined cluster events</tt>. That means that
+     * caches will be reset and thus will need to be repopulated again with fresh data from this JVM.
+     * This also includes the case where the other JVM was the senior cluster member and when the islands
+     * met again then the other JVM stopped being the senior member.<p>
+     *
+     * At this point the CacheFactory of the leaving node holds local caches. That means that modifications to
+     * the caches of this JVM will not affect the leaving node but other cluster members.
+     *
+     * @param nodeID ID of the node that is left the cluster.
+     */
+    void leftCluster(byte[] nodeID);
+
+    /**
      * Notification event indicating that this JVM is now the senior cluster member. This
      * could either happen when initially joining the cluster or when the senior cluster
      * member node left the cluster and this JVM was marked as the new senior cluster member.<p>
@@ -74,7 +88,7 @@ public interface ClusterEventListener {
      * island will have its own senior cluster member. However, when the islands meet again there
      * could only be one senior cluster member so one of the senior cluster members will stop playing
      * that role. When that happens the JVM no longer playing that role will receive the
-     * {@link #leftCluster()} and {@link #joinedCluster(byte[])} events.
+     * {@link #leftCluster()} and {@link #joinedCluster()} events.
      */
     void markedAsSeniorClusterMember();
 }

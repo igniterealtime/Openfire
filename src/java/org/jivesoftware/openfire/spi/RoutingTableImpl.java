@@ -527,11 +527,22 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public boolean hasClientRoute(JID jid) {
-        return usersCache.get(jid.toString()) != null || isAnonymousRoute(jid);
+        return usersCache.containsKey(jid.toString()) || isAnonymousRoute(jid);
+    }
+
+    public byte[] getNodeIDForClientRoute(JID jid) {
+        ClientRoute clientRoute = usersCache.get(jid.toString());
+        if (clientRoute == null) {
+            clientRoute = anonymousUsersCache.get(jid.toString());
+        }
+        if (clientRoute != null) {
+            return clientRoute.getNodeID();
+        }
+        return null;
     }
 
     public boolean isAnonymousRoute(JID jid) {
-        return anonymousUsersCache.get(jid.toString()) != null;
+        return anonymousUsersCache.containsKey(jid.toString());
     }
 
     public boolean isLocalRoute(JID jid) {
@@ -539,11 +550,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public boolean hasServerRoute(JID jid) {
-        return serversCache.get(jid.getDomain()) != null;
+        return serversCache.containsKey(jid.getDomain());
     }
 
     public boolean hasComponentRoute(JID jid) {
-        return componentsCache.get(jid.getDomain()) != null;
+        return componentsCache.containsKey(jid.getDomain());
     }
 
     public List<JID> getRoutes(JID route) {
@@ -581,7 +592,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         else if (route.getDomain().contains(serverName)) {
             // Packet sent to component hosted in this server
             if (componentsCache.containsKey(route.getDomain())) {
-                jids.add(route);
+                jids.add(new JID(route.getDomain()));
             }
         }
         else {
@@ -686,7 +697,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         localRoutingTable.stop();
     }
 
-    public void joinedCluster(byte[] oldNodeID) {
+    public void joinedCluster() {
         restoreCacheContent();
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence
@@ -703,89 +714,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
-    public void leavingCluster() {
-        if (XMPPServer.getInstance().isShuttingDown()) {
-            // Do nothing since local sessions will be closed. Local session manager
-            // and local routing table will be correctly updated thus updating the
-            // other cluster nodes correctly
-        }
-        else {
-            // This JVM is leaving the cluster but will continue to work. That means
-            // that clients connected to this JVM will be able to keep talking.
-            // In other words, their sessions will not be closed (and not removed from
-            // the routing table or the session manager). However, other nodes should
-            // get their routing tables correctly updated so we need to temporarily
-            // remove the content from the cache so other cluster nodes are correctly
-            // updated. Local content will be restored to cache in #leftCluster
-
-            // In the case of an abnormal disconnection from the cluster this event will
-            // not be triggered so it is up to the cluster nodes to know how to clean up
-            // their caches from the local data added by this JVM
-
-            // Remove outgoing server sessions hosted locally from the cache (using new nodeID)
-            for (LocalOutgoingServerSession session : localRoutingTable.getServerRoutes()) {
-                String address = session.getAddress().getDomain();
-                serversCache.remove(address);
-            }
-
-            // Remove component sessions hosted locally from the cache (using new nodeID) and remove traces to old nodeID
-            for (RoutableChannelHandler componentRoute : localRoutingTable.getComponentRoute()) {
-                JID route = componentRoute.getAddress();
-                String address = route.getDomain();
-                Lock lock = LockManager.getLock(address + "rt");
-                try {
-                    lock.lock();
-                    Set<byte[]> nodes = componentsCache.get(address);
-                    if (nodes != null) {
-                        nodes.remove(server.getNodeID());
-                        if (nodes.isEmpty()) {
-                            componentsCache.remove(address);
-                        }
-                        else {
-                            componentsCache.put(address, nodes);
-                        }
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-
-            // Remove client sessions hosted locally from the cache (using new nodeID)
-            for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
-                boolean anonymous = false;
-                JID route = session.getAddress();
-                String address = route.toString();
-                ClientRoute clientRoute = usersCache.remove(address);
-                if (clientRoute == null) {
-                    clientRoute = anonymousUsersCache.remove(address);
-                    anonymous = true;
-                }
-                if (clientRoute != null && route.getResource() != null) {
-                    Lock lock = LockManager.getLock(route.toBareJID());
-                    try {
-                        lock.lock();
-                        if (anonymous) {
-                            usersSessions.remove(route.toBareJID());
-                        }
-                        else {
-                            Collection<String> jids = usersSessions.get(route.toBareJID());
-                            if (jids != null) {
-                                jids.remove(route.toString());
-                                if (!jids.isEmpty()) {
-                                    usersSessions.put(route.toBareJID(), jids);
-                                }
-                                else {
-                                    usersSessions.remove(route.toBareJID());
-                                }
-                            }
-                        }
-                    }
-                    finally {
-                        lock.unlock();
-                    }
-                }
-            }
-        }
+    public void joinedCluster(byte[] nodeID) {
+        // Do nothing
     }
 
     public void leftCluster() {
@@ -793,6 +723,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Add local sessions to caches
             restoreCacheContent();
         }
+    }
+
+    public void leftCluster(byte[] nodeID) {
+        // Do nothing
     }
 
     public void markedAsSeniorClusterMember() {

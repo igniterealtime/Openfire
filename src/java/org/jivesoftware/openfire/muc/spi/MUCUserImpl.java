@@ -12,15 +12,15 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -476,6 +476,7 @@ public class MUCUserImpl implements MUCUser {
                 else {
                     if (Presence.Type.unavailable == packet.getType()) {
                         try {
+                            // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down) 
                             removeRole(group);
                             role.getChatRoom().leaveRoom(role.getNickname());
                         }

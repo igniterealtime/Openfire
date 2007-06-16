@@ -1398,92 +1398,28 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         }
     }
 
-    public void joinedCluster(byte[] oldNodeID) {
+    public void joinedCluster() {
         restoreCacheContent();
     }
 
-    public void leavingCluster() {
-        if (XMPPServer.getInstance().isShuttingDown()) {
-            // Do nothing since local sessions will be closed. Local session manager
-            // and local routing table will be correctly updated thus updating the
-            // other cluster nodes correctly
-        }
-        else {
-            // This JVM is leaving the cluster but will continue to work. That means
-            // that clients connected to this JVM will be able to keep talking.
-            // In other words, their sessions will not be closed (and not removed from
-            // the routing table or the session manager). However, other nodes should
-            // get their session managers correctly updated.
-
-            // Remove external component sessions hosted locally to the cache (using new nodeID)
-            for (Session session : localSessionManager.getComponentsSessions()) {
-                componentSessionsCache.remove(session.getAddress().toString());
-            }
-
-            // Remove connection multiplexer sessions hosted locally to the cache (using new nodeID)
-            for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
-                multiplexerSessionsCache.remove(address);
-            }
-
-            // Remove incoming server sessions hosted locally to the cache (using new nodeID)
-            for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
-                String streamID = session.getStreamID().getID();
-                incomingServerSessionsCache.remove(streamID);
-                for (String hostname : session.getValidatedDomains()) {
-                    // Update list of sockets/sessions coming from the same remote hostname
-                    Lock lock = LockManager.getLock(hostname);
-                    try {
-                        lock.lock();
-                        List<String> streamIDs = hostnameSessionsCache.get(hostname);
-                        streamIDs.remove(streamID);
-                        if (streamIDs.isEmpty()) {
-                            hostnameSessionsCache.remove(hostname);
-                        }
-                        else {
-                            hostnameSessionsCache.put(hostname, streamIDs);
-                        }
-                    }
-                    finally {
-                        lock.unlock();
-                    }
-                    // Remove from clustered cache
-                    lock = LockManager.getLock(streamID);
-                    try {
-                        lock.lock();
-                        Set<String> validatedDomains = validatedDomainsCache.get(streamID);
-                        if (validatedDomains == null) {
-                            validatedDomains = new HashSet<String>();
-                        }
-                        validatedDomains.remove(hostname);
-                        if (!validatedDomains.isEmpty()) {
-                            validatedDomainsCache.put(streamID, validatedDomains);
-                        }
-                        else {
-                            validatedDomainsCache.remove(streamID);
-                        }
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-            }
-
-            // Update counters of client sessions
-            for (ClientSession session : routingTable.getClientsRoutes(true)) {
-                // Increment the counter of user sessions
-                decrementCounter("conncounter");
-                if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                    // Increment counter of authenticated sessions
-                    decrementCounter("usercounter");
-                }
-            }
-        }
+    public void joinedCluster(byte[] nodeID) {
+        // Do nothing
     }
 
     public void leftCluster() {
+        // TODO Send unavailable presence TO roster contacts not hosted in this JVM (type=FROM)
+        // TODO Send unavailable presence FROM roster contacts not hosted in this JVM (type=TO)
+        // TODO Send unavailable presence FROM & TO roster contacts not hosted in this JVM (type=BOTH)
+        // TODO Send unavailable presence TO other resources of the user not hosted in this JVM
+
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Add local sessions to caches
             restoreCacheContent();
         }
+    }
+
+    public void leftCluster(byte[] nodeID) {
+        // Do nothing
     }
 
     public void markedAsSeniorClusterMember() {

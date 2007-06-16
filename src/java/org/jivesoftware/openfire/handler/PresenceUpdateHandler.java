@@ -13,6 +13,8 @@ package org.jivesoftware.openfire.handler;
 
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
@@ -22,16 +24,17 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.*;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -71,9 +74,23 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Iain Shigeoka
  */
-public class PresenceUpdateHandler extends BasicModule implements ChannelHandler {
+public class PresenceUpdateHandler extends BasicModule implements ChannelHandler, ClusterEventListener {
 
-    private Map<String, Map<String, Set<String>>> directedPresences;
+    private static final String PRESENCE_CACHE_NAME = "Directed Presences";
+
+    /**
+     * Keeps track of entities that sent directed presences to other entities. In this map
+     * we keep track of every directed presence no matter if the recipient was hosted in
+     * this JVM or another cluster node.
+     *
+     * Key: sender, Value: list of DirectedPresences
+     */
+    private Cache<String, Collection<DirectedPresence>> directedPresencesCache;
+    /**
+     * Same as the directedPresencesCache but only keeps directed presences sent from
+     * users connected to this JVM.
+     */
+    private Map<String, Collection<DirectedPresence>> localDirectedPresences;
 
     private RoutingTable routingTable;
     private RosterManager rosterManager;
@@ -86,7 +103,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     public PresenceUpdateHandler() {
         super("Presence update handler");
-        directedPresences = new ConcurrentHashMap<String, Map<String, Set<String>>>();
+        localDirectedPresences = new ConcurrentHashMap<String, Collection<DirectedPresence>>();
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
@@ -296,7 +313,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
         if (localServer.isLocal(update.getFrom())) {
             boolean keepTrack = false;
-            Map<String, Set<String>> map;
             String name = update.getFrom().getNode();
             if (name != null && !"".equals(name)) {
                 // Keep track of all directed presences if roster service is disabled
@@ -313,7 +329,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         try {
                             rosterItem = roster.getRosterItem(update.getTo());
                         }
-                        catch (UserNotFoundException e) {}
+                        catch (UserNotFoundException e) {
+                            // Ignore
+                        }
                         if (rosterItem == null ||
                                 RosterItem.SUB_NONE == rosterItem.getSubStatus() ||
                                 RosterItem.SUB_TO == rosterItem.getSubStatus()) {
@@ -334,55 +352,72 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             }
             if (keepTrack) {
                 String sender = update.getFrom().toString();
-                map = directedPresences.get(sender);
+                Collection<DirectedPresence> directedPresences = directedPresencesCache.get(sender);
                 if (Presence.Type.unavailable.equals(update.getType())) {
-                    if (map != null) {
+                    if (directedPresences != null) {
                         // It's a directed unavailable presence
                         if (routingTable.hasClientRoute(handlerJID)) {
                             // Client sessions will receive only presences to the same JID (the
                             // address of the session) so remove the handler from the map
-                            map.remove(handlerJID.toString());
-                            if (map.isEmpty()) {
-                                // Remove the user from the registry since the list of directed
-                                // presences is empty
-                                directedPresences.remove(sender);
+                            for (DirectedPresence directedPresence : directedPresences) {
+                                if (directedPresence.getHandler().equals(handlerJID)) {
+                                    directedPresences.remove(directedPresence);
+                                    break;
+                                }
                             }
                         }
                         else {
                             // A service may receive presences for many JIDs so in this case we
                             // just need to remove the jid that has received a directed
                             // unavailable presence
-                            Set<String> jids = map.get(handlerJID.toString());
-                            if (jids != null) {
-                                jids.remove(jid);
-                                if (jids.isEmpty()) {
-                                    map.remove(handlerJID.toString());
-                                    if (map.isEmpty()) {
-                                        // Remove the user from the registry since the list of directed
-                                        // presences is empty
-                                        directedPresences.remove(sender);
+                            for (DirectedPresence directedPresence : directedPresences) {
+                                if (directedPresence.getHandler().equals(handlerJID)) {
+                                    directedPresence.removeReceiver(jid);
+                                    if (directedPresence.isEmpty()) {
+                                        directedPresences.remove(directedPresence);
                                     }
+                                    break;
                                 }
                             }
+                        }
+                        if (directedPresences.isEmpty()) {
+                            // Remove the user from the registry since the list of directed
+                            // presences is empty
+                            directedPresencesCache.remove(sender);
+                            localDirectedPresences.remove(sender);
+                        }
+                        else {
+                            directedPresencesCache.put(sender, directedPresences);
+                            localDirectedPresences.put(sender, directedPresences);
                         }
                     }
                 }
                 else {
-                    if (map == null) {
+                    if (directedPresences == null) {
                         // We are using a set to avoid duplicate jids in case the user
                         // sends several directed presences to the same handler. The Map also
                         // ensures that if the user sends several presences to the same handler
                         // we will have only one entry in the Map
-                        map = new ConcurrentHashMap<String, Set<String>>();
-                        directedPresences.put(sender, map);
+                        directedPresences = new ConcurrentLinkedQueue<DirectedPresence>();
                     }
                     // Add the handler to the list of handler that processed the directed
                     // presence sent by the user. This handler will be used to send
                     // the unavailable presence when the user goes offline
-                    if (map.get(handlerJID.toString()) == null) {
-                        map.put(handlerJID.toString(), new ConcurrentHashSet<String>());
+                    DirectedPresence affectedDirectedPresence = null;
+                    for (DirectedPresence directedPresence : directedPresences) {
+                        if (directedPresence.getHandler().equals(handlerJID)) {
+                            affectedDirectedPresence = directedPresence;
+                            break;
+                        }
                     }
-                    map.get(handlerJID.toString()).add(jid);
+
+                    if (affectedDirectedPresence == null) {
+                        affectedDirectedPresence = new DirectedPresence(handlerJID);
+                    }
+                    affectedDirectedPresence.addReceiver(jid);
+
+                    directedPresencesCache.put(sender, directedPresences);
+                    localDirectedPresences.put(sender, directedPresences);
                 }
             }
         }
@@ -395,43 +430,61 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @param update the unavailable presence sent by the user.
      */
     private void broadcastUnavailableForDirectedPresences(Presence update) {
-        if (update.getFrom() == null) {
+        JID from = update.getFrom();
+        if (from == null) {
             return;
         }
-        if (localServer.isLocal(update.getFrom())) {
+        if (localServer.isLocal(from)) {
             // Remove the registry of directed presences of this user
-            Map<String, Set<String>> map = directedPresences.remove(update.getFrom().toString());
-            if (map != null) {
+            Collection<DirectedPresence> directedPresences = directedPresencesCache.remove(from.toString());
+            if (directedPresences != null) {
                 // Iterate over all the entities that the user sent a directed presence
-                for (String handler : new HashSet<String>(map.keySet())) {
-                    JID handlerJID = new JID(handler);
-                    Set<String> jids = map.get(handler);
-                    if (jids == null) {
-                        continue;
-                    }
-                    for (String jid : jids) {
+                for (DirectedPresence directedPresence : directedPresences) {
+                    for (String receiver : directedPresence.getReceivers()) {
                         Presence presence = update.createCopy();
-                        presence.setTo(jid);
-                        routingTable.routePacket(handlerJID, presence);
+                        presence.setTo(receiver);
+                        routingTable.routePacket(directedPresence.getHandler(), presence);
+
                     }
                 }
+                localDirectedPresences.remove(from.toString());
             }
         }
     }
 
     public boolean hasDirectPresence(Session session, JID recipientJID) {
-        Map<String, Set<String>> map = directedPresences.get(session.getAddress().toString());
-        if (map != null) {
+        Collection<DirectedPresence> directedPresences = directedPresencesCache.get(session.getAddress().toString());
+        if (directedPresences != null) {
             String recipient = recipientJID.toBareJID();
-            for (Set<String> fullJIDs : map.values()) {
-                for (String fullJID : fullJIDs) {
-                    if (fullJID.contains(recipient)) {
+            for (DirectedPresence directedPresence : directedPresences) {
+                for (String receiver : directedPresence.getReceivers()) {
+                    if (receiver.contains(recipient)) {
                         return true;
                     }
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Removes directed presences sent to entities that are no longer available.
+     */
+    public void removedExpiredPresences() {
+        Map<String, Collection<DirectedPresence>> copy =
+                new HashMap<String, Collection<DirectedPresence>>(localDirectedPresences);
+        for (Map.Entry<String, Collection<DirectedPresence>> entry : copy.entrySet()) {
+            for (DirectedPresence directedPresence : entry.getValue()) {
+                if (!routingTable.hasClientRoute(directedPresence.getHandler()) &&
+                        !routingTable.hasComponentRoute(directedPresence.getHandler())) {
+                    Collection<DirectedPresence> presences = localDirectedPresences.get(entry.getKey());
+                    presences.remove(directedPresence);
+                    if (presences.isEmpty()) {
+                        localDirectedPresences.remove(entry.getKey());
+                    }
+                }
+            }
+        }
     }
 
     public void initialize(XMPPServer server) {
@@ -444,7 +497,39 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         sessionManager = server.getSessionManager();
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
-        // TODO Add as route listener (to remove direct presences info for removed routes)
+        directedPresencesCache = CacheFactory.createCache(PRESENCE_CACHE_NAME);
+        // TODO Add as route listener (to remove direct presences info for removed routes). Mainly for c2s sessions which is uncommon.
+        // Listen to cluster events
+        ClusterManager.addListener(this);
     }
 
+    public void joinedCluster() {
+        // Populate directedPresencesCache with local content since when not in a cluster
+        // we could still send directed presences to entities that when connected to a cluster
+        // they will be replicated. An example would be MUC rooms.
+        for (Map.Entry<String, Collection<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
+            directedPresencesCache.put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public void joinedCluster(byte[] nodeID) {
+        // Do nothing
+    }
+
+    public void leftCluster() {
+        if (!XMPPServer.getInstance().isShuttingDown()) {
+            // Populate directedPresencesCache with local content
+            for (Map.Entry<String, Collection<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
+                directedPresencesCache.put(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    public void leftCluster(byte[] nodeID) {
+        // Do nothing
+    }
+
+    public void markedAsSeniorClusterMember() {
+        // Do nothing
+    }
 }

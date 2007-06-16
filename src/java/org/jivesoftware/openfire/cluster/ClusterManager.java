@@ -43,11 +43,11 @@ public class ClusterManager {
                         Event event = events.take();
                         EventType eventType = event.getType();
                         // Make sure that CacheFactory is getting this events first (to update cache structure)
-                        if (eventType == EventType.joined_cluster) {
+                        if (eventType == EventType.joined_cluster && event.getNodeID() == null) {
                             // Replace standalone caches with clustered caches. Local cached data is not moved.
                             CacheFactory.joinedCluster();
                         }
-                        else if (eventType == EventType.left_cluster) {
+                        else if (eventType == EventType.left_cluster && event.getNodeID() == null) {
                             // Replace clustered caches with standalone caches. Cached data is not moved to new cache.
                             CacheFactory.leftCluster();
                         }
@@ -56,15 +56,21 @@ public class ClusterManager {
                             try {
                                 switch (eventType) {
                                     case joined_cluster: {
-                                        listener.joinedCluster(event.getOldNodeID());
-                                        break;
-                                    }
-                                    case leaving_cluster: {
-                                        listener.leavingCluster();
+                                        if (event.getNodeID() == null) {
+                                            listener.joinedCluster();
+                                        }
+                                        else {
+                                            listener.joinedCluster(event.getNodeID());
+                                        }
                                         break;
                                     }
                                     case left_cluster: {
-                                        listener.leftCluster();
+                                        if (event.getNodeID() == null) {
+                                            listener.leftCluster();
+                                        }
+                                        else {
+                                            listener.leftCluster(event.getNodeID());
+                                        }
                                         break;
                                     }
                                     case marked_senior_cluster_member: {
@@ -126,12 +132,11 @@ public class ClusterManager {
      * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
      *
-     * @param oldNodeID    nodeID used by this JVM before joining the cluster.
      * @param asynchronous true if event will be triggered in background
      */
-    public static void fireJoinedCluster(byte[] oldNodeID, boolean asynchronous) {
+    public static void fireJoinedCluster(boolean asynchronous) {
         try {
-            Event event = new Event(EventType.joined_cluster, oldNodeID);
+            Event event = new Event(EventType.joined_cluster, null);
             events.put(event);
             if (!asynchronous) {
                 while (!event.isProcessed()) {
@@ -144,20 +149,22 @@ public class ClusterManager {
     }
 
     /**
-     * Triggers event indicating that this JVM is about to leave the cluster. This could
-     * happen when disabling clustering support, removing the enterprise plugin that provides
-     * clustering support or even shutdown the server.<p>
-     * <p/>
-     * This event will be triggered in another thread but won't return until all listeners have
-     * been alerted. This will give listeners the chance to use the cluster for any clean up
-     * operation before the node actually leaves the cluster.
+     * Triggers event indicating that another JVM is now part of a cluster.<p>
+     *
+     * This event will be triggered in another thread. This will avoid potential deadlocks
+     * in Coherence.
+     *
+     * @param nodeID    nodeID assigned to the JVM when joining the cluster.
+     * @param asynchronous true if event will be triggered in background
      */
-    public static void fireLeavingCluster() {
+    public static void fireJoinedCluster(byte[] nodeID, boolean asynchronous) {
         try {
-            Event event = new Event(EventType.leaving_cluster, null);
+            Event event = new Event(EventType.joined_cluster, nodeID);
             events.put(event);
-            while (!event.isProcessed()) {
-                Thread.sleep(50);
+            if (!asynchronous) {
+                while (!event.isProcessed()) {
+                    Thread.sleep(50);
+                }
             }
         } catch (InterruptedException e) {
             // Should never happen
@@ -204,7 +211,7 @@ public class ClusterManager {
      * island will have its own senior cluster member. However, when the islands meet again there
      * could only be one senior cluster member so one of the senior cluster members will stop playing
      * that role. When that happens the JVM no longer playing that role will receive the
-     * {@link #fireLeftCluster(boolean)} and {@link #fireJoinedCluster(byte[],boolean)} events.<p>
+     * {@link #fireLeftCluster(boolean)} and {@link #fireJoinedCluster(boolean)} events.<p>
      * <p/>
      * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
@@ -305,20 +312,20 @@ public class ClusterManager {
 
     private static class Event {
         private EventType type;
-        private byte[] oldNodeID;
+        private byte[] nodeID;
         private boolean processed;
 
         public Event(EventType type, byte[] oldNodeID) {
             this.type = type;
-            this.oldNodeID = oldNodeID;
+            this.nodeID = oldNodeID;
         }
 
         public EventType getType() {
             return type;
         }
 
-        public byte[] getOldNodeID() {
-            return oldNodeID;
+        public byte[] getNodeID() {
+            return nodeID;
         }
 
         public boolean isProcessed() {
@@ -343,11 +350,6 @@ public class ClusterManager {
          * This JVM joined a cluster.
          */
         joined_cluster,
-
-        /**
-         * This JVM is about to leave the cluster.
-         */
-        leaving_cluster,
 
         /**
          * This JVM is no longer part of the cluster.

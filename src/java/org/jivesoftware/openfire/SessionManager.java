@@ -186,7 +186,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
             for (Map.Entry<String, byte[]> entry : multiplexerSessionsCache.entrySet()) {
-                if (!Arrays.equals(server.getNodeID(), entry.getValue())) {
+                if (!server.getNodeID().equals(entry.getValue())) {
                     sessions.add(locator.getConnectionMultiplexerSession(entry.getValue(), new JID(entry.getKey())));
                 }
             }
@@ -216,7 +216,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
             for (Map.Entry<String, byte[]> entry : multiplexerSessionsCache.entrySet()) {
-                if (!Arrays.equals(server.getNodeID(), entry.getValue())) {
+                if (!server.getNodeID().equals(entry.getValue())) {
                     JID jid = new JID(entry.getKey());
                     if (domain.equals(jid.getDomain())) {
                         sessions.add(
@@ -250,7 +250,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         boolean firstConnection = getConnectionMultiplexerSessions(address.getDomain()).isEmpty();
         localSessionManager.getConnnectionManagerSessions().put(address.toString(), session);
         // Keep track of the cluster node hosting the new CM connection
-        multiplexerSessionsCache.put(address.toString(), server.getNodeID());
+        multiplexerSessionsCache.put(address.toString(), server.getNodeID().toByteArray());
         if (firstConnection) {
             // Notify ConnectionMultiplexerManager that a new connection manager
             // is available
@@ -336,7 +336,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         // Add to component session.
         localSessionManager.getComponentsSessions().add(session);
         // Keep track of the cluster node hosting the new external component
-        componentSessionsCache.put(address.toString(), server.getNodeID());
+        componentSessionsCache.put(address.toString(), server.getNodeID().toByteArray());
         return session;
     }
 
@@ -390,7 +390,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         String streamID = session.getStreamID().getID();
         localSessionManager.addIncomingServerSessions(streamID, session);
         // Keep track of the nodeID hosting the incoming server session
-        incomingServerSessionsCache.put(streamID, server.getNodeID());
+        incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
         // Update list of sockets/sessions coming from the same remote hostname
         Lock lock = LockManager.getLock(hostname);
         try {
@@ -870,7 +870,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
             for (Map.Entry<String, byte[]> entry : componentSessionsCache.entrySet()) {
-                if (!Arrays.equals(server.getNodeID(), entry.getValue())) {
+                if (!server.getNodeID().equals(entry.getValue())) {
                     sessions.add(locator.getComponentSession(entry.getValue(), new JID(entry.getKey())));
                 }
             }
@@ -1429,18 +1429,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     private void restoreCacheContent() {
         // Add external component sessions hosted locally to the cache (using new nodeID)
         for (Session session : localSessionManager.getComponentsSessions()) {
-            componentSessionsCache.put(session.getAddress().toString(), server.getNodeID());
+            componentSessionsCache.put(session.getAddress().toString(), server.getNodeID().toByteArray());
         }
 
         // Add connection multiplexer sessions hosted locally to the cache (using new nodeID)
         for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
-            multiplexerSessionsCache.put(address, server.getNodeID());
+            multiplexerSessionsCache.put(address, server.getNodeID().toByteArray());
         }
 
         // Add incoming server sessions hosted locally to the cache (using new nodeID)
         for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
             String streamID = session.getStreamID().getID();
-            incomingServerSessionsCache.put(streamID, server.getNodeID());
+            incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
             for (String hostname : session.getValidatedDomains()) {
                 // Update list of sockets/sessions coming from the same remote hostname
                 Lock lock = LockManager.getLock(hostname);

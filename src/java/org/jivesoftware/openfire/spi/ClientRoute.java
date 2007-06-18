@@ -11,6 +11,7 @@
 
 package org.jivesoftware.openfire.spi;
 
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -44,8 +45,8 @@ public class ClientRoute implements Cacheable, Externalizable {
         return available;
     }
 
-    public ClientRoute(byte[] nodeID, boolean available) {
-        this.nodeID = nodeID;
+    public ClientRoute(NodeID nodeID, boolean available) {
+        this.nodeID = nodeID.toByteArray();
         this.available = available;
     }
 

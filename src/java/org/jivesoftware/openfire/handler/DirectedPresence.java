@@ -58,7 +58,7 @@ public class DirectedPresence implements Externalizable {
 
     public DirectedPresence(JID handlerJID) {
         this.handler = handlerJID;
-        this.nodeID = XMPPServer.getInstance().getNodeID();
+        this.nodeID = XMPPServer.getInstance().getNodeID().toByteArray();
     }
 
     public byte[] getNodeID() {

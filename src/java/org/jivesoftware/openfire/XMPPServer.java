@@ -16,6 +16,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
@@ -98,8 +99,8 @@ public class XMPPServer {
     private Date startDate;
     private Date stopDate;
     private boolean initialized = false;
-    private byte[] nodeID;
-    private static final byte[] DEFAULT_NODE_ID = new byte[0];
+    private NodeID nodeID;
+    private static final NodeID DEFAULT_NODE_ID = new NodeID(new byte[0]);
 
     /**
      * All modules loaded by this server
@@ -206,7 +207,7 @@ public class XMPPServer {
      *
      * @return an ID that uniquely identifies this server in a cluster.
      */
-    public byte[] getNodeID() {
+    public NodeID getNodeID() {
         return nodeID == null ? DEFAULT_NODE_ID : nodeID;
     }
 
@@ -217,7 +218,7 @@ public class XMPPServer {
      *
      * @param nodeID an ID that uniquely identifies this server in a cluster or null if not in a cluster.
      */
-    public void setNodeID(byte[] nodeID) {
+    public void setNodeID(NodeID nodeID) {
         this.nodeID = nodeID;
     }
 

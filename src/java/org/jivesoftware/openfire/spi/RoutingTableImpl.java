@@ -15,6 +15,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
@@ -61,7 +62,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds components connected to the server.
      * Key: component domain, Value: list of nodeIDs hosting the component
      */
-    private Cache<String, Set<byte[]>> componentsCache;
+    private Cache<String, Set<NodeID>> componentsCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
@@ -100,7 +101,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addServerRoute(JID route, LocalOutgoingServerSession destination) {
         String address = destination.getAddress().getDomain();
         localRoutingTable.addRoute(address, destination);
-        serversCache.put(address, server.getNodeID());
+        serversCache.put(address, server.getNodeID().toByteArray());
     }
 
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
@@ -109,9 +110,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = LockManager.getLock(address + "rt");
         try {
             lock.lock();
-            Set<byte[]> nodes = componentsCache.get(address);
+            Set<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
-                nodes = new HashSet<byte[]>();
+                nodes = new HashSet<NodeID>();
             }
             nodes.add(server.getNodeID());
             componentsCache.put(address, nodes);
@@ -196,7 +197,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         routed = false;
                     }
                     else {
-                        if (Arrays.equals(clientRoute.getNodeID(), server.getNodeID())) {
+                        if (server.getNodeID().equals(clientRoute.getNodeID())) {
                             // This is a route to a local user hosted in this node
                             try {
                                 localRoutingTable.getRoute(jid.toString()).process(packet);
@@ -229,10 +230,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             else {
                 // Check if other cluster nodes are hosting this component
-                Set<byte[]> nodes = componentsCache.get(jid.getDomain());
+                Set<NodeID> nodes = componentsCache.get(jid.getDomain());
                 if (nodes != null) {
-                    for (byte[] nodeID : nodes) {
-                        if (Arrays.equals(nodeID, server.getNodeID())) {
+                    for (NodeID nodeID : nodes) {
+                        if (server.getNodeID().equals(nodeID)) {
                             // This is a route to a local component hosted in this node (route
                             // could have been added after our previous check)
                             try {
@@ -246,7 +247,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         else {
                             // This is a route to a local component hosted in other node
                             if (remotePacketRouter != null) {
-                                routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                                routed = remotePacketRouter.routePacket(nodeID.toByteArray(), jid, packet);
                                 if (routed) {
                                     break;
                                 }
@@ -260,7 +261,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Packet sent to remote server
             byte[] nodeID = serversCache.get(jid.getDomain());
             if (nodeID != null) {
-                if (Arrays.equals(nodeID, server.getNodeID())) {
+                if (server.getNodeID().equals(nodeID)) {
                     // This is a route to a remote server connected from this node
                     try {
                         localRoutingTable.getRoute(jid.getDomain()).process(packet);
@@ -489,14 +490,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // Add sessions of non-anonymous users hosted by other cluster nodes
                 for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
                     ClientRoute route = entry.getValue();
-                    if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
+                    if (!server.getNodeID().equals(route.getNodeID())) {
                         sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
                     }
                 }
                 // Add sessions of anonymous users hosted by other cluster nodes
                 for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
                     ClientRoute route = entry.getValue();
-                    if (!Arrays.equals(route.getNodeID(), server.getNodeID())) {
+                    if (!server.getNodeID().equals(route.getNodeID())) {
                         sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
                     }
                 }
@@ -651,7 +652,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = LockManager.getLock(address + "rt");
         try {
             lock.lock();
-            Set<byte[]> nodes = componentsCache.get(address);
+            Set<NodeID> nodes = componentsCache.get(address);
             if (nodes != null) {
                 removed = nodes.remove(server.getNodeID());
                 if (nodes.isEmpty()) {

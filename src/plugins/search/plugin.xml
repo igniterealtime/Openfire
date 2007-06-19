@@ -5,23 +5,23 @@
     <name>Search</name>
     <description>Provides support for Jabber Search (XEP-0055)</description>
     <author>Ryan Graham</author>
-    <version>1.4.0</version>
-    <date>4/12/2007</date>
+    <version>1.4.1</version>
+    <date>6/20/2007</date>
     <minServerVersion>3.3.0</minServerVersion>
     
     <adminconsole>
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">
-                <item id="search-props-edit-form" name="Search Properties"
+                <item id="search-props-edit-form" name="${search.props.edit.form.title}"
                     url="search-props-edit-form.jsp"
-                    description="Edit search service properties" />
+                    description="${search.props.edit.form.description}" />
             </sidebar>
         </tab>
         <tab id="tab-users">
             <sidebar id="sidebar-users">
-                <item id="advance-user-search" name="Advanced User Search"
+                <item id="advance-user-search" name="${advance.user.search.title}"
                     url="advance-user-search.jsp"
-                    description="Advanced user search" />
+                    description="${advance.user.search.description}" />
             </sidebar>
         </tab>
     </adminconsole>

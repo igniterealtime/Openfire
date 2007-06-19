@@ -15,7 +15,6 @@ import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.interceptor.PacketCopier;
-import org.xmpp.component.Component;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -92,10 +91,9 @@ public class PacketsNotification extends AdHocCommand {
         boolean processed = "true".equals(data.getData().get("processed").get(0));
 
         JID componentJID = data.getOwner();
-        Component component = InternalComponentManager.getInstance().getComponent(componentJID);
         // Create or update subscription of the component to receive packet notifications
-        PacketCopier.getInstance().addSubscriber(componentJID, component, iqEnabled,
-                messageEnabled, presenceEnabled, incoming, processed);
+        PacketCopier.getInstance()
+                .addSubscriber(componentJID, iqEnabled, messageEnabled, presenceEnabled, incoming, processed);
 
         // Inform that everything went fine
         Element note = command.addElement("note");
@@ -131,6 +129,6 @@ public class PacketsNotification extends AdHocCommand {
      * @return true if the requester can access this command.
      */
     public boolean hasPermission(JID requester) {
-        return InternalComponentManager.getInstance().getComponent(requester) != null;
+        return InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

@@ -56,8 +56,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
     private List<Element> serverItems = new ArrayList<Element>();
-    private Map<String, DiscoItemsProvider> serverNodeProviders =
-            new ConcurrentHashMap<String, DiscoItemsProvider>();
+    private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoItemsProvider>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
 

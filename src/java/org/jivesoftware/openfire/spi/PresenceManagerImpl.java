@@ -15,13 +15,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PresenceManager;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -35,11 +29,16 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.xmpp.component.Component;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import java.sql.Connection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,6 +62,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     private static final String NULL_STRING = "NULL";
     private static final long NULL_LONG = -1L;
 
+    private RoutingTable routingTable;
     private SessionManager sessionManager;
     private UserManager userManager;
     private RosterManager rosterManager;
@@ -390,15 +390,14 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 }
             }
             else {
-                Component component = getComponent(probee);
-                if (component != null) {
+                if (routingTable.hasComponentRoute(probee)) {
                     // If the probee belongs to a component then ask the component to process the
                     // probe presence
                     Presence presence = new Presence();
                     presence.setType(Presence.Type.probe);
                     presence.setFrom(prober);
                     presence.setTo(probee);
-                    component.processPacket(presence);
+                    routingTable.routePacket(probee, presence);
                 }
                 else {
                     // Check if the probee may be hosted by this server
@@ -477,6 +476,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         userManager = server.getUserManager();
         presenceUpdateHandler = server.getPresenceUpdateHandler();
         rosterManager = server.getRosterManager();
+        routingTable = server.getRoutingTable();
     }
 
     public void start() throws IllegalStateException {
@@ -490,15 +490,6 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         // Clear the caches when stopping the module.
         offlinePresenceCache.clear();
         lastActivityCache.clear();
-    }
-
-    private Component getComponent(JID probee) {
-        // Check for registered components
-        Component component = componentManager.getComponent(probee);
-        if (component != null) {
-            return component;
-        }
-        return null;
     }
 
     /**

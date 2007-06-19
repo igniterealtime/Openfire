@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.component;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -23,8 +24,6 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.*;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,8 +51,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     /**
      * Holds the list of listeners that will be notified of component events.
      */
-    private List<ComponentEventListener> listeners =
-            new CopyOnWriteArrayList<ComponentEventListener>();
+    private List<ComponentEventListener> listeners = new CopyOnWriteArrayList<ComponentEventListener>();
 
     private static InternalComponentManager instance;
     /**
@@ -65,6 +63,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * in many methods.
      */
     private String serverDomain;
+    private RoutingTable routingTable;
 
     public InternalComponentManager() {
         super("Internal Component Manager");
@@ -73,6 +72,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
     public static InternalComponentManager getInstance() {
         return instance;
+    }
+
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        routingTable = server.getRoutingTable();
     }
 
     public void start() {
@@ -155,13 +159,15 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         JID componentJID = new JID(subdomain + "." + serverDomain);
 
         // Remove the route for the service provided by the component
-        if (XMPPServer.getInstance().getRoutingTable() != null) {
-            XMPPServer.getInstance().getRoutingTable().removeComponentRoute(componentJID);
+        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+        if (routingTable != null) {
+            routingTable.removeComponentRoute(componentJID);
         }
 
         // Remove the disco item from the server for the component that is being removed
-        if (XMPPServer.getInstance().getIQDiscoItemsHandler() != null) {
-            XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(componentJID.toBareJID());
+        IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
+        if (iqDiscoItemsHandler != null) {
+            iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
         }
 
         // Ask the component to shutdown
@@ -169,7 +175,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             component.shutdown();
         }
 
-        // Notify listeners that a new component has been registered
+        // Notify listeners that an existing component has been unregistered
         for (ComponentEventListener listener : listeners) {
             listener.componentUnregistered(component, componentJID);
         }
@@ -319,23 +325,15 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     /**
-     * Returns the list of components that are currently installed in the server.
-     * This includes internal and external components.
-     *
-     * @return the list of installed components.
-     */
-    public Collection<Component> getComponents() {
-        return Collections.unmodifiableCollection(components.values());
-    }
-
-    /**
-     * Retrieves the <code>Component</code> which is mapped
-     * to the specified JID.
+     * Retrieves the <code>Component</code> which is mapped to the specified JID. The
+     * look up will only be done on components that were registered with this JVM. That
+     * means that components registered in other cluster nodes are not going to be
+     * considered.
      *
      * @param componentJID the jid mapped to the component.
      * @return the component with the specified id.
      */
-    public Component getComponent(JID componentJID) {
+    private Component getComponent(JID componentJID) {
         if (componentJID.getNode() != null) {
             return null;
         }
@@ -356,14 +354,20 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     /**
-     * Retrieves the <code>Component</code> which is mapped
-     * to the specified JID.
+     * Returns true if a component is associated to the specified address. Components
+     * registered with this JVM or other cluster nodes are going to be considered.
      *
-     * @param jid the jid mapped to the component.
-     * @return the component with the specified id.
+     * @param componentJID the address of the component. This is the complete domain.
+     * @return true if a component is associated to the specified address.
      */
-    public Component getComponent(String jid) {
-        return getComponent(new JID(jid));
+    public boolean hasComponent(JID componentJID) {
+        if (componentJID.getNode() != null || componentJID.getResource() != null) {
+            return false;
+        }
+//        if (componentJID.getDomain().lastIndexOf("." + serverDomain) == -1) {
+//            componentJID = new JID(componentJID.getDomain() + "." + serverDomain);
+//        }
+        return routingTable.hasComponentRoute(componentJID);
     }
 
     /**
@@ -380,12 +384,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         for (JID prober : presenceMap.keySet()) {
             JID probee = presenceMap.get(prober);
 
-            Component component = getComponent(probee);
-            if (component != null) {
+            if (routingTable.hasComponentRoute(probee)) {
                 Presence presence = new Presence();
                 presence.setFrom(prober);
                 presence.setTo(probee);
-                component.processPacket(presence);
+                routingTable.routePacket(probee, presence);
 
                 // No reason to hold onto prober reference.
                 presenceMap.remove(prober);

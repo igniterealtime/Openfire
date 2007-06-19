@@ -8,17 +8,17 @@
  */
 package org.jivesoftware.openfire.commands.admin;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.dom4j.Element;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * AdHoc command to return the current status of the HTTP-bind service. The command returns whether
@@ -93,7 +93,6 @@ public class HttpBindStatus extends AdHocCommand {
 
     @Override
     public boolean hasPermission(JID requester) {
-        return super.hasPermission(requester) ||
-                InternalComponentManager.getInstance().getComponent(requester) != null;
+        return super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

@@ -122,7 +122,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             return null;
         }
         // Check that the requested subdomain is not already in use
-        if (InternalComponentManager.getInstance().getComponent(subdomain) != null) {
+        if (InternalComponentManager.getInstance().hasComponent(new JID(subdomain + "." + serverName))) {
             Log.debug("[ExComp] Another component is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response

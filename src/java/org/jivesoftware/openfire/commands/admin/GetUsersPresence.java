@@ -124,7 +124,6 @@ public class GetUsersPresence extends AdHocCommand {
      * @return true if the requester can access this command.
      */
     public boolean hasPermission(JID requester) {
-        return super.hasPermission(requester) ||
-                InternalComponentManager.getInstance().getComponent(requester) != null;
+        return super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

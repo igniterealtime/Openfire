@@ -193,7 +193,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public boolean isServiceAdmin(JID user) {
         return sysadmins.contains(user.toBareJID()) || allowedToCreate.contains(user.toBareJID()) ||
-                InternalComponentManager.getInstance().getComponent(user) != null;
+                InternalComponentManager.getInstance().hasComponent(user);
     }
 
     public boolean isInstantNodeSupported() {

@@ -11,14 +11,15 @@
 package org.jivesoftware.openfire.interceptor;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.packet.*;
 
@@ -44,6 +45,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
     private Map<String, Subscription> subscribers = new ConcurrentHashMap<String, Subscription>();
     private String serverName;
+    private RoutingTable routingTable;
 
     /**
      * Timer to save queued logs to the XML file.
@@ -54,8 +56,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
      */
-    private BlockingQueue<InterceptedPacket> packetQueue =
-            new LinkedBlockingQueue<InterceptedPacket>();
+    private BlockingQueue<InterceptedPacket> packetQueue = new LinkedBlockingQueue<InterceptedPacket>();
 
     /**
      * Returns unique instance of this class.
@@ -71,7 +72,9 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         // Add the new instance as a listener of component events. We need to react when
         // a component is no longer valid
         InternalComponentManager.getInstance().addListener(this);
-        serverName = XMPPServer.getInstance().getServerInfo().getName();
+        XMPPServer server = XMPPServer.getInstance();
+        serverName = server.getServerInfo().getName();
+        routingTable = server.getRoutingTable();
 
         // Add new instance to the PacketInterceptors list
         InterceptorManager.getInstance().addInterceptor(this);
@@ -85,17 +88,16 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
      * Creates new subscription for the specified component with the specified settings.
      *
      * @param componentJID the address of the component connected to the server.
-     * @param component the component that will be notified of packet activity.
      * @param iqEnabled true if interested in IQ packets of any type.
      * @param messageEnabled true if interested in Message packets.
      * @param presenceEnabled true if interested in Presence packets.
      * @param incoming true if interested in incoming traffic. false means outgoing.
      * @param processed true if want to be notified after packets were processed.
      */
-    public void addSubscriber(JID componentJID, Component component, boolean iqEnabled,
-            boolean messageEnabled, boolean presenceEnabled, boolean incoming, boolean processed) {
-        subscribers.put(componentJID.toString(), new Subscription(component, iqEnabled,
-                messageEnabled, presenceEnabled, incoming, processed));
+    public void addSubscriber(JID componentJID, boolean iqEnabled, boolean messageEnabled, boolean presenceEnabled,
+                              boolean incoming, boolean processed) {
+        subscribers.put(componentJID.toString(),
+                new Subscription(iqEnabled, messageEnabled, presenceEnabled, incoming, processed));
     }
 
     /**
@@ -179,7 +181,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
                         childElement.addAttribute("date", dateFormat.format(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
                         // Send message notification to subscribed component
-                        subscription.getComponent().processPacket(message);
+                        routingTable.routePacket(message.getTo(), message);
                     }
                     catch (Exception e) {
                         Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -202,7 +204,6 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     }
 
     private static class Subscription {
-        private Component component;
         private boolean presenceEnabled;
         private boolean messageEnabled;
         private boolean iqEnabled;
@@ -213,30 +214,19 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
          * Creates a new subscription for the specified Component with the
          * specified configuration.
          *
-         * @param component the component subscribing.
          * @param iqEnabled true if interested in IQ packets of any type.
          * @param messageEnabled true if interested in Message packets.
          * @param presenceEnabled true if interested in Presence packets.
          * @param incoming true if interested in incoming traffic. false means outgoing.
          * @param processed true if want to be notified after packets were processed.
          */
-        public Subscription(Component component, boolean iqEnabled, boolean messageEnabled,
+        public Subscription(boolean iqEnabled, boolean messageEnabled,
                 boolean presenceEnabled, boolean incoming, boolean processed) {
-            this.component = component;
             this.incoming = incoming;
             this.iqEnabled = iqEnabled;
             this.messageEnabled = messageEnabled;
             this.presenceEnabled = presenceEnabled;
             this.processed = processed;
-        }
-
-        /**
-         * Returns the component that is subscribed.
-         *
-         * @return the component that is subscribed.
-         */
-        public Component getComponent() {
-            return component;
         }
 
         /**

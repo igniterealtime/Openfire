@@ -193,7 +193,7 @@ public class XMPPServer {
      */
     public boolean isRemote(JID jid) {
         if (jid != null) {
-            if (!name.equals(jid.getDomain()) && componentManager.getComponent(jid) == null) {
+            if (!name.equals(jid.getDomain()) && !componentManager.hasComponent(jid)) {
                 return true;
             }
         }
@@ -229,8 +229,7 @@ public class XMPPServer {
      * @return true if the given address matches a component service JID.
      */
     public boolean matchesComponent(JID jid) {
-        return jid != null && !name.equals(jid.getDomain()) &&
-                componentManager.getComponent(jid) != null;
+        return jid != null && !name.equals(jid.getDomain()) && componentManager.hasComponent(jid);
     }
 
     /**

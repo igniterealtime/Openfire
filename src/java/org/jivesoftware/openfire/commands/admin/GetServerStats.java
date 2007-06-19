@@ -12,15 +12,15 @@ package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
 import org.jivesoftware.admin.AdminConsole;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -151,6 +151,6 @@ public class GetServerStats extends AdHocCommand {
      * @return true if the requester can access this command.
      */
     public boolean hasPermission(JID requester) {
-        return super.hasPermission(requester) || InternalComponentManager.getInstance().getComponent(requester) != null;
+        return super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

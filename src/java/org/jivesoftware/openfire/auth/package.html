@@ -3,8 +3,13 @@
 <head>
 </head>
 <body>
-<p>Authentication service interfaces and classes. Custom
-authentication implementations can be created by extending the
-{@link org.jivesoftware.openfire.auth.AuthProvider} interface.
+<p>Authentication and Authorization service interfaces and classes. There are three compoents:
+
+<ul>
+<li><b>Authentication</b>. Authentication is the process of verifying a user. Custom authentication implementations can be created by extending the {@link org.jivesoftware.openfire.auth.AuthProvider} interface.</li>
+<li><b>Authorization</b>. Authorization is the process of allowing an authenticated identity to choose a username.  Default authorization will authorize an authenticated username to the same username only.  Custom authorization implementations can be created by extending the {@link org.jivesoftware.openfire.auth.AuthorizationPolicy} interface.</li>
+<li><b>Authorization Mapping</b>. Mapping occurs when the client did not request any specific username. This provides a method of giving a default username in these situations. Custom authorization mappings can be created by extending the {@link org.jivesoftware.auth.AuthorizationMapping} interface.</li>
+</ul>
+
 </body>
 </html>

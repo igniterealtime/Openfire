@@ -16,6 +16,7 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -31,6 +32,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import java.io.UnsupportedEncodingException;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -188,11 +190,7 @@ public class SASLAuthentication {
                     // Store the requested SASL mechanism by the client
                     session.setSessionData("SaslMechanism", mechanism);
                     //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
-                    if (mechanism.equalsIgnoreCase("PLAIN") &&
-                            mechanisms.contains("PLAIN")) {
-                        status = doPlainAuthentication(session, doc);
-                    }
-                    else if (mechanism.equalsIgnoreCase("ANONYMOUS") &&
+                    if (mechanism.equalsIgnoreCase("ANONYMOUS") &&
                             mechanisms.contains("ANONYMOUS")) {
                         status = doAnonymousAuthentication(session);
                     }
@@ -221,11 +219,17 @@ public class SASLAuthentication {
                                 }
                             }
                             byte[] challenge = ss.evaluateResponse(token);
-                            // Send the challenge
-                            sendChallenge(session, challenge);
-
+                            if (ss.isComplete()) {
+                                authenticationSuccessful(session, ss.getAuthorizationID(),
+                                    challenge);
+                                status = Status.authenticated;
+                            }
+                            else {
+                                // Send the challenge
+                                sendChallenge(session, challenge);
+                                status = Status.needResponse;
+                            }
                             session.setSessionData("SaslServer", ss);
-                            status = Status.needResponse;
                         }
                         catch (SaslException e) {
                             Log.warn("SaslException", e);
@@ -243,11 +247,7 @@ public class SASLAuthentication {
                 case RESPONSE:
                     // Store the requested SASL mechanism by the client
                     mechanism = (String) session.getSessionData("SaslMechanism");
-                    if (mechanism.equalsIgnoreCase("PLAIN") &&
-                            mechanisms.contains("PLAIN")) {
-                        status = doPlainAuthentication(session, doc);
-                    }
-                    else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
+                    if (mechanism.equalsIgnoreCase("EXTERNAL")) {
                         status = doExternalAuthentication(session, doc);
                     }
                     else if (mechanism.equalsIgnoreCase("JIVE-SHAREDSECRET")) {
@@ -397,88 +397,88 @@ public class SASLAuthentication {
         }
     }
 
-    private static Status doPlainAuthentication(LocalSession session, Element doc)
-            throws UnsupportedEncodingException {
-        String username;
-        String password;
-        String response = doc.getTextTrim();
-        if (response == null || response.length() == 0) {
-            // No info was provided so send a challenge to get it
-            sendChallenge(session, new byte[0]);
-            return Status.needResponse;
-        }
-
-        // Parse data and obtain username & password
-        String data = new String(StringUtils.decodeBase64(response), CHARSET);
-        StringTokenizer tokens = new StringTokenizer(data, "\0");
-        if (tokens.countTokens() > 2) {
-            // Skip the "authorization identity"
-            tokens.nextToken();
-        }
-        username = tokens.nextToken();
-        if (username != null && username.contains("@")) {
-            // Check that the specified domain matches the server's domain
-            int index = username.indexOf("@");
-            String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
-                // Domains match. Store in username just the username
-                username = username.substring(0, index);
-            }
-            else {
-                // Unknown domain. Return authentication failed
-                authenticationFailed(session);
-                return Status.failed;
-            }
-        }
-        password = tokens.nextToken();
-        try {
-            AuthToken token = AuthFactory.authenticate(username, password);
-            authenticationSuccessful(session, token.getUsername(), null);
-            return Status.authenticated;
-        }
-        catch (UnauthorizedException e) {
-            authenticationFailed(session);
-            return Status.failed;
-        }
-    }
-
     private static Status doExternalAuthentication(LocalSession session, Element doc)
             throws UnsupportedEncodingException {
-        // Only accept EXTERNAL SASL for s2s. At this point the connection has already
-        // been secured using TLS
-        if (!(session instanceof IncomingServerSession)) {
-            return Status.failed;
-        }
-        String hostname = doc.getTextTrim();
-        if (hostname == null || hostname.length() == 0) {
-            // No hostname was provided so send a challenge to get it
-            sendChallenge(session, new byte[0]);
-            return Status.needResponse;
-        }
+        // At this point the connection has already been secured using TLS
 
-        hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
-        // Check if cerificate validation is disabled for s2s
-        // Flag that indicates if certificates of the remote server should be validated.
-        // Disabling certificate validation is not recommended for production environments.
-        boolean verify =
-                JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
-        if (!verify) {
-            authenticationSuccessful(session, hostname, null);
-            return Status.authenticated;
-        }
-        // Check that hostname matches the one provided in a certificate
-        SocketConnection connection = (SocketConnection) session.getConnection();
-        try {
-            for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                if (CertificateManager.getPeerIdentities((X509Certificate) certificate)
-                        .contains(hostname)) {
-                    authenticationSuccessful(session, hostname, null);
-                    return Status.authenticated;
+        if (session instanceof IncomingServerSession) {
+
+            String hostname = doc.getTextTrim();
+            if (hostname == null || hostname.length() == 0) {
+                // No hostname was provided so send a challenge to get it
+                sendChallenge(session, new byte[0]);
+                return Status.needResponse;
+            }
+    
+            hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
+            // Check if cerificate validation is disabled for s2s
+            // Flag that indicates if certificates of the remote server should be validated.
+            // Disabling certificate validation is not recommended for production environments.
+            boolean verify =
+                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
+            if (!verify) {
+                authenticationSuccessful(session, hostname, null);
+                return Status.authenticated;
+            }
+            // Check that hostname matches the one provided in a certificate
+            SocketConnection connection = (SocketConnection) session.getConnection();
+            try {
+                for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
+                    if (CertificateManager.getPeerIdentities((X509Certificate) certificate)
+                            .contains(hostname)) {
+                        authenticationSuccessful(session, hostname, null);
+                        return Status.authenticated;
+                    }
                 }
             }
+            catch (SSLPeerUnverifiedException e) {
+                Log.warn("Error retrieving client certificates of: " + session, e);
+            }
         }
-        catch (SSLPeerUnverifiedException e) {
-            Log.warn("Error retrieving client certificates of: " + session, e);
+        else {
+            // Client EXTERNALL login
+            Log.debug("SASLAuthentication: EXTERNAL authentication via SSL certs for c2s connection");
+            // This may be null, we will deal with that later
+            String username = doc.getTextTrim();
+            String principal = "";
+            ArrayList<String> principals = new ArrayList<String>();
+            SocketConnection connection = (SocketConnection)session.getConnection();
+            try {
+                for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
+                    principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)certificate));
+                }
+            }
+            catch (SSLPeerUnverifiedException e) {
+                Log.warn("Error retrieving client certificates of: " + session, e);
+            }
+
+            if (username == null || username.length() == 0) {
+                    // No username was provided, according to XEP-0178 we need to:
+                    //    * attempt to get it from the cert first
+                    //    * have the server assign one
+
+                    // There shouldn't be more than a few principals in here. One ideally
+                    // We set principal to the first one in the list to have a sane default
+                    // If this list is empty, then the cert had no identity at all, which
+                    // will cause an authorization failure
+                    principal = principals.get(0);
+
+                    for(String princ : principals) {
+                        String u = AuthorizationManager.map(princ);
+                        if(!u.equals(princ)) {
+                            username = u;
+                            principal = princ;
+                            break;
+                        }
+                    }
+                    Log.debug("SASLAuthentication: no username requested, using "+username);
+            }
+            //Its possible that either/both username and principal are null here
+            //The providers should not allow a null authorization
+            if (AuthorizationManager.authorize(username,principal)) {
+                Log.debug("SASLAuthentication: "+principal+" authorized to "+username);
+                return Status.authenticated;
+            }
         }
         authenticationFailed(session);
         return Status.failed;
@@ -650,6 +650,7 @@ public class SASLAuthentication {
                         mech.equals("DIGEST-MD5") ||
                         mech.equals("CRAM-MD5") ||
                         mech.equals("GSSAPI") ||
+                        mech.equals("EXTERNAL") ||
                         mech.equals("JIVE-SHAREDSECRET")) 
                 {
                     Log.debug("SASLAuthentication: Added " + mech + " to mech list");
@@ -673,5 +674,7 @@ public class SASLAuthentication {
                 }
             }
         }
+        //Add our providers to the Security class
+        Security.addProvider(new org.jivesoftware.openfire.sasl.SaslProvider());
     }
 }

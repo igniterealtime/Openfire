@@ -2,7 +2,7 @@
  * $Revision: 1217 $
  * $Date: 2005-04-11 14:11:06 -0700 (Mon, 11 Apr 2005) $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -17,6 +17,7 @@ import org.dom4j.Node;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
+import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attributes;
@@ -99,11 +100,17 @@ import java.util.*;
  */
 public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
-    private LdapManager manager;
+    private final LdapManager manager;
+    private final VCardManager vCardManager;
     private VCardTemplate template;
 
     public LdapVCardProvider() {
-        manager = LdapManager.getInstance();
+        this(LdapManager.getInstance(), XMPPServer.getInstance().getVCardManager());
+    }
+
+    public LdapVCardProvider(LdapManager ldapManager, VCardManager vCardManager) {
+        manager = ldapManager;
+        this.vCardManager = vCardManager;
         initTemplate();
         // Listen to property events so that the template is always up to date
         PropertyEventDispatcher.addListener(this);
@@ -188,6 +195,11 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         throw new UnsupportedOperationException();
     }
 
+
+    public void setVCard(String username, Element vCardElement) {
+        throw new UnsupportedOperationException();
+    }
+
     public void deleteVCard(String username) {
         throw new UnsupportedOperationException();
     }
@@ -209,7 +221,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         if ("ldap.vcard-mapping".equals(property)) {
             initTemplate();
             // Reset cache of vCards
-            VCardManager.getInstance().reset();
+            vCardManager.reset();
         }
     }
 

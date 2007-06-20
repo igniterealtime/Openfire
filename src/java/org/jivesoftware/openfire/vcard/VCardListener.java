@@ -23,6 +23,7 @@ public interface VCardListener {
      * A vCard was created.
      *
      * @param user the user for which the vCard was created.
+     * @deprecated use {@link #vCardSet(String)}
      */
     public void vCardCreated(String user);
 
@@ -30,8 +31,16 @@ public interface VCardListener {
      * A vCard was updated.
      *
      * @param user the user for which the vCard was updated.
+     * @deprecated use {@link #vCardSet(String)}
      */
     public void vCardUpdated(String user);
+
+    /**
+     * A vCard was set.
+     *
+     * @param username the user for which the vCard was set
+     */
+    public void vCardSet(String username);
 
     /**
      * A vCard was deleted.

@@ -57,6 +57,7 @@ import java.util.List;
 public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     private boolean anonymousAllowed;
+    private boolean iqAuthAllowed;
 
     private Element probeResponse;
     private IQHandlerInfo info;
@@ -100,57 +101,64 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             return reply;
         }
         IQ response;
-        try {
-            Element iq = packet.getElement();
-            Element query = iq.element("query");
-            Element queryResponse = probeResponse.createCopy();
-            if (IQ.Type.get == packet.getType()) {
-                String username = query.elementTextTrim("username");
-                if (username != null) {
-                    queryResponse.element("username").setText(username);
-                }
-                response = IQ.createResultIQ(packet);
-                response.setChildElement(queryResponse);
-                // This is a workaround. Since we don't want to have an incorrect TO attribute
-                // value we need to clean up the TO attribute and send directly the response.
-                // The TO attribute will contain an incorrect value since we are setting a fake
-                // JID until the user actually authenticates with the server.
-                if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
-                    response.setTo((JID)null);
-                }
-            }
-            // Otherwise set query
-            else {
-                if (query.elements().isEmpty()) {
-                    // Anonymous authentication
-                    response = anonymousLogin(session, packet);
-                }
-                else {
+        if (JiveGlobals.getBooleanProperty("xmpp.auth.iqauth",true)) {
+            try {
+                Element iq = packet.getElement();
+                Element query = iq.element("query");
+                Element queryResponse = probeResponse.createCopy();
+                if (IQ.Type.get == packet.getType()) {
                     String username = query.elementTextTrim("username");
-                    // Login authentication
-                    String password = query.elementTextTrim("password");
-                    String digest = null;
-                    if (query.element("digest") != null) {
-                        digest = query.elementTextTrim("digest").toLowerCase();
+                    if (username != null) {
+                        queryResponse.element("username").setText(username);
                     }
-
-                    // If we're already logged in, this is a password reset
-                    if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                        response = passwordReset(password, packet, username, session);
+                    response = IQ.createResultIQ(packet);
+                    response.setChildElement(queryResponse);
+                    // This is a workaround. Since we don't want to have an incorrect TO attribute
+                    // value we need to clean up the TO attribute and send directly the response.
+                    // The TO attribute will contain an incorrect value since we are setting a fake
+                    // JID until the user actually authenticates with the server.
+                    if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+                        response.setTo((JID)null);
+                    }
+                }
+                // Otherwise set query
+                else {
+                    if (query.elements().isEmpty()) {
+                        // Anonymous authentication
+                        response = anonymousLogin(session, packet);
                     }
                     else {
-                        // it is an auth attempt
-                        response = login(username, query, packet, password, session, digest);
+                        String username = query.elementTextTrim("username");
+                        // Login authentication
+                        String password = query.elementTextTrim("password");
+                        String digest = null;
+                        if (query.element("digest") != null) {
+                            digest = query.elementTextTrim("digest").toLowerCase();
+                        }
+    
+                        // If we're already logged in, this is a password reset
+                        if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                            response = passwordReset(password, packet, username, session);
+                        }
+                        else {
+                            // it is an auth attempt
+                            response = login(username, query, packet, password, session, digest);
+                        }
                     }
                 }
             }
+            catch (UserNotFoundException e) {
+                response = IQ.createResultIQ(packet);
+                response.setChildElement(packet.getChildElement().createCopy());
+                response.setError(PacketError.Condition.not_authorized);
+            }
+            catch (UnauthorizedException e) {
+                response = IQ.createResultIQ(packet);
+                response.setChildElement(packet.getChildElement().createCopy());
+                response.setError(PacketError.Condition.not_authorized);
+            }
         }
-        catch (UserNotFoundException e) {
-            response = IQ.createResultIQ(packet);
-            response.setChildElement(packet.getChildElement().createCopy());
-            response.setError(PacketError.Condition.not_authorized);
-        }
-        catch (UnauthorizedException e) {
+        else {
             response = IQ.createResultIQ(packet);
             response.setChildElement(packet.getChildElement().createCopy());
             response.setError(PacketError.Condition.not_authorized);
@@ -180,6 +188,9 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             response.setChildElement(packet.getChildElement().createCopy());
             response.setError(PacketError.Condition.not_acceptable);
             return response;
+        }
+        if (! JiveGlobals.getBooleanProperty("xmpp.auth.iqauth",true)) {
+            throw new UnauthorizedException();
         }
         username = username.toLowerCase();
         // Verify that supplied username and password are correct (i.e. user authentication was successful)

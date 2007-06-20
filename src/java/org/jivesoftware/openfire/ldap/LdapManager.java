@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
  *      <li>ldap.adminDN</li>
  *      <li>ldap.adminPassword</li>
  *      <li>ldap.usernameField -- default value is "uid".</li>
+ *      <li>ldap.usernameSuffix -- default value is "".</li>
  *      <li>ldap.nameField -- default value is "cn".</li>
  *      <li>ldap.emailField -- default value is "mail".</li>
  *      <li>ldap.searchFilter -- the filter used to load the list of users. When defined, it
@@ -130,6 +131,7 @@ public class LdapManager {
     private int port;
     private int readTimeout = -1;
     private String usernameField;
+    private String usernameSuffix;
     private String nameField;
     private String emailField;
     private String baseDN;
@@ -207,6 +209,10 @@ public class LdapManager {
         usernameField = properties.get("ldap.usernameField");
         if (usernameField == null) {
             usernameField = "uid";
+        }
+        usernameSuffix = properties.get("ldap.usernameSuffix");
+        if (usernameSuffix == null) {
+            usernameSuffix = "";
         }
         baseDN = properties.get("ldap.baseDN");
         if (baseDN == null) {
@@ -299,6 +305,7 @@ public class LdapManager {
         buf.append("\t host: ").append(hosts).append("\n");
         buf.append("\t port: ").append(port).append("\n");
         buf.append("\t usernamefield: ").append(usernameField).append("\n");
+        buf.append("\t usernameSuffix: ").append(usernameSuffix).append("\n");
         buf.append("\t baseDN: ").append(baseDN).append("\n");
         buf.append("\t alternateBaseDN: ").append(alternateBaseDN).append("\n");
         buf.append("\t nameField: ").append(nameField).append("\n");
@@ -590,6 +597,8 @@ public class LdapManager {
      */
     public String findUserDN(String username, String baseDN) throws Exception {
         boolean debug = Log.isDebugEnabled();
+        //Support for usernameSuffix
+        username = username + usernameSuffix;
         if (debug) {
             Log.debug("Trying to find a user's DN based on their username. " + usernameField + ": " + username
                     + ", Base DN: " + baseDN + "...");
@@ -811,6 +820,14 @@ public class LdapManager {
     }
 
     /**
+     * Returns the suffix appended to the username when LDAP lookups are performed.
+     * By default this is "".
+     */
+    public String getUsernameSuffix() {
+        return usernameSuffix;
+    }
+
+    /**
      * Sets the LDAP field name that the username lookup will be performed on.
      * By default this is "uid".
      *
@@ -825,6 +842,22 @@ public class LdapManager {
         }
         else {
             properties.put("ldap.usernameField", usernameField);
+        }
+    }
+
+    /**
+     * Set the suffix appended to the username whenever LDAP lookups are performed.
+     *
+     * @param usernameSuffix the String to append to usernames for lookups
+     */
+    public void setUsernameSuffix(String usernameSuffix) {
+        this.usernameSuffix = usernameSuffix;
+        if (usernameSuffix == null) {
+            properties.remove("ldap.usernameSuffix");
+            this.usernameSuffix = "";
+        }
+        else {
+            properties.put("ldap.usernameSuffix", usernameSuffix);
         }
     }
 

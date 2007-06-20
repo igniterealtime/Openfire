@@ -321,6 +321,11 @@ public class LdapUserProvider implements UserProvider {
                     // Get the next userID.
                     String username = (String)((SearchResult)answer.next()).getAttributes().get(
                             manager.getUsernameField()).get();
+                    // Remove usernameSuffix if set
+                    String suffix = manager.getUsernameSuffix();
+                    if(suffix.length() > 0 && username.endsWith(suffix)) {
+                        username = username.substring(0,username.length()-suffix.length());
+                    }
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
                 }
@@ -329,6 +334,11 @@ public class LdapUserProvider implements UserProvider {
                         // Get the next userID.
                         String username = (String) ((SearchResult) answer2.next()).getAttributes().get(
                                 manager.getUsernameField()).get();
+                        // Remove usernameSuffix if set
+                        String suffix = manager.getUsernameSuffix();
+                        if(suffix.length() > 0 && username.endsWith(suffix)) {
+                            username = username.substring(0,username.length()-suffix.length());
+                        }
                         // Escape username and add to results.
                         usernames.add(JID.escapeNode(username));
                     }
@@ -354,12 +364,22 @@ public class LdapUserProvider implements UserProvider {
                         // Get the next userID.
                         String username = (String)((SearchResult)answer.next()).getAttributes().get(
                                 manager.getUsernameField()).get();
+                        // Remove usernameSuffix if set
+                        String suffix = manager.getUsernameSuffix();
+                        if(suffix.length() > 0 && username.endsWith(suffix)) {
+                            username = username.substring(0,username.length()-suffix.length());
+                        }
                         // Escape username and add to results.
                         usernames.add(JID.escapeNode(username));
                     } else if (alternateBaseDN != null && answer2.hasMoreElements()) {
                         // Get the next userID.
                         String username = (String) ((SearchResult) answer2.next()).getAttributes().get(
                                 manager.getUsernameField()).get();
+                        // Remove usernameSuffix if set
+                        String suffix = manager.getUsernameSuffix();
+                        if(suffix.length() > 0 && username.endsWith(suffix)) {
+                            username = username.substring(0,username.length()-suffix.length());
+                        }
                         // Escape username and add to results.
                         usernames.add(JID.escapeNode(username));
                     } else {
@@ -454,7 +474,7 @@ public class LdapUserProvider implements UserProvider {
         }
         List<String> usernames = new ArrayList<String>();
         LdapContext ctx = null;
-	LdapContext ctx2 = null;
+        LdapContext ctx2 = null;
         try {
             ctx = manager.getContext(baseDN);
             // Sort on username field.
@@ -473,7 +493,13 @@ public class LdapUserProvider implements UserProvider {
                 searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
             }
             searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
+            String searchFilter = MessageFormat.format(manager.getSearchFilter(),"*");
             StringBuilder filter = new StringBuilder();
+            //Add the global search filter so only those users the directory administrator wants to include
+            //are returned from the directory
+            filter.append("(&(");
+            filter.append(searchFilter);
+            filter.append(")");
             if (fields.size() > 1) {
                 filter.append("(|");
             }
@@ -484,6 +510,7 @@ public class LdapUserProvider implements UserProvider {
             if (fields.size() > 1) {
                 filter.append(")");
             }
+            filter.append(")");
             NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
             while (answer.hasMoreElements()) {
                 // Get the next userID.
@@ -492,18 +519,23 @@ public class LdapUserProvider implements UserProvider {
                 // Escape username and add to results.
                 usernames.add(JID.escapeNode(username));
             }
-	    if (alternateBaseDN != null) {
-		ctx2 = manager.getContext(alternateBaseDN);
-		ctx2.setRequestControls(searchControl);
-		answer = ctx2.search("", filter.toString(), searchControls);
+            if (alternateBaseDN != null) {
+                ctx2 = manager.getContext(alternateBaseDN);
+                ctx2.setRequestControls(searchControl);
+                answer = ctx2.search("", filter.toString(), searchControls);
                 while (answer.hasMoreElements()) {
                     // Get the next userID.
                     String username = (String)((SearchResult)answer.next()).getAttributes().get(
                             manager.getUsernameField()).get();
+                    // Remove usernameSuffix if set
+                    String suffix = manager.getUsernameSuffix();
+                    if(suffix.length() > 0 && username.endsWith(suffix)) {
+                        username = username.substring(0,username.length()-suffix.length());
+                    }
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
                 }
-	    }
+            }
             // Close the enumeration.
             answer.close();
             // If client-side sorting is enabled, sort.
@@ -567,7 +599,13 @@ public class LdapUserProvider implements UserProvider {
                 searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
             }
             searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
+            String searchFilter = MessageFormat.format(manager.getSearchFilter(),"*");
             StringBuilder filter = new StringBuilder();
+            //Add the global search filter so only those users the directory administrator wants to include
+            //are returned from the directory
+            filter.append("(&(");
+            filter.append(searchFilter);
+            filter.append(")");
             if (fields.size() > 1) {
                 filter.append("(|");
             }
@@ -578,22 +616,22 @@ public class LdapUserProvider implements UserProvider {
             if (fields.size() > 1) {
                 filter.append(")");
             }
+            filter.append(")");
             // TODO: used paged results if supported by LDAP server.
             NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
-	    NamingEnumeration answer2 = null;
-	    if(alternateBaseDN != null) {
+            NamingEnumeration answer2 = null;
+            if(alternateBaseDN != null) {
                 ctx2 = manager.getContext(alternateBaseDN);
                 ctx2.setRequestControls(searchControl);
                 answer2 = ctx2.search("", filter.toString(), searchControls);
-	    }
+            }
             for (int i=0; i < startIndex; i++) {
                 if (answer.hasMoreElements()) {
                     answer.next();
                 }
-		else if (alternateBaseDN != null && answer2.hasMoreElements())
-		{
-		    answer2.next();
-		}
+                else if (alternateBaseDN != null && answer2.hasMoreElements()) {
+                    answer2.next();
+                }
                 else {
                     return Collections.emptyList();
                 }
@@ -604,24 +642,33 @@ public class LdapUserProvider implements UserProvider {
                     // Get the next userID.
                     String username = (String)((SearchResult)answer.next()).getAttributes().get(
                             manager.getUsernameField()).get();
+                    // Remove usernameSuffix if set
+                    String suffix = manager.getUsernameSuffix();
+                    if(suffix.length() > 0 && username.endsWith(suffix)) {
+                        username = username.substring(0,username.length()-suffix.length());
+                    }
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
                 }
-		else if (alternateBaseDN != null && answer2.hasMoreElements())
-		{
+                else if (alternateBaseDN != null && answer2.hasMoreElements()) {
                     // Get the next userID.
                     String username = (String)((SearchResult)answer2.next()).getAttributes().get(
                             manager.getUsernameField()).get();
+                    // Remove usernameSuffix if set
+                    String suffix = manager.getUsernameSuffix();
+                    if(suffix.length() > 0 && username.endsWith(suffix)) {
+                        username = username.substring(0,username.length()-suffix.length());
+                    }
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
-		}
+                }
                 else {
                     break;
                 }
             }
             // Close the enumeration.
             answer.close();
-            
+
             // If client-side sorting is enabled, sort.
             if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
                 Collections.sort(usernames);

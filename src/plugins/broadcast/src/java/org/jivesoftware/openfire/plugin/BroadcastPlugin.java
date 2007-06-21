@@ -21,7 +21,6 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.JiveProperties;
 import org.xmpp.component.Component;

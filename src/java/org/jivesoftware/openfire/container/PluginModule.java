@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.handler.IQAuthHandler;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.util.JiveProperties;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 
@@ -36,6 +37,8 @@ import org.xmpp.component.ComponentManagerFactory;
 public class PluginModule extends AbstractModule {
 
     protected void configure() {
+        bind(JiveProperties.class).toInstance(JiveProperties.getInstance());
+
         XMPPServer server = XMPPServer.getInstance();
         bind(XMPPServer.class).toInstance(server);
         bind(ConnectionManager.class).toInstance(server.getConnectionManager());

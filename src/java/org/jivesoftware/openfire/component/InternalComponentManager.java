@@ -16,10 +16,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.*;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -65,16 +62,21 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     private String serverDomain;
     private final RoutingTable routingTable;
     private final IQDiscoItemsHandler discoItemsHandler;
+    private final JiveProperties jiveProperties;
 
     public InternalComponentManager() {
-        this(XMPPServer.getInstance().getRoutingTable(), XMPPServer.getInstance().getIQDiscoItemsHandler());
+        this(XMPPServer.getInstance().getRoutingTable(),
+                XMPPServer.getInstance().getIQDiscoItemsHandler(), JiveProperties.getInstance());
     }
 
-    public InternalComponentManager(RoutingTable routingTable, IQDiscoItemsHandler discoItemsHandler) {
+    public InternalComponentManager(RoutingTable routingTable, IQDiscoItemsHandler discoItemsHandler,
+                                    JiveProperties jiveProperties)
+    {
         super("Internal Component Manager");
         instance = this;
         this.routingTable = routingTable;
         this.discoItemsHandler = discoItemsHandler;
+        this.jiveProperties = jiveProperties;
     }
 
     public static InternalComponentManager getInstance() {
@@ -530,6 +532,12 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
 
         public synchronized void start() {
+            if(jiveProperty != null) {
+                jiveProperties.put(jiveProperty, Boolean.TRUE.toString());
+            }
+            else {
+                startComponent();
+            }
         }
 
         private synchronized void startComponent() {
@@ -543,6 +551,12 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
 
         public synchronized void stop() {
+            if(jiveProperty != null) {
+                jiveProperties.put(jiveProperty, Boolean.FALSE.toString());
+            }
+            else {
+                stopComponent();
+            }
         }
 
         private synchronized void stopComponent() {

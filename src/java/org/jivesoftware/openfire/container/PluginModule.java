@@ -9,6 +9,7 @@ package org.jivesoftware.openfire.container;
 
 import com.google.inject.*;
 import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.stun.STUNService;
@@ -28,6 +29,8 @@ import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.Logger;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 
@@ -38,6 +41,7 @@ public class PluginModule extends AbstractModule {
 
     protected void configure() {
         bind(JiveProperties.class).toInstance(JiveProperties.getInstance());
+        bind(Logger.class).toInstance(getLogger());
 
         XMPPServer server = XMPPServer.getInstance();
         bind(XMPPServer.class).toInstance(server);
@@ -72,6 +76,7 @@ public class PluginModule extends AbstractModule {
         bind(MediaProxyService.class).toInstance(server.getMediaProxyService());
         bind(STUNService.class).toInstance(server.getSTUNService());
         bind(VCardManager.class).toInstance(server.getVCardManager());
+        bind(GroupManager.class).toInstance(GroupManager.getInstance());
         bind(RemoteSessionLocator.class).toProvider(new Provider<RemoteSessionLocator>() {
             private XMPPServer xmppServer;
 
@@ -90,5 +95,58 @@ public class PluginModule extends AbstractModule {
                 return ComponentManagerFactory.getComponentManager();
             }
         });
+    }
+
+    private Logger getLogger() {
+        return new Logger() {
+
+            public void error(String msg) {
+                Log.error(msg);
+            }
+
+            public void error(String msg, Throwable throwable) {
+                Log.error(msg, throwable);
+            }
+
+            public void error(Throwable throwable) {
+                Log.error(throwable);
+            }
+
+            public void warn(String msg) {
+                Log.warn(msg);
+            }
+
+            public void warn(String msg, Throwable throwable) {
+                Log.warn(msg, throwable);
+            }
+
+            public void warn(Throwable throwable) {
+                Log.warn(throwable);
+            }
+
+            public void info(String msg) {
+                Log.info(msg);
+            }
+
+            public void info(String msg, Throwable throwable) {
+                Log.info(msg, throwable);
+            }
+
+            public void info(Throwable throwable) {
+                Log.info(throwable);
+            }
+
+            public void debug(String msg) {
+                Log.debug(msg);
+            }
+
+            public void debug(String msg, Throwable throwable) {
+                Log.debug(msg, throwable);
+            }
+
+            public void debug(Throwable throwable) {
+                Log.debug(throwable);
+            }
+        };
     }
 }

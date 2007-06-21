@@ -18,6 +18,10 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.plugin.AbstractPlugin;
+import org.jivesoftware.openfire.container.plugin.PluginName;
+import org.jivesoftware.openfire.container.plugin.PluginDescription;
+import org.jivesoftware.openfire.container.plugin.PluginDir;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
@@ -33,6 +37,7 @@ import java.util.zip.ZipFile;
 
 import com.google.inject.Guice;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provider;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
@@ -398,7 +403,8 @@ public class PluginManager {
                         moduleClazz = null;
                     }
                     //noinspection unchecked
-                    plugin = instantiateAbstractPlugin(pluginLoader, pluginClazz, moduleClazz);
+                    plugin = instantiateAbstractPlugin(pluginDir, pluginLoader, pluginClazz,
+                            moduleClazz);
                 }
                 else {
                     plugin = (Plugin) pluginClazz.newInstance();
@@ -526,7 +532,7 @@ public class PluginManager {
         }
     }
 
-    private Plugin instantiateAbstractPlugin(PluginClassLoader pluginLoader,
+    private Plugin instantiateAbstractPlugin(final File pluginDir, PluginClassLoader pluginLoader,
                                              final Class<? extends AbstractPlugin> pluginClazz,
                                              Class<? extends com.google.inject.Module> moduleClazz)
             throws IllegalAccessException, InstantiationException
@@ -549,6 +555,28 @@ public class PluginManager {
                 if (pluginModule != null) {
                     install(pluginModule);
                 }
+                bind(String.class).annotatedWith(PluginName.class).toProvider(
+                        new Provider<String>() {
+                            public String get() {
+                                return getName(pluginDir);
+                            }
+                        }
+                );
+                bind(String.class).annotatedWith(PluginDescription.class).toProvider(
+                        new Provider<String>() {
+                            public String get() {
+                                return getDescription(pluginDir);
+                            }
+                        }
+                );
+                bind(File.class).annotatedWith(PluginDir.class).toProvider(
+                        new Provider<File>() {
+                            public File get() {
+                                return pluginDir;
+                            }
+                        }
+                );
+
                 bind(pluginClazz);
             }
         }).getInstance(pluginClazz);
@@ -679,8 +707,12 @@ public class PluginManager {
      * @return the plugin's name.
      */
     public String getName(Plugin plugin) {
-        String name = getElementValue(plugin, "/plugin/name");
-        String pluginName = pluginDirs.get(plugin).getName();
+        return getName(pluginDirs.get(plugin));
+    }
+
+    private String getName(File pluginDir) {
+        String name = getElementValue(pluginDir, "/plugin/name");
+        String pluginName = pluginDir.getName();
         if (name != null) {
             return AdminConsole.getAdminText(name, pluginName);
         }
@@ -697,8 +729,13 @@ public class PluginManager {
      * @return the plugin's description.
      */
     public String getDescription(Plugin plugin) {
-        String pluginName = pluginDirs.get(plugin).getName();
-        return AdminConsole.getAdminText(getElementValue(plugin, "/plugin/description"), pluginName);
+        return getDescription(pluginDirs.get(plugin));
+    }
+
+    private String getDescription(File pluginDir) {
+        String pluginName = pluginDir.getName();
+        return AdminConsole.getAdminText(getElementValue(pluginDirs.get(pluginDir),
+                "/plugin/description"), pluginName);
     }
 
     /**
@@ -709,7 +746,7 @@ public class PluginManager {
      * @return the plugin's author.
      */
     public String getAuthor(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/author");
+        return getElementValue(pluginDirs.get(plugin), "/plugin/author");
     }
 
     /**
@@ -720,7 +757,7 @@ public class PluginManager {
      * @return the plugin's version.
      */
     public String getVersion(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/version");
+        return getElementValue(pluginDirs.get(plugin), "/plugin/version");
     }
 
      /**
@@ -731,7 +768,7 @@ public class PluginManager {
      * @return the plugin's version.
      */
     public String getMinServerVersion(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/minServerVersion");
+        return getElementValue(pluginDirs.get(plugin), "/plugin/minServerVersion");
     }
 
     /**
@@ -743,7 +780,7 @@ public class PluginManager {
      * @return the plugin's database schema key or <tt>null</tt> if it doesn't exist.
      */
     public String getDatabaseKey(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/databaseKey");
+        return getElementValue(pluginDirs.get(plugin), "/plugin/databaseKey");
     }
 
     /**
@@ -755,7 +792,7 @@ public class PluginManager {
      * @return the plugin's database schema version or <tt>-1</tt> if it doesn't exist.
      */
     public int getDatabaseVersion(Plugin plugin) {
-        String versionString = getElementValue(plugin, "/plugin/databaseVersion");
+        String versionString = getElementValue(pluginDirs.get(plugin), "/plugin/databaseVersion");
         if (versionString != null) {
             try {
                 return Integer.parseInt(versionString.trim());
@@ -776,7 +813,7 @@ public class PluginManager {
      * @return the plugin's license agreement.
      */
     public License getLicense(Plugin plugin) {
-        String licenseString = getElementValue(plugin, "/plugin/licenseType");
+        String licenseString = getElementValue(pluginDirs.get(plugin), "/plugin/licenseType");
         if (licenseString != null) {
             try {
                 // Attempt to load the get the license type. We lower-case and
@@ -806,12 +843,11 @@ public class PluginManager {
      * Returns the value of an element selected via an xpath expression from
      * a Plugin's plugin.xml file.
      *
-     * @param plugin the plugin.
+     * @param pluginDir the plugin directory.
      * @param xpath  the xpath expression.
      * @return the value of the element selected by the xpath expression.
      */
-    private String getElementValue(Plugin plugin, String xpath) {
-        File pluginDir = pluginDirs.get(plugin);
+    private String getElementValue(File pluginDir, String xpath) {
         if (pluginDir == null) {
             return null;
         }

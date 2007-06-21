@@ -110,9 +110,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     public void addComponent(String subdomain, Component component) throws ComponentException {
-        ComponentLifecycleImpl componentLifecycle
-                = (ComponentLifecycleImpl) addComponent(subdomain, component, null);
-        startComponent(componentLifecycle.subdomain, componentLifecycle.component);
+        addComponent(subdomain, component, null);
     }
 
     private void startComponent(String subdomain, Component component) {
@@ -148,7 +146,8 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
 
-    public ComponentLifecycle addComponent(String subdomain, Component component, String jiveProperty)
+    public ComponentLifecycle addComponent(String subdomain, Component component,
+                                           String jiveProperty)
             throws ComponentException
     {
         ComponentLifecycleImpl componentLifecycle = new ComponentLifecycleImpl(subdomain, component);
@@ -170,6 +169,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             throw e;
         }
 
+        componentLifecycle.setJiveProperty(jiveProperty);
         return componentLifecycle;
     }
 

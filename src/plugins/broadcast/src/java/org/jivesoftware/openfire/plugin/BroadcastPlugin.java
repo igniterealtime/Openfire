@@ -14,22 +14,25 @@ package org.jivesoftware.openfire.plugin;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.container.Plugin;
-import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.plugin.AbstractPlugin;
+import org.jivesoftware.openfire.container.plugin.PluginName;
+import org.jivesoftware.openfire.container.plugin.PluginDescription;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.JiveProperties;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.*;
 
-import java.io.File;
 import java.util.*;
+
+import com.google.inject.Inject;
+
 
 /**
  * Broadcast service plugin. It accepts messages and broadcasts them out to
@@ -40,61 +43,54 @@ import java.util.*;
  *
  * @author Matt Tucker
  */
-public class BroadcastPlugin implements Plugin, Component, PropertyEventListener {
+public class BroadcastPlugin extends AbstractPlugin implements Component, PropertyEventListener {
 
-    private String serviceName;
     private SessionManager sessionManager;
     private GroupManager groupManager;
-    private List<JID> allowedUsers;
-    private boolean groupMembersAllowed;
-    private boolean disableGroupPermissions;
-    private ComponentManager componentManager;
-    private PluginManager pluginManager;
+
+    private final String pluginName;
+    private final String pluginDescription;
+    private final JiveProperties jiveProperties;
+    private String serviceName;
 
     /**
      * Constructs a new broadcast plugin.
+     *
+     * @param pluginName the name configured for this plugin.
+     * @param pluginDescription the description configured for this plugin.
+     * @param jiveProperties system properties which stores the configuration paramters for the
+     * broadcast plugin.
      */
-    public BroadcastPlugin() {
-        serviceName = JiveGlobals.getProperty("plugin.broadcast.serviceName", "broadcast");
-        disableGroupPermissions = JiveGlobals.getBooleanProperty(
-                "plugin.broadcast.disableGroupPermissions");
-        groupMembersAllowed = JiveGlobals.getBooleanProperty(
-                "plugin.broadcast.groupMembersAllowed", true);
-        allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
+    @Inject
+    public BroadcastPlugin(@PluginName String pluginName,
+                           @PluginDescription String pluginDescription,
+                           JiveProperties jiveProperties)
+    {
+        this.pluginName = pluginName;
+        this.pluginDescription = pluginDescription;
+        this.jiveProperties = jiveProperties;
+        this.serviceName = jiveProperties.getProperty("plugin.broadcast.serviceName", "broadcast");
     }
 
-    // Plugin Interface
+    @Inject
+    public void setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        pluginManager = manager;
-        sessionManager = SessionManager.getInstance();
-        groupManager = GroupManager.getInstance();
+    @Inject
+    public void setGroupManager(GroupManager groupManager) {
+        this.groupManager = groupManager;
+    }
 
+    public void initialize() {
         // Register as a component.
-        componentManager = ComponentManagerFactory.getComponentManager();
         try {
-            componentManager.addComponent(serviceName, this);
+            addComponent(getServiceName(), this);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            throw new RuntimeException("Error initializing internal broadcast component", e);
         }
-        PropertyEventDispatcher.addListener(this);
-    }
-
-    public void destroyPlugin() {
-        PropertyEventDispatcher.removeListener(this);
-        // Unregister component.
-        try {
-            componentManager.removeComponent(serviceName);
-        }
-        catch (Exception e) {
-            componentManager.getLog().error(e);
-        }
-        componentManager = null;
-        pluginManager = null;
-        sessionManager = null;
-        groupManager = null;
-        allowedUsers.clear();
+        addPropertyEventListener(this);
     }
 
     public void initialize(JID jid, ComponentManager componentManager) {
@@ -107,15 +103,12 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
     }
 
     // Component Interface
-
     public String getName() {
-        // Get the name from the plugin.xml file.
-        return pluginManager.getName(this);
+        return pluginName;
     }
 
     public String getDescription() {
-        // Get the description from the plugin.xml file.
-        return pluginManager.getDescription(this);
+        return pluginDescription;
     }
 
     public void processPacket(Packet packet) {
@@ -124,6 +117,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         String toNode = packet.getTo().getNode();
         // Check if user is allowed to send packet to this service[+group]
         boolean targetAll = "all".equals(toNode);
+        Collection<JID> allowedUsers = getGlobalAllowedUsers();
         if (targetAll) {
             // See if the user is allowed to send the packet.
             JID address = new JID(packet.getFrom().toBareJID());
@@ -137,7 +131,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     group = groupManager.getGroup(toNode);
                     boolean isGroupUser = group.isUser(packet.getFrom()) ||
                             group.isUser(new JID(packet.getFrom().toBareJID()));
-                    if (disableGroupPermissions || (groupMembersAllowed && isGroupUser) ||
+                    if (isGroupPermissionsDisabled() || (isGroupMembersAllowed() && isGroupUser) ||
                             allowedUsers.contains(new JID(packet.getFrom().toBareJID()))) {
                         canProceed = true;
                     }
@@ -344,6 +338,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 // Return the list of groups hosted by the service that can be used by the user
                 Collection<Group> groups;
                 JID address = new JID(iq.getFrom().toBareJID());
+                Collection<JID> allowedUsers = getGlobalAllowedUsers();
                 if (allowedUsers.contains(address)) {
                     groups = groupManager.getGroups();
                 }
@@ -409,7 +404,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
      * @return the users allowed to send broadcast messages.
      */
     public Collection<JID> getGlobalAllowedUsers() {
-        return allowedUsers;
+        return stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
     }
 
     /**
@@ -437,7 +432,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
      * @return true if group permission checking is disabled.
      */
     public boolean isGroupPermissionsDisabled() {
-        return disableGroupPermissions;
+        return jiveProperties.getBooleanProperty(
+                "plugin.broadcast.disableGroupPermissions");
     }
 
     /**
@@ -447,8 +443,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
      * @param disableGroupPermissions true if group permission checking should be disabled.
      */
     public void setGroupPermissionsDisabled(boolean disableGroupPermissions) {
-        this.disableGroupPermissions = disableGroupPermissions;
-        JiveGlobals.setProperty("plugin.broadcast.disableGroupPermissions",
+        jiveProperties.put("plugin.broadcast.disableGroupPermissions",
                 Boolean.toString(disableGroupPermissions));
     }
 
@@ -462,7 +457,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
      *      group admins are allowed.
      */
     public boolean isGroupMembersAllowed() {
-        return groupMembersAllowed;
+        return jiveProperties.getBooleanProperty(
+                "plugin.broadcast.groupMembersAllowed", true);
     }
 
     /**
@@ -475,38 +471,19 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
      *      group admins are allowed.
      */
     public void setGroupMembersAllowed(boolean allowed) {
-        this.groupMembersAllowed = allowed;
-        JiveGlobals.setProperty("plugin.broadcast.groupMembersAllowed", Boolean.toString(allowed));
+        jiveProperties.put("plugin.broadcast.groupMembersAllowed", Boolean.toString(allowed));
     }
 
     // PropertyEventListener Methods
 
     public void propertySet(String property, Map params) {
-        if (property.equals("plugin.broadcast.groupMembersAllowed")) {
-            this.groupMembersAllowed = Boolean.parseBoolean((String)params.get("value"));
-        }
-        else if (property.equals("plugin.broadcast.disableGroupPermissions")) {
-            this.disableGroupPermissions = Boolean.parseBoolean((String)params.get("value"));
-        }
-        else if (property.equals("plugin.broadcast.allowedUsers")) {
-            this.allowedUsers = stringToList((String)params.get("value"));
-        }
-        else if (property.equals("plugin.broadcast.serviceName")) {
+        if (property.equals("plugin.broadcast.serviceName")) {
             changeServiceName((String)params.get("value"));
         }
     }
 
     public void propertyDeleted(String property, Map params) {
-        if (property.equals("plugin.broadcast.groupMembersAllowed")) {
-            this.groupMembersAllowed = true;
-        }
-        else if (property.equals("plugin.broadcast.disableGroupPermissions")) {
-            this.disableGroupPermissions = false;
-        }
-        else if (property.equals("plugin.broadcast.allowedUsers")) {
-            this.allowedUsers = Collections.emptyList();
-        }
-        else if (property.equals("plugin.broadcast.serviceName")) {
+        if (property.equals("plugin.broadcast.serviceName")) {
             changeServiceName("broadcast");
         }
     }

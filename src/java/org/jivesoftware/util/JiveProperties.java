@@ -203,6 +203,30 @@ public class JiveProperties implements Map<String, String> {
         return result;
     }
 
+    public String getProperty(String name, String defaultValue) {
+        String value = properties.get(name);
+        if (value != null) {
+            return value;
+        }
+        else {
+            return defaultValue;
+        }
+    }
+
+    public boolean getBooleanProperty(String name) {
+        return Boolean.valueOf(get(name));
+    }
+
+    public boolean getBooleanProperty(String name, boolean defaultValue) {
+        String value = get(name);
+        if (value != null) {
+            return Boolean.valueOf(value);
+        }
+        else {
+            return defaultValue;
+        }
+    }
+
     private void insertProperty(String name, String value) {
         Connection con = null;
         PreparedStatement pstmt = null;

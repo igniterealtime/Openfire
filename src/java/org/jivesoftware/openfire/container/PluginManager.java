@@ -31,6 +31,9 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.ZipFile;
 
+import com.google.inject.Guice;
+import com.google.inject.AbstractModule;
+
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
  * new plugins, and they are dynamically loaded.<p/>
@@ -372,7 +375,34 @@ public class PluginManager {
                 }
 
                 String className = pluginXML.selectSingleNode("/plugin/class").getText();
-                plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
+                Class pluginClazz = pluginLoader.loadClass(className);
+                if(AbstractPlugin.class.isAssignableFrom(pluginClazz)) {
+                    String moduleClassName;
+                    try {
+                        moduleClassName = pluginXML.selectSingleNode("/plugin/module/class")
+                                .getText();
+                    }
+                    catch (NullPointerException npe) {
+                        moduleClassName = null;
+                    }
+                    Class moduleClazz;
+                    try {
+                        if (moduleClassName != null) {
+                            moduleClazz = pluginLoader.loadClass(moduleClassName);
+                        }
+                        else {
+                            moduleClazz = null;
+                        }
+                    }
+                    catch (ClassNotFoundException cnfe) {
+                        moduleClazz = null;
+                    }
+                    //noinspection unchecked
+                    plugin = instantiateAbstractPlugin(pluginLoader, pluginClazz, moduleClazz);
+                }
+                else {
+                    plugin = (Plugin) pluginClazz.newInstance();
+                }
                 if (parentPluginNode != null) {
                     String parentPlugin = parentPluginNode.getTextTrim();
                     // See if the parent is already loaded.
@@ -494,6 +524,36 @@ public class PluginManager {
         catch (Throwable e) {
             Log.error("Error loading plugin: " + pluginDir, e);
         }
+    }
+
+    private Plugin instantiateAbstractPlugin(PluginClassLoader pluginLoader,
+                                             final Class<? extends AbstractPlugin> pluginClazz,
+                                             Class<? extends com.google.inject.Module> moduleClazz)
+            throws IllegalAccessException, InstantiationException
+    {
+        // Init the plugin.
+        ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(pluginLoader);
+        final PluginModule module = new PluginModule();
+        com.google.inject.Module tempModule;
+        if(moduleClazz == null) {
+            tempModule = null;
+        }
+        else {
+            tempModule = moduleClazz.newInstance();
+        }
+        final com.google.inject.Module pluginModule = tempModule;
+        AbstractPlugin plugin = Guice.createInjector(new AbstractModule() {
+            protected void configure() {
+                install(module);
+                if (pluginModule != null) {
+                    install(pluginModule);
+                }
+                bind(pluginClazz);
+            }
+        }).getInstance(pluginClazz);
+        Thread.currentThread().setContextClassLoader(oldLoader);
+        return plugin;
     }
 
     private void firePluginCreatedEvent(String name, Plugin plugin) {

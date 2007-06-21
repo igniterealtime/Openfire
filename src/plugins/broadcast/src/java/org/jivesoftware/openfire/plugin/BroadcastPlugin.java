@@ -20,7 +20,6 @@ import org.jivesoftware.openfire.container.plugin.PluginDescription;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.JiveProperties;
 import org.xmpp.component.Component;
@@ -391,7 +390,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
      * @param serviceName the service name of this component.
      */
     public void setServiceName(String serviceName) {
-        JiveGlobals.setProperty("plugin.broadcast.serviceName", serviceName);
+        jiveProperties.put("plugin.broadcast.serviceName", serviceName);
     }
 
     /**
@@ -403,7 +402,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
      * @return the users allowed to send broadcast messages.
      */
     public Collection<JID> getGlobalAllowedUsers() {
-        return stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
+        return stringToList(jiveProperties.getProperty("plugin.broadcast.allowedUsers", ""));
     }
 
     /**
@@ -420,7 +419,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
         for (String jid : allowedUsers) {
             buf.append(jid).append(",");
         }
-        JiveGlobals.setProperty("plugin.broadcast.allowedUsers", buf.toString());
+        jiveProperties.put("plugin.broadcast.allowedUsers", buf.toString());
     }
 
     /**

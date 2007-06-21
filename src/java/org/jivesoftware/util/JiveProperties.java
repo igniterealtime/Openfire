@@ -32,7 +32,12 @@ public class JiveProperties implements Map<String, String> {
     private static final String UPDATE_PROPERTY = "UPDATE jiveProperty SET propValue=? WHERE name=?";
     private static final String DELETE_PROPERTY = "DELETE FROM jiveProperty WHERE name LIKE ?";
 
-    private static JiveProperties instance;
+    private static class JivePropertyHolder {
+        private static final JiveProperties instance = new JiveProperties();
+        static {
+            instance.init();
+        }
+    }
 
     private Map<String, String> properties;
 
@@ -41,15 +46,11 @@ public class JiveProperties implements Map<String, String> {
      *
      * @return an instance of JiveProperties.
      */
-    public static synchronized JiveProperties getInstance() {
-        if (instance == null) {
-            instance = new JiveProperties();
-        }
-        return instance;
+    public static JiveProperties getInstance() {
+        return JivePropertyHolder.instance;
     }
 
     private JiveProperties() {
-        init();
     }
 
     /**

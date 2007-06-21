@@ -18,6 +18,8 @@ import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -26,10 +28,7 @@ import org.xmpp.packet.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Manages the registration and delegation of Components. The ComponentManager
@@ -45,7 +44,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
 
-    private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
+    private ConcurrentMap<String, ComponentLifecycleImpl> components
+            = new ConcurrentHashMap<String, ComponentLifecycleImpl>();
     private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
     /**
@@ -63,11 +63,18 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * in many methods.
      */
     private String serverDomain;
-    private RoutingTable routingTable;
+    private final RoutingTable routingTable;
+    private final IQDiscoItemsHandler discoItemsHandler;
 
     public InternalComponentManager() {
+        this(XMPPServer.getInstance().getRoutingTable(), XMPPServer.getInstance().getIQDiscoItemsHandler());
+    }
+
+    public InternalComponentManager(RoutingTable routingTable, IQDiscoItemsHandler discoItemsHandler) {
         super("Internal Component Manager");
         instance = this;
+        this.routingTable = routingTable;
+        this.discoItemsHandler = discoItemsHandler;
     }
 
     public static InternalComponentManager getInstance() {
@@ -76,7 +83,6 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        routingTable = server.getRoutingTable();
     }
 
     public void start() {
@@ -102,31 +108,21 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     public void addComponent(String subdomain, Component component) throws ComponentException {
-        // Check that the requested subdoman is not taken by another component
-        Component existingComponent = components.get(subdomain);
-        if (existingComponent != null && existingComponent != component) {
-            throw new ComponentException("Domain (" + subdomain +
-                    ") already taken by another component: " + existingComponent);
-        }
-        Log.debug("Registering component for domain: " + subdomain);
-        // Register that the domain is now taken by the component
-        components.put(subdomain, component);
+        ComponentLifecycleImpl componentLifecycle
+                = (ComponentLifecycleImpl) addComponent(subdomain, component, null);
+        startComponent(componentLifecycle.subdomain, componentLifecycle.component);
+    }
 
-        JID componentJID = new JID(subdomain + "." + serverDomain);
+    private void startComponent(String subdomain, Component component) {
+       JID componentJID = new JID(subdomain + "." + serverDomain);
 
         // Add the route to the new service provided by the component
-        XMPPServer.getInstance().getRoutingTable().addComponentRoute(componentJID,
+        routingTable.addComponentRoute(componentJID,
                 new RoutableComponent(componentJID, component));
 
         // Initialize the new component
         try {
-            component.initialize(componentJID, this);
             component.start();
-
-            // Notify listeners that a new component has been registered
-            for (ComponentEventListener listener : listeners) {
-                listener.componentRegistered(component, componentJID);
-            }
 
             // Check for potential interested users.
             checkPresences();
@@ -134,41 +130,63 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             // then it will be added to the list of discoverable server items.
             checkDiscoSupport(component, componentJID);
             Log.debug("Component registered for domain: " + subdomain);
-        }
-        catch (Exception e) {
-            // Unregister the componet's domain
-            components.remove(subdomain);
-            // Remove the route
-            XMPPServer.getInstance().getRoutingTable().removeComponentRoute(componentJID);
-            if (e instanceof ComponentException) {
-                // Rethrow the exception
-                throw (ComponentException)e;
+
+            // Notify listeners that a new component has been registered
+            for (ComponentEventListener listener : listeners) {
+                listener.componentRegistered(component, componentJID);
             }
+        }
+        catch (RuntimeException e) {
+            // Remove the route
+            routingTable.removeComponentRoute(componentJID);
             // Rethrow the exception
-            throw new ComponentException(e);
+            throw e;
         }
 
     }
 
+
+    public ComponentLifecycle addComponent(String subdomain, Component component, String jiveProperty)
+            throws ComponentException
+    {
+        ComponentLifecycleImpl componentLifecycle = new ComponentLifecycleImpl(subdomain, component);
+
+        ComponentLifecycleImpl oldLifecycle = components.putIfAbsent(subdomain, componentLifecycle);
+        if(oldLifecycle != null) {
+            throw new IllegalArgumentException("Domain (" + subdomain +
+                    ") already taken by another component: " + oldLifecycle.component);
+        }
+
+        try {
+            component.initialize(getComponentJID(subdomain), this);
+        } catch (ComponentException e) {
+            components.remove(subdomain, componentLifecycle);
+            throw e;
+        }
+        catch (RuntimeException e) {
+            components.remove(subdomain, componentLifecycle);
+            throw e;
+        }
+
+        return componentLifecycle;
+    }
+
     public void removeComponent(String subdomain) {
         Log.debug("Unregistering component for domain: " + subdomain);
-        Component component = components.remove(subdomain);
+        ComponentLifecycleImpl component = components.remove(subdomain);
         // Remove any info stored with the component being removed
         componentInfo.remove(subdomain);
+        stopComponent(subdomain, component.component);
+    }
 
-        JID componentJID = new JID(subdomain + "." + serverDomain);
+    private void stopComponent(String subdomain, Component component) {
+        JID componentJID = getComponentJID(subdomain);
 
         // Remove the route for the service provided by the component
-        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-        if (routingTable != null) {
-            routingTable.removeComponentRoute(componentJID);
-        }
+        routingTable.removeComponentRoute(componentJID);
 
         // Remove the disco item from the server for the component that is being removed
-        IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
-        if (iqDiscoItemsHandler != null) {
-            iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
-        }
+        discoItemsHandler.removeComponentItem(componentJID.toBareJID());
 
         // Ask the component to shutdown
         if (component != null) {
@@ -229,9 +247,9 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     public void addListener(ComponentEventListener listener) {
         listeners.add(listener);
         // Notify the new listener about existing components
-        for (Map.Entry<String, Component> entry : components.entrySet()) {
+        for (Map.Entry<String, ComponentLifecycleImpl> entry : components.entrySet()) {
             String subdomain = entry.getKey();
-            Component component = entry.getValue();
+            Component component = entry.getValue().component;
             JID componentJID = new JID(subdomain + "." + serverDomain);
             listener.componentRegistered(component, componentJID);
             // Check if there is disco#info stored for the component
@@ -262,6 +280,10 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
     public String getServerName() {
         return serverDomain;
+    }
+
+    private JID getComponentJID(String subdomain) {
+      return new JID(subdomain + "." + serverDomain);
     }
 
     public String getHomeDirectory() {
@@ -337,7 +359,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         if (componentJID.getNode() != null) {
             return null;
         }
-        Component component = components.get(componentJID.getDomain());
+        Component component = components.get(componentJID.getDomain()).component;
         if (component != null) {
             return component;
         }
@@ -347,7 +369,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             String serverName = componentJID.getDomain();
             int index = serverName.lastIndexOf("." + serverDomain);
             if (index > -1) {
-                return components.get(serverName.substring(0, index));
+                return components.get(serverName.substring(0, index)).component;
             }
         }
         return null;
@@ -437,7 +459,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                 if (childElement != null) {
                     namespace = childElement.getNamespaceURI();
                 }
-                if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
+                if ("http://jabber.org/protocol/disco#info".equals(namespace) && childElement != null) {
                     // Add a disco item to the server for the component that supports disco
                     Element identity = childElement.element("identity");
                     if (identity == null) {
@@ -491,6 +513,94 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
         public void process(Packet packet) throws PacketException {
             component.processPacket(packet);
+        }
+    }
+
+    private class ComponentLifecycleImpl implements ComponentLifecycle, PropertyEventListener {
+        private String jiveProperty;
+
+        private boolean isRunning = false;
+
+        private final Component component;
+        private final String subdomain;
+
+        private ComponentLifecycleImpl(String subdomain, Component component) {
+            this.subdomain = subdomain;
+            this.component = component;
+        }
+
+        public synchronized void start() {
+        }
+
+        private synchronized void startComponent() {
+            if(isRunning) {
+                return;
+            }
+
+            InternalComponentManager.this.startComponent(subdomain, component);
+
+            isRunning = true;
+        }
+
+        public synchronized void stop() {
+        }
+
+        private synchronized void stopComponent() {
+            if(!isRunning) {
+                return;
+            }
+
+            InternalComponentManager.this.stopComponent(subdomain, component);
+
+            isRunning = false;
+        }
+
+        public void setJiveProperty(String jiveProperty) {
+            if(jiveProperty == null) {
+                this.jiveProperty = null;
+                PropertyEventDispatcher.removeListener(this);
+                startComponent();
+            }
+
+            this.jiveProperty = jiveProperty;
+            PropertyEventDispatcher.addListener(this);
+
+            if(JiveGlobals.getBooleanProperty(jiveProperty, true)) {
+                startComponent();
+            }
+            else {
+                stopComponent();
+            }
+        }
+
+        public synchronized boolean isRunning() {
+            return isRunning;
+        }
+
+        public void propertySet(String property, Map<String, Object> params) {
+            if(property.equals(jiveProperty)) {
+                boolean enabled = Boolean.FALSE.toString().equals(params.get("value"));
+                if(enabled) {
+                    startComponent();
+                }
+                else {
+                    stopComponent();
+                }
+            }
+        }
+
+        public void propertyDeleted(String property, Map<String, Object> params) {
+            if(property.equals(jiveProperty)) {
+                startComponent();
+            }
+        }
+
+        public void xmlPropertySet(String property, Map<String, Object> params) {
+
+        }
+
+        public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+
         }
     }
 }

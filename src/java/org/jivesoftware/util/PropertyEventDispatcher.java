@@ -11,9 +11,9 @@
 
 package org.jivesoftware.util;
 
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Dispatches property events. Each event has a {@link EventType type}
@@ -33,8 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class PropertyEventDispatcher {
 
-    private static List<PropertyEventListener> listeners =
-            new CopyOnWriteArrayList<PropertyEventListener>();
+    private static Set<PropertyEventListener> listeners =
+            new CopyOnWriteArraySet<PropertyEventListener>();
 
     private PropertyEventDispatcher() {
         // Not instantiable.

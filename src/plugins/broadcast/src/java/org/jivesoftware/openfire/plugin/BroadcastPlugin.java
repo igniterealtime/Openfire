@@ -14,8 +14,8 @@ package org.jivesoftware.openfire.plugin;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.container.AbstractPlugin;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -25,6 +25,7 @@ import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
+import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.*;
 
 import java.io.File;
@@ -39,7 +40,7 @@ import java.util.*;
  *
  * @author Matt Tucker
  */
-public class BroadcastPlugin extends AbstractPlugin implements Component, PropertyEventListener {
+public class BroadcastPlugin implements Plugin, Component, PropertyEventListener {
 
     private String serviceName;
     private SessionManager sessionManager;
@@ -47,6 +48,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
     private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
     private boolean disableGroupPermissions;
+    private ComponentManager componentManager;
     private PluginManager pluginManager;
 
     /**
@@ -69,6 +71,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
         groupManager = GroupManager.getInstance();
 
         // Register as a component.
+        componentManager = ComponentManagerFactory.getComponentManager();
         try {
             componentManager.addComponent(serviceName, this);
         }
@@ -76,9 +79,6 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
             componentManager.getLog().error(e);
         }
         PropertyEventDispatcher.addListener(this);
-    }
-
-    public void initializePlugin() {
     }
 
     public void destroyPlugin() {
@@ -90,6 +90,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
         catch (Exception e) {
             componentManager.getLog().error(e);
         }
+        componentManager = null;
         pluginManager = null;
         sessionManager = null;
         groupManager = null;

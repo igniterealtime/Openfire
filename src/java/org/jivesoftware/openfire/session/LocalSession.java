@@ -13,8 +13,8 @@ import org.xmpp.packet.Packet;
 
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -57,7 +57,7 @@ public abstract class LocalSession implements Session {
 
     private String serverName;
 
-    private Date startDate = new Date();
+    private long startDate = System.currentTimeMillis();
 
     private long lastActiveDate;
     private long clientPacketCount = 0;
@@ -67,7 +67,7 @@ public abstract class LocalSession implements Session {
 	 * Session temporary data. All data stored in this <code>Map</code> disapear when session
 	 * finishes.
 	 */
-	private Map<String, Object> sessionData = null;
+	private final Map<String, Object> sessionData = new HashMap<String, Object>();
 
     /**
      * Creates a session with an underlying connection and permission protection.
@@ -83,7 +83,6 @@ public abstract class LocalSession implements Session {
         String id = streamID.getID();
         this.address = new JID(null, serverName, id, true);
         this.sessionManager = SessionManager.getInstance();
-        sessionData = new ConcurrentHashMap<String, Object>();
     }
 
     /**
@@ -164,7 +163,7 @@ public abstract class LocalSession implements Session {
      * @return the session's creation date.
      */
     public Date getCreationDate() {
-        return startDate;
+        return new Date(startDate);
     }
 
     /**
@@ -219,8 +218,10 @@ public abstract class LocalSession implements Session {
 	 * @see #getSessionData(String)
 	 */
 	public void setSessionData(String key, Object value) {
-		sessionData.put(key, value);
-	}
+        synchronized (sessionData) {
+            sessionData.put(key, value);
+        }
+    }
 
 	/**
 	 * Retrieves session data. This method gives access to temporary session data only. You can
@@ -232,8 +233,10 @@ public abstract class LocalSession implements Session {
 	 * @see #setSessionData(String, Object)
 	 */
 	public Object getSessionData(String key) {
-		return sessionData.get(key);
-	}
+        synchronized (sessionData) {
+    		return sessionData.get(key);
+        }
+    }
 
     /**
      * Removes session data. Please see {@link #setSessionData(String, Object)} description
@@ -243,7 +246,9 @@ public abstract class LocalSession implements Session {
      * @see #setSessionData(String, Object)
      */
     public void removeSessionData(String key) {
-        sessionData.remove(key);
+        synchronized (sessionData) {
+            sessionData.remove(key);
+        }
     }
 
     public void process(Packet packet) {

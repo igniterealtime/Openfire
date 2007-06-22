@@ -34,11 +34,9 @@ import java.util.Map;
  */
 public class GroupManager {
 
-    Cache<String, Group> groupCache;
-    Cache<String, Object> groupMetaCache;
-    private GroupProvider provider;
-
-    private static GroupManager instance = new GroupManager();
+    private static final class GroupManagerContainer {
+        private static final GroupManager instance = new GroupManager();
+    }
 
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
@@ -50,8 +48,12 @@ public class GroupManager {
      * @return a GroupManager instance.
      */
     public static GroupManager getInstance() {
-        return instance;
+        return GroupManagerContainer.instance;
     }
+
+    Cache<String, Group> groupCache;
+    Cache<String, Object> groupMetaCache;
+    private GroupProvider provider;
 
     private GroupManager() {
         // Initialize caches.

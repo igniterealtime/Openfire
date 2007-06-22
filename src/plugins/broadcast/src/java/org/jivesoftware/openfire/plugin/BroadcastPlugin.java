@@ -70,7 +70,6 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
         this.pluginName = pluginName;
         this.pluginDescription = pluginDescription;
         this.jiveProperties = jiveProperties;
-        this.serviceName = jiveProperties.getProperty("plugin.broadcast.serviceName", "broadcast");
         this.sessionManager = sessionManager;
         this.groupManager = groupManager;
     }
@@ -376,6 +375,9 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
      * @return the service name of this component.
      */
     public String getServiceName() {
+        if (serviceName == null) {
+            serviceName = jiveProperties.getProperty("plugin.broadcast.serviceName", "broadcast");
+        }
         return serviceName;
     }
 
@@ -498,7 +500,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
          if (serviceName == null) {
             throw new NullPointerException("Service name cannot be null");
         }
-        if (this.serviceName.equals(serviceName)) {
+        if (serviceName.equals(this.serviceName)) {
             return;
         }
 

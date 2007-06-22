@@ -80,7 +80,7 @@ public class NIOConnection implements Connection {
      * Compression policy currently in use for this connection.
      */
     private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
-    private CharsetEncoder encoder;
+    private static ThreadLocal encoder = new ThreadLocalEncoder();
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
      * is an asynch operation so instead of waiting for the connection to be actually closed just
@@ -93,7 +93,6 @@ public class NIOConnection implements Connection {
     public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
-        encoder = Charset.forName(CHARSET).newEncoder();
         closed = false;
     }
 
@@ -206,8 +205,8 @@ public class NIOConnection implements Connection {
 
             boolean errorDelivering = false;
             try {
-                //XMLWriter xmlSerializer = new XMLWriter(buffer.asOutputStream(), new OutputFormat());
-                XMLWriter xmlSerializer = new XMLWriter(new ByteBufferWriter(buffer, encoder), new OutputFormat());
+                XMLWriter xmlSerializer =
+                        new XMLWriter(new ByteBufferWriter(buffer, (CharsetEncoder) encoder.get()), new OutputFormat());
                 xmlSerializer.write(packet.getElement());
                 xmlSerializer.flush();
                 if (flashClient) {
@@ -390,5 +389,12 @@ public class NIOConnection implements Connection {
 
     public String toString() {
         return super.toString() + " MINA Session: " + ioSession;
+    }
+
+    private static class ThreadLocalEncoder extends ThreadLocal {
+
+        protected Object initialValue() {
+            return Charset.forName(CHARSET).newEncoder();
+        }
     }
 }

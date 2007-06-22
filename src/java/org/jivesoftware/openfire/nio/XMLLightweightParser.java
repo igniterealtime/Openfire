@@ -157,7 +157,7 @@ class XMLLightweightParser {
 
         buffer.append(buf);
         // Do nothing if the buffer only contains white spaces
-        if (' ' == buffer.charAt(0) && ' ' == buffer.charAt(buffer.length()-1)) {
+        if (buffer.charAt(0) <= ' ' && buffer.charAt(buffer.length()-1) <= ' ') {
             if ("".equals(buffer.toString().trim())) {
                 // Empty the buffer so there is no memory leak
                 buffer.delete(0, buffer.length());

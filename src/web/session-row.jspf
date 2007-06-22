@@ -69,8 +69,15 @@
 
     <%  Presence.Show _show = sess.getPresence().getShow();
         String _stat = sess.getPresence().getStatus();
-        if (_show == Presence.Show.away) {
-    %>
+        if (!sess.getPresence().isAvailable()) {
+     %>
+        <td width="1%"
+            ><img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />"
+            ></td>
+        <td width="46%">
+                <fmt:message key="user.properties.offline" />
+        </td>
+      <%  } else if (_show == Presence.Show.away) { %>
         <td width="1%"
             ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />"
             ></td>

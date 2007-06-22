@@ -9,6 +9,7 @@ package org.jivesoftware.openfire.container;
 
 import com.google.inject.*;
 import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.container.plugin.ServerName;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.vcard.VCardManager;
@@ -43,7 +44,12 @@ public class PluginModule extends AbstractModule {
         bind(JiveProperties.class).toInstance(JiveProperties.getInstance());
         bind(Logger.class).toInstance(getLogger());
 
-        XMPPServer server = XMPPServer.getInstance();
+        final XMPPServer server = XMPPServer.getInstance();
+        bind(String.class).annotatedWith(ServerName.class).toProvider(new Provider<String>() {
+            public String get() {
+                return server.getServerInfo().getName();
+            }
+        });
         bind(XMPPServer.class).toInstance(server);
         bind(ConnectionManager.class).toInstance(server.getConnectionManager());
         bind(RoutingTable.class).toInstance(server.getRoutingTable());

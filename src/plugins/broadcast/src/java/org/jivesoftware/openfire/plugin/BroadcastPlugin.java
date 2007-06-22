@@ -13,7 +13,6 @@ package org.jivesoftware.openfire.plugin;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.plugin.AbstractPlugin;
 import org.jivesoftware.openfire.container.plugin.PluginName;
 import org.jivesoftware.openfire.container.plugin.PluginDescription;
@@ -43,12 +42,12 @@ import com.google.inject.Inject;
  */
 public class BroadcastPlugin extends AbstractPlugin implements Component, PropertyEventListener {
 
-    private SessionManager sessionManager;
-    private GroupManager groupManager;
-
     private final String pluginName;
     private final String pluginDescription;
     private final JiveProperties jiveProperties;
+    private final SessionManager sessionManager;
+    private final GroupManager groupManager;
+
     private String serviceName;
 
     /**
@@ -58,25 +57,21 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
      * @param pluginDescription the description configured for this plugin.
      * @param jiveProperties system properties which stores the configuration paramters for the
      * broadcast plugin.
+     * @param sessionManager the session manager.
+     * @param groupManager the group manager.
      */
     @Inject
     public BroadcastPlugin(@PluginName String pluginName,
                            @PluginDescription String pluginDescription,
-                           JiveProperties jiveProperties)
+                           JiveProperties jiveProperties,
+                           SessionManager sessionManager,
+                           GroupManager groupManager)
     {
         this.pluginName = pluginName;
         this.pluginDescription = pluginDescription;
         this.jiveProperties = jiveProperties;
         this.serviceName = jiveProperties.getProperty("plugin.broadcast.serviceName", "broadcast");
-    }
-
-    @Inject
-    public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
-    }
-
-    @Inject
-    public void setGroupManager(GroupManager groupManager) {
         this.groupManager = groupManager;
     }
 
@@ -540,7 +535,7 @@ public class BroadcastPlugin extends AbstractPlugin implements Component, Proper
                     values.add(new JID(value));
                 }
                 else {
-                    values.add(XMPPServer.getInstance().createJID(value, null));
+                    values.add(createJid(value));
                 }
             }
         }

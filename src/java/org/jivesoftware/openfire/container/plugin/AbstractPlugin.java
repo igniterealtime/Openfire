@@ -12,7 +12,6 @@ import com.google.inject.Inject;
 import java.io.File;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.Callable;
-import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -23,6 +22,7 @@ import org.jivesoftware.util.PropertyEventDispatcher;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
+import org.xmpp.packet.JID;
 import org.jivesoftware.openfire.component.ComponentLifecycle;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -36,6 +36,7 @@ public abstract class AbstractPlugin implements Plugin {
 
     protected ComponentManager componentManager;
     protected Logger log;
+    protected String serverName;
 
     @Inject
     public void setComponentManager(ComponentManager componentManager) {
@@ -45,6 +46,15 @@ public abstract class AbstractPlugin implements Plugin {
     @Inject
     public void setLog(Logger log) {
         this.log = log;
+    }
+
+    @Inject
+    public void setServerName(@ServerName String serverName) {
+        this.serverName = serverName;
+    }
+
+    protected JID createJid(String username) {
+        return new JID(username, serverName, null);
     }
 
     protected ComponentLifecycle addComponent(String domain, Component component)

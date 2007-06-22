@@ -38,6 +38,7 @@ import java.util.zip.ZipFile;
 import com.google.inject.Guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
@@ -577,7 +578,7 @@ public class PluginManager {
                         }
                 );
 
-                bind(pluginClazz);
+                bind(pluginClazz).in(Scopes.SINGLETON);
             }
         }).getInstance(pluginClazz);
         Thread.currentThread().setContextClassLoader(oldLoader);

@@ -256,7 +256,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             field = new XFormFieldImpl(searchField);
             field.setType(FormField.TYPE_BOOLEAN);
             field.addValue("1");
-            field.setLabel(searchField);
+            field.setLabel(LocaleUtils.getLocalizedString("advance.user.search." + searchField.toLowerCase(), "search"));
             field.setRequired(false);
             searchForm.addField(field);
         }
@@ -354,6 +354,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         return searchList;
     }
     
+    /**
+     * Constructs a XForm that is returned as an IQ packet that contains the search results.
+     * 
+     * @param users set of users that will be used to construct the search results
+     * @param packet the IQ packet sent by the client
+     * @return the iq packet that contains the search results
+     */
     private IQ replyDataFormResult(Set<User> users, IQ packet) {
         XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
         
@@ -367,12 +374,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
         for (String fieldName : getFilteredSearchFields()) {
             field = new XFormFieldImpl(fieldName);
-            field.setLabel(fieldName);
+            field.setLabel(LocaleUtils.getLocalizedString("advance.user.search." + fieldName.toLowerCase(), "search"));
             searchResults.addReportedField(field);
         }
 
         for (User user : users) {
-            String username = user.getUsername();
+            String username = JID.unescapeNode(user.getUsername());
 
             ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
             
@@ -380,15 +387,15 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             fieldJID.addValue(username + "@" + serverName);
             items.add(fieldJID);
 
-            XFormFieldImpl fieldUsername = new XFormFieldImpl("Username");
+            XFormFieldImpl fieldUsername = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.username", "search"));
             fieldUsername.addValue(username);
             items.add(fieldUsername);
 
-            XFormFieldImpl fieldName = new XFormFieldImpl("Name");
+            XFormFieldImpl fieldName = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.name", "search"));
             fieldName.addValue(removeNull(user.getName()));
             items.add(fieldName);
 
-            XFormFieldImpl fieldEmail = new XFormFieldImpl("Email");
+            XFormFieldImpl fieldEmail = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.email", "search"));
             fieldEmail.addValue(removeNull(user.getEmail()));
             items.add(fieldEmail);
 
@@ -402,19 +409,29 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         return replyPacket;
     }
 
+    /**
+     * Constructs a query that is returned as an IQ packet that contains the search results.
+     * 
+     * @param users set of users that will be used to construct the search results
+     * @param packet the IQ packet sent by the client
+     * @return the iq packet that contains the search results
+     */
     private IQ replyNonDataFormResult(Set<User> users, IQ packet) {
         IQ replyPacket = IQ.createResultIQ(packet);
         Element replyQuery = replyPacket.setChildElement("query", "jabber:iq:search");
 
         for (User user : users) {
             Element item = replyQuery.addElement("item");
-            item.addAttribute("jid", user.getUsername() + "@" + serverName);
+            
+            String username = JID.unescapeNode(user.getUsername());
+            
+            item.addAttribute("jid", username + "@" + serverName);
 
             //return to the client the same fields that were submitted
             for (String field : reverseFieldLookup.keySet()) {
                 if ("Username".equals(field)) {
                     Element element = item.addElement(reverseFieldLookup.get(field));
-                    element.addText(user.getUsername());
+                    element.addText(username);
                 }
              
                 if ("Name".equals(field)) {
@@ -432,19 +449,41 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         return replyPacket;
     }
     
+    /**
+     * Returns the service name of this component, which is "search" by default.
+     *
+     * @return the service name of this component.
+     */
     public String getServiceName() {
         return serviceName;
     }
     
+    /**
+     * Sets the service name of this component, which is "search" by default. If the name
+     * is different than the existing name the plugin will remove itself from the ComponentManager
+     * and then add itself back using the new name.
+     *
+     * @param name the service name of this component.
+     */
     public void setServiceName(String name) {
         changeServiceName(name);
         JiveGlobals.setProperty(SERVICENAME, name);
     }
     
+    /**
+    * @return true if search service is enabled.
+    */
     public boolean getServiceEnabled() {
         return serviceEnabled;
     }
     
+   /**
+    * Enables or disables the search service. When disabled, when a client tries 
+    * to do a search they will receive an XForm informing that the service is
+    * unavailable.
+    *
+    * @param enabled true if group permission checking should be disabled.
+    */
     public void setServiceEnabled(boolean enabled) {
         serviceEnabled = enabled;
         JiveGlobals.setProperty(SERVICEENABLED, enabled ? "true" : "false");
@@ -472,6 +511,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
        return searchFields;
     }
     
+    /**
+     * Restricts which fields can be searched on and shown to clients. This can be used
+     * in the case of preventing users email addresses from being revealed as part of
+     * the search results. 
+     *
+     * @param set of fields that can not be searched on or shown to the client
+     */
     public void setExcludedFields(Collection<String> exculudedFields) {
        this.exculudedFields = exculudedFields;
        JiveGlobals.setProperty(EXCLUDEDFIELDS, StringUtils.collectionToString(exculudedFields));

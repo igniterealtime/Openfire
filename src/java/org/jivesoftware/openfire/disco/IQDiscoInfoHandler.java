@@ -14,14 +14,20 @@ package org.jivesoftware.openfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -29,6 +35,7 @@ import org.xmpp.packet.PacketError;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.Lock;
 
 /**
  * IQDiscoInfoHandler is responsible for handling disco#info requests. This class holds a map with
@@ -50,12 +57,12 @@ import java.util.concurrent.CopyOnWriteArraySet;
  *
  * @author Gaston Dombiak
  */
-public class IQDiscoInfoHandler extends IQHandler {
+public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListener {
 
     private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
-    private Set<String> serverFeatures = new CopyOnWriteArraySet<String>();
-    private Map<String, DiscoInfoProvider> serverNodeProviders =
-            new ConcurrentHashMap<String, DiscoInfoProvider>();
+    private Set<String> localServerFeatures = new CopyOnWriteArraySet<String>();
+    private Cache<String, Set<NodeID>> serverFeatures;
+    private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoInfoProvider>();
     private IQHandlerInfo info;
 
     private List<Element> anonymousUserIdentities = new ArrayList<Element>();
@@ -65,7 +72,6 @@ public class IQDiscoInfoHandler extends IQHandler {
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
         info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info");
-        addServerFeature("http://jabber.org/protocol/disco#info");
         // Initialize the user identity and features collections (optimization to avoid creating
         // the same objects for each response)
         Element userIdentity = DocumentHelper.createElement("identity");
@@ -223,10 +229,23 @@ public class IQDiscoInfoHandler extends IQHandler {
      * made against the server.
      *
      * @param namespace the namespace identifying the new server feature.
-     * @return true if the new feature was successfully added.
      */
-    public boolean addServerFeature(String namespace) {
-        return serverFeatures.add(namespace);
+    public void addServerFeature(String namespace) {
+        if (localServerFeatures.add(namespace)) {
+            Lock lock = LockManager.getLock(namespace);
+            try {
+                lock.lock();
+                Set<NodeID> nodeIDs = serverFeatures.get(namespace);
+                if (nodeIDs == null) {
+                    nodeIDs = new HashSet<NodeID>();
+                }
+                nodeIDs.add(XMPPServer.getInstance().getNodeID());
+                serverFeatures.put(namespace, nodeIDs);
+            }
+            finally {
+                lock.unlock();
+            }
+        }
     }
 
     /**
@@ -236,17 +255,101 @@ public class IQDiscoInfoHandler extends IQHandler {
      * @param namespace the namespace of the feature to be removed.
      */
     public void removeServerFeature(String namespace) {
-        serverFeatures.remove(namespace);
+        if (localServerFeatures.remove(namespace)) {
+            Lock lock = LockManager.getLock(namespace);
+            try {
+                lock.lock();
+                Set<NodeID> nodeIDs = serverFeatures.get(namespace);
+                if (nodeIDs != null) {
+                    nodeIDs.remove(XMPPServer.getInstance().getNodeID());
+                    if (nodeIDs.isEmpty()) {
+                        serverFeatures.remove(namespace);
+                    }
+                    else {
+                        serverFeatures.put(namespace, nodeIDs);
+                    }
+                }
+            }
+            finally {
+                lock.unlock();
+            }
+        }
     }
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
+        serverFeatures = CacheFactory.createCache("Disco Server Features");
+        addServerFeature("http://jabber.org/protocol/disco#info");
         // Track the implementors of ServerFeaturesProvider so that we can collect the features
         // provided by the server
         for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {
             addServerFeaturesProvider(provider);
         }
         setProvider(server.getServerInfo().getName(), getServerInfoProvider());
+        // Listen to cluster events
+        ClusterManager.addListener(this);
+    }
+
+    public void joinedCluster() {
+        restoreCacheContent();
+    }
+
+    public void joinedCluster(byte[] nodeID) {
+        // Do nothing
+    }
+
+    public void leftCluster() {
+        if (!XMPPServer.getInstance().isShuttingDown()) {
+            restoreCacheContent();
+        }
+    }
+
+    public void leftCluster(byte[] nodeID) {
+        if (ClusterManager.isSeniorClusterMember()) {
+            NodeID leftNode = new NodeID(nodeID);
+            // Remove server features added by node that is gone
+            for (Map.Entry<String, Set<NodeID>> entry : serverFeatures.entrySet()) {
+                String namespace = entry.getKey();
+                Lock lock = LockManager.getLock(namespace);
+                try {
+                    lock.lock();
+                    Set<NodeID> nodeIDs = entry.getValue();
+                    if (nodeIDs.remove(leftNode)) {
+                        if (nodeIDs.isEmpty()) {
+                            serverFeatures.remove(namespace);
+                        }
+                        else {
+                            serverFeatures.put(namespace, nodeIDs);
+                        }
+                    }
+                }
+                finally {
+                    lock.unlock();
+                }
+            }
+        }
+    }
+
+    public void markedAsSeniorClusterMember() {
+        // Do nothing
+    }
+
+    private void restoreCacheContent() {
+        for (String feature : localServerFeatures) {
+            Lock lock = LockManager.getLock(feature);
+            try {
+                lock.lock();
+                Set<NodeID> nodeIDs = serverFeatures.get(feature);
+                if (nodeIDs == null) {
+                    nodeIDs = new HashSet<NodeID>();
+                }
+                nodeIDs.add(XMPPServer.getInstance().getNodeID());
+                serverFeatures.put(feature, nodeIDs);
+            }
+            finally {
+                lock.unlock();
+            }
+        }
     }
 
     /**
@@ -257,7 +360,7 @@ public class IQDiscoInfoHandler extends IQHandler {
      * @return the DiscoInfoProvider responsible for providing information at the server level.
      */
     private DiscoInfoProvider getServerInfoProvider() {
-        DiscoInfoProvider discoInfoProvider = new DiscoInfoProvider() {
+        return new DiscoInfoProvider() {
             final ArrayList<Element> identities = new ArrayList<Element>();
 
             public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
@@ -300,7 +403,7 @@ public class IQDiscoInfoHandler extends IQHandler {
                 }
                 if (name == null) {
                     // Answer features of the server
-                    return serverFeatures.iterator();
+                    return new HashSet<String>(serverFeatures.keySet()).iterator();
                 }
                 else {
                     // Answer features of the user
@@ -336,6 +439,5 @@ public class IQDiscoInfoHandler extends IQHandler {
                 return null;
             }
         };
-        return discoInfoProvider;
     }
 }

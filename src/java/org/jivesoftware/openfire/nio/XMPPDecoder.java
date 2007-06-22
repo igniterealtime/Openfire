@@ -25,12 +25,8 @@ public class XMPPDecoder extends CumulativeProtocolDecoder {
 
     protected boolean doDecode(IoSession session, ByteBuffer in, ProtocolDecoderOutput out)
             throws Exception {
-        if (in.remaining() < 4) {
-            return false;
-        }
         // Get the XML light parser from the IoSession
-        XMLLightweightParser parser =
-                (XMLLightweightParser) session.getAttribute(ConnectionHandler.XML_PARSER);
+        XMLLightweightParser parser = (XMLLightweightParser) session.getAttribute(ConnectionHandler.XML_PARSER);
         // Parse as many stanzas as possible from the received data
         parser.read(in);
 

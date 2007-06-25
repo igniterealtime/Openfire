@@ -83,8 +83,13 @@ public class BroadcastPluginTest {
 
         context.checking(new Expectations() {{
             allowing(jiveProperties).put("plugin.broadcast.serviceName", "broadcast");
+
+            allowing(jiveProperties)
+                    .getProperty("plugin.broadcast.serviceName", "broadcast");
+            will(returnValue("broadcast"));
         }});
         broadcastPlugin.setServiceName("broadcast");
+        assertEquals(broadcastPlugin.getServiceName(), "broadcast");
     }
 
 }

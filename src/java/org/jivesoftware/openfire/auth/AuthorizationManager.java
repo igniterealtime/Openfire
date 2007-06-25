@@ -14,6 +14,10 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -134,10 +138,38 @@ public class AuthorizationManager {
     public static boolean authorize(String username, String principal) {
         for (AuthorizationPolicy ap : authorizationPolicies) {
             Log.debug("AuthorizationManager: Trying "+ap.name()+".authorize("+username+","+principal+")");
+
             if (ap.authorize(username, principal)) {
-                return true;
+                // Authorized..  but do you exist?
+                try {
+                    UserManager.getUserProvider().loadUser(username);
+                }
+                catch (UserNotFoundException nfe) {
+                    Log.debug("AuthorizationManager: User "+username+" not found.");
+                    // Should we add the user?
+                    if(JiveGlobals.getBooleanProperty("xmpp.auth.autoadd",false)) {
+                        if (UserManager.getUserProvider().isReadOnly()) {
+                            return false;
+                        }
+                        try {
+                            UserManager.getUserProvider().createUser(username, StringUtils.randomString(8), null, null);
+                            Log.info("AuthorizationManager: User "+username+" created.");
+                            return true;
+                        }
+                        catch (UserAlreadyExistsException uaee) {
+                            // Somehow the user got created in this very short timeframe.. 
+                            // To be safe, lets fail here. The user can always try again.
+                            Log.error("AuthorizationManager: User "+username+" already exists while attempting to add user.");
+                            return false;
+                        }
+                    }
+                    return false;
+                }
             }
+            // User exists
+            return true;
         }
+        // Not authorized.
         return false;
     }
 

@@ -145,6 +145,7 @@ public class ClusterManager {
             }
         } catch (InterruptedException e) {
             // Should never happen
+            Log.error(e);
         }
     }
 
@@ -168,6 +169,7 @@ public class ClusterManager {
             }
         } catch (InterruptedException e) {
             // Should never happen
+            Log.error(e);
         }
     }
 
@@ -175,30 +177,41 @@ public class ClusterManager {
      * Triggers event indicating that this JVM is no longer part of the cluster. This could
      * happen when disabling clustering support or removing the enterprise plugin that provides
      * clustering support.<p>
-     * <p/>
+     *
      * Moreover, if we were in a "split brain" scenario (ie. separated cluster islands) and the
      * island were this JVM belonged was marked as "old" then all nodes of that island will
      * get the <tt>left cluster event</tt> and <tt>joined cluster events</tt>. That means that
      * caches will be reset and thus will need to be repopulated again with fresh data from this JVM.
      * This also includes the case where this JVM was the senior cluster member and when the islands
-     * met again then this JVM stopped being the senior member.<p>
-     * <p/>
-     * This event will be triggered in another thread. This will avoid potential deadlocks
-     * in Coherence.
-     *
-     * @param asynchronous true if event will be triggered in background
+     * met again then this JVM stopped being the senior member.
      */
-    public static void fireLeftCluster(boolean asynchronous) {
-        try {
-            Event event = new Event(EventType.left_cluster, null);
-            events.put(event);
-            if (!asynchronous) {
-                while (!event.isProcessed()) {
-                    Thread.sleep(50);
-                }
+    public static void fireLeftCluster() {
+        CacheFactory.leftCluster();
+        // Now notify rest of the listeners
+        for (ClusterEventListener listener : listeners) {
+            try {
+                listener.leftCluster();
             }
+            catch (Exception e) {
+                Log.error(e);
+            }
+        }
+    }
+
+    /**
+     * Triggers event indicating that another JVM is no longer part of the cluster. This could
+     * happen when disabling clustering support or removing the enterprise plugin that provides
+     * clustering support.
+     *
+     * @param nodeID    nodeID assigned to the JVM when joining the cluster.
+     */
+    public static void fireLeftCluster(byte[] nodeID) {
+        try {
+            Event event = new Event(EventType.left_cluster, nodeID);
+            events.put(event);
         } catch (InterruptedException e) {
             // Should never happen
+            Log.error(e);
         }
     }
 
@@ -211,7 +224,7 @@ public class ClusterManager {
      * island will have its own senior cluster member. However, when the islands meet again there
      * could only be one senior cluster member so one of the senior cluster members will stop playing
      * that role. When that happens the JVM no longer playing that role will receive the
-     * {@link #fireLeftCluster(boolean)} and {@link #fireJoinedCluster(boolean)} events.<p>
+     * {@link #fireLeftCluster()} and {@link #fireJoinedCluster(boolean)} events.<p>
      * <p/>
      * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
@@ -260,13 +273,13 @@ public class ClusterManager {
     public static synchronized void shutdown() {
         // Reset the LockFactory to the default one
         LockManager.setLockFactory(new LocalLockFactory());
-        // Reset the session locator to use
-        XMPPServer.getInstance().setRemoteSessionLocator(null);
         // Reset packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
         if (isClusteringStarted()) {
             CacheFactory.shutdown();
         }
+        // Reset the session locator to use
+        XMPPServer.getInstance().setRemoteSessionLocator(null);
     }
 
     /**

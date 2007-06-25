@@ -379,16 +379,13 @@ public class CacheFactory {
 
     private static void stopClustering() {
         try {
-            CacheFactoryStrategy clusteredFactory = cacheFactoryStrategy;
+            // Stop the cluster
+            cacheFactoryStrategy.stopCluster();
+            // Set the strategy to local
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass)
                     .newInstance();
 
             clusteringStarted = false;
-            // Reset the node ID
-            XMPPServer.getInstance().setNodeID(null);
-
-            // Stop the cluster
-            clusteredFactory.stopCluster();
         }
         catch (Exception e) {
             Log.error("Unable to stop clustering - continuing in clustered mode", e);
@@ -412,10 +409,16 @@ public class CacheFactory {
      */
     public static void leftCluster() {
         // Loop through clustered caches and change them to local caches (migrate content)
-        for (Cache cache : getAllCaches()) {
-            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-            Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-            cacheWrapper.setWrappedCache(standaloneCache);
+        try {
+            CacheFactoryStrategy localStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
+
+            for (Cache cache : getAllCaches()) {
+                CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+                Cache standaloneCache = localStrategy.createCache(cacheWrapper.getName());
+                cacheWrapper.setWrappedCache(standaloneCache);
+            }
+        } catch (Exception e) {
+            Log.error("Error reverting caches to local caches", e);
         }
     }
 }

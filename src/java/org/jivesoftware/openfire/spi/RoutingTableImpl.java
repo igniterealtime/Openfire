@@ -209,7 +209,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         else {
                             // This is a route to a local user hosted in other node
                             if (remotePacketRouter != null) {
-                                routed = remotePacketRouter.routePacket(clientRoute.getNodeID(), jid, packet);
+                                routed = remotePacketRouter
+                                        .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
                             }
                         }
                     }
@@ -473,7 +474,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     route = anonymousUsersCache.get(jid.toString());
                 }
                 if (route != null) {
-                    session = locator.getClientSession(route.getNodeID(), jid);
+                    session = locator.getClientSession(route.getNodeID().toByteArray(), jid);
                 }
             }
         }
@@ -491,14 +492,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
                     ClientRoute route = entry.getValue();
                     if (!server.getNodeID().equals(route.getNodeID())) {
-                        sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                        sessions.add(locator.getClientSession(route.getNodeID().toByteArray(), new JID(entry.getKey())));
                     }
                 }
                 // Add sessions of anonymous users hosted by other cluster nodes
                 for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
                     ClientRoute route = entry.getValue();
                     if (!server.getNodeID().equals(route.getNodeID())) {
-                        sessions.add(locator.getClientSession(route.getNodeID(), new JID(entry.getKey())));
+                        sessions.add(locator.getClientSession(route.getNodeID().toByteArray(), new JID(entry.getKey())));
                     }
                 }
             }
@@ -529,17 +530,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     public boolean hasClientRoute(JID jid) {
         return usersCache.containsKey(jid.toString()) || isAnonymousRoute(jid);
-    }
-
-    public byte[] getNodeIDForClientRoute(JID jid) {
-        ClientRoute clientRoute = usersCache.get(jid.toString());
-        if (clientRoute == null) {
-            clientRoute = anonymousUsersCache.get(jid.toString());
-        }
-        if (clientRoute != null) {
-            return clientRoute.getNodeID();
-        }
-        return null;
     }
 
     public boolean isAnonymousRoute(JID jid) {

@@ -11,6 +11,7 @@
 
 package org.jivesoftware.openfire.spi;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
@@ -29,14 +30,14 @@ import java.io.ObjectOutput;
  */
 public class ClientRoute implements Cacheable, Externalizable {
 
-    private byte[] nodeID;
+    private NodeID nodeID;
     private boolean available;
 
     public ClientRoute() {
     }
 
 
-    public byte[] getNodeID() {
+    public NodeID getNodeID() {
         return nodeID;
     }
 
@@ -46,7 +47,7 @@ public class ClientRoute implements Cacheable, Externalizable {
     }
 
     public ClientRoute(NodeID nodeID, boolean available) {
-        this.nodeID = nodeID.toByteArray();
+        this.nodeID = nodeID;
         this.available = available;
     }
 
@@ -55,18 +56,26 @@ public class ClientRoute implements Cacheable, Externalizable {
         // of each field.
         int size = 0;
         size += CacheSizes.sizeOfObject();      // overhead of object
-        size += nodeID.length;                  // Node ID
+        size += nodeID.toByteArray().length;                  // Node ID
         size += CacheSizes.sizeOfBoolean();     // available
         return size;
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableUtil.getInstance().writeByteArray(out, nodeID);
+        ExternalizableUtil.getInstance().writeByteArray(out, nodeID.toByteArray());
         ExternalizableUtil.getInstance().writeBoolean(out, available);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        nodeID = ExternalizableUtil.getInstance().readByteArray(in);
+        byte[] bytes = ExternalizableUtil.getInstance().readByteArray(in);
+        // Retrieve the NodeID but try to use the singleton instance
+        if (XMPPServer.getInstance().getNodeID().equals(bytes)) {
+            nodeID = XMPPServer.getInstance().getNodeID();
+        }
+        else {
+            // TODO Keep singleton instances in NodeID
+            nodeID = new NodeID(bytes);
+        }
         available = ExternalizableUtil.getInstance().readBoolean(in);
     }
 }

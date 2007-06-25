@@ -5,7 +5,7 @@
  * Copyright (C) 2007 Jive Software. All rights reserved.
  * This software is the proprietary information of Jive Software. Use is subject to license terms.
  */
-package org.jivesoftware.plugin;
+package org.jivesoftware.openfire.plugin;
 
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.jmock.integration.junit4.JUnit4Mockery;
@@ -67,6 +67,24 @@ public class BroadcastPluginTest {
         }});
 
         broadcastPlugin.initialize();
+    }
+
+    @Test
+    public void testNameAndDescription() {
+        BroadcastPlugin broadcastPlugin = injector.getInstance(BroadcastPlugin.class);
+        assertEquals(broadcastPlugin.getName(), "broadcast");
+        assertEquals(broadcastPlugin.getDescription(), "the broadcast plugin");
+    }
+
+    @Test
+    public void testGetAndSetProperties() {
+        final BroadcastPlugin broadcastPlugin = injector.getInstance(BroadcastPlugin.class);
+        final JiveProperties jiveProperties = injector.getInstance(JiveProperties.class);
+
+        context.checking(new Expectations() {{
+            allowing(jiveProperties).put("plugin.broadcast.serviceName", "broadcast");
+        }});
+        broadcastPlugin.setServiceName("broadcast");
     }
 
 }

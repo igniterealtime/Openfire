@@ -47,10 +47,6 @@ public class ClusterManager {
                             // Replace standalone caches with clustered caches. Local cached data is not moved.
                             CacheFactory.joinedCluster();
                         }
-                        else if (eventType == EventType.left_cluster && event.getNodeID() == null) {
-                            // Replace clustered caches with standalone caches. Cached data is not moved to new cache.
-                            CacheFactory.leftCluster();
-                        }
                         // Now notify rest of the listeners
                         for (ClusterEventListener listener : listeners) {
                             try {

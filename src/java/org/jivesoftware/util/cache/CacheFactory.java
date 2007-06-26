@@ -18,7 +18,10 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.Log;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -174,15 +177,6 @@ public class CacheFactory {
      * @param task the task to be invoked on all other cluster members.
      */
     public static void doClusterTask(final ClusterTask task) {
-        if (!clusteringStarted) {
-            return;
-        }
-        synchronized(CacheFactory.class) {
-            if (!clusteringStarted) {
-                return;
-            }
-        }
-
         cacheFactoryStrategy.doClusterTask(task);
     }
 
@@ -195,15 +189,6 @@ public class CacheFactory {
      * @throws IllegalStateException if requested node was not found or not running in a cluster. 
      */
     public static void doClusterTask(final ClusterTask task, byte[] nodeID) {
-        if (!clusteringStarted) {
-            throw new IllegalStateException("Cluster service is not available");
-        }
-        synchronized(CacheFactory.class) {
-            if (!clusteringStarted) {
-                throw new IllegalStateException("Cluster service is not available");
-            }
-        }
-
         cacheFactoryStrategy.doClusterTask(task, nodeID);
     }
 
@@ -218,12 +203,6 @@ public class CacheFactory {
      * @return collection with the result of the execution.
      */
     public static Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
-        synchronized(CacheFactory.class) {
-            if (!clusteringStarted) {
-                return Collections.emptyList();
-            }
-        }
-
         return cacheFactoryStrategy.doSynchronousClusterTask(task, includeLocalMember);
     }
 
@@ -237,12 +216,6 @@ public class CacheFactory {
      * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */
     public static Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
-        synchronized(CacheFactory.class) {
-            if (!clusteringStarted) {
-                throw new IllegalStateException("Cluster service is not available");
-            }
-        }
-
         return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
     }
 
@@ -410,11 +383,11 @@ public class CacheFactory {
     public static void leftCluster() {
         // Loop through clustered caches and change them to local caches (migrate content)
         try {
-            CacheFactoryStrategy localStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
+            cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
 
             for (Cache cache : getAllCaches()) {
                 CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-                Cache standaloneCache = localStrategy.createCache(cacheWrapper.getName());
+                Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
                 cacheWrapper.setWrappedCache(standaloneCache);
             }
         } catch (Exception e) {

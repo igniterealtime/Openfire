@@ -3,7 +3,7 @@
  * $Revision: 1651 $
  * $Date: 2005-07-20 00:20:39 -0300 (Wed, 20 Jul 2005) $
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2004 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -36,7 +36,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     private static VCardManager instance;
 
     private Cache<String, Element> vcardCache;
-    private final EventHandler eventHandler = new EventHandler();
+    private EventHandler eventHandler;
     /**
      * List of listeners that will be notified when vCards are created, updated or deleted.
      */
@@ -62,6 +62,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         super("VCard Manager");
         String cacheName = "VCard";
         vcardCache = CacheFactory.createCache(cacheName);
+        this.eventHandler = new EventHandler();
     }
 
     /**
@@ -113,16 +114,51 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      *
      * @param username     The username of the user to set his new vCard.
      * @param vCardElement The DOM element sent by the user as his new vcard.
+     * @throws Exception if an error occured while storing the new vCard.
      */
-    public void setVCard(String username, Element vCardElement) {
+    public void setVCard(String username, Element vCardElement) throws Exception {
+        boolean created = false;
+        boolean updated = false;
+
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException("VCard provider is read-only.");
         }
-        synchronized (getLock(username)) {
-            provider.setVCard(username, vCardElement);
-            vcardCache.put(username, vCardElement);
+        Element oldVCard = getOrLoadVCard(username);
+        // See if we need to update the vCard or insert a new one.
+        if (oldVCard != null) {
+            // Only update the vCard in the database if the vCard has changed.
+            if (!oldVCard.equals(vCardElement)) {
+                try {
+                    provider.updateVCard(username, vCardElement);
+                    updated = true;
+                }
+                catch (NotFoundException e) {
+                    Log.warn("Tried to update a vCard that does not exist", e);
+                    provider.createVCard(username, vCardElement);
+                    created = true;
+                }
+            }
         }
-        dispatchVCardSet(username);
+        else {
+            try {
+                provider.createVCard(username, vCardElement);
+                created = true;
+            }
+            catch (AlreadyExistsException e) {
+                Log.warn("Tried to create a vCard when one already exist", e);
+                provider.updateVCard(username, vCardElement);
+                updated = true;
+            }
+        }
+        vcardCache.put(username, vCardElement);
+        // Dispatch vCard events
+        if (created) {
+            // Alert listeners that a new vCard has been created
+            dispatchVCardCreated(username);
+        } else if (updated) {
+            // Alert listeners that a vCard has been updated
+            dispatchVCardUpdated(username);
+        }
     }
 
     /**
@@ -136,17 +172,11 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException("VCard provider is read-only.");
         }
-        boolean deleted = false;
-        synchronized (getLock(username)) {
-            Element oldVCard = getOrLoadVCard(username);
-            if (oldVCard != null) {
-                // Delete the property from the DB if it was present in memory
-                provider.deleteVCard(username);
-                vcardCache.remove(username);
-                deleted = true;
-            }
-        }
-        if (deleted) {
+        Element oldVCard = getOrLoadVCard(username);
+        if (oldVCard != null) {
+            vcardCache.remove(username);
+            // Delete the property from the DB if it was present in memory
+            provider.deleteVCard(username);
             // Alert listeners that a vCard has been deleted
             dispatchVCardDeleted(username);
         }
@@ -158,7 +188,6 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      * read-only vCard.
      *
      * @return the vCard of a given user.
-     * @param username the username of the user whose vCard is being retrieved.
      */
     public Element getVCard(String username) {
         Element vCardElement = getOrLoadVCard(username);
@@ -166,20 +195,14 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     private Element getOrLoadVCard(String username) {
-        synchronized (getLock(username)) {
-            Element vCardElement = vcardCache.get(username);
-            if (vCardElement == null) {
-                vCardElement = provider.loadVCard(username);
-                if (vCardElement != null) {
-                    vcardCache.put(username, vCardElement);
-                }
+        Element vCardElement = vcardCache.get(username);
+        if (vCardElement == null) {
+            vCardElement = provider.loadVCard(username);
+            if (vCardElement != null) {
+                vcardCache.put(username, vCardElement);
             }
-            return vCardElement;
         }
-    }
-
-    private Object getLock(String username) {
-        return (username + VCardManager.class.toString()).intern();
+        return vCardElement;
     }
 
     /**
@@ -196,7 +219,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
 
     /**
      * Unregisters a listener to receive events.
-     *                  
+     *
      * @param listener the listener.
      */
     public void removeListener(VCardListener listener) {
@@ -204,23 +227,24 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     /**
-     * Returns true if vCards are read-only. When vCards are read-only and #setVCard is called an
-     * unsupported operation exception is thrown.
-     * 
-     * @return true if vCards are read-only.
-     */
-    public boolean isReadOnly() {
-        return provider.isReadOnly();
-    }
-
-    /**
      * Dispatches that a vCard was updated to all listeners.
      *
      * @param user the user for which the vCard was set.
      */
-    private void dispatchVCardSet(String user) {
+    private void dispatchVCardUpdated(String user) {
         for (VCardListener listener : listeners) {
-            listener.vCardSet(user);
+            listener.vCardUpdated(user);
+        }
+    }
+
+    /**
+     * Dispatches that a vCard was created to all listeners.
+     *
+     * @param user the user for which the vCard was created.
+     */
+    private void dispatchVCardCreated(String user) {
+        for (VCardListener listener : listeners) {
+            listener.vCardCreated(user);
         }
     }
 

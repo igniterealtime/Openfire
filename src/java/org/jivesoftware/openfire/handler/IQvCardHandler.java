@@ -62,38 +62,34 @@ import java.util.Iterator;
  */
 public class IQvCardHandler extends IQHandler {
 
-    private final IQHandlerInfo info = new IQHandlerInfo("vCard", "vcard-temp");
+    private IQHandlerInfo info;
     private XMPPServer server;
     private UserManager userManager;
-    private VCardManager vCardManager;
 
     public IQvCardHandler() {
         super("XMPP vCard Handler");
+        info = new IQHandlerInfo("vCard", "vcard-temp");
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = IQ.createResultIQ(packet);
         IQ.Type type = packet.getType();
         if (type.equals(IQ.Type.set)) {
-            JID userJid = packet.getFrom();
-            if(vCardManager.isReadOnly() || !server.isLocal(userJid)) {
-                result.setChildElement(packet.getChildElement().createCopy());
-                result.setError(PacketError.Condition.not_allowed);
+            try {
+                User user = userManager.getUser(packet.getFrom().getNode());
+                Element vcard = packet.getChildElement();
+                if (vcard != null) {
+                    VCardManager.getInstance().setVCard(user.getUsername(), vcard);
+                }
             }
-            else {
-                try {
-                    User user = userManager.getUser(userJid.getNode());
-                    Element vcard = packet.getChildElement();
-                    vCardManager.setVCard(user.getUsername(), vcard);
-                }
-                catch (UserNotFoundException e) {
-                    result.setChildElement(packet.getChildElement().createCopy());
-                    result.setError(PacketError.Condition.item_not_found);
-                }
-                catch (Exception e) {
-                    Log.error("Error setting user vCard: " + packet.getFrom().getNode(), e);
-                    result.setError(PacketError.Condition.internal_server_error);
-                }
+            catch (UserNotFoundException e) {
+                result = IQ.createResultIQ(packet);
+                result.setChildElement(packet.getChildElement().createCopy());
+                result.setError(PacketError.Condition.item_not_found);
+            }
+            catch (Exception e) {
+                Log.error(e);
+                result.setError(PacketError.Condition.internal_server_error);
             }
         }
         else if (type.equals(IQ.Type.get)) {
@@ -107,7 +103,8 @@ public class IQvCardHandler extends IQHandler {
             // Only try to get the vCard values of non-anonymous users
             if (recipient != null) {
                 if (recipient.getNode() != null && server.isLocal(recipient)) {
-                    Element userVCard = vCardManager.getVCard(recipient.getNode());
+                    VCardManager vManager = VCardManager.getInstance();
+                    Element userVCard = vManager.getVCard(recipient.getNode());
                     if (userVCard != null) {
                         // Check if the requester wants to ignore some vCard's fields
                         Element filter = packet.getChildElement()
@@ -146,7 +143,6 @@ public class IQvCardHandler extends IQHandler {
         super.initialize(server);
         this.server = server;
         userManager = server.getUserManager();
-        this.vCardManager = server.getVCardManager();
     }
 
     public IQHandlerInfo getInfo() {

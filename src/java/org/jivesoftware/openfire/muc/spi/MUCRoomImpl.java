@@ -937,7 +937,7 @@ public class MUCRoomImpl implements MUCRoom {
 
         public JID getRoleAddress() {
             if (crJID == null) {
-                crJID = new JID(room.getName(), server.getServiceDomain(), "", true);
+                crJID = new JID(room.getName(), server.getServiceDomain(), null, true);
             }
             return crJID;
         }

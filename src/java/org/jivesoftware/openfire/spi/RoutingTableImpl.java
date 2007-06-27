@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
@@ -121,10 +122,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
-    public void addClientRoute(JID route, LocalClientSession destination) {
+    public boolean addClientRoute(JID route, LocalClientSession destination) {
         String address = destination.getAddress().toString();
         boolean available = destination.getPresence().isAvailable();
-        localRoutingTable.addRoute(address, destination);
+        boolean added = localRoutingTable.addRoute(address, destination);
         if (destination.getAuthToken().isAnonymous()) {
             anonymousUsersCache.put(address, new ClientRoute(server.getNodeID(), available));
             // Add the session to the list of user sessions
@@ -148,7 +149,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     lock.lock();
                     Collection<String> jids = usersSessions.get(route.toBareJID());
                     if (jids == null) {
-                        jids = new HashSet<String>();
+                        // Optimization - use different class depending on current setup
+                        if (ClusterManager.isClusteringStarted()) {
+                            jids = new HashSet<String>();
+                        }
+                        else {
+                            jids = new ConcurrentHashSet<String>();
+                        }
                     }
                     jids.add(route.toString());
                     usersSessions.put(route.toBareJID(), jids);
@@ -158,6 +165,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             }
         }
+        return added;
     }
 
     public void broadcastPacket(Message packet, boolean onlyLocal) {

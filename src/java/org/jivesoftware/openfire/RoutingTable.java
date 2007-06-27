@@ -112,8 +112,9 @@ public interface RoutingTable {
      *
      * @param route the address associated to the route.
      * @param destination the client session.
+     * @return true if route was added to the table or false if already present.
      */
-    void addClientRoute(JID route, LocalClientSession destination);
+    boolean addClientRoute(JID route, LocalClientSession destination);
 
     /**
      * Routes a packet to the specified address. The packet destination can be a

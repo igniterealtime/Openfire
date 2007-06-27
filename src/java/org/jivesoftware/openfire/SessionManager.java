@@ -500,18 +500,19 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     }
 
     /**
-     * Add a new session to be managed. The session has been authenticated by
-     * a non-anonymous user.
+     * Add a new session to be managed. The session has been authenticated and resource
+     * binding has been done.
      *
      * @param session the session that was authenticated.
      */
     public void addSession(LocalClientSession session) {
         // Remove the pre-Authenticated session but remember to use the temporary ID as the key
         localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
-        // Increment counter of authenticated sessions
-        incrementCounter("usercounter");
         // Add session to the routing table (routing table will know session is not available yet)
-        routingTable.addClientRoute(session.getAddress(), session);
+        if (routingTable.addClientRoute(session.getAddress(), session)) {
+            // Increment counter of authenticated sessions
+            incrementCounter("usercounter");
+        }
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
                 SessionEventDispatcher.EventType.anonymous_session_created :
                 SessionEventDispatcher.EventType.session_created;
@@ -614,7 +615,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             return;
         }
         int newPriority = session.getPresence().getPriority();
-        if (newPriority >= 0 && oldPriority < 0) {
+        if (newPriority < 0 || oldPriority >= 0) {
             // Do nothing if new presence priority is not positive and old presence negative
             return;
         }

@@ -38,9 +38,10 @@ class LocalRoutingTable {
      *
      * @param address the string representation of the JID associated to the route.
      * @param route the route hosted by this node.
+     * @return true if the element was added or false if was already present.
      */
-    void addRoute(String address, RoutableChannelHandler route) {
-        routes.put(address, route);
+    boolean addRoute(String address, RoutableChannelHandler route) {
+        return routes.put(address, route) != route;
     }
 
     /**

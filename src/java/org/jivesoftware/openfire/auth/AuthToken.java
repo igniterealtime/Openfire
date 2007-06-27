@@ -34,6 +34,11 @@ public class AuthToken {
         this.username = username;
     }
 
+    public AuthToken(String username, Boolean anonymous) {
+        this.username = username;
+        this.anonymous = anonymous;
+    }
+
     /**
      * Returns the username associated with this AuthToken.
      *

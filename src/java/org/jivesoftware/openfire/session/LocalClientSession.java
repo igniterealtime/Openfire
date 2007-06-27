@@ -520,6 +520,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         String resource = getAddress().getResource();
         setAddress(new JID(resource, getServerName(), resource, true));
         setStatus(Session.STATUS_AUTHENTICATED);
+        if (authToken == null) {
+            authToken = new AuthToken(resource, true);
+        }
         // Add session to the session manager. The session will be added to the routing table as well
         sessionManager.addSession(this);
     }

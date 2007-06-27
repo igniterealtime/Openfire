@@ -17,6 +17,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * This ChannelHandler writes packet data to connections.
@@ -46,8 +47,15 @@ public class SocketPacketWriteHandler implements ChannelHandler {
                 // no TO was found so send back the packet to the sender
                 routingTable.routePacket(packet.getFrom(), packet);
             }
-            else {
+            else if (recipient.getResource() != null || !(packet instanceof Presence)) {
+                // JID is of the form <user@domain/resource>
                 routingTable.routePacket(recipient, packet);
+            }
+            else {
+                // JID is of the form <user@domain>
+                for (JID route : routingTable.getRoutes(recipient)) {
+                    routingTable.routePacket(route, packet);
+                }
             }
         }
         catch (Exception e) {

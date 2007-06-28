@@ -563,17 +563,40 @@ public class PluginManager {
         catch (Exception e) {
             Log.error(e);
         }
-        plugins.remove(pluginName);
-        pluginDirs.remove(plugin);
-        classloaders.remove(plugin);
-
-        // See if this is a child plugin. If it is, we should unload
-        // the parent plugin as well.
-        if (childPluginMap.containsKey(plugin)) {
-            unloadPlugin(childPluginMap.get(plugin));
+        // Try to remove the folder where the plugin was exploded. If this works then
+        // the plugin was successfully removed. Otherwise, some objects created by the
+        // plugin are still in memory.
+        File dir = new File(pluginDirectory, pluginName);
+        // Give the plugin 2 seconds to unload.
+        try {
+            Thread.sleep(2000);
+            // Ask the system to clean up references.
+            System.gc();
+            int count = 0;
+            while (!deleteDir(dir) && count < 5) {
+                Log.warn("Error unloading plugin " + pluginName + ". " + "Will attempt again momentarily.");
+                Thread.sleep(8000);
+                count++;
+                // Ask the system to clean up references.
+                System.gc();
+            }
+        } catch (InterruptedException e) {
+            Log.error(e);
         }
-        childPluginMap.remove(plugin);
-        firePluginDestroyedEvent(pluginName, plugin);
+
+        if (!dir.exists()) {
+            plugins.remove(pluginName);
+            pluginDirs.remove(plugin);
+            classloaders.remove(plugin);
+
+            // See if this is a child plugin. If it is, we should unload
+            // the parent plugin as well.
+            if (childPluginMap.containsKey(plugin)) {
+                unloadPlugin(childPluginMap.get(plugin));
+            }
+            childPluginMap.remove(plugin);
+            firePluginDestroyedEvent(pluginName, plugin);
+        }
     }
 
     private void firePluginDestroyedEvent(String name, Plugin plugin) {
@@ -874,21 +897,8 @@ public class PluginManager {
                     // needs to be unloaded and then reloaded.
                     else if (jarFile.lastModified() > dir.lastModified()) {
                         unloadPlugin(pluginName);
-                        // Give the plugin 2 seconds to unload.
-                        Thread.sleep(2000);
-                        // Ask the system to clean up references.
-                        System.gc();
-                        int count = 0;
-                        while (!deleteDir(dir) && count < 5) {
-                            Log.warn("Error unloading plugin " + pluginName + ". " +
-                                "Will attempt again momentarily.");
-                            Thread.sleep(8000);
-                            count++;
-                            // Ask the system to clean up references.
-                            System.gc();
-                        }
                         // If the delete operation was a success, unzip the plugin.
-                        if (count != 5) {
+                        if (!dir.exists()) {
                             unzipPlugin(pluginName, jarFile, dir);
                         }
                     }
@@ -940,15 +950,6 @@ public class PluginManager {
                 }
                 for (String pluginName : toDelete) {
                     unloadPlugin(pluginName);
-                    System.gc();
-                    int count = 0;
-                    File dir = new File(pluginDirectory, pluginName);
-                    while (!deleteDir(dir) && count < 5) {
-                        Log.error("Error unloading plugin " + pluginName + ". " +
-                            "Will attempt again momentarily.");
-                        Thread.sleep(10000);
-                        count++;
-                    }
                 }
 
                 // Load all plugins that need to be loaded.
@@ -1076,47 +1077,48 @@ public class PluginManager {
             }
         }
 
-        /**
-         * Deletes a directory.
-         *
-         * @param dir the directory to delete.
-         * @return true if the directory was deleted.
-         */
-        private boolean deleteDir(File dir) {
-            if (dir.isDirectory()) {
-                String[] childDirs = dir.list();
-                // Always try to delete JAR files first since that's what will
-                // be under contention. We do this by always sorting the lib directory
-                // first.
-                List<String> children = new ArrayList<String>(Arrays.asList(childDirs));
-                Collections.sort(children, new Comparator<String>() {
-                    public int compare(String o1, String o2) {
-                        if (o1.equals("lib")) {
-                            return -1;
-                        }
-                        if (o2.equals("lib")) {
-                            return 1;
-                        }
-                        else {
-                            return o1.compareTo(o2);
-                        }
+    }
+
+    /**
+     * Deletes a directory.
+     *
+     * @param dir the directory to delete.
+     * @return true if the directory was deleted.
+     */
+    private boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] childDirs = dir.list();
+            // Always try to delete JAR files first since that's what will
+            // be under contention. We do this by always sorting the lib directory
+            // first.
+            List<String> children = new ArrayList<String>(Arrays.asList(childDirs));
+            Collections.sort(children, new Comparator<String>() {
+                public int compare(String o1, String o2) {
+                    if (o1.equals("lib")) {
+                        return -1;
                     }
-                });
-                for (String file : children) {
-                    boolean success = deleteDir(new File(dir, file));
-                    if (!success) {
-                        Log.debug("Plugin removal: could not delete: " + new File(dir, file));
-                        return false;
+                    if (o2.equals("lib")) {
+                        return 1;
+                    }
+                    else {
+                        return o1.compareTo(o2);
                     }
                 }
+            });
+            for (String file : children) {
+                boolean success = deleteDir(new File(dir, file));
+                if (!success) {
+                    Log.debug("Plugin removal: could not delete: " + new File(dir, file));
+                    return false;
+                }
             }
-            boolean deleted = dir.delete();
-            if (deleted) {
-                // Remove the JAR/WAR file that created the plugin folder
-                pluginFiles.remove(dir.getName());
-            }
-            return deleted;
         }
+        boolean deleted = dir.delete();
+        if (deleted) {
+            // Remove the JAR/WAR file that created the plugin folder
+            pluginFiles.remove(dir.getName());
+        }
+        return deleted;
     }
 
     public void addPluginListener(PluginListener listener) {

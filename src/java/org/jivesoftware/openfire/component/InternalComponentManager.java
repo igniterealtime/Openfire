@@ -388,7 +388,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                 Presence presence = new Presence();
                 presence.setFrom(prober);
                 presence.setTo(probee);
-                routingTable.routePacket(probee, presence);
+                routingTable.routePacket(probee, presence, false);
 
                 // No reason to hold onto prober reference.
                 presenceMap.remove(prober);

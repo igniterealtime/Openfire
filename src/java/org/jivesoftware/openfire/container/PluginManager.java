@@ -848,6 +848,12 @@ public class PluginManager {
          * */
         private boolean executed = false;
 
+        /**
+         * True when it's the first time the plugin monitor process runs. This is helpful for
+         * bootstrapping purposes.
+         */
+        private boolean firstRun = true;
+
         public void run() {
             // If the task is already running, return.
             synchronized (this) {
@@ -896,7 +902,18 @@ public class PluginManager {
                     // See if the JAR is newer than the directory. If so, the plugin
                     // needs to be unloaded and then reloaded.
                     else if (jarFile.lastModified() > dir.lastModified()) {
-                        unloadPlugin(pluginName);
+                        // If this is the first time that the monitor process is running, then
+                        // plugins won't be loaded yet. Therefore, just delete the directory.
+                        if (firstRun) {
+                            int count = 0;
+                            // Attempt to delete the folder for up to 5 seconds.
+                            while (!deleteDir(dir) && count < 5) {
+                                Thread.sleep(1000);
+                            }
+                        }
+                        else {
+                            unloadPlugin(pluginName);
+                        }
                         // If the delete operation was a success, unzip the plugin.
                         if (!dir.exists()) {
                             unzipPlugin(pluginName, jarFile, dir);
@@ -975,6 +992,8 @@ public class PluginManager {
             synchronized (this) {
                 running = false;
             }
+            // Process finished, so set firstRun to false (setting it multiple times doesn't hurt).
+            firstRun = false;
         }
 
         /**

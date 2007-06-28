@@ -15,12 +15,12 @@ import org.apache.mina.common.ExecutorThreadModel;
 import org.apache.mina.management.MINAStatCollector;
 import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.TaskEngine;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -81,7 +81,7 @@ public class StatCollector extends TimerTask {
             sb.append(executor.getCompletedTaskCount());
             // Add info about number of connected sessions
             sb.append(',');
-            sb.append(SessionManager.getInstance().getConnectionsCount());
+            sb.append(SessionManager.getInstance().getConnectionsCount(false));
             // Add info about MINA statistics
             sb.append(',');
             sb.append(statCollector.getMsgRead());

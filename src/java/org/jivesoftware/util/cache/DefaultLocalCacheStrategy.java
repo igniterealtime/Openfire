@@ -2,7 +2,7 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2005 Jive Software. All rights reserved.
+ * Copyright (C) 1999-2007 Jive Software. All rights reserved.
  * This software is the proprietary information of Jive Software. Use is subject to license terms.
  */
 package org.jivesoftware.util.cache;
@@ -68,7 +68,6 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Routing Users Cache", "routeUser");
         cacheNames.put("Routing AnonymousUsers Cache", "routeAnonymousUser");
         cacheNames.put("Routing User Sessions", "routeUserSessions");
-        cacheNames.put("Session Manager Counters", "sessManagerCounters");
         cacheNames.put("Components Sessions", "componentsSessions");
         cacheNames.put("Connection Managers Sessions", "connManagerSessions");
         cacheNames.put("Incoming Server Sessions", "incServerSessions");
@@ -117,8 +116,6 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.routeAnonymousUser.expirationTime", -1l);
         cacheProps.put("cache.routeUserSessions.size", -1l);
         cacheProps.put("cache.routeUserSessions.expirationTime", -1l);
-        cacheProps.put("cache.sessManagerCounters.size", -1l);
-        cacheProps.put("cache.sessManagerCounters.expirationTime", -1l);
         cacheProps.put("cache.componentsSessions.size", -1l);
         cacheProps.put("cache.componentsSessions.expirationTime", -1l);
         cacheProps.put("cache.connManagerSessions.size", -1l);

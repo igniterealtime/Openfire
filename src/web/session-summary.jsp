@@ -57,7 +57,7 @@
     SessionManager sessionManager = webManager.getSessionManager();
 
     // Get the session count
-    int sessionCount = sessionManager.getUserSessionsCount();
+    int sessionCount = sessionManager.getUserSessionsCount(false);
 
     // Close a connection if requested
     if (close) {

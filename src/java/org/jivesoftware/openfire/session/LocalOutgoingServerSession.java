@@ -555,7 +555,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 reply.setFrom(packet.getTo());
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply);
+                routingTable.routePacket(reply.getTo(), reply, true);
             }
             else if (packet instanceof Presence) {
                 Presence reply = new Presence();
@@ -563,7 +563,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply);
+                routingTable.routePacket(reply.getTo(), reply, true);
             }
             else if (packet instanceof Message) {
                 Message reply = new Message();
@@ -573,7 +573,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 reply.setType(((Message)packet).getType());
                 reply.setThread(((Message)packet).getThread());
                 reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply);
+                routingTable.routePacket(reply.getTo(), reply, true);
             }
         }
         catch (Exception e) {

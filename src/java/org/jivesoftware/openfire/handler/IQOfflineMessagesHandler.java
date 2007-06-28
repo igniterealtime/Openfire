@@ -111,7 +111,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
             offlineInfo.addElement("item").addAttribute("node",
                     dateFormat.format(offlineMessage.getCreationDate()));
         }
-        routingTable.routePacket(receipient, offlineMessage);
+        routingTable.routePacket(receipient, offlineMessage, true);
     }
 
     public IQHandlerInfo getInfo() {

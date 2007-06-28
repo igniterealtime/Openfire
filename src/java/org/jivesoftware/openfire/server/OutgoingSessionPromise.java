@@ -209,7 +209,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             }
             if (created) {
                 // A connection to the remote server was created so get the route and send the packet
-                routingTable.routePacket(packet.getTo(), packet);
+                routingTable.routePacket(packet.getTo(), packet, false);
             }
             else {
                 throw new Exception("Failed to create connection to remote server");
@@ -237,7 +237,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     reply.setFrom(to);
                     reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply);
+                    routingTable.routePacket(reply.getTo(), reply, true);
                 }
                 else if (packet instanceof Presence) {
                     Presence reply = new Presence();
@@ -245,7 +245,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     reply.setTo(from);
                     reply.setFrom(to);
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply);
+                    routingTable.routePacket(reply.getTo(), reply, true);
                 }
                 else if (packet instanceof Message) {
                     Message reply = new Message();
@@ -255,7 +255,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     reply.setType(((Message)packet).getType());
                     reply.setThread(((Message)packet).getThread());
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply);
+                    routingTable.routePacket(reply.getTo(), reply, true);
                 }
             }
             catch (Exception e) {

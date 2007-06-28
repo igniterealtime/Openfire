@@ -93,7 +93,7 @@ public class MessageRouter extends BasicModule {
 
                 try {
                     // Deliver stanza to requested route
-                    routingTable.routePacket(recipientJID, packet);
+                    routingTable.routePacket(recipientJID, packet, false);
                 }
                 catch (Exception e) {
                     routingFailed(recipientJID, packet);
@@ -182,7 +182,7 @@ public class MessageRouter extends BasicModule {
         // If message was sent to an unavailable full JID of a user then retry using the bare JID
         if (serverName.equals(receipient.getDomain()) && receipient.getResource() != null &&
                 userManager.isRegisteredUser(receipient.getNode())) {
-            routingTable.routePacket(new JID(receipient.toBareJID()), packet);
+            routingTable.routePacket(new JID(receipient.toBareJID()), packet, false);
         } else {
             // Just store the message offline
             messageStrategy.storeOffline((Message) packet);

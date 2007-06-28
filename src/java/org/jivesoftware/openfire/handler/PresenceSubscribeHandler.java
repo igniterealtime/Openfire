@@ -155,7 +155,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                             Presence presenteToSend = presence.createCopy();
                             // Stamp the presence with the user's bare JID as the 'from' address
                             presenteToSend.setFrom(senderJID.toBareJID());
-                            routingTable.routePacket(jid, presenteToSend);
+                            routingTable.routePacket(jid, presenteToSend, false);
                         }
                     }
                     else {

@@ -180,7 +180,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
-    public void routePacket(JID jid, Packet packet) throws PacketException {
+    public void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
         boolean routed = false;
         if (serverName.equals(jid.getDomain())) {
             if (jid.getResource() == null) {
@@ -200,7 +200,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     clientRoute = anonymousUsersCache.get(jid.toString());
                 }
                 if (clientRoute != null) {
-                    if (!clientRoute.isAvailable() && routeOnlyAvailable(packet)) {
+                    if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer)) {
                         // Packet should only be sent to available sessions and the route is not available
                         routed = false;
                     }
@@ -314,9 +314,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Returns true if the specified packet must only be route to available client sessions.
      *
      * @param packet the packet to route.
+     * @param fromServer true if the packet was created by the server.
      * @return true if the specified packet must only be route to available client sessions.
      */
-    private boolean routeOnlyAvailable(Packet packet) {
+    private boolean routeOnlyAvailable(Packet packet, boolean fromServer) {
+        if (fromServer) {
+            // Packets created by the server (no matter their FROM value) must always be delivered no
+            // matter the available presence of the user
+            return false;
+        }
         boolean onlyAvailable = true;
         JID from = packet.getFrom();
         boolean hasSender = from != null;

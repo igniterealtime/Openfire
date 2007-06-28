@@ -181,7 +181,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
                         childElement.addAttribute("date", dateFormat.format(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
                         // Send message notification to subscribed component
-                        routingTable.routePacket(message.getTo(), message);
+                        routingTable.routePacket(message.getTo(), message, true);
                     }
                     catch (Exception e) {
                         Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

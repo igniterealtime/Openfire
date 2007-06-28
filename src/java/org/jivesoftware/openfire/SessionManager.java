@@ -38,6 +38,7 @@ import org.xmpp.packet.Presence;
 
 import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -63,12 +64,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     private int conflictLimit;
 
     /**
-     * Cache (unlimited, never expire) that holds counters of:
-     * 1) anonymous and non-anonymous user sessions and
-     * 2) user connections. A connection is counted just after it was created and not
-     *    after the user became available.
+     * Counter of user connections. A connection is counted just after it was created and not
+     * after the user became available.
      */
-    private Cache<String, Integer> countersCache;
+    private final AtomicInteger connectionsCounter = new AtomicInteger(0);
+    /**
+     * Counter of anonymous and non-anonymous user sessions.
+     */
+    private final AtomicInteger userSessionsCounter = new AtomicInteger(0);
+
     /**
      * Cache (unlimited, never expire) that holds external component sessions.
      * Key: component address, Value: nodeID
@@ -300,7 +304,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         // Add to pre-authenticated sessions.
         localSessionManager.getPreAuthenticatedSessions().put(session.getAddress().getResource(), session);
         // Increment the counter of user sessions
-        incrementCounter("conncounter");
+        connectionsCounter.incrementAndGet();
         return session;
     }
 
@@ -316,7 +320,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);
         localSessionManager.getPreAuthenticatedSessions().put(session.getAddress().getResource(), session);
-        incrementCounter("conncounter");
+        connectionsCounter.incrementAndGet();
         return session;
     }
 
@@ -511,7 +515,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         // Add session to the routing table (routing table will know session is not available yet)
         if (routingTable.addClientRoute(session.getAddress(), session)) {
             // Increment counter of authenticated sessions
-            incrementCounter("usercounter");
+            userSessionsCounter.incrementAndGet();
         }
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
                 SessionEventDispatcher.EventType.anonymous_session_created :
@@ -584,7 +588,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             // Send the presence of the session whose presence has changed to
             // this other user's session
             presence.setTo(address);
-            routingTable.routePacket(address, presence);
+            routingTable.routePacket(address, presence, false);
         }
     }
 
@@ -825,20 +829,44 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * Returns number of client sessions that are connected to the server. Sessions that
      * are authenticated and not authenticated will be included
      *
+     * @param onlyLocal true if only sessions connected to this JVM will be considered. Otherwise count cluster wise.
      * @return number of client sessions that are connected to the server.
      */
-    public int getConnectionsCount() {
-        return getCounter("conncounter");
+    public int getConnectionsCount(boolean onlyLocal) {
+        if (onlyLocal) {
+            return connectionsCounter.get();
+        }
+        Collection<Object> results = CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(false), false);
+        int total = connectionsCounter.get();
+        for (Object result : results) {
+            if (result == null) {
+                continue;
+            }
+            total = total + (Integer) result;
+        }
+        return total;
     }
 
     /**
      * Returns number of client sessions that are authenticated with the server. This includes
      * anonymous and non-anoymous users.
      *
+     * @param onlyLocal true if only sessions connected to this JVM will be considered. Otherwise count cluster wise.
      * @return number of client sessions that are authenticated with the server.
      */
-    public int getUserSessionsCount() {
-        return getCounter("usercounter");
+    public int getUserSessionsCount(boolean onlyLocal) {
+        if (onlyLocal) {
+            return userSessionsCounter.get();
+        }
+        Collection<Object> results = CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(true), false);
+        int total = userSessionsCounter.get();
+        for (Object result : results) {
+            if (result == null) {
+                continue;
+            }
+            total = total + (Integer) result;
+        }
+        return total;
     }
 
     /**
@@ -850,12 +878,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return number of available sessions for a user.
      */
     public int getActiveSessionCount(String username) {
-        return routingTable.getRoutes(new JID(username, serverName, null)).size();
+        return routingTable.getRoutes(new JID(username, serverName, null, true)).size();
     }
 
     public int getSessionCount(String username) {
         // TODO Count ALL sessions not only available
-        return routingTable.getRoutes(new JID(username, serverName, null)).size();
+        return routingTable.getRoutes(new JID(username, serverName, null, true)).size();
     }
 
     /**
@@ -948,7 +976,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         // TODO broadcast to ALL sessions of the user and not only available
         for (JID address : routingTable.getRoutes(new JID(username, serverName, null))) {
             packet.setTo(address);
-            routingTable.routePacket(address, packet);
+            routingTable.routePacket(address, packet, true);
         }
     }
 
@@ -1018,10 +1046,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             router.route(offline);
         }
         if (removed || preauth_removed) {
-            // Decrement number of authenticated sessions (of anonymous and non-anonymous users)
-            decrementCounter("usercounter");
+            if (removed) {
+                // Decrement number of authenticated sessions (of anonymous and non-anonymous users)
+                userSessionsCounter.decrementAndGet();
+            }
             // Decrement the counter of user sessions
-            decrementCounter("conncounter");
+            connectionsCounter.decrementAndGet();
             return true;
         }
         return false;
@@ -1203,7 +1233,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         }
 
         // Initialize caches.
-        countersCache = CacheFactory.createCache("Session Manager Counters");
         componentSessionsCache = CacheFactory.createCache(COMPONENT_SESSION_CACHE_NAME);
         multiplexerSessionsCache = CacheFactory.createCache(CM_CACHE_NAME);
         incomingServerSessionsCache = CacheFactory.createCache(ISS_CACHE_NAME);
@@ -1245,7 +1274,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             userBroadcast(address.getNode(), packet);
         }
         else {
-            routingTable.routePacket(address, packet);
+            routingTable.routePacket(address, packet, true);
         }
     }
 
@@ -1357,48 +1386,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
     }
 
-    private int getCounter(String counterName) {
-        Integer counter = countersCache.get(counterName);
-        if (counter == null) {
-            return 0;
-        }
-        return counter;
-    }
-
-    private void incrementCounter(String counterName) {
-        Lock lock = LockManager.getLock(counterName);
-        try {
-            lock.lock();
-            Integer counter = countersCache.get(counterName);
-            if (counter == null) {
-                countersCache.put(counterName, 1);
-            }
-            else {
-                countersCache.put(counterName, ++counter);
-            }
-        }
-        finally {
-            lock.unlock();
-        }
-    }
-
-    private void decrementCounter(String counterName) {
-        Lock lock = LockManager.getLock(counterName);
-        try {
-            lock.lock();
-            Integer counter = countersCache.get(counterName);
-            if (counter == null) {
-                Log.error("Failed to decrement counter. Counter not found: " + counterName);
-            }
-            else {
-                countersCache.put(counterName, --counter);
-            }
-        }
-        finally {
-            lock.unlock();
-        }
-    }
-
     public void joinedCluster() {
         restoreCacheContent();
     }
@@ -1408,11 +1395,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     }
 
     public void leftCluster() {
-        // TODO Send unavailable presence TO roster contacts not hosted in this JVM (type=FROM)
-        // TODO Send unavailable presence FROM roster contacts not hosted in this JVM (type=TO)
-        // TODO Send unavailable presence FROM & TO roster contacts not hosted in this JVM (type=BOTH)
-        // TODO Send unavailable presence TO other resources of the user not hosted in this JVM
-
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Add local sessions to caches
             restoreCacheContent();
@@ -1472,16 +1454,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
                 } finally {
                     lock.unlock();
                 }
-            }
-        }
-
-        // Update counters of client sessions
-        for (ClientSession session : routingTable.getClientsRoutes(true)) {
-            // Increment the counter of user sessions
-            incrementCounter("conncounter");
-            if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                // Increment counter of authenticated sessions
-                incrementCounter("usercounter");
             }
         }
     }

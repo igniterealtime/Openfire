@@ -397,7 +397,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                     presence.setType(Presence.Type.probe);
                     presence.setFrom(prober);
                     presence.setTo(probee);
-                    routingTable.routePacket(probee, presence);
+                    routingTable.routePacket(probee, presence, true);
                 }
                 else {
                     // Check if the probee may be hosted by this server

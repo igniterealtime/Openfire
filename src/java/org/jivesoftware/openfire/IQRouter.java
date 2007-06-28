@@ -243,7 +243,7 @@ public class IQRouter extends BasicModule {
             if (recipientJID != null) {
                 if (routingTable.hasComponentRoute(recipientJID) || routingTable.hasServerRoute(recipientJID)) {
                     // A component/service/remote server was found that can handle the Packet
-                    routingTable.routePacket(recipientJID, packet);
+                    routingTable.routePacket(recipientJID, packet, false);
                     return;
                 }
             }
@@ -298,7 +298,7 @@ public class IQRouter extends BasicModule {
             }
             else {
                 // JID is of the form <node@domain/resource>
-                routingTable.routePacket(recipientJID, packet);
+                routingTable.routePacket(recipientJID, packet, false);
             }
         }
         catch (Exception e) {
@@ -325,7 +325,7 @@ public class IQRouter extends BasicModule {
             return;
         }
         // Route the error packet to the original sender of the IQ.
-        routingTable.routePacket(reply.getTo(), reply);
+        routingTable.routePacket(reply.getTo(), reply, false);
     }
 
     private IQHandler getHandler(String namespace) {

@@ -40,21 +40,21 @@ public class SocketPacketWriteHandler implements ChannelHandler {
             JID recipient = packet.getTo();
             // Check if the target domain belongs to a remote server or a component
             if (server.matchesComponent(recipient) || server.isRemote(recipient)) {
-                routingTable.routePacket(recipient, packet);
+                routingTable.routePacket(recipient, packet, false);
             }
             // The target domain belongs to the local server
             else if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
                 // no TO was found so send back the packet to the sender
-                routingTable.routePacket(packet.getFrom(), packet);
+                routingTable.routePacket(packet.getFrom(), packet, false);
             }
             else if (recipient.getResource() != null || !(packet instanceof Presence)) {
                 // JID is of the form <user@domain/resource>
-                routingTable.routePacket(recipient, packet);
+                routingTable.routePacket(recipient, packet, false);
             }
             else {
                 // JID is of the form <user@domain>
                 for (JID route : routingTable.getRoutes(recipient)) {
-                    routingTable.routePacket(route, packet);
+                    routingTable.routePacket(route, packet, false);
                 }
             }
         }

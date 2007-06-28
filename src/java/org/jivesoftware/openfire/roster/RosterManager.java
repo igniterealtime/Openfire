@@ -716,7 +716,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         else {
             presence.setType(Presence.Type.unsubscribe);
         }
-        routingTable.routePacket(recipient, presence);
+        routingTable.routePacket(recipient, presence, false);
     }
 
     private Collection<Group> getVisibleGroups(Group groupToCheck) {

@@ -584,7 +584,7 @@ public class Roster implements Cacheable, Externalizable {
                 JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null, true);
                 for (JID jid : routingTable.getRoutes(searchNode)) {
                     try {
-                        routingTable.routePacket(jid, packet);
+                        routingTable.routePacket(jid, packet, false);
                     }
                     catch (Exception e) {
                         // Theoretically only happens if session has been closed.
@@ -602,7 +602,7 @@ public class Roster implements Cacheable, Externalizable {
             }
             for (JID jid: routingTable.getRoutes(new JID(contact))) {
                 try {
-                    routingTable.routePacket(jid, packet);
+                    routingTable.routePacket(jid, packet, false);
                 }
                 catch (Exception e) {
                     // Theoretically only happens if session has been closed.

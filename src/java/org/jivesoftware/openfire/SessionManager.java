@@ -68,10 +68,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * after the user became available.
      */
     private final AtomicInteger connectionsCounter = new AtomicInteger(0);
-    /**
-     * Counter of anonymous and non-anonymous user sessions.
-     */
-    private final AtomicInteger userSessionsCounter = new AtomicInteger(0);
 
     /**
      * Cache (unlimited, never expire) that holds external component sessions.
@@ -513,10 +509,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         // Remove the pre-Authenticated session but remember to use the temporary ID as the key
         localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
         // Add session to the routing table (routing table will know session is not available yet)
-        if (routingTable.addClientRoute(session.getAddress(), session)) {
-            // Increment counter of authenticated sessions
-            userSessionsCounter.incrementAndGet();
-        }
+        routingTable.addClientRoute(session.getAddress(), session);
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
                 SessionEventDispatcher.EventType.anonymous_session_created :
                 SessionEventDispatcher.EventType.session_created;
@@ -833,16 +826,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return number of client sessions that are connected to the server.
      */
     public int getConnectionsCount(boolean onlyLocal) {
-        if (onlyLocal) {
-            return connectionsCounter.get();
-        }
-        Collection<Object> results = CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(false), false);
         int total = connectionsCounter.get();
-        for (Object result : results) {
-            if (result == null) {
-                continue;
+        if (!onlyLocal) {
+            Collection<Object> results =
+                    CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(false), false);
+            for (Object result : results) {
+                if (result == null) {
+                    continue;
+                }
+                total = total + (Integer) result;
             }
-            total = total + (Integer) result;
         }
         return total;
     }
@@ -855,16 +848,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return number of client sessions that are authenticated with the server.
      */
     public int getUserSessionsCount(boolean onlyLocal) {
-        if (onlyLocal) {
-            return userSessionsCounter.get();
-        }
-        Collection<Object> results = CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(true), false);
-        int total = userSessionsCounter.get();
-        for (Object result : results) {
-            if (result == null) {
-                continue;
+        int total = routingTable.getClientsRoutes(true).size();
+        if (!onlyLocal) {
+            Collection<Object> results =
+                    CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(true), false);
+            for (Object result : results) {
+                if (result == null) {
+                    continue;
+                }
+                total = total + (Integer) result;
             }
-            total = total + (Integer) result;
         }
         return total;
     }
@@ -1046,10 +1039,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             router.route(offline);
         }
         if (removed || preauth_removed) {
-            if (removed) {
-                // Decrement number of authenticated sessions (of anonymous and non-anonymous users)
-                userSessionsCounter.decrementAndGet();
-            }
             // Decrement the counter of user sessions
             connectionsCounter.decrementAndGet();
             return true;

@@ -12,8 +12,11 @@ package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.sasl.VerifyPasswordCallback;
 
 import javax.security.auth.callback.*;
 import javax.security.sasl.AuthorizeCallback;
@@ -39,6 +42,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
     public void handle(final Callback[] callbacks)
             throws IOException, UnsupportedCallbackException {
+
 
         String realm;
         String name = null;
@@ -69,6 +73,20 @@ public class XMPPCallbackHandler implements CallbackHandler {
                 }
                 catch (UserNotFoundException e) {
                     throw new IOException(e.toString());
+                }
+                catch (UnsupportedOperationException uoe) {
+                    throw new IOException(uoe.toString());
+                }
+
+            }
+            else if (callbacks[i] instanceof VerifyPasswordCallback) {
+                VerifyPasswordCallback vpcb = (VerifyPasswordCallback) callbacks[i];
+                try {
+                    AuthToken at = AuthFactory.authenticate(name,new String(vpcb.getPassword()));
+                    vpcb.setVerified( (at != null) );
+                }
+                catch (UnauthorizedException e) {
+                    vpcb.setVerified(false);
                 }
             }
             else if (callbacks[i] instanceof AuthorizeCallback) {

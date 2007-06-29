@@ -1,3 +1,13 @@
+/**
+ * $RCSfile$
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2004 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
 
 package org.jivesoftware.openfire.sasl;
 
@@ -15,6 +25,18 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+
+/**
+ * Implements the PLAIN server-side mechanism.
+ * (<a href="http://www.ietf.org/rfc/rfc4616.txt">RFC 4616</a>)<br />
+ * <p>
+ * client ----- {authzid, authcid, password} -----> server
+ * </p>
+ * Each paramater sent to the server is seperated by a null character
+ * The authorization ID (authzid) may be empty.
+ *
+ * @author Jay Kline
+ */
 
 public class SaslServerPlainImpl implements SaslServer {
 
@@ -84,16 +106,11 @@ public class SaslServerPlainImpl implements SaslServer {
                 }
                 password = tokens.nextToken();
                 NameCallback ncb = new NameCallback("PLAIN authentication ID: ",principal);
-                PasswordCallback pcb = new PasswordCallback("PLAIN password: ",false);
-                cbh.handle(new Callback[]{ncb,pcb});
-                char correctPassword[] = pcb.getPassword();
-                if (correctPassword == null || correctPassword.length == 0) {
-                    aborted = true;
-                    throw new SaslException("PLAIN: username not found: "+principal);
-                }
-                pcb.clearPassword();
-                String s_correctPassword = new String(correctPassword);
-                if (s_correctPassword.equals(password) ) {
+                VerifyPasswordCallback vpcb = new VerifyPasswordCallback(password.toCharArray());
+                cbh.handle(new Callback[]{ncb,vpcb});
+
+                if (vpcb.getVerified()) {
+                    vpcb.clearPassword();
                     AuthorizeCallback acb = new AuthorizeCallback(principal,username);
                     cbh.handle(new Callback[]{acb});
                     username = acb.getAuthorizationID();

@@ -199,7 +199,11 @@
             <%= mbFormat.format(memUsed)%> MB
         </td>
         <td class="c3">
-            <%= percentFormat.format(usedMem)%>%
+            <% if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) { %>
+                <%= percentFormat.format(usedMem)%>%
+            <% } else { %>
+                N/A
+            <% } %>
         </td>
         <td class="c4">
             <%= hitPercent%>

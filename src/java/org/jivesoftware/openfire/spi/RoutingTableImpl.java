@@ -539,7 +539,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public Collection<String> getServerHostnames() {
-        return serversCache.keySet();
+        return new ArrayList<String>(serversCache.keySet());
     }
 
     public boolean hasClientRoute(JID jid) {

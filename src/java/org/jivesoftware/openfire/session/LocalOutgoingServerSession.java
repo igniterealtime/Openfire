@@ -38,10 +38,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -73,7 +70,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     private static Pattern pattern = Pattern.compile("[a-zA-Z]");
 
     private Collection<String> authenticatedDomains = new ArrayList<String>();
-    private Collection<String> hostnames = new ArrayList<String>();
+    private final Collection<String> hostnames = new HashSet<String>();
     private OutgoingServerSocketReader socketReader;
     /**
      * Flag that indicates if the session was created usign server-dialback.
@@ -590,11 +587,17 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     }
 
     public Collection<String> getHostnames() {
-        return Collections.unmodifiableCollection(hostnames);
+        synchronized (hostnames) {
+            return Collections.unmodifiableCollection(hostnames);
+        }
     }
 
     public void addHostname(String hostname) {
-        if (hostnames.add(hostname)) {
+        boolean added;
+        synchronized (hostnames) {
+            added = hostnames.add(hostname);
+        }
+        if (added) {
             // Add a new route for this new session
             XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(hostname), this);
         }

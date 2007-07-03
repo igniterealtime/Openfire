@@ -66,6 +66,18 @@ public class LdapAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
 
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
+
         // Un-escape username.
         username = JID.unescapeNode(username);
 

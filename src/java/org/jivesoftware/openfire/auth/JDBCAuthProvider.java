@@ -14,6 +14,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.user.*;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.database.DbConnectionManager;
 
 import java.sql.DriverManager;
@@ -72,15 +73,15 @@ public class JDBCAuthProvider implements AuthProvider {
      */
     public JDBCAuthProvider() {
         // Load the JDBC driver and connection string.
-		String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
-		try {
-			Class.forName(jdbcDriver).newInstance();
-		}
-		catch (Exception e) {
-			Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-			return;
-		}
-		connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
+        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
+        try {
+            Class.forName(jdbcDriver).newInstance();
+        }
+        catch (Exception e) {
+            Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+            return;
+        }
+        connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
 
         // Load SQL statements.
         passwordSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");
@@ -99,6 +100,17 @@ public class JDBCAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
         String userPassword;
         try {
             userPassword = getPasswordValue(username);
@@ -133,6 +145,17 @@ public class JDBCAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
         String password;
         try {
             password = getPasswordValue(username);
@@ -162,8 +185,20 @@ public class JDBCAuthProvider implements AuthProvider {
     public String getPassword(String username) throws UserNotFoundException,
             UnsupportedOperationException
     {
+
         if (!supportsPasswordRetrieval()) {
             throw new UnsupportedOperationException();
+        }
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            }
+        } else {
+            // Unknown domain. Return authentication failed.
+            throw new UserNotFoundException();
         }
         return getPasswordValue(username);
     }
@@ -190,6 +225,17 @@ public class JDBCAuthProvider implements AuthProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain.
+                throw new UserNotFoundException();
+            }
+        }
         try {
             con = DriverManager.getConnection(connectionString);
             pstmt = con.prepareStatement(passwordSQL);

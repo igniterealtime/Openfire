@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.user.*;
 import com.cenqua.shaj.Shaj;
 
@@ -109,6 +110,17 @@ public class NativeAuthProvider implements AuthProvider {
     }
 
     public void authenticate(String username, String password) throws UnauthorizedException {
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
         try {
             // Some native authentication mechanisms appear to not handle high load
             // very well. Therefore, synchronize access to Shaj to throttle auth checks.

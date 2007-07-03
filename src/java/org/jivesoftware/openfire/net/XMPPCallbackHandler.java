@@ -80,6 +80,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
             }
             else if (callbacks[i] instanceof VerifyPasswordCallback) {
+                Log.debug("XMPPCallbackHandler: VerifyPasswordCallback");
                 VerifyPasswordCallback vpcb = (VerifyPasswordCallback) callbacks[i];
                 try {
                     AuthToken at = AuthFactory.authenticate(name,new String(vpcb.getPassword()));

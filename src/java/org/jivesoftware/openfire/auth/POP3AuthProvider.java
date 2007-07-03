@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -114,6 +115,17 @@ public class POP3AuthProvider implements AuthProvider {
 
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
+            throw new UnauthorizedException();
+        }
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            }
+        } else {
+            // Unknown domain. Return authentication failed.
             throw new UnauthorizedException();
         }
 

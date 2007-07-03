@@ -56,7 +56,7 @@ public interface AuthProvider {
      * If {@link #isPlainSupported()} returns false, this method should
      * throw an UnsupportedOperationException.
      *
-     * @param username the username.
+     * @param username the username or full JID.
      * @param password the passwordl
      * @throws UnauthorizedException if the username and password do
      *      not match any existing user.
@@ -70,7 +70,7 @@ public interface AuthProvider {
      * If {@link #isDigestSupported()} returns false, this method should
      * throw an UnsupportedOperationException.
      *
-     * @param username the username.
+     * @param username the username or full JID.
      * @param token the token that was used with plain-text password to
      *      generate the digest.
      * @param digest the digest generated from plain-text password and unique token.

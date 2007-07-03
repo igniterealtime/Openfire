@@ -46,11 +46,13 @@ public class SaslServerPlainImpl implements SaslServer {
     private CallbackHandler cbh;
     private boolean completed;
     private boolean aborted;
+    private int counter;
 
 
     public SaslServerPlainImpl(String protocol, String serverFqdn, Map props, CallbackHandler cbh) throws SaslException {
         this.cbh = cbh;
         this.completed = false;
+        this.counter = 0;
     }
 
     /**
@@ -119,9 +121,11 @@ public class SaslServerPlainImpl implements SaslServer {
                     throw new SaslException("PLAIN: user not authorized: "+principal);
                 }
             } else {
-                //throw new SaslException("PLAIN expects an initial response");
-		//Client gave no initial response, give a null (possible infinate loop?)
-		return null;
+                //Client gave no initial response
+                if( counter++ > 1 ) {
+                    throw new SaslException("PLAIN expects a response");
+                }
+                return null;
             }
         } catch (UnsupportedEncodingException e) {
             aborted = true;

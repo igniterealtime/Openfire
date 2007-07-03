@@ -15,6 +15,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.XMPPServer;
 
 import java.sql.*;
 
@@ -46,6 +47,17 @@ public class DefaultAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
         try {
             if (!password.equals(getPassword(username))) {
                 throw new UnauthorizedException();
@@ -62,6 +74,17 @@ public class DefaultAuthProvider implements AuthProvider {
             throw new UnauthorizedException();
         }
         username = username.trim().toLowerCase();
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
         try {
             String password = getPassword(username);
             String anticipatedDigest = AuthFactory.createDigest(token, password);
@@ -90,6 +113,17 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         Connection con = null;
         PreparedStatement pstmt = null;
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain.
+                throw new UserNotFoundException();
+            }
+        }
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PASSWORD);
@@ -125,6 +159,17 @@ public class DefaultAuthProvider implements AuthProvider {
         // Determine if the password should be stored as plain text or encrypted.
         boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
         String encryptedPassword = null;
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain.
+                throw new UserNotFoundException();
+            }
+        }
         if (!usePlainPassword) {
             try {
                 encryptedPassword = AuthFactory.encryptPassword(password);

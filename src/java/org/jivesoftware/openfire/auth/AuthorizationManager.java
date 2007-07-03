@@ -165,9 +165,9 @@ public class AuthorizationManager {
                     }
                     return false;
                 }
+                // User exists
+                return true;
             }
-            // User exists
-            return true;
         }
         // Not authorized.
         return false;

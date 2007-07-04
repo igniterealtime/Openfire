@@ -17,6 +17,8 @@ import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,6 +43,12 @@ public class RemoteServerManager {
         "SELECT remotePort,permission FROM jiveRemoteServerConf where domain=?";
     private static final String LOAD_CONFIGURATIONS =
         "SELECT domain,remotePort FROM jiveRemoteServerConf where permission=?";
+
+    private static Cache configurationsCache;
+
+    static {
+        configurationsCache = CacheFactory.createCache("Remote Server Configurations");
+    }
 
     /**
      * Allows a remote server to connect to the local server with the specified configuration.
@@ -152,6 +160,8 @@ public class RemoteServerManager {
      * @param domain the domain of the remote server.
      */
     public static void deleteConfiguration(String domain) {
+        // Remove configuration from cache
+        configurationsCache.remove(domain);
         // Remove the permission for the entity from the database
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
@@ -174,8 +184,12 @@ public class RemoteServerManager {
 
     /**
      * Adds a new permission for the specified remote server.
+     *
+     * @param configuration the new configuration for a remote server
      */
     private static void addConfiguration(RemoteServerConfiguration configuration) {
+        // Remove configuration from cache
+        configurationsCache.put(configuration.getDomain(), configuration);
         // Remove the permission for the entity from the database
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
@@ -205,30 +219,42 @@ public class RemoteServerManager {
      * @return the configuration for a remote server or <tt>null</tt> if none was found.
      */
     public static RemoteServerConfiguration getConfiguration(String domain) {
-        RemoteServerConfiguration configuration = null;
-        java.sql.Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_CONFIGURATION);
-            pstmt.setString(1, domain);
-            ResultSet rs = pstmt.executeQuery();
+        Object value = configurationsCache.get(domain);
+        if ("null".equals(value)) {
+            return null;
+        }
+        RemoteServerConfiguration configuration = (RemoteServerConfiguration) value;
+        if (configuration == null) {
+            java.sql.Connection con = null;
+            PreparedStatement pstmt = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(LOAD_CONFIGURATION);
+                pstmt.setString(1, domain);
+                ResultSet rs = pstmt.executeQuery();
 
-            while (rs.next()) {
-                configuration = new RemoteServerConfiguration(domain);
-                configuration.setRemotePort(rs.getInt(1));
-                configuration.setPermission(Permission.valueOf(rs.getString(2)));
+                while (rs.next()) {
+                    configuration = new RemoteServerConfiguration(domain);
+                    configuration.setRemotePort(rs.getInt(1));
+                    configuration.setPermission(Permission.valueOf(rs.getString(2)));
+                }
+                rs.close();
             }
-            rs.close();
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (SQLException sqle) {
+                Log.error(sqle);
+            }
+            finally {
+                try { if (pstmt != null) pstmt.close(); }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) con.close(); }
+                catch (Exception e) { Log.error(e); }
+            }
+            if (configuration != null) {
+                configurationsCache.put(domain, configuration);
+            }
+            else {
+                configurationsCache.put(domain, "null");
+            }
         }
         return configuration;
     }

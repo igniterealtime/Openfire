@@ -77,6 +77,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Directed Presences", "directedPresences");
         cacheNames.put("Disco Server Features", "serverFeatures");
         cacheNames.put("Disco Server Items", "serverItems");
+        cacheNames.put("Remote Server Configurations", "serversConfigurations");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.maxLifetime", 1000 * 60 * 10l);
@@ -134,6 +135,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.serverFeatures.maxLifetime", -1l);
         cacheProps.put("cache.serverItems.size", -1l);
         cacheProps.put("cache.serverItems.maxLifetime", -1l);
+        cacheProps.put("cache.serversConfigurations.size", 128 * 1024l);
+        cacheProps.put("cache.serversConfigurations.maxLifetime", JiveConstants.MINUTE * 30);
     }
 
 

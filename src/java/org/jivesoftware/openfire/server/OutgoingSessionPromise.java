@@ -208,6 +208,9 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 lock.unlock();
             }
             if (created) {
+                if (!routingTable.hasServerRoute(packet.getTo())) {
+                    throw new Exception("Route created but not found!!!");
+                }
                 // A connection to the remote server was created so get the route and send the packet
                 routingTable.routePacket(packet.getTo(), packet, false);
             }

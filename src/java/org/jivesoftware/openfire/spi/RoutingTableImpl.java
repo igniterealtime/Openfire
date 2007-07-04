@@ -100,13 +100,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public void addServerRoute(JID route, LocalOutgoingServerSession destination) {
-        String address = destination.getAddress().getDomain();
+        String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
         serversCache.put(address, server.getNodeID().toByteArray());
     }
 
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
-        String address = destination.getAddress().getDomain();
+        String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
         Lock lock = LockManager.getLock(address + "rt");
         try {
@@ -123,11 +123,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public boolean addClientRoute(JID route, LocalClientSession destination) {
-        String address = destination.getAddress().toString();
         boolean available = destination.getPresence().isAvailable();
-        boolean added = localRoutingTable.addRoute(address, destination);
+        boolean added = localRoutingTable.addRoute(route.toString(), destination);
         if (destination.getAuthToken().isAnonymous()) {
-            anonymousUsersCache.put(address, new ClientRoute(server.getNodeID(), available));
+            anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available));
             // Add the session to the list of user sessions
             if (route.getResource() != null && !available) {
                 Lock lock = LockManager.getLock(route.toBareJID());
@@ -141,7 +140,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         else {
-            usersCache.put(address, new ClientRoute(server.getNodeID(), available));
+            usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available));
             // Add the session to the list of user sessions
             if (route.getResource() != null && !available) {
                 Lock lock = LockManager.getLock(route.toBareJID());

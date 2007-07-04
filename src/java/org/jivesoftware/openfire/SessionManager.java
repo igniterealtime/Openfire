@@ -804,7 +804,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return a session that was originated from this server to a remote server.
      */
     public OutgoingServerSession getOutgoingServerSession(String hostname) {
-        return routingTable.getServerRoute(new JID(null, hostname, null));
+        return routingTable.getServerRoute(new JID(null, hostname, null, true));
     }
 
     public Collection<ClientSession> getSessions(String username) {

@@ -38,7 +38,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 /**
@@ -69,7 +72,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
      */
     private static Pattern pattern = Pattern.compile("[a-zA-Z]");
 
-    private Collection<String> authenticatedDomains = new ArrayList<String>();
+    private Collection<String> authenticatedDomains = new HashSet<String>();
     private final Collection<String> hostnames = new HashSet<String>();
     private OutgoingServerSocketReader socketReader;
     /**
@@ -119,9 +122,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                         if (session != null) {
                             if (session.isUsingServerDialback()) {
                                 // A session to the same remote server but with different hostname
-                                // was found. Use this session and add the new hostname to the
-                                // session
-                                session.addHostname(hostname);
+                                // was found. Use this session.
                                 break;
                             } else {
                                 session = null;
@@ -137,10 +138,10 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 if (session == null) {
                     session = createOutgoingSession(domain, hostname, port);
                     if (session != null) {
-                        // Add the new hostname to the list of names that the server may have
-                        session.addHostname(hostname);
                         // Add the validated domain as an authenticated domain
                         session.addAuthenticatedDomain(domain);
+                        // Add the new hostname to the list of names that the server may have
+                        session.addHostname(hostname);
                         // Notify the SessionManager that a new session has been created
                         sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
                         return true;
@@ -178,14 +179,14 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                             }
                             session = createOutgoingSession(domain, newHostname, port);
                             if (session != null) {
-                                // Add the new hostname to the list of names that the server may have
-                                session.addHostname(hostname);
                                 // Add the validated domain as an authenticated domain
                                 session.addAuthenticatedDomain(domain);
-                                // Notify the SessionManager that a new session has been created
-                                sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+                                // Add the new hostname to the list of names that the server may have
+                                session.addHostname(hostname);
                                 // Add the new hostname to the found session
                                 session.addHostname(newHostname);
+                                // Notify the SessionManager that a new session has been created
+                                sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
                                 return true;
                             } else {
                                 index = hostname.indexOf('.', index + 1);
@@ -197,7 +198,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             }
             // A session already exists. The session was established using server dialback so
             // it is possible to do piggybacking to authenticate more domains
-            if (session.getAuthenticatedDomains().contains(domain)) {
+            if (session.getAuthenticatedDomains().contains(domain) && session.getHostnames().contains(hostname)) {
                 // Do nothing since the domain has already been authenticated
                 return true;
             }
@@ -531,12 +532,14 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             // Using SASL so just assume that the domain was validated
             // (note: this may not be correct)
             addAuthenticatedDomain(domain);
+            addHostname(hostname);
             return true;
         }
         ServerDialback method = new ServerDialback(getConnection(), domain);
         if (method.authenticateDomain(socketReader, domain, hostname, getStreamID().getID())) {
             // Add the validated domain as an authenticated domain
             addAuthenticatedDomain(domain);
+            addHostname(hostname);
             return true;
         }
         return false;
@@ -593,14 +596,11 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     }
 
     public void addHostname(String hostname) {
-        boolean added;
         synchronized (hostnames) {
-            added = hostnames.add(hostname);
+            hostnames.add(hostname);
         }
-        if (added) {
-            // Add a new route for this new session
-            XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(hostname), this);
-        }
+        // Add a new route for this new session
+        XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, hostname, null, true), this);
     }
 
     public String getAvailableStreamFeatures() {

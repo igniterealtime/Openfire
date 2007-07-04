@@ -16,9 +16,9 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.IQ;
 
 import java.util.*;
 
@@ -110,7 +110,7 @@ public class LeafNode extends Node {
                 itemsByID.remove(removedItem.getID());
                 // Add the removed item to the queue of items to delete from the database. The
                 // queue is going to be processed by another thread
-                service.getPubSubEngine().queueItemToRemove(removedItem);
+                service.queueItemToRemove(removedItem);
             }
         }
     }
@@ -161,7 +161,7 @@ public class LeafNode extends Node {
                 itemsByID.remove(removedItem.getID());
                 // Add the removed item to the queue of items to delete from the database. The
                 // queue is going to be processed by another thread
-                service.getPubSubEngine().queueItemToRemove(removedItem);
+                service.queueItemToRemove(removedItem);
             }
         }
     }
@@ -257,12 +257,12 @@ public class LeafNode extends Node {
                         itemsByID.remove(removedItem.getID());
                         // Add the removed item to the queue of items to delete from the database. The
                         // queue is going to be processed by another thread
-                        service.getPubSubEngine().queueItemToRemove(removedItem);
+                        service.queueItemToRemove(removedItem);
                     }
                     addPublishedItem(newItem);
                     // Add the new published item to the queue of items to add to the database. The
                     // queue is going to be processed by another thread
-                    service.getPubSubEngine().queueItemToAdd(newItem);
+                    service.queueItemToAdd(newItem);
                 }
             }
         }
@@ -307,7 +307,7 @@ public class LeafNode extends Node {
         }
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
-            service.getPubSubEngine().queueItemToRemove(item);
+            service.queueItemToRemove(item);
         }
         if (isNotifiedOfRetract()) {
             // Broadcast notification deletion to subscribers
@@ -447,7 +447,7 @@ public class LeafNode extends Node {
         if (toDelete != null) {
             // Delete purged items from the database
             for (PublishedItem item : toDelete) {
-                service.getPubSubEngine().queueItemToRemove(item);
+                service.queueItemToRemove(item);
             }
             // Broadcast purge notification to subscribers
             // Build packet to broadcast to subscribers

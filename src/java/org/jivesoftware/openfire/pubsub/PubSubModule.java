@@ -227,8 +227,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         engine.presenceSubscriptionRequired(node, user);
     }
 
-    public PubSubEngine getPubSubEngine() {
-        return engine;
+    public void queueItemToAdd(PublishedItem newItem) {
+        engine.queueItemToAdd(newItem);
+    }
+
+    public void queueItemToRemove(PublishedItem removedItem) {
+        engine.queueItemToRemove(removedItem);
     }
 
     public String getServiceName() {

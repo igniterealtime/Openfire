@@ -187,15 +187,6 @@ public interface PubSubService {
     Collection<String> getShowPresences(JID subscriber);
 
     /**
-     * Returns the pubsub engine responsible for handling packets sent to the pub-sub service.
-     * The engine is the actual place where the pubsub magic happens like creating nodes,
-     * publishing items or subscribing to nodes.
-     *
-     * @return the pubsub engine responsible for handling packets sent to the pub-sub service.
-     */
-    PubSubEngine getPubSubEngine();
-
-    /**
      * Requests the pubsub service to subscribe to the presence of the user. If the service
      * has already subscribed to the user's presence then do nothing.
      *
@@ -222,4 +213,20 @@ public interface PubSubService {
      * @return true if a user may have more than one subscription with the node.
      */
     boolean isMultipleSubscriptionsEnabled();
+
+    /**
+     * Adds the item to the queue of items to add to the database. The queue is going
+     * to be processed by another thread.
+     *
+     * @param newItem the item to add to the database.
+     */
+    void queueItemToAdd(PublishedItem newItem);
+
+    /**
+     * Adds the item to the queue of items to remove from the database. The queue is going
+     * to be processed by another thread.
+     *
+     * @param removedItem the item to remove from the database.
+     */
+    void queueItemToRemove(PublishedItem removedItem);
 }

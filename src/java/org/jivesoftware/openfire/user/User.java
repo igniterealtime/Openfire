@@ -16,9 +16,9 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.Externalizable;
@@ -273,8 +273,9 @@ public class User implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns all extended properties of the group. Groups
-     * have an arbitrary number of extended properties.
+     * Returns all extended properties of the group. Groups have an arbitrary
+     * number of extended properties. The returned collection can be modified
+     * to add new properties or remove existing ones.
      *
      * @return the extended properties.
      */

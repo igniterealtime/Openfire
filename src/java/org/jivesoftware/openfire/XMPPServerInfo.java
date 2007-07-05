@@ -55,14 +55,6 @@ public interface XMPPServerInfo {
     public Date getLastStarted();
 
     /**
-     * Obtain the date when the server was last stopped.
-     *
-     * @return the date the server was stopped or null if server has not been
-     *      started or is still running
-     */
-    public Date getLastStopped();
-
-    /**
      * Obtain the server ports active on this server.
      *
      * @return an iterator over the server ports for this server.

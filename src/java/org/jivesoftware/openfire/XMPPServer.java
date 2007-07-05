@@ -97,7 +97,6 @@ public class XMPPServer {
     private String name;
     private Version version;
     private Date startDate;
-    private Date stopDate;
     private boolean initialized = false;
     private NodeID nodeID;
     private static final NodeID DEFAULT_NODE_ID = new NodeID(new byte[0]);
@@ -133,6 +132,7 @@ public class XMPPServer {
     private static final String WRAPPER_CLASSNAME =
             "org.tanukisoftware.wrapper.WrapperManager";
     private boolean shuttingDown;
+    private XMPPServerInfoImpl xmppServerInfo;
 
     /**
      * Returns a singleton instance of XMPPServer.
@@ -164,7 +164,7 @@ public class XMPPServer {
         if (!initialized) {
             throw new IllegalStateException("Not initialized yet");
         }
-        return new XMPPServerInfoImpl(name, version, startDate, stopDate, getConnectionManager());
+        return xmppServerInfo;
     }
 
     /**
@@ -417,6 +417,10 @@ public class XMPPServer {
         try {
             initialize();
 
+            startDate = new Date();
+            // Store server info
+            xmppServerInfo = new XMPPServerInfoImpl(name, version, startDate, getConnectionManager());
+
             // Create PluginManager now (but don't start it) so that modules may use it
             File pluginDir = new File(openfireHome, "plugins");
             pluginManager = new PluginManager(pluginDir);
@@ -444,8 +448,6 @@ public class XMPPServer {
             Log.info(startupBanner);
             System.out.println(startupBanner);
 
-            startDate = new Date();
-            stopDate = null;
             // Notify server listeners that the server has been started
             for (XMPPServerListener listener : listeners) {
                 listener.serverStarted();
@@ -638,7 +640,6 @@ public class XMPPServer {
             }
             else {
                 shutdownServer();
-                stopDate = new Date();
                 Thread shutdownThread = new ShutdownThread();
                 shutdownThread.setDaemon(true);
                 shutdownThread.start();
@@ -648,7 +649,6 @@ public class XMPPServer {
             // Close listening socket no matter what the condition is in order to be able
             // to be restartable inside a container.
             shutdownServer();
-            stopDate = new Date();
         }
     }
 

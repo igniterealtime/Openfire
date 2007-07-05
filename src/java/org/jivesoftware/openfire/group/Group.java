@@ -204,8 +204,9 @@ public class Group implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns all extended properties of the group. Groups
-     * have an arbitrary number of extended properties.
+     * Returns all extended properties of the group. Groups have an arbitrary
+     * number of extended properties. The returned collection can be modified
+     * to add new properties or remove existing ones.
      *
      * @return the extended properties.
      */

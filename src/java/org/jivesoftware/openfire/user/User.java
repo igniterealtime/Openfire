@@ -273,7 +273,7 @@ public class User implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns all extended properties of the group. Groups have an arbitrary
+     * Returns all extended properties of the user. Users have an arbitrary
      * number of extended properties. The returned collection can be modified
      * to add new properties or remove existing ones.
      *

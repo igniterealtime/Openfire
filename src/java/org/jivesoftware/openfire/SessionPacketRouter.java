@@ -35,7 +35,6 @@ public class SessionPacketRouter implements PacketRouter {
         router = XMPPServer.getInstance().getPacketRouter();
     }
 
-
     /**
      * Sets if TO addresses of Elements being routed should be validated. Doing stringprep operations
      * is very expensive and sometimes we already validated the TO address so there is no need to
@@ -82,6 +81,8 @@ public class SessionPacketRouter implements PacketRouter {
     }
 
     public void route(Packet packet) {
+        // Security: Don't allow users to send packets on behalf of other users
+        packet.setFrom(session.getAddress());
         if(packet instanceof IQ) {
             route((IQ)packet);
         }

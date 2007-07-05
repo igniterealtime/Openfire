@@ -11,12 +11,15 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import javax.naming.CommunicationException;
@@ -43,7 +46,7 @@ import javax.naming.CommunicationException;
 public class LdapAuthProvider implements AuthProvider {
 
     private LdapManager manager;
-    private Cache authCache = null;
+    private Cache<String, String> authCache = null;
 
     public LdapAuthProvider() {
         manager = LdapManager.getInstance();
@@ -83,7 +86,7 @@ public class LdapAuthProvider implements AuthProvider {
 
         // If cache is enabled, see if the auth is in cache.
         if (authCache != null && authCache.containsKey(username)) {
-            String hash = (String)authCache.get(username);
+            String hash = authCache.get(username);
             if (StringUtils.hash(password).equals(hash)) {
                 return;
             }

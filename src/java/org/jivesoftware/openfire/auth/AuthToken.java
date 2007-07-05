@@ -11,8 +11,8 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.JiveGlobals;
 
 /**
  * A token that proves that a user has successfully authenticated.
@@ -31,11 +31,15 @@ public class AuthToken {
      * Constucts a new AuthToken with the specified username.
      * The username can be either a simple username or a full JID.
      *
-     * @param username the username to create an authToken token with.
+     * @param jid the username or bare JID to create an authToken token with.
      */
     public AuthToken(String jid) {
-        if (jid.contains("@") ) {
-            int index = jid.indexOf("@");
+        if (jid == null) {
+            this.domain = JiveGlobals.getProperty("xmpp.domain");
+            return;
+        }
+        int index = jid.indexOf("@");
+        if (index > -1) {
             this.username = jid.substring(0,index);
             this.domain = jid.substring(index+1);
         } else {
@@ -45,8 +49,8 @@ public class AuthToken {
     }
 
     public AuthToken(String jid, Boolean anonymous) {
-        if (jid.contains("@") ) {
-            int index = jid.indexOf("@");
+        int index = jid.indexOf("@");
+        if (index > -1) {
             this.username = jid.substring(0,index);
             this.domain = jid.substring(index+1);
         } else {
@@ -57,9 +61,10 @@ public class AuthToken {
     }
 
     /**
-     * Returns the username associated with this AuthToken.
+     * Returns the username associated with this AuthToken. A <tt>null</tt> value
+     * means that the authenticated user is anonymous.
      *
-     * @return the username associated with this AuthToken.
+     * @return the username associated with this AuthToken or null when using an anonymous user.
      */
     public String getUsername() {
         return username;
@@ -72,15 +77,6 @@ public class AuthToken {
      */
     public String getDomain() {
         return domain;
-    }
-
-    /**
-     * Returns the jid associated with this AuthToken.
-     *
-     * @return the jid associated with this AuthToken.
-     */
-    public String getJID() {
-        return username+"@"+domain;
     }
 
     /**

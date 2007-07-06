@@ -88,6 +88,14 @@ public class IQBindHandler extends IQHandler {
         }
         // Get the token that was generated during the SASL authentication
         AuthToken authToken = session.getAuthToken();
+        if (authToken == null) {
+            // User must be authenticated before binding a resource
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(PacketError.Condition.not_authorized);
+            // Send the error directly since a route does not exist at this point.
+            session.process(reply);
+            return reply;
+        }
         if (authToken.isAnonymous()) {
             // User used ANONYMOUS SASL so initialize the session as an anonymous login
             session.setAnonymousAuth();

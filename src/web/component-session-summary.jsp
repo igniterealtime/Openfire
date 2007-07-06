@@ -176,7 +176,7 @@
         </td>
         <td align="center" width="15%" nowrap>
             <%= componentSession.getExternalComponent().getName() %>
-        </td>                                                                                  n
+        </td>
         <td align="center" width="10%" nowrap>
             <%= componentSession.getExternalComponent().getCategory() %>
         </td>

@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class LocalComponentSession extends LocalSession implements ComponentSession {
 
-    private ExternalComponent component;
+    private LocalExternalComponent component;
 
     /**
      * Returns a newly created session between the server and a component. The session will be
@@ -97,6 +97,8 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         if (index > -1) {
             subdomain = domain.substring(0, index -1);
         }
+        domain = subdomain + "." + serverName;
+        JID componentJID = new JID(domain);
         // Check that an external component for the specified subdomain may connect to this server
         if (!ExternalComponentManager.canAccess(subdomain)) {
             Log.debug("[ExComp] Component is not allowed to connect with subdomain: " + subdomain);
@@ -122,7 +124,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             return null;
         }
         // Check that the requested subdomain is not already in use
-        if (InternalComponentManager.getInstance().hasComponent(new JID(subdomain + "." + serverName))) {
+        if (InternalComponentManager.getInstance().hasComponent(componentJID)) {
             Log.debug("[ExComp] Another component is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
@@ -136,9 +138,8 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         }
 
         // Create a ComponentSession for the external component
-        LocalComponentSession session =
-                SessionManager.getInstance().createComponentSession(new JID(null, domain, null), connection);
-        session.component = new LocalExternalComponent(connection);
+        LocalComponentSession session = SessionManager.getInstance().createComponentSession(componentJID, connection);
+        session.component = new LocalExternalComponent(session, connection);
 
         try {
             Log.debug("[ExComp] Send stream header with ID: " + session.getStreamID() +
@@ -209,9 +210,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     }
 
     void deliver(Packet packet) throws PacketException {
-        // Since ComponentSessions are not being stored in the RoutingTable this messages is very
-        // unlikely to be sent
-        component.processPacket(packet);
+        component.deliver(packet);
     }
 
     public ExternalComponent getExternalComponent() {
@@ -231,7 +230,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
      * @author Gaston Dombiak
      */
     public static class LocalExternalComponent implements ComponentSession.ExternalComponent {
-
+        private LocalComponentSession session;
         private Connection connection;
         private String name = "";
         private String type = "";
@@ -243,11 +242,23 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         private List<String> subdomains = new ArrayList<String>();
 
 
-        public LocalExternalComponent(Connection connection) {
+        public LocalExternalComponent(LocalComponentSession session, Connection connection) {
+            this.session = session;
             this.connection = connection;
         }
 
         public void processPacket(Packet packet) {
+            // Ask the session to process the outgoing packet. This will
+            // give us the chance to apply PacketInterceptors
+            session.process(packet);
+        }
+
+        /**
+         * Delivers the packet to the external component.
+         *
+         * @param packet the packet to deliver.
+         */
+        void deliver(Packet packet) {
             if (connection != null && !connection.isClosed()) {
                 try {
                     connection.deliver(packet);

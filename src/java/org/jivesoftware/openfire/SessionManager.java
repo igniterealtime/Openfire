@@ -641,7 +641,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
 
     public boolean isAnonymousRoute(String username) {
         // JID's node and resource are the same for anonymous sessions
-        return isAnonymousRoute(new JID(username, serverName, username));
+        return isAnonymousRoute(new JID(username, serverName, username, true));
     }
 
     public boolean isAnonymousRoute(JID address) {

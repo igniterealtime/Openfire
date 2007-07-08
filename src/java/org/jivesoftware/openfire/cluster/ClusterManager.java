@@ -13,6 +13,7 @@ package org.jivesoftware.openfire.cluster;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.lock.LocalLockFactory;
@@ -242,7 +243,7 @@ public class ClusterManager {
      * {@link org.jivesoftware.openfire.RoutingTable#setRemotePacketRouter(org.jivesoftware.openfire.RemotePacketRouter)}
      * need to be properly configured.
      */
-    public static void startup() {
+    public static synchronized void startup() {
         if (isClusteringStarted()) {
             return;
         }
@@ -255,7 +256,7 @@ public class ClusterManager {
                 throw new IllegalStateException("No RemotePacketRouter was found.");
             }
             // Start up the cluster and reset caches
-            CacheFactory.startup();
+            CacheFactory.startClustering();
         }
     }
 
@@ -272,20 +273,34 @@ public class ClusterManager {
         // Reset packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
         if (isClusteringStarted()) {
-            CacheFactory.shutdown();
+            Log.debug("Shutting down clustered cache service.");
+            CacheFactory.stopClustering();
         }
         // Reset the session locator to use
         XMPPServer.getInstance().setRemoteSessionLocator(null);
     }
 
     /**
-     * Sets true if clustering support is enabled. This does not mean
-     * that clustering has started or that clustering will be able to start.
+     * Sets true if clustering support is enabled. An attempt to start or join
+     * an existing cluster will be attempted in the service was enabled. On the
+     * other hand, if disabled then this JVM will leave or stop the cluster.
      *
      * @param enabled if clustering support is enabled.
      */
     public static void setClusteringEnabled(boolean enabled) {
+        if (enabled == isClusteringEnabled()) {
+            return;
+        }
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, Boolean.toString(enabled));
+        if (!enabled) {
+            CacheFactory.stopClustering();
+        }
+        else {
+            // Reload Jive properties. This will ensure that this nodes copy of the
+            // properties starts correct.
+           JiveProperties.getInstance().init();
+           CacheFactory.startClustering();
+        }
     }
 
     /**

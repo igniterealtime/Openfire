@@ -65,6 +65,15 @@ public interface ClientSession extends Session {
     public String getUsername() throws UserNotFoundException;
 
     /**
+     * Returns true if the authetnicated user is an anonymous user or if
+     * the use has not authenticated yet.
+     *
+     * @return true if the authetnicated user is an anonymous user or if
+     * the use has not authenticated yet.
+     */
+    boolean isAnonymousUser();
+
+    /**
      * Flag indicating if this session has been initialized once coming
      * online. Session initialization occurs after the session receives
      * the first "available" presence update from the client. Initialization

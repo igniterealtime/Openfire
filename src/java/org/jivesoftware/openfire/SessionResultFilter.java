@@ -10,7 +10,7 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.ClientSession;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -196,7 +196,7 @@ public class SessionResultFilter {
      *
      * @return a comparator that sorts Sessions matching the sort order for this filter.
      */
-    public Comparator<Session> getSortComparator() {
+    public Comparator<ClientSession> getSortComparator() {
         return new SessionComparator();
     }
 
@@ -205,11 +205,9 @@ public class SessionResultFilter {
      *
      * @author Iain Shigeoka
      */
-    private class SessionComparator implements Comparator {
+    private class SessionComparator implements Comparator<ClientSession> {
 
-        public int compare(Object o1, Object o2) {
-            Session lhs = (Session)o1;
-            Session rhs = (Session)o2;
+        public int compare(ClientSession lhs, ClientSession rhs) {
             int comparison;
             switch (sortField) {
                 case SessionResultFilter.SORT_CREATION_DATE:
@@ -226,8 +224,9 @@ public class SessionResultFilter {
                     break;
                 case SessionResultFilter.SORT_USER:
                     // sort first by name, then by resource
-                    comparison = compareString(lhs.getAddress().getNode(),
-                            rhs.getAddress().getNode());
+                    String lUsername = lhs.isAnonymousUser() ? "" : lhs.getAddress().getNode();
+                    String rUsername = rhs.isAnonymousUser() ? "" : rhs.getAddress().getNode();
+                    comparison = compareString(lUsername, rUsername);
                     if (comparison == 0) {
                         comparison = compareString(lhs.getAddress().getResource(),
                                 rhs.getAddress().getResource());

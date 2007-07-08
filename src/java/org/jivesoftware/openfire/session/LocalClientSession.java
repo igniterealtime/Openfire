@@ -536,6 +536,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         return authToken;
     }
 
+    public boolean isAnonymousUser() {
+        return authToken == null || authToken.isAnonymous();
+    }
+
     /**
      * Flag indicating if this session has been initialized once coming
      * online. Session initialization occurs after the session receives

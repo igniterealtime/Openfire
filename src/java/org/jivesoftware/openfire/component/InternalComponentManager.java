@@ -445,8 +445,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                         return;
                     }
                     try {
-                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
-                                .toBareJID(),
+                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom(),
                                 identity.attributeValue("name"));
                         if (component instanceof ComponentSession.ExternalComponent) {
                             ComponentSession.ExternalComponent externalComponent =

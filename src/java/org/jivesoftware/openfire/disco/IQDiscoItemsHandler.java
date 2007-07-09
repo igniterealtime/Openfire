@@ -31,9 +31,12 @@ import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.jivesoftware.util.lock.LockManager;
+import org.jivesoftware.util.rsm.ResultSet;
+import org.jivesoftware.util.rsm.ResultSetImpl;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketError.Condition;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -67,16 +70,18 @@ import java.util.concurrent.locks.Lock;
  */
 public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider, ClusterEventListener {
 
+    public static final String NAMESPACE_DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
     private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
     private Map<String, Element> localServerItems = new HashMap<String, Element>();
     private Cache<String, ClusteredServerItem> serverItems;
-    private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoItemsProvider>();
+    private Map<String, DiscoItemsProvider> serverNodeProviders
+            = new ConcurrentHashMap<String, DiscoItemsProvider>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
 
     public IQDiscoItemsHandler() {
         super("XMPP Disco Items Handler");
-        info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#items");
+        info = new IQHandlerInfo("query", NAMESPACE_DISCO_ITEMS);
     }
 
     public IQHandlerInfo getInfo() {
@@ -85,10 +90,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
-        // we only need to add the requested items to the reply if any otherwise add 
+        // we only need to add the requested items to the reply if any otherwise add
         // a not found error
         IQ reply = IQ.createResultIQ(packet);
-        
+
         // TODO Implement publishing client items
         if (IQ.Type.set == packet.getType()) {
             reply.setChildElement(packet.getChildElement().createCopy());
@@ -97,9 +102,9 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
 
         // Look for a DiscoItemsProvider associated with the requested entity.
-        // We consider the host of the recipient JID of the packet as the entity. It's the 
-        // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
-        // together with any possible requested node.  
+        // We consider the host of the recipient JID of the packet as the entity. It's the
+        // DiscoItemsProvider responsibility to provide the items associated with the JID's name
+        // together with any possible requested node.
         DiscoItemsProvider itemsProvider = getProvider(packet.getTo() == null ?
                 XMPPServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
         if (itemsProvider != null) {
@@ -113,21 +118,74 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             String node = iq.attributeValue("node");
 
             // Check if we have items associated with the requested name and node
-            Iterator<Element> itemsItr = itemsProvider.getItems(name, node, packet.getFrom());
-            if (itemsItr != null) {
-                reply.setChildElement(iq.createCopy());
-                Element queryElement = reply.getChildElement();
+            Iterator<DiscoItem> itemsItr = itemsProvider.getItems(name, node,
+					packet.getFrom());
+			if (itemsItr != null) {
+				reply.setChildElement(iq.createCopy());
+				Element queryElement = reply.getChildElement();
 
-                // Add to the reply all the items provided by the DiscoItemsProvider
-                Element item;
-                while (itemsItr.hasNext()) {
-                    item = itemsItr.next();
-                    item.setQName(new QName(item.getName(), queryElement.getNamespace()));
-                    queryElement.add(item.createCopy());
-                }
-            }
+				// See if the requesting entity would like to apply 'result set
+				// management'
+				final Element rsmElement = packet.getChildElement().element(
+						QName.get("set",
+								ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT));
+
+				// apply RSM only if the element exists, and the (total) results
+				// set is not empty.
+				final boolean applyRSM = rsmElement != null
+						&& itemsItr.hasNext();
+
+				if (applyRSM) {
+					if (!ResultSet.isValidRSMRequest(rsmElement))
+					{
+						reply.setError(Condition.bad_request);
+						return reply;
+					}
+
+					// Calculate which results to include.
+					final List<DiscoItem> rsmResults;
+					final List<DiscoItem> allItems = new ArrayList<DiscoItem>();
+					while (itemsItr.hasNext()) {
+						allItems.add(itemsItr.next());
+					}
+					final ResultSet<DiscoItem> rs = new ResultSetImpl<DiscoItem>(
+							allItems);
+					try {
+						rsmResults = rs.applyRSMDirectives(rsmElement);
+					} catch (NullPointerException e) {
+						final IQ itemNotFound = IQ.createResultIQ(packet);
+						itemNotFound.setError(Condition.item_not_found);
+						return itemNotFound;
+					}
+
+					// add the applicable results to the IQ-result
+					for (DiscoItem item : rsmResults) {
+						final Element resultElement = item.getElement();
+						resultElement.setQName(new QName(resultElement
+								.getName(), queryElement.getNamespace()));
+						queryElement.add(resultElement.createCopy());
+					}
+
+					// overwrite the 'set' element.
+					queryElement.remove(queryElement.element(
+							QName.get("set",
+									ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)));
+					queryElement.add(rs.generateSetElementFromResults(rsmResults));
+				} else {
+					// don't apply RSM:
+					// Add to the reply all the items provided by the
+					// DiscoItemsProvider
+					Element item;
+					while (itemsItr.hasNext()) {
+						item = itemsItr.next().getElement();
+						item.setQName(new QName(item.getName(), queryElement
+								.getNamespace()));
+						queryElement.add(item.createCopy());
+					}
+				}
+			}
             else {
-                // If the DiscoItemsProvider has no items for the requested name and node 
+                // If the DiscoItemsProvider has no items for the requested name and node
                 // then answer a not found error
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.item_not_found);
@@ -193,10 +251,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         while (items.hasNext()) {
             discoItem = items.next();
             // Add the element to the list of items related to the server
-            addComponentItem(discoItem.getJID(), discoItem.getNode(), discoItem.getName());
+            addComponentItem(discoItem.getJID().toString(), discoItem.getNode(), discoItem.getName());
 
             // Add the new item as a valid entity that could receive info and items disco requests
-            String host = new JID(discoItem.getJID()).getDomain();
+            String host = discoItem.getJID().getDomain();
             infoHandler.setProvider(host, discoItem.getDiscoInfoProvider());
             setProvider(host, discoItem.getDiscoItemsProvider());
         }
@@ -217,10 +275,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         while (items.hasNext()) {
             discoItem = items.next();
             // Remove the item from the server items list
-            removeComponentItem(discoItem.getJID());
+            removeComponentItem(discoItem.getJID().toString());
 
             // Remove the item as a valid entity that could receive info and items disco requests
-            String host = new JID(discoItem.getJID()).getDomain();
+            String host = discoItem.getJID().getDomain();
             infoHandler.removeProvider(host);
             removeProvider(host);
         }
@@ -343,7 +401,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     public Iterator<String> getFeatures() {
         List<String> features = new ArrayList<String>();
-        features.add("http://jabber.org/protocol/disco#items");
+        features.add(NAMESPACE_DISCO_ITEMS);
         // TODO Comment out this line when publishing of client items is implemented
         //features.add("http://jabber.org/protocol/disco#publish");
         return features.iterator();
@@ -418,7 +476,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private DiscoItemsProvider getServerItemsProvider() {
         return new DiscoItemsProvider() {
-            public Iterator<Element> getItems(String name, String node, JID senderJID) {
+            public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
                 if (node != null) {
                     // Check if there is a provider for the requested node
                     if (serverNodeProviders.get(node) != null) {
@@ -433,26 +491,22 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     }
                     return answer.iterator();
                 }
-                else {
-                    List<Element> answer = new ArrayList<Element>();
-                    try {
-                        User user = UserManager.getInstance().getUser(name);
-                        RosterItem item = user.getRoster().getRosterItem(senderJID);
-                        // If the requesting entity is subscribed to the account's presence then
-                        // answer the user's "available resources"
-                        if (item.getSubStatus() == RosterItem.SUB_FROM ||
-                                item.getSubStatus() == RosterItem.SUB_BOTH) {
-                            for (Session session : SessionManager.getInstance().getSessions(name)) {
-                                Element element = DocumentHelper.createElement("item");
-                                element.addAttribute("jid", session.getAddress().toString());
-                                answer.add(element);
-                            }
+                final List<DiscoItem> answer = new ArrayList<DiscoItem>();
+                try {
+                    User user = UserManager.getInstance().getUser(name);
+                    RosterItem item = user.getRoster().getRosterItem(senderJID);
+                    // If the requesting entity is subscribed to the account's presence then
+                    // answer the user's "available resources"
+                    if (item.getSubStatus() == RosterItem.SUB_FROM ||
+                            item.getSubStatus() == RosterItem.SUB_BOTH) {
+                        for (Session session : SessionManager.getInstance().getSessions(name)) {
+                            answer.add(new DiscoItem(session.getAddress(), null, null, null));
                         }
-                        return answer.iterator();
                     }
-                    catch (UserNotFoundException e) {
-                        return answer.iterator();
-                    }
+                    return answer.iterator();
+                }
+                catch (UserNotFoundException e) {
+                    return answer.iterator();
                 }
             }
         };

@@ -20,6 +20,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.jivesoftware.util.rsm.Result;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Matt Tucker
  */
-public class User implements Cacheable, Externalizable {
+public class User implements Cacheable, Externalizable, Result {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveUserProp WHERE username=?";
@@ -529,4 +530,8 @@ public class User implements Cacheable, Externalizable {
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
         modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
     }
+
+	public String getUID() {
+		return username;
+	}
 }

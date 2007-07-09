@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-
-<!-- Insert a tab with the same ID to overwrite the tab -->
-
-<adminconsole>
-    <tab id="server" name="New Server Title" url="newurl.jsp" description="Testing 1 2 3" />
-</adminconsole>

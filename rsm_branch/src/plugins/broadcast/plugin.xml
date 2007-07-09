@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Plugin configuration for the broadcast plugin.
+-->
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.BroadcastPlugin</class>
+    <name>Broadcast</name>
+    <description>Broadcasts messages to users.</description>
+    <author>Jive Software</author>
+    <version>1.6.0</version>
+    <date>4/12/2007</date>
+    <url>http://www.igniterealtime.org</url>
+    <minServerVersion>3.3.0</minServerVersion>
+</plugin>

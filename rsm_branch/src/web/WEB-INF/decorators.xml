@@ -1,0 +1,20 @@
+<decorators defaultdir="/decorators">
+    <decorator name="setup" page="setup.jsp">
+        <pattern>/setup/*.jsp</pattern>
+    </decorator>
+    <decorator name="main" page="main.jsp">
+          <pattern>/*.jsp</pattern>
+          <pattern>/plugins</pattern>
+    </decorator>
+    <decorator name="none"/>
+    <excludes>
+        <pattern>/setup/setup-completed.jsp*</pattern>
+        <pattern>/setup/setup-ldap-server_test.jsp*</pattern>
+        <pattern>/setup/setup-ldap-user_test.jsp*</pattern>
+        <pattern>/setup/setup-ldap-group_test.jsp*</pattern>
+        <pattern>/setup/setup-admin-settings_test.jsp*</pattern>
+        <pattern>/login.jsp*</pattern>
+        <pattern>/plugin-icon.jsp*</pattern>
+        <pattern>/js/jscalendar/i18n.jsp*</pattern>
+    </excludes>
+</decorators>

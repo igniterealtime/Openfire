@@ -11,12 +11,26 @@
 
 package org.jivesoftware.openfire.filetransfer.proxy;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutableChannelHandler;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
@@ -30,10 +44,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.*;
 
 /**
  * Manages the transfering of files between two remote entities on the jabber network.
@@ -284,31 +294,8 @@ public class FileTransferProxy extends BasicModule
             return items.iterator();
         }
 
-        items.add(new DiscoServerItem() {
-            public String getJID() {
-                return getServiceDomain();
-            }
-
-            public String getName() {
-                return "Socks 5 Bytestreams Proxy";
-            }
-
-            public String getAction() {
-                return null;
-            }
-
-            public String getNode() {
-                return null;
-            }
-
-            public DiscoInfoProvider getDiscoInfoProvider() {
-                return FileTransferProxy.this;
-            }
-
-            public DiscoItemsProvider getDiscoItemsProvider() {
-                return FileTransferProxy.this;
-            }
-        });
+        items.add(new DiscoServerItem(new JID(getServiceDomain()),
+                "Socks 5 Bytestreams Proxy", null, null, this, this));
         return items.iterator();
     }
 
@@ -338,9 +325,9 @@ public class FileTransferProxy extends BasicModule
         return true;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
-        return new ArrayList<Element>().iterator();
+        return new ArrayList<DiscoItem>().iterator();
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {

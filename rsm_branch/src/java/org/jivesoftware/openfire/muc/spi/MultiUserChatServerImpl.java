@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
@@ -960,37 +961,19 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             return null;
         }
         ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-        items.add(new DiscoServerItem() {
-            public String getJID() {
-                return getServiceDomain();
-            }
+        final String name;
+        // Check if there is a system property that overrides the default value
+        String serviceName = JiveGlobals.getProperty("muc.service-name");
+        if (serviceName != null && serviceName.trim().length() > 0) {
+            name = serviceName;
+        }
+        else {
+        	// Return the default service name based on the current locale
+        	name = LocaleUtils.getLocalizedString("muc.service-name");
+        }
 
-            public String getName() {
-                // Check if there is a system property that overrides the default value
-                String serviceName = JiveGlobals.getProperty("muc.service-name");
-                if (serviceName != null && serviceName.trim().length() > 0) {
-                    return serviceName;
-                }
-                // Return the default service name based on the current locale
-                return LocaleUtils.getLocalizedString("muc.service-name");
-            }
-
-            public String getAction() {
-                return null;
-            }
-
-            public String getNode() {
-                return null;
-            }
-
-            public DiscoInfoProvider getDiscoInfoProvider() {
-                return MultiUserChatServerImpl.this;
-            }
-
-            public DiscoItemsProvider getDiscoItemsProvider() {
-                return MultiUserChatServerImpl.this;
-            }
-        });
+        final DiscoServerItem item = new DiscoServerItem(new JID(getServiceDomain()), name, null, null, this, this);
+        items.add(item);
         return items.iterator();
     }
 
@@ -1150,22 +1133,17 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return false;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
             return null;
         }
-        List<Element> answer = new ArrayList<Element>();
+        List<DiscoItem> answer = new ArrayList<DiscoItem>();
         if (name == null && node == null) {
-            Element item;
             // Answer all the public rooms as items
             for (MUCRoom room : rooms.values()) {
                 if (canDiscoverRoom(room)) {
-                    item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", room.getRole().getRoleAddress().toString());
-                    item.addAttribute("name", room.getNaturalLanguageName());
-
-                    answer.add(item);
+                    answer.add(new DiscoItem(room.getRole().getRoleAddress(), room.getNaturalLanguageName(), null, null));
                 }
             }
         }
@@ -1173,13 +1151,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             // Answer the room occupants as items if that info is publicly available
             MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room)) {
-                Element item;
                 for (MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
-                    item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", role.getRoleAddress().toString());
-
-                    answer.add(item);
+                    answer.add(new DiscoItem(role.getRoleAddress(), null, null, null));
                 }
             }
         }

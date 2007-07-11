@@ -163,6 +163,11 @@
                           url="user-properties.jsp"
                           description="${sidebar.user-properties.descr}"/>
 
+                    <!-- User Roster -->
+                    <item id="user-roster" name="${sidebar.user-roster}"
+                          url="user-roster.jsp"
+                          description="${sidebar.user-roster.descr}"/>
+
                     <!-- Password -->
                     <item id="user-password" name="${sidebar.user-password}"
                           url="user-password.jsp"

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+ * Specifies the full path to your openfireHome directory.
+ * This file must be in the classpath of your application
+ * server. Normally, the easiest way to do this is to
+ * put it into the /WEB-INF/classes directory of the web
+ * application.
+ *
+ * For unix this might be:
+ * <openfireHome>/var/openfire</openfireHome>
+ *
+ * For Windows this might be:
+ * <openfireHome>c:\openfire</openfireHome>
+-->
+<openfireHome></openfireHome>

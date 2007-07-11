@@ -1,0 +1,15 @@
+diff -Nur openfire-3.3.0/src/conf/openfire.xml openfire-3.3.0.new/src/conf/openfire.xml
+--- openfire-3.3.0/src/conf/openfire.xml	2007-04-12 11:00:10.000000000 +0200
++++ openfire-3.3.0.new/src/conf/openfire.xml	2007-04-12 12:34:04.000000000 +0200
+@@ -50,4 +50,9 @@
+         <interface></interface>
+     </network>
+     -->
+-</jive>
+\ Kein Zeilenumbruch am Dateiende.
++
++    <!-- Set the log directory to /var/log/openfire for the debian package. -->
++    <log> 
++        <directory>/var/log/openfire</directory> 
++    </log> 
++</jive>

@@ -74,6 +74,9 @@
             catch (SharedGroupException e) {
                 errors.put("uneditableGroup","");
             }
+            catch (IllegalArgumentException e) {
+                errors.put("illegalJID","");
+            }
             catch (Exception e) {
                 errors.put("general","");
                 Log.error(e);
@@ -114,6 +117,8 @@
                 <fmt:message key="user.roster.add.item_exists" />
             <% } else if (errors.get("uneditableGroup") != null) { %>
                 <fmt:message key="user.roster.add.uneditable_group" />
+            <% } else if (errors.get("illegalJID") != null) { %>
+                <fmt:message key="user.roster.add.illegal_jid" />
             <% } %>
             </td>
         </tr>

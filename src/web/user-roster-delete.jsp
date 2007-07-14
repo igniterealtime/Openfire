@@ -21,7 +21,7 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
-<% // Get parameters //
+<% // Get parameters
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
     String username = ParamUtils.getParameter(request, "username");
@@ -50,14 +50,14 @@
     <head>
         <title><fmt:message key="user.roster.delete.title"/></title>
         <meta name="subPageID" content="user-roster"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8")+"&jid="+URLEncoder.encode(jid, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
     </head>
     <body>
 
     <p>
     <fmt:message key="user.roster.delete.info">
-        <fmt:param value="<%= "<b>"+URLEncoder.encode(jid, "UTF-8")+"</b>" %>" />
-        <fmt:param value="<%= "<b>"+URLEncoder.encode(username, "UTF-8")+"</b>" %>" />
+        <fmt:param value="<%= "<b>"+jid+"</b>" %>" />
+        <fmt:param value="<%= "<b>"+username+"</b>" %>" />
     </fmt:message>
     </p>
 

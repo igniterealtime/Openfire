@@ -1,0 +1,154 @@
+<%--
+  -	$Revision$
+  -	$Date$
+  -
+  - Copyright (C) 2007 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution.
+--%>
+
+<%@ page import="org.jivesoftware.util.ParamUtils,
+                 java.net.URLEncoder"
+    errorPage="error.jsp"
+%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.roster.Roster" %>
+<%@ page import="org.jivesoftware.openfire.roster.RosterItem" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+
+<% // Get parameters
+    boolean cancel = request.getParameter("cancel") != null;
+    String username = ParamUtils.getParameter(request, "username");
+    String jid = ParamUtils.getParameter(request, "jid");
+    String nickname = ParamUtils.getParameter(request, "nickname");
+    String groups = ParamUtils.getParameter(request, "groups");
+    Integer sub = ParamUtils.getIntParameter(request, "sub", 0);
+    boolean save = ParamUtils.getBooleanParameter(request, "save");
+
+    // Handle a cancel
+    if (cancel) {
+        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        return;
+    }
+
+    // Load the user's roster object
+    Roster roster = webManager.getRosterManager().getRoster(username);
+
+    // Load the roster item from the user's roster.
+    RosterItem item = roster.getRosterItem(new JID(jid));
+
+    // Handle a roster item delete:
+    if (save) {
+        List<String> groupList = new ArrayList<String>();
+        if (groups != null) {
+            for (String group : groups.split(",")) {
+                groupList.add(group.trim());
+            }
+        }
+        item.setNickname(nickname);
+        item.setGroups(groupList);
+        item.setSubStatus(RosterItem.SubType.getTypeFromInt(sub));
+        // Delete the roster item
+        roster.updateRosterItem(item);
+        // Done, so redirect
+        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&editsuccess=true");
+        return;
+    }
+%>
+
+<html>
+    <head>
+        <title><fmt:message key="user.roster.edit.title"/></title>
+        <meta name="subPageID" content="user-roster"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+    </head>
+    <body>
+
+<p>
+<fmt:message key="user.roster.edit.info">
+    <fmt:param value="<%= username %>"/>
+</fmt:message>
+</p>
+
+<form action="user-roster-edit.jsp">
+
+<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="jid" value="<%= jid %>">
+<input type="hidden" name="save" value="true">
+
+<fieldset>
+    <legend><fmt:message key="user.roster.item.settings" /></legend>
+    <div>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.roster.jid" />:
+            </td>
+            <td>
+                <%= jid %>
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.roster.nickname" />:
+            </td>
+            <td>
+                <input type="text" size="30" maxlength="150" name="nickname"
+                 value="<%= item.getNickname() %>">
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.roster.groups" />:
+            </td>
+            <td>
+                <input type="text" size="30" maxlength="255" name="groups"
+                 value="<%
+                List<String> groupList = item.getGroups();
+                if (!groupList.isEmpty()) {
+                    int count = 0;
+                    for (String group : groupList) {
+                        if (count != 0) {
+                            out.print(",");
+                        }
+                        out.print(group);
+                        count++;
+                    }
+                }
+                  %>">
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.roster.subscription" />:
+            </td>
+            <td>
+                <select name="sub">
+                    <option value="<%= RosterItem.SUB_REMOVE.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_REMOVE ? " SELECTED" : "" %>>Remove</option>
+                    <option value="<%= RosterItem.SUB_NONE.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_NONE  ? " SELECTED" : "" %>>None</option>
+                    <option value="<%= RosterItem.SUB_TO.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_TO  ? " SELECTED" : "" %>>To</option>
+                    <option value="<%= RosterItem.SUB_FROM.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_FROM  ? " SELECTED" : "" %>>From</option>
+                    <option value="<%= RosterItem.SUB_BOTH.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_BOTH  ? " SELECTED" : "" %>>Both</option>
+                </select>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+</fieldset>
+
+<br><br>
+
+<input type="submit" value="<fmt:message key="global.save" />">
+<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+
+</form>
+
+    </body>
+</html>

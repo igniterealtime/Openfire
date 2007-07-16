@@ -17,6 +17,7 @@
 <%@ page import="org.jivesoftware.openfire.roster.RosterItem" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.group.Group" %>
 
 <%!
     final int DEFAULT_RANGE = 15;
@@ -30,7 +31,7 @@
 <%
     class RosterItemComparator implements Comparator<RosterItem> {
         public int compare(RosterItem itemA, RosterItem itemB) {
-            return itemA.getJid().compareTo(itemB.getJid());
+            return itemA.getJid().toBareJID().compareTo(itemB.getJid().toBareJID());
         }
     }
 %>
@@ -249,13 +250,8 @@
         <td>
             <%
                 List<String> groups = rosterItem.getGroups();
-                if (groups.isEmpty()) {
-            %>
-                <i>None</i>
-            <%
-                }
-                else {
-                    int count = 0;
+                int count = 0;
+                if (!groups.isEmpty()) {
                     for (String group : groups) {
                         if (count != 0) {
                             out.print(", ");
@@ -263,6 +259,21 @@
                         out.print(group);
                         count++;
                     }
+                }
+                Collection<Group> sharedGroups = rosterItem.getSharedGroups();
+                if (!sharedGroups.isEmpty()) {
+                    for (Group group : sharedGroups) {
+                        if (count != 0) {
+                            out.print(", ");
+                        }
+                        out.print("<i>"+group.getName()+"</i>");
+                        count++;
+                    }
+                }
+                if (count == 0) {
+            %>
+                <i>None</i>
+            <%
                 }
             %>
         </td>
@@ -275,9 +286,13 @@
              ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
+            <% if (sharedGroups.isEmpty()) { %>
             <a href="user-roster-delete.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
+            <% } else { %>
+             <img onclick='alert("<fmt:message key="user.roster.cant_delete" />")' src="images/forbidden-16x16.gif" width="16" height="16" border="0" alt="">
+            <% } %>
         </td>
     </tr>
     <%

@@ -16,6 +16,8 @@
 <%@ page import="org.jivesoftware.openfire.roster.RosterItem" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="org.jivesoftware.openfire.group.Group" %>
+<%@ page import="java.util.Collection" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -122,6 +124,29 @@
                     }
                 }
                   %>">
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.roster.shared_groups" />:
+            </td>
+            <td>
+                <%
+                Collection<Group> sharedGroups = item.getSharedGroups();
+                if (!sharedGroups.isEmpty()) {
+                    int count = 0;
+                    for (Group group : sharedGroups) {
+                        if (count != 0) {
+                            out.print(",");
+                        }
+                        out.print(group.getName());
+                        count++;
+                    }
+                }
+                else {
+                    out.print("<i>None</i>");
+                }
+                %>
             </td>
         </tr>
         <tr>

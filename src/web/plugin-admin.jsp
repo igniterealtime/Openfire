@@ -13,15 +13,20 @@
                  org.jivesoftware.openfire.update.Update"
         %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="java.io.BufferedReader" %>
-<%@ page import="java.io.File" %>
-<%@ page import="java.io.FileReader" %>
-<%@ page import="java.io.IOException" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Collections" %>
 <%@ page import="java.util.Comparator" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.apache.commons.fileupload.DiskFileUpload" %>
+<%@ page import="java.io.*" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.Log" %>
+<%@ page import="org.apache.commons.fileupload.FileItemFactory" %>
+<%@ page import="org.apache.commons.fileupload.disk.DiskFileItemFactory" %>
+<%@ page import="org.apache.commons.fileupload.servlet.ServletFileUpload" %>
+<%@ page import="org.apache.commons.fileupload.FileItem" %>
+<%@ page import="org.apache.commons.fileupload.FileUploadException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -36,7 +41,9 @@
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
     boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
     boolean downloadRequested = request.getParameter("download") != null;
+    boolean uploadPlugin = request.getParameter("uploadplugin") != null;
     String url = request.getParameter("url");
+    Boolean uploadEnabled = JiveGlobals.getBooleanProperty("plugins.upload.enabled", true);
 
     final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
 
@@ -78,6 +85,52 @@
                 response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
                 return;
             }
+        }
+    }
+
+    if (uploadEnabled && uploadPlugin) {
+        Boolean installed = false;
+
+        // Create a factory for disk-based file items
+        FileItemFactory factory = new DiskFileItemFactory();
+
+        // Create a new file upload handler
+        ServletFileUpload upload = new ServletFileUpload(factory);
+
+        try {
+            // Parse the request
+            List items = upload.parseRequest(request);
+
+            for (Object objItem : items) {
+                FileItem item = (FileItem)objItem;
+                String fileName = item.getName();
+                if (fileName != null) {
+                    InputStream is = item.getInputStream();
+                    if (is != null) {
+                        installed = XMPPServer.getInstance().getPluginManager().installPlugin(is, fileName);
+                        if (!installed) {
+                            Log.error("Plugin manager failed to install plugin: " + fileName);
+                        }
+                        is.close();
+                    }
+                    else {
+                        Log.error("Unable to open file stream for uploaded file: " + fileName);
+                    }
+                }
+                else {
+                    Log.error("No filename specified for file upload.");
+                }
+            }
+        }
+        catch (FileUploadException e) {
+            Log.error("Unable to upload plugin file.", e);
+        }
+        if (installed) {
+            response.sendRedirect("plugin-admin.jsp?uploadsuccess=true");
+            return;
+        } else {
+            response.sendRedirect("plugin-admin.jsp?uploadsuccess=false");
+            return;
         }
     }
 %>
@@ -385,6 +438,23 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 
 <% } %>
 
+<% if ("true".equals(request.getParameter("uploadsuccess"))) { %>
+
+<div class="success">
+   <fmt:message key="plugin.admin.uploaded_success"/>
+</div>
+<br>
+
+<% }
+else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
+
+<div class="error">
+    <fmt:message key="plugin.admin.uploaded_failure"/>
+</div>
+<br>
+
+<% } %>
+
 <p>
     <fmt:message key="plugin.admin.info"/>
 </p>
@@ -550,6 +620,19 @@ else if ("false".equals(request.getParameter("deletesuccess"))) { %>
 </tbody>
 </table>
 </div>
+
+<% if (uploadEnabled) { %>
+<br /><br />
+
+<div>
+    <h3><fmt:message key="plugin.admin.upload_plugin" /></h3>
+    <p><fmt:message key="plugin.admin.upload_plugin.info" /></p>
+    <form action="plugin-admin.jsp?uploadplugin" enctype="multipart/form-data" method="post">
+        <input type="file" name="uploadfile" />
+        <input type="submit" value="<fmt:message key="plugin.admin.upload_plugin" />" />
+    </form>
+</div>
+<% } %>
 
 </body>
 </html>

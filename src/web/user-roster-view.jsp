@@ -77,12 +77,6 @@
 </fmt:message>
 </p>
 
-<form action="user-roster-edit.jsp">
-
-<input type="hidden" name="username" value="<%= username %>">
-<input type="hidden" name="jid" value="<%= jid %>">
-<input type="hidden" name="save" value="true">
-
 <fieldset>
     <legend><fmt:message key="user.roster.item.settings" /></legend>
     <div>
@@ -101,8 +95,7 @@
                 <fmt:message key="user.roster.nickname" />:
             </td>
             <td>
-                <input type="text" size="30" maxlength="150" name="nickname"
-                 value="<%= item.getNickname() %>">
+                <%= item.getNickname() %>
             </td>
         </tr>
         <tr>
@@ -110,20 +103,22 @@
                 <fmt:message key="user.roster.groups" />:
             </td>
             <td>
-                <input type="text" size="30" maxlength="255" name="groups"
-                 value="<%
-                List<String> groupList = item.getGroups();
-                if (!groupList.isEmpty()) {
-                    int count = 0;
-                    for (String group : groupList) {
-                        if (count != 0) {
-                            out.print(",");
+                <%
+                    List<String> groupList = item.getGroups();
+                    if (!groupList.isEmpty()) {
+                        int count = 0;
+                        for (String group : groupList) {
+                            if (count != 0) {
+                                out.print(",");
+                            }
+                            out.print(group);
+                            count++;
                         }
-                        out.print(group);
-                        count++;
                     }
-                }
-                  %>">
+                    else {
+                        out.print("<i>None</i>");
+                    }
+                %>
             </td>
         </tr>
         <tr>
@@ -132,22 +127,22 @@
             </td>
             <td>
                 <%
-                Collection<Group> sharedGroups = item.getSharedGroups();
-                if (!sharedGroups.isEmpty()) {
-                    int count = 0;
-                    for (Group group : sharedGroups) {
-                        if (count != 0) {
-                            out.print(",");
+                    Collection<Group> sharedGroups = item.getSharedGroups();
+                    if (!sharedGroups.isEmpty()) {
+                        int count = 0;
+                        for (Group group : sharedGroups) {
+                            if (count != 0) {
+                                out.print(",");
+                            }
+                            out.print("<a href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
+                            out.print(group.getName());
+                            out.print("</a>");
+                            count++;
                         }
-                        out.print("<a href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
-                        out.print(group.getName());
-                        out.print("</a>");
-                        count++;
                     }
-                }
-                else {
-                    out.print("<i>None</i>");
-                }
+                    else {
+                        out.print("<i>None</i>");
+                    }
                 %>
             </td>
         </tr>
@@ -156,13 +151,7 @@
                 <fmt:message key="user.roster.subscription" />:
             </td>
             <td>
-                <select name="sub">
-                    <option value="<%= RosterItem.SUB_REMOVE.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_REMOVE ? " SELECTED" : "" %>>Remove</option>
-                    <option value="<%= RosterItem.SUB_NONE.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_NONE  ? " SELECTED" : "" %>>None</option>
-                    <option value="<%= RosterItem.SUB_TO.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_TO  ? " SELECTED" : "" %>>To</option>
-                    <option value="<%= RosterItem.SUB_FROM.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_FROM  ? " SELECTED" : "" %>>From</option>
-                    <option value="<%= RosterItem.SUB_BOTH.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_BOTH  ? " SELECTED" : "" %>>Both</option>
-                </select>
+                <%= item.getSubStatus().getName() %>
             </td>
         </tr>
     </tbody>
@@ -172,9 +161,16 @@
 
 <br><br>
 
-<input type="submit" value="<fmt:message key="global.save" />">
-<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+<form style="display: inline" action="user-roster-edit.jsp">
+<input type="hidden" name="jid" value="<%= jid %>">
+<input type="hidden" name="username" value="<%= username %>">
+<input type="submit" value="<fmt:message key="user.roster.edit" />">
+</form>
 
+<form style="display: inline" action="user-roster-delete.jsp">
+<input type="hidden" name="jid" value="<%= jid %>">
+<input type="hidden" name="username" value="<%= username %>">
+<input type="submit" value="<fmt:message key="global.delete" />">
 </form>
 
     </body>

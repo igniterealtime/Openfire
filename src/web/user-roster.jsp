@@ -242,7 +242,9 @@
             <%= i %>
         </td>
         <td>
-            <%= rosterItem.getJid() %>
+            <a href="user-roster-view.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
+             title="<fmt:message key="user.roster.click_view" />"
+             ><%= rosterItem.getJid() %></a>
         </td>
         <td>
             <%= (rosterItem.getNickname() != null ? rosterItem.getNickname() : "<i>None</i>") %>
@@ -266,7 +268,7 @@
                         if (count != 0) {
                             out.print(", ");
                         }
-                        out.print("<i>"+group.getName()+"</i>");
+                        out.print("<u>"+group.getName()+"</u>");
                         count++;
                     }
                 }

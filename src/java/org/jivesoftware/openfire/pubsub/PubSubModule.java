@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
@@ -39,6 +40,7 @@ import org.xmpp.packet.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Module that implements JEP-60: Publish-Subscribe. By default node collections and
@@ -63,6 +65,47 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Nodes managed by this manager, table: key nodeID (String); value Node
      */
     private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
+    
+    /**
+     * Keep a registry of the presence's show value of users that subscribed to a node of
+     * the pubsub service and for which the node only delivers notifications for online users
+     * or node subscriptions deliver events based on the user presence show value. Offline
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
+     * is full JID of connected resource and value is show value of the last received presence.
+     */
+    private Map<String, Map<String, String>> barePresences =
+            new ConcurrentHashMap<String, Map<String, String>>();
+    
+    /**
+     * Queue that holds the items that need to be added to the database.
+     */
+    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>();
+    /**
+     * Queue that holds the items that need to be deleted from the database.
+     */
+    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>();
+    
+    /**
+     * Manager that keeps the list of ad-hoc commands and processing command requests.
+     */
+    private AdHocCommandManager manager;
+    
+    /**
+     * The time to elapse between each execution of the maintenance process. Default
+     * is 2 minutes.
+     */
+    private int items_task_timeout = 2 * 60 * 1000;
+
+    /**
+     * Task that saves or deletes published items from the database.
+     */
+    private PublishedItemTask publishedItemTask;
+
+    /**
+     * Timer to save published items to the database or remove deleted or old items.
+     */
+    private Timer timer = new Timer("PubSub maintenance");
+
     /**
      * Returns the permission policy for creating nodes. A true value means that not anyone can
      * create a node, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
@@ -117,6 +160,15 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public PubSubModule() {
         super("Publish Subscribe Service");
+        
+        // Initialize the ad-hoc commands manager to use for this pubsub service
+        manager = new AdHocCommandManager();
+        manager.addCommand(new PendingSubscriptionsCommand(this));
+        
+        // Save or delete published items from the database every 2 minutes starting in
+        // 2 minutes (default values)
+        publishedItemTask = new PublishedItemTask(this);
+        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
     }
 
     public void process(Packet packet) {
@@ -127,15 +179,15 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         try {
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
-                if (!engine.process((IQ) packet)) {
+                if (!engine.process(this, (IQ) packet)) {
                     process((IQ) packet);
                 }
             }
             else if (packet instanceof Presence) {
-                engine.process((Presence) packet);
+                engine.process(this, (Presence) packet);
             }
             else {
-                engine.process((Message) packet);
+                engine.process(this, (Message) packet);
             }
         }
         catch (Exception e) {
@@ -216,23 +268,23 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public Collection<String> getShowPresences(JID subscriber) {
-        return engine.getShowPresences(subscriber);
+        return PubSubEngine.getShowPresences(this, subscriber);
     }
 
     public void presenceSubscriptionNotRequired(Node node, JID user) {
-        engine.presenceSubscriptionNotRequired(node, user);
+        PubSubEngine.presenceSubscriptionNotRequired(this, node, user);
     }
 
     public void presenceSubscriptionRequired(Node node, JID user) {
-        engine.presenceSubscriptionRequired(node, user);
+        PubSubEngine.presenceSubscriptionRequired(this, node, user);
     }
 
     public void queueItemToAdd(PublishedItem newItem) {
-        engine.queueItemToAdd(newItem);
+        PubSubEngine.queueItemToAdd(this, newItem);
     }
 
     public void queueItemToRemove(PublishedItem removedItem) {
-        engine.queueItemToRemove(removedItem);
+        PubSubEngine.queueItemToRemove(this, removedItem);
     }
 
     public String getServiceName() {
@@ -334,7 +386,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
 
-        engine = new PubSubEngine(this, server.getPacketRouter());
+        engine = new PubSubEngine(server.getPacketRouter());
 
         // Load default configuration for leaf nodes
         leafDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, true);
@@ -406,7 +458,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Add the route to this service
         routingTable.addComponentRoute(getAddress(), this);
         // Start the pubsub engine
-        engine.start();
+        engine.start(this);
         ArrayList<String> params = new ArrayList<String>();
         params.clear();
         params.add(getServiceDomain());
@@ -419,7 +471,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         routingTable.removeComponentRoute(getAddress());
         // Stop the pubsub engine. This will gives us the chance to
         // save queued items to the database.
-        engine.shutdown();
+        engine.shutdown(this);
     }
 
     private void enableService(boolean enabled) {
@@ -749,5 +801,41 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             }
         }
         return buf.toString();
+    }
+
+    public Map<String, Map<String, String>> getBarePresences() {
+        return barePresences;
+    }
+
+    public Queue<PublishedItem> getItemsToAdd() {
+        return itemsToAdd;
+    }
+
+    public Queue<PublishedItem> getItemsToDelete() {
+        return itemsToDelete;
+    }
+
+    public AdHocCommandManager getManager() {
+        return manager;
+    }
+
+    public PublishedItemTask getPublishedItemTask() {
+        return publishedItemTask;
+    }
+
+    public void setPublishedItemTask(PublishedItemTask task) {
+        publishedItemTask = task;
+    }
+
+    public Timer getTimer() {
+        return timer;
+    }
+    
+    public int getItemsTaskTimeout() {
+        return items_task_timeout;
+    }
+
+    public void setItemsTaskTimeout(int timeout) {
+        items_task_timeout = timeout;
     }
 }

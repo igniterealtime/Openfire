@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
@@ -37,6 +38,8 @@ import org.jivesoftware.openfire.net.MulticastDNSService;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
+import org.jivesoftware.openfire.pep.IQPEPHandler;
+import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.*;
@@ -494,9 +497,9 @@ public class XMPPServer {
         loadModule(IQLastActivityHandler.class.getName());
         loadModule(PresenceSubscribeHandler.class.getName());
         loadModule(PresenceUpdateHandler.class.getName());
-        loadModule(IQDiscoInfoHandler.class.getName());
-        loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(IQOfflineMessagesHandler.class.getName());
+        loadModule(IQPEPHandler.class.getName());
+        loadModule(IQPEPOwnerHandler.class.getName());
         loadModule(MultiUserChatServerImpl.class.getName());
         loadModule(MulticastDNSService.class.getName());
         loadModule(IQSharedGroupHandler.class.getName());
@@ -507,6 +510,8 @@ public class XMPPServer {
         loadModule(MediaProxyService.class.getName());
         loadModule(STUNService.class.getName());
         loadModule(PubSubModule.class.getName());
+        loadModule(IQDiscoInfoHandler.class.getName());
+        loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(UpdateManager.class.getName());
         loadModule(InternalComponentManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
@@ -1024,6 +1029,17 @@ public class XMPPServer {
     public IQAuthHandler getIQAuthHandler() {
         return (IQAuthHandler) modules.get(IQAuthHandler.class);
     }
+    
+    /**
+     * Returns the <code>IQPEPHandler</code> registered with this server. The
+     * <code>IQPEPHandler</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>IQPEPHandler</code> registered with this server.
+     */
+    public IQPEPHandler getIQPEPHandler() {
+        return (IQPEPHandler) modules.get(IQPEPHandler.class);
+    }
 
     /**
      * Returns the <code>PluginManager</code> instance registered with this server.
@@ -1191,6 +1207,21 @@ public class XMPPServer {
         for (Module module : modules.values()) {
             if (module instanceof ServerFeaturesProvider) {
                 answer.add((ServerFeaturesProvider) module);
+            }
+        }
+        return answer;
+    }
+ 
+    /**
+     * Returns a list with all the modules that provide "discoverable" identities.
+     *
+     * @return a list with all the modules that provide "discoverable" identities.
+     */
+    public List<ServerIdentitiesProvider> getServerIdentitiesProviders() {
+        List<ServerIdentitiesProvider> answer = new ArrayList<ServerIdentitiesProvider>();
+        for (Module module : modules.values()) {
+            if (module instanceof ServerIdentitiesProvider) {
+                answer.add((ServerIdentitiesProvider) module);
             }
         }
         return answer;

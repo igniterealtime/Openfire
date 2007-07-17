@@ -61,7 +61,7 @@ public class LeafNode extends Node {
 
     // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
 
-    LeafNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
+    public LeafNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
         super(service, parentNode, nodeID, creator);
         // Configure node with default values (get them from the pubsub service)
         DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration(true);

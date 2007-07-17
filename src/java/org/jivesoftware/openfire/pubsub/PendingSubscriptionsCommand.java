@@ -26,11 +26,11 @@ import java.util.List;
  *
  * @author Matt Tucker
  */
-class PendingSubscriptionsCommand extends AdHocCommand {
+public class PendingSubscriptionsCommand extends AdHocCommand {
 
     private PubSubService service;
 
-    PendingSubscriptionsCommand(PubSubService service) {
+    public PendingSubscriptionsCommand(PubSubService service) {
         this.service = service;
     }
 

@@ -51,7 +51,7 @@ public class CollectionNode extends Node {
      */
     private int maxLeafNodes = -1;
 
-    CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
+    public CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
         super(service, parentNode, nodeID, creator);
         // Configure node with default values (get them from the pubsub service)
         DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration(false);

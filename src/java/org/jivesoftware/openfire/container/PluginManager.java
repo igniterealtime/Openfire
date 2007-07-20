@@ -524,45 +524,44 @@ public class PluginManager {
         Log.debug("Unloading plugin " + pluginName);
 
         Plugin plugin = plugins.get(pluginName);
-        if (plugin == null) {
-            return;
-        }
+        if (plugin != null) {
+            // Remove from dev mode if it exists.
+            pluginDevelopment.remove(plugin);
 
-        // Remove from dev mode if it exists.
-        pluginDevelopment.remove(plugin);
-
-        // See if any child plugins are defined.
-        if (parentPluginMap.containsKey(plugin)) {
-            for (String childPlugin : parentPluginMap.get(plugin)) {
-                Log.debug("Unloading child plugin: " + childPlugin);
-                unloadPlugin(childPlugin);
+            // See if any child plugins are defined.
+            if (parentPluginMap.containsKey(plugin)) {
+                for (String childPlugin : parentPluginMap.get(plugin)) {
+                    Log.debug("Unloading child plugin: " + childPlugin);
+                    unloadPlugin(childPlugin);
+                }
+                parentPluginMap.remove(plugin);
             }
-            parentPluginMap.remove(plugin);
+
+            File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
+                File.separator + "web.xml");
+            if (webXML.exists()) {
+                AdminConsole.removeModel(pluginName);
+                PluginServlet.unregisterServlets(webXML);
+            }
+            File customWebXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
+                File.separator + "web-custom.xml");
+            if (customWebXML.exists()) {
+                PluginServlet.unregisterServlets(customWebXML);
+            }
+
+            // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
+            // in the destroy plugin process will disrupt the whole unloading process. It's still
+            // possible that classloader destruction won't work in the case that destroying the plugin
+            // fails. In that case, Openfire may need to be restarted to fully cleanup the plugin
+            // resources.
+            try {
+                plugin.destroyPlugin();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
 
-        File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-            File.separator + "web.xml");
-        if (webXML.exists()) {
-            AdminConsole.removeModel(pluginName);
-            PluginServlet.unregisterServlets(webXML);
-        }
-        File customWebXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-            File.separator + "web-custom.xml");
-        if (customWebXML.exists()) {
-            PluginServlet.unregisterServlets(customWebXML);
-        }
-
-        // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
-        // in the destroy plugin process will disrupt the whole unloading process. It's still
-        // possible that classloader destruction won't work in the case that destroying the plugin
-        // fails. In that case, Openfire may need to be restarted to fully cleanup the plugin
-        // resources.
-        try {
-            plugin.destroyPlugin();
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
@@ -584,7 +583,7 @@ public class PluginManager {
             Log.error(e);
         }
 
-        if (!dir.exists()) {
+        if (plugin != null && !dir.exists()) {
             plugins.remove(pluginName);
             pluginDirs.remove(plugin);
             classloaders.remove(plugin);

@@ -1673,28 +1673,37 @@ public class PubSubEngine {
         return completedForm;
     }
 
-    public void start(PubSubService service) {
+    public void start(final PubSubService service) {
         // Probe presences of users that this service has subscribed to (once the server
         // has started)
-        final PubSubService tempService = service;    // TODO: Needs to be tested for correctness
-        XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
-            public void serverStarted() {
-                Set<JID> affiliates = new HashSet<JID>();
-                for (Node node : tempService.getNodes()) {
-                    affiliates.addAll(node.getPresenceBasedSubscribers());
+        
+        if (XMPPServer.getInstance().isStarted()) {
+            probePresences(service);
+        }
+        else {
+            XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                public void serverStarted() {
+                    probePresences(service);
                 }
-                for (JID jid : affiliates) {
-                    // Send probe presence
-                    Presence subscription = new Presence(Presence.Type.probe);
-                    subscription.setTo(jid);
-                    subscription.setFrom(tempService.getAddress());
-                    tempService.send(subscription);
-                }
-            }
 
-            public void serverStopping() {
-            }
-        });
+                public void serverStopping() {
+                }
+            });
+        }        
+    }
+
+    private void probePresences(final PubSubService service) {
+        Set<JID> affiliates = new HashSet<JID>();
+        for (Node node : service.getNodes()) {
+            affiliates.addAll(node.getPresenceBasedSubscribers());
+        }
+        for (JID jid : affiliates) {
+            // Send probe presence
+            Presence subscription = new Presence(Presence.Type.probe);
+            subscription.setTo(jid);
+            subscription.setFrom(service.getAddress());
+            service.send(subscription);
+        }
     }
 
     public void shutdown(PubSubService service) {

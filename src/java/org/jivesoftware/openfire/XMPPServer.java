@@ -101,6 +101,7 @@ public class XMPPServer {
     private Version version;
     private Date startDate;
     private boolean initialized = false;
+    private boolean started = false;
     private NodeID nodeID;
     private static final NodeID DEFAULT_NODE_ID = new NodeID(new byte[0]);
 
@@ -451,6 +452,8 @@ public class XMPPServer {
             Log.info(startupBanner);
             System.out.println(startupBanner);
 
+            started = true;
+            
             // Notify server listeners that the server has been started
             for (XMPPServerListener listener : listeners) {
                 listener.serverStarted();
@@ -910,7 +913,7 @@ public class XMPPServer {
         // hack to allow safe stopping
         Log.info("Openfire stopped");
     }
-
+    
     /**
      * Returns true if the server is being shutdown.
      *
@@ -1382,5 +1385,14 @@ public class XMPPServer {
      */
     public void setRemoteSessionLocator(RemoteSessionLocator remoteSessionLocator) {
         this.remoteSessionLocator = remoteSessionLocator;
+    }
+
+    /**
+     * Returns whether or not the server has been started.
+     * 
+     * @return whether or not the server has been started.
+     */
+    public boolean isStarted() {
+        return started;
     }
 }

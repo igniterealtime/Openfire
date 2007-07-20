@@ -17,7 +17,7 @@ import org.dom4j.Element;
 
 /**
  * <p>
- * A <code>ServerIdentityProvider</code> is responsible for providing the identities
+ * A <code>ServerIdentitiesProvider</code> is responsible for providing the identities
  * of protocols supported by the SERVER. An example of a server identity is that
  * for PEP (XEP-0163): <identity category="pubsub" type="pep" />
  * <p/>

@@ -92,6 +92,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // TODO: Much to be done here...
 
         if (packet.getTo() == null) {
+            // TODO: Do not allow anonymous users to create a service
             String jidFrom = packet.getFrom().toBareJID();
             
             PEPService pepService = pepServices.get(jidFrom);
@@ -100,8 +101,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             if (pepService == null) {
                 pepService = new PEPService(XMPPServer.getInstance(), jidFrom);
                 pepServices.put(jidFrom, pepService);
-                pubSubEngine.start(pepService);     // Keep DB synced
-                Log.debug("PEP: " + jidFrom + " had a PEPService created");
+                
+                // Probe presences
+                pubSubEngine.start(pepService);
+                if (Log.isDebugEnabled()) {
+                    Log.debug("PEP: " + jidFrom + " had a PEPService created");
+                }
             }
 
             // If publishing a node, and the node doesn't exist, create it.
@@ -117,17 +122,23 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                         LeafNode newNode = new LeafNode(pepService, null, nodeID, creator);
                         newNode.addOwner(creator);
                         newNode.saveToDB();
-                        Log.debug("PEP: Created node ('" + nodeID + "') for " + jidFrom);
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("PEP: Created node ('" + nodeID + "') for " + jidFrom);
+                        }
                     }
                 }                        
             }
             
             // Process with PubSub as usual.
             if (pubSubEngine.process(pepService, packet)) {
-                Log.debug("PEP: The pubSubEngine processed a packet for " + jidFrom + "'s pepService.");
+                if (Log.isDebugEnabled()) {
+                    Log.debug("PEP: The pubSubEngine processed a packet for " + jidFrom + "'s pepService.");
+                }
             }
             else {
-                Log.debug("PEP: The pubSubEngine did not process a packet for " + jidFrom + "'s pepService.");
+                if (Log.isDebugEnabled()) {
+                    Log.debug("PEP: The pubSubEngine did not process a packet for " + jidFrom + "'s pepService.");
+                }
             }
 
         }

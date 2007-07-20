@@ -293,7 +293,8 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 serverIdentities.add(it.next());
             }
         }
-        // 
+        
+        // FIXME: Create a UserIdentityProvider interface
         if (server.getIQPEPHandler() != null) {
             Element userIdentity = DocumentHelper.createElement("identity");
             userIdentity.addAttribute("category", "pubsub");

@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
+import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
@@ -59,7 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
-        ServerFeaturesProvider {
+        ServerFeaturesProvider, UserIdentitiesProvider {
 
     // Map of PEP services. Table, Key: bare JID (String); Value: PEPService
     private Map<String, PEPService> pepServices;
@@ -164,8 +165,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     /**
-     * Implements ServerIdentitiesProvider, adding the PEP identity to the
-     * server's disco#info result.
+     * Implements ServerIdentitiesProvider and UserIdentitiesProvider, adding
+     * the PEP identity to the respective disco#info results.
      */
     public Iterator<Element> getIdentities() {
         ArrayList<Element> identities = new ArrayList<Element>();

@@ -286,21 +286,21 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {
             addServerFeaturesProvider(provider);
         }
-        // Track the implementors of ServerIdentitiesProvider so that we can collect the identities
+        // Collect the implementors of ServerIdentitiesProvider so that we can collect the identities
         // for protocols supported by the server
         for (ServerIdentitiesProvider provider : server.getServerIdentitiesProviders()) {
             for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
                 serverIdentities.add(it.next());
             }
         }
-        
-        // FIXME: Create a UserIdentityProvider interface
-        if (server.getIQPEPHandler() != null) {
-            Element userIdentity = DocumentHelper.createElement("identity");
-            userIdentity.addAttribute("category", "pubsub");
-            userIdentity.addAttribute("type", "pep");
-            registeredUserIdentities.add(0, userIdentity);
+        // Collect the implementors of UserIdentitiesProvider so that we can collect identities
+        // for registered users.
+        for (UserIdentitiesProvider provider : server.getUserIdentitiesProviders()) {
+            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
+                registeredUserIdentities.add(it.next());
+            }
         }
+
         setProvider(server.getServerInfo().getName(), getServerInfoProvider());
         // Listen to cluster events
         ClusterManager.addListener(this);

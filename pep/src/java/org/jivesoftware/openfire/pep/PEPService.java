@@ -161,7 +161,7 @@ public class PEPService implements PubSubService {
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
-            leafDefaultConfiguration.setAccessModel(AccessModel.open);
+            leafDefaultConfiguration.setAccessModel(AccessModel.presence);
             leafDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
             leafDefaultConfiguration.setDeliverPayloads(true);
             leafDefaultConfiguration.setLanguage("English");

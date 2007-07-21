@@ -22,9 +22,11 @@ import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -173,12 +175,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     if (pepService.getNode(nodeID) == null) {
                         // Create the node
                         JID creator = new JID(jidFrom);
-                        LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(),
-                                                        nodeID, creator);
+                        LeafNode newNode = new LeafNode(pepService, null, nodeID, creator);
                         newNode.addOwner(creator);
                         newNode.saveToDB();
                         if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: Created node ('" + nodeID + "') for " + jidFrom);
+                            Log.debug("PEP: Created node ('" + newNode.getNodeID() + "') for " + jidFrom);
                         }
                     }
                 }                        
@@ -251,6 +252,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         return XMPPServer.getInstance().getPubSubModule().getFeatures(null, null, null);
     }
 
+    /**
+     * Implements UserItemsProvider, adding PEP related items to a disco#items
+     * result.
+     */
     public Iterator<Element> getUserItems(String name, JID senderJID) {
         ArrayList<Element> items = new ArrayList<Element>();
         
@@ -258,12 +263,23 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         PEPService pepService = pepServices.get(recipientJID);
         
         if (pepService != null) {
+            CollectionNode rootNode = pepService.getRootCollectionNode();
+            
             Element defaultItem = DocumentHelper.createElement("item");
             defaultItem.addAttribute("jid", recipientJID);
+            
             for (Node node : pepService.getNodes()) {
-                Element item = defaultItem.createCopy();
-                item.addAttribute("node", node.getNodeID());
-                items.add(item);
+                // Do not include the root node.
+                if (node == rootNode) {
+                    continue;
+                }
+                
+                AccessModel accessModel = node.getAccessModel();
+                if (accessModel.canAccessItems(node, senderJID, new JID(recipientJID))) {
+                    Element item = defaultItem.createCopy();
+                    item.addAttribute("node", node.getNodeID());
+                    items.add(item);
+                }                
             }
         }
         

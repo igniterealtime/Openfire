@@ -137,8 +137,8 @@ public class PEPService implements PubSubService {
     /**
      * Constructs a PEPService.
      * 
-     * @param server
-     *            the XMPP server.
+     * @param server  the XMPP server.
+     * @param bareJID the bare JID (service ID) of the user owning the service.
      */
     public PEPService(XMPPServer server, String bareJID) {
         this.bareJID = bareJID;
@@ -200,7 +200,7 @@ public class PEPService implements PubSubService {
         // Load nodes to memory
         PubSubPersistenceManager.loadNodes(this);
         // Ensure that we have a root collection node
-        String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", "");
+        String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", bareJID);
         if (nodes.isEmpty()) {
             // Create root collection node
             String creator = JiveGlobals.getProperty("xmpp.pubsub.root.creator");

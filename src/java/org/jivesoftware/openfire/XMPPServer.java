@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
+import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
@@ -1258,6 +1259,23 @@ public class XMPPServer {
         for (Module module : modules.values()) {
             if (module instanceof UserIdentitiesProvider) {
                 answer.add((UserIdentitiesProvider) module);
+            }
+        }
+        return answer;
+    }
+
+    /**
+     * Returns a list with all the modules that provide "discoverable" items associated with
+     * users.
+     *
+     * @return a list with all the modules that provide "discoverable" items associated with
+     *         users.
+     */
+    public List<UserItemsProvider> getUserItemsProviders() {
+        List<UserItemsProvider> answer = new ArrayList<UserItemsProvider>();
+        for (Module module : modules.values()) {
+            if (module instanceof UserItemsProvider) {
+                answer.add((UserItemsProvider) module);
             }
         }
         return answer;

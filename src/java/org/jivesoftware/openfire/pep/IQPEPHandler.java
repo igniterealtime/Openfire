@@ -22,9 +22,11 @@ import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -68,6 +70,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     private IQHandlerInfo info;
 
     private PubSubEngine pubSubEngine = null;
+    
+    private UserManager userManager = null;
 
     public IQPEPHandler() {
         super("Personal Eventing Handler");
@@ -80,6 +84,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         super.initialize(server);
         
         pubSubEngine = new PubSubEngine(server.getPacketRouter());
+        userManager = server.getUserManager();
 
     }
 
@@ -93,13 +98,21 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // TODO: Much to be done here...
 
         if (packet.getTo() == null) {
-            // TODO: Do not allow anonymous users to create a service
             String jidFrom = packet.getFrom().toBareJID();
             
             PEPService pepService = pepServices.get(jidFrom);
 
             // If no service exists yet for jidFrom, create one.
             if (pepService == null) {
+                // Return an error if the packet is from an anonymous or otherwise
+                // unregistered user.
+                if (!userManager.isRegisteredUser(packet.getFrom())) {
+                    IQ reply = IQ.createResultIQ(packet);
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.not_allowed);
+                    return reply;
+                }
+                
                 pepService = new PEPService(XMPPServer.getInstance(), jidFrom);
                 pepServices.put(jidFrom, pepService);
                 

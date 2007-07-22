@@ -365,7 +365,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     public void leftCluster(byte[] nodeID) {
         if (ClusterManager.isSeniorClusterMember()) {
-            NodeID leftNode = new NodeID(nodeID);
+            NodeID leftNode = NodeID.getInstance(nodeID);
             for (Map.Entry<String, ClusteredServerItem> entry : serverItems.entrySet()) {
                 String jid = entry.getKey();
                 Lock lock = LockManager.getLock(jid + "item");

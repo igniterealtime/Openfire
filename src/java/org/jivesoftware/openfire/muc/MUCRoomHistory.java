@@ -83,7 +83,7 @@ public final class MUCRoomHistory {
                     // Set the Full JID as the "from" attribute
                     try {
                         MUCRole role = room.getOccupant(message.getFrom().getResource());
-                        delayElement.addAttribute("from", role.getChatUser().getAddress().toString());
+                        delayElement.addAttribute("from", role.getUserAddress().toString());
                     }
                     catch (UserNotFoundException e) {
                         // Ignore.
@@ -105,8 +105,7 @@ public final class MUCRoomHistory {
             // Set the Full JID as the "from" attribute
             try {
                 MUCRole role = room.getOccupant(packet.getFrom().getResource());
-                delayInformation.addAttribute("from", role.getChatUser().getAddress()
-                        .toString());
+                delayInformation.addAttribute("from", role.getUserAddress().toString());
             }
             catch (UserNotFoundException e) {
                 // Ignore.

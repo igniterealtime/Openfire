@@ -306,7 +306,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     public void leftCluster(byte[] nodeID) {
         if (ClusterManager.isSeniorClusterMember()) {
-            NodeID leftNode = new NodeID(nodeID);
+            NodeID leftNode = NodeID.getInstance(nodeID);
             // Remove server features added by node that is gone
             for (Map.Entry<String, Set<NodeID>> entry : serverFeatures.entrySet()) {
                 String namespace = entry.getKey();

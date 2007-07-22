@@ -12,12 +12,12 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -144,7 +144,7 @@ public class MUCPersistenceManager {
      * 
      * @param room the room to load from the database if persistent
      */
-    public static void loadFromDB(MUCRoomImpl room) {
+    public static void loadFromDB(LocalMUCRoom room) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -294,7 +294,7 @@ public class MUCPersistenceManager {
      * 
      * @param room The room to save its configuration.
      */
-    public static void saveToDB(MUCRoomImpl room) {
+    public static void saveToDB(LocalMUCRoom room) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -415,19 +415,19 @@ public class MUCPersistenceManager {
      * @param packetRouter the PacketRouter that loaded rooms will use to send packets.
      * @return a collection with all the persistent rooms.
      */
-    public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatServer chatserver,
+    public static Collection<LocalMUCRoom> loadRoomsFromDB(MultiUserChatServer chatserver,
             Date emptyDate, PacketRouter packetRouter) {
         Connection con = null;
         PreparedStatement pstmt = null;
-        Map<Long,MUCRoom> rooms = new HashMap<Long,MUCRoom>();
+        Map<Long, LocalMUCRoom> rooms = new HashMap<Long, LocalMUCRoom>();
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ALL_ROOMS);
             pstmt.setString(1, StringUtils.dateToMillis(emptyDate));
             ResultSet rs = pstmt.executeQuery();
-            MUCRoomImpl room = null;
+            LocalMUCRoom room = null;
             while (rs.next()) {
-                room = new MUCRoomImpl(chatserver, rs.getString(4), packetRouter);
+                room = new LocalMUCRoom(chatserver, rs.getString(4), packetRouter);
                 room.setID(rs.getLong(1));
                 room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
                 room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
@@ -478,7 +478,7 @@ public class MUCPersistenceManager {
             // Load the rooms conversations from the last two days
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                room = (MUCRoomImpl) rooms.get(rs.getLong(1));
+                room = (LocalMUCRoom) rooms.get(rs.getLong(1));
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -521,7 +521,7 @@ public class MUCPersistenceManager {
                 long roomID = rs.getLong(1);
                 String jid = rs.getString(2);
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
-                room = (MUCRoomImpl) rooms.get(roomID);
+                room = (LocalMUCRoom) rooms.get(roomID);
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -552,7 +552,7 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(LOAD_ALL_MEMBERS);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                room = (MUCRoomImpl) rooms.get(rs.getLong(1));
+                room = (LocalMUCRoom) rooms.get(rs.getLong(1));
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -626,7 +626,7 @@ public class MUCPersistenceManager {
      *
      * @param room the room to update its lock status in the database.
      */
-    public static void updateRoomLock(MUCRoomImpl room) {
+    public static void updateRoomLock(LocalMUCRoom room) {
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }

@@ -99,7 +99,7 @@ public class XMPPServer {
     private Date startDate;
     private boolean initialized = false;
     private NodeID nodeID;
-    private static final NodeID DEFAULT_NODE_ID = new NodeID(new byte[0]);
+    private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
 
     /**
      * All modules loaded by this server
@@ -313,7 +313,7 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(3, 4, 0, Version.ReleaseStatus.Alpha, 1);
+        version = new Version(3, 4, 0, Version.ReleaseStatus.Alpha, 2);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

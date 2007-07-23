@@ -441,6 +441,8 @@ public class PluginServlet extends HttpServlet {
             jspc.setOutputDir(compilationDir.getAbsolutePath());
             jspc.setClassName(filename);
             jspc.setCompile(true);
+            jspc.setCompilerSourceVM("1.5");
+            jspc.setCompilerTargetVM("1.5");
 
             jspc.setClassPath(getClasspathForPlugin(plugin));
             try {

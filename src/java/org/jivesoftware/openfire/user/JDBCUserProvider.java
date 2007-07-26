@@ -97,6 +97,14 @@ public class JDBCUserProvider implements UserProvider {
 	}
 
 	public User loadUser(String username) throws UserNotFoundException {
+        String userDomain = JiveGlobals.getProperty("xmpp.domain");
+        if(username.contains("@")) {
+            userDomain = username.substring((username.lastIndexOf("@")+1));
+            username = username.substring(0,username.lastIndexOf("@"));
+        }
+        if(!userDomain.equals(JiveGlobals.getProperty("xmpp.domain"))) {
+            throw new UserNotFoundException("Unknown domain: "+userDomain);
+        }
 		Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;

@@ -109,6 +109,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
                 }
                 else {
                     Log.debug("XMPPCallbackHandler: "+principal + " not authorized to " + username);
+                    authCallback.setAuthorized(false);
                 }
             }
             else {

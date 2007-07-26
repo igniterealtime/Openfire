@@ -145,7 +145,7 @@ public class AuthorizationManager {
                     UserManager.getUserProvider().loadUser(username);
                 }
                 catch (UserNotFoundException nfe) {
-                    Log.debug("AuthorizationManager: User "+username+" not found.");
+                    Log.debug("AuthorizationManager: User "+username+" not found "+nfe.toString());
                     // Should we add the user?
                     if(JiveGlobals.getBooleanProperty("xmpp.auth.autoadd",false)) {
                         if (UserManager.getUserProvider().isReadOnly()) {

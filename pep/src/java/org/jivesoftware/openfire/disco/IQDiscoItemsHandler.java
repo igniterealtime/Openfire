@@ -101,10 +101,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // the reply.
         if (packet.getTo() != null && packet.getTo().getNode() != null) {
             String name = packet.getTo().getNode();
-            
+
             reply.setChildElement(packet.getChildElement().createCopy());
             Element queryElement = reply.getChildElement();
-            
+
             List<UserItemsProvider> itemsProviders = XMPPServer.getInstance().getUserItemsProviders();
             if (itemsProviders.isEmpty()) {
                 // If we didn't find any UserItemsProviders, then answer a not found error
@@ -126,10 +126,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     }
                 }
             }
-            
+
             return reply;
         }
-        
+
         // Look for a DiscoItemsProvider associated with the requested entity.
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  

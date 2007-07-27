@@ -12,6 +12,7 @@
 package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.openfire.session.ClientSession;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 import java.util.List;
@@ -120,6 +121,21 @@ public class PresenceEventDispatcher {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
                 listener.presenceChanged(session, presence);
+            }
+        }
+    }
+
+    /**
+     * Notification message indicating that a user has successfully subscribed
+     * to the presence of another user.
+     * 
+     * @param subscriberJID the user that initiated the subscription.
+     * @param authorizerJID the user that authorized the subscription.
+     */
+    public static void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
+        if (!listeners.isEmpty()) {
+            for (PresenceEventListener listener : listeners) {
+                listener.subscribedToPresence(subscriberJID, authorizerJID);
             }
         }
     }

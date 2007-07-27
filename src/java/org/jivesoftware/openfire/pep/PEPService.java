@@ -270,7 +270,7 @@ public class PEPService implements PubSubService {
     }
 
     public boolean isCollectionNodesSupported() {
-        return false;
+        return true;
     }
 
     public boolean isInstantNodeSupported() {

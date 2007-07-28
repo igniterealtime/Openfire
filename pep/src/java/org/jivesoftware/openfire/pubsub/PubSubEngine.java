@@ -1102,11 +1102,6 @@ public class PubSubEngine {
                             return;
                         }
                         parentNode = (CollectionNode) tempNode;
-                        // If requested new nodeID does not contain parent nodeID then add
-                        // the parent nodeID to the beginging of the new nodeID
-                        if (!newNodeID.startsWith(parentNodeID)) {
-                            newNodeID = parentNodeID + "/" + newNodeID;
-                        }
                     }
                 }
                 field = completedForm.getField("pubsub#node_type");
@@ -1122,10 +1117,6 @@ public class PubSubEngine {
         // If no parent was defined then use the root collection node
         if (parentNode == null && service.isCollectionNodesSupported()) {
             parentNode = service.getRootCollectionNode();
-            // Calculate new nodeID for the new node
-            if (!newNodeID.startsWith(parentNode.getNodeID() + "/")) {
-                newNodeID = parentNode.getNodeID() + "/" + newNodeID;
-            }
         }
         // Check that the requested nodeID does not exist
         Node existingNode = service.getNode(newNodeID);

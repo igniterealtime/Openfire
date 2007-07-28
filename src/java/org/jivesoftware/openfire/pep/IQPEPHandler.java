@@ -59,7 +59,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * <p>
  * For each user on the server there is an associated PEPService interacting
- * with a PubSubEngine for managing the user's PEP nodes.
+ * with a single PubSubEngine for managing the user's PEP nodes.
  * </p>
  * 
  * <p>
@@ -152,6 +152,20 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         }
     }
 
+    public void start() {
+        super.start();
+        for (PEPService service : pepServices.values()) {
+            pubSubEngine.start(service);
+        }
+    }
+
+    public void stop() {
+        super.stop();
+        for (PEPService service : pepServices.values()) {
+            pubSubEngine.shutdown(service);
+        }
+    }
+
     @Override
     public IQHandlerInfo getInfo() {
         return info;
@@ -161,7 +175,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
         // TODO: Finish implementing ... ;)
 
-        if (packet.getTo() == null) {
+        if (packet.getTo() == null && packet.getType() == IQ.Type.set) {
             String jidFrom = packet.getFrom().toBareJID();
 
             PEPService pepService = pepServices.get(jidFrom);
@@ -185,7 +199,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 if (Log.isDebugEnabled()) {
                     Log.debug("PEP: " + jidFrom + " had a PEPService created");
                 }
-                
+
                 // Those who already have presence subscriptions to jidFrom
                 // will now automatically be subscribed to this new PEPService.
                 Roster roster;
@@ -193,7 +207,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     roster = XMPPServer.getInstance().getRosterManager().getRoster(packet.getFrom().getNode());
                     for (RosterItem item : roster.getRosterItems()) {
                         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-                            subscribedToPresence(item.getJid(), packet.getFrom());
+                            createSubscriptionToPEPService(item.getJid(), packet.getFrom());
                         }
                     }
                 }
@@ -201,88 +215,115 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     // Do nothing
                 }
 
-                
             }
 
             // If publishing a node, and the node doesn't exist, create it.
-            if (packet.getType() == IQ.Type.set) {
-                Element childElement = packet.getChildElement();
-                Element publishElement = childElement.element("publish");
-                if (publishElement != null) {
-                    String nodeID = publishElement.attributeValue("node");
+            Element childElement = packet.getChildElement();
+            Element publishElement = childElement.element("publish");
+            if (publishElement != null) {
+                String nodeID = publishElement.attributeValue("node");
 
-                    if (pepService.getNode(nodeID) == null) {
-                        // Create the node
-                        JID creator = new JID(jidFrom);
-                        LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(), nodeID, creator);
-                        newNode.addOwner(creator);
-                        newNode.saveToDB();
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: Created node ('" + newNode.getNodeID() + "') for " + jidFrom);
-                        }
+                if (pepService.getNode(nodeID) == null) {
+                    // Create the node
+                    JID creator = new JID(jidFrom);
+                    LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(), nodeID, creator);
+                    newNode.addOwner(creator);
+                    newNode.saveToDB();
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("PEP: Created node ('" + newNode.getNodeID() + "') for " + jidFrom);
                     }
                 }
             }
 
             // Process with PubSub as usual.
-            if (pubSubEngine.process(pepService, packet)) {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: The pubSubEngine processed a packet for " + jidFrom + "'s pepService.");
-                }
-            }
-            else {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: The pubSubEngine did not process a packet for " + jidFrom + "'s pepService.");
-                }
-            }
+            pubSubEngine.process(pepService, packet);
 
         }
-        else {
-            // TODO: Handle packets such as these.
-            if (packet.getType() == IQ.Type.result) {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: Ignored result packet (probably from an auto-subscribe).");
-                }
-                return null;
-            }
+        else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
+            // TODO: Ensure these packets get handled. (Check XEP-0060 for examples.)
 
             String jidTo = packet.getTo().toBareJID();
 
             PEPService pepService = pepServices.get(jidTo);
 
             if (pepService != null) {
-                if (pubSubEngine.process(pepService, packet)) {
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("PEP: The pubSubEngine processed a packet for " + jidTo + "'s pepService.");
-                    }
-                }
-                else {
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("PEP: The pubSubEngine did not process a packet for " + jidTo + "'s pepService.");
-                    }
-                }
+                pubSubEngine.process(pepService, packet);
             }
             else {
-                // TODO: Handle other packets here...
+                // TODO: Handle other packets here... ?
             }
 
+        }
+        else {
+            // Ignore IQ packets of type 'error' or 'result'.
+            return null;
         }
 
         // Other error flows are handled in pubSubEngine.process(...)
         return null;
     }
 
-    public void start() {
-        super.start();
-        for (PEPService service : pepServices.values()) {
-            pubSubEngine.start(service);
-        }
-    }
+    /**
+     * Generates and processes an IQ stanza that subscribes to a PEP service.
+     * 
+     * @param subscriber the JID of the entity that is subscribing to the PEP service.
+     * @param owner      the JID of the owner of the PEP service.
+     */
+    private void createSubscriptionToPEPService(JID subscriber, JID owner) {
+        // If `owner` has a PEP service, generate and process a pubsub subscription packet
+        // that is equivalent to: (where 'from' field is JID of subscriber and 'to' field is JID of owner)
+        //
+        //        <iq type='set'
+        //            from='nurse@capulet.com/chamber'
+        //            to='juliet@capulet.com
+        //            id='collsub'>
+        //          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+        //            <subscribe jid='nurse@capulet.com'/>
+        //            <options>
+        //              <x xmlns='jabber:x:data'>
+        //                <field var='FORM_TYPE' type='hidden'>
+        //                  <value>http://jabber.org/protocol/pubsub#subscribe_options</value>
+        //                </field>
+        //                <field var='pubsub#subscription_type'>
+        //                  <value>items</value>
+        //                </field>
+        //                <field var='pubsub#subscription_depth'>
+        //                  <value>all</value>
+        //                </field>
+        //              </x>
+        //           </options>
+        //         </pubsub>
+        //        </iq>
+        PEPService pepService = pepServices.get(owner.toBareJID());
+        if (pepService != null) {
+            IQ subscriptionPacket = new IQ(IQ.Type.set);
+            subscriptionPacket.setFrom(subscriber);
+            subscriptionPacket.setTo(owner.toBareJID());
 
-    public void stop() {
-        super.stop();
-        for (PEPService service : pepServices.values()) {
-            pubSubEngine.shutdown(service);
+            Element pubsubElement = subscriptionPacket.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+
+            Element subscribeElement = pubsubElement.addElement("subscribe");
+            subscribeElement.addAttribute("jid", subscriber.toBareJID());
+
+            Element optionsElement = pubsubElement.addElement("options");
+            Element xElement = optionsElement.addElement(QName.get("x", "jabber:x:data"));
+
+            DataForm dataForm = new DataForm(xElement);
+
+            FormField formField = dataForm.addField();
+            formField.setVariable("FORM_TYPE");
+            formField.setType(FormField.Type.hidden);
+            formField.addValue("http://jabber.org/protocol/pubsub#subscribe_options");
+
+            formField = dataForm.addField();
+            formField.setVariable("pubsub#subscription_type");
+            formField.addValue("items");
+
+            formField = dataForm.addField();
+            formField.setVariable("pubsub#subscription_depth");
+            formField.addValue("all");
+
+            pubSubEngine.process(pepService, subscriptionPacket);
         }
     }
 
@@ -341,94 +382,27 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         return items.iterator();
     }
 
+    public void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
+        createSubscriptionToPEPService(subscriberJID, authorizerJID);
+    }
+
+    public void unavailableSession(ClientSession session, Presence presence) {
+        // Do nothing
+
+    }
+
     public void availableSession(ClientSession session, Presence presence) {
-        // TODO Auto-generated method stub
+        // Do nothing
 
     }
 
     public void presenceChanged(ClientSession session, Presence presence) {
-        // TODO Auto-generated method stub
+        // Do nothing
 
     }
 
     public void presencePriorityChanged(ClientSession session, Presence presence) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
-        // If authorizerJID has a PEP service, auto generate and process a pubsub subscription packet
-        // that is equivalent to: (where 'from' is subscriberJID and 'to' is authorizerJID)
-        //
-        //        <iq type='set'
-        //            from='nurse@capulet.com/chamber'
-        //            to='juliet@capulet.com
-        //            id='collsub'>
-        //          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
-        //            <subscribe jid='nurse@capulet.com'/>
-        //            <options>
-        //              <x xmlns='jabber:x:data'>
-        //                <field var='FORM_TYPE' type='hidden'>
-        //                  <value>http://jabber.org/protocol/pubsub#subscribe_options</value>
-        //                </field>
-        //                <field var='pubsub#subscription_type'>
-        //                  <value>items</value>
-        //                </field>
-        //                <field var='pubsub#subscription_depth'>
-        //                  <value>all</value>
-        //                </field>
-        //              </x>
-        //           </options>
-        //         </pubsub>
-        //        </iq>
-        PEPService pepService = pepServices.get(authorizerJID.toBareJID());
-        if (pepService != null) {
-            IQ subscriptionPacket = new IQ(IQ.Type.set);
-            subscriptionPacket.setFrom(subscriberJID);
-            subscriptionPacket.setTo(authorizerJID.toBareJID());
-
-            Element pubsubElement = subscriptionPacket.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
-
-            Element subscribeElement = pubsubElement.addElement("subscribe");
-            subscribeElement.addAttribute("jid", subscriberJID.toBareJID());
-
-            Element optionsElement = pubsubElement.addElement("options");
-            Element xElement = optionsElement.addElement(QName.get("x", "jabber:x:data"));
-
-            DataForm dataForm = new DataForm(xElement);
-
-            FormField formField = dataForm.addField();
-            formField.setVariable("FORM_TYPE");
-            formField.setType(FormField.Type.hidden);
-            formField.addValue("http://jabber.org/protocol/pubsub#subscribe_options");
-
-            formField = dataForm.addField();
-            formField.setVariable("pubsub#subscription_type");
-            formField.addValue("items");
-
-            formField = dataForm.addField();
-            formField.setVariable("pubsub#subscription_depth");
-            formField.addValue("all");
-
-            if (Log.isDebugEnabled()) {
-                Log.debug("PEP: Generated auto-subscribe packet:" + subscriptionPacket.toString());
-            }
-
-            if (pubSubEngine.process(pepService, subscriptionPacket)) {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: Sent auto-subscribe packet to " + authorizerJID.toBareJID() + "'s pepService.");
-                }
-            }
-            else {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: The pubSubEngine failed sending the auto-subscribe packet.");
-                }
-            }
-        }
-    }
-
-    public void unavailableSession(ClientSession session, Presence presence) {
-        // TODO Auto-generated method stub
+        // Do nothing
 
     }
 

@@ -25,7 +25,6 @@ import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -62,8 +61,37 @@ public class PEPService implements PubSubService {
     private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
 
     /**
+     * The packet router for the server.
+     */
+    private PacketRouter router = null;
+
+    /**
+     * Default configuration to use for newly created leaf nodes.
+     */
+    private DefaultNodeConfiguration leafDefaultConfiguration;
+
+    /**
+     * Default configuration to use for newly created collection nodes.
+     */
+    private DefaultNodeConfiguration collectionDefaultConfiguration;
+
+    /**
+     * Returns the permission policy for creating nodes. A true value means that
+     * not anyone can create a node, only the service admin.
+     */
+    private boolean nodeCreationRestricted = true;
+
+    /**
+     * Flag that indicates if a user may have more than one subscription with
+     * the node. When multiple subscriptions is enabled each subscription
+     * request, event notification, and unsubscription request should include a
+     * subid attribute.
+     */
+    private boolean multipleSubscriptionsEnabled = false;
+
+    /**
      * Keep a registry of the presence's show value of users that subscribed to
-     * a node of the pubsub service and for which the node only delivers
+     * a node of the pep service and for which the node only delivers
      * notifications for online users or node subscriptions deliver events based
      * on the user presence show value. Offline users will not have an entry in
      * the map. Note: Key-> bare JID and Value-> Map whose key is full JID of
@@ -105,36 +133,6 @@ public class PEPService implements PubSubService {
     private Timer timer = new Timer("PEP service maintenance");
 
     /**
-     * Returns the permission policy for creating nodes. A true value means that
-     * not anyone can create a node, only the JIDs listed in
-     * <code>allowedToCreate</code> are allowed to create nodes.
-     */
-    private boolean nodeCreationRestricted = false;
-
-    /**
-     * Flag that indicates if a user may have more than one subscription with
-     * the node. When multiple subscriptions is enabled each subscription
-     * request, event notification and unsubscription request should include a
-     * subid attribute.
-     */
-    private boolean multipleSubscriptionsEnabled = true;
-
-    /**
-     * The packet router for the server.
-     */
-    private PacketRouter router = null;
-
-    /**
-     * Default configuration to use for newly created leaf nodes.
-     */
-    private DefaultNodeConfiguration leafDefaultConfiguration;
-
-    /**
-     * Default configuration to use for newly created collection nodes.
-     */
-    private DefaultNodeConfiguration collectionDefaultConfiguration;
-
-    /**
      * Constructs a PEPService.
      * 
      * @param server  the XMPP server.
@@ -144,17 +142,14 @@ public class PEPService implements PubSubService {
         this.bareJID = bareJID;
         router = server.getPacketRouter();
 
-        // Initialize the ad-hoc commands manager to use for this pubsub service
+        // Initialize the ad-hoc commands manager to use for this pep service
         manager = new AdHocCommandManager();
         manager.addCommand(new PendingSubscriptionsCommand(this));
 
         // Save or delete published items from the database every 2 minutes
-        // starting in
-        // 2 minutes (default values)
+        // starting in 2 minutes (default values)
         publishedItemTask = new PublishedItemTask(this);
         timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
-
-        multipleSubscriptionsEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.multiple-subscriptions", true);
 
         // Load default configuration for leaf nodes
         leafDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, true);
@@ -200,19 +195,17 @@ public class PEPService implements PubSubService {
         // Load nodes to memory
         PubSubPersistenceManager.loadNodes(this);
         // Ensure that we have a root collection node
-        String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", bareJID);
         if (nodes.isEmpty()) {
             // Create root collection node
-            String creator = JiveGlobals.getProperty("xmpp.pubsub.root.creator");
-            JID creatorJID = creator != null ? new JID(creator) : server.getAdmins().iterator().next();
-            rootCollectionNode = new CollectionNode(this, null, rootNodeID, creatorJID);
+            JID creatorJID = new JID(bareJID);
+            rootCollectionNode = new CollectionNode(this, null, bareJID, creatorJID);
             // Add the creator as the node owner
             rootCollectionNode.addOwner(creatorJID);
             // Save new root node
             rootCollectionNode.saveToDB();
         }
         else {
-            rootCollectionNode = (CollectionNode) getNode(rootNodeID);
+            rootCollectionNode = (CollectionNode) getNode(bareJID);
         }
     }
 
@@ -262,7 +255,8 @@ public class PEPService implements PubSubService {
     }
 
     public String getServiceID() {
-        return bareJID;     // The bare JID of the user is the service ID
+        // The bare JID of the user is the service ID for PEP
+        return bareJID;
     }
 
     public Collection<String> getShowPresences(JID subscriber) {
@@ -284,7 +278,7 @@ public class PEPService implements PubSubService {
     public boolean isServiceAdmin(JID user) {
         // Here we consider a 'service admin' to be the user that this PEPService
         // is associated with.
-        if (bareJID == user.toBareJID()) {
+        if (bareJID.equals(user.toBareJID())) {
             return true;
         }
         else {

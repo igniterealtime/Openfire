@@ -95,6 +95,7 @@ public class NodeAffiliate {
                     if (getNode().getNodeID().indexOf("@") >= 0) {
                         items.addAttribute("node", publishedItem.getNode().getNodeID());                        
                     }
+
                     // Add item information to the event notification
                     Element item = items.addElement("item");
                     if (leafNode.isItemRequired()) {

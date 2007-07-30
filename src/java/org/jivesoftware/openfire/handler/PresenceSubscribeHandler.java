@@ -169,7 +169,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                         JID prober = localServer.isLocal(recipientJID) ?
                                 new JID(recipientJID.toBareJID()) : recipientJID;
                         presenceManager.probePresence(prober, senderJID);
-                        PresenceEventDispatcher.subscribedToPresence(prober, senderJID);
+                        PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
                     }
                 }
 

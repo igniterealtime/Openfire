@@ -240,8 +240,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         }
         else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
-            // TODO: Ensure these packets get handled. (Check XEP-0060 for examples.)
-
             String jidTo = packet.getTo().toBareJID();
 
             PEPService pepService = pepServices.get(jidTo);
@@ -250,8 +248,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 pubSubEngine.process(pepService, packet);
             }
             else {
-                // TODO: Handle other packets here... ?
-                //       Example: pubsub packet with the wrong packet.getTo()
+                // Process with PubSub using a dummyService.
+                PEPService dummyService = new PEPService(XMPPServer.getInstance(), packet.getFrom().toBareJID());
+                pubSubEngine.process(dummyService, packet);
             }
 
         }

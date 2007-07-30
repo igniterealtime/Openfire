@@ -11,6 +11,9 @@
 
 package org.jivesoftware.openfire.pep;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
@@ -23,13 +26,16 @@ import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.jivesoftware.openfire.pubsub.PublishedItemTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
-
+import org.xmpp.packet.PacketExtension;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
@@ -48,7 +54,7 @@ public class PEPService implements PubSubService {
     /**
      * The bare JID that this service is identified by.
      */
-    private String bareJID;
+    private String serviceOwnerJID;
 
     /**
      * Collection node that acts as the root node of the entire node hierarchy.
@@ -139,7 +145,7 @@ public class PEPService implements PubSubService {
      * @param bareJID the bare JID (service ID) of the user owning the service.
      */
     public PEPService(XMPPServer server, String bareJID) {
-        this.bareJID = bareJID;
+        this.serviceOwnerJID = bareJID;
         router = server.getPacketRouter();
 
         // Initialize the ad-hoc commands manager to use for this pep service
@@ -232,7 +238,7 @@ public class PEPService implements PubSubService {
     }
 
     public JID getAddress() {
-        return new JID(bareJID);
+        return new JID(serviceOwnerJID);
     }
 
     public DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType) {
@@ -256,7 +262,7 @@ public class PEPService implements PubSubService {
 
     public String getServiceID() {
         // The bare JID of the user is the service ID for PEP
-        return bareJID;
+        return serviceOwnerJID;
     }
 
     public Collection<String> getShowPresences(JID subscriber) {
@@ -278,7 +284,7 @@ public class PEPService implements PubSubService {
     public boolean isServiceAdmin(JID user) {
         // Here we consider a 'service admin' to be the user that this PEPService
         // is associated with.
-        if (bareJID.equals(user.toBareJID())) {
+        if (serviceOwnerJID.equals(user.toBareJID())) {
             return true;
         }
         else {
@@ -302,10 +308,63 @@ public class PEPService implements PubSubService {
         router.route(packet);
     }
 
-    public void sendNotification(Node node, Message message, JID jid) {
+    public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setFrom(getAddress());
-        message.setTo(jid);
-        message.setID(node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+        message.setTo(recipientJID);
+        message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
+
+        // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
+        // resource. However, only include the extension if the receiver has a presence subscription
+        // to the service owner.
+        try {
+            // Get the full JID of the item publisher from the node that was published to.
+            // This full JID will be used as the "replyto" address in the addressing extension.
+            JID publisher = null;
+            
+            Element itemsElement = message.getElement().element("event").element("items");
+            String publishedItemID = itemsElement.element("item").attributeValue("id");
+
+            if (node.isCollectionNode()) {
+                String nodeIDPublishedTo = itemsElement.attributeValue("node");
+
+                for (Node leafNode : node.getNodes()) {
+                    if (leafNode.getNodeID().equals(nodeIDPublishedTo)) {
+                        publisher = leafNode.getPublishedItem(publishedItemID).getPublisher();
+                        break;
+                    }
+                }
+            }
+            else {
+                publisher = node.getPublishedItem(publishedItemID).getPublisher();
+            }
+
+            // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
+            Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(publisher.getNode());
+            RosterItem item = roster.getRosterItem(recipientJID);
+
+            if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
+                Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
+                Element address = addresses.addElement("address");
+                address.addAttribute("type", "replyto");
+                address.addAttribute("jid", publisher.toString());
+
+                Message extendedMessage = message.createCopy();
+                extendedMessage.addExtension(new PacketExtension(addresses));
+
+                router.route(extendedMessage);
+                return;
+            }
+        }
+        catch (IndexOutOfBoundsException e) {
+            // Do not add addressing extension to message.
+        }
+        catch (UserNotFoundException e) {
+            // Do not add addressing extension to message.
+        }
+        catch (NullPointerException e) {
+            // Do not add addressing extension to message.
+        }
+
         router.route(message);
     }
 

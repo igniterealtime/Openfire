@@ -202,9 +202,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
                 // Those who already have presence subscriptions to jidFrom
                 // will now automatically be subscribed to this new PEPService.
-                Roster roster;
                 try {
-                    roster = XMPPServer.getInstance().getRosterManager().getRoster(packet.getFrom().getNode());
+                    Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(packet.getFrom().getNode());
                     for (RosterItem item : roster.getRosterItems()) {
                         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
                             createSubscriptionToPEPService(item.getJid(), packet.getFrom());
@@ -251,6 +250,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             }
             else {
                 // TODO: Handle other packets here... ?
+                //       Example: pubsub packet with the wrong packet.getTo()
             }
 
         }

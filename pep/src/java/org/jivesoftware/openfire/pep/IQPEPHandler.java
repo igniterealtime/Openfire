@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
@@ -80,8 +81,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Armando Jagucki
  * 
  */
-public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
-        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener {
+public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider, UserIdentitiesProvider, UserItemsProvider,
+        PresenceEventListener {
 
     // Map of PEP services. Table, Key: bare JID (String); Value: PEPService
     private Map<String, PEPService> pepServices;
@@ -206,7 +207,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(packet.getFrom().getNode());
                     for (RosterItem item : roster.getRosterItems()) {
                         if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-                            createSubscriptionToPEPService(item.getJid(), packet.getFrom());
+                            createSubscriptionToPEPService(pepService, item.getJid(), packet.getFrom());
                         }
                     }
                 }
@@ -266,10 +267,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     /**
      * Generates and processes an IQ stanza that subscribes to a PEP service.
      * 
+     * @param pepService the PEP service of the owner.
      * @param subscriber the JID of the entity that is subscribing to the PEP service.
      * @param owner      the JID of the owner of the PEP service.
      */
-    private void createSubscriptionToPEPService(JID subscriber, JID owner) {
+    private void createSubscriptionToPEPService(PEPService pepService, JID subscriber, JID owner) {
         // If `owner` has a PEP service, generate and process a pubsub subscription packet
         // that is equivalent to: (where 'from' field is JID of subscriber and 'to' field is JID of owner)
         //
@@ -294,37 +296,35 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         //           </options>
         //         </pubsub>
         //        </iq>
-        PEPService pepService = pepServices.get(owner.toBareJID());
-        if (pepService != null) {
-            IQ subscriptionPacket = new IQ(IQ.Type.set);
-            subscriptionPacket.setFrom(subscriber);
-            subscriptionPacket.setTo(owner.toBareJID());
 
-            Element pubsubElement = subscriptionPacket.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+        IQ subscriptionPacket = new IQ(IQ.Type.set);
+        subscriptionPacket.setFrom(subscriber);
+        subscriptionPacket.setTo(owner.toBareJID());
 
-            Element subscribeElement = pubsubElement.addElement("subscribe");
-            subscribeElement.addAttribute("jid", subscriber.toBareJID());
+        Element pubsubElement = subscriptionPacket.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
 
-            Element optionsElement = pubsubElement.addElement("options");
-            Element xElement = optionsElement.addElement(QName.get("x", "jabber:x:data"));
+        Element subscribeElement = pubsubElement.addElement("subscribe");
+        subscribeElement.addAttribute("jid", subscriber.toBareJID());
 
-            DataForm dataForm = new DataForm(xElement);
+        Element optionsElement = pubsubElement.addElement("options");
+        Element xElement = optionsElement.addElement(QName.get("x", "jabber:x:data"));
 
-            FormField formField = dataForm.addField();
-            formField.setVariable("FORM_TYPE");
-            formField.setType(FormField.Type.hidden);
-            formField.addValue("http://jabber.org/protocol/pubsub#subscribe_options");
+        DataForm dataForm = new DataForm(xElement);
 
-            formField = dataForm.addField();
-            formField.setVariable("pubsub#subscription_type");
-            formField.addValue("items");
+        FormField formField = dataForm.addField();
+        formField.setVariable("FORM_TYPE");
+        formField.setType(FormField.Type.hidden);
+        formField.addValue("http://jabber.org/protocol/pubsub#subscribe_options");
 
-            formField = dataForm.addField();
-            formField.setVariable("pubsub#subscription_depth");
-            formField.addValue("all");
+        formField = dataForm.addField();
+        formField.setVariable("pubsub#subscription_type");
+        formField.addValue("items");
 
-            pubSubEngine.process(pepService, subscriptionPacket);
-        }
+        formField = dataForm.addField();
+        formField.setVariable("pubsub#subscription_depth");
+        formField.addValue("all");
+
+        pubSubEngine.process(pepService, subscriptionPacket);
     }
 
     /**
@@ -383,7 +383,23 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
-        createSubscriptionToPEPService(subscriberJID, authorizerJID);
+        PEPService pepService = pepServices.get(authorizerJID.toBareJID());
+        if (pepService != null) {
+            createSubscriptionToPEPService(pepService, subscriberJID, authorizerJID);
+
+            // Delete any leaf node subscriptions the subscriber may have already
+            // had (since a subscription to the PEP service, and thus its leaf PEP
+            // nodes, would be duplicating publish notifications from previous leaf
+            // node subscriptions).
+            CollectionNode rootNode = pepService.getRootCollectionNode();
+            for (Node node : pepService.getNodes()) {
+                if (rootNode.isChildNode(node)) {
+                    for (NodeSubscription subscription : node.getSubscriptions(subscriberJID)) {
+                        node.cancelSubscription(subscription);
+                    }
+                }
+            }
+        }
     }
 
     public void unavailableSession(ClientSession session, Presence presence) {

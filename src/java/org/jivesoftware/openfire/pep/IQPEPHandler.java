@@ -480,10 +480,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 return;
             }
 
-            // FIXME: Instead of the bare JID, use the full JID. Only change this
-            //        when PEPService's sendNotification() is able to send to the full
-            //        JID. See its FIXME as well.
-            String jidFrom = packet.getFrom().toBareJID();
+            // Get the sender's full JID considering they may be logged in from multiple
+            // clients with different notification filters.
+            String jidFrom = packet.getFrom().toString();
 
             // For each feature variable, or in this case node ID, ending in "+notify" -- add
             // the node ID to the set of filtered nodes that jidFrom is interested in being

@@ -373,12 +373,14 @@ public class UserManager implements IQResultListener {
         // Analyze the disco result packet
         if (IQ.Type.result == packet.getType()) {
             Element child = packet.getChildElement();
-            for (Iterator it=child.elementIterator("identity"); it.hasNext();) {
-                Element identity = (Element) it.next();
-                String accountType = identity.attributeValue("type");
-                if ("registered".equals(accountType) || "admin".equals(accountType)) {
-                    isRegistered = Boolean.TRUE;
-                    break;
+            if (child != null) {
+                for (Iterator it=child.elementIterator("identity"); it.hasNext();) {
+                    Element identity = (Element) it.next();
+                    String accountType = identity.attributeValue("type");
+                    if ("registered".equals(accountType) || "admin".equals(accountType)) {
+                        isRegistered = Boolean.TRUE;
+                        break;
+                    }
                 }
             }
         }

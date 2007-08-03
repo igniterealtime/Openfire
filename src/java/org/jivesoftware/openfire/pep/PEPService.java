@@ -28,8 +28,10 @@ import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
@@ -37,6 +39,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -312,79 +315,92 @@ public class PEPService implements PubSubService {
 
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setFrom(getAddress());
-        
-        // FIXME: Send to the full JID if this PEPService can retrieve presence
-        //        for the recipient.
+
+        // If this PEPService can retrieve presence information for the recipient,
+        // collect all of their full JIDs and send the notification to each below.
+        Collection<JID> recipientFullJIDs = new ArrayList<JID>();
+        if (XMPPServer.getInstance().isLocal(recipientJID)) {
+            for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
+                recipientFullJIDs.add(clientSession.getAddress());
+            }
+        }
+        else {
+            recipientFullJIDs.add(recipientJID);
+        }
+
         message.setTo(recipientJID);
         message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
 
-        // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
-        // resource. However, only include the extension if the receiver has a presence subscription
-        // to the service owner.
-        try {
-            // Get the full JID of the item publisher from the node that was published to.
-            // This full JID will be used as the "replyto" address in the addressing extension.
-            JID publisher = null;
+        for (JID recipientFullJID : recipientFullJIDs) {
+            // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
+            // resource. However, only include the extension if the receiver has a presence subscription
+            // to the service owner.
+            try {
+                // Get the full JID of the item publisher from the node that was published to.
+                // This full JID will be used as the "replyto" address in the addressing extension.
+                JID publisher = null;
 
-            Element itemsElement = message.getElement().element("event").element("items");
-            String publishedItemID = itemsElement.element("item").attributeValue("id");
-            String nodeIDPublishedTo = itemsElement.attributeValue("node");
-            
-            // Check if the recipientJID is interested in notifications for this node.
-            // If the recipient has not yet requested any notification filtering, continue and send
-            // the notification.
-            Map<String, HashSet<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
-            HashSet<String> filteredNodesSet = filteredNodesMap.get(recipientJID.toBareJID());
-            if (filteredNodesSet != null && !filteredNodesSet.contains(nodeIDPublishedTo)) {
-                return;
-            }
+                Element itemsElement = message.getElement().element("event").element("items");
+                String publishedItemID = itemsElement.element("item").attributeValue("id");
+                String nodeIDPublishedTo = itemsElement.attributeValue("node");
 
-            if (node.isCollectionNode()) {
-                for (Node leafNode : node.getNodes()) {
-                    if (leafNode.getNodeID().equals(nodeIDPublishedTo)) {
-                        publisher = leafNode.getPublishedItem(publishedItemID).getPublisher();
-                        
-                        // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
-                        AccessModel accessModel = leafNode.getAccessModel();
-                        if (!accessModel.canAccessItems(leafNode, recipientJID, publisher)) {
-                            return;
+                // Check if the recipientFullJID is interested in notifications for this node.
+                // If the recipient has not yet requested any notification filtering, continue and send
+                // the notification.
+                Map<String, HashSet<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
+                HashSet<String> filteredNodesSet = filteredNodesMap.get(recipientFullJID.toString());
+                if (filteredNodesSet != null && !filteredNodesSet.contains(nodeIDPublishedTo)) {
+                    return;
+                }
+
+                if (node.isCollectionNode()) {
+                    for (Node leafNode : node.getNodes()) {
+                        if (leafNode.getNodeID().equals(nodeIDPublishedTo)) {
+                            publisher = leafNode.getPublishedItem(publishedItemID).getPublisher();
+
+                            // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
+                            AccessModel accessModel = leafNode.getAccessModel();
+                            if (!accessModel.canAccessItems(leafNode, recipientFullJID, publisher)) {
+                                return;
+                            }
+
+                            break;
                         }
-                        
-                        break;
                     }
                 }
+                else {
+                    publisher = node.getPublishedItem(publishedItemID).getPublisher();
+                }
+
+                // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
+                Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(publisher.getNode());
+                RosterItem item = roster.getRosterItem(recipientFullJID);
+
+                if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
+                    Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
+                    Element address = addresses.addElement("address");
+                    address.addAttribute("type", "replyto");
+                    address.addAttribute("jid", publisher.toString());
+
+                    Message extendedMessage = message.createCopy();
+                    extendedMessage.addExtension(new PacketExtension(addresses));
+
+                    extendedMessage.setTo(recipientFullJID);
+                    router.route(extendedMessage);
+
+                    return;
+                }
             }
-            else {
-                publisher = node.getPublishedItem(publishedItemID).getPublisher();
+            catch (IndexOutOfBoundsException e) {
+                // Do not add addressing extension to message.
             }
-
-            // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
-            Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(publisher.getNode());
-            RosterItem item = roster.getRosterItem(recipientJID);
-
-            if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-                Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
-                Element address = addresses.addElement("address");
-                address.addAttribute("type", "replyto");
-                address.addAttribute("jid", publisher.toString());
-
-                Message extendedMessage = message.createCopy();
-                extendedMessage.addExtension(new PacketExtension(addresses));
-
-                router.route(extendedMessage);
-                return;
+            catch (UserNotFoundException e) {
+                // Do not add addressing extension to message.
+            }
+            catch (NullPointerException e) {
+                // Do not add addressing extension to message.
             }
         }
-        catch (IndexOutOfBoundsException e) {
-            // Do not add addressing extension to message.
-        }
-        catch (UserNotFoundException e) {
-            // Do not add addressing extension to message.
-        }
-        catch (NullPointerException e) {
-            // Do not add addressing extension to message.
-        }
-
         router.route(message);
     }
 

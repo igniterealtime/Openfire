@@ -36,7 +36,9 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
+
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
@@ -183,7 +185,7 @@ public class PEPService implements PubSubService {
         if (collectionDefaultConfiguration == null) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
-            collectionDefaultConfiguration.setAccessModel(AccessModel.open);
+            collectionDefaultConfiguration.setAccessModel(AccessModel.presence);
             collectionDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
             collectionDefaultConfiguration.setDeliverPayloads(false);
             collectionDefaultConfiguration.setLanguage("English");
@@ -310,6 +312,9 @@ public class PEPService implements PubSubService {
 
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setFrom(getAddress());
+        
+        // FIXME: Send to the full JID if this PEPService can retrieve presence
+        //        for the recipient.
         message.setTo(recipientJID);
         message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
 
@@ -320,16 +325,31 @@ public class PEPService implements PubSubService {
             // Get the full JID of the item publisher from the node that was published to.
             // This full JID will be used as the "replyto" address in the addressing extension.
             JID publisher = null;
-            
+
             Element itemsElement = message.getElement().element("event").element("items");
             String publishedItemID = itemsElement.element("item").attributeValue("id");
+            String nodeIDPublishedTo = itemsElement.attributeValue("node");
+            
+            // Check if the recipientJID is interested in notifications for this node.
+            // If the recipient has not yet requested any notification filtering, continue and send
+            // the notification.
+            Map<String, HashSet<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
+            HashSet<String> filteredNodesSet = filteredNodesMap.get(recipientJID.toBareJID());
+            if (filteredNodesSet != null && !filteredNodesSet.contains(nodeIDPublishedTo)) {
+                return;
+            }
 
             if (node.isCollectionNode()) {
-                String nodeIDPublishedTo = itemsElement.attributeValue("node");
-
                 for (Node leafNode : node.getNodes()) {
                     if (leafNode.getNodeID().equals(nodeIDPublishedTo)) {
                         publisher = leafNode.getPublishedItem(publishedItemID).getPublisher();
+                        
+                        // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
+                        AccessModel accessModel = leafNode.getAccessModel();
+                        if (!accessModel.canAccessItems(leafNode, recipientJID, publisher)) {
+                            return;
+                        }
+                        
                         break;
                     }
                 }

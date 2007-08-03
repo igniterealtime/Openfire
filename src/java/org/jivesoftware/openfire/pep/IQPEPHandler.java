@@ -23,6 +23,9 @@ import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketInterceptor;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
@@ -32,6 +35,7 @@ import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.PresenceEventListener;
 import org.jivesoftware.openfire.user.UserManager;
@@ -41,6 +45,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
@@ -49,6 +54,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,10 +88,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider, UserIdentitiesProvider, UserItemsProvider,
-        PresenceEventListener {
+        PresenceEventListener, PacketInterceptor {
 
     // Map of PEP services. Table, Key: bare JID (String); Value: PEPService
     private Map<String, PEPService> pepServices;
+
+    /**
+     * Nodes to send filtered notifications for, table: key JID (String); value Set of nodes
+     * 
+     * filteredNodesMap are used for Contact Notification Filtering as described in XEP-0163. The JID
+     * of a user is associated with a set of PEP node IDs they are interested in receiving notifications
+     * for.
+     */
+    private Map<String, HashSet<String>> filteredNodesMap = new ConcurrentHashMap<String, HashSet<String>>();
 
     private IQHandlerInfo info;
 
@@ -151,6 +166,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 Log.error(e);
             }
         }
+
+        // Add this PEP handler as a packet interceptor so we may deal with
+        // client packets that send disco#info's explaining capabilities
+        // including PEP contact notification filters.
+        InterceptorManager.getInstance().addInterceptor(this);
     }
 
     public void start() {
@@ -419,6 +439,116 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public void presencePriorityChanged(ClientSession session, Presence presence) {
         // Do nothing
 
+    }
+
+    public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
+        if (processed && packet instanceof IQ && ((IQ) packet).getType() == IQ.Type.result) {
+            // Examine the packet and return if it does not look like a disco#info result containing
+            // Entity Capabilities for a client. The sooner we return the better, as this method will be called
+            // quite a lot.
+            Element element = packet.getElement();
+            if (element == null) {
+                return;
+            }
+            Element query = element.element("query");
+            if (query == null) {
+                return;
+            }
+            else {
+                String queryNamespace = query.getNamespaceURI();
+                if (queryNamespace == null || !queryNamespace.equals("http://jabber.org/protocol/disco#info")) {
+                    return;
+                }
+            }
+            /*Element identity = query.element("identity");
+            if (identity == null) {
+                return;
+            }
+            else {
+                String identityCategory = identity.attributeValue("category");
+                if (identityCategory == null || !identityCategory.equals("client")) {
+                    return;
+                }
+            }*/
+
+            if (Log.isDebugEnabled()) {
+                Log.debug("PEP: Intercepted a caps result packet: " + packet.toString());
+            }
+
+            Iterator featuresIterator = query.elementIterator("feature");
+            if (featuresIterator == null) {
+                return;
+            }
+
+            // FIXME: Instead of the bare JID, use the full JID. Only change this
+            //        when PEPService's sendNotification() is able to send to the full
+            //        JID. See its FIXME as well.
+            String jidFrom = packet.getFrom().toBareJID();
+
+            // For each feature variable, or in this case node ID, ending in "+notify" -- add
+            // the node ID to the set of filtered nodes that jidFrom is interested in being
+            // notified about.
+            //
+            // If a node ID does not end in "+notify", remove it from the set of filtered nodes
+            // that jidFrom is interested in being notified about.
+            while (featuresIterator.hasNext()) {
+                Element featureElement = (Element) featuresIterator.next();
+
+                String featureVar = featureElement.attributeValue("var");
+                if (featureVar == null) {
+                    continue;
+                }
+
+                if (featureVar.endsWith("+notify")) {
+                    String nodeID = featureVar.replace("+notify", "");
+                    HashSet<String> filteredNodeSet = filteredNodesMap.get(jidFrom);
+
+                    if (filteredNodeSet == null) {
+                        filteredNodeSet = new HashSet<String>();
+                        filteredNodeSet.add(nodeID);
+                        filteredNodesMap.put(jidFrom, filteredNodeSet);
+
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("PEP: Created filteredNodeSet for " + jidFrom);
+                            Log.debug("PEP: Added " + nodeID + " to " + jidFrom + "'s set of filtered nodes.");
+                        }
+                    }
+                    else {
+                        if (filteredNodeSet.add(nodeID)) {
+                            if (Log.isDebugEnabled()) {
+                                Log.debug("PEP: Added " + nodeID + " to " + jidFrom + "'s set of filtered nodes: ");
+                                Iterator tempIter = filteredNodeSet.iterator();
+                                while (tempIter.hasNext()) {
+                                    Log.debug("PEP: " + tempIter.next());
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else {
+                    HashSet<String> filteredNodeSet = filteredNodesMap.get(jidFrom);
+                    if (filteredNodeSet != null && filteredNodeSet.remove(featureVar)) {
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("PEP: Removed " + featureVar + " from " + jidFrom + "'s set of filtered nodes: ");
+                            Iterator tempIter = filteredNodeSet.iterator();
+                            while (tempIter.hasNext()) {
+                                Log.debug("PEP: " + tempIter.next());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the filteredNodesMap.
+     * 
+     * @return the filteredNodesMap
+     */
+    public Map<String, HashSet<String>> getFilteredNodesMap() {
+        return filteredNodesMap;
     }
 
 }

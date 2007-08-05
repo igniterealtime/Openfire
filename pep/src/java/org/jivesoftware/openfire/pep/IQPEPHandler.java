@@ -455,21 +455,14 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 return;
             }
             else {
+                if (query.attributeValue("node") == null) {
+                    return;
+                }
                 String queryNamespace = query.getNamespaceURI();
                 if (queryNamespace == null || !queryNamespace.equals("http://jabber.org/protocol/disco#info")) {
                     return;
                 }
             }
-            /*Element identity = query.element("identity");
-            if (identity == null) {
-                return;
-            }
-            else {
-                String identityCategory = identity.attributeValue("category");
-                if (identityCategory == null || !identityCategory.equals("client")) {
-                    return;
-                }
-            }*/
 
             if (Log.isDebugEnabled()) {
                 Log.debug("PEP: Intercepted a caps result packet: " + packet.toString());
@@ -488,8 +481,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             // the node ID to the set of filtered nodes that jidFrom is interested in being
             // notified about.
             //
-            // If a node ID does not end in "+notify", remove it from the set of filtered nodes
-            // that jidFrom is interested in being notified about.
+            // If none of the feature variables contain the node ID ending in "+notify",
+            // remove it from the set of filtered nodes that jidFrom is interested in being
+            // notified about.
+            HashSet<String> supportedNodesSet = new HashSet<String>();
             while (featuresIterator.hasNext()) {
                 Element featureElement = (Element) featuresIterator.next();
 
@@ -497,26 +492,30 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 if (featureVar == null) {
                     continue;
                 }
+                
+                supportedNodesSet.add(featureVar);
+            }
 
-                if (featureVar.endsWith("+notify")) {
-                    String nodeID = featureVar.replace("+notify", "");
-                    HashSet<String> filteredNodeSet = filteredNodesMap.get(jidFrom);
+            for (String nodeID : supportedNodesSet) {
+                if (nodeID.endsWith("+notify")) {
+                    // Add the nodeID to the sender's filteredNodesSet.
+                    HashSet<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
 
-                    if (filteredNodeSet == null) {
-                        filteredNodeSet = new HashSet<String>();
-                        filteredNodeSet.add(nodeID);
-                        filteredNodesMap.put(jidFrom, filteredNodeSet);
+                    if (filteredNodesSet == null) {
+                        filteredNodesSet = new HashSet<String>();
+                        filteredNodesSet.add(nodeID);
+                        filteredNodesMap.put(jidFrom, filteredNodesSet);
 
                         if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: Created filteredNodeSet for " + jidFrom);
+                            Log.debug("PEP: Created filteredNodesSet for " + jidFrom);
                             Log.debug("PEP: Added " + nodeID + " to " + jidFrom + "'s set of filtered nodes.");
                         }
                     }
                     else {
-                        if (filteredNodeSet.add(nodeID)) {
+                        if (filteredNodesSet.add(nodeID)) {
                             if (Log.isDebugEnabled()) {
                                 Log.debug("PEP: Added " + nodeID + " to " + jidFrom + "'s set of filtered nodes: ");
-                                Iterator tempIter = filteredNodeSet.iterator();
+                                Iterator tempIter = filteredNodesSet.iterator();
                                 while (tempIter.hasNext()) {
                                     Log.debug("PEP: " + tempIter.next());
                                 }
@@ -526,11 +525,19 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
                 }
                 else {
-                    HashSet<String> filteredNodeSet = filteredNodesMap.get(jidFrom);
-                    if (filteredNodeSet != null && filteredNodeSet.remove(featureVar)) {
+                    // Remove the nodeID from the sender's filteredNodesSet if nodeIDPlusNotify
+                    // is not in supportedNodesSet.
+                    HashSet<String> filteredNodesSet = filteredNodesMap.get(jidFrom);                    
+                    if (filteredNodesSet == null) {
+                        return;
+                    }
+                    
+                    String nodeIDPlusNotify = nodeID + "+notify";
+
+                    if (!supportedNodesSet.contains(nodeIDPlusNotify) && filteredNodesSet.remove(nodeIDPlusNotify)) {
                         if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: Removed " + featureVar + " from " + jidFrom + "'s set of filtered nodes: ");
-                            Iterator tempIter = filteredNodeSet.iterator();
+                            Log.debug("PEP: Removed " + nodeIDPlusNotify + " from " + jidFrom + "'s set of filtered nodes: ");
+                            Iterator tempIter = filteredNodesSet.iterator();
                             while (tempIter.hasNext()) {
                                 Log.debug("PEP: " + tempIter.next());
                             }

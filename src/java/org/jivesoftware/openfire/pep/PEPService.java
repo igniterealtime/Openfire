@@ -349,7 +349,7 @@ public class PEPService implements PubSubService {
                 // the notification.
                 Map<String, HashSet<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
                 HashSet<String> filteredNodesSet = filteredNodesMap.get(recipientFullJID.toString());
-                if (filteredNodesSet != null && !filteredNodesSet.contains(nodeIDPublishedTo)) {
+                if (filteredNodesSet != null && !filteredNodesSet.contains(nodeIDPublishedTo + "+notify")) {
                     return;
                 }
 

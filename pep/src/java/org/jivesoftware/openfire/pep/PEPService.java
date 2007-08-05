@@ -315,7 +315,8 @@ public class PEPService implements PubSubService {
 
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setFrom(getAddress());
-
+        message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
+        
         // If this PEPService can retrieve presence information for the recipient,
         // collect all of their full JIDs and send the notification to each below.
         Collection<JID> recipientFullJIDs = new ArrayList<JID>();
@@ -328,9 +329,13 @@ public class PEPService implements PubSubService {
             recipientFullJIDs.add(recipientJID);
         }
 
-        message.setTo(recipientJID);
-        message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
-
+        if (recipientFullJIDs.isEmpty()) {
+            message.setTo(recipientJID);
+            
+            router.route(message);
+            return;
+        }
+        
         for (JID recipientFullJID : recipientFullJIDs) {
             // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
             // resource. However, only include the extension if the receiver has a presence subscription
@@ -387,8 +392,6 @@ public class PEPService implements PubSubService {
 
                     extendedMessage.setTo(recipientFullJID);
                     router.route(extendedMessage);
-
-                    return;
                 }
             }
             catch (IndexOutOfBoundsException e) {
@@ -401,7 +404,6 @@ public class PEPService implements PubSubService {
                 // Do not add addressing extension to message.
             }
         }
-        router.route(message);
     }
 
     public boolean isNodeCreationRestricted() {

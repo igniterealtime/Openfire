@@ -129,7 +129,7 @@ public class NodeSubscription {
         dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         fastDateFormat = FastDateFormat
-                .getInstance("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
+                .getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
     }
 
     /**
@@ -613,7 +613,7 @@ public class NodeSubscription {
      * @return true if an event notification can be sent to the subscriber for the specified
      *         published item.
      */
-    boolean canSendPublicationEvent(LeafNode leafNode, PublishedItem publishedItem) {
+    public boolean canSendPublicationEvent(LeafNode leafNode, PublishedItem publishedItem) {
         if (!canSendEvents()) {
             return false;
         }

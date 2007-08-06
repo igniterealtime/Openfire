@@ -17,7 +17,9 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
+import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PendingSubscriptionsCommand;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
@@ -33,6 +35,8 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -44,6 +48,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -130,7 +135,7 @@ public class PEPService implements PubSubService {
      * The time to elapse between each execution of the maintenance process.
      * Default is 2 minutes.
      */
-    public int items_task_timeout = 2 * 60 * 1000;
+    private int items_task_timeout = 2 * 60 * 1000;
 
     /**
      * Task that saves or deletes published items from the database.
@@ -142,6 +147,12 @@ public class PEPService implements PubSubService {
      * items.
      */
     private Timer timer = new Timer("PEP service maintenance");
+    
+    private static final FastDateFormat fastDateFormat;
+    
+    static {
+        fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
+    }
 
     /**
      * Constructs a PEPService.
@@ -454,6 +465,46 @@ public class PEPService implements PubSubService {
 
     public void setItemsTaskTimeout(int timeout) {
         items_task_timeout = timeout;
+    }
+
+    /**
+     * Sends an event notification for the last published item to the subscription's subscriber. If
+     * the subscription has not yet been authorized or is pending to be configured then
+     * no notification is going to be sent.<p>
+     *
+     * Depending on the subscription configuration the event notification may or may not have
+     * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
+     *
+     * @param subscription the subscription the published item is being sent for.
+     * @param publishedItem the last item that was published to the node.
+     */
+    public void sendLastPublishedItem(NodeSubscription subscription, PublishedItem publishedItem) {
+        // Check if the published item can be sent to the subscriber
+        if (!subscription.canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
+            return;
+        }
+        // Send event notification to the subscriber
+        Message notification = new Message();
+        Element event = notification.getElement()
+                .addElement("event", "http://jabber.org/protocol/pubsub#event");
+        Element items = event.addElement("items");
+        items.addAttribute("node", publishedItem.getNode().getNodeID());
+        Element item = items.addElement("item");
+        if (((LeafNode) publishedItem.getNode()).isItemRequired()) {
+            item.addAttribute("id", publishedItem.getID());
+        }
+        if (publishedItem.getNode().isPayloadDelivered() && publishedItem.getPayload() != null) {
+            item.add(publishedItem.getPayload().createCopy());
+        }
+        // Add a message body (if required)
+        if (subscription.isIncludingBody()) {
+            notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
+        }
+        // Include date when published item was created
+        notification.getElement().addElement("x", "jabber:x:delay")
+                .addAttribute("stamp", fastDateFormat.format(publishedItem.getCreationDate()));
+        // Send the event notification to the subscriber
+        this.sendNotification(subscription.getNode(), notification, subscription.getJID());
     }
 
 }

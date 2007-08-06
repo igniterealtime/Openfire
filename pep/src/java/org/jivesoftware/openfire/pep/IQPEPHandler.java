@@ -16,6 +16,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
@@ -31,6 +32,7 @@ import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
@@ -427,7 +429,63 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void availableSession(ClientSession session, Presence presence) {
-        // Do nothing
+        // FIXME: this method is never called for remote sessions...
+        /**
+         * When a PEP service receives initial presence information from a subscriber's
+         * resource with a non-negative priority and including XEP-0115 information that
+         * indicates an interest in the data format, it MUST generate a notification
+         * containing the last published item for that node and send it to the newly-available
+         * resource.
+         * 
+         * As an exception to the foregoing MUST rules, a PEP service MUST NOT send notifications
+         * to a subscriber if the user has blocked the subscriber from receiving all or any kinds
+         * of stanza (presence, message, IQ, or any combination thereof) using communiations blocking
+         * as specified in XMPP IM.
+         */
+
+
+        JID newlyAvailableJID = presence.getFrom();
+        
+        PresenceManager presenceManager = XMPPServer.getInstance().getPresenceManager();
+
+        for (PEPService pepService : pepServices.values()) {
+            try {
+                if (presenceManager.canProbePresence(newlyAvailableJID, pepService.getAddress().getNode())) {
+                    // Retrieve last published item.
+                    CollectionNode rootNode = pepService.getRootCollectionNode();
+                    PublishedItem lastPublishedItem = null;
+
+                    for (Node leafNode : rootNode.getNodes()) {
+                        PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
+                        if (leafLastPublishedItem == null) {
+                            continue;
+                        }
+
+                        if (lastPublishedItem == null) {
+                            lastPublishedItem = leafLastPublishedItem;
+                            continue;
+                        }
+                        
+                        if (leafLastPublishedItem.getCreationDate().compareTo(lastPublishedItem.getCreationDate()) > 0) {
+                            lastPublishedItem = leafLastPublishedItem;
+                        }
+                    }
+                    
+                    // Send last published item to the newly-available resource.
+                    NodeSubscription subscription = rootNode.getSubscription(newlyAvailableJID);
+                    if (subscription == null) {
+                        subscription = rootNode.getSubscription(new JID(newlyAvailableJID.toBareJID()));
+                    }
+
+                    if (subscription != null) {
+                        pepService.sendLastPublishedItem(subscription, lastPublishedItem);
+                    }
+                }
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing
+            }
+        }
 
     }
 

@@ -1735,7 +1735,7 @@ public abstract class Node {
      * @throws IllegalStateException If this message was used when the node supports multiple
      *         subscriptions.
      */
-    NodeSubscription getSubscription(JID subscriberJID) {
+    public NodeSubscription getSubscription(JID subscriberJID) {
         // Check that node does not support multiple subscriptions
         if (isMultipleSubscriptionsEnabled()) {
             throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +

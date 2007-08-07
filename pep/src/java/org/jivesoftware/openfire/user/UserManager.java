@@ -377,7 +377,9 @@ public class UserManager implements IQResultListener {
                 for (Iterator it=child.elementIterator("identity"); it.hasNext();) {
                     Element identity = (Element) it.next();
                     String accountType = identity.attributeValue("type");
-                    if ("registered".equals(accountType) || "admin".equals(accountType)) {
+                    // FIXME: Not all servers provide these identity types for their regged users.
+                    //        So for PEP testing purposes, let's just assume everyone is registered.
+                    if (true /*"registered".equals(accountType) || "admin".equals(accountType)*/) {
                         isRegistered = Boolean.TRUE;
                         break;
                     }

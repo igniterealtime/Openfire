@@ -336,9 +336,10 @@ public class PEPService implements PubSubService {
                 recipientFullJIDs.add(clientSession.getAddress());
             }
         }
-        else {
+        // TODO: Try to get presence info even if not local...
+        /*else {
             recipientFullJIDs.add(recipientJID);
-        }
+        }*/
 
         if (recipientFullJIDs.isEmpty()) {
             message.setTo(recipientJID);

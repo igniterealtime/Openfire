@@ -8,6 +8,7 @@
 package org.xmpp.packet;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.Log;
 
 import java.util.Iterator;
 
@@ -16,7 +17,7 @@ import java.util.Iterator;
  * network availability and to notify other entities of that availability.
  * Presence packets are also used to negotiate and manage subscriptions to the
  * presence of other entities.<p>
- *
+ * <p/>
  * A presence optionally has a {@link Type}.
  *
  * @author Matt Tucker
@@ -56,7 +57,7 @@ public class Presence extends Packet {
      * on the TO address can be disabled. The FROM address will not be validated since the
      * server is the one that sets that value.
      *
-     * @param element the Presence Element.
+     * @param element        the Presence Element.
      * @param skipValidation true if stringprep should not be applied to the TO address.
      */
     public Presence(Element element, boolean skipValidation) {
@@ -67,7 +68,7 @@ public class Presence extends Packet {
      * Constructs a new Presence that is a copy of an existing Presence.
      *
      * @param presence the presence packet.
-     * @see #createCopy() 
+     * @see #createCopy()
      */
     private Presence(Presence presence) {
         Element elementCopy = presence.element.createCopy();
@@ -81,9 +82,8 @@ public class Presence extends Packet {
     /**
      * Returns true if the presence type is "available". This is a
      * convenience method that is equivalent to:
-     *
+     * <p/>
      * <pre>getType() == null</pre>
-     *
      */
     public boolean isAvailable() {
         return getType() == null;
@@ -114,7 +114,7 @@ public class Presence extends Packet {
      * @see Type
      */
     public void setType(Type type) {
-        element.addAttribute("type", type==null?null:type.toString());
+        element.addAttribute("type", type == null ? null : type.toString());
     }
 
     /**
@@ -133,7 +133,13 @@ public class Presence extends Packet {
             return null;
         }
         else {
-            return Show.valueOf(show);
+            try {
+                return Show.valueOf(show);
+            }
+            catch (IllegalArgumentException e) {
+                Log.error("Unable to retrieve show value for " + show);
+                return null;
+            }
         }
     }
 
@@ -224,12 +230,12 @@ public class Presence extends Packet {
      *
      * @param priority the priority.
      * @throws IllegalArgumentException if the priority is less than -128 or greater
-     *      than 128.
+     *                                  than 128.
      */
     public void setPriority(int priority) {
         if (priority < -128 || priority > 128) {
             throw new IllegalArgumentException("Priority value of " + priority +
-                    " is outside the valid range of -128 through 128");
+                " is outside the valid range of -128 through 128");
         }
         Element priorityElement = element.element("priority");
         if (priorityElement == null) {
@@ -243,7 +249,7 @@ public class Presence extends Packet {
      * given name and namespace. If no matching element is found,
      * <tt>null</tt> will be returned. This is a convenience method to avoid
      * manipulating this underlying packet's Element instance directly.<p>
-     *
+     * <p/>
      * Child elements in extended namespaces are used to extend the features
      * of XMPP. Examples include a "user is typing" indicator and invitations to
      * group chat rooms. Although any valid XML can be included in a child element
@@ -251,13 +257,13 @@ public class Presence extends Packet {
      * as <a href="http://www.jabber.org/jeps">Jabber Enhancement Proposals</a>
      * (JEPs).
      *
-     * @param name the element name.
+     * @param name      the element name.
      * @param namespace the element namespace.
      * @return the first matching child element, or <tt>null</tt> if there
-     *      is no matching child element.
+     *         is no matching child element.
      */
     public Element getChildElement(String name, String namespace) {
-        for (Iterator i=element.elementIterator(name); i.hasNext(); ) {
+        for (Iterator i = element.elementIterator(name); i.hasNext();) {
             Element element = (Element)i.next();
             if (element.getNamespaceURI().equals(namespace)) {
                 return element;
@@ -271,7 +277,7 @@ public class Presence extends Packet {
      * namespace. The newly created Element is returned. This is a
      * convenience method to avoid manipulating this underlying packet's
      * Element instance directly.<p>
-     *
+     * <p/>
      * Child elements in extended namespaces are used to extend the features
      * of XMPP. Examples include a "user is typing" indicator and invitations to
      * group chat rooms. Although any valid XML can be included in a child element
@@ -279,7 +285,7 @@ public class Presence extends Packet {
      * as <a href="http://www.jabber.org/jeps">Jabber Enhancement Proposals</a>
      * (JEPs).
      *
-     * @param name the element name.
+     * @param name      the element name.
      * @param namespace the element namespace.
      * @return the newly created child element.
      */
@@ -300,22 +306,22 @@ public class Presence extends Packet {
      * Represents the type of a presence packet. Note: the presence is assumed
      * to be "available" when the type attribute of the packet is <tt>null</tt>.
      * The valid types are:
-     *
-     *  <ul>
-     *      <li>{@link #unavailable Presence.Type.unavailable} -- signals that the
-     *          entity is no longer available for communication.
-     *      <li>{@link #subscribe Presence.Type.subscribe} -- the sender wishes to
-     *          subscribe to the recipient's presence.
-     *      <li>{@link #subscribed Presence.Type.subscribed} -- the sender has allowed
-     *          the recipient to receive their presence.
-     *      <li>{@link #unsubscribe Presence.Type.unsubscribe} -- the sender is
-     *          unsubscribing from another entity's presence.
-     *      <li>{@link #unsubscribed Presence.Type.unsubcribed} -- the subscription
-     *          request has been denied or a previously-granted subscription has been cancelled.
-     *      <li>{@link #probe Presence.Type.probe} -- a request for an entity's current
-     *          presence; SHOULD be generated only by a server on behalf of a user.
-     *      <li>{@link #error Presence.Type.error} -- an error has occurred regarding
-     *          processing or delivery of a previously-sent presence stanza.
+     * <p/>
+     * <ul>
+     * <li>{@link #unavailable Presence.Type.unavailable} -- signals that the
+     * entity is no longer available for communication.
+     * <li>{@link #subscribe Presence.Type.subscribe} -- the sender wishes to
+     * subscribe to the recipient's presence.
+     * <li>{@link #subscribed Presence.Type.subscribed} -- the sender has allowed
+     * the recipient to receive their presence.
+     * <li>{@link #unsubscribe Presence.Type.unsubscribe} -- the sender is
+     * unsubscribing from another entity's presence.
+     * <li>{@link #unsubscribed Presence.Type.unsubcribed} -- the subscription
+     * request has been denied or a previously-granted subscription has been cancelled.
+     * <li>{@link #probe Presence.Type.probe} -- a request for an entity's current
+     * presence; SHOULD be generated only by a server on behalf of a user.
+     * <li>{@link #error Presence.Type.error} -- an error has occurred regarding
+     * processing or delivery of a previously-sent presence stanza.
      * </ul>
      */
     public enum Type {
@@ -362,16 +368,16 @@ public class Presence extends Packet {
     /**
      * Represents the presence "show" value. Note: a <tt>null</tt> "show" value is the
      * default, which means "available". Valid values are:
-     *
+     * <p/>
      * <ul>
-     *      <li>{@link #chat Presence.Show.chat} -- the entity or resource is actively
-     *          interested in chatting.
-     *      <li>{@link #away Presence.Show.away} -- the entity or resource is
-     *          temporarily away.
-     *      <li>{@link #dnd Presence.Show.dnd} -- the entity or resource is busy
-     *          (dnd = "Do Not Disturb").
-     *      <li>{@link #xa Presence.Show.xa} -- the entity or resource is away for an
-     *          extended period (xa = "eXtended Away").
+     * <li>{@link #chat Presence.Show.chat} -- the entity or resource is actively
+     * interested in chatting.
+     * <li>{@link #away Presence.Show.away} -- the entity or resource is
+     * temporarily away.
+     * <li>{@link #dnd Presence.Show.dnd} -- the entity or resource is busy
+     * (dnd = "Do Not Disturb").
+     * <li>{@link #xa Presence.Show.xa} -- the entity or resource is away for an
+     * extended period (xa = "eXtended Away").
      * </ul>
      */
     public enum Show {

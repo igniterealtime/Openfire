@@ -245,7 +245,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         
         field = new XFormFieldImpl("search"); 
         field.setType(FormField.TYPE_TEXT_SINGLE);
-        field.setLabel(LocaleUtils.getLocalizedString("advance.user.search.search", "search"));
+        field.setLabel("search");
         field.setRequired(true);
         searchForm.addField(field);
         

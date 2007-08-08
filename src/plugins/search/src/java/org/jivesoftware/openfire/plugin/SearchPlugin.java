@@ -79,13 +79,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                
         // Some clients, such as Miranda, are hard-coded to search specific fields,
         // so we map those fields to the fields that Openfire actually supports.
-        fieldLookup.put("jid", "Username");
-        fieldLookup.put("username", "Username");
-        fieldLookup.put("first", "Name");
-        fieldLookup.put("last", "Name");
-        fieldLookup.put("nick", "Name");
-        fieldLookup.put("name", "Name");
-        fieldLookup.put("email", "Email");
+        fieldLookup.put("jid", "username");
+        fieldLookup.put("username", "username");
+        fieldLookup.put("first", "name");
+        fieldLookup.put("last", "name");
+        fieldLookup.put("nick", "name");
+        fieldLookup.put("name", "name");
+        fieldLookup.put("email", "email");
     }
     
     public String getName() {

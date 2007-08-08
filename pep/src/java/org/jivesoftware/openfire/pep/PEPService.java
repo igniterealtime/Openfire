@@ -325,13 +325,15 @@ public class PEPService implements PubSubService {
     }
 
     public void sendNotification(Node node, Message message, JID recipientJID) {
+        message.setTo(recipientJID);
         message.setFrom(getAddress());
         message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
         
-        // If this PEPService can retrieve presence information for the recipient,
-        // collect all of their full JIDs and send the notification to each below.
+        // If the recipient subscribed with a bare JID and this PEPService can retrieve
+        // presence information for the recipient, collect all of their full JIDs and
+        // send the notification to each below.
         Collection<JID> recipientFullJIDs = new ArrayList<JID>();
-        if (XMPPServer.getInstance().isLocal(recipientJID)) {
+        if (recipientJID.getResource() == null && XMPPServer.getInstance().isLocal(recipientJID)) {
             for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
                 recipientFullJIDs.add(clientSession.getAddress());
             }
@@ -342,24 +344,47 @@ public class PEPService implements PubSubService {
         }*/
 
         if (recipientFullJIDs.isEmpty()) {
-            message.setTo(recipientJID);
-            
             router.route(message);
             return;
         }
         
         for (JID recipientFullJID : recipientFullJIDs) {
+            message.setTo(recipientFullJID);
+            
             // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
             // resource. However, only include the extension if the receiver has a presence subscription
             // to the service owner.
             try {
-                // Get the full JID of the item publisher from the node that was published to.
-                // This full JID will be used as the "replyto" address in the addressing extension.
                 JID publisher = null;
 
-                Element itemsElement = message.getElement().element("event").element("items");
-                String publishedItemID = itemsElement.element("item").attributeValue("id");
+                // Get the nodeIDPublishedTo
+                Element eventElement = message.getElement().element("event");
+                if (eventElement == null) {
+                    router.route(message);
+                    continue;
+                }
+                Element itemsElement = eventElement.element("items");
+                if (itemsElement == null) {
+                    router.route(message);
+                    continue;
+                }
                 String nodeIDPublishedTo = itemsElement.attributeValue("node");
+
+                // Get the itemID
+                String itemID = null;
+                Element retractElement = itemsElement.element("retract");
+                if (retractElement == null) {
+                    Element itemElement = itemsElement.element("item");
+                    if (itemElement == null) {
+                        router.route(message);
+                        continue;
+                    }
+                    itemID = itemElement.attributeValue("id");
+                }
+                else {
+                    itemID = retractElement.attributeValue("id");
+                }
+
 
                 // Check if the recipientFullJID is interested in notifications for this node.
                 // If the recipient has not yet requested any notification filtering, continue and send
@@ -370,10 +395,19 @@ public class PEPService implements PubSubService {
                     return;
                 }
 
+                // Get the full JID of the item publisher from the node that was published to.
+                // This full JID will be used as the "replyto" address in the addressing extension.
                 if (node.isCollectionNode()) {
                     for (Node leafNode : node.getNodes()) {
                         if (leafNode.getNodeID().equals(nodeIDPublishedTo)) {
-                            publisher = leafNode.getPublishedItem(publishedItemID).getPublisher();
+                            PublishedItem publishedItem = leafNode.getPublishedItem(itemID);
+                            if (publishedItem != null) {
+                                publisher = publishedItem.getPublisher();
+                            }                
+                            else {
+                                router.route(message);
+                                break;
+                            }
 
                             // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
                             AccessModel accessModel = leafNode.getAccessModel();
@@ -384,9 +418,19 @@ public class PEPService implements PubSubService {
                             break;
                         }
                     }
+                    if (publisher == null) {
+                        continue;
+                    }
                 }
                 else {
-                    publisher = node.getPublishedItem(publishedItemID).getPublisher();
+                    PublishedItem publishedItem = node.getPublishedItem(itemID);
+                    if (publishedItem != null) {
+                        publisher = publishedItem.getPublisher();
+                    }                
+                    else {
+                        router.route(message);
+                        continue;
+                    }
                 }
 
                 // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
@@ -402,7 +446,6 @@ public class PEPService implements PubSubService {
                     Message extendedMessage = message.createCopy();
                     extendedMessage.addExtension(new PacketExtension(addresses));
 
-                    extendedMessage.setTo(recipientFullJID);
                     router.route(extendedMessage);
                 }
             }
@@ -411,6 +454,9 @@ public class PEPService implements PubSubService {
             }
             catch (UserNotFoundException e) {
                 // Do not add addressing extension to message.
+                message.setTo(recipientJID);
+                router.route(message);
+                break;
             }
             catch (NullPointerException e) {
                 // Do not add addressing extension to message.

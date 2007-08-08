@@ -349,49 +349,35 @@ public class PEPService implements PubSubService {
         }
         
         for (JID recipientFullJID : recipientFullJIDs) {
-            message.setTo(recipientFullJID);
-            
             // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
             // resource. However, only include the extension if the receiver has a presence subscription
             // to the service owner.
             try {
                 JID publisher = null;
 
-                // Get the nodeIDPublishedTo
-                Element eventElement = message.getElement().element("event");
-                if (eventElement == null) {
-                    router.route(message);
-                    continue;
-                }
-                Element itemsElement = eventElement.element("items");
-                if (itemsElement == null) {
-                    router.route(message);
-                    continue;
-                }
-                String nodeIDPublishedTo = itemsElement.attributeValue("node");
-
-                // Get the itemID
+                // Get the ID of the node that had an item published to or retracted from.
+                Element itemsElement = message.getElement().element("event").element("items");
+                String nodeID = itemsElement.attributeValue("node");
+                
+                // Get the ID of the item that was published or retracted.
                 String itemID = null;
-                Element retractElement = itemsElement.element("retract");
-                if (retractElement == null) {
-                    Element itemElement = itemsElement.element("item");
-                    if (itemElement == null) {
-                        router.route(message);
-                        continue;
+                Element itemElement = itemsElement.element("item");                
+                if (itemElement == null) {
+                    Element retractElement = itemsElement.element("retract");
+                    if (retractElement != null) {
+                        itemID = retractElement.attributeValue("id");
                     }
-                    itemID = itemElement.attributeValue("id");
                 }
                 else {
-                    itemID = retractElement.attributeValue("id");
+                    itemID = itemElement.attributeValue("id");
                 }
-
 
                 // Check if the recipientFullJID is interested in notifications for this node.
                 // If the recipient has not yet requested any notification filtering, continue and send
                 // the notification.
                 Map<String, HashSet<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
                 HashSet<String> filteredNodesSet = filteredNodesMap.get(recipientFullJID.toString());
-                if (filteredNodesSet != null && !filteredNodesSet.contains(nodeIDPublishedTo + "+notify")) {
+                if (filteredNodesSet != null && !filteredNodesSet.contains(nodeID + "+notify")) {
                     return;
                 }
 
@@ -399,15 +385,8 @@ public class PEPService implements PubSubService {
                 // This full JID will be used as the "replyto" address in the addressing extension.
                 if (node.isCollectionNode()) {
                     for (Node leafNode : node.getNodes()) {
-                        if (leafNode.getNodeID().equals(nodeIDPublishedTo)) {
-                            PublishedItem publishedItem = leafNode.getPublishedItem(itemID);
-                            if (publishedItem != null) {
-                                publisher = publishedItem.getPublisher();
-                            }                
-                            else {
-                                router.route(message);
-                                break;
-                            }
+                        if (leafNode.getNodeID().equals(nodeID)) {
+                            publisher = leafNode.getPublishedItem(itemID).getPublisher();
 
                             // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
                             AccessModel accessModel = leafNode.getAccessModel();
@@ -418,26 +397,13 @@ public class PEPService implements PubSubService {
                             break;
                         }
                     }
-                    if (publisher == null) {
-                        continue;
-                    }
                 }
                 else {
-                    PublishedItem publishedItem = node.getPublishedItem(itemID);
-                    if (publishedItem != null) {
-                        publisher = publishedItem.getPublisher();
-                    }                
-                    else {
-                        router.route(message);
-                        continue;
-                    }
+                    publisher = node.getPublishedItem(itemID).getPublisher();
                 }
 
                 // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
-                Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(publisher.getNode());
-                RosterItem item = roster.getRosterItem(recipientFullJID);
-
-                if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
+                if (canProbePresence(publisher, recipientFullJID)) {
                     Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
                     Element address = addresses.addElement("address");
                     address.addAttribute("type", "replyto");
@@ -446,6 +412,7 @@ public class PEPService implements PubSubService {
                     Message extendedMessage = message.createCopy();
                     extendedMessage.addExtension(new PacketExtension(addresses));
 
+                    extendedMessage.setTo(recipientFullJID);
                     router.route(extendedMessage);
                 }
             }
@@ -454,12 +421,18 @@ public class PEPService implements PubSubService {
             }
             catch (UserNotFoundException e) {
                 // Do not add addressing extension to message.
-                message.setTo(recipientJID);
                 router.route(message);
-                break;
             }
             catch (NullPointerException e) {
-                // Do not add addressing extension to message.
+                try {
+                    if (canProbePresence(getAddress(), recipientFullJID)) {
+                        message.setTo(recipientFullJID);
+                    }
+                }
+                catch (UserNotFoundException e1) {
+                    // Do nothing
+                }                
+                router.route(message);
             }
         }
     }
@@ -552,6 +525,27 @@ public class PEPService implements PubSubService {
                 .addAttribute("stamp", fastDateFormat.format(publishedItem.getCreationDate()));
         // Send the event notification to the subscriber
         this.sendNotification(subscription.getNode(), notification, subscription.getJID());
+    }
+    
+    /**
+     * Returns true if the the prober is allowed to see the presence of the probee.
+     *
+     * @param prober the user that is trying to probe the presence of another user.
+     * @param probee the username of the uset that is being probed.
+     * @return true if the the prober is allowed to see the presence of the probee.
+     * @throws UserNotFoundException If the probee does not exist in the local server or the prober
+     *         is not present in the roster of the probee.
+     */
+    private boolean canProbePresence(JID prober, JID probee) throws UserNotFoundException {
+        Roster roster;
+            roster = XMPPServer.getInstance().getRosterManager().getRoster(prober.getNode());
+            RosterItem item = roster.getRosterItem(probee);
+            
+            if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
+                return true;
+            }
+
+        return false;
     }
 
 }

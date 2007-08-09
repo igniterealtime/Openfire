@@ -429,20 +429,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void availableSession(ClientSession session, Presence presence) {
-        // FIXME: this method is never called for remote sessions...
-        /**
-         * When a PEP service receives initial presence information from a subscriber's
-         * resource with a non-negative priority and including XEP-0115 information that
-         * indicates an interest in the data format, it MUST generate a notification
-         * containing the last published item for that node and send it to the newly-available
-         * resource.
-         * 
-         * As an exception to the foregoing MUST rules, a PEP service MUST NOT send notifications
-         * to a subscriber if the user has blocked the subscriber from receiving all or any kinds
-         * of stanza (presence, message, IQ, or any combination thereof) using communiations blocking
-         * as specified in XMPP IM.
-         */
-
+        // On newly-available presences, send the last published item if the resource is a subscriber.
 
         JID newlyAvailableJID = presence.getFrom();
         

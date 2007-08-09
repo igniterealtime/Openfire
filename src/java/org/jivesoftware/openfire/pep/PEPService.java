@@ -43,7 +43,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -148,7 +147,17 @@ public class PEPService implements PubSubService {
      */
     private Timer timer = new Timer("PEP service maintenance");
     
+    /**
+     * Date format to use for time stamps in delayed event notifications.
+     */
     private static final FastDateFormat fastDateFormat;
+    
+    /**
+     * A cache of all known full JIDs that have sent presences from a remote server.
+     * This set is convenient for sending notifications to the full JID of remote users
+     * that have sent available presences to the PEP service. 
+     */
+    private HashSet<JID> knownRemotePresences = new HashSet<JID>();
     
     static {
         fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
@@ -332,16 +341,21 @@ public class PEPService implements PubSubService {
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
-        Collection<JID> recipientFullJIDs = new ArrayList<JID>();
+        HashSet<JID> recipientFullJIDs = new HashSet<JID>();
         if (recipientJID.getResource() == null && XMPPServer.getInstance().isLocal(recipientJID)) {
             for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
                 recipientFullJIDs.add(clientSession.getAddress());
             }
         }
-        // TODO: Try to get presence info even if not local...
-        /*else {
-            recipientFullJIDs.add(recipientJID);
-        }*/
+        else {
+            // Since recipientJID is not local, try to get presence info from cached known remote
+            // presences.
+            for (JID remotePresence : knownRemotePresences) {
+                if (recipientJID.toBareJID().equals(remotePresence.toBareJID())) {
+                    recipientFullJIDs.add(remotePresence);
+                }
+            }
+        }
 
         if (recipientFullJIDs.isEmpty()) {
             router.route(message);
@@ -546,6 +560,14 @@ public class PEPService implements PubSubService {
             }
 
         return false;
+    }
+
+    public boolean addRemotePresence(JID jidFrom) {
+        return knownRemotePresences.add(jidFrom);
+    }
+
+    public boolean removeRemotePresence(JID jidFrom) {
+        return knownRemotePresences.remove(jidFrom);
     }
 
 }

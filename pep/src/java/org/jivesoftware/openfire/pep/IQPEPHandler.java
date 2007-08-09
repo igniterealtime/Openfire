@@ -604,6 +604,37 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 }
             }
         }
+        else if (incoming && processed && packet instanceof Presence) {
+            // Cache newly-available presence resources for remote users (since the PresenceEventDispatcher
+            // methods are not called for remote presence events).
+            JID jidFrom = packet.getFrom();
+            if (!XMPPServer.getInstance().isLocal(jidFrom) && packet.getTo() != null) {
+                if (Log.isDebugEnabled()) {
+                    Log.debug("PEP: received presence from: " + packet.getFrom() + " to: " + packet.getTo());
+                }
+                
+                for (PEPService service : pepServices.values()) {
+                    if (service.getAddress().toString().equals(packet.getTo().toString())) {
+                        Presence.Type type = ((Presence) packet).getType();
+                        if (type != null && type == Presence.Type.unavailable) {
+                            if (service.removeRemotePresence(jidFrom)) {
+                                if (Log.isDebugEnabled()) {
+                                    Log.debug("PEP: removed " + jidFrom + " from " + service.getAddress() + "'s knownRemotePresences");
+                                }
+                            }
+                        }
+                        else if (jidFrom.getResource() != null && service.addRemotePresence(jidFrom)) {
+                            if (Log.isDebugEnabled()) {
+                                Log.debug("PEP: added " + jidFrom + " to " + service.getAddress() + "'s knownRemotePresences");
+                            }
+                            
+                            // Send last published item for newly-available remote resource.
+                            availableSession((ClientSession) session, (Presence) packet);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

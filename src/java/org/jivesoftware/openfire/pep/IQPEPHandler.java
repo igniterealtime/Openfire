@@ -108,6 +108,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     private PubSubEngine pubSubEngine = null;
 
+    /**
+     * A map of all known full JIDs that have sent presences from a remote server.
+     * table: key Bare JID (String); value HashSet of JIDs
+     * 
+     * This map is convenient for sending notifications to the full JID of remote users
+     * that have sent available presences to the PEP service. 
+     */
+    private Map<String, HashSet<JID>> knownRemotePresences = new ConcurrentHashMap<String, HashSet<JID>>();
+
     private static final String GET_PEP_SERVICES = "SELECT DISTINCT serviceID FROM pubsubNode";
 
     public IQPEPHandler() {
@@ -432,7 +441,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // On newly-available presences, send the last published item if the resource is a subscriber.
 
         JID newlyAvailableJID = presence.getFrom();
-        
+
         PresenceManager presenceManager = XMPPServer.getInstance().getPresenceManager();
 
         for (PEPService pepService : pepServices.values()) {
@@ -452,12 +461,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                             lastPublishedItem = leafLastPublishedItem;
                             continue;
                         }
-                        
+
                         if (leafLastPublishedItem.getCreationDate().compareTo(lastPublishedItem.getCreationDate()) > 0) {
                             lastPublishedItem = leafLastPublishedItem;
                         }
                     }
-                    
+
                     // Send last published item to the newly-available resource.
                     NodeSubscription subscription = rootNode.getSubscription(newlyAvailableJID);
                     if (subscription == null) {
@@ -537,7 +546,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 if (featureVar == null) {
                     continue;
                 }
-                
+
                 supportedNodesSet.add(featureVar);
             }
 
@@ -572,11 +581,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 else {
                     // Remove the nodeID from the sender's filteredNodesSet if nodeIDPlusNotify
                     // is not in supportedNodesSet.
-                    HashSet<String> filteredNodesSet = filteredNodesMap.get(jidFrom);                    
+                    HashSet<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
                     if (filteredNodesSet == null) {
                         return;
                     }
-                    
+
                     String nodeIDPlusNotify = nodeID + "+notify";
 
                     if (!supportedNodesSet.contains(nodeIDPlusNotify) && filteredNodesSet.remove(nodeIDPlusNotify)) {
@@ -594,31 +603,44 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         else if (incoming && processed && packet instanceof Presence) {
             // Cache newly-available presence resources for remote users (since the PresenceEventDispatcher
             // methods are not called for remote presence events).
-            JID jidFrom = packet.getFrom();
-            if (!XMPPServer.getInstance().isLocal(jidFrom) && packet.getTo() != null) {
+            JID jidFrom  = packet.getFrom();
+            JID jidTo = packet.getTo(); 
+
+            if (!XMPPServer.getInstance().isLocal(jidFrom) && jidTo != null) {
                 if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: received presence from: " + packet.getFrom() + " to: " + packet.getTo());
+                    Log.debug("PEP: received presence from: " + jidFrom + " to: " + jidTo);
                 }
-                
-                for (PEPService service : pepServices.values()) {
-                    if (service.getAddress().toString().equals(packet.getTo().toString())) {
-                        Presence.Type type = ((Presence) packet).getType();
-                        if (type != null && type == Presence.Type.unavailable) {
-                            if (service.removeRemotePresence(jidFrom)) {
-                                if (Log.isDebugEnabled()) {
-                                    Log.debug("PEP: removed " + jidFrom + " from " + service.getAddress() + "'s knownRemotePresences");
-                                }
-                            }
-                        }
-                        else if (jidFrom.getResource() != null && service.addRemotePresence(jidFrom)) {
-                            if (Log.isDebugEnabled()) {
-                                Log.debug("PEP: added " + jidFrom + " to " + service.getAddress() + "'s knownRemotePresences");
-                            }
-                            
-                            // Send last published item for newly-available remote resource.
-                            availableSession((ClientSession) session, (Presence) packet);
+
+                HashSet<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
+                Presence.Type type = ((Presence) packet).getType();
+
+                if (type != null && type == Presence.Type.unavailable) {
+                    if (remotePresenceSet != null && remotePresenceSet.remove(jidFrom)) {
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("PEP: removed " + jidFrom + " from " + jidTo + "'s knownRemotePresences");
                         }
                     }
+                }
+                else if (jidFrom.getResource() != null) {
+                    if (remotePresenceSet != null) {
+                        if (remotePresenceSet.add(jidFrom)) {
+                            if (Log.isDebugEnabled()) {
+                                Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
+                            }
+                        }
+                    }
+                    else {
+                        remotePresenceSet = new HashSet<JID>();
+                        if (remotePresenceSet.add(jidFrom)) {
+                            if (Log.isDebugEnabled()) {
+                                Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
+                            }
+                            knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
+                        }
+                    }
+
+                    // Send last published item for newly-available remote resource.
+                    availableSession((ClientSession) session, (Presence) packet);
                 }
             }
         }
@@ -631,6 +653,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     public Map<String, HashSet<String>> getFilteredNodesMap() {
         return filteredNodesMap;
+    }
+
+    /**
+     * Returns the knownRemotePresences map.
+     * 
+     * @return the knownRemotePresences map
+     */
+    public Map<String, HashSet<JID>> getKnownRemotePresenes() {
+        return knownRemotePresences;
     }
 
 }

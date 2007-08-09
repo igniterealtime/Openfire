@@ -253,6 +253,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             Element publishElement = childElement.element("publish");
             if (publishElement != null) {
                 String nodeID = publishElement.attributeValue("node");
+                
+                // Do not allow User Avatar nodes to be created.
+                // TODO: Implement XEP-0084
+                if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
+                    IQ reply = IQ.createResultIQ(packet);
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.feature_not_implemented);
+                    return reply;
+                }
 
                 if (pepService.getNode(nodeID) == null) {
                     // Create the node
@@ -606,7 +615,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             JID jidFrom  = packet.getFrom();
             JID jidTo = packet.getTo(); 
 
-            if (!XMPPServer.getInstance().isLocal(jidFrom) && jidTo != null) {
+            if (!XMPPServer.getInstance().isLocal(jidFrom) && jidFrom != null && jidTo != null) {
                 if (Log.isDebugEnabled()) {
                     Log.debug("PEP: received presence from: " + jidFrom + " to: " + jidTo);
                 }

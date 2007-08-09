@@ -152,13 +152,6 @@ public class PEPService implements PubSubService {
      */
     private static final FastDateFormat fastDateFormat;
     
-    /**
-     * A cache of all known full JIDs that have sent presences from a remote server.
-     * This set is convenient for sending notifications to the full JID of remote users
-     * that have sent available presences to the PEP service. 
-     */
-    private HashSet<JID> knownRemotePresences = new HashSet<JID>();
-    
     static {
         fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
     }
@@ -350,9 +343,15 @@ public class PEPService implements PubSubService {
         else {
             // Since recipientJID is not local, try to get presence info from cached known remote
             // presences.
-            for (JID remotePresence : knownRemotePresences) {
-                if (recipientJID.toBareJID().equals(remotePresence.toBareJID())) {
-                    recipientFullJIDs.add(remotePresence);
+            Map<String, HashSet<JID>> knownRemotePresences =
+                XMPPServer.getInstance().getIQPEPHandler().getKnownRemotePresenes();
+            
+            HashSet<JID> remotePresenceSet = knownRemotePresences.get(getAddress().toBareJID());
+            if (remotePresenceSet != null) {
+                for (JID remotePresence : remotePresenceSet) {
+                    if (recipientJID.toBareJID().equals(remotePresence.toBareJID())) {
+                        recipientFullJIDs.add(remotePresence);
+                    }
                 }
             }
         }
@@ -560,14 +559,6 @@ public class PEPService implements PubSubService {
             }
 
         return false;
-    }
-
-    public boolean addRemotePresence(JID jidFrom) {
-        return knownRemotePresences.add(jidFrom);
-    }
-
-    public boolean removeRemotePresence(JID jidFrom) {
-        return knownRemotePresences.remove(jidFrom);
     }
 
 }

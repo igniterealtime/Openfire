@@ -34,6 +34,8 @@ import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterEventDispatcher;
+import org.jivesoftware.openfire.roster.RosterEventListener;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -89,7 +91,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider, UserIdentitiesProvider, UserItemsProvider,
-        PresenceEventListener, PacketInterceptor {
+        PresenceEventListener, RosterEventListener, PacketInterceptor {
 
     // Map of PEP services. Table, Key: bare JID (String); Value: PEPService
     private Map<String, PEPService> pepServices;
@@ -130,6 +132,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         // Listen to presence events to manage PEP auto-subscriptions.
         PresenceEventDispatcher.addListener(this);
+        
+        // Listen to roster events for PEP subscription cancelling on contact deletion.
+        RosterEventDispatcher.addListener(this);
 
         pubSubEngine = new PubSubEngine(server.getPacketRouter());
 
@@ -463,10 +468,13 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 Log.debug("PEP: " + unsubscriberJID + " subscription to " + recipientJID + "'s PEP service was cancelled.");
             }
         }
+        else {
+            return;
+        }
         
         // In the case of both users being local, we must also cancel recipientJID's subscription
         // to unsubscriberJID's PEP service, if it exists.
-        unsubscribedToPresence(recipientJID, unsubscriberJID);
+        //unsubscribedToPresence(recipientJID, unsubscriberJID);
     }
 
     public void unavailableSession(ClientSession session, Presence presence) {
@@ -671,5 +679,38 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     public Map<String, HashSet<JID>> getKnownRemotePresenes() {
         return knownRemotePresences;
+    }
+
+    public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void contactAdded(Roster roster, RosterItem item) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void contactDeleted(Roster roster, RosterItem item) {
+        JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
+        JID deletedContact = item.getJid();
+        
+        if (Log.isDebugEnabled()) {
+            Log.debug("PEP: contactDeleted: rosterOwner is " + rosterOwner + " and deletedContact is" + deletedContact);
+        }
+        
+        // FIXME: Extract the code in the below method into its own method
+        unsubscribedToPresence(rosterOwner, deletedContact);
+        
+    }
+
+    public void contactUpdated(Roster roster, RosterItem item) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void rosterLoaded(Roster roster) {
+        // TODO Auto-generated method stub
+        
     }
 }

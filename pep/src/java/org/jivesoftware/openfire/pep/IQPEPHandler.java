@@ -441,6 +441,29 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             pepService.sendLastPublishedItem(subscriberJID);
         }
     }
+    
+    public void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID) {
+        if (Log.isDebugEnabled()) {
+            Log.debug("PEP: " + unsubscriberJID + " unsubscribed from " + recipientJID + "'s presence.");
+        }
+
+        // Retrieve recipientJID's PEP service, if it exists.
+        PEPService pepService = pepServices.get(recipientJID.toBareJID());        
+        if (pepService == null) {
+            return;
+        }
+        
+        // Cancel unsubscriberJID's subscription to recipientJID's PEP service, if it exists.
+        CollectionNode rootNode = pepService.getRootCollectionNode();
+        NodeSubscription nodeSubscription = rootNode.getSubscription(unsubscriberJID);
+        if (nodeSubscription != null) {
+            rootNode.cancelSubscription(nodeSubscription);
+            
+            if (Log.isDebugEnabled()) {
+                Log.debug("PEP: " + unsubscriberJID + " subscription to " + recipientJID + "'s PEP service was cancelled.");
+            }
+        }
+    }
 
     public void unavailableSession(ClientSession session, Presence presence) {
         // Do nothing

@@ -97,14 +97,6 @@ public class PEPService implements PubSubService {
     private boolean nodeCreationRestricted = true;
 
     /**
-     * Flag that indicates if a user may have more than one subscription with
-     * the node. When multiple subscriptions is enabled each subscription
-     * request, event notification, and unsubscription request should include a
-     * subid attribute.
-     */
-    private boolean multipleSubscriptionsEnabled = false;
-
-    /**
      * Keep a registry of the presence's show value of users that subscribed to
      * a node of the pep service and for which the node only delivers
      * notifications for online users or node subscriptions deliver events based
@@ -296,7 +288,7 @@ public class PEPService implements PubSubService {
     }
 
     public boolean isMultipleSubscriptionsEnabled() {
-        return multipleSubscriptionsEnabled;
+        return false;
     }
 
     public boolean isServiceAdmin(JID user) {

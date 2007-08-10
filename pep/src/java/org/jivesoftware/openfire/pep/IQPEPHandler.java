@@ -463,6 +463,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 Log.debug("PEP: " + unsubscriberJID + " subscription to " + recipientJID + "'s PEP service was cancelled.");
             }
         }
+        
+        // In the case of both users being local, we must also cancel recipientJID's subscription
+        // to unsubscriberJID's PEP service, if it exists.
+        unsubscribedToPresence(recipientJID, unsubscriberJID);
     }
 
     public void unavailableSession(ClientSession session, Presence presence) {

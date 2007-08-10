@@ -700,7 +700,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         }
         
         // FIXME: Extract the code in the below method into its own method
-        unsubscribedToPresence(rosterOwner, deletedContact);
+        unsubscribedToPresence(deletedContact, rosterOwner);
         
     }
 

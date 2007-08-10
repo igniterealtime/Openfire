@@ -177,6 +177,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // Send unavailable presence from all of the local user's available resources
                     // to the remote user
                     presenceManager.sendUnavailableFromSessions(recipientJID, senderJID);
+                    PresenceEventDispatcher.unsubscribedToPresence(senderJID, recipientJID);
                 }
             }
             catch (SharedGroupException e) {

@@ -74,4 +74,13 @@ public interface PresenceEventListener {
      * @param authorizerJID the user that authorized the subscription.
      */
     public void subscribedToPresence(JID subscriberJID, JID authorizerJID);
+
+    /**
+     * Notification message indicating that a user has unsubscribed
+     * to the presence of another user.
+     * 
+     * @param unsubscriberJID the user that initiated the unsubscribe request.
+     * @param recipientJID    the recipient user of the unsubscribe request.
+     */
+    public void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID);
 }

@@ -501,19 +501,47 @@ public class PEPService implements PubSubService {
     }
 
     /**
-     * Sends an event notification for the last published item to the subscription's subscriber. If
-     * the subscription has not yet been authorized or is pending to be configured then
-     * no notification is going to be sent.<p>
+     * Sends an event notification for the last published item to the recipient JID. For
+     * a PEPService, the last published item is the latest item published for all of the
+     * last published items of each leaf node under the root collection node. If the
+     * recipient has no subscription to the root collection node, has not yet been authorized,
+     * or is pending to be configured -- then no notification is going to be sent.<p>
      *
      * Depending on the subscription configuration the event notification may or may not have
      * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
      *
-     * @param subscription the subscription the published item is being sent for.
-     * @param publishedItem the last item that was published to the node.
+     * @param recipientJID the recipient that is to receive the last published item notification.
      */
-    public void sendLastPublishedItem(NodeSubscription subscription, PublishedItem publishedItem) {
+    public void sendLastPublishedItem(JID recipientJID) {
+        // Retrieve last published item.
+        PublishedItem lastPublishedItem = null;
+
+        for (Node leafNode : rootCollectionNode.getNodes()) {
+            PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
+            if (leafLastPublishedItem == null) {
+                continue;
+            }
+
+            if (lastPublishedItem == null) {
+                lastPublishedItem = leafLastPublishedItem;
+                continue;
+            }
+
+            if (leafLastPublishedItem.getCreationDate().compareTo(lastPublishedItem.getCreationDate()) > 0) {
+                lastPublishedItem = leafLastPublishedItem;
+            }
+        }
+
+        NodeSubscription subscription = rootCollectionNode.getSubscription(recipientJID);
+        if (subscription == null) {
+            subscription = rootCollectionNode.getSubscription(new JID(recipientJID.toBareJID()));
+        }
+        if (subscription == null) {
+            return;
+        }
+
         // Check if the published item can be sent to the subscriber
-        if (!subscription.canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
+        if (!subscription.canSendPublicationEvent(lastPublishedItem.getNode(), lastPublishedItem)) {
             return;
         }
         // Send event notification to the subscriber
@@ -521,13 +549,13 @@ public class PEPService implements PubSubService {
         Element event = notification.getElement()
                 .addElement("event", "http://jabber.org/protocol/pubsub#event");
         Element items = event.addElement("items");
-        items.addAttribute("node", publishedItem.getNode().getNodeID());
+        items.addAttribute("node", lastPublishedItem.getNode().getNodeID());
         Element item = items.addElement("item");
-        if (((LeafNode) publishedItem.getNode()).isItemRequired()) {
-            item.addAttribute("id", publishedItem.getID());
+        if (((LeafNode) lastPublishedItem.getNode()).isItemRequired()) {
+            item.addAttribute("id", lastPublishedItem.getID());
         }
-        if (publishedItem.getNode().isPayloadDelivered() && publishedItem.getPayload() != null) {
-            item.add(publishedItem.getPayload().createCopy());
+        if (lastPublishedItem.getNode().isPayloadDelivered() && lastPublishedItem.getPayload() != null) {
+            item.add(lastPublishedItem.getPayload().createCopy());
         }
         // Add a message body (if required)
         if (subscription.isIncludingBody()) {
@@ -535,7 +563,7 @@ public class PEPService implements PubSubService {
         }
         // Include date when published item was created
         notification.getElement().addElement("x", "jabber:x:delay")
-                .addAttribute("stamp", fastDateFormat.format(publishedItem.getCreationDate()));
+                .addAttribute("stamp", fastDateFormat.format(lastPublishedItem.getCreationDate()));
         // Send the event notification to the subscriber
         this.sendNotification(subscription.getNode(), notification, subscription.getJID());
     }

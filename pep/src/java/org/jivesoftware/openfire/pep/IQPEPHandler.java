@@ -32,9 +32,10 @@ import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterEventDispatcher;
+import org.jivesoftware.openfire.roster.RosterEventListener;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -438,6 +439,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     }
                 }
             }
+            
+            pepService.sendLastPublishedItem(subscriberJID);
         }
     }
 
@@ -456,35 +459,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         for (PEPService pepService : pepServices.values()) {
             try {
                 if (presenceManager.canProbePresence(newlyAvailableJID, pepService.getAddress().getNode())) {
-                    // Retrieve last published item.
-                    CollectionNode rootNode = pepService.getRootCollectionNode();
-                    PublishedItem lastPublishedItem = null;
-
-                    for (Node leafNode : rootNode.getNodes()) {
-                        PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
-                        if (leafLastPublishedItem == null) {
-                            continue;
-                        }
-
-                        if (lastPublishedItem == null) {
-                            lastPublishedItem = leafLastPublishedItem;
-                            continue;
-                        }
-
-                        if (leafLastPublishedItem.getCreationDate().compareTo(lastPublishedItem.getCreationDate()) > 0) {
-                            lastPublishedItem = leafLastPublishedItem;
-                        }
-                    }
-
-                    // Send last published item to the newly-available resource.
-                    NodeSubscription subscription = rootNode.getSubscription(newlyAvailableJID);
-                    if (subscription == null) {
-                        subscription = rootNode.getSubscription(new JID(newlyAvailableJID.toBareJID()));
-                    }
-
-                    if (subscription != null) {
-                        pepService.sendLastPublishedItem(subscription, lastPublishedItem);
-                    }
+                    pepService.sendLastPublishedItem(newlyAvailableJID);
                 }
             }
             catch (UserNotFoundException e) {
@@ -672,5 +647,4 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public Map<String, HashSet<JID>> getKnownRemotePresenes() {
         return knownRemotePresences;
     }
-
 }

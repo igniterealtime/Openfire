@@ -115,8 +115,14 @@ public class SaslServerPlainImpl implements SaslServer {
                     vpcb.clearPassword();
                     AuthorizeCallback acb = new AuthorizeCallback(principal,username);
                     cbh.handle(new Callback[]{acb});
-                    username = acb.getAuthorizationID();
-                    completed = true;
+                    if(acb.isAuthorized()) {
+                        username = acb.getAuthorizationID();
+                        completed = true;
+                    } else {
+                        completed = true;
+                        username = null;
+                        throw new SaslException("PLAIN: user not authorized: "+principal);
+                    }
                 } else {
                     throw new SaslException("PLAIN: user not authorized: "+principal);
                 }

@@ -135,6 +135,16 @@ public class CacheFactory {
     }
 
     /**
+     * Returns a byte[] that uniquely identifies this senior cluster member or <tt>null</tt>
+     * when not in a cluster.
+     *
+     * @return a byte[] that uniquely identifies this senior cluster member or null when not in a cluster.
+     */
+    public static byte[] getSeniorClusterMemberID() {
+        return cacheFactoryStrategy.getSeniorClusterMemberID();
+    }
+
+    /**
      * Returns true if this member is the senior member in the cluster. If clustering
      * is not enabled, this method will also return true. This test is useful for
      * tasks that should only be run on a single member in a cluster.

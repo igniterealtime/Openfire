@@ -17,6 +17,7 @@
 <%@ page import="org.jivesoftware.openfire.roster.RosterItem" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.group.Group" %>
 
 <%!
     final int DEFAULT_RANGE = 15;
@@ -30,7 +31,7 @@
 <%
     class RosterItemComparator implements Comparator<RosterItem> {
         public int compare(RosterItem itemA, RosterItem itemB) {
-            return itemA.getJid().compareTo(itemB.getJid());
+            return itemA.getJid().toBareJID().compareTo(itemB.getJid().toBareJID());
         }
     }
 %>
@@ -69,6 +70,36 @@
     </head>
     <body>
 
+    <%  if (request.getParameter("addsuccess") != null) { %>
+
+        <div class="jive-success">
+        <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+            <tr><td class="jive-icon"><img src="images/success-16x16.gif" alt="" width="16" height="16" border="0"></td>
+            <td class="jive-icon-label">
+            <fmt:message key="user.roster.added" />
+            </td></tr>
+        </tbody>
+        </table>
+        </div><br>
+
+    <%  } %>
+
+    <%  if (request.getParameter("editsuccess") != null) { %>
+
+        <div class="jive-success">
+        <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+            <tr><td class="jive-icon"><img src="images/success-16x16.gif" alt="" width="16" height="16" border="0"></td>
+            <td class="jive-icon-label">
+            <fmt:message key="user.roster.edited" />
+            </td></tr>
+        </tbody>
+        </table>
+        </div><br>
+
+    <%  } %>
+
     <%  if (request.getParameter("deletesuccess") != null) { %>
 
         <div class="jive-success">
@@ -90,6 +121,9 @@
 </fmt:message>
 </p>
 
+<div style="float:right; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
+    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><fmt:message key="user.roster.add"/><img src="images/add-16x16.gif" alt="" width="16" height="16" border="0" align="absmiddle"></a>
+</div>
 <p>
 <fmt:message key="user.roster.total_items" />:
 <b><%= LocaleUtils.getLocalizedNumber(rosterCount) %></b> --
@@ -135,10 +169,10 @@
 
     <%
         }
-        int i = 0;
-        for (i=s; i<numPages && i<num; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
+        int i;
+        for (i = s; i < numPages && i < num; i++) {
+            String sep = ((i + 1) < numPages) ? " " : "";
+            boolean isCurrent = (i + 1) == curPage;
     %>
         <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= (i*range) %>&range=<%= range %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
@@ -167,6 +201,7 @@
         <th nowrap><fmt:message key="user.roster.nickname" /></th>
         <th nowrap><fmt:message key="user.roster.groups" /></th>
         <th nowrap><fmt:message key="user.roster.subscription" /></th>
+        <th nowrap><fmt:message key="user.roster.edit" /></th>
         <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
@@ -175,7 +210,7 @@
         if (roster == null) {
     %>
     <tr>
-        <td colspan="6" align="center">
+        <td colspan="7" align="center">
             <fmt:message key="error.requested_user_not_found" />
         </td>
     </tr>
@@ -183,7 +218,7 @@
         } else if (roster.getRosterItems().size() < 1) {
     %>
     <tr>
-        <td colspan="6" align="center">
+        <td colspan="7" align="center">
             <i><fmt:message key="user.roster.none_found" /></i>
         </td>
     </tr>
@@ -207,7 +242,9 @@
             <%= i %>
         </td>
         <td>
-            <%= rosterItem.getJid() %>
+            <a href="user-roster-view.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
+             title="<fmt:message key="user.roster.click_view" />"
+             ><%= rosterItem.getJid() %></a>
         </td>
         <td>
             <%= (rosterItem.getNickname() != null ? rosterItem.getNickname() : "<i>None</i>") %>
@@ -215,13 +252,8 @@
         <td>
             <%
                 List<String> groups = rosterItem.getGroups();
-                if (groups.isEmpty()) {
-            %>
-                <i>None</i>
-            <%
-                }
-                else {
-                    int count = 0;
+                int count = 0;
+                if (!groups.isEmpty()) {
                     for (String group : groups) {
                         if (count != 0) {
                             out.print(", ");
@@ -230,15 +262,39 @@
                         count++;
                     }
                 }
+                Collection<Group> sharedGroups = rosterItem.getSharedGroups();
+                if (!sharedGroups.isEmpty()) {
+                    for (Group group : sharedGroups) {
+                        if (count != 0) {
+                            out.print(", ");
+                        }
+                        out.print("<u>"+group.getName()+"</u>");
+                        count++;
+                    }
+                }
+                if (count == 0) {
+            %>
+                <i>None</i>
+            <%
+                }
             %>
         </td>
         <td>
             <%= rosterItem.getSubStatus().getName() %>
         </td>
+        <td width="1%" align="center">
+            <a href="user-roster-edit.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
+             title="<fmt:message key="global.click_edit" />"
+             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
+        </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
+            <% if (sharedGroups.isEmpty()) { %>
             <a href="user-roster-delete.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
+            <% } else { %>
+             <img onclick='alert("<fmt:message key="user.roster.cant_delete" />")' src="images/forbidden-16x16.gif" width="16" height="16" border="0" alt="">
+            <% } %>
         </td>
     </tr>
     <%

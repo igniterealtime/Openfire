@@ -159,6 +159,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return true;
     }
 
+    public byte[] getSeniorClusterMemberID() {
+        return null;
+    }
+
     public byte[] getClusterMemberID() {
         return new byte[0];
     }

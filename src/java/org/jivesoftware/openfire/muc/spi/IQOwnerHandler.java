@@ -11,6 +11,10 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.forms.DataForm;
 import org.jivesoftware.openfire.forms.FormField;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
@@ -18,18 +22,16 @@ import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import java.util.*;
-
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.JID;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
+
+import java.util.*;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#owner. This kind of 
@@ -39,7 +41,7 @@ import org.xmpp.packet.PacketError;
  * @author Gaston Dombiak
  */
 public class IQOwnerHandler {
-    private MUCRoomImpl room;
+    private LocalMUCRoom room;
 
     private PacketRouter router;
 
@@ -47,7 +49,7 @@ public class IQOwnerHandler {
 
     private Element probeResult;
 
-    public IQOwnerHandler(MUCRoomImpl chatroom, PacketRouter packetRouter) {
+    public IQOwnerHandler(LocalMUCRoom chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
         init();
@@ -209,7 +211,7 @@ public class IQOwnerHandler {
                     else {
                         // Get the bare JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        bareJID = room.getOccupant(nick).getChatUser().getAddress().toBareJID();
+                        bareJID = room.getOccupant(nick).getUserAddress().toBareJID();
                     }
                     jids.put(bareJID, affiliation);
                 }
@@ -312,6 +314,10 @@ public class IQOwnerHandler {
             // message
             if (room.isLocked() && !room.isManuallyLocked()) {
                 room.unlock(senderRole);
+            }
+            if (!room.isDestroyed) {
+                // Let other cluster nodes that the room has been updated
+                CacheFactory.doClusterTask(new RoomUpdatedEvent(room));
             }
         }
     }

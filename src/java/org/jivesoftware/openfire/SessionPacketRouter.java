@@ -95,21 +95,18 @@ public class SessionPacketRouter implements PacketRouter {
     }
 
     public void route(IQ packet) {
-        router.route(packet);
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
     public void route(Message packet) {
-        router.route(packet);
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
     public void route(Presence packet) {
-        router.route(packet);
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();

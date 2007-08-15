@@ -17,7 +17,6 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
@@ -27,12 +26,18 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Implementation of MUCUser. There will be a MUCUser per user that is connected to one or more 
- * rooms. A MUCUser contains a collection of MUCRoles for each room where the user has joined.
+ * Representation of users interacting with the chat service. A user
+ * may join serveral rooms hosted by the chat service. That means that
+ * we are going to have an instance of this class for the user and several
+ * MUCRoles for each joined room.<p>
+ *
+ * This room occupant is being hosted by this JVM. When the room occupant
+ * is hosted by another cluster node then an instance of {@link RemoteMUCRole}
+ * will be used instead.
  * 
  * @author Gaston Dombiak
  */
-public class MUCUserImpl implements MUCUser {
+public class LocalMUCUser implements MUCUser {
 
     /** The chat server this user belongs to. */
     private MultiUserChatServer server;
@@ -40,8 +45,8 @@ public class MUCUserImpl implements MUCUser {
     /** Real system XMPPAddress for the user. */
     private JID realjid;
 
-    /** Table: key roomName.toLowerCase(); value MUCRole. */
-    private Map<String, MUCRole> roles = new ConcurrentHashMap<String, MUCRole>();
+    /** Table: key roomName.toLowerCase(); value LocalMUCRole. */
+    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<String, LocalMUCRole>();
 
     /** Deliver packets to users. */
     private PacketRouter router;
@@ -58,40 +63,56 @@ public class MUCUserImpl implements MUCUser {
      * @param packetRouter the router for sending packets from this user.
      * @param jid the real address of the user
      */
-    MUCUserImpl(MultiUserChatServerImpl chatserver, PacketRouter packetRouter, JID jid) {
+    LocalMUCUser(MultiUserChatServerImpl chatserver, PacketRouter packetRouter, JID jid) {
         this.realjid = jid;
         this.router = packetRouter;
         this.server = chatserver;
     }
 
-    public long getID() {
-        return -1;
-    }
-
-    public MUCRole getRole(String roomName) throws NotFoundException {
-        MUCRole role = roles.get(roomName);
-        if (role == null) {
-            throw new NotFoundException(roomName);
-        }
-        return role;
-    }
-
+    /**
+     * Returns true if the user is currently present in one or more rooms.
+     *
+     * @return true if the user is currently present in one or more rooms.
+     */
     public boolean isJoined() {
         return !roles.isEmpty();
     }
 
-    public Iterator<MUCRole> getRoles() {
-        return Collections.unmodifiableCollection(roles.values()).iterator();
+    /**
+     * Get all roles for this user.
+     *
+     * @return Iterator over all roles for this user
+     */
+    public Collection<LocalMUCRole> getRoles() {
+        return Collections.unmodifiableCollection(roles.values());
     }
 
-    public void addRole(String roomName, MUCRole role) {
+    /**
+     * Adds the role of the user in a particular room.
+     *
+     * @param roomName The name of the room.
+     * @param role The new role of the user.
+     */
+    public void addRole(String roomName, LocalMUCRole role) {
         roles.put(roomName, role);
     }
 
+    /**
+     * Removes the role of the user in a particular room.<p>
+     *
+     * Note: PREREQUISITE: A lock on this object has already been obtained.
+     *
+     * @param roomName The name of the room we're being removed
+     */
     public void removeRole(String roomName) {
         roles.remove(roomName);
     }
 
+    /**
+     * Get time (in milliseconds from System currentTimeMillis()) since last packet.
+     *
+     * @return The time when the last packet was sent from this user
+     */
     public long getLastPacketTime() {
         return lastPacketTime;
     }
@@ -101,6 +122,7 @@ public class MUCUserImpl implements MUCUser {
      * use by another user.
      * 
      * @param packet the packet to be bounced.
+     * @param error the reason why the operation failed.
      */
     private void sendErrorPacket(Packet packet, PacketError.Condition error) {
         if (packet instanceof IQ) {
@@ -118,6 +140,14 @@ public class MUCUserImpl implements MUCUser {
         }
     }
 
+    /**
+      * Obtain the address of the user. The address is used by services like the core
+      * server packet router to determine if a packet should be sent to the handler.
+      * Handlers that are working on behalf of the server should use the generic server
+      * hostname address (e.g. server.com).
+      *
+      * @return the address of the packet handler.
+      */
     public JID getAddress() {
         return realjid;
     }
@@ -200,7 +230,7 @@ public class MUCUserImpl implements MUCUser {
             else {
                 // Check and reject conflicting packets with conflicting roles
                 // In other words, another user already has this nickname
-                if (!role.getChatUser().getAddress().equals(packet.getFrom())) {
+                if (!role.getUserAddress().equals(packet.getFrom())) {
                     sendErrorPacket(packet, PacketError.Condition.conflict);
                 }
                 else {
@@ -236,7 +266,7 @@ public class MUCUserImpl implements MUCUser {
                                     "http://jabber.org/protocol/muc#user");
                                 // Real real real UGLY TRICK!!! Will and MUST be solved when
                                 // persistence will be added. Replace locking with transactions!
-                                MUCRoomImpl room = (MUCRoomImpl) role.getChatRoom();
+                                LocalMUCRoom room = (LocalMUCRoom) role.getChatRoom();
                                 if (userInfo != null && userInfo.element("invite") != null) {
                                     // An occupant is sending invitations
 
@@ -333,7 +363,7 @@ public class MUCUserImpl implements MUCUser {
             else {
                 // Check and reject conflicting packets with conflicting roles
                 // In other words, another user already has this nickname
-                if (!role.getChatUser().getAddress().equals(packet.getFrom())) {
+                if (!role.getUserAddress().equals(packet.getFrom())) {
                     sendErrorPacket(packet, PacketError.Condition.conflict);
                 }
                 else {
@@ -385,12 +415,7 @@ public class MUCUserImpl implements MUCUser {
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
-        if (group == null) {
-            if (Presence.Type.unavailable == packet.getType()) {
-                server.removeUser(packet.getFrom());
-            }
-        }
-        else {
+        if (group != null) {
             MUCRole role = roles.get(group);
             if (role == null) {
                 // If we're not already in a room, we either are joining it or it's not
@@ -470,18 +495,15 @@ public class MUCUserImpl implements MUCUser {
             else {
                 // Check and reject conflicting packets with conflicting roles
                 // In other words, another user already has this nickname
-                if (!role.getChatUser().getAddress().equals(packet.getFrom())) {
+                if (!role.getUserAddress().equals(packet.getFrom())) {
                     sendErrorPacket(packet, PacketError.Condition.conflict);
                 }
                 else {
                     if (Presence.Type.unavailable == packet.getType()) {
                         try {
-                            // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down) 
+                            // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down)
                             removeRole(group);
-                            role.getChatRoom().leaveRoom(role.getNickname());
-                        }
-                        catch (UserNotFoundException e) {
-                            // Do nothing since the users has already left the room
+                            role.getChatRoom().leaveRoom(role);
                         }
                         catch (Exception e) {
                             Log.error(e);
@@ -495,8 +517,7 @@ public class MUCUserImpl implements MUCUser {
                             if (resource == null
                                     || role.getNickname().equalsIgnoreCase(resource)) {
                                 // Occupant has changed his availability status
-                                role.setPresence(packet.createCopy());
-                                role.getChatRoom().send(role.getPresence().createCopy());
+                                role.getChatRoom().presenceUpdated(role, packet);
                             }
                             else {
                                 // Occupant has changed his nickname. Send two presences
@@ -525,10 +546,7 @@ public class MUCUserImpl implements MUCUser {
 
                                     // Send availability presence for the new nickname
                                     String oldNick = role.getNickname();
-                                    role.setPresence(packet.createCopy());
-                                    role.changeNickname(resource);
-                                    role.getChatRoom().nicknameChanged(oldNick, resource);
-                                    role.getChatRoom().send(role.getPresence().createCopy());
+                                    role.getChatRoom().nicknameChanged(role, packet, oldNick, resource);
                                 }
                             }
                         }

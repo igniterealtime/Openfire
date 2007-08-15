@@ -1,5 +1,5 @@
 /**
- * $RCSfile: MUCRoleImpl.java,v $
+ * $RCSfile: LocalMUCRole.java,v $
  * $Revision: 3168 $
  * $Date: 2005-12-07 13:55:47 -0300 (Wed, 07 Dec 2005) $
  *
@@ -16,7 +16,11 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ElementUtil;
@@ -25,21 +29,21 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
- * Simple in-memory implementation of a role in a chatroom
+ * Implementation of a local room occupant.
  * 
  * @author Gaston Dombiak
  */
-public class MUCRoleImpl implements MUCRole {
+public class LocalMUCRole implements MUCRole {
 
     /**
      * The room this role is valid in.
      */
-    private MUCRoomImpl room;
+    private LocalMUCRoom room;
 
     /**
      * The user of the role.
      */
-    private MUCUserImpl user;
+    private LocalMUCUser user;
 
     /**
      * The user's nickname in the room.
@@ -105,8 +109,8 @@ public class MUCRoleImpl implements MUCRole {
      * @param presence the presence sent by the user to join the room.
      * @param packetRouter the packet router for sending messages from this role.
      */
-    public MUCRoleImpl(MultiUserChatServer chatserver, MUCRoomImpl chatroom, String nickname,
-            MUCRole.Role role, MUCRole.Affiliation affiliation, MUCUserImpl chatuser, Presence presence,
+    public LocalMUCRole(MultiUserChatServer chatserver, LocalMUCRoom chatroom, String nickname,
+            MUCRole.Role role, MUCRole.Affiliation affiliation, LocalMUCUser chatuser, Presence presence,
             PacketRouter packetRouter)
     {
         this.room = chatroom;
@@ -136,10 +140,6 @@ public class MUCRoleImpl implements MUCRole {
 
     public Presence getPresence() {
         return presence;
-    }
-
-    public Element getExtendedPresenceInformation() {
-        return extendedInformation;
     }
 
     public void setPresence(Presence newPresence) {
@@ -204,16 +204,13 @@ public class MUCRoleImpl implements MUCRole {
     }
 
     public void changeNickname(String nickname) {
-        String oldNickname = this.nick;
         this.nick = nickname;
         setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nick));
-        // Fire event that user changed his nickname
-        ((MultiUserChatServerImpl) server)
-                .fireNicknameChanged(room.getRole().getRoleAddress(), user.getAddress(), oldNickname, nickname);
     }
 
-    public MUCUser getChatUser() {
-        return user;
+    public void destroy() {
+        // Notify the user that he/she is no longer in the room
+        user.removeRole(room.getName());
     }
 
     public MUCRoom getChatRoom() {
@@ -222,6 +219,18 @@ public class MUCRoleImpl implements MUCRole {
 
     public JID getRoleAddress() {
         return rJID;
+    }
+
+    public JID getUserAddress() {
+        return user.getAddress();
+    }
+
+    public boolean isLocal() {
+        return true;
+    }
+
+    public NodeID getNodeID() {
+        return XMPPServer.getInstance().getNodeID();
     }
 
     private void setRoleAddress(JID jid) {

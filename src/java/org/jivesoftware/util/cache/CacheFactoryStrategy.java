@@ -53,6 +53,14 @@ public interface CacheFactoryStrategy {
     boolean isSeniorClusterMember();
 
     /**
+     * Returns a byte[] that uniquely identifies this senior cluster member or <tt>null</tt>
+     * when not in a cluster.
+     *
+     * @return a byte[] that uniquely identifies this senior cluster member or null when not in a cluster.
+     */
+    byte[] getSeniorClusterMemberID();
+
+    /**
      * Returns a byte[] that uniquely identifies this member within the cluster or <tt>null</tt>
      * when not in a cluster.
      *

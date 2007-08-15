@@ -30,9 +30,9 @@ jtds.jar                            | 1.2
 junit.jar                           | 4.3.1
 jzlib.jar                           | 1.0.7
 mail.jar                            | 1.4.0 (JavaMail)
-mina-core-1.2.0.jar                 | https://svn.apache.org/repos/asf/mina/branches/1.1
-mina-filter-compression-1.2.0.jar   | https://svn.apache.org/repos/asf/mina/branches/1.1
-mina-filter-ssl-1.2.0.jar           | https://svn.apache.org/repos/asf/mina/branches/1.1
+mina-core-1.2.0.jar                 | 1.1.1 https://svn.apache.org/repos/asf/mina/branches/1.1
+mina-filter-compression-1.2.0.jar   | 1.1.1 https://svn.apache.org/repos/asf/mina/branches/1.1
+mina-filter-ssl-1.2.0.jar           | 1.1.1 https://svn.apache.org/repos/asf/mina/branches/1.1
 mysql.jar                           | 3.1.13
 objenesis                           | 1.0 (JMock 2.1.0)
 pack200task.jar                     | August 5, 2004

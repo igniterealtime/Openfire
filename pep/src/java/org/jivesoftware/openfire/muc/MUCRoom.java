@@ -11,23 +11,26 @@
 
 package org.jivesoftware.openfire.muc;
 
-import java.util.List;
-import java.util.Date;
-import java.util.Collection;
-
 import org.dom4j.Element;
+import org.jivesoftware.database.JiveID;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
 import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
+import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.database.JiveID;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Message;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.NotFoundException;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
+
+import java.io.Externalizable;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -37,7 +40,7 @@ import org.xmpp.packet.Packet;
  * @author Gaston Dombiak
  */
 @JiveID(JiveConstants.MUC_ROOM)
-public interface MUCRoom {
+public interface MUCRoom extends Externalizable {
 
     /**
      * Get the name of this room.
@@ -139,13 +142,13 @@ public interface MUCRoom {
     List<MUCRole> getOccupantsByBareJID(String jid) throws UserNotFoundException;
 
     /**
-     * Obtain the role of a given user in the room by his full JID.
+     * Returns the role of a given user in the room by his full JID or <tt>null</tt>
+     * if no role was found for the specified user.
      *
      * @param jid The full jid of the user you'd like to obtain
-     * @return The user's role in the room
-     * @throws UserNotFoundException If there is no user with the given nickname
+     * @return The user's role in the room or null if not found.
      */
-    MUCRole getOccupantByFullJID(JID jid) throws UserNotFoundException;
+    MUCRole getOccupantByFullJID(JID jid);
 
     /**
      * Obtain the roles of all users in the chatroom.
@@ -209,7 +212,7 @@ public interface MUCRoom {
      * @throws NotAcceptableException       If the registered user is trying to join with a
      *                                      nickname different than the reserved nickname.
      */
-    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, MUCUser user,
+    LocalMUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, LocalMUCUser user,
             Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
             ConflictException, ServiceUnavailableException, NotAcceptableException;
@@ -217,10 +220,9 @@ public interface MUCRoom {
     /**
      * Remove a member from the chat room.
      *
-     * @param nickname The user to remove
-     * @throws UserNotFoundException If the nickname is not found.
+     * @param leaveRole room occupant that left the room.
      */
-    void leaveRoom(String nickname) throws UserNotFoundException;
+    void leaveRoom(MUCRole leaveRole);
 
     /**
      * Destroys the room. Each occupant will be removed and will receive a presence stanza of type
@@ -418,12 +420,22 @@ public interface MUCRoom {
     public boolean isManuallyLocked();
 
     /**
+     * An event callback fired whenever an occupant updated his presence in the chatroom.
+     *
+     * @param occupantRole occupant that changed his presence in the room.
+     * @param newPresence presence sent by the occupant.
+     */
+    public void presenceUpdated(MUCRole occupantRole, Presence newPresence);
+
+    /**
      * An event callback fired whenever an occupant changes his nickname within the chatroom.
-     *  
+     *
+     * @param occupantRole occupant that changed his nickname in the room.
+     * @param newPresence presence sent by the occupant with the new nickname.
      * @param oldNick old nickname within the room.
      * @param newNick new nickname within the room.
      */
-    public void nicknameChanged(String oldNick, String newNick);
+    public void nicknameChanged(MUCRole occupantRole, Presence newPresence, String oldNick, String newNick);
     
     /**
      * Changes the room's subject if the occupant has enough permissions. The occupant must be

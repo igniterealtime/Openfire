@@ -66,7 +66,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      * Returns true if the principal is explicity authorized to the JID
      *
      * @param username  The username requested.
-     * @param authenID The authenticated ID requesting the username.
+     * @param authenID The authenticated ID (principal) requesting the username.
      * @return true if the authenticated ID is authorized to the requested user.
      */
     public boolean authorize(String username, String authenID) {

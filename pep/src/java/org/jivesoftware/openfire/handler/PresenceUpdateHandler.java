@@ -76,7 +76,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler, ClusterEventListener {
 
-    private static final String PRESENCE_CACHE_NAME = "Directed Presences";
+    public static final String PRESENCE_CACHE_NAME = "Directed Presences";
 
     /**
      * Keeps track of entities that sent directed presences to other entities. In this map
@@ -413,6 +413,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
                     if (affectedDirectedPresence == null) {
                         affectedDirectedPresence = new DirectedPresence(handlerJID);
+                        directedPresences.add(affectedDirectedPresence);
                     }
                     affectedDirectedPresence.addReceiver(jid);
 

@@ -11,7 +11,6 @@
 
 package org.jivesoftware.openfire.muc;
 
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -234,30 +233,6 @@ public interface MultiUserChatServer extends Component {
      * @param roomName The room to remove.
      */
     void removeChatRoom(String roomName);
-
-    /**
-     * Removes a user from all chat rooms.
-     * 
-     * @param jabberID The user's normal jid, not the chat nickname jid.
-     */
-    void removeUser(JID jabberID);
-
-    /**
-     * Obtain a chat user by XMPPAddress.
-     * 
-     * @param userjid The XMPPAddress of the user.
-     * @return The chatuser corresponding to that XMPPAddress.
-     * @throws UserNotFoundException If the user is not found and can't be auto-created.
-     */
-    MUCUser getChatUser(JID userjid) throws UserNotFoundException;
-
-    /**
-     * Broadcast a given message to all members of this chat room. The sender is always set to be
-     * the chatroom.
-     * 
-     * @param msg The message to broadcast.
-     */
-    void serverBroadcast(String msg);
 
     /**
      * Returns the total chat time of all rooms combined.

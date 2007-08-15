@@ -9,9 +9,9 @@
   - Use is subject to license terms.
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.muc.MUCRole,
+<%@ page import="org.jivesoftware.openfire.muc.MUCRole,
                  org.jivesoftware.openfire.muc.MUCRoom,
+                 org.jivesoftware.util.ParamUtils,
                  java.net.URLEncoder,
                  java.text.DateFormat"
     errorPage="error.jsp"
@@ -87,7 +87,7 @@
     <tbody>
         <% for (MUCRole role : room.getOccupants()) { %>
         <tr>
-            <td><%= role.getChatUser().getAddress() %></td>
+            <td><%= role.getUserAddress() %></td>
             <td><%= role.getNickname() %></td>
             <td><%= role.getRole() %></td>
             <td><%= role.getAffiliation() %></td>

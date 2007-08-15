@@ -334,6 +334,20 @@ public class ClusterManager {
         return CacheFactory.isSeniorClusterMember();
     }
 
+    /**
+     * Returns the id of the node that is the senior cluster member. When not in a cluster the returned
+     * node id will be the {@link XMPPServer#getNodeID()}.
+     *
+     * @return the id of the node that is the senior cluster member.
+     */
+    public static NodeID getSeniorClusterMember() {
+        byte[] clusterMemberID = CacheFactory.getSeniorClusterMemberID();
+        if (clusterMemberID == null) {
+            return XMPPServer.getInstance().getNodeID();
+        }
+        return NodeID.getInstance(clusterMemberID);
+    }
+
     private static class Event {
         private EventType type;
         private byte[] nodeID;

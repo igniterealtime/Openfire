@@ -73,8 +73,7 @@ public class ClientRoute implements Cacheable, Externalizable {
             nodeID = XMPPServer.getInstance().getNodeID();
         }
         else {
-            // TODO Keep singleton instances in NodeID
-            nodeID = new NodeID(bytes);
+            nodeID = NodeID.getInstance(bytes);
         }
         available = ExternalizableUtil.getInstance().readBoolean(in);
     }

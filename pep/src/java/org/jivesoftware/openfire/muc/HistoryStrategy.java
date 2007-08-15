@@ -11,13 +11,13 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.Message;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -96,9 +96,17 @@ public class HistoryStrategy {
      * @param max the maximum number of messages to store in applicable strategies.
      */
     public void setMaxNumber(int max) {
+        if (maxNumber == max) {
+            // Do nothing since value has not changed
+            return;
+        }
         this.maxNumber = max;
         if (contextPrefix != null){
             JiveGlobals.setProperty(contextPrefix + ".maxNumber", Integer.toString(maxNumber));
+        }
+        if (parent == null) {
+            // Update the history strategy of the MUC service
+            CacheFactory.doClusterTask(new UpdateHistoryStrategy(this));
         }
     }
 
@@ -108,11 +116,19 @@ public class HistoryStrategy {
      * @param newType The new type of chat history to use.
      */
     public void setType(Type newType){
+        if (type == newType) {
+            // Do nothing since value has not changed
+            return;
+        }
         if (newType != null){
             type = newType;
         }
         if (contextPrefix != null){
             JiveGlobals.setProperty(contextPrefix + ".type", type.toString());
+        }
+        if (parent == null) {
+            // Update the history strategy of the MUC service
+            CacheFactory.doClusterTask(new UpdateHistoryStrategy(this));
         }
     }
 
@@ -195,6 +211,8 @@ public class HistoryStrategy {
      */
     public Iterator<Message> getMessageHistory(){
         LinkedList<Message> list = new LinkedList<Message>(history);
+        // Sort messages. Messages may be out of order when running inside of a cluster
+        Collections.sort(list, new MessageComparator());
         return list.iterator();
     }
 
@@ -207,6 +225,8 @@ public class HistoryStrategy {
      */
     public ListIterator<Message> getReverseMessageHistory(){
         LinkedList<Message> list = new LinkedList<Message>(history);
+        // Sort messages. Messages may be out of order when running inside of a cluster
+        Collections.sort(list, new MessageComparator());
         return list.listIterator(list.size());
     }
 
@@ -227,14 +247,14 @@ public class HistoryStrategy {
      */
     public void setTypeFromString(String typeName) {
         try {
-            setType(Type.valueOf(typeName));
+            type = Type.valueOf(typeName);
         }
         catch (Exception e) {
             if (parent != null) {
-                setType(Type.defaulType);
+                type = Type.defaulType;
             }
             else {
-                setType(Type.number);
+                type = Type.number;
             }
         }
     }
@@ -251,7 +271,7 @@ public class HistoryStrategy {
         String maxNumberString = JiveGlobals.getProperty(prefix + ".maxNumber");
         if (maxNumberString != null && maxNumberString.trim().length() > 0){
             try {
-                setMaxNumber(Integer.parseInt(maxNumberString));
+                this.maxNumber = Integer.parseInt(maxNumberString);
             }
             catch (Exception e){
                 Log.info("Jive property " + prefix + ".maxNumber not a valid number.");
@@ -268,5 +288,13 @@ public class HistoryStrategy {
      */
     public boolean hasChangedSubject() {
         return roomSubject != null;
+    }
+
+    private static class MessageComparator implements Comparator<Message> {
+        public int compare(Message o1, Message o2) {
+            String stamp1 = o1.getChildElement("x", "jabber:x:delay").attributeValue("stamp");
+            String stamp2 = o2.getChildElement("x", "jabber:x:delay").attributeValue("stamp");
+            return stamp1.compareTo(stamp2);
+        }
     }
 }

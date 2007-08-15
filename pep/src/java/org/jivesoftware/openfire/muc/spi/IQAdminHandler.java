@@ -36,11 +36,11 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 public class IQAdminHandler {
-    private MUCRoomImpl room;
+    private LocalMUCRoom room;
 
     private PacketRouter router;
 
-    public IQAdminHandler(MUCRoomImpl chatroom, PacketRouter packetRouter) {
+    public IQAdminHandler(LocalMUCRoom chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
     }
@@ -170,7 +170,7 @@ public class IQAdminHandler {
                     for (MUCRole role : room.getModerators()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("role", "moderator");
-                        metaData.addAttribute("jid", role.getChatUser().getAddress().toString());
+                        metaData.addAttribute("jid", role.getUserAddress().toString());
                         metaData.addAttribute("nick", role.getNickname());
                         metaData.addAttribute("affiliation", role.getAffiliation().toString());
                     }
@@ -183,7 +183,7 @@ public class IQAdminHandler {
                     for (MUCRole role : room.getParticipants()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("role", "participant");
-                        metaData.addAttribute("jid", role.getChatUser().getAddress().toString());
+                        metaData.addAttribute("jid", role.getUserAddress().toString());
                         metaData.addAttribute("nick", role.getNickname());
                         metaData.addAttribute("affiliation", role.getAffiliation().toString());
                     }
@@ -219,7 +219,7 @@ public class IQAdminHandler {
                     else {
                         // Get the JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        jid = room.getOccupant(nick).getChatUser().getAddress();
+                        jid = room.getOccupant(nick).getUserAddress();
                     }
 
                     room.lock.writeLock().lock();
@@ -262,8 +262,7 @@ public class IQAdminHandler {
                                 if (MUCRole.Role.moderator != senderRole.getRole()) {
                                     throw new ForbiddenException();
                                 }
-                                presences.add(room.kickOccupant(jid,
-                                        senderRole.getChatUser().getAddress(),
+                                presences.add(room.kickOccupant(jid, senderRole.getUserAddress(),
                                         item.elementTextTrim("reason")));
                             }
                         }

@@ -17,7 +17,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Class which wraps the byte[] we use to identify cluster members. The main reason
@@ -29,12 +31,38 @@ import java.util.Arrays;
  * @author Gaston Dombiak
  */
 public class NodeID implements Externalizable {
+    private static List<NodeID> instances = new ArrayList<NodeID>();
+
     private byte[] nodeID;
+
+    public static synchronized NodeID getInstance(byte[] nodeIdBytes) {
+        for (NodeID nodeID : instances) {
+            if (nodeID.equals(nodeIdBytes)) {
+                return nodeID;
+            }
+        }
+        NodeID answer = new NodeID(nodeIdBytes);
+        instances.add(answer);
+        return answer;
+    }
+
+    public static synchronized void deleteInstance(byte[] nodeIdBytes) {
+        NodeID toDelete = null;
+        for (NodeID nodeID : instances) {
+            if (nodeID.equals(nodeIdBytes)) {
+                toDelete = nodeID;
+                break;
+            }
+        }
+        if (toDelete != null) {
+            instances.remove(toDelete);
+        }
+    }
 
     public NodeID() {
     }
 
-    public NodeID(byte[] nodeIdBytes) {
+    private NodeID(byte[] nodeIdBytes) {
         this.nodeID = nodeIdBytes;
     }
 

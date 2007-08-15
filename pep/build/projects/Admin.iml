@@ -19,6 +19,24 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/web/WEB-INF/lib/commons-fileupload.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/web/WEB-INF/lib/commons-io.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
   <component name="WebModuleBuildComponent">
@@ -55,6 +73,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/ant.jar" />
       <url>jar://$MODULE_DIR$/../lib/ant.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/cglib-nodep.jar" />
+      <url>jar://$MODULE_DIR$/../lib/cglib-nodep.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -103,6 +126,16 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/hamcrest-api.jar" />
+      <url>jar://$MODULE_DIR$/../lib/hamcrest-api.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/hamcrest-library.jar" />
+      <url>jar://$MODULE_DIR$/../lib/hamcrest-library.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/i4jruntime.jar" />
       <url>jar://$MODULE_DIR$/../lib/i4jruntime.jar!/</url>
     </containerElement>
@@ -115,6 +148,16 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/jasper-runtime.jar" />
       <url>jar://$MODULE_DIR$/../lib/jasper-runtime.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jmock-junit4.jar" />
+      <url>jar://$MODULE_DIR$/../lib/jmock-junit4.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jmock.jar" />
+      <url>jar://$MODULE_DIR$/../lib/jmock.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -235,6 +278,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/xpp3.jar" />
       <url>jar://$MODULE_DIR$/../lib/merge/xpp3.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/objenesis.jar" />
+      <url>jar://$MODULE_DIR$/../lib/objenesis.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -425,6 +473,16 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/classes" />
       <url>file://$MODULE_DIR$/../../src/resources/jar</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="1" />
+      <attribute name="URI" value="/WEB-INF/lib/commons-fileupload.jar" />
+      <url>jar://$MODULE_DIR$/../../src/web/WEB-INF/lib/commons-fileupload.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="1" />
+      <attribute name="URI" value="/WEB-INF/lib/commons-io.jar" />
+      <url>jar://$MODULE_DIR$/../../src/web/WEB-INF/lib/commons-io.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="1" />

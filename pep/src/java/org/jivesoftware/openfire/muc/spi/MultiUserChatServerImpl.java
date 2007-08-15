@@ -27,10 +27,11 @@ import org.jivesoftware.openfire.forms.FormField;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.cluster.*;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
 
@@ -107,12 +108,16 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
      */
-    private Map<String,MUCRoom> rooms = new ConcurrentHashMap<String,MUCRoom>();
+    private Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<String, LocalMUCRoom>();
 
     /**
-     * chat users managed by this manager, table: key user jid (XMPPAddress); value ChatUser
+     * Chat users managed by this manager. This includes only users connected to this JVM.
+     * That means that when running inside of a cluster each node will have its own manager
+     * that in turn will keep its own list of locally connected.
+     *
+     * table: key user jid (XMPPAddress); value ChatUser
      */
-    private Map<JID, MUCUser> users = new ConcurrentHashMap<JID, MUCUser>();
+    private Map<JID, LocalMUCUser> users = new ConcurrentHashMap<JID, LocalMUCUser>();
     private HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
@@ -233,8 +238,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 }
             }
             // The packet is a normal packet that should possibly be sent to the room
-            MUCUser user = getChatUser(packet.getFrom());
-            user.process(packet);
+            JID receipient = packet.getTo();
+            String roomName = receipient != null ? receipient.getNode() : null;
+            getChatUser(packet.getFrom(), roomName).process(packet);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -318,7 +324,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             return;
         }
         final long deadline = System.currentTimeMillis() - user_idle;
-        for (MUCUser user : users.values()) {
+        for (LocalMUCUser user : users.values()) {
             try {
                 if (user.getLastPacketTime() < deadline) {
                     // If user is not present in any room then remove the user from
@@ -328,12 +334,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         continue;
                     }
                     // Kick the user from all the rooms that he/she had previuosly joined
-                    Iterator<MUCRole> roles = user.getRoles();
-                    MUCRole role;
                     MUCRoom room;
                     Presence kickedPresence;
-                    while (roles.hasNext()) {
-                        role = roles.next();
+                    for (LocalMUCRole role : user.getRoles()) {
                         room = role.getChatRoom();
                         try {
                             kickedPresence =
@@ -401,6 +404,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      */
     private class CleanupTask extends TimerTask {
         public void run() {
+            if (ClusterManager.isClusteringStarted() && !ClusterManager.isSeniorClusterMember()) {
+                // Do nothing if we are in a cluster and this JVM is not the senior cluster member
+                return;
+            }
             try {
                 cleanupRooms();
             }
@@ -419,17 +426,20 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
-        MUCRoom room;
+        LocalMUCRoom room;
+        boolean loaded = false;
+        boolean created = false;
         synchronized (roomName.intern()) {
             room = rooms.get(roomName);
             if (room == null) {
-                room = new MUCRoomImpl(this, roomName, router);
+                room = new LocalMUCRoom(this, roomName, router);
                 // If the room is persistent load the configuration values from the DB
                 try {
                     // Try to load the room's configuration from the database (if the room is
                     // persistent but was added to the DB after the server was started up or the
                     // room may be an old room that was not present in memory)
-                    MUCPersistenceManager.loadFromDB((MUCRoomImpl) room);
+                    MUCPersistenceManager.loadFromDB((LocalMUCRoom) room);
+                    loaded = true;
                 }
                 catch (IllegalArgumentException e) {
                     // The room does not exist so check for creation permissions
@@ -444,31 +454,45 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         }
                     }
                     room.addFirstOwner(userjid.toBareJID());
-                    // Fire event that a new room has been created
-                    for (MUCEventListener listener : listeners) {
-                        listener.roomCreated(room.getRole().getRoleAddress());
-                    }
+                    created = true;
                 }
                 rooms.put(roomName, room);
+            }
+        }
+        if (created) {
+            // Fire event that a new room has been created
+            for (MUCEventListener listener : listeners) {
+                listener.roomCreated(room.getRole().getRoleAddress());
+            }
+        }
+        if (loaded || created) {
+            // Notify other cluster nodes that a new room is available
+            CacheFactory.doClusterTask(new RoomAvailableEvent(room));
+            for (MUCRole role : room.getOccupants()) {
+                if (role instanceof LocalMUCRole) {
+                    CacheFactory.doClusterTask(new OccupantAddedEvent(room, role));
+                }
             }
         }
         return room;
     }
 
     public MUCRoom getChatRoom(String roomName) {
-        MUCRoom room = rooms.get(roomName);
+        boolean loaded = false;
+        LocalMUCRoom room = rooms.get(roomName);
         if (room == null) {
             // Check if the room exists in the database and was not present in memory
             synchronized (roomName.intern()) {
                 room = rooms.get(roomName);
                 if (room == null) {
-                    room = new MUCRoomImpl(this, roomName, router);
+                    room = new LocalMUCRoom(this, roomName, router);
                     // If the room is persistent load the configuration values from the DB
                     try {
                         // Try to load the room's configuration from the database (if the room is
                         // persistent but was added to the DB after the server was started up or the
                         // room may be an old room that was not present in memory)
-                        MUCPersistenceManager.loadFromDB((MUCRoomImpl) room);
+                        MUCPersistenceManager.loadFromDB((LocalMUCRoom) room);
+                        loaded = true;
                         rooms.put(roomName, room);
                     }
                     catch (IllegalArgumentException e) {
@@ -477,6 +501,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     }
                 }
             }
+        }
+        if (loaded) {
+            // Notify other cluster nodes that a new room is available
+            CacheFactory.doClusterTask(new RoomAvailableEvent(room));
         }
         return room;
     }
@@ -490,9 +518,37 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void removeChatRoom(String roomName) {
-        final MUCRoom room = rooms.remove(roomName);
+        removeChatRoom(roomName, true);
+    }
+
+    /**
+     * Notification message indicating that the specified chat room was
+     * removed from some other cluster member.
+     *
+     * @param roomName the name of the room removed from the cluster.
+     */
+    public void chatRoomRemoved(String roomName) {
+        removeChatRoom(roomName, false);
+    }
+
+    /**
+     * Notification message indicating that a chat room has been created
+     * in another cluster member.
+     *
+     * @param room the created room in another cluster node.
+     */
+    public void chatRoomAdded(LocalMUCRoom room) {
+        rooms.put(room.getName(), room);
+    }
+
+    private void removeChatRoom(String roomName, boolean notify) {
+        MUCRoom room = rooms.remove(roomName);
         if (room != null) {
             totalChatTime += room.getChatLength();
+            if (notify) {
+                // Notify other cluster nodes that a room has been removed
+                CacheFactory.doClusterTask(new RoomRemovedEvent(roomName));
+            }
         }
     }
 
@@ -504,14 +560,17 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return historyStrategy;
     }
 
-    public void removeUser(JID jabberID) {
-        MUCUser user = users.remove(jabberID);
+    /**
+     * Removes a user from all chat rooms.
+     *
+     * @param jabberID The user's normal jid, not the chat nickname jid.
+     */
+    private void removeUser(JID jabberID) {
+        LocalMUCUser user = users.remove(jabberID);
         if (user != null) {
-            Iterator<MUCRole> roles = user.getRoles();
-            while (roles.hasNext()) {
-                MUCRole role = roles.next();
+            for (LocalMUCRole role : user.getRoles()) {
                 try {
-                    role.getChatRoom().leaveRoom(role.getNickname());
+                    role.getChatRoom().leaveRoom(role);
                 }
                 catch (Exception e) {
                     Log.error(e);
@@ -520,25 +579,36 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
     }
 
-    public MUCUser getChatUser(JID userjid) throws UserNotFoundException {
+    /**
+     * Obtain a chat user by XMPPAddress. Only returns users that are connected to this JVM.
+     *
+     * @param userjid The XMPPAddress of the user.
+     * @param roomName name of the room to receive the packet.
+     * @return The chatuser corresponding to that XMPPAddress.
+     */
+    private MUCUser getChatUser(JID userjid, String roomName) {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }
-        MUCUser user;
+        LocalMUCUser user;
         synchronized (userjid.toString().intern()) {
             user = users.get(userjid);
             if (user == null) {
-                user = new MUCUserImpl(this, router, userjid);
+                if (roomName != null) {
+                    // Check if the JID belong to a user hosted in another cluster node
+                    LocalMUCRoom localMUCRoom = rooms.get(roomName);
+                    if (localMUCRoom != null) {
+                        MUCRole occupant = localMUCRoom.getOccupantByFullJID(userjid);
+                        if (occupant != null && !occupant.isLocal()) {
+                            return new RemoteMUCUser(userjid, localMUCRoom);
+                        }
+                    }
+                }
+                user = new LocalMUCUser(this, router, userjid);
                 users.put(userjid, user);
             }
         }
         return user;
-    }
-
-    public void serverBroadcast(String msg) {
-        for (MUCRoom room : rooms.values()) {
-            room.serverBroadcast(msg);
-        }
     }
 
     public void setServiceName(String name) {
@@ -811,8 +881,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         // Load all the persistent rooms to memory
-        for (MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(),
-                router)) {
+        for (LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             rooms.put(room.getName().toLowerCase(), room);
         }
         // Add statistics
@@ -883,13 +952,25 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * Retuns the total number of occupants in all rooms in the server.
      *
+     * @param onlyLocal true if only users connected to this JVM will be considered. Otherwise count cluster wise.
      * @return the number of existing rooms in the server.
      */
-    public int getNumberConnectedUsers() {
+    public int getNumberConnectedUsers(boolean onlyLocal) {
         int total = 0;
-        for (MUCUser user : users.values()) {
+        for (LocalMUCUser user : users.values()) {
             if (user.isJoined()) {
                 total = total + 1;
+            }
+        }
+        // Add users from remote cluster nodes
+        if (!onlyLocal) {
+            Collection<Object> results =
+                    CacheFactory.doSynchronousClusterTask(new GetNumberConnectedUsers(), false);
+            for (Object result : results) {
+                if (result == null) {
+                    continue;
+                }
+                total = total + (Integer) result;
             }
         }
         return total;
@@ -924,34 +1005,71 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public void joinedCluster() {
-        // Disable the service until we know that we are the senior cluster member
-        enableService(false, false);
-        //TODO Do not disable the service. All nodes will host the service (unless it was disabled before)
-        //TODO Merge rooms existing in the cluster with the ones of the new node
-        //TODO For rooms that exist in cluster and in new node then send presences of remote occupants to LOCAL occupants
+        if (isServiceEnabled()) {
+            if (!ClusterManager.isSeniorClusterMember()) {
+                // Get transient rooms and persistent rooms with occupants from senior
+                // cluster member and merge with local ones. If room configuration was
+                // changed in both places then latest configuration will be kept
+                List<RoomInfo> result = (List<RoomInfo>) CacheFactory.doSynchronousClusterTask(
+                        new SeniorMemberRoomsRequest(), ClusterManager.getSeniorClusterMember().toByteArray());
+                if (result != null) {
+                    for (RoomInfo roomInfo : result) {
+                        LocalMUCRoom remoteRoom = roomInfo.getRoom();
+                        LocalMUCRoom localRoom = rooms.get(remoteRoom.getName());
+                        if (localRoom == null) {
+                            // Create local room with remote information
+                            localRoom = remoteRoom;
+                            rooms.put(remoteRoom.getName(), localRoom);
+                        }
+                        else {
+                            // Update local room with remote information
+                            localRoom.updateConfiguration(remoteRoom);
+                        }
+                        // Add remote occupants to local room
+                        // TODO Handle conflict of nicknames
+                        for (OccupantAddedEvent event : roomInfo.getOccupants()) {
+                            event.setSendPresence(true);
+                            event.run();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public void joinedCluster(byte[] nodeID) {
-        //TODO Merge rooms existing in the cluster with the ones of the new node
-        //TODO For rooms that exist in cluster and in new node then send presences of new remote occupants to LOCAL occupants
+        if (isServiceEnabled()) {
+            List<RoomInfo> result =
+                    (List<RoomInfo>) CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
+            if (result != null) {
+                for (RoomInfo roomInfo : result) {
+                    LocalMUCRoom remoteRoom = roomInfo.getRoom();
+                    LocalMUCRoom localRoom = rooms.get(remoteRoom.getName());
+                    if (localRoom == null) {
+                        // Create local room with remote information
+                        localRoom = remoteRoom;
+                        rooms.put(remoteRoom.getName(), localRoom);
+                    }
+                    // Add remote occupants to local room
+                    for (OccupantAddedEvent event : roomInfo.getOccupants()) {
+                        event.setSendPresence(true);
+                        event.run();
+                    }
+                }
+            }
+        }
     }
 
     public void leftCluster() {
-        // Offer the service when not running in a cluster
-        enableService(true, false);
-        //TODO Do not mess with service enablement! :)
-        //TODO Send unavailable presences of leaving remote occupants to LOCAL occupants
-        //TODO Remove rooms with no occupants (should happen with previous step)?
+        // Do nothing. An unavailable presence will be created for occupants hosted in other cluster nodes.
     }
 
     public void leftCluster(byte[] nodeID) {
-        //TODO Send unavailable presences of leaving remote occupants to LOCAL occupants
-        //TODO Remove rooms with no occupants (should happen with previous step)?
+        // Do nothing. An unavailable presence will be created for occupants hosted in the leaving cluster node.
     }
 
     public void markedAsSeniorClusterMember() {
-        // Offer the service since we are the senior cluster member
-        enableService(true, false);
+        // Do nothing
     }
 
     public Iterator<DiscoServerItem> getItems() {
@@ -1045,7 +1163,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
         else if (name != null && node == null) {
             // Answer the features of a given room
-            // TODO lock the room while gathering this info???
             MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room)) {
                 features.add("http://jabber.org/protocol/muc");
@@ -1089,7 +1206,6 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
-            // TODO lock the room while gathering this info???
             MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room)) {
                 XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);
@@ -1322,7 +1438,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public double sample() {
-                return getNumberConnectedUsers();
+                return getNumberConnectedUsers(false);
             }
         };
         StatisticsManager.getInstance().addStatistic(usersStatKey, statistic);
@@ -1348,6 +1464,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public double sample() {
+                // TODO Get these value from the other cluster nodes
                 return inMessages.getAndSet(0);
             }
         };

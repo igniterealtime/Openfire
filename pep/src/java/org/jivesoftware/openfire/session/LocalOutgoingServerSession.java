@@ -113,6 +113,10 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             // hostname (i.e. remote server). If no one exists then create a new session. The same
             // session will be used for the same hostname for all the domains to authenticate
             SessionManager sessionManager = SessionManager.getInstance();
+            if (sessionManager == null) {
+                // Server is shutting down while we are trying to create a new s2s connection
+                return false;
+            }
             session = sessionManager.getOutgoingServerSession(hostname);
             if (session == null) {
                 // Try locating if the remote server has previously authenticated with this server

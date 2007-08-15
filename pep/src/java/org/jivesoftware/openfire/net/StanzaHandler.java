@@ -22,7 +22,12 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Roster;
+import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -74,7 +79,7 @@ public abstract class StanzaHandler {
     /**
      * Creates a dedicated reader for a socket.
      *
-     * @param router the router for sending packets that were read.
+     * @param router     the router for sending packets that were read.
      * @param serverName the name of the server this socket is working for.
      * @param connection the connection being read.
      */
@@ -98,13 +103,16 @@ public abstract class StanzaHandler {
                 MXParser parser = reader.getXPPParser();
                 parser.setInput(new StringReader(stanza));
                 createSession(parser);
-            } else if (startedTLS) {
+            }
+            else if (startedTLS) {
                 startedTLS = false;
                 tlsNegotiated();
-            } else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
+            }
+            else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
                 startedSASL = false;
                 saslSuccessful();
-            } else if (waitingCompressionACK) {
+            }
+            else if (waitingCompressionACK) {
                 waitingCompressionACK = false;
                 compressionSuccessful();
             }
@@ -130,27 +138,32 @@ public abstract class StanzaHandler {
         if ("starttls".equals(tag)) {
             // Negotiate TLS
             if (negotiateTLS()) {
-                startedTLS= true;
-            } else {
+                startedTLS = true;
+            }
+            else {
                 connection.close();
                 session = null;
             }
-        } else if ("auth".equals(tag)) {
+        }
+        else if ("auth".equals(tag)) {
             // User is trying to authenticate using SASL
             startedSASL = true;
             // Process authentication stanza
             saslStatus = SASLAuthentication.handle(session, doc);
-        } else if (startedSASL && "response".equals(tag)) {
+        }
+        else if (startedSASL && "response".equals(tag)) {
             // User is responding to SASL challenge. Process response
             saslStatus = SASLAuthentication.handle(session, doc);
-        } else if ("compress".equals(tag)) {
+        }
+        else if ("compress".equals(tag)) {
             // Client is trying to initiate compression
             if (compressClient(doc)) {
                 // Compression was successful so open a new stream and offer
                 // resource binding and session establishment (to client sessions only)
                 waitingCompressionACK = true;
             }
-        } else {
+        }
+        else {
             process(doc);
         }
     }
@@ -173,7 +186,7 @@ public abstract class StanzaHandler {
             try {
                 packet = new Message(doc, !validateJIDs());
             }
-            catch(IllegalArgumentException e) {
+            catch (IllegalArgumentException e) {
                 Log.debug("Rejecting packet. JID malformed", e);
                 // The original packet contains a malformed JID so answer with an error.
                 Message reply = new Message();
@@ -217,7 +230,7 @@ public abstract class StanzaHandler {
                 packet.getShow();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence show", e);
+                Log.warn("Invalid presence show for -" + packet.toXML(), e);
                 // The presence packet contains an invalid presence show so replace it with
                 // an available presence show
                 packet.setShow(null);
@@ -236,12 +249,12 @@ public abstract class StanzaHandler {
             try {
                 packet = getIQ(doc);
             }
-            catch(IllegalArgumentException e) {
+            catch (IllegalArgumentException e) {
                 Log.debug("Rejecting packet. JID malformed", e);
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();
                 if (!doc.elements().isEmpty()) {
-                    reply.setChildElement(((Element) doc.elements().get(0)).createCopy());
+                    reply.setChildElement(((Element)doc.elements().get(0)).createCopy());
                 }
                 reply.setID(doc.attributeValue("id"));
                 reply.setTo(session.getAddress());
@@ -254,8 +267,7 @@ public abstract class StanzaHandler {
             }
             processIQ(packet);
         }
-        else
-        {
+        else {
             if (!processUnknowPacket(doc)) {
                 Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
                         doc.asXML());
@@ -278,13 +290,14 @@ public abstract class StanzaHandler {
      * Process the received IQ packet. Registered
      * {@link org.jivesoftware.openfire.interceptor.PacketInterceptor} will be invoked before
      * and after the packet was routed.<p>
-     *
+     * <p/>
      * Subclasses may redefine this method for different reasons such as modifying the sender
      * of the packet to avoid spoofing, rejecting the packet or even process the packet in
      * another thread.
      *
      * @param packet the received packet.
-     * @throws org.jivesoftware.openfire.auth.UnauthorizedException if service is not available to sender.
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException
+     *          if service is not available to sender.
      */
     protected void processIQ(IQ packet) throws UnauthorizedException {
         router.route(packet);
@@ -295,13 +308,14 @@ public abstract class StanzaHandler {
      * Process the received Presence packet. Registered
      * {@link org.jivesoftware.openfire.interceptor.PacketInterceptor} will be invoked before
      * and after the packet was routed.<p>
-     *
+     * <p/>
      * Subclasses may redefine this method for different reasons such as modifying the sender
      * of the packet to avoid spoofing, rejecting the packet or even process the packet in
      * another thread.
      *
      * @param packet the received packet.
-     * @throws org.jivesoftware.openfire.auth.UnauthorizedException if service is not available to sender.
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException
+     *          if service is not available to sender.
      */
     protected void processPresence(Presence packet) throws UnauthorizedException {
         router.route(packet);
@@ -312,13 +326,14 @@ public abstract class StanzaHandler {
      * Process the received Message packet. Registered
      * {@link org.jivesoftware.openfire.interceptor.PacketInterceptor} will be invoked before
      * and after the packet was routed.<p>
-     *
+     * <p/>
      * Subclasses may redefine this method for different reasons such as modifying the sender
      * of the packet to avoid spoofing, rejecting the packet or even process the packet in
      * another thread.
      *
      * @param packet the received packet.
-     * @throws org.jivesoftware.openfire.auth.UnauthorizedException if service is not available to sender.
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException
+     *          if service is not available to sender.
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
         router.route(packet);
@@ -331,7 +346,7 @@ public abstract class StanzaHandler {
      * be thrown which will make the thread to stop processing further packets.
      *
      * @param doc the DOM element of an unkown type.
-     * @return  true if a received packet has been processed.
+     * @return true if a received packet has been processed.
      */
     abstract boolean processUnknowPacket(Element doc);
 
@@ -429,13 +444,15 @@ public abstract class StanzaHandler {
             // Log a warning so that admins can track this case from the server side
             Log.warn("Client requested compression while compression is disabled. Closing " +
                     "connection : " + connection);
-        } else if (connection.isCompressed()) {
+        }
+        else if (connection.isCompressed()) {
             // Client requested compression but connection is already compressed
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
             // Log a warning so that admins can track this case from the server side
             Log.warn("Client requested compression and connection is already compressed. Closing " +
                     "connection : " + connection);
-        } else {
+        }
+        else {
             // Check that the requested method is supported
             String method = doc.elementText("method");
             if (!"zlib".equals(method)) {
@@ -450,7 +467,8 @@ public abstract class StanzaHandler {
             // Deliver stanza
             connection.deliverRawText(error);
             return false;
-        } else {
+        }
+        else {
             // Start using compression for incoming traffic
             connection.addCompression();
 
@@ -495,7 +513,8 @@ public abstract class StanzaHandler {
         sb.append("'?>");
         if (connection.isFlashClient()) {
             sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
-        } else {
+        }
+        else {
             sb.append("<stream:stream ");
         }
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
@@ -645,6 +664,7 @@ public abstract class StanzaHandler {
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
      * @return the created session or null.
      * @throws org.xmlpull.v1.XmlPullParserException
+     *
      */
     abstract boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException;

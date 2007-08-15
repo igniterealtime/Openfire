@@ -47,6 +47,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -326,7 +327,7 @@ public class PEPService implements PubSubService {
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
-        HashSet<JID> recipientFullJIDs = new HashSet<JID>();
+        Set<JID> recipientFullJIDs = new HashSet<JID>();
         if (recipientJID.getResource() == null && XMPPServer.getInstance().isLocal(recipientJID)) {
             for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
                 recipientFullJIDs.add(clientSession.getAddress());
@@ -335,10 +336,10 @@ public class PEPService implements PubSubService {
         else {
             // Since recipientJID is not local, try to get presence info from cached known remote
             // presences.
-            Map<String, HashSet<JID>> knownRemotePresences =
+            Map<String, Set<JID>> knownRemotePresences =
                 XMPPServer.getInstance().getIQPEPHandler().getKnownRemotePresenes();
             
-            HashSet<JID> remotePresenceSet = knownRemotePresences.get(getAddress().toBareJID());
+            Set<JID> remotePresenceSet = knownRemotePresences.get(getAddress().toBareJID());
             if (remotePresenceSet != null) {
                 for (JID remotePresence : remotePresenceSet) {
                     if (recipientJID.toBareJID().equals(remotePresence.toBareJID())) {
@@ -380,8 +381,8 @@ public class PEPService implements PubSubService {
                 // Check if the recipientFullJID is interested in notifications for this node.
                 // If the recipient has not yet requested any notification filtering, continue and send
                 // the notification.
-                Map<String, HashSet<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
-                HashSet<String> filteredNodesSet = filteredNodesMap.get(recipientFullJID.toString());
+                Map<String, Set<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
+                Set<String> filteredNodesSet = filteredNodesMap.get(recipientFullJID.toString());
                 if (filteredNodesSet != null && !filteredNodesSet.contains(nodeID + "+notify")) {
                     return;
                 }

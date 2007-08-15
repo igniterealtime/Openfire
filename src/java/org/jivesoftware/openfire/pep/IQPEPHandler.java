@@ -60,6 +60,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -90,10 +91,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Armando Jagucki
  * 
  */
-public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider, UserIdentitiesProvider, UserItemsProvider,
-        PresenceEventListener, RosterEventListener, PacketInterceptor {
+public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
+        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RosterEventListener, PacketInterceptor {
 
-    // Map of PEP services. Table, Key: bare JID (String); Value: PEPService
+    /**
+     * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
+     */
     private Map<String, PEPService> pepServices;
 
     /**
@@ -103,7 +106,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * of a user is associated with a set of PEP node IDs they are interested in receiving notifications
      * for.
      */
-    private Map<String, HashSet<String>> filteredNodesMap = new ConcurrentHashMap<String, HashSet<String>>();
+    private Map<String, Set<String>> filteredNodesMap = new ConcurrentHashMap<String, Set<String>>();
 
     private IQHandlerInfo info;
 
@@ -111,12 +114,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     /**
      * A map of all known full JIDs that have sent presences from a remote server.
-     * table: key Bare JID (String); value HashSet of JIDs
+     * table: key Bare JID (String); value Set of JIDs
      * 
      * This map is convenient for sending notifications to the full JID of remote users
      * that have sent available presences to the PEP service. 
      */
-    private Map<String, HashSet<JID>> knownRemotePresences = new ConcurrentHashMap<String, HashSet<JID>>();
+    private Map<String, Set<JID>> knownRemotePresences = new ConcurrentHashMap<String, Set<JID>>();
 
     private static final String GET_PEP_SERVICES = "SELECT DISTINCT serviceID FROM pubsubNode";
 
@@ -555,7 +558,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             // If none of the feature variables contain the node ID ending in "+notify",
             // remove it from the set of filtered nodes that jidFrom is interested in being
             // notified about.
-            HashSet<String> supportedNodesSet = new HashSet<String>();
+            Set<String> supportedNodesSet = new HashSet<String>();
             while (featuresIterator.hasNext()) {
                 Element featureElement = (Element) featuresIterator.next();
 
@@ -570,7 +573,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             for (String nodeID : supportedNodesSet) {
                 if (nodeID.endsWith("+notify")) {
                     // Add the nodeID to the sender's filteredNodesSet.
-                    HashSet<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
+                    Set<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
 
                     if (filteredNodesSet == null) {
                         filteredNodesSet = new HashSet<String>();
@@ -598,7 +601,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 else {
                     // Remove the nodeID from the sender's filteredNodesSet if nodeIDPlusNotify
                     // is not in supportedNodesSet.
-                    HashSet<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
+                    Set<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
                     if (filteredNodesSet == null) {
                         return;
                     }
@@ -628,7 +631,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     Log.debug("PEP: received presence from: " + jidFrom + " to: " + jidTo);
                 }
 
-                HashSet<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
+                Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
                 Presence.Type type = ((Presence) packet).getType();
 
                 if (type != null && type == Presence.Type.unavailable) {
@@ -668,7 +671,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * 
      * @return the filteredNodesMap
      */
-    public Map<String, HashSet<String>> getFilteredNodesMap() {
+    public Map<String, Set<String>> getFilteredNodesMap() {
         return filteredNodesMap;
     }
 
@@ -677,7 +680,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * 
      * @return the knownRemotePresences map
      */
-    public Map<String, HashSet<JID>> getKnownRemotePresenes() {
+    public Map<String, Set<JID>> getKnownRemotePresenes() {
         return knownRemotePresences;
     }
 

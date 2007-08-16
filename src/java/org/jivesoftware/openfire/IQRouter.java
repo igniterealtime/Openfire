@@ -203,13 +203,27 @@ public class IQRouter extends BasicModule {
     /**
      * A JID is considered local if:
      * 1) is null or
-     * 2) has no domain or domain is empty or
-     * 3) has no resource or resource is empty
+     * 2) has no domain or domain is empty
+     * or
+     * if it's not a full JID and it was sent to the server itself.
+     *
+     * @param recipientJID address to check.
+     * @return true if the specified address belongs to the local server.
      */
     private boolean isLocalServer(JID recipientJID) {
-        return recipientJID == null || recipientJID.getDomain() == null
-                || "".equals(recipientJID.getDomain()) || recipientJID.getResource() == null
-                || "".equals(recipientJID.getResource());
+        // Check if no address was specified in the IQ packet
+        boolean implicitServer =
+                recipientJID == null || recipientJID.getDomain() == null || "".equals(recipientJID.getDomain());
+        if (!implicitServer) {
+            // We found an address. Now check if it's a bare or full JID
+            if (recipientJID.getNode() == null || recipientJID.getResource() == null) {
+                // Address is a bare JID so check if it was sent to the server itself
+                return serverName.equals(recipientJID.getDomain());
+            }
+            // Address is a full JID. IQ packets sent to full JIDs are not handle by the server
+            return false;
+        }
+        return true;
     }
 
     private void handle(IQ packet) {
@@ -297,7 +311,7 @@ public class IQRouter extends BasicModule {
                 }
             }
             else {
-                // JID is of the form <node@domain/resource>
+                // JID is of the form <node@domain/resource> or belongs to a remote server
                 routingTable.routePacket(recipientJID, packet, false);
             }
         }

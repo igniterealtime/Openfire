@@ -88,8 +88,8 @@ public class NodeAffiliate {
                 Element items = event.addElement("items");
                 items.addAttribute("node", getNode().getNodeID());
                 for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
-                    // FIXME: This was added for compatibility with PEP supporting clients like Psi.
-                    //        May not be the best of solutions.
+                    // FIXME: This was added for compatibility with PEP supporting clients.
+                    //        Alternate solution needed when XEP-0163 version > 1.0 is released.
                     //
                     // If the node ID looks like a JID, replace it with the published item's node ID.
                     if (getNode().getNodeID().indexOf("@") >= 0) {

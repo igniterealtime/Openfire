@@ -92,7 +92,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
-        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RosterEventListener, PacketInterceptor {
+        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RosterEventListener,
+        PacketInterceptor {
 
     /**
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
@@ -135,7 +136,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         // Listen to presence events to manage PEP auto-subscriptions.
         PresenceEventDispatcher.addListener(this);
-        
+
         // Listen to roster events for PEP subscription cancelling on contact deletion.
         RosterEventDispatcher.addListener(this);
 
@@ -210,10 +211,26 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         return info;
     }
 
+    /**
+     * Returns the filteredNodesMap.
+     * 
+     * @return the filteredNodesMap
+     */
+    public Map<String, Set<String>> getFilteredNodesMap() {
+        return filteredNodesMap;
+    }
+
+    /**
+     * Returns the knownRemotePresences map.
+     * 
+     * @return the knownRemotePresences map
+     */
+    public Map<String, Set<JID>> getKnownRemotePresenes() {
+        return knownRemotePresences;
+    }
+
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
-        // TODO: Finish implementing ... ;)
-
         if (packet.getTo() == null && packet.getType() == IQ.Type.set) {
             String jidFrom = packet.getFrom().toBareJID();
 
@@ -260,7 +277,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             Element publishElement = childElement.element("publish");
             if (publishElement != null) {
                 String nodeID = publishElement.attributeValue("node");
-                
+
                 // Do not allow User Avatar nodes to be created.
                 // TODO: Implement XEP-0084
                 if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
@@ -374,6 +391,34 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     /**
+     * Cancels a subscription to a PEPService's root collection node.
+     * 
+     * @param unsubscriber the JID of the subscriber whose subscription is being canceled.
+     * @param serviceOwner the JID of the owner of the PEP service for which the subscription is being canceled.
+     */
+    private void cancelSubscriptionToPEPService(JID unsubscriber, JID serviceOwner) {
+        // Retrieve recipientJID's PEP service, if it exists.
+        PEPService pepService = pepServices.get(serviceOwner.toBareJID());
+        if (pepService == null) {
+            return;
+        }
+
+        // Cancel unsubscriberJID's subscription to recipientJID's PEP service, if it exists.
+        CollectionNode rootNode = pepService.getRootCollectionNode();
+        NodeSubscription nodeSubscription = rootNode.getSubscription(unsubscriber);
+        if (nodeSubscription != null) {
+            rootNode.cancelSubscription(nodeSubscription);
+
+            if (Log.isDebugEnabled()) {
+                Log.debug("PEP: " + unsubscriber + " subscription to " + serviceOwner + "'s PEP service was cancelled.");
+            }
+        }
+        else {
+            return;
+        }
+    }
+
+    /**
      * Implements ServerIdentitiesProvider and UserIdentitiesProvider, adding
      * the PEP identity to the respective disco#info results.
      */
@@ -445,44 +490,17 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     }
                 }
             }
-            
+
             pepService.sendLastPublishedItem(subscriberJID);
         }
     }
-    
+
     public void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID) {
         if (Log.isDebugEnabled()) {
             Log.debug("PEP: " + unsubscriberJID + " unsubscribed from " + recipientJID + "'s presence.");
         }
 
-        // Retrieve recipientJID's PEP service, if it exists.
-        PEPService pepService = pepServices.get(recipientJID.toBareJID());        
-        if (pepService == null) {
-            return;
-        }
-        
-        // Cancel unsubscriberJID's subscription to recipientJID's PEP service, if it exists.
-        CollectionNode rootNode = pepService.getRootCollectionNode();
-        NodeSubscription nodeSubscription = rootNode.getSubscription(unsubscriberJID);
-        if (nodeSubscription != null) {
-            rootNode.cancelSubscription(nodeSubscription);
-            
-            if (Log.isDebugEnabled()) {
-                Log.debug("PEP: " + unsubscriberJID + " subscription to " + recipientJID + "'s PEP service was cancelled.");
-            }
-        }
-        else {
-            return;
-        }
-        
-        // In the case of both users being local, we must also cancel recipientJID's subscription
-        // to unsubscriberJID's PEP service, if it exists.
-        //unsubscribedToPresence(recipientJID, unsubscriberJID);
-    }
-
-    public void unavailableSession(ClientSession session, Presence presence) {
-        // Do nothing
-
+        cancelSubscriptionToPEPService(unsubscriberJID, recipientJID);
     }
 
     public void availableSession(ClientSession session, Presence presence) {
@@ -505,13 +523,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     }
 
-    public void presenceChanged(ClientSession session, Presence presence) {
-        // Do nothing
+    public void contactDeleted(Roster roster, RosterItem item) {
+        JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
+        JID deletedContact = item.getJid();
 
-    }
+        if (Log.isDebugEnabled()) {
+            Log.debug("PEP: contactDeleted: rosterOwner is " + rosterOwner + " and deletedContact is" + deletedContact);
+        }
 
-    public void presencePriorityChanged(ClientSession session, Presence presence) {
-        // Do nothing
+        cancelSubscriptionToPEPService(deletedContact, rosterOwner);
 
     }
 
@@ -623,8 +643,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         else if (incoming && processed && packet instanceof Presence) {
             // Cache newly-available presence resources for remote users (since the PresenceEventDispatcher
             // methods are not called for remote presence events).
-            JID jidFrom  = packet.getFrom();
-            JID jidTo = packet.getTo(); 
+            JID jidFrom = packet.getFrom();
+            JID jidTo = packet.getTo();
 
             if (!XMPPServer.getInstance().isLocal(jidFrom) && jidFrom != null && jidTo != null) {
                 if (Log.isDebugEnabled()) {
@@ -667,53 +687,40 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     /**
-     * Returns the filteredNodesMap.
-     * 
-     * @return the filteredNodesMap
+     *  The following functions are unimplemented required interface methods.
      */
-    public Map<String, Set<String>> getFilteredNodesMap() {
-        return filteredNodesMap;
+    public void unavailableSession(ClientSession session, Presence presence) {
+        // Do nothing
+
     }
 
-    /**
-     * Returns the knownRemotePresences map.
-     * 
-     * @return the knownRemotePresences map
-     */
-    public Map<String, Set<JID>> getKnownRemotePresenes() {
-        return knownRemotePresences;
+    public void presenceChanged(ClientSession session, Presence presence) {
+        // Do nothing
+
+    }
+
+    public void presencePriorityChanged(ClientSession session, Presence presence) {
+        // Do nothing
+
     }
 
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
-        // TODO Auto-generated method stub
+        // Do nothing
         return false;
     }
 
     public void contactAdded(Roster roster, RosterItem item) {
-        // TODO Auto-generated method stub
-        
-    }
+        // Do nothing
 
-    public void contactDeleted(Roster roster, RosterItem item) {
-        JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
-        JID deletedContact = item.getJid();
-        
-        if (Log.isDebugEnabled()) {
-            Log.debug("PEP: contactDeleted: rosterOwner is " + rosterOwner + " and deletedContact is" + deletedContact);
-        }
-        
-        // FIXME: Extract the code in the below method into its own method
-        unsubscribedToPresence(deletedContact, rosterOwner);
-        
     }
 
     public void contactUpdated(Roster roster, RosterItem item) {
-        // TODO Auto-generated method stub
-        
+        // Do nothing
+
     }
 
     public void rosterLoaded(Roster roster) {
-        // TODO Auto-generated method stub
-        
+        // Do nothing
+
     }
 }

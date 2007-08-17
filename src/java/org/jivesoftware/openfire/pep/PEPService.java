@@ -139,12 +139,12 @@ public class PEPService implements PubSubService {
      * items.
      */
     private Timer timer = new Timer("PEP service maintenance");
-    
+
     /**
      * Date format to use for time stamps in delayed event notifications.
      */
     private static final FastDateFormat fastDateFormat;
-    
+
     static {
         fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
     }
@@ -230,33 +230,8 @@ public class PEPService implements PubSubService {
         nodes.put(node.getNodeID(), node);
     }
 
-    public void broadcast(Node node, Message message, Collection<JID> jids) {
-        message.setFrom(getAddress());
-        for (JID jid : jids) {
-            message.setTo(jid);
-            message.setID(node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
-            router.route(message);
-        }
-    }
-
-    public boolean canCreateNode(JID creator) {
-        // Node creation is always allowed for sysadmin
-        if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
-            // The user is not allowed to create nodes
-            return false;
-        }
-        return true;
-    }
-
-    public JID getAddress() {
-        return new JID(serviceOwnerJID);
-    }
-
-    public DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType) {
-        if (leafType) {
-            return leafDefaultConfiguration;
-        }
-        return collectionDefaultConfiguration;
+    public void removeNode(String nodeID) {
+        nodes.remove(nodeID);
     }
 
     public Node getNode(String nodeID) {
@@ -271,13 +246,54 @@ public class PEPService implements PubSubService {
         return rootCollectionNode;
     }
 
+    public JID getAddress() {
+        return new JID(serviceOwnerJID);
+    }
+
     public String getServiceID() {
         // The bare JID of the user is the service ID for PEP
         return serviceOwnerJID;
     }
 
+    public DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType) {
+        if (leafType) {
+            return leafDefaultConfiguration;
+        }
+        return collectionDefaultConfiguration;
+    }
+
     public Collection<String> getShowPresences(JID subscriber) {
         return PubSubEngine.getShowPresences(this, subscriber);
+    }
+
+    public boolean canCreateNode(JID creator) {
+        // Node creation is always allowed for sysadmin
+        if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
+            // The user is not allowed to create nodes
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the the prober is allowed to see the presence of the probee.
+     *
+     * @param prober the user that is trying to probe the presence of another user.
+     * @param probee the username of the uset that is being probed.
+     * @return true if the the prober is allowed to see the presence of the probee.
+     * @throws UserNotFoundException If the probee does not exist in the local server or the prober
+     *         is not present in the roster of the probee.
+     */
+    private boolean canProbePresence(JID prober, JID probee) throws UserNotFoundException {
+        Roster roster;
+        roster = XMPPServer.getInstance().getRosterManager().getRoster(prober.getNode());
+        RosterItem item = roster.getRosterItem(probee);
+
+        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
+            return true;
+        }
+
+        return false;
     }
 
     public boolean isCollectionNodesSupported() {
@@ -303,6 +319,10 @@ public class PEPService implements PubSubService {
         }
     }
 
+    public boolean isNodeCreationRestricted() {
+        return nodeCreationRestricted;
+    }
+
     public void presenceSubscriptionNotRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionNotRequired(this, node, user);
     }
@@ -311,19 +331,24 @@ public class PEPService implements PubSubService {
         PubSubEngine.presenceSubscriptionRequired(this, node, user);
     }
 
-    public void removeNode(String nodeID) {
-        nodes.remove(nodeID);
-    }
-
     public void send(Packet packet) {
         router.route(packet);
+    }
+
+    public void broadcast(Node node, Message message, Collection<JID> jids) {
+        message.setFrom(getAddress());
+        for (JID jid : jids) {
+            message.setTo(jid);
+            message.setID(node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+            router.route(message);
+        }
     }
 
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setTo(recipientJID);
         message.setFrom(getAddress());
         message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
-        
+
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
@@ -336,9 +361,8 @@ public class PEPService implements PubSubService {
         else {
             // Since recipientJID is not local, try to get presence info from cached known remote
             // presences.
-            Map<String, Set<JID>> knownRemotePresences =
-                XMPPServer.getInstance().getIQPEPHandler().getKnownRemotePresenes();
-            
+            Map<String, Set<JID>> knownRemotePresences = XMPPServer.getInstance().getIQPEPHandler().getKnownRemotePresenes();
+
             Set<JID> remotePresenceSet = knownRemotePresences.get(getAddress().toBareJID());
             if (remotePresenceSet != null) {
                 for (JID remotePresence : remotePresenceSet) {
@@ -353,7 +377,7 @@ public class PEPService implements PubSubService {
             router.route(message);
             return;
         }
-        
+
         for (JID recipientFullJID : recipientFullJIDs) {
             // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
             // resource. However, only include the extension if the receiver has a presence subscription
@@ -364,10 +388,10 @@ public class PEPService implements PubSubService {
                 // Get the ID of the node that had an item published to or retracted from.
                 Element itemsElement = message.getElement().element("event").element("items");
                 String nodeID = itemsElement.attributeValue("node");
-                
+
                 // Get the ID of the item that was published or retracted.
                 String itemID = null;
-                Element itemElement = itemsElement.element("item");                
+                Element itemElement = itemsElement.element("item");
                 if (itemElement == null) {
                     Element retractElement = itemsElement.element("retract");
                     if (retractElement != null) {
@@ -437,60 +461,10 @@ public class PEPService implements PubSubService {
                 }
                 catch (UserNotFoundException e1) {
                     // Do nothing
-                }                
+                }
                 router.route(message);
             }
         }
-    }
-
-    public boolean isNodeCreationRestricted() {
-        return nodeCreationRestricted;
-    }
-
-    public void queueItemToAdd(PublishedItem newItem) {
-        PubSubEngine.queueItemToAdd(this, newItem);
-
-    }
-
-    public void queueItemToRemove(PublishedItem removedItem) {
-        PubSubEngine.queueItemToRemove(this, removedItem);
-
-    }
-
-    public Map<String, Map<String, String>> getBarePresences() {
-        return barePresences;
-    }
-
-    public Queue<PublishedItem> getItemsToAdd() {
-        return itemsToAdd;
-    }
-
-    public Queue<PublishedItem> getItemsToDelete() {
-        return itemsToDelete;
-    }
-
-    public AdHocCommandManager getManager() {
-        return manager;
-    }
-
-    public PublishedItemTask getPublishedItemTask() {
-        return publishedItemTask;
-    }
-
-    public void setPublishedItemTask(PublishedItemTask task) {
-        publishedItemTask = task;
-    }
-
-    public Timer getTimer() {
-        return timer;
-    }
-
-    public int getItemsTaskTimeout() {
-        return items_task_timeout;
-    }
-
-    public void setItemsTaskTimeout(int timeout) {
-        items_task_timeout = timeout;
     }
 
     /**
@@ -539,8 +513,7 @@ public class PEPService implements PubSubService {
         }
         // Send event notification to the subscriber
         Message notification = new Message();
-        Element event = notification.getElement()
-                .addElement("event", "http://jabber.org/protocol/pubsub#event");
+        Element event = notification.getElement().addElement("event", "http://jabber.org/protocol/pubsub#event");
         Element items = event.addElement("items");
         items.addAttribute("node", lastPublishedItem.getNode().getNodeID());
         Element item = items.addElement("item");
@@ -555,31 +528,55 @@ public class PEPService implements PubSubService {
             notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
         }
         // Include date when published item was created
-        notification.getElement().addElement("x", "jabber:x:delay")
-                .addAttribute("stamp", fastDateFormat.format(lastPublishedItem.getCreationDate()));
+        notification.getElement().addElement("x", "jabber:x:delay").addAttribute("stamp", fastDateFormat.format(lastPublishedItem.getCreationDate()));
         // Send the event notification to the subscriber
         this.sendNotification(subscription.getNode(), notification, subscription.getJID());
     }
-    
-    /**
-     * Returns true if the the prober is allowed to see the presence of the probee.
-     *
-     * @param prober the user that is trying to probe the presence of another user.
-     * @param probee the username of the uset that is being probed.
-     * @return true if the the prober is allowed to see the presence of the probee.
-     * @throws UserNotFoundException If the probee does not exist in the local server or the prober
-     *         is not present in the roster of the probee.
-     */
-    private boolean canProbePresence(JID prober, JID probee) throws UserNotFoundException {
-        Roster roster;
-            roster = XMPPServer.getInstance().getRosterManager().getRoster(prober.getNode());
-            RosterItem item = roster.getRosterItem(probee);
-            
-            if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-                return true;
-            }
 
-        return false;
+    public void queueItemToAdd(PublishedItem newItem) {
+        PubSubEngine.queueItemToAdd(this, newItem);
+
+    }
+
+    public void queueItemToRemove(PublishedItem removedItem) {
+        PubSubEngine.queueItemToRemove(this, removedItem);
+
+    }
+
+    public Map<String, Map<String, String>> getBarePresences() {
+        return barePresences;
+    }
+
+    public Queue<PublishedItem> getItemsToAdd() {
+        return itemsToAdd;
+    }
+
+    public Queue<PublishedItem> getItemsToDelete() {
+        return itemsToDelete;
+    }
+
+    public AdHocCommandManager getManager() {
+        return manager;
+    }
+
+    public PublishedItemTask getPublishedItemTask() {
+        return publishedItemTask;
+    }
+
+    public void setPublishedItemTask(PublishedItemTask task) {
+        publishedItemTask = task;
+    }
+
+    public Timer getTimer() {
+        return timer;
+    }
+
+    public int getItemsTaskTimeout() {
+        return items_task_timeout;
+    }
+
+    public void setItemsTaskTimeout(int timeout) {
+        items_task_timeout = timeout;
     }
 
 }

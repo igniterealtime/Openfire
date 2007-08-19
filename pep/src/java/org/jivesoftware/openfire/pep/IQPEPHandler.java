@@ -16,7 +16,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
@@ -508,17 +507,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         JID newlyAvailableJID = presence.getFrom();
 
-        PresenceManager presenceManager = XMPPServer.getInstance().getPresenceManager();
-
         for (PEPService pepService : pepServices.values()) {
-            try {
-                if (presenceManager.canProbePresence(newlyAvailableJID, pepService.getAddress().getNode())) {
-                    pepService.sendLastPublishedItems(newlyAvailableJID);
-                }
-            }
-            catch (UserNotFoundException e) {
-                // Do nothing
-            }
+            pepService.sendLastPublishedItems(newlyAvailableJID);
         }
 
     }

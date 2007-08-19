@@ -491,7 +491,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 }
             }
 
-            pepService.sendLastPublishedItem(subscriberJID);
+            pepService.sendLastPublishedItems(subscriberJID);
         }
     }
 
@@ -513,7 +513,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         for (PEPService pepService : pepServices.values()) {
             try {
                 if (presenceManager.canProbePresence(newlyAvailableJID, pepService.getAddress().getNode())) {
-                    pepService.sendLastPublishedItem(newlyAvailableJID);
+                    pepService.sendLastPublishedItems(newlyAvailableJID);
                 }
             }
             catch (UserNotFoundException e) {

@@ -468,37 +468,18 @@ public class PEPService implements PubSubService {
     }
 
     /**
-     * Sends an event notification for the last published item to the recipient JID. For
-     * a PEPService, the last published item is the latest item published for all of the
-     * last published items of each leaf node under the root collection node. If the
-     * recipient has no subscription to the root collection node, has not yet been authorized,
-     * or is pending to be configured -- then no notification is going to be sent.<p>
+     * Sends an event notification for the last published item of each leaf node under the
+     * root collection node to the recipient JID. If the recipient has no subscription to
+     * the root collection node, has not yet been authorized, or is pending to be
+     * configured -- then no notifications are going to be sent.<p>
      *
-     * Depending on the subscription configuration the event notification may or may not have
+     * Depending on the subscription configuration the event notifications may or may not have
      * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
      *
-     * @param recipientJID the recipient that is to receive the last published item notification.
+     * @param recipientJID the recipient that is to receive the last published item notifications.
      */
-    public void sendLastPublishedItem(JID recipientJID) {
-        // Retrieve last published item.
-        PublishedItem lastPublishedItem = null;
-
-        for (Node leafNode : rootCollectionNode.getNodes()) {
-            PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
-            if (leafLastPublishedItem == null) {
-                continue;
-            }
-
-            if (lastPublishedItem == null) {
-                lastPublishedItem = leafLastPublishedItem;
-                continue;
-            }
-
-            if (leafLastPublishedItem.getCreationDate().compareTo(lastPublishedItem.getCreationDate()) > 0) {
-                lastPublishedItem = leafLastPublishedItem;
-            }
-        }
-
+    public void sendLastPublishedItems(JID recipientJID) {
+        // Ensure the recipient has a subscription to this service's root collection node.
         NodeSubscription subscription = rootCollectionNode.getSubscription(recipientJID);
         if (subscription == null) {
             subscription = rootCollectionNode.getSubscription(new JID(recipientJID.toBareJID()));
@@ -507,30 +488,41 @@ public class PEPService implements PubSubService {
             return;
         }
 
-        // Check if the published item can be sent to the subscriber
-        if (!subscription.canSendPublicationEvent(lastPublishedItem.getNode(), lastPublishedItem)) {
-            return;
+        // Send the last published item of each leaf node to the recipient.
+        for (Node leafNode : rootCollectionNode.getNodes()) {
+            // Retrieve last published item for the leaf node.
+            PublishedItem leafLastPublishedItem = null;
+            leafLastPublishedItem = leafNode.getLastPublishedItem();
+            if (leafLastPublishedItem == null) {
+                continue;
+            }
+
+            // Check if the published item can be sent to the subscriber
+            if (!subscription.canSendPublicationEvent(leafLastPublishedItem.getNode(), leafLastPublishedItem)) {
+                return;
+            }
+
+            // Send event notification to the subscriber
+            Message notification = new Message();
+            Element event = notification.getElement().addElement("event", "http://jabber.org/protocol/pubsub#event");
+            Element items = event.addElement("items");
+            items.addAttribute("node", leafLastPublishedItem.getNode().getNodeID());
+            Element item = items.addElement("item");
+            if (((LeafNode) leafLastPublishedItem.getNode()).isItemRequired()) {
+                item.addAttribute("id", leafLastPublishedItem.getID());
+            }
+            if (leafLastPublishedItem.getNode().isPayloadDelivered() && leafLastPublishedItem.getPayload() != null) {
+                item.add(leafLastPublishedItem.getPayload().createCopy());
+            }
+            // Add a message body (if required)
+            if (subscription.isIncludingBody()) {
+                notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
+            }
+            // Include date when published item was created
+            notification.getElement().addElement("x", "jabber:x:delay").addAttribute("stamp", fastDateFormat.format(leafLastPublishedItem.getCreationDate()));
+            // Send the event notification to the subscriber
+            this.sendNotification(subscription.getNode(), notification, subscription.getJID());
         }
-        // Send event notification to the subscriber
-        Message notification = new Message();
-        Element event = notification.getElement().addElement("event", "http://jabber.org/protocol/pubsub#event");
-        Element items = event.addElement("items");
-        items.addAttribute("node", lastPublishedItem.getNode().getNodeID());
-        Element item = items.addElement("item");
-        if (((LeafNode) lastPublishedItem.getNode()).isItemRequired()) {
-            item.addAttribute("id", lastPublishedItem.getID());
-        }
-        if (lastPublishedItem.getNode().isPayloadDelivered() && lastPublishedItem.getPayload() != null) {
-            item.add(lastPublishedItem.getPayload().createCopy());
-        }
-        // Add a message body (if required)
-        if (subscription.isIncludingBody()) {
-            notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
-        }
-        // Include date when published item was created
-        notification.getElement().addElement("x", "jabber:x:delay").addAttribute("stamp", fastDateFormat.format(lastPublishedItem.getCreationDate()));
-        // Send the event notification to the subscriber
-        this.sendNotification(subscription.getNode(), notification, subscription.getJID());
     }
 
     public void queueItemToAdd(PublishedItem newItem) {

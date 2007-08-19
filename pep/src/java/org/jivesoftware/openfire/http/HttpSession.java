@@ -51,7 +51,7 @@ public class HttpSession extends LocalClientSession {
     private int maxPollingInterval;
     private long lastPoll = -1;
     private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
-    private boolean isClosed;
+    private volatile boolean isClosed;
     private int inactivityTimeout;
     private long lastActivity;
     private long lastRequestID;
@@ -124,7 +124,7 @@ public class HttpSession extends LocalClientSession {
      * Closes the session. After a session has been closed it will no longer accept new connections
      * on the session ID.
      */
-    public synchronized void close() {
+    public void close() {
         if (isClosed) {
             return;
         }

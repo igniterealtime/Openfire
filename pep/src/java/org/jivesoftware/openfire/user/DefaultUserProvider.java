@@ -12,8 +12,13 @@
 package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.xmpp.packet.JID;
 
 import java.sql.*;
 import java.util.*;
@@ -57,13 +62,11 @@ public class DefaultUserProvider implements UserProvider {
             "UPDATE jiveUser SET modificationDate=? WHERE username=?";
 
     public User loadUser(String username) throws UserNotFoundException {
-        String userDomain = JiveGlobals.getProperty("xmpp.domain");
         if(username.contains("@")) {
-            userDomain = username.substring((username.lastIndexOf("@")+1));
+            if (!XMPPServer.getInstance().isLocal(new JID(username))) {
+                throw new UserNotFoundException("Cannot load user of remote server: " + username);
+            }
             username = username.substring(0,username.lastIndexOf("@"));
-        }
-        if(!userDomain.equals(JiveGlobals.getProperty("xmpp.domain"))) {
-            throw new UserNotFoundException("Unknown domain: "+userDomain);
         }
         Connection con = null;
         PreparedStatement pstmt = null;

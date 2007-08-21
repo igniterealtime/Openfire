@@ -696,7 +696,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
         // Do nothing
-        return false;
+        return true;
     }
 
     public void contactAdded(Roster roster, RosterItem item) {

@@ -218,6 +218,12 @@ public class SASLAuthentication {
                                     token = new byte[0];
                                 }
                             }
+                            if (mechanism.equals("DIGEST-MD5")) {
+                                // RFC2831 (DIGEST-MD5) says the client MAY provide an initial response on subsequent
+                                // authentication. Java SASL does not (currently) support this and thows an exception
+                                // if we try.  This violates the RFC, so we just strip any initial token.
+                                token = new byte[0];
+                            }
                             byte[] challenge = ss.evaluateResponse(token);
                             if (ss.isComplete()) {
                                 authenticationSuccessful(session, ss.getAuthorizationID(),

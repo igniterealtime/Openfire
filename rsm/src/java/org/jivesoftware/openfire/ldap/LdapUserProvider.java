@@ -11,10 +11,11 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.user.*;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
@@ -70,13 +71,11 @@ public class LdapUserProvider implements UserProvider {
     }
 
     public User loadUser(String username) throws UserNotFoundException {
-        String userDomain = JiveGlobals.getProperty("xmpp.domain");
         if(username.contains("@")) {
-            userDomain = username.substring((username.lastIndexOf("@")+1));
+            if (!XMPPServer.getInstance().isLocal(new JID(username))) {
+                throw new UserNotFoundException("Cannot load user of remote server: " + username);
+            }
             username = username.substring(0,username.lastIndexOf("@"));
-        }
-        if(!userDomain.equals(JiveGlobals.getProperty("xmpp.domain"))) {
-            throw new UserNotFoundException("Unknown domain: "+userDomain);
         }
         // Un-escape username.
         username = JID.unescapeNode(username);

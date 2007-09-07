@@ -410,6 +410,9 @@ public class XMPPServer {
             finishSetup.start();
             // We can now safely indicate that setup has finished
             setupMode = false;
+
+            // Update server info
+            xmppServerInfo = new XMPPServerInfoImpl(name, version, startDate, getConnectionManager());
         }
     }
 

@@ -32,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class ClusterManager {
 
-    private static String CLUSTER_PROPERTY_NAME = "cache.clustering.enabled";
+    private static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
     private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>();
 

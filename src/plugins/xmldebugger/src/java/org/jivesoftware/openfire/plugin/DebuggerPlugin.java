@@ -59,11 +59,19 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         PropertyEventDispatcher.removeListener(this);
         // Remove filter from filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        connManager.getSocketAcceptor().getFilterChain().remove("rawDebugger");
-        connManager.getSSLSocketAcceptor().getFilterChain().remove("rawDebugger");
+        if (connManager.getSocketAcceptor().getFilterChain().contains("rawDebugger")) {
+            connManager.getSocketAcceptor().getFilterChain().remove("rawDebugger");
+        }
+        if (connManager.getSSLSocketAcceptor().getFilterChain().contains("rawDebugger")) {
+            connManager.getSSLSocketAcceptor().getFilterChain().remove("rawDebugger");
+        }
         // Remove the filters from existing sessions
-        defaultPortFilter.shutdown();
-        oldPortFilter.shutdown();
+        if (defaultPortFilter != null) {
+            defaultPortFilter.shutdown();
+        }
+        if (oldPortFilter != null) {
+            oldPortFilter.shutdown();
+        }
 
         // Remove the packet interceptor that prints interpreted XML
         InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);

@@ -4,14 +4,14 @@
   -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.openfire.XMPPServer,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.auth.AuthFactory,
                  org.jivesoftware.openfire.ldap.LdapManager,
-                 org.jivesoftware.openfire.user.User" %>
-<%@ page import="org.jivesoftware.openfire.user.UserManager"%>
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.net.URLEncoder" %>
@@ -100,7 +100,8 @@
                 return;
             }
             catch (Exception e) {
-                System.err.println("Could not find UserManager");
+                //System.err.println("Could not find UserManager");
+                e.printStackTrace();
                 errors.put("general", "There was an unexpected error encountered when "
                         + "setting the new admin information. Please check your error "
                         + "logs and try to remedy the problem.");

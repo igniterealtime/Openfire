@@ -183,7 +183,7 @@ public class HttpConnection {
             return deliverable;
         }
         this.isDelivered = true;
-        throw new HttpBindTimeoutException("Request " + requestId + " exceded response time from " +
+        throw new HttpBindTimeoutException("Request " + requestId + " exceeded response time from " +
                 "server of " + session.getWait() + " seconds.");
     }
 }

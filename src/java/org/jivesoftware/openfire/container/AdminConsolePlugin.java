@@ -19,11 +19,10 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.handler.DefaultHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.security.SslSocketConnector;
+import org.mortbay.jetty.security.SslSelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.webapp.WebAppContext;
-
-import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
@@ -315,11 +314,11 @@ public class AdminConsolePlugin implements Plugin {
         }
     }
 
-    private class JiveSslConnector extends SslSocketConnector {
+    private class JiveSslConnector extends SslSelectChannelConnector {
 
         @Override
-        protected SSLServerSocketFactory createFactory() throws Exception {
-            return SSLConfig.getServerSocketFactory();
+        protected SSLContext createSSLContext() throws Exception {
+            return SSLConfig.getSSLContext();
         }
     }
 }

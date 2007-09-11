@@ -310,7 +310,7 @@ public class HttpSession extends LocalClientSession {
      * @return the time in milliseconds since the epoch that this session was last active.
      */
     public synchronized long getLastActivity() {
-        if (connectionQueue.size() <= 0) {
+        if (connectionQueue.isEmpty()) {
             return lastActivity;
         }
         else {
@@ -417,7 +417,7 @@ public class HttpSession extends LocalClientSession {
     protected void sendPendingPackets() {
         // access blocked only on send to prevent deadlocks
         synchronized (packetsToSend) {
-            if (packetsToSend.size() <= 0) {
+            if (packetsToSend.isEmpty()) {
                 return;
             }
 

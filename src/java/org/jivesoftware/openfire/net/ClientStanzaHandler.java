@@ -90,4 +90,8 @@ public class ClientStanzaHandler extends StanzaHandler {
         packet.setFrom(session.getAddress());
         super.processMessage(packet);
     }
+
+    void startTLS() throws Exception {
+        connection.startTLS(false, null, Connection.ClientAuth.disabled);
+    }
 }

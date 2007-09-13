@@ -22,6 +22,8 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.handler.IQHandler;
 //import org.jivesoftware.openfire.interceptor.InterceptorManager;
 //import org.jivesoftware.openfire.interceptor.PacketInterceptor;
@@ -42,6 +44,7 @@ import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.PresenceEventListener;
 import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
 import org.jivesoftware.openfire.user.RemotePresenceEventListener;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
@@ -94,7 +97,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
-        RosterEventListener {
+        RosterEventListener, UserEventListener {
 
     /**
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
@@ -143,6 +146,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         // Listen to roster events for PEP subscription cancelling on contact deletion.
         RosterEventDispatcher.addListener(this);
+        
+        // Listen to user events in order to destroy a PEP service when a user is deleted.
+        UserEventDispatcher.addListener(this);
 
         pubSubEngine = new PubSubEngine(server.getPacketRouter());
 
@@ -580,6 +586,13 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     }
 
+    public void userDeleting(User user, Map<String, Object> params) {
+        JID bareJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
+        
+        // Remove the user's PEP service if it exists.
+        pepServices.remove(bareJID.toString());
+    }
+
     // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
     /*
     public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
@@ -726,6 +739,16 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public void rosterLoaded(Roster roster) {
         // Do nothing
 
+    }
+
+    public void userCreated(User user, Map<String, Object> params) {
+        // Do nothing
+        
+    }
+
+    public void userModified(User user, Map<String, Object> params) {
+        // Do nothing
+        
     }
 
 }

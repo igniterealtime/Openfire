@@ -402,7 +402,14 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                         trustFactory.getTrustManagers(),
                         new java.security.SecureRandom());
 
-                sslSocketAcceptor.getFilterChain().addFirst("tls", new SSLFilter(sslContext));
+                SSLFilter sslFilter = new SSLFilter(sslContext);
+                if (JiveGlobals.getProperty("xmpp.client.cert.policy","disabled").equals("needed")) {
+                    sslFilter.setNeedClientAuth(true);
+                }
+                else if(JiveGlobals.getProperty("xmpp.client.cert.policy","disabled").equals("wanted")) {
+                    sslFilter.setWantClientAuth(true);
+                }
+                sslSocketAcceptor.getFilterChain().addFirst("tls", sslFilter);
 
             }
             catch (Exception e) {

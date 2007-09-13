@@ -19,8 +19,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -116,6 +116,8 @@ public class SASLAuthentication {
      * Returns a string with the valid SASL mechanisms available for the specified session. If
      * the session's connection is not secured then only include the SASL mechanisms that don't
      * require TLS.
+     *
+     * @param session The current session
      *
      * @return a string with the valid SASL mechanisms available for the specified session.
      */
@@ -441,14 +443,20 @@ public class SASLAuthentication {
                 Log.warn("Error retrieving client certificates of: " + session, e);
             }
         }
-        else {
+        else if (session instanceof LocalClientSession) {
             // Client EXTERNALL login
             Log.debug("SASLAuthentication: EXTERNAL authentication via SSL certs for c2s connection");
+            
             // This may be null, we will deal with that later
-            String username = doc.getTextTrim();
+            String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), CHARSET); 
             String principal = "";
             ArrayList<String> principals = new ArrayList<String>();
-            SocketConnection connection = (SocketConnection)session.getConnection();
+            Connection connection = session.getConnection();
+            if (connection.getSSLSession() == null) {
+                Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no SSL/TLS connection found.");
+                authenticationFailed(session);
+                return Status.failed; 
+            }
             try {
                 for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
                     principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)certificate));
@@ -458,33 +466,41 @@ public class SASLAuthentication {
                 Log.warn("Error retrieving client certificates of: " + session, e);
             }
 
+
+            principal = principals.get(0);
+
             if (username == null || username.length() == 0) {
-                    // No username was provided, according to XEP-0178 we need to:
-                    //    * attempt to get it from the cert first
-                    //    * have the server assign one
+                // No username was provided, according to XEP-0178 we need to:
+                //    * attempt to get it from the cert first
+                //    * have the server assign one
 
-                    // There shouldn't be more than a few principals in here. One ideally
-                    // We set principal to the first one in the list to have a sane default
-                    // If this list is empty, then the cert had no identity at all, which
-                    // will cause an authorization failure
-                    principal = principals.get(0);
-
-                    for(String princ : principals) {
-                        String u = AuthorizationManager.map(princ);
-                        if(!u.equals(princ)) {
-                            username = u;
-                            principal = princ;
-                            break;
-                        }
+                // There shouldn't be more than a few principals in here. One ideally
+                // We set principal to the first one in the list to have a sane default
+                // If this list is empty, then the cert had no identity at all, which
+                // will cause an authorization failure
+                for(String princ : principals) {
+                    String u = AuthorizationManager.map(princ);
+                    if(!u.equals(princ)) {
+                        username = u;
+                        principal = princ;
+                        break;
                     }
-                    Log.debug("SASLAuthentication: no username requested, using "+username);
+                }
+                if (username == null || username.length() == 0) {
+                    // Still no username.  Punt.
+                    username = principal;
+                }
+                Log.debug("SASLAuthentication: no username requested, using "+username);
             }
+
             //Its possible that either/both username and principal are null here
             //The providers should not allow a null authorization
             if (AuthorizationManager.authorize(username,principal)) {
                 Log.debug("SASLAuthentication: "+principal+" authorized to "+username);
                 return Status.authenticated;
             }
+        } else {
+            Log.debug("SASLAuthentication: unknown session type. Cannot perform EXTERNAL authentication");
         }
         authenticationFailed(session);
         return Status.failed;

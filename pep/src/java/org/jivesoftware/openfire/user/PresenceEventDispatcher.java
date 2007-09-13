@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Dispatches presence events. The following events are supported:
  * <ul>
  * <li><b>availableSession</b> --> A session is now available to receive communication.</li>
- * <li><b>unavailableSession</b> --> A session is now longer available.</li>
+ * <li><b>unavailableSession</b> --> A session is no longer available.</li>
  * <li><b>presencePriorityChanged</b> --> The priority of a resource has changed.</li>
  * <li><b>presenceChanged</b> --> The show or status value of an available session has changed.</li>
  * </ul>

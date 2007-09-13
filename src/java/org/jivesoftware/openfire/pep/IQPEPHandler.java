@@ -23,9 +23,9 @@ import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.openfire.interceptor.PacketInterceptor;
-import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+//import org.jivesoftware.openfire.interceptor.InterceptorManager;
+//import org.jivesoftware.openfire.interceptor.PacketInterceptor;
+//import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
@@ -37,7 +37,7 @@ import org.jivesoftware.openfire.roster.RosterEventDispatcher;
 import org.jivesoftware.openfire.roster.RosterEventListener;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.Session;
+//import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.PresenceEventListener;
 import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
@@ -49,7 +49,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
+//import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
@@ -94,7 +94,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
-        RosterEventListener, PacketInterceptor {
+        RosterEventListener {
 
     /**
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
@@ -190,10 +190,13 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             }
         }
 
+        // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
+        /*
         // Add this PEP handler as a packet interceptor so we may deal with
         // client packets that send disco#info's explaining capabilities
         // including PEP contact notification filters.
         InterceptorManager.getInstance().addInterceptor(this);
+        */
     }
 
     public void start() {
@@ -577,6 +580,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     }
 
+    // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
+    /*
     public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
         if (processed && packet instanceof IQ && ((IQ) packet).getType() == IQ.Type.result) {
             // Examine the packet and return if it does not look like a disco#info result containing
@@ -683,6 +688,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             }
         }
     }
+    */
 
     /**
      *  The following functions are unimplemented required interface methods.

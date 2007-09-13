@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
@@ -98,6 +99,7 @@ public class PresenceRouter extends BasicModule {
 
     private void handle(Presence packet) {
         JID recipientJID = packet.getTo();
+
         // Check if the packet was sent to the server hostname
         if (recipientJID != null && recipientJID.getNode() == null &&
                 recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
@@ -108,8 +110,11 @@ public class PresenceRouter extends BasicModule {
                 return;
             }
         }
+
         try {
+            JID senderJID = packet.getFrom();            
             Presence.Type type = packet.getType();
+
             // Presence updates (null is 'available')
             if (type == null || Presence.Type.unavailable == type) {
                 // check for local server target
@@ -120,6 +125,18 @@ public class PresenceRouter extends BasicModule {
                     updateHandler.process(packet);
                 }
                 else {
+                    // Manage remote presence event dispatching
+                    if (senderJID != null && !serverName.equals(senderJID.getDomain())) {
+                        if (type == null) {
+                            // Remote user has become available
+                            RemotePresenceEventDispatcher.availableRemoteUser(packet);
+                        }
+                        else if (type == Presence.Type.unavailable) {
+                            // Remote user is now unavailable
+                            RemotePresenceEventDispatcher.unavailableRemoteUser(packet);
+                        }
+                    }
+                    
                     // Check that sender session is still active
                     Session session = sessionManager.getSession(packet.getFrom());
                     if (session != null && session.getStatus() == Session.STATUS_CLOSED) {

@@ -40,6 +40,8 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.PresenceEventListener;
+import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
+import org.jivesoftware.openfire.user.RemotePresenceEventListener;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
@@ -91,8 +93,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
-        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RosterEventListener,
-        PacketInterceptor {
+        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
+        RosterEventListener, PacketInterceptor {
 
     /**
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
@@ -135,6 +137,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         // Listen to presence events to manage PEP auto-subscriptions.
         PresenceEventDispatcher.addListener(this);
+
+        // Listen to remote presence events to manage the knownRemotePresences map.
+        RemotePresenceEventDispatcher.addListener(this);
 
         // Listen to roster events for PEP subscription cancelling on contact deletion.
         RosterEventDispatcher.addListener(this);
@@ -513,6 +518,53 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     }
 
+    public void availableRemoteUser(Presence presence) {
+        JID jidFrom = presence.getFrom();
+        JID jidTo   = presence.getTo();
+
+        // Manage the cache of remote presence resources.
+        Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
+
+        if (jidFrom.getResource() != null) {
+            if (remotePresenceSet != null) {
+                if (remotePresenceSet.add(jidFrom)) {
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
+                    }
+                }
+            }
+            else {
+                remotePresenceSet = new HashSet<JID>();
+                if (remotePresenceSet.add(jidFrom)) {
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
+                    }
+                    knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
+                }
+            }
+
+            // Send the presence packet recipient's last published items to the remote user.
+            PEPService pepService = pepServices.get(jidTo.toBareJID());
+            if (pepService != null) {
+                pepService.sendLastPublishedItems(jidFrom);
+            }
+        }
+    }
+
+    public void unavailableRemoteUser(Presence presence) {
+        JID jidFrom = presence.getFrom();
+        JID jidTo   = presence.getTo();
+        
+        // Manage the cache of remote presence resources.
+        Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
+        
+        if (remotePresenceSet != null && remotePresenceSet.remove(jidFrom)) {
+            if (Log.isDebugEnabled()) {
+                Log.debug("PEP: removed " + jidFrom + " from " + jidTo + "'s knownRemotePresences");
+            }
+        }
+    }
+
     public void contactDeleted(Roster roster, RosterItem item) {
         JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
         JID deletedContact = item.getJid();
@@ -630,50 +682,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 }
             }
         }
-        else if (incoming && processed && packet instanceof Presence) {
-            // Cache newly-available presence resources for remote users (since the PresenceEventDispatcher
-            // methods are not called for remote presence events).
-            JID jidFrom = packet.getFrom();
-            JID jidTo = packet.getTo();
-
-            if (!XMPPServer.getInstance().isLocal(jidFrom) && jidFrom != null && jidTo != null) {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: received presence from: " + jidFrom + " to: " + jidTo);
-                }
-
-                Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
-                Presence.Type type = ((Presence) packet).getType();
-
-                if (type != null && type == Presence.Type.unavailable) {
-                    if (remotePresenceSet != null && remotePresenceSet.remove(jidFrom)) {
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: removed " + jidFrom + " from " + jidTo + "'s knownRemotePresences");
-                        }
-                    }
-                }
-                else if (jidFrom.getResource() != null) {
-                    if (remotePresenceSet != null) {
-                        if (remotePresenceSet.add(jidFrom)) {
-                            if (Log.isDebugEnabled()) {
-                                Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
-                            }
-                        }
-                    }
-                    else {
-                        remotePresenceSet = new HashSet<JID>();
-                        if (remotePresenceSet.add(jidFrom)) {
-                            if (Log.isDebugEnabled()) {
-                                Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
-                            }
-                            knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
-                        }
-                    }
-
-                    // Send last published item for newly-available remote resource.
-                    availableSession((ClientSession) session, (Presence) packet);
-                }
-            }
-        }
     }
 
     /**
@@ -713,4 +721,5 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // Do nothing
 
     }
+
 }

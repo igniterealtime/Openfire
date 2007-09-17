@@ -268,7 +268,9 @@
                         if (count != 0) {
                             out.print(", ");
                         }
-                        out.print("<u>"+group.getName()+"</u>");
+                        out.print("<a style='text-decoration: underline' href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
+                        out.print(group.getName());
+                        out.print("</a>");
                         count++;
                     }
                 }
@@ -293,7 +295,7 @@
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
             <% } else { %>
-             <img onclick='alert("<fmt:message key="user.roster.cant_delete" />")' src="images/forbidden-16x16.gif" width="16" height="16" border="0" alt="">
+             <img onclick='alert("<fmt:message key="user.roster.cant_delete" />")' src="images/lock.gif" width="16" height="16" border="0" alt="">
             <% } %>
         </td>
     </tr>

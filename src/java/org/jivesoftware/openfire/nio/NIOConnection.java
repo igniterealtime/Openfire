@@ -34,6 +34,7 @@ import org.xmpp.packet.Packet;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.SSLSession;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -132,6 +133,10 @@ public class NIOConnection implements Connection {
 
     public String getHostName() throws UnknownHostException {
         return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
+    }
+
+    public SSLSession getSSLSession() {
+        return (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
     }
 
     public PacketDeliverer getPacketDeliverer() {
@@ -272,7 +277,7 @@ public class NIOConnection implements Connection {
         }
     }
 
-    public void startTLS(boolean clientMode, String remoteServer) throws Exception {
+    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
         KeyStore ksKeys = SSLConfig.getKeyStore();
         String keypass = SSLConfig.getKeyPassword();
 
@@ -284,9 +289,7 @@ public class NIOConnection implements Connection {
 
         // TrustManager's decide whether to allow connections.
         TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
-        // TODO Set proper value when s2s is supported
-        boolean needClientAuth = false;
-        if (clientMode || needClientAuth) {
+        if (clientMode || authentication == ClientAuth.needed || authentication == ClientAuth.wanted) {
             // Check if we can trust certificates presented by the server
             tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
         }
@@ -297,21 +300,14 @@ public class NIOConnection implements Connection {
 
         SSLFilter filter = new SSLFilter(tlsContext);
         filter.setUseClientMode(clientMode);
-        if (needClientAuth) {
-            // Only REQUIRE client authentication if we are fully verifying certificates
-            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
-                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
-                    !JiveGlobals
-                            .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
-            {
-                filter.setNeedClientAuth(true);
-            }
-            else {
-                // Just indicate that we would like to authenticate the client but if client
-                // certificates are self-signed or have no certificate chain then we are still
-                // good
-                filter.setWantClientAuth(true);
-            }
+        if (authentication == ClientAuth.needed) {
+            filter.setNeedClientAuth(true);
+        }
+        else if (authentication == ClientAuth.wanted) {
+            // Just indicate that we would like to authenticate the client but if client
+            // certificates are self-signed or have no certificate chain then we are still
+            // good
+            filter.setWantClientAuth(true);
         }
         // TODO Temporary workaround (placing SSLFilter before ExecutorFilter) to avoid deadlock. Waiting for
         // MINA devs feedback

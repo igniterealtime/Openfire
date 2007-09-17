@@ -167,11 +167,13 @@
 <input type="submit" value="<fmt:message key="user.roster.edit" />">
 </form>
 
+<% if (sharedGroups.isEmpty()) { %>
 <form style="display: inline" action="user-roster-delete.jsp">
 <input type="hidden" name="jid" value="<%= jid %>">
 <input type="hidden" name="username" value="<%= username %>">
 <input type="submit" value="<fmt:message key="global.delete" />">
 </form>
+<% } %>
 
     </body>
 </html>

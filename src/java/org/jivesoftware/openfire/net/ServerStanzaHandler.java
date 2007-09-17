@@ -1,0 +1,140 @@
+/**
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
+package org.jivesoftware.openfire.net;
+
+import org.dom4j.Element;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.packet.*;
+
+/**
+ * Handler of XML stanzas sent by remote servers. Remote servers that send stanzas
+ * with no TO or FROM will get their connections closed. Moreover, remote servers
+ * that try to send stanzas from a not validated domain will also get their connections
+ * closed.<p>
+ *
+ * Server-to-server communication requires two TCP connections between the servers where
+ * one is used for sending packets whilst the other connection is used for receiving packets.
+ * The connection used for receiving packets will use a ServerStanzaHandler since the other
+ * connection will not receive packets.<p>
+ *
+ * TODO Finish migration of s2s to use NIO instead of blocking threads. Migrate from ServerSocketReader.
+ *
+ * @author Gaston Dombiak
+ */
+public class ServerStanzaHandler extends StanzaHandler {
+
+    public ServerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
+        super(router, serverName, connection);
+    }
+
+    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+        // Handle subsequent db:result packets
+        if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+            if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
+                throw new UnauthorizedException("Failed to validate domain when using piggyback.");
+            }
+            return true;
+        }
+        else if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
+            // The Receiving Server is reusing an existing connection for sending the
+            // Authoritative Server a request for verification of a key
+            ((LocalIncomingServerSession) session).verifyReceivedKey(doc);
+            return true;
+        }
+        return false;
+    }
+
+    String getNamespace() {
+        return "jabber:server";
+    }
+
+    boolean validateHost() {
+        return true;
+    }
+
+    boolean validateJIDs() {
+        // TODO Should we trust other servers???
+        return false;
+    }
+
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+            throws XmlPullParserException {
+        // TODO Finish implementation
+        /*if ("jabber:server".equals(namespace)) {
+            // The connected client is a server so create an IncomingServerSession
+            session = LocalIncomingServerSession.createSession(serverName, reader, connection);
+            return true;
+        }*/
+        return false;
+    }
+
+    void startTLS() throws Exception {
+        // TODO Finish implementation. We need to get the name of the remote server!?!?
+
+        boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
+                JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
+                !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
+        connection.startTLS(true, "IMPLEMENT_ME", needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+    }
+    protected void processIQ(IQ packet) throws UnauthorizedException {
+        packetReceived(packet);
+        // Actually process the packet
+        super.processIQ(packet);
+    }
+
+    protected void processPresence(Presence packet) throws UnauthorizedException {
+        packetReceived(packet);
+        // Actually process the packet
+        super.processPresence(packet);
+    }
+
+    protected void processMessage(Message packet) throws UnauthorizedException {
+        packetReceived(packet);
+        // Actually process the packet
+        super.processMessage(packet);
+    }
+
+    /**
+     * Make sure that the received packet has a TO and FROM values defined and that it was sent
+     * from a previously validated domain. If the packet does not matches any of the above
+     * conditions then a PacketRejectedException will be thrown.
+     *
+     * @param packet the received packet.
+     * @throws UnauthorizedException if the packet does not include a TO or FROM or if the packet
+     *                                 was sent from a domain that was not previously validated.
+     */
+    private void packetReceived(Packet packet) throws UnauthorizedException {
+        if (packet.getTo() == null || packet.getFrom() == null) {
+            Log.debug("Closing IncomingServerSession due to packet with no TO or FROM: " +
+                    packet.toXML());
+            // Send a stream error saying that the packet includes no TO or FROM
+            StreamError error = new StreamError(StreamError.Condition.improper_addressing);
+            connection.deliverRawText(error.toXML());
+            throw new UnauthorizedException("Packet with no TO or FROM attributes");
+        }
+        else if (!((LocalIncomingServerSession) session).isValidDomain(packet.getFrom().getDomain())) {
+            Log.debug("Closing IncomingServerSession due to packet with invalid domain: " +
+                    packet.toXML());
+            // Send a stream error saying that the packet includes an invalid FROM
+            StreamError error = new StreamError(StreamError.Condition.invalid_from);
+            connection.deliverRawText(error.toXML());
+            throw new UnauthorizedException("Packet with no TO or FROM attributes");
+        }
+    }
+
+}

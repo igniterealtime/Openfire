@@ -16,6 +16,8 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
+import javax.net.ssl.*;
+import javax.net.ServerSocketFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -33,7 +35,7 @@ import java.util.List;
  */
 public class SSLConfig {
 
-    private static SSLJiveServerSocketFactory sslFactory;
+    private static SSLServerSocketFactory sslFactory;
     private static KeyStore keyStore;
     private static String keypass;
     private static KeyStore trustStore;
@@ -41,6 +43,7 @@ public class SSLConfig {
     private static String keyStoreLocation;
     private static String trustStoreLocation;
     private static String storeType;
+    private static SSLContext sslContext;
 
     private SSLConfig() {
     }
@@ -73,9 +76,7 @@ public class SSLConfig {
 
             trustStore = KeyStore.getInstance(storeType);
             trustStore.load(new FileInputStream(trustStoreLocation), trustpass.toCharArray());
-
-            sslFactory = (SSLJiveServerSocketFactory)SSLJiveServerSocketFactory.getInstance(
-                    algorithm, keyStore, trustStore);
+            resetFactory();
         }
         catch (Exception e) {
             Log.error("SSLConfig startup problem.\n" +
@@ -88,36 +89,51 @@ public class SSLConfig {
             trustStore = null;
             sslFactory = null;
         }
+
         // Reset ssl factoty when certificates are modified
         CertificateManager.addListener(new CertificateEventListener() {
+            // Reset ssl factory since keystores have changed
             public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
-                // Reset ssl factory since keystores have changed
-                resetFactory(keyStore);
+                resetFactory();
             }
-
             public void certificateDeleted(KeyStore keyStore, String alias) {
-                // Reset ssl factory since keystores have changed
-                resetFactory(keyStore);
+                resetFactory();
             }
-
-            public void certificateSigned(KeyStore keyStore, String alias,
-                    List<X509Certificate> certificates) {
-                // Reset ssl factory since keystores have changed
-                resetFactory(keyStore);
-            }
-
-            private void resetFactory(KeyStore keyStore) {
-                try {
-                    String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-                    sslFactory = (SSLJiveServerSocketFactory)SSLJiveServerSocketFactory.getInstance(
-                            algorithm, keyStore, trustStore);
-                }
-                catch (IOException e) {
-                    Log.error("Error while resetting ssl factory", e);
-                    sslFactory = null;
-                }
+            public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
+                resetFactory();
             }
         });
+    }
+
+    private static void resetFactory() {
+        try {
+            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+
+            sslContext = SSLContext.getInstance(algorithm);
+
+            KeyManagerFactory keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyFactory.init(keyStore, SSLConfig.getKeyPassword().toCharArray());
+
+            TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustFactory.init(trustStore);
+
+            sslContext.init(keyFactory.getKeyManagers(),
+                    trustFactory.getTrustManagers(),
+                    new java.security.SecureRandom());
+
+            sslFactory = sslContext.getServerSocketFactory();
+        }
+        catch (Exception e) {
+            Log.error("SSLConfig factory setup problem.\n" +
+                    "  storeType: [" + storeType + "]\n" +
+                    "  keyStoreLocation: [" + keyStoreLocation + "]\n" +
+                    "  keypass: [" + keypass + "]\n" +
+                    "  trustStoreLocation: [" + trustStoreLocation+ "]\n" +
+                    "  trustpass: [" + trustpass + "]", e);
+            keyStore = null;
+            trustStore = null;
+            sslFactory = null;
+        }
     }
 
     public static String getKeyPassword() {
@@ -199,7 +215,11 @@ public class SSLConfig {
         return storeType;
     }
 
-    public static SSLJiveServerSocketFactory getServerSocketFactory() {
+    public static SSLContext getSSLContext() {
+        return sslContext;
+    }
+
+    public static SSLServerSocketFactory getServerSocketFactory() {
         return sslFactory;
     }
 }

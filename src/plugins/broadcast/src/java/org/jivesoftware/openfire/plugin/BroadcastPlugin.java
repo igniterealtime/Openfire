@@ -84,11 +84,13 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
     public void destroyPlugin() {
         PropertyEventDispatcher.removeListener(this);
         // Unregister component.
-        try {
-            componentManager.removeComponent(serviceName);
-        }
-        catch (Exception e) {
-            componentManager.getLog().error(e);
+        if (componentManager != null) {
+            try {
+                componentManager.removeComponent(serviceName);
+            }
+            catch (Exception e) {
+                componentManager.getLog().error(e);
+            }
         }
         componentManager = null;
         pluginManager = null;

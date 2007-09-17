@@ -11,26 +11,25 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.mortbay.jetty.Server;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.util.*;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.ContextHandler;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.handler.DefaultHandler;
-import org.mortbay.jetty.handler.ContextHandler;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.jivesoftware.util.*;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.XMPPServer;
-
-import javax.net.ssl.SSLServerSocketFactory;
-import java.util.Map;
-import java.util.List;
+import org.mortbay.jetty.security.SslSelectChannelConnector;
+import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.webapp.WebAppContext;
+import javax.net.ssl.SSLContext;
+import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -138,7 +137,7 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                SslSocketConnector sslConnector = new JiveSslConnector();
+                JiveSslConnector sslConnector = new JiveSslConnector();
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
 
@@ -430,11 +429,11 @@ public final class HttpBindManager {
         }
     }
 
-    private class JiveSslConnector extends SslSocketConnector {
+    private class JiveSslConnector extends SslSelectChannelConnector {
 
         @Override
-        protected SSLServerSocketFactory createFactory() throws Exception {
-            return SSLConfig.getServerSocketFactory();
+        protected SSLContext createSSLContext() throws Exception {
+            return SSLConfig.getSSLContext();
         }
     }
 

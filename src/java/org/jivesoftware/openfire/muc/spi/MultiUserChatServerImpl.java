@@ -1388,6 +1388,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             public double sample() {
                 return getNumberChatRooms();
             }
+
+            public boolean isPartialSample() {
+                return false;
+            }
         };
         StatisticsManager.getInstance().addStatistic(roomsStatKey, statistic);
     }
@@ -1413,6 +1417,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
             public double sample() {
                 return getNumberRoomOccupants();
+            }
+
+            public boolean isPartialSample() {
+                return false;
             }
         };
         StatisticsManager.getInstance().addStatistic(occupantsStatKey, statistic);
@@ -1440,6 +1448,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             public double sample() {
                 return getNumberConnectedUsers(false);
             }
+
+            public boolean isPartialSample() {
+                return false;
+            }
         };
         StatisticsManager.getInstance().addStatistic(usersStatKey, statistic);
     }
@@ -1464,8 +1476,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             }
 
             public double sample() {
-                // TODO Get these value from the other cluster nodes
                 return inMessages.getAndSet(0);
+            }
+
+            public boolean isPartialSample() {
+                // Get this value from the other cluster nodes
+                return true;
             }
         };
         StatisticsManager.getInstance().addMultiStatistic(incomingStatKey, trafficStatGroup, statistic);
@@ -1492,6 +1508,11 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
 
             public double sample() {
                 return outMessages.getAndSet(0);
+            }
+
+            public boolean isPartialSample() {
+                // Each cluster node knows the total across the cluster
+                return false;
             }
         };
         StatisticsManager.getInstance().addMultiStatistic(outgoingStatKey, trafficStatGroup, statistic);

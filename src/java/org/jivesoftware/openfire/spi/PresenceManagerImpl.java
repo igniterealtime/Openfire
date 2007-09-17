@@ -32,6 +32,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.lock.LockManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -501,23 +503,27 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        Lock lock = LockManager.getLock(username + "pr");
         try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_OFFLINE_PRESENCE);
-            pstmt.setString(1, username);
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                String offlinePresence = DbConnectionManager.getLargeTextField(rs, 1);
-                if (rs.wasNull()) {
-                    offlinePresence = NULL_STRING;    
+            lock.lock();
+            if (!offlinePresenceCache.containsKey(username) || !lastActivityCache.containsKey(username)) {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(LOAD_OFFLINE_PRESENCE);
+                pstmt.setString(1, username);
+                rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    String offlinePresence = DbConnectionManager.getLargeTextField(rs, 1);
+                    if (rs.wasNull()) {
+                        offlinePresence = NULL_STRING;
+                    }
+                    long offlineDate = Long.parseLong(rs.getString(2).trim());
+                    offlinePresenceCache.put(username, offlinePresence);
+                    lastActivityCache.put(username, offlineDate);
                 }
-                long offlineDate = Long.parseLong(rs.getString(2).trim());
-                offlinePresenceCache.put(username, offlinePresence);
-                lastActivityCache.put(username, offlineDate);
-            }
-            else {
-                offlinePresenceCache.put(username, NULL_STRING);
-                lastActivityCache.put(username, NULL_LONG);
+                else {
+                    offlinePresenceCache.put(username, NULL_STRING);
+                    lastActivityCache.put(username, NULL_LONG);
+                }
             }
         }
         catch (SQLException sqle) {
@@ -525,6 +531,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
+            lock.unlock();
         }
     }
 }

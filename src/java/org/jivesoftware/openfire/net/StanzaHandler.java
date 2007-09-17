@@ -43,7 +43,7 @@ public abstract class StanzaHandler {
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
     protected static String CHARSET = "UTF-8";
-    private Connection connection;
+    protected Connection connection;
 
     // DANIELE: Indicate if a session is already created
     private boolean sessionCreated = false;
@@ -347,8 +347,9 @@ public abstract class StanzaHandler {
      *
      * @param doc the DOM element of an unkown type.
      * @return true if a received packet has been processed.
+     * @throws UnauthorizedException if stanza failed to be processed. Connection will be closed.
      */
-    abstract boolean processUnknowPacket(Element doc);
+    abstract boolean processUnknowPacket(Element doc) throws UnauthorizedException;
 
     /**
      * Tries to secure the connection using TLS. If the connection is secured then reset
@@ -372,7 +373,7 @@ public abstract class StanzaHandler {
         }
         // Client requested to secure the connection using TLS. Negotiate TLS.
         try {
-            connection.startTLS(false, null);
+            startTLS();
         }
         catch (Exception e) {
             Log.error("Error while negotiating TLS", e);
@@ -382,6 +383,8 @@ public abstract class StanzaHandler {
         }
         return true;
     }
+
+    abstract void startTLS() throws Exception;
 
     /**
      * TLS negotiation was successful so open a new stream and offer the new stream features.

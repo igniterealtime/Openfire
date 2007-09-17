@@ -15,6 +15,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.xmpp.packet.Packet;
 
+import javax.net.ssl.SSLSession;
 import java.net.UnknownHostException;
 
 /**
@@ -86,6 +87,13 @@ public interface Connection {
      * @see SecurityManager#checkConnect
      */
     public String getHostName() throws UnknownHostException;
+
+    /**
+     * Returns the underlying {@link SSLSession} for the connection.
+     *
+     * @return <tt>null</tt> if no {@link SSLSession} is initialized yet.
+     */
+    public SSLSession getSSLSession();
 
     /**
      * Close this session including associated socket connection. The order of
@@ -290,9 +298,10 @@ public interface Connection {
      * @param clientMode boolean indicating if this entity is a client or a server.
      * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
      *        when not in client mode.
+     * @param authentication policy to use for authenticating the remote peer.
      * @throws Exception if an error occured while securing the connection.
      */
-    void startTLS(boolean clientMode, String remoteServer) throws Exception;
+    void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter
@@ -348,5 +357,33 @@ public interface Connection {
          * error and their connections will be closed.
          */
         disabled
+    }
+
+    /**
+     * Enumeration that specifies if clients should be authenticated (and how) while
+     * negotiating TLS.
+     */
+    enum ClientAuth {
+
+        /**
+         * No authentication will be performed on the client. Client credentials will not
+         * be verified while negotiating TLS.
+         */
+        disabled,
+
+        /**
+         * Clients will try to be authenticated. Unlike {@link #needed}, if the client
+         * chooses not to provide authentication information about itself, the TLS negotiations
+         * will stop and the connection will be dropped. This option is only useful for
+         * engines in the server mode.
+         */
+        wanted,
+
+        /**
+         * Clients need to be authenticated. Unlike {@link #wanted}, if the client
+         * chooses not to provide authentication information about itself, the TLS negotiations
+         * will continue. This option is only useful for engines in the server mode.
+         */
+        needed
     }
 }

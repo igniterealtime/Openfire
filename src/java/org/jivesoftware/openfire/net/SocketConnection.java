@@ -152,7 +152,7 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    public void startTLS(boolean clientMode, String remoteServer) throws IOException {
+    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws IOException {
         if (!secure) {
             secure = true;
             // Prepare for TLS

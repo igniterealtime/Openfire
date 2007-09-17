@@ -131,4 +131,8 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         }
         return false;
     }
+
+    void startTLS() throws Exception {
+        connection.startTLS(false, null, Connection.ClientAuth.disabled);
+    }
 }

@@ -234,8 +234,7 @@ public class HttpBindServlet extends HttpServlet {
                 respond(response, createEmptyBody(), request.getMethod());
             }
             else {
-                connection
-                        .setContinuation(ContinuationSupport.getContinuation(request, connection));
+                connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
                 try {

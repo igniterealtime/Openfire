@@ -1099,12 +1099,28 @@ public class LocalMUCRoom implements MUCRoom {
         // Collect all the updated presences of these roles
         for (MUCRole role : roles) {
             // Update the presence with the new affiliation and role
-            role.setAffiliation(newAffiliation);
-            role.setRole(newRole);
-            // Notify the othe cluster nodes to update the occupant
-            CacheFactory.doClusterTask(new UpdateOccupant(this, role));
-            // Prepare a new presence to be sent to all the room occupants
-            presences.add(role.getPresence().createCopy());
+            if (role.isLocal()) {
+                role.setAffiliation(newAffiliation);
+                role.setRole(newRole);
+                // Notify the othe cluster nodes to update the occupant
+                CacheFactory.doClusterTask(new UpdateOccupant(this, role));
+                // Prepare a new presence to be sent to all the room occupants
+                presences.add(role.getPresence().createCopy());
+            }
+            else {
+                // Ask the cluster node hosting the occupant to make the changes. Note that if the change
+                // is not allowed a NotAllowedException will be thrown
+                Element element = (Element) CacheFactory.doSynchronousClusterTask(
+                        new UpdateOccupantRequest(this, role.getNickname(), newAffiliation, newRole),
+                        role.getNodeID().toByteArray());
+                if (element != null) {
+                    // Prepare a new presence to be sent to all the room occupants
+                    presences.add(new Presence(element, true));
+                }
+                else {
+                    throw new NotAllowedException();
+                }
+            }
         }
         // Answer all the updated presences
         return presences;
@@ -1467,15 +1483,41 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public void occupantUpdated(UpdateOccupant update) {
-        RemoteMUCRole occupantRole = (RemoteMUCRole) occupants.get(update.getNickname().toLowerCase());
+        MUCRole occupantRole = occupants.get(update.getNickname().toLowerCase());
         if (occupantRole != null) {
-            occupantRole.setPresence(update.getPresence());
-            occupantRole.setRole(update.getRole());
-            occupantRole.setAffiliation(update.getAffiliation());
+            if (!occupantRole.isLocal()) {
+                occupantRole.setPresence(update.getPresence());
+                try {
+                    occupantRole.setRole(update.getRole());
+                    occupantRole.setAffiliation(update.getAffiliation());
+                } catch (NotAllowedException e) {
+                    // Ignore. Should never happen with remote roles
+                }
+            }
+            else {
+                Log.error("Tried to update local occupant with info of local occupant?. Occupant nickname: " +
+                        update.getNickname());
+            }
         }
         else {
             Log.debug("Failed to update information of room occupant. Occupant nickname: " + update.getNickname());
         }
+    }
+
+    public Presence updateOccupant(UpdateOccupantRequest updateRequest) throws NotAllowedException {
+        MUCRole occupantRole = occupants.get(updateRequest.getNickname().toLowerCase());
+        if (occupantRole != null) {
+            occupantRole.setAffiliation(updateRequest.getAffiliation());
+            occupantRole.setRole(updateRequest.getRole());
+            // Notify the othe cluster nodes to update the occupant
+            CacheFactory.doClusterTask(new UpdateOccupant(this, occupantRole));
+            return occupantRole.getPresence();
+        }
+        else {
+            Log.debug("Failed to update information of local room occupant. Occupant nickname: " +
+                    updateRequest.getNickname());
+        }
+        return null;
     }
 
     public void nicknameChanged(MUCRole occupantRole, Presence newPresence, String oldNick, String newNick) {

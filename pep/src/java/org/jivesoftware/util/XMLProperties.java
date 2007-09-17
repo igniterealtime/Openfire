@@ -17,6 +17,7 @@ import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.io.*;
 import java.util.*;
@@ -327,7 +328,7 @@ public class XMLProperties {
                 childElement.addCDATA(value.substring(9, value.length()-3));
             }
             else {
-                childElement.setText(value);
+                childElement.setText(StringEscapeUtils.escapeXml(value));
             }
         }
         saveProperties();
@@ -379,6 +380,9 @@ public class XMLProperties {
      * @param value the new value for the property.
      */
     public synchronized void setProperty(String name, String value) {
+        if(!StringEscapeUtils.escapeXml(name).equals(name)) {
+            throw new IllegalArgumentException("Property name cannot contain XML entities.");
+        }
         if (name == null) {
             return;
         }
@@ -413,7 +417,7 @@ public class XMLProperties {
             element.addCDATA(value.substring(9, value.length()-3));
         }
         else {
-            element.setText(value);
+            element.setText(StringEscapeUtils.escapeXml(value));
         }
         // Write the XML properties to disk
         saveProperties();
@@ -456,6 +460,8 @@ public class XMLProperties {
 
     /**
      * Builds the document XML model up based the given reader of XML data.
+     * @param in the input stream used to build the xml document
+     * @throws java.io.IOException thrown when an error occurs reading the input stream.
      */
     private void buildDoc(Reader in) throws IOException {
         try {

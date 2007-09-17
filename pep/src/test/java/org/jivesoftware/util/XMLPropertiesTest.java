@@ -13,7 +13,6 @@ package org.jivesoftware.util;
 import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
-import java.util.Iterator;
 
 public class XMLPropertiesTest extends TestCase {
 
@@ -48,5 +47,11 @@ public class XMLPropertiesTest extends TestCase {
             assertEquals(values[i], value);
             i++;
         }
+    }
+
+    public void testGetPropertyWithXMLEntity() throws Exception {
+        String xml = "<root><foo>foo&amp;bar</foo></root>";
+        XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
+        assertEquals("foo&bar", props.getProperty("foo"));
     }
 }

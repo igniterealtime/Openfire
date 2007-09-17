@@ -363,7 +363,10 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
             Log.debug("OS - Negotiating TLS with " + hostname);
-            connection.startTLS(true, hostname);
+            boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
+                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
+                    !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
+            connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
             Log.debug("OS - TLS negotiation with " + hostname + " was successful");
 
             // TLS negotiation was successful so initiate a new stream

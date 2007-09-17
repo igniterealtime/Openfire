@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 
+import javax.net.ssl.SSLSession;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,6 +55,11 @@ public abstract class VirtualConnection implements Connection {
     public int getMinorXMPPVersion() {
         // Information not available. Return any value. This is not actually used.
         return 0;
+    }
+
+    public SSLSession getSSLSession() {
+        // Ignore
+        return null;
     }
 
     public boolean isClosed() {
@@ -108,7 +114,7 @@ public abstract class VirtualConnection implements Connection {
         return null;
     }
 
-    public void startTLS(boolean clientMode, String remoteServer) throws Exception {
+    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
         //Ignore
     }
 

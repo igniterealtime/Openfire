@@ -22,8 +22,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
-/**
- * Handler of XML stanzas sent by clients connected directly to the server. Received packet will
+/** Handler of XML stanzas sent by clients connected directly to the server. Received packet will
  * have their FROM attribute overriden to avoid spoofing.<p>
  *
  * By default the hostname specified in the stream header sent by clients will not be validated.
@@ -89,5 +88,18 @@ public class ClientStanzaHandler extends StanzaHandler {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processMessage(packet);
+    }
+
+    void startTLS() throws Exception {
+
+        Connection.ClientAuth policy;
+        try {
+            policy =
+                    Connection.ClientAuth.valueOf(JiveGlobals.getProperty("xmpp.client.cert.policy",
+                        "required"));
+        } catch (IllegalArgumentException e) {
+            policy = Connection.ClientAuth.disabled;
+        }
+        connection.startTLS(false, null, policy);
     }
 }

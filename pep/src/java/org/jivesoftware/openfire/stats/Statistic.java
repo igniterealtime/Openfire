@@ -54,6 +54,24 @@ public interface Statistic {
     public double sample();
 
     /**
+     * Returns true if the sample value represents only the value of the cluster node
+     * or otherwise it represents the value of the entire cluster. Statistics that keep
+     * only a sample of the local node will need to get added up with the value of the
+     * other cluster nodes. On the other hand, statistics that hold the value of the
+     * entire cluster can be sampled in any cluster node and they don't need to get
+     * added up.<p>
+     *
+     * An example of a partial sample statistic would be network traffic. Each node keeps
+     * track of its own network traffic information. Whilst an example of a total sample
+     * statistic would be user sessions since every cluster node knows the total number of
+     * connected users across the cluster. 
+     *
+     * @return true if the sample value represents only the value of the cluster node
+     * or otherwise it represents the value of the entire cluster. 
+     */
+    public boolean isPartialSample();
+
+    /**
      * The type of statistic.
      */
     @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser

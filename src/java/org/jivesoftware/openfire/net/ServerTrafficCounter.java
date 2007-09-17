@@ -136,6 +136,10 @@ public class ServerTrafficCounter {
                 // Divide result by 1024 so that we return the result in Kb.
                 return incomingCounter.getAndSet(0)/1024;
             }
+
+            public boolean isPartialSample() {
+                return true;
+            }
         };
         StatisticsManager.getInstance()
                 .addMultiStatistic(incomingStatKey, trafficStatGroup, statistic);
@@ -162,6 +166,10 @@ public class ServerTrafficCounter {
 
             public double sample() {
                 return outgoingCounter.getAndSet(0)/1024;
+            }
+
+            public boolean isPartialSample() {
+                return true;
             }
         };
         StatisticsManager.getInstance()

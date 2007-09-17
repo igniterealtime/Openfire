@@ -10,22 +10,23 @@
  */
 package org.jivesoftware.openfire.filetransfer.proxy;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.DefaultCache;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferRejectedException;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.stats.i18nStatistic;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -358,6 +359,10 @@ public class ProxyConnectionManager {
 
         public double sample() {
             return (ProxyOutputStream.amountTransfered.getAndSet(0) / 1000);
+        }
+
+        public boolean isPartialSample() {
+            return true;
         }
     }
 }

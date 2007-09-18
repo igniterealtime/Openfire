@@ -12,6 +12,7 @@
 package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.openfire.session.ClientSession;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Dispatches presence events. The following events are supported:
  * <ul>
  * <li><b>availableSession</b> --> A session is now available to receive communication.</li>
- * <li><b>unavailableSession</b> --> A session is now longer available.</li>
+ * <li><b>unavailableSession</b> --> A session is no longer available.</li>
  * <li><b>presencePriorityChanged</b> --> The priority of a resource has changed.</li>
  * <li><b>presenceChanged</b> --> The show or status value of an available session has changed.</li>
  * </ul>
@@ -120,6 +121,36 @@ public class PresenceEventDispatcher {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
                 listener.presenceChanged(session, presence);
+            }
+        }
+    }
+
+    /**
+     * Notification message indicating that a user has successfully subscribed
+     * to the presence of another user.
+     * 
+     * @param subscriberJID the user that initiated the subscription.
+     * @param authorizerJID the user that authorized the subscription.
+     */
+    public static void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
+        if (!listeners.isEmpty()) {
+            for (PresenceEventListener listener : listeners) {
+                listener.subscribedToPresence(subscriberJID, authorizerJID);
+            }
+        }
+    }
+    
+    /**
+     * Notification message indicating that a user has unsubscribed
+     * to the presence of another user.
+     * 
+     * @param unsubscriberJID the user that initiated the unsubscribe request.
+     * @param recipientJID    the recipient user of the unsubscribe request.
+     */
+    public static void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID) {
+        if (!listeners.isEmpty()) {
+            for (PresenceEventListener listener : listeners) {
+                listener.unsubscribedToPresence(unsubscriberJID, recipientJID);
             }
         }
     }

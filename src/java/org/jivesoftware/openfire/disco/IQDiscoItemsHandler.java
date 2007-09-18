@@ -65,7 +65,8 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Gaston Dombiak
  */
-public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider, ClusterEventListener {
+public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider, ClusterEventListener,
+        UserItemsProvider {
 
     private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
     private Map<String, Element> localServerItems = new HashMap<String, Element>();
@@ -96,10 +97,43 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             return reply;
         }
 
+        // If addressed to user@domain, add items from UserItemsProviders to
+        // the reply.
+        if (packet.getTo() != null && packet.getTo().getNode() != null) {
+            String name = packet.getTo().getNode();
+
+            reply.setChildElement(packet.getChildElement().createCopy());
+            Element queryElement = reply.getChildElement();
+
+            List<UserItemsProvider> itemsProviders = XMPPServer.getInstance().getUserItemsProviders();
+            if (itemsProviders.isEmpty()) {
+                // If we didn't find any UserItemsProviders, then answer a not found error
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.item_not_found);
+            }
+            else {
+                for (UserItemsProvider itemsProvider : itemsProviders) {
+                    // Check if we have items associated with the requested name
+                    Iterator<Element> itemsItr = itemsProvider.getUserItems(name, packet.getFrom());
+                    if (itemsItr != null) {
+                        // Add to the reply all the items provided by the UserItemsProvider
+                        Element item;
+                        while (itemsItr.hasNext()) {
+                            item = itemsItr.next();
+                            item.setQName(new QName(item.getName(), queryElement.getNamespace()));
+                            queryElement.add(item.createCopy());
+                        }
+                    }
+                }
+            }
+
+            return reply;
+        }
+
         // Look for a DiscoItemsProvider associated with the requested entity.
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
-        // together with any possible requested node.  
+        // together with any possible requested node.
         DiscoItemsProvider itemsProvider = getProvider(packet.getTo() == null ?
                 XMPPServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
         if (itemsProvider != null) {
@@ -434,25 +468,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     return answer.iterator();
                 }
                 else {
-                    List<Element> answer = new ArrayList<Element>();
-                    try {
-                        User user = UserManager.getInstance().getUser(name);
-                        RosterItem item = user.getRoster().getRosterItem(senderJID);
-                        // If the requesting entity is subscribed to the account's presence then
-                        // answer the user's "available resources"
-                        if (item.getSubStatus() == RosterItem.SUB_FROM ||
-                                item.getSubStatus() == RosterItem.SUB_BOTH) {
-                            for (Session session : SessionManager.getInstance().getSessions(name)) {
-                                Element element = DocumentHelper.createElement("item");
-                                element.addAttribute("jid", session.getAddress().toString());
-                                answer.add(element);
-                            }
-                        }
-                        return answer.iterator();
-                    }
-                    catch (UserNotFoundException e) {
-                        return answer.iterator();
-                    }
+                    return null;
                 }
             }
         };
@@ -473,6 +489,28 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             element = (Element) ExternalizableUtil.getInstance().readSerializable(in);
             ExternalizableUtil.getInstance().readExternalizableCollection(in, nodes, getClass().getClassLoader());
+        }
+    }
+
+    public Iterator<Element> getUserItems(String name, JID senderJID) {
+        List<Element> answer = new ArrayList<Element>();
+        try {
+            User user = UserManager.getInstance().getUser(name);
+            RosterItem item = user.getRoster().getRosterItem(senderJID);
+            // If the requesting entity is subscribed to the account's presence then
+            // answer the user's "available resources"
+            if (item.getSubStatus() == RosterItem.SUB_FROM ||
+                    item.getSubStatus() == RosterItem.SUB_BOTH) {
+                for (Session session : SessionManager.getInstance().getSessions(name)) {
+                    Element element = DocumentHelper.createElement("item");
+                    element.addAttribute("jid", session.getAddress().toString());
+                    answer.add(element);
+                }
+            }
+            return answer.iterator();
+        }
+        catch (UserNotFoundException e) {
+            return answer.iterator();
         }
     }
 }

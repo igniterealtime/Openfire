@@ -11,6 +11,7 @@
 
 package org.jivesoftware.openfire.plugin;
 
+import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -41,9 +42,15 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         // Add filter to filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
         defaultPortFilter = new RawPrintFilter();
-        connManager.getSocketAcceptor().getFilterChain().addBefore("xmpp", "rawDebugger", defaultPortFilter);
+        SocketAcceptor socketAcceptor = connManager.getSocketAcceptor();
+        if (socketAcceptor != null) {
+            socketAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", defaultPortFilter);
+        }
         oldPortFilter = new RawPrintFilter();
-        connManager.getSSLSocketAcceptor().getFilterChain().addBefore("xmpp", "rawDebugger", oldPortFilter);
+        SocketAcceptor sslAcceptor = connManager.getSSLSocketAcceptor();
+        if (sslAcceptor != null) {
+            sslAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", oldPortFilter);
+        }
 
         interpretedPrinter = new InterpretedXMLPrinter();
         if (JiveGlobals.getBooleanProperty("plugin.debugger.interpretedAllowed")) {
@@ -59,10 +66,12 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         PropertyEventDispatcher.removeListener(this);
         // Remove filter from filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        if (connManager.getSocketAcceptor().getFilterChain().contains("rawDebugger")) {
+        if (connManager.getSocketAcceptor() != null &&
+                connManager.getSocketAcceptor().getFilterChain().contains("rawDebugger")) {
             connManager.getSocketAcceptor().getFilterChain().remove("rawDebugger");
         }
-        if (connManager.getSSLSocketAcceptor().getFilterChain().contains("rawDebugger")) {
+        if (connManager.getSSLSocketAcceptor() != null &&
+                connManager.getSSLSocketAcceptor().getFilterChain().contains("rawDebugger")) {
             connManager.getSSLSocketAcceptor().getFilterChain().remove("rawDebugger");
         }
         // Remove the filters from existing sessions
@@ -84,7 +93,7 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
 
     public void propertySet(String property, Map<String, Object> params) {
         if (property.equals("plugin.debugger.interpretedAllowed")) {
-            if (Boolean.parseBoolean((String)params.get("value"))) {
+            if (Boolean.parseBoolean((String) params.get("value"))) {
                 InterceptorManager.getInstance().addInterceptor(interpretedPrinter);
             }
             else {

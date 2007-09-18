@@ -12,10 +12,10 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -1735,7 +1735,7 @@ public abstract class Node {
      * @throws IllegalStateException If this message was used when the node supports multiple
      *         subscriptions.
      */
-    NodeSubscription getSubscription(JID subscriberJID) {
+    public NodeSubscription getSubscription(JID subscriberJID) {
         // Check that node does not support multiple subscriptions
         if (isMultipleSubscriptionsEnabled()) {
             throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +

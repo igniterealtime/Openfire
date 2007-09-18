@@ -11,9 +11,9 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -26,11 +26,11 @@ import java.util.List;
  *
  * @author Matt Tucker
  */
-class PendingSubscriptionsCommand extends AdHocCommand {
+public class PendingSubscriptionsCommand extends AdHocCommand {
 
     private PubSubService service;
 
-    PendingSubscriptionsCommand(PubSubService service) {
+    public PendingSubscriptionsCommand(PubSubService service) {
         this.service = service;
     }
 

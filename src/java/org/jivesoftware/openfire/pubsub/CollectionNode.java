@@ -11,12 +11,12 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import org.dom4j.Element;
+import org.jivesoftware.util.LocaleUtils;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.forms.FormField;
-import org.xmpp.forms.DataForm;
-import org.jivesoftware.util.LocaleUtils;
-import org.dom4j.Element;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,7 +51,7 @@ public class CollectionNode extends Node {
      */
     private int maxLeafNodes = -1;
 
-    CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
+    public CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
         super(service, parentNode, nodeID, creator);
         // Configure node with default values (get them from the pubsub service)
         DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration(false);

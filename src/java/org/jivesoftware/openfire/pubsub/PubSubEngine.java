@@ -14,96 +14,45 @@ package org.jivesoftware.openfire.pubsub;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
-import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * A PubSubEngine is responsible for handling packets sent to the pub-sub service.
+ * A PubSubEngine is responsible for handling packets sent to a pub-sub service.
  *
  * @author Matt Tucker
  */
 public class PubSubEngine {
-
-    private PubSubService service;
-    /**
-     * Manager that keeps the list of ad-hoc commands and processing command requests.
-     */
-    private AdHocCommandManager manager;
-    /**
-     * Keep a registry of the presence's show value of users that subscribed to a node of
-     * the pubsub service and for which the node only delivers notifications for online users
-     * or node subscriptions deliver events based on the user presence show value. Offline
-     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
-     * is full JID of connected resource and value is show value of the last received presence.
-     */
-    private Map<String, Map<String, String>> barePresences =
-            new ConcurrentHashMap<String, Map<String, String>>();
-    /**
-     * The time to elapse between each execution of the maintenance process. Default
-     * is 2 minutes.
-     */
-    private int items_task_timeout = 2 * 60 * 1000;
-    /**
-     * The number of items to save on each run of the maintenance process.
-     */
-    private int items_batch_size = 50;
-    /**
-     * Queue that holds the items that need to be added to the database.
-     */
-    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>();
-    /**
-     * Queue that holds the items that need to be deleted from the database.
-     */
-    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>();
-    /**
-     * Task that saves or deletes published items from the database.
-     */
-    private PublishedItemTask publishedItemTask;
-
-    /**
-     * Timer to save published items to the database or remove deleted or old items.
-     */
-    private Timer timer = new Timer("PubSub maintenance");
 
     /**
      * The packet router for the server.
      */
     private PacketRouter router = null;
 
-    public PubSubEngine(PubSubService pubSubService, PacketRouter router) {
-        this.service = pubSubService;
+    public PubSubEngine(PacketRouter router) {
         this.router = router;
-        // Initialize the ad-hoc commands manager to use for this pubsub service
-        manager = new AdHocCommandManager();
-        manager.addCommand(new PendingSubscriptionsCommand(service));
-        // Save or delete published items from the database every 2 minutes starting in
-        // 2 minutes (default values)
-        publishedItemTask = new PublishedItemTask();
-        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
     }
 
     /**
      * Handles IQ packets sent to the pubsub service. Requests of disco#info and disco#items
      * are not being handled by the engine. Instead the service itself should handle disco packets.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param iq the IQ packet sent to the pubsub service.
      * @return true if the IQ packet was handled by the engine.
      */
-    public boolean process(IQ iq) {
+    public boolean process(PubSubService service, IQ iq) {
         // Ignore IQs of type ERROR or RESULT
         if (IQ.Type.error == iq.getType() || IQ.Type.result == iq.getType()) {
             return true;
@@ -118,61 +67,61 @@ public class PubSubEngine {
             Element action = childElement.element("publish");
             if (action != null) {
                 // Entity publishes an item
-                publishItemsToNode(iq, action);
+                publishItemsToNode(service, iq, action);
                 return true;
             }
             action = childElement.element("subscribe");
             if (action != null) {
                 // Entity subscribes to a node
-                subscribeNode(iq, childElement, action);
+                subscribeNode(service, iq, childElement, action);
                 return true;
             }
             action = childElement.element("options");
             if (action != null) {
                 if (IQ.Type.get == iq.getType()) {
                     // Subscriber requests subscription options form
-                    getSubscriptionConfiguration(iq, childElement, action);
+                    getSubscriptionConfiguration(service, iq, childElement, action);
                 }
                 else {
                     // Subscriber submits completed options form
-                    configureSubscription(iq, action);
+                    configureSubscription(service, iq, action);
                 }
                 return true;
             }
             action = childElement.element("create");
             if (action != null) {
                 // Entity is requesting to create a new node
-                createNode(iq, childElement, action);
+                createNode(service, iq, childElement, action);
                 return true;
             }
             action = childElement.element("unsubscribe");
             if (action != null) {
                 // Entity unsubscribes from a node
-                unsubscribeNode(iq, action);
+                unsubscribeNode(service, iq, action);
                 return true;
             }
             action = childElement.element("subscriptions");
             if (action != null) {
                 // Entity requests all current subscriptions
-                getSubscriptions(iq, childElement);
+                getSubscriptions(service, iq, childElement);
                 return true;
             }
             action = childElement.element("affiliations");
             if (action != null) {
                 // Entity requests all current affiliations
-                getAffiliations(iq, childElement);
+                getAffiliations(service, iq, childElement);
                 return true;
             }
             action = childElement.element("items");
             if (action != null) {
                 // Subscriber requests all active items
-                getPublishedItems(iq, action);
+                getPublishedItems(service, iq, action);
                 return true;
             }
             action = childElement.element("retract");
             if (action != null) {
                 // Entity deletes an item
-                deleteItems(iq, action);
+                deleteItems(service, iq, action);
                 return true;
             }
             // Unknown action requested
@@ -200,11 +149,11 @@ public class PubSubEngine {
                 }
                 if (IQ.Type.get == iq.getType()) {
                     // Owner requests configuration form of a node
-                    getNodeConfiguration(iq, childElement, nodeID);
+                    getNodeConfiguration(service, iq, childElement, nodeID);
                 }
                 else {
                     // Owner submits or cancels node configuration form
-                    configureNode(iq, action, nodeID);
+                    configureNode(service, iq, action, nodeID);
                 }
                 return true;
             }
@@ -212,23 +161,23 @@ public class PubSubEngine {
             if (action != null) {
                 // Owner requests default configuration options for
                 // leaf or collection nodes
-                getDefaultNodeConfiguration(iq, childElement, action);
+                getDefaultNodeConfiguration(service, iq, childElement, action);
                 return true;
             }
             action = childElement.element("delete");
             if (action != null) {
                 // Owner deletes a node
-                deleteNode(iq, action);
+                deleteNode(service, iq, action);
                 return true;
             }
             action = childElement.element("subscriptions");
             if (action != null) {
                 if (IQ.Type.get == iq.getType()) {
                     // Owner requests all affiliated entities
-                    getNodeSubscriptions(iq, action);
+                    getNodeSubscriptions(service, iq, action);
                 }
                 else {
-                    modifyNodeSubscriptions(iq, action);
+                    modifyNodeSubscriptions(service, iq, action);
                 }
                 return true;
             }
@@ -236,17 +185,17 @@ public class PubSubEngine {
             if (action != null) {
                 if (IQ.Type.get == iq.getType()) {
                     // Owner requests all affiliated entities
-                    getNodeAffiliations(iq, action);
+                    getNodeAffiliations(service, iq, action);
                 }
                 else {
-                    modifyNodeAffiliations(iq, action);
+                    modifyNodeAffiliations(service, iq, action);
                 }
                 return true;
             }
             action = childElement.element("purge");
             if (action != null) {
                 // Owner purges items from a node
-                purgeNode(iq, action);
+                purgeNode(service, iq, action);
                 return true;
             }
             // Unknown action requested so return error to sender
@@ -255,7 +204,7 @@ public class PubSubEngine {
         }
         else if ("http://jabber.org/protocol/commands".equals(namespace)) {
             // Process ad-hoc command
-            IQ reply = manager.process(iq);
+            IQ reply = service.getManager().process(iq);
             router.route(reply);
             return true;
         }
@@ -266,18 +215,19 @@ public class PubSubEngine {
      * Handles Presence packets sent to the pubsub service. Only process available and not
      * available presences.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param presence the Presence packet sent to the pubsub service.
      */
-    public void process(Presence presence) {
+    public void process(PubSubService service, Presence presence) {
         if (presence.isAvailable()) {
             JID subscriber = presence.getFrom();
-            Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+            Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
             if (fullPresences == null) {
                 synchronized (subscriber.toBareJID().intern()) {
-                    fullPresences = barePresences.get(subscriber.toBareJID());
+                    fullPresences = service.getBarePresences().get(subscriber.toBareJID());
                     if (fullPresences == null) {
                         fullPresences = new ConcurrentHashMap<String, String>();
-                        barePresences.put(subscriber.toBareJID(), fullPresences);
+                        service.getBarePresences().put(subscriber.toBareJID(), fullPresences);
                     }
                 }
             }
@@ -286,11 +236,11 @@ public class PubSubEngine {
         }
         else if (presence.getType() == Presence.Type.unavailable) {
             JID subscriber = presence.getFrom();
-            Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+            Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
             if (fullPresences != null) {
                 fullPresences.remove(subscriber.toString());
                 if (fullPresences.isEmpty()) {
-                    barePresences.remove(subscriber.toBareJID());
+                    service.getBarePresences().remove(subscriber.toBareJID());
                 }
             }
         }
@@ -303,16 +253,17 @@ public class PubSubEngine {
      * Answers to authorization requests sent to node owners to approve pending subscriptions
      * will also be processed by this method.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param message the Message packet sent to the pubsub service.
      */
-    public void process(Message message) {
+    public void process(PubSubService service, Message message) {
         if (message.getType() == Message.Type.error) {
             // Process Messages of type error to identify possible subscribers that no longer exist
             if (message.getError().getType() == PacketError.Type.cancel) {
                 // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
                 JID owner = new JID(message.getFrom().toBareJID());
                 // Terminate the subscription of the entity to all nodes hosted at the service
-               cancelAllSubscriptions(owner);
+               cancelAllSubscriptions(service, owner);
             }
             else if (message.getError().getType() == PacketError.Type.auth) {
                 // TODO Queue the message to be sent again later (will retry a few times and
@@ -327,13 +278,13 @@ public class PubSubEngine {
                 // Check that completed data form belongs to an authorization request
                 if ("http://jabber.org/protocol/pubsub#subscribe_authorization".equals(formType)) {
                     // Process the answer to the authorization request
-                    processAuthorizationAnswer(authForm, message);
+                    processAuthorizationAnswer(service, authForm, message);
                 }
             }
         }
     }
 
-    private void publishItemsToNode(IQ iq, Element publishElement) {
+    private void publishItemsToNode(PubSubService service, IQ iq, Element publishElement) {
         String nodeID = publishElement.attributeValue("node");
         Node node;
         if (nodeID == null) {
@@ -420,7 +371,7 @@ public class PubSubEngine {
         leafNode.publishItems(from, items);
     }
 
-    private void deleteItems(IQ iq, Element retractElement) {
+    private void deleteItems(PubSubService service, IQ iq, Element retractElement) {
         String nodeID = retractElement.attributeValue("node");
         Node node;
         if (nodeID == null) {
@@ -503,7 +454,7 @@ public class PubSubEngine {
         leafNode.deleteItems(items);
     }
 
-    private void subscribeNode(IQ iq, Element childElement, Element subscribeElement) {
+    private void subscribeNode(PubSubService service, IQ iq, Element childElement, Element subscribeElement) {
         String nodeID = subscribeElement.attributeValue("node");
         Node node;
         if (nodeID == null) {
@@ -631,7 +582,7 @@ public class PubSubEngine {
                 optionsForm);
     }
 
-    private void unsubscribeNode(IQ iq, Element unsubscribeElement) {
+    private void unsubscribeNode(PubSubService service, IQ iq, Element unsubscribeElement) {
         String nodeID = unsubscribeElement.attributeValue("node");
         String subID = unsubscribeElement.attributeValue("subid");
         Node node;
@@ -719,7 +670,8 @@ public class PubSubEngine {
         router.route(IQ.createResultIQ(iq));
     }
 
-    private void getSubscriptionConfiguration(IQ iq, Element childElement, Element optionsElement) {
+    private void getSubscriptionConfiguration(PubSubService service, IQ iq,
+                                              Element childElement, Element optionsElement) {
         String nodeID = optionsElement.attributeValue("node");
         String subID = optionsElement.attributeValue("subid");
         Node node;
@@ -800,7 +752,7 @@ public class PubSubEngine {
         router.route(reply);
     }
 
-    private void configureSubscription(IQ iq, Element optionsElement) {
+    private void configureSubscription(PubSubService service, IQ iq, Element optionsElement) {
         String nodeID = optionsElement.attributeValue("node");
         String subID = optionsElement.attributeValue("subid");
         Node node;
@@ -885,7 +837,7 @@ public class PubSubEngine {
         }
     }
 
-    private void getSubscriptions(IQ iq, Element childElement) {
+    private void getSubscriptions(PubSubService service, IQ iq, Element childElement) {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
         JID owner = new JID(iq.getFrom().toBareJID());
         // Collect subscriptions of owner for all nodes at the service
@@ -924,7 +876,7 @@ public class PubSubEngine {
         router.route(reply);
     }
 
-    private  void getAffiliations(IQ iq, Element childElement) {
+    private  void getAffiliations(PubSubService service, IQ iq, Element childElement) {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
         JID owner = new JID(iq.getFrom().toBareJID());
         // Collect affiliations of owner for all nodes at the service
@@ -960,7 +912,7 @@ public class PubSubEngine {
         router.route(reply);
     }
 
-    private void getPublishedItems(IQ iq, Element itemsElement) {
+    private void getPublishedItems(PubSubService service, IQ iq, Element itemsElement) {
         String nodeID = itemsElement.attributeValue("node");
         String subID = itemsElement.attributeValue("subid");
         Node node;
@@ -1095,7 +1047,7 @@ public class PubSubEngine {
         leafNode.sendPublishedItems(iq, items, forceToIncludePayload);
     }
 
-    private void createNode(IQ iq, Element childElement, Element createElement) {
+    private void createNode(PubSubService service, IQ iq, Element childElement, Element createElement) {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
@@ -1150,11 +1102,6 @@ public class PubSubEngine {
                             return;
                         }
                         parentNode = (CollectionNode) tempNode;
-                        // If requested new nodeID does not contain parent nodeID then add
-                        // the parent nodeID to the beginging of the new nodeID
-                        if (!newNodeID.startsWith(parentNodeID)) {
-                            newNodeID = parentNodeID + "/" + newNodeID;
-                        }
                     }
                 }
                 field = completedForm.getField("pubsub#node_type");
@@ -1170,10 +1117,6 @@ public class PubSubEngine {
         // If no parent was defined then use the root collection node
         if (parentNode == null && service.isCollectionNodesSupported()) {
             parentNode = service.getRootCollectionNode();
-            // Calculate new nodeID for the new node
-            if (!newNodeID.startsWith(parentNode.getNodeID() + "/")) {
-                newNodeID = parentNode.getNodeID() + "/" + newNodeID;
-            }
         }
         // Check that the requested nodeID does not exist
         Node existingNode = service.getNode(newNodeID);
@@ -1260,7 +1203,7 @@ public class PubSubEngine {
         }
     }
 
-    private void getNodeConfiguration(IQ iq, Element childElement, String nodeID) {
+    private void getNodeConfiguration(PubSubService service, IQ iq, Element childElement, String nodeID) {
         Node node = service.getNode(nodeID);
         if (node == null) {
             // Node does not exist. Return item-not-found error
@@ -1281,7 +1224,8 @@ public class PubSubEngine {
         router.route(reply);
     }
 
-    private void getDefaultNodeConfiguration(IQ iq, Element childElement, Element defaultElement) {
+    private void getDefaultNodeConfiguration(PubSubService service, IQ iq,
+                                             Element childElement, Element defaultElement) {
         String type = defaultElement.attributeValue("type");
         type = type == null ? "leaf" : type;
 
@@ -1304,7 +1248,7 @@ public class PubSubEngine {
         router.route(reply);
     }
 
-    private void configureNode(IQ iq, Element configureElement, String nodeID) {
+    private void configureNode(PubSubService service, IQ iq, Element configureElement, String nodeID) {
         Node node = service.getNode(nodeID);
         if (node == null) {
             // Node does not exist. Return item-not-found error
@@ -1338,7 +1282,7 @@ public class PubSubEngine {
         }
     }
 
-    private void deleteNode(IQ iq, Element deleteElement) {
+    private void deleteNode(PubSubService service, IQ iq, Element deleteElement) {
         String nodeID = deleteElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error
@@ -1373,7 +1317,7 @@ public class PubSubEngine {
         }
     }
 
-    private void purgeNode(IQ iq, Element purgeElement) {
+    private void purgeNode(PubSubService service, IQ iq, Element purgeElement) {
         String nodeID = purgeElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error
@@ -1414,7 +1358,7 @@ public class PubSubEngine {
         router.route(IQ.createResultIQ(iq));
     }
 
-    private void getNodeSubscriptions(IQ iq, Element affiliationsElement) {
+    private void getNodeSubscriptions(PubSubService service, IQ iq, Element affiliationsElement) {
         String nodeID = affiliationsElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error.
@@ -1437,7 +1381,7 @@ public class PubSubEngine {
         node.sendSubscriptions(iq);
     }
 
-    private void modifyNodeSubscriptions(IQ iq, Element entitiesElement) {
+    private void modifyNodeSubscriptions(PubSubService service, IQ iq, Element entitiesElement) {
         String nodeID = entitiesElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error.
@@ -1497,7 +1441,7 @@ public class PubSubEngine {
         router.route(reply);
     }
 
-    private void getNodeAffiliations(IQ iq, Element affiliationsElement) {
+    private void getNodeAffiliations(PubSubService service, IQ iq, Element affiliationsElement) {
         String nodeID = affiliationsElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error.
@@ -1520,7 +1464,7 @@ public class PubSubEngine {
         node.sendAffiliations(iq);
     }
 
-    private void modifyNodeAffiliations(IQ iq, Element entitiesElement) {
+    private void modifyNodeAffiliations(PubSubService service, IQ iq, Element entitiesElement) {
         String nodeID = entitiesElement.attributeValue("node");
         if (nodeID == null) {
             // NodeID was not provided. Return bad-request error.
@@ -1603,9 +1547,10 @@ public class PubSubEngine {
      * The affiliation with the node will be removed if the entity was not a node owner or
      * publisher.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param user the entity that no longer exists.
      */
-    private void cancelAllSubscriptions(JID user) {
+    private void cancelAllSubscriptions(PubSubService service, JID user) {
         for (Node node : service.getNodes()) {
             NodeAffiliate affiliate = node.getAffiliate(user);
             if (affiliate == null) {
@@ -1618,7 +1563,7 @@ public class PubSubEngine {
         }
     }
 
-    private void processAuthorizationAnswer(DataForm authForm, Message message) {
+    private void processAuthorizationAnswer(PubSubService service, DataForm authForm, Message message) {
         String nodeID = authForm.getField("pubsub#node").getValues().get(0);
         String subID = authForm.getField("pubsub#subid").getValues().get(0);
         String allow = authForm.getField("pubsub#allow").getValues().get(0);
@@ -1719,49 +1664,59 @@ public class PubSubEngine {
         return completedForm;
     }
 
-    public void start() {
+    public void start(final PubSubService service) {
         // Probe presences of users that this service has subscribed to (once the server
         // has started)
-        XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
-            public void serverStarted() {
-                Set<JID> affiliates = new HashSet<JID>();
-                for (Node node : service.getNodes()) {
-                    affiliates.addAll(node.getPresenceBasedSubscribers());
+        
+        if (XMPPServer.getInstance().isStarted()) {
+            probePresences(service);
+        }
+        else {
+            XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                public void serverStarted() {
+                    probePresences(service);
                 }
-                for (JID jid : affiliates) {
-                    // Send probe presence
-                    Presence subscription = new Presence(Presence.Type.probe);
-                    subscription.setTo(jid);
-                    subscription.setFrom(service.getAddress());
-                    service.send(subscription);
-                }
-            }
 
-            public void serverStopping() {
-            }
-        });
+                public void serverStopping() {
+                }
+            });
+        }        
     }
 
-    public void shutdown() {
-        // Stop te maintenance processes
-        timer.cancel();
+    private void probePresences(final PubSubService service) {
+        Set<JID> affiliates = new HashSet<JID>();
+        for (Node node : service.getNodes()) {
+            affiliates.addAll(node.getPresenceBasedSubscribers());
+        }
+        for (JID jid : affiliates) {
+            // Send probe presence
+            Presence subscription = new Presence(Presence.Type.probe);
+            subscription.setTo(jid);
+            subscription.setFrom(service.getAddress());
+            service.send(subscription);
+        }
+    }
+
+    public void shutdown(PubSubService service) {
+        // Stop the maintenance processes
+        service.getTimer().cancel();
         // Delete from the database items contained in the itemsToDelete queue
         PublishedItem entry;
-        while (!itemsToDelete.isEmpty()) {
-            entry = itemsToDelete.poll();
+        while (!service.getItemsToDelete().isEmpty()) {
+            entry = service.getItemsToDelete().poll();
             if (entry != null) {
                 PubSubPersistenceManager.removePublishedItem(service, entry);
             }
         }
         // Save to the database items contained in the itemsToAdd queue
-        while (!itemsToAdd.isEmpty()) {
-            entry = itemsToAdd.poll();
+        while (!service.getItemsToAdd().isEmpty()) {
+            entry = service.getItemsToAdd().poll();
             if (entry != null) {
                 PubSubPersistenceManager.createPublishedItem(service, entry);
             }
         }
         // Stop executing ad-hoc commands
-        manager.stop();
+        service.getManager().stop();
     }
 
     /*******************************************************************************
@@ -1775,12 +1730,13 @@ public class PubSubEngine {
      * is offline then an empty collectin is returned. Available show status is represented
      * by a <tt>online</tt> value. The rest of the possible show values as defined in RFC 3921.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param subscriber the JID of the subscriber. This is not the JID of the affiliate.
      * @return an empty collection when offline. Otherwise, a collection with the show value
      *         of each connected resource.
      */
-    public Collection<String> getShowPresences(JID subscriber) {
-        Map<String, String> fullPresences = barePresences.get(subscriber.toBareJID());
+    public static Collection<String> getShowPresences(PubSubService service, JID subscriber) {
+        Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
         if (fullPresences == null) {
             // User is offline so return empty list
             return Collections.emptyList();
@@ -1805,10 +1761,11 @@ public class PubSubEngine {
      * Requests the pubsub service to subscribe to the presence of the user. If the service
      * has already subscribed to the user's presence then do nothing.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param node the node that originated the subscription request.
      * @param user the JID of the affiliate to subscribe to his presence.
      */
-    public void presenceSubscriptionNotRequired(Node node, JID user) {
+    public static void presenceSubscriptionNotRequired(PubSubService service, Node node, JID user) {
         // Check that no node is requiring to be subscribed to this user
         for (Node hostedNode : service.getNodes()) {
             if (hostedNode.isPresenceBasedDelivery(user)) {
@@ -1828,11 +1785,12 @@ public class PubSubEngine {
      * was not subscribed to the user's presence or any node still requires to be subscribed to
      * the user presence then do nothing.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param node the node that originated the unsubscription request.
      * @param user the JID of the affiliate to unsubscribe from his presence.
      */
-    public void presenceSubscriptionRequired(Node node, JID user) {
-        Map<String, String> fullPresences = barePresences.get(user.toString());
+    public static void presenceSubscriptionRequired(PubSubService service, Node node, JID user) {
+        Map<String, String> fullPresences = service.getBarePresences().get(user.toString());
         if (fullPresences == null || fullPresences.isEmpty()) {
             Presence subscription = new Presence(Presence.Type.subscribe);
             subscription.setTo(user);
@@ -1840,10 +1798,10 @@ public class PubSubEngine {
             service.send(subscription);
             // Sending subscription requests based on received presences may generate
             // that a sunscription request is sent to an offline user (since offline
-            // presences are not stored in "barePresences"). However, this not optimal
-            // algorithm shouldn't bother the user since the user's server should reply
-            // when already subscribed to the user's presence instead of asking the user
-            // to accept the subscription request
+            // presences are not stored in the service's "barePresences"). However, this
+            // not optimal algorithm shouldn't bother the user since the user's server
+            // should reply when already subscribed to the user's presence instead of
+            // asking the user to accept the subscription request.
         }
     }
 
@@ -1857,34 +1815,38 @@ public class PubSubEngine {
      * beginning after the specified delay.  Subsequent executions take place
      * at approximately regular intervals separated by the specified period.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param timeout the new frequency of the maintenance task.
      */
-    void setPublishedItemTaskTimeout(int timeout) {
-        if (this.items_task_timeout == timeout) {
+    void setPublishedItemTaskTimeout(PubSubService service, int timeout) {
+        int items_task_timeout = service.getItemsTaskTimeout();
+        if (items_task_timeout == timeout) {
             return;
         }
         // Cancel the existing task because the timeout has changed
+        PublishedItemTask publishedItemTask = service.getPublishedItemTask();
         if (publishedItemTask != null) {
             publishedItemTask.cancel();
         }
-        this.items_task_timeout = timeout;
+        service.setItemsTaskTimeout(timeout);
         // Create a new task and schedule it with the new timeout
-        publishedItemTask = new PublishedItemTask();
-        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
+        service.setPublishedItemTask(new PublishedItemTask(service));
+        service.getTimer().schedule(publishedItemTask, items_task_timeout, items_task_timeout);
     }
 
     /**
      * Adds the item to the queue of items to remove from the database. The queue is going
      * to be processed by another thread.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param removedItem the item to remove from the database.
      */
-    void queueItemToRemove(PublishedItem removedItem) {
+    public static void queueItemToRemove(PubSubService service, PublishedItem removedItem) {
         // Remove the removed item from the queue of items to add to the database
-        if (!itemsToAdd.remove(removedItem)) {
+        if (!service.getItemsToAdd().remove(removedItem)) {
             // The item is already present in the database so add the removed item
             // to the queue of items to delete from the database
-            itemsToDelete.add(removedItem);
+            service.getItemsToDelete().add(removedItem);
         }
     }
 
@@ -1892,10 +1854,11 @@ public class PubSubEngine {
      * Adds the item to the queue of items to add to the database. The queue is going
      * to be processed by another thread.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param newItem the item to add to the database.
      */
-    void queueItemToAdd(PublishedItem newItem) {
-        itemsToAdd.add(newItem);
+    public static void queueItemToAdd(PubSubService service, PublishedItem newItem) {
+        service.getItemsToAdd().add(newItem);
     }
 
     /**
@@ -1903,44 +1866,13 @@ public class PubSubEngine {
      * usually required when a node was deleted so any pending operation of the node items
      * should be cancelled.
      *
+     * @param service the PubSub service this action is to be performed for.
      * @param items the list of items to remove the from queues.
      */
-    void cancelQueuedItems(Collection<PublishedItem> items) {
+    void cancelQueuedItems(PubSubService service, Collection<PublishedItem> items) {
         for (PublishedItem item : items) {
-            itemsToAdd.remove(item);
-            itemsToDelete.remove(item);
-        }
-    }
-
-    private class PublishedItemTask extends TimerTask {
-        public void run() {
-            try {
-                PublishedItem entry;
-                boolean success;
-                // Delete from the database items contained in the itemsToDelete queue
-                for (int index = 0; index <= items_batch_size && !itemsToDelete.isEmpty(); index++) {
-                    entry = itemsToDelete.poll();
-                    if (entry != null) {
-                        success = PubSubPersistenceManager.removePublishedItem(service, entry);
-                        if (!success) {
-                            itemsToDelete.add(entry);
-                        }
-                    }
-                }
-                // Save to the database items contained in the itemsToAdd queue
-                for (int index = 0; index <= items_batch_size && !itemsToAdd.isEmpty(); index++) {
-                    entry = itemsToAdd.poll();
-                    if (entry != null) {
-                        success = PubSubPersistenceManager.createPublishedItem(service, entry);
-                        if (!success) {
-                            itemsToAdd.add(entry);
-                        }
-                    }
-                }
-            }
-            catch (Throwable e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
+            service.getItemsToAdd().remove(item);
+            service.getItemsToDelete().remove(item);
         }
     }
 

@@ -22,10 +22,7 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
@@ -36,6 +33,8 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
 import org.jivesoftware.openfire.net.MulticastDNSService;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
+import org.jivesoftware.openfire.pep.IQPEPHandler;
+import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
@@ -98,6 +97,7 @@ public class XMPPServer {
     private Version version;
     private Date startDate;
     private boolean initialized = false;
+    private boolean started = false;
     private NodeID nodeID;
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
 
@@ -451,6 +451,8 @@ public class XMPPServer {
             Log.info(startupBanner);
             System.out.println(startupBanner);
 
+            started = true;
+            
             // Notify server listeners that the server has been started
             for (XMPPServerListener listener : listeners) {
                 listener.serverStarted();
@@ -497,9 +499,9 @@ public class XMPPServer {
         loadModule(IQLastActivityHandler.class.getName());
         loadModule(PresenceSubscribeHandler.class.getName());
         loadModule(PresenceUpdateHandler.class.getName());
-        loadModule(IQDiscoInfoHandler.class.getName());
-        loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(IQOfflineMessagesHandler.class.getName());
+        loadModule(IQPEPHandler.class.getName());
+        loadModule(IQPEPOwnerHandler.class.getName());
         loadModule(MultiUserChatServerImpl.class.getName());
         loadModule(MulticastDNSService.class.getName());
         loadModule(IQSharedGroupHandler.class.getName());
@@ -510,6 +512,8 @@ public class XMPPServer {
         loadModule(MediaProxyService.class.getName());
         loadModule(STUNService.class.getName());
         loadModule(PubSubModule.class.getName());
+        loadModule(IQDiscoInfoHandler.class.getName());
+        loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(UpdateManager.class.getName());
         loadModule(InternalComponentManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
@@ -908,7 +912,7 @@ public class XMPPServer {
         // hack to allow safe stopping
         Log.info("Openfire stopped");
     }
-
+    
     /**
      * Returns true if the server is being shutdown.
      *
@@ -1026,6 +1030,17 @@ public class XMPPServer {
      */
     public IQAuthHandler getIQAuthHandler() {
         return (IQAuthHandler) modules.get(IQAuthHandler.class);
+    }
+    
+    /**
+     * Returns the <code>IQPEPHandler</code> registered with this server. The
+     * <code>IQPEPHandler</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>IQPEPHandler</code> registered with this server.
+     */
+    public IQPEPHandler getIQPEPHandler() {
+        return (IQPEPHandler) modules.get(IQPEPHandler.class);
     }
 
     /**
@@ -1198,6 +1213,21 @@ public class XMPPServer {
         }
         return answer;
     }
+ 
+    /**
+     * Returns a list with all the modules that provide "discoverable" identities.
+     *
+     * @return a list with all the modules that provide "discoverable" identities.
+     */
+    public List<ServerIdentitiesProvider> getServerIdentitiesProviders() {
+        List<ServerIdentitiesProvider> answer = new ArrayList<ServerIdentitiesProvider>();
+        for (Module module : modules.values()) {
+            if (module instanceof ServerIdentitiesProvider) {
+                answer.add((ServerIdentitiesProvider) module);
+            }
+        }
+        return answer;
+    }
 
     /**
      * Returns a list with all the modules that provide "discoverable" items associated with
@@ -1211,6 +1241,38 @@ public class XMPPServer {
         for (Module module : modules.values()) {
             if (module instanceof ServerItemsProvider) {
                 answer.add((ServerItemsProvider) module);
+            }
+        }
+        return answer;
+    }
+    
+    /**
+     * Returns a list with all the modules that provide "discoverable" user identities.
+     *
+     * @return a list with all the modules that provide "discoverable" user identities.
+     */
+    public List<UserIdentitiesProvider> getUserIdentitiesProviders() {
+        List<UserIdentitiesProvider> answer = new ArrayList<UserIdentitiesProvider>();
+        for (Module module : modules.values()) {
+            if (module instanceof UserIdentitiesProvider) {
+                answer.add((UserIdentitiesProvider) module);
+            }
+        }
+        return answer;
+    }
+
+    /**
+     * Returns a list with all the modules that provide "discoverable" items associated with
+     * users.
+     *
+     * @return a list with all the modules that provide "discoverable" items associated with
+     *         users.
+     */
+    public List<UserItemsProvider> getUserItemsProviders() {
+        List<UserItemsProvider> answer = new ArrayList<UserItemsProvider>();
+        for (Module module : modules.values()) {
+            if (module instanceof UserItemsProvider) {
+                answer.add((UserItemsProvider) module);
             }
         }
         return answer;
@@ -1354,5 +1416,14 @@ public class XMPPServer {
      */
     public void setRemoteSessionLocator(RemoteSessionLocator remoteSessionLocator) {
         this.remoteSessionLocator = remoteSessionLocator;
+    }
+
+    /**
+     * Returns whether or not the server has been started.
+     * 
+     * @return whether or not the server has been started.
+     */
+    public boolean isStarted() {
+        return started;
     }
 }

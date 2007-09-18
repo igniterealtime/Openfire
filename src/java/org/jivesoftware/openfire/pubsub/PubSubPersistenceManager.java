@@ -13,10 +13,10 @@ package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 
 import java.io.StringReader;
@@ -35,14 +35,22 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class PubSubPersistenceManager {
 
-    private static final String LOAD_NODES =
+    private static final String LOAD_NON_LEAF_NODES =
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
             "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
             "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
             "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
             "bodyXSLT, dataformXSLT, creator, description, language, name, " +
             "replyPolicy, associationPolicy, maxLeafNodes FROM pubsubNode " +
-            "WHERE serviceID=? ORDER BY nodeID";
+            "WHERE serviceID=? AND leaf=0 ORDER BY nodeID";
+    private static final String LOAD_LEAF_NODES =
+            "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
+            "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
+            "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
+            "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
+            "bodyXSLT, dataformXSLT, creator, description, language, name, " +
+            "replyPolicy, associationPolicy, maxLeafNodes FROM pubsubNode " +
+            "WHERE serviceID=? AND leaf=1 ORDER BY nodeID";
     private static final String UPDATE_NODE =
             "UPDATE pubsubNode SET modificationDate=?, parent=?, deliverPayloads=?, " +
             "maxPayloadSize=?, persistItems=?, maxItems=?, " +
@@ -446,11 +454,22 @@ public class PubSubPersistenceManager {
         Map<String, Node> nodes = new HashMap<String, Node>();
         try {
             con = DbConnectionManager.getConnection();
-            // Get all nodes at once (with 1 query)
-            pstmt = con.prepareStatement(LOAD_NODES);
+            // Get all non-leaf nodes (to ensure parent nodes are loaded before their children)
+            pstmt = con.prepareStatement(LOAD_NON_LEAF_NODES);
             pstmt.setString(1, service.getServiceID());
             ResultSet rs = pstmt.executeQuery();
-            // Rebuild all loaded nodes
+            // Rebuild loaded non-leaf nodes
+            while(rs.next()) {
+                loadNode(service, nodes, rs);
+            }
+            rs.close();
+            pstmt.close();
+
+            // Get all leaf nodes (remaining unloaded nodes)
+            pstmt = con.prepareStatement(LOAD_LEAF_NODES);
+            pstmt.setString(1, service.getServiceID());
+            rs = pstmt.executeQuery();
+            // Rebuild loaded leaf nodes
             while(rs.next()) {
                 loadNode(service, nodes, rs);
             }

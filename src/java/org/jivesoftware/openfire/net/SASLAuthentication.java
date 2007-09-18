@@ -291,7 +291,7 @@ public class SASLAuthentication {
                                 }
                             }
                             catch (SaslException e) {
-                                Log.debug("SaslException", e);
+                                Log.debug("SASLAuthentication: SaslException", e);
                                 authenticationFailed(session);
                                 status = Status.failed;
                             }
@@ -317,7 +317,7 @@ public class SASLAuthentication {
             }
         }
         else {
-            Log.debug("Unknown namespace sent in auth element: " + doc.asXML());
+            Log.debug("SASLAuthentication: Unknown namespace sent in auth element: " + doc.asXML());
             authenticationFailed(session);
             status = Status.failed;
         }
@@ -497,6 +497,7 @@ public class SASLAuthentication {
             //The providers should not allow a null authorization
             if (AuthorizationManager.authorize(username,principal)) {
                 Log.debug("SASLAuthentication: "+principal+" authorized to "+username);
+                authenticationSuccessful(session, username,  null);
                 return Status.authenticated;
             }
         } else {

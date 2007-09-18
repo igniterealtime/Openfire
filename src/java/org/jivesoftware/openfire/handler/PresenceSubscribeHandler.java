@@ -16,6 +16,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -168,6 +169,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                         JID prober = localServer.isLocal(recipientJID) ?
                                 new JID(recipientJID.toBareJID()) : recipientJID;
                         presenceManager.probePresence(prober, senderJID);
+                        PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
                     }
                 }
 
@@ -175,6 +177,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // Send unavailable presence from all of the local user's available resources
                     // to the remote user
                     presenceManager.sendUnavailableFromSessions(recipientJID, senderJID);
+                    PresenceEventDispatcher.unsubscribedToPresence(senderJID, recipientJID);
                 }
             }
             catch (SharedGroupException e) {

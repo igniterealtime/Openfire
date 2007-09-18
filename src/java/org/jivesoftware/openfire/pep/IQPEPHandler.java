@@ -107,8 +107,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     private Map<String, Set<JID>> knownRemotePresences = new ConcurrentHashMap<String, Set<JID>>();
 
-    private static final String GET_PEP_SERVICES = "SELECT DISTINCT serviceID FROM pubsubNode";
-
     public IQPEPHandler() {
         super("Personal Eventing Handler");
         pepServices = new ConcurrentHashMap<String, PEPService>();
@@ -133,25 +131,44 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         pubSubEngine = new PubSubEngine(server.getPacketRouter());
 
-        // Restore previous PEP services for which nodes exist in the database.
+        // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
+        /*
+        // Add this PEP handler as a packet interceptor so we may deal with
+        // client packets that send disco#info's explaining capabilities
+        // including PEP contact notification filters.
+        InterceptorManager.getInstance().addInterceptor(this);
+        */
+    }
+
+    /**
+     * Loads a PEP service from the database, if it exists.
+     * 
+     * @param jid the JID of the owner of the PEP service.
+     * @return the loaded PEP service, or null if not found.
+     */
+    private PEPService loadPEPServiceFromDB(String jid) {
+        String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM pubsubNode " +
+                                 "WHERE serviceID='" + jid + "'";
+        PEPService pepService = null;
+        
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             // Get all PEP services
-            pstmt = con.prepareStatement(GET_PEP_SERVICES);
+            pstmt = con.prepareStatement(GET_PEP_SERVICE);
             ResultSet rs = pstmt.executeQuery();
             // Restore old PEPServices
             while (rs.next()) {
                 String serviceID = rs.getString(1);
 
-                // Create a new PEPService if serviceID looks like a bare JID.
-                if (serviceID.indexOf("@") >= 0) {
-                    PEPService pepService = new PEPService(server, serviceID);
-                    pepServices.put(serviceID, pepService);
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("PEP: Restored service for " + serviceID + " from the database.");
-                    }
+                // Create a new PEPService
+                pepService = new PEPService(XMPPServer.getInstance(), serviceID);
+                pepServices.put(serviceID, pepService);
+                pubSubEngine.start(pepService);
+                
+                if (Log.isDebugEnabled()) {
+                    Log.debug("PEP: Restored service for " + serviceID + " from the database.");
                 }
             }
             rs.close();
@@ -176,21 +193,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 Log.error(e);
             }
         }
-
-        // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
-        /*
-        // Add this PEP handler as a packet interceptor so we may deal with
-        // client packets that send disco#info's explaining capabilities
-        // including PEP contact notification filters.
-        InterceptorManager.getInstance().addInterceptor(this);
-        */
-    }
-
-    public void start() {
-        super.start();
-        for (PEPService service : pepServices.values()) {
-            pubSubEngine.start(service);
-        }
+        
+        return pepService;
     }
 
     public void stop() {
@@ -238,7 +242,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         if (packet.getTo() == null && packet.getType() == IQ.Type.set) {
             String jidFrom = senderJID.toBareJID();
 
-            PEPService pepService = pepServices.get(jidFrom);
+            PEPService pepService = getPEPService(jidFrom);
 
             // If no service exists yet for jidFrom, create one.
             if (pepService == null) {
@@ -251,7 +255,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     reply.setError(PacketError.Condition.not_allowed);
                     return reply;
                 }
-
+                
                 pepService = new PEPService(XMPPServer.getInstance(), jidFrom);
                 pepServices.put(jidFrom, pepService);
 
@@ -274,7 +278,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 catch (UserNotFoundException e) {
                     // Do nothing
                 }
-
             }
 
             // If publishing a node, and the node doesn't exist, create it.
@@ -311,7 +314,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
             String jidTo = packet.getTo().toBareJID();
 
-            PEPService pepService = pepServices.get(jidTo);
+            PEPService pepService = getPEPService(jidTo);
 
             if (pepService != null) {
                 pubSubEngine.process(pepService, packet);
@@ -330,6 +333,21 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         // Other error flows are handled in pubSubEngine.process(...)
         return null;
+    }
+    
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the database.
+     * 
+     * @return the requested PEP service if found or null if not found.
+     */
+    private PEPService getPEPService(String jid) {
+        PEPService pepService = pepServices.get(jid);
+        
+        if (pepService == null) {
+            pepService = loadPEPServiceFromDB(jid);
+        }
+        
+        return pepService;
     }
 
     /**
@@ -403,7 +421,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     private void cancelSubscriptionToPEPService(JID unsubscriber, JID serviceOwner) {
         // Retrieve recipientJID's PEP service, if it exists.
-        PEPService pepService = pepServices.get(serviceOwner.toBareJID());
+        PEPService pepService = getPEPService(serviceOwner.toBareJID());
         if (pepService == null) {
             return;
         }
@@ -452,7 +470,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         ArrayList<Element> items = new ArrayList<Element>();
 
         String recipientJID = XMPPServer.getInstance().createJID(name, null).toBareJID();
-        PEPService pepService = pepServices.get(recipientJID);
+        PEPService pepService = getPEPService(recipientJID);
 
         if (pepService != null) {
             CollectionNode rootNode = pepService.getRootCollectionNode();
@@ -479,7 +497,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
-        PEPService pepService = pepServices.get(authorizerJID.toBareJID());
+        PEPService pepService = getPEPService(authorizerJID.toBareJID());
         if (pepService != null) {
             createSubscriptionToPEPService(pepService, subscriberJID, authorizerJID);
 
@@ -509,14 +527,23 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void availableSession(ClientSession session, Presence presence) {
-        // On newly-available presences, send the last published item if the resource is a subscriber.
+         JID newlyAvailableJID = presence.getFrom();
 
-        JID newlyAvailableJID = presence.getFrom();
-
-        for (PEPService pepService : pepServices.values()) {
-            pepService.sendLastPublishedItems(newlyAvailableJID);
+        // Send the last published items for the contacts on newlyAvailableJID's roster. 
+        try {
+            Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(newlyAvailableJID.getNode());
+            for (RosterItem item : roster.getRosterItems()) {
+                if (item.getSubStatus() == RosterItem.SUB_BOTH) {
+                    PEPService pepService = getPEPService(item.getJid().toBareJID());
+                    if (pepService != null) {
+                        pepService.sendLastPublishedItems(newlyAvailableJID);
+                    }
+                }
+            }
         }
-
+        catch (UserNotFoundException e) {
+            // Do nothing
+        }
     }
 
     public void remoteUserAvailable(Presence presence) {
@@ -545,7 +572,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             }
 
             // Send the presence packet recipient's last published items to the remote user.
-            PEPService pepService = pepServices.get(jidTo.toBareJID());
+            PEPService pepService = getPEPService(jidTo.toBareJID());
             if (pepService != null) {
                 pepService.sendLastPublishedItems(jidFrom);
             }

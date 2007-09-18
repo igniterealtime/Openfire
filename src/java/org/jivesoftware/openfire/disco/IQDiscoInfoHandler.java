@@ -62,6 +62,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<String>();
     private Cache<String, Set<NodeID>> serverFeatures;
+    private List<Element> serverIdentities = new ArrayList<Element>();
     private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoInfoProvider>();
     private IQHandlerInfo info;
 
@@ -285,6 +286,21 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {
             addServerFeaturesProvider(provider);
         }
+        // Collect the implementors of ServerIdentitiesProvider so that we can collect the identities
+        // for protocols supported by the server
+        for (ServerIdentitiesProvider provider : server.getServerIdentitiesProviders()) {
+            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
+                serverIdentities.add(it.next());
+            }
+        }
+        // Collect the implementors of UserIdentitiesProvider so that we can collect identities
+        // for registered users.
+        for (UserIdentitiesProvider provider : server.getUserIdentitiesProviders()) {
+            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
+                registeredUserIdentities.add(it.next());
+            }
+        }
+
         setProvider(server.getServerInfo().getName(), getServerInfoProvider());
         // Listen to cluster events
         ClusterManager.addListener(this);
@@ -379,6 +395,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                             identity.addAttribute("type", "im");
 
                             identities.add(identity);
+                            
+                            // Include identities from modules that implement ServerIdentitiesProvider
+                            for (Element identityElement : serverIdentities) {
+                                identities.add(identityElement);
+                            }
                         }
                     }
                     return identities.iterator();

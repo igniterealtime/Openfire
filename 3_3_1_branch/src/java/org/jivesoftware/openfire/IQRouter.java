@@ -12,8 +12,6 @@
 package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -24,6 +22,8 @@ import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -341,10 +341,9 @@ public class IQRouter extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             Session session = sessionManager.getSession(packet.getFrom());
             if (session != null) {
-                Connection conn = session.getConnection();
-                if (conn != null) {
-                    conn.close();
-                }
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setError(PacketError.Condition.internal_server_error);
+                session.process(reply);
             }
         }
     }

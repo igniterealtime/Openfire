@@ -11,6 +11,8 @@
 
 package org.jivesoftware.openfire.disco;
 
+import org.xmpp.packet.JID;
+
 /**
  * Represent a DiscoItem provided by the server. Therefore, the DiscoServerItems are responsible
  * for providing the DiscoInfoProvider and DiscoItemsProvider that will provide the information and
@@ -26,8 +28,28 @@ package org.jivesoftware.openfire.disco;
  *
  * @author Gaston Dombiak
  */
-public interface DiscoServerItem extends DiscoItem {
+public class DiscoServerItem extends DiscoItem {
 
+	private final DiscoInfoProvider infoProvider;
+	private final DiscoItemsProvider itemsProvider;
+	
+	public DiscoServerItem(JID jid, String name, String node, String action, DiscoInfoProvider infoProvider, DiscoItemsProvider itemsProvider) {
+		super(jid, name, node, action);
+		
+		if (infoProvider == null)
+		{
+			throw new IllegalArgumentException("Argument 'infoProvider' cannot be null.");
+		}
+		
+		if (itemsProvider == null)
+		{
+			throw new IllegalArgumentException("Argument 'itemsProvider' cannot be null.");
+		}
+		
+		this.infoProvider = infoProvider;
+		this.itemsProvider = itemsProvider;
+	}
+	
     /**
      * Returns the DiscoInfoProvider responsible for providing the information related to this item.
      * The DiscoInfoProvider will be automatically included in IQDiscoInfoHandler as the provider
@@ -35,7 +57,10 @@ public interface DiscoServerItem extends DiscoItem {
      *
      * @return the DiscoInfoProvider responsible for providing the information related to this item.
      */
-    public abstract DiscoInfoProvider getDiscoInfoProvider();
+    public DiscoInfoProvider getDiscoInfoProvider()
+    {
+    	return infoProvider;
+    }
 
     /**
      * Returns the DiscoItemsProvider responsible for providing the items related to this item.
@@ -44,5 +69,8 @@ public interface DiscoServerItem extends DiscoItem {
      *
      * @return the DiscoItemsProvider responsible for providing the items related to this item.
      */
-    public abstract DiscoItemsProvider getDiscoItemsProvider();
+    public DiscoItemsProvider getDiscoItemsProvider()
+    {
+    	return itemsProvider;
+    }
 }

@@ -25,9 +25,11 @@ import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.lock.LockManager;
+import org.jivesoftware.util.resultsetmanager.ResultSet;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -59,7 +61,8 @@ import java.util.concurrent.locks.Lock;
  */
 public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListener {
 
-    private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
+    public static final String NAMESPACE_DISCO_INFO = "http://jabber.org/protocol/disco#info";
+	private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<String>();
     private Cache<String, Set<NodeID>> serverFeatures;
     private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoInfoProvider>();
@@ -71,7 +74,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
-        info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info");
+        info = new IQHandlerInfo("query", NAMESPACE_DISCO_INFO);
         // Initialize the user identity and features collections (optimization to avoid creating
         // the same objects for each response)
         Element userIdentity = DocumentHelper.createElement("identity");
@@ -82,7 +85,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         userIdentity.addAttribute("category", "account");
         userIdentity.addAttribute("type", "registered");
         registeredUserIdentities.add(userIdentity);
-        userFeatures.add("http://jabber.org/protocol/disco#info");
+        userFeatures.add(NAMESPACE_DISCO_INFO);
     }
 
     public IQHandlerInfo getInfo() {
@@ -99,9 +102,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoInfoProvider responsibility to provide information about the JID's name together 
         // with any possible requested node.  
-        DiscoInfoProvider infoProvider = getProvider(packet.getTo() == null ?
-                XMPPServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
-        if (infoProvider != null) {
+        final String toAddress = packet.getTo() == null ? XMPPServer
+				.getInstance().getServerInfo().getName() : packet.getTo()
+				.getDomain();
+		DiscoInfoProvider infoProvider = getProvider(toAddress);
+		if (infoProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();
             if (name == null || name.trim().length() == 0) {
@@ -119,19 +124,49 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
                 // Add to the reply all the identities provided by the DiscoInfoProvider
                 Element identity;
-                Iterator identities = infoProvider.getIdentities(name, node, packet.getFrom());
+                Iterator<Element> identities = infoProvider.getIdentities(name, node, packet.getFrom());
                 while (identities.hasNext()) {
-                    identity = (Element)identities.next();
+                    identity = identities.next();
                     identity.setQName(new QName(identity.getName(), queryElement.getNamespace()));
                     queryElement.add((Element)identity.clone());
                 }
 
                 // Add to the reply all the features provided by the DiscoInfoProvider
-                Iterator features = infoProvider.getFeatures(name, node, packet.getFrom());
+                Iterator<String> features = infoProvider.getFeatures(name, node, packet.getFrom());
+                boolean hasDiscoInfoFeature = false;
+                boolean hasDiscoItemsFeature = false;
+                boolean hasResultSetManagementFeature = false;
+                
                 while (features.hasNext()) {
-                    queryElement.addElement("feature").addAttribute("var", (String)features.next());
+					final String feature = features.next();
+					queryElement.addElement("feature").addAttribute("var", feature);
+					if (feature.equals(NAMESPACE_DISCO_INFO)) {
+						hasDiscoInfoFeature = true;
+					} else if (feature.equals("http://jabber.org/protocol/disco#items")) {
+						hasDiscoItemsFeature = true;
+					} else if (feature.equals(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)) {
+						hasResultSetManagementFeature = true;
+					}
                 }
 
+				if (hasDiscoItemsFeature && !hasResultSetManagementFeature) {
+					// IQDiscoItemsHandler provides result set management
+					// support.
+					queryElement.addElement("feature").addAttribute("var",
+							ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
+				}
+                
+                if (!hasDiscoInfoFeature) {
+					// XEP-0030 requires that every entity that supports service
+					// discovery broadcasts the disco#info feature.
+					Log.debug("InfoProvider for '" + toAddress
+									+ "' does not return the disco#info feature. "
+									+ "Openfire will add the feature on the entities behalf, "
+									+ "but the entities response to Service Discovery request should be modified.");
+					queryElement.addElement("feature").addAttribute("var",
+							NAMESPACE_DISCO_INFO);
+				}
+                
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
                 XDataFormImpl dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
                 if (dataForm != null) {
@@ -279,7 +314,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     public void initialize(XMPPServer server) {
         super.initialize(server);
         serverFeatures = CacheFactory.createCache("Disco Server Features");
-        addServerFeature("http://jabber.org/protocol/disco#info");
+        addServerFeature(NAMESPACE_DISCO_INFO);
         // Track the implementors of ServerFeaturesProvider so that we can collect the features
         // provided by the server
         for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {

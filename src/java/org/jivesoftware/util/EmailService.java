@@ -229,7 +229,7 @@ public class EmailService {
                 }
                 else if (htmlBody != null) {
                     MimeBodyPart bPart = new MimeBodyPart();
-                    bPart.setContent(htmlBody, "text/html");
+                    bPart.setText(htmlBody, "UTF-8", "html");
                     bPart.setDisposition(Part.INLINE);
                     MimeMultipart mPart = new MimeMultipart();
                     mPart.addBodyPart(bPart);

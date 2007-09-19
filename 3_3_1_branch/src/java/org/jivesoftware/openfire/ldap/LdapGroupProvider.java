@@ -11,14 +11,14 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
@@ -364,6 +364,9 @@ public class LdapGroupProvider implements GroupProvider {
             filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
             filter.append("(").append(manager.getGroupMemberField()).append("=").append(username);
             filter.append("))");
+            if (Log.isDebugEnabled()) {
+                Log.debug("Trying to find group names for user: " + user + " using query: " + filter.toString());
+            }
             NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
             while (answer.hasMoreElements()) {
                 // Get the next group.

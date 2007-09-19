@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
@@ -206,7 +207,7 @@ public class FileTransferProxy extends BasicModule
         super.stop();
 
         XMPPServer.getInstance().getIQDiscoItemsHandler()
-                .removeComponentItem(getAddress().toString());
+                .removeComponentItem(getAddress());
         routingTable.removeComponentRoute(getAddress());
         connectionManager.disable();
     }
@@ -284,31 +285,11 @@ public class FileTransferProxy extends BasicModule
             return items.iterator();
         }
 
-        items.add(new DiscoServerItem() {
-            public String getJID() {
-                return getServiceDomain();
-            }
-
-            public String getName() {
-                return "Socks 5 Bytestreams Proxy";
-            }
-
-            public String getAction() {
-                return null;
-            }
-
-            public String getNode() {
-                return null;
-            }
-
-            public DiscoInfoProvider getDiscoInfoProvider() {
-                return FileTransferProxy.this;
-            }
-
-            public DiscoItemsProvider getDiscoItemsProvider() {
-                return FileTransferProxy.this;
-            }
-        });
+        final DiscoServerItem item = new DiscoServerItem(new JID(
+			getServiceDomain()), "Socks 5 Bytestreams Proxy", null, null, this,
+			this);
+		items.add(item);
+        
         return items.iterator();
     }
 
@@ -338,9 +319,9 @@ public class FileTransferProxy extends BasicModule
         return true;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
-        return new ArrayList<Element>().iterator();
+        return new ArrayList<DiscoItem>().iterator();
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {

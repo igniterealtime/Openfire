@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
@@ -468,33 +469,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public Iterator<DiscoServerItem> getItems() {
         ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-
-        items.add(new DiscoServerItem() {
-            public String getJID() {
-                return getServiceDomain();
-            }
-
-            public String getName() {
-                return "Publish-Subscribe service";
-            }
-
-            public String getAction() {
-                return null;
-            }
-
-            public String getNode() {
-                return null;
-            }
-
-            public DiscoInfoProvider getDiscoInfoProvider() {
-                return PubSubModule.this;
-            }
-
-            public DiscoItemsProvider getDiscoItemsProvider() {
-                return PubSubModule.this;
-            }
-        });
-        return items.iterator();
+		final DiscoServerItem item = new DiscoServerItem(new JID(
+			getServiceDomain()), "Publish-Subscribe service", null, null, this,
+			this);
+		items.add(item);
+		return items.iterator();
     }
 
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
@@ -636,18 +615,16 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return false;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
-        List<Element> answer = new ArrayList<Element>();
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
+        List<DiscoItem> answer = new ArrayList<DiscoItem>();
         String serviceDomain = getServiceDomain();
         if (name == null && node == null) {
-            Element item;
             // Answer all first level nodes
             for (Node pubNode : rootCollectionNode.getNodes()) {
                 if (canDiscoverNode(pubNode)) {
-                    item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", serviceDomain);
-                    item.addAttribute("node", pubNode.getNodeID());
-                    item.addAttribute("name", pubNode.getName());
+                	final DiscoItem item = new DiscoItem(
+						new JID(serviceDomain), pubNode.getName(),
+						pubNode.getNodeID(), null);
                     answer.add(item);
                 }
             }
@@ -656,25 +633,21 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             Node pubNode = getNode(node);
             if (pubNode != null && canDiscoverNode(pubNode)) {
                 if (pubNode.isCollectionNode()) {
-                    Element item;
                     // Answer all nested nodes as items
                     for (Node nestedNode : pubNode.getNodes()) {
                         if (canDiscoverNode(nestedNode)) {
-                            item = DocumentHelper.createElement("item");
-                            item.addAttribute("jid", serviceDomain);
-                            item.addAttribute("node", nestedNode.getNodeID());
-                            item.addAttribute("name", nestedNode.getName());
+                        	final DiscoItem item = new DiscoItem(new JID(
+								serviceDomain), nestedNode.getName(),
+								nestedNode.getNodeID(), null);
                             answer.add(item);
                         }
                     }
                 }
                 else {
                     // This is a leaf node so answer the published items which exist on the service
-                    Element item;
                     for (PublishedItem publishedItem : pubNode.getPublishedItems()) {
-                        item = DocumentHelper.createElement("item");
-                        item.addAttribute("jid", serviceDomain);
-                        item.addAttribute("name", publishedItem.getID());
+                    	final DiscoItem item = new DiscoItem(new JID(
+							serviceDomain), publishedItem.getID(), null, null);
                         answer.add(item);
                     }
                 }

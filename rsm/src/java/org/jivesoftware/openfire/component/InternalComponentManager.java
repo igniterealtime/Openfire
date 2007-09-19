@@ -167,7 +167,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         // Remove the disco item from the server for the component that is being removed
         IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
         if (iqDiscoItemsHandler != null) {
-            iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
+            iqDiscoItemsHandler.removeComponentItem(componentJID);
         }
 
         // Ask the component to shutdown
@@ -445,8 +445,8 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                         return;
                     }
                     try {
-                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
-                                .toBareJID(),
+                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(new JID(packet.getFrom()
+                                .toBareJID()),
                                 identity.attributeValue("name"));
                         if (component instanceof ComponentSession.ExternalComponent) {
                             ComponentSession.ExternalComponent externalComponent =

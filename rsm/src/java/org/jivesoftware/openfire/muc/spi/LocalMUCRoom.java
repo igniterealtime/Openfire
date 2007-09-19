@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  * @author Gaston Dombiak
  */
-public class LocalMUCRoom extends MUCRoom {
+public class LocalMUCRoom implements MUCRoom {
 
     /**
      * The server hosting the room.

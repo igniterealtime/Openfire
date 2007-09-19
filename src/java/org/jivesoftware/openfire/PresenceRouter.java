@@ -99,6 +99,7 @@ public class PresenceRouter extends BasicModule {
 
     private void handle(Presence packet) {
         JID recipientJID = packet.getTo();
+        JID senderJID = packet.getFrom();
         // Check if the packet was sent to the server hostname
         if (recipientJID != null && recipientJID.getNode() == null &&
                 recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
@@ -110,6 +111,14 @@ public class PresenceRouter extends BasicModule {
             }
         }
         try {
+            // Presences sent between components are just routed to the component
+            if (recipientJID != null && !XMPPServer.getInstance().isLocal(recipientJID) &&
+                    !XMPPServer.getInstance().isLocal(senderJID)) {
+                // Route the packet
+                routingTable.routePacket(recipientJID, packet, false);
+                return;
+            }
+
             Presence.Type type = packet.getType();
             // Presence updates (null is 'available')
             if (type == null || Presence.Type.unavailable == type) {
@@ -121,9 +130,9 @@ public class PresenceRouter extends BasicModule {
                     updateHandler.process(packet);
                 }
                 else {
-                    JID senderJID = packet.getFrom();
-                    // Manage remote presence event dispatching
-                    if (senderJID != null && !serverName.equals(senderJID.getDomain())) {
+                    // Trigger events for presences of remote users
+                    if (senderJID != null && !serverName.equals(senderJID.getDomain()) &&
+                            !routingTable.hasComponentRoute(senderJID)) {
                         if (type == null) {
                             // Remote user has become available
                             RemotePresenceEventDispatcher.remoteUserAvailable(packet);

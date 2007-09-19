@@ -319,7 +319,9 @@ public class IQRouter extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             Session session = sessionManager.getSession(packet.getFrom());
             if (session != null) {
-                session.close();
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setError(PacketError.Condition.internal_server_error);
+                session.process(reply);
             }
         }
     }

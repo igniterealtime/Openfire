@@ -11,9 +11,9 @@
 
 package org.jivesoftware.openfire.interceptor;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
 import java.util.Collection;
@@ -236,7 +236,7 @@ public class InterceptorManager {
                     }
                 }
                 catch (Throwable e) {
-                    Log.error("Error in interceptor: " + interceptor, e);
+                    Log.error("Error in interceptor: " + interceptor + " while intercepting: " + packet, e);
                 }
             }
         }
@@ -263,7 +263,7 @@ public class InterceptorManager {
                         }
                     }
                     catch (Throwable e) {
-                        Log.error("Error in interceptor: " + interceptor, e);
+                        Log.error("Error in interceptor: " + interceptor + " while intercepting: " + packet, e);
                     }
                 }
             }

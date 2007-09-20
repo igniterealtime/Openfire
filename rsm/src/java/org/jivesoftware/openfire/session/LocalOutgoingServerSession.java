@@ -11,8 +11,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZInputStream;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -21,6 +19,8 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.StreamCompressionManager;
+import org.jivesoftware.openfire.net.StreamCompressor;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration;
 import org.jivesoftware.openfire.server.RemoteServerManager;
@@ -388,31 +388,34 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                     // Verify if the remote server supports stream compression
                     Element compression = features.element("compression");
                     if (compression != null) {
-                        boolean zlibSupported = false;
+                        boolean matchingCompressors = false;
+                        String methodIdentifier = null;
                         Iterator it = compression.elementIterator("method");
                         while (it.hasNext()) {
                             Element method = (Element) it.next();
-                            if ("zlib".equals(method.getTextTrim())) {
-                                zlibSupported = true;
+                            methodIdentifier = method.getTextTrim();
+                            if (StreamCompressionManager.isAvailable(methodIdentifier)) {
+                            	// TODO: we now accept the first method that matches. It'd be
+                            	// nicer to prioritize this somehow.
+                                matchingCompressors = true;
+                                break;
                             }
                         }
-                        if (zlibSupported) {
+                        if (matchingCompressors && methodIdentifier.length() > 0) {
                             // Request Stream Compression
-                            connection.deliverRawText("<compress xmlns='http://jabber.org/protocol/compress'><method>zlib</method></compress>");
+                            connection.deliverRawText("<compress xmlns='http://jabber.org/protocol/compress'><method>"+methodIdentifier+"</method></compress>");
                             // Check if we are good to start compression
                             Element answer = reader.parseDocument().getRootElement();
                             if ("compressed".equals(answer.getName())) {
-                                // Server confirmed that we can use zlib compression
+                                // Server confirmed that we can use compression
                                 connection.addCompression();
-                                connection.startCompression();
+                                connection.startCompression(methodIdentifier);
                                 Log.debug("OS - Stream compression was successful with " + hostname);
                                 // Stream compression was successful so initiate a new stream
                                 connection.deliverRawText(openingStream.toString());
                                 // Reset the parser to use stream compression over TLS
-                                ZInputStream in = new ZInputStream(
-                                        connection.getTLSStreamHandler().getInputStream());
-                                in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                                xpp.setInput(new InputStreamReader(in, CHARSET));
+                                final StreamCompressor compressor = StreamCompressionManager.getCompressor(methodIdentifier);
+                                xpp.setInput(compressor.getReader(connection.getTLSStreamHandler().getInputStream()));
                                 // Skip the opening stream sent by the server
                                 for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
                                 {
@@ -431,12 +434,12 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                         }
                         else {
                             Log.debug(
-                                    "OS - Stream compression found but zlib method is not supported by" +
+                                    "OS - Stream compression found but no valid method is supported by " +
                                             hostname);
                         }
                     }
                     else {
-                        Log.debug("OS - Stream compression not supoprted by " + hostname);
+                        Log.debug("OS - Stream compression not supported by " + hostname);
                     }
                 }
 

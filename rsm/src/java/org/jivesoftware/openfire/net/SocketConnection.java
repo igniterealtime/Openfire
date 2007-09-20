@@ -11,8 +11,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZOutputStream;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -173,28 +171,33 @@ public class SocketConnection implements Connection {
         // WARNING: We do not support adding compression for incoming traffic but not for outgoing traffic.
     }
 
-    public void startCompression() {
-        compressed = true;
+    public void startCompression(final String methodIdentifier) {
+    	
+    	if (!StreamCompressionManager.isAvailable(methodIdentifier)) {
+    		compressed = false;
+        	Log.warn("Stream compression was requested, but requested method is not available: " + methodIdentifier);
+    		return;
+    	}
+    	
+    	compressed = true;
 
         try {
+        	final StreamCompressor compressor = StreamCompressionManager.getCompressor(methodIdentifier);
             if (tlsStreamHandler == null) {
-                ZOutputStream out = new ZOutputStream(
-                        ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()),
-                        JZlib.Z_BEST_COMPRESSION);
-                out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+            	writer = compressor.getWriter(socket.getOutputStream());
                 xmlSerializer = new XMLSocketWriter(writer, this);
             }
             else {
-                ZOutputStream out = new ZOutputStream(tlsStreamHandler.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
-                out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+            	writer = compressor.getWriter(tlsStreamHandler.getOutputStream());
                 xmlSerializer = new XMLSocketWriter(writer, this);
             }
         } catch (IOException e) {
             // TODO Would be nice to still be able to throw the exception and not catch it here
             Log.error("Error while starting compression", e);
             compressed = false;
+        } catch (IllegalStateException e) {
+        	Log.error("Stream compression was requested, but requested method is not available: " + methodIdentifier, e);
+        	compressed = false;
         }
     }
 

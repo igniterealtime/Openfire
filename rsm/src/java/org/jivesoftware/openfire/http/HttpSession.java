@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.StreamCompressionManager;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.Log;
@@ -94,7 +95,9 @@ public class HttpSession extends LocalClientSession {
 
         // Include Stream Compression Mechanism
         if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
+                !conn.isCompressed() && StreamCompressionManager.isAvailable("zlib")) {
+        	// TODO: we're only including zlib at this time. Maybe we should
+			// include every compression algorithm that's available.
             Element compression = DocumentHelper.createElement(new QName("compression",
                     new Namespace("", "http://jabber.org/features/compress")));
             Element method = compression.addElement("method");

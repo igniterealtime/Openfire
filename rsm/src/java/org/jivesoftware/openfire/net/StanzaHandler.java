@@ -42,7 +42,7 @@ public abstract class StanzaHandler {
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
-    protected static String CHARSET = "UTF-8";
+    protected static final String CHARSET = "UTF-8";
     private Connection connection;
 
     // DANIELE: Indicate if a session is already created
@@ -438,6 +438,8 @@ public abstract class StanzaHandler {
      */
     private boolean compressClient(Element doc) {
         String error = null;
+        String method = doc.elementText("method");
+        
         if (connection.getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
             // Client requested compression but this feature is disabled
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
@@ -454,8 +456,7 @@ public abstract class StanzaHandler {
         }
         else {
             // Check that the requested method is supported
-            String method = doc.elementText("method");
-            if (!"zlib".equals(method)) {
+            if (!StreamCompressionManager.isAvailable(method)) {
                 error = "<failure xmlns='http://jabber.org/protocol/compress'><unsupported-method/></failure>";
                 // Log a warning so that admins can track this case from the server side
                 Log.warn("Requested compression method is not supported: " + method +
@@ -470,13 +471,13 @@ public abstract class StanzaHandler {
         }
         else {
             // Start using compression for incoming traffic
-            connection.addCompression();
+            // TODO: Enable me again: JM-1059 connection.addCompression();
 
             // Indicate client that he can proceed and compress the socket
             connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
 
             // Start using compression for outgoing traffic
-            connection.startCompression();
+            connection.startCompression(method);
             return true;
         }
     }

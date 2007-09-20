@@ -116,7 +116,7 @@ public abstract class VirtualConnection implements Connection {
         //Ignore
     }
 
-    public void startCompression() {
+    public void startCompression(final String methodIdentifier) {
         //Ignore
     }
 

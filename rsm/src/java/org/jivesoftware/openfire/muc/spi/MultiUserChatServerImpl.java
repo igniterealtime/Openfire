@@ -33,6 +33,7 @@ import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.resultsetmanager.ResultSet;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
 
@@ -53,8 +54,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * Temporary rooms are held in memory as long as they have occupants. They will be destroyed after
  * the last occupant left the room. On the other hand, persistent rooms are always present in memory
- * even after the last occupant left the room. In order to keep memory clean of peristent rooms that
- * have been forgotten or abandonded this class includes a clean up process. The clean up process
+ * even after the last occupant left the room. In order to keep memory clean of persistent rooms that
+ * have been forgotten or abandoned this class includes a clean up process. The clean up process
  * will remove from memory rooms that haven't had occupants for a while. Moreover, forgotten or
  * abandoned rooms won't be loaded into memory when the Multi-User Chat service starts up.
  *
@@ -130,6 +131,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * The handler of packets with namespace jabber:iq:register for the server.
      */
     private IQMUCRegisterHandler registerHandler = null;
+    
+    /**
+     * The handler of search requests ('jabber:iq:search' namespace).
+     */
+    private IQMUCSearchHandler searchHandler = null;
+    
     /**
      * The total time all agents took to chat *
      */
@@ -187,7 +194,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * The time to elapse between each rooms cleanup. Default frequency is 60 minutes.
      */
-    private final long cleanup_frequency = 60 * 60 * 1000;
+    private static final long CLEANUP_FREQUENCY = 60 * 60 * 1000;
 
     /**
      * Total number of received messages in all rooms since the last reset. The counter
@@ -271,6 +278,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
         if ("jabber:iq:register".equals(namespace)) {
             IQ reply = registerHandler.handleIQ(iq);
+            router.route(reply);
+        }
+        else if ("jabber:iq:search".equals(namespace)) {
+            IQ reply = searchHandler.handleIQ(iq);
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
@@ -439,7 +450,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                     // Try to load the room's configuration from the database (if the room is
                     // persistent but was added to the DB after the server was started up or the
                     // room may be an old room that was not present in memory)
-                    MUCPersistenceManager.loadFromDB((LocalMUCRoom) room);
+                    MUCPersistenceManager.loadFromDB(room);
                     loaded = true;
                 }
                 catch (IllegalArgumentException e) {
@@ -492,7 +503,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                         // Try to load the room's configuration from the database (if the room is
                         // persistent but was added to the DB after the server was started up or the
                         // room may be an old room that was not present in memory)
-                        MUCPersistenceManager.loadFromDB((LocalMUCRoom) room);
+                        MUCPersistenceManager.loadFromDB(room);
                         loaded = true;
                         rooms.put(roomName, room);
                     }
@@ -617,9 +628,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     /**
-     * Returns the limit date after which rooms whithout activity will be removed from memory.
+     * Returns the limit date after which rooms without activity will be removed from memory.
      *
-     * @return the limit date after which rooms whithout activity will be removed from memory.
+     * @return the limit date after which rooms without activity will be removed from memory.
      */
     private Date getCleanupDate() {
         return new Date(System.currentTimeMillis() - (emptyLimit * 3600000));
@@ -863,12 +874,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         timer.schedule(logConversationTask, log_timeout, log_timeout);
         // Remove unused rooms from memory
         cleanupTask = new CleanupTask();
-        timer.schedule(cleanupTask, cleanup_frequency, cleanup_frequency);
+        timer.schedule(cleanupTask, CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
 
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
         // Configure the handler of iq:register packets
         registerHandler = new IQMUCRegisterHandler(this);
+        // Configure the handler of jabber:iq:search packets
+        searchHandler = new IQMUCSearchHandler(this);
         // Listen to cluster events
         ClusterManager.addListener(this);
     }
@@ -1109,8 +1122,13 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             identity.addAttribute("category", "conference");
             identity.addAttribute("name", "Public Chatrooms");
             identity.addAttribute("type", "text");
-
             identities.add(identity);
+            
+            Element searchId = DocumentHelper.createElement("identity");
+            searchId.addAttribute("category", "directory");
+            searchId.addAttribute("name", "Public Chatroom Search");
+            searchId.addAttribute("type", "chatroom");
+            identities.add(searchId);            
         }
         else if (name != null && node == null) {
             // Answer the identity of a given room
@@ -1149,6 +1167,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             features.add("http://jabber.org/protocol/muc");
             features.add("http://jabber.org/protocol/disco#info");
             features.add("http://jabber.org/protocol/disco#items");
+            features.add("jabber:iq:search");
+            features.add(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
         }
         else if (name != null && node == null) {
             // Answer the features of a given room

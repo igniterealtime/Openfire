@@ -165,6 +165,7 @@ abstract class SocketReadingMode {
      */
     protected boolean compressClient(Element doc) throws IOException, XmlPullParserException {
         String error = null;
+        String method = doc.elementText("method");
         if (socketReader.connection.getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
             // Client requested compression but this feature is disabled
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
@@ -181,8 +182,7 @@ abstract class SocketReadingMode {
         }
         else {
             // Check that the requested method is supported
-            String method = doc.elementText("method");
-            if (!"zlib".equals(method)) {
+            if (!StreamCompressionManager.isAvailable(method)) {
                 error = "<failure xmlns='http://jabber.org/protocol/compress'><unsupported-method/></failure>";
                 // Log a warning so that admins can track this case from the server side
                 Log.warn("Requested compression method is not supported: " + method +
@@ -196,14 +196,11 @@ abstract class SocketReadingMode {
             return false;
         }
         else {
-            // Start using compression for incoming traffic
-            socketReader.connection.addCompression();
-
             // Indicate client that he can proceed and compress the socket
             socketReader.connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
 
-            // Start using compression for outgoing traffic
-            socketReader.connection.startCompression();
+            // Start using compression
+            socketReader.connection.startCompression(method);
             return true;
         }
     }

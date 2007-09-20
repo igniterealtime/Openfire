@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
 import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.net.StreamCompressionManager;
+import org.jivesoftware.openfire.net.StreamCompressor;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
@@ -324,18 +326,15 @@ public class NIOConnection implements Connection {
         }
     }
 
-    public void addCompression() {
+    public void startCompression(final String methodIdentifier) {
         IoFilterChain chain = ioSession.getFilterChain();
         String baseFilter = "org.apache.mina.common.ExecutorThreadModel";
         if (chain.contains("tls")) {
             baseFilter = "tls";
         }
-        chain.addAfter(baseFilter, "compression", new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
-    }
-
-    public void startCompression() {
-        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get("compression");
-        ioFilter.setCompressOutbound(true);
+        
+    	final StreamCompressor compressor = StreamCompressionManager.getCompressor(methodIdentifier);
+        chain.addAfter(baseFilter, "compression", compressor.getCompressingIOFilter());
     }
 
     public boolean isFlashClient() {

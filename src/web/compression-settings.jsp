@@ -9,10 +9,12 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.Connection,
+<%@ page import="java.util.Set,
+				 org.jivesoftware.openfire.Connection,
                  org.jivesoftware.openfire.PrivateStorage,
                  org.jivesoftware.openfire.session.LocalClientSession,
-                 org.jivesoftware.util.JiveGlobals"
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.openfire.net.StreamCompressionManager"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -37,6 +39,9 @@
     // Get an audit manager:
     PrivateStorage privateStorage = webManager.getPrivateStore();
 
+	// Get currently available compression methods.
+	Set<String> allMethods = StreamCompressionManager.allAvailableMethods();
+	
     if (update) {
         // Update c2s compression policy
         LocalClientSession.setCompressionPolicy(
@@ -136,6 +141,22 @@
         </tr>
     </tbody>
     </table>
+    
+    <br>
+    <br>
+    
+	<h4><fmt:message key="compression.settings.available.methods" /></h4>
+    <%  if (allMethods.isEmpty()) { %>
+            <i>(none)</i> 
+    <%  } else {%>
+    
+    <ul>
+    <%  for (final String method : allMethods) { %>
+        <li><%= method %></li> 
+    <%  } %>
+    <%  } %>
+    </ul>
+    
 	</div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>

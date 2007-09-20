@@ -11,8 +11,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZInputStream;
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -183,24 +181,29 @@ class BlockingReadingMode extends SocketReadingMode {
     }
 
     protected boolean compressClient(Element doc) throws XmlPullParserException, IOException {
-        boolean answer = super.compressClient(doc);
-        if (answer) {
-            XmlPullParser xpp = socketReader.reader.getXPPParser();
-            // Reset the parser since a new stream header has been sent from the client
-            if (socketReader.connection.getTLSStreamHandler() == null) {
-                ZInputStream in = new ZInputStream(
-                        ServerTrafficCounter.wrapInputStream(socket.getInputStream()));
-                in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                xpp.setInput(new InputStreamReader(in, CHARSET));
-            }
-            else {
-                ZInputStream in = new ZInputStream(
-                        socketReader.connection.getTLSStreamHandler().getInputStream());
-                in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                xpp.setInput(new InputStreamReader(in, CHARSET));
-            }
-        }
-        return answer;
+		boolean answer = super.compressClient(doc);
+		if (answer) {
+			final String method = doc.elementText("method");
+			if (!StreamCompressionManager.isAvailable(method)) {
+				Log.error("Although super.compressClient returned 'true', we're unable to apply stream compression!");
+				return false;
+			}
+
+			final StreamCompressor compressor = StreamCompressionManager
+					.getCompressor(method);
+
+			XmlPullParser xpp = socketReader.reader.getXPPParser();
+			// Reset the parser since a new stream header has been sent from the
+			// client
+			if (socketReader.connection.getTLSStreamHandler() == null) {
+				xpp.setInput(compressor.getReader(ServerTrafficCounter
+						.wrapInputStream(socket.getInputStream())));
+			} else {
+				xpp.setInput(compressor.getReader(socketReader.connection
+						.getTLSStreamHandler().getInputStream()));
+			}
+		}
+		return answer;
     }
 
     protected void compressionSuccessful() throws XmlPullParserException, IOException {

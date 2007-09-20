@@ -11,6 +11,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -20,6 +21,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.StreamCompressionManager;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
@@ -696,11 +698,13 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         StringBuilder sb = new StringBuilder(200);
 
         // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            sb.append(
-                    "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
-        }
+		if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled
+				&& !conn.isCompressed()) {
+        	final Element compression = StreamCompressionManager.getStreamCompressionFeature();
+        	if (compression != null) {
+        		sb.append(compression.asXML());
+        	}
+		}
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication

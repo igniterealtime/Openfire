@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.StreamCompressionManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -331,7 +332,10 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         // Include Stream Compression Mechanism
         if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
-            return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
+        	final Element compression = StreamCompressionManager.getStreamCompressionFeature();
+        	if (compression != null) {
+        		return compression.asXML();
+        	}
         }
         // Nothing special to add
         return null;

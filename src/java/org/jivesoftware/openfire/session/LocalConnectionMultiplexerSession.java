@@ -11,6 +11,7 @@ import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.StreamCompressionManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
@@ -187,10 +188,13 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         }
 
         // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
-        }
+		if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled
+				&& !conn.isCompressed()) {
+        	final Element compression = StreamCompressionManager.getStreamCompressionFeature();
+        	if (compression != null) {
+        		return compression.asXML();
+        	}
+		}
         return null;
     }
 
@@ -261,11 +265,13 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             }
         }
         // Add info about Stream Compression
-        if (LocalClientSession.getCompressionPolicy() == Connection.CompressionPolicy.optional) {
-            Element comp = child.addElement("compression", "http://jabber.org/features/compress");
-            comp.addElement("method").setText("zlib");
-        }
-        // Add info about Non-SASL authentication
+		if (LocalClientSession.getCompressionPolicy() == Connection.CompressionPolicy.optional)	{
+        	final Element compression = StreamCompressionManager.getStreamCompressionFeature();
+        	if (compression != null) {
+        		child.add(compression);
+        	}
+		}
+		// Add info about Non-SASL authentication
         child.addElement("auth", "http://jabber.org/features/iq-auth");
         // Add info about In-Band Registration
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {

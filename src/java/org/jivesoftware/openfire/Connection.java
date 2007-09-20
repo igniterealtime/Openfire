@@ -300,14 +300,16 @@ public interface Connection {
      * that he can start compressing the traffic. After we sent the uncompresses stanza we can
      * start compression outgoing traffic as well.
      */
-    void addCompression();
+    // TODO: enable me again! JM-1059 void addCompression();
 
     /**
      * Start compressing outgoing traffic for this connection. Compression will only be available after
      * TLS has been negotiated. This means that a connection can never be using compression before
      * TLS. However, it is possible to use compression without TLS.
+     * 
+     * @param methodIdentifier The name of the compression algorithm to use.
      */
-    void startCompression();
+    void startCompression(final String methodIdentifier);
 
     /**
      * Enumeration of possible compression policies required to interact with the server.

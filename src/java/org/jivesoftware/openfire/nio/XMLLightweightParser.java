@@ -144,8 +144,6 @@ class XMLLightweightParser {
     * Main reading method
     */
     public void read(ByteBuffer byteBuffer) throws Exception {
-        int readByte = byteBuffer.remaining();
-
         invalidateBuffer();
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
@@ -154,8 +152,9 @@ class XMLLightweightParser {
         }
         CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
         char[] buf = charBuffer.array();
+        int readByte = charBuffer.remaining();
 
-        buffer.append(buf);
+        buffer.append(buf, 0, readByte);
         // Do nothing if the buffer only contains white spaces
         if (buffer.charAt(0) <= ' ' && buffer.charAt(buffer.length()-1) <= ' ') {
             if ("".equals(buffer.toString().trim())) {

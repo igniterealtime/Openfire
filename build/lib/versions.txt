@@ -21,6 +21,7 @@ jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)
 jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)
 jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)
 jdic.jar                            | 0.9.1 (for windows only)
+jdom.jar                            | 1.0 (required by rome)
 jstl.jar                            | Jakarta standard taglib 1.1.2
 jmdns.jar                           | PRE 1.0, patched
 jmock.jar                           | 2.1.0
@@ -38,6 +39,8 @@ mysql.jar                           | 3.1.13
 objenesis                           | 1.0 (JMock 2.1.0)
 pack200task.jar                     | August 5, 2004
 postgres.jar                        | 8.1-404 JDBC 3
+rome.jar                            | 0.9
+rome-fetcher.jar                    | 0.9
 servlet.jar                         | Jetty 6.1.0 (2.5)
 shaj.jar                            | 0.5
 sitemesh.jar                        | 2.2.1

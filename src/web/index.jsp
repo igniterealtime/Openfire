@@ -25,13 +25,18 @@
 <%@ page import="org.jivesoftware.openfire.stun.STUNService" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="org.jivesoftware.util.CertificateManager" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.LocaleUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.net.InetSocketAddress" %>
 <%@ page import="java.net.SocketAddress" %>
 <%@ page import="java.text.DecimalFormat" %>
+<%@ page import="java.net.URL" %>
+<%@ page import="java.util.List" %>
+<%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="com.sun.syndication.fetcher.FeedFetcher" %>
+<%@ page import="com.sun.syndication.fetcher.impl.FeedFetcherCache" %>
+<%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache" %>
+<%@ page import="com.sun.syndication.io.FeedException" %>
+<%@ page import="com.sun.syndication.feed.synd.SyndEntry" %>
+<%@ page import="com.sun.syndication.feed.synd.SyndFeed" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -51,11 +56,17 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out); %>
 
+<%! long lastRRSFecth = 0;
+    SyndFeed lastBlogFeed = null;
+    SyndFeed lastReleaseFeed = null;
+    String blogFeedRSS = "http://www.igniterealtime.org/community/blogs/ignite/feeds/posts";
+    String releaseFeedRSS = "http://www.igniterealtime.org/community/community/feeds/messages?communityID=2017";
+
+%>
 <% // Get parameters //
     boolean serverOn = (webManager.getXMPPServer() != null);
 
     String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-
 
     ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
     SocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
@@ -119,172 +130,272 @@
 <%
     }
 %>
-<p>
-<fmt:message key="index.title.info" />
-</p>
-
 <style type="text/css">
 .bar TD {
     padding : 0px;
 }
+#jive-latest-activity .jive-bottom-line {
+	padding-top: 10px;
+    border-bottom : 1px #e8a400 solid;
+	}
+#jive-latest-activity {
+    border: 1px #E8A400 solid;
+    background-color: #FFF4D8;
+	font-family: Lucida Grande, Arial, Helvetica, sans-serif;
+	font-size: 9pt;
+    padding: 0 10px 10px 10px;
+    margin-bottom: 10px;
+    min-height: 280px;
+    -moz-border-radius: 4px;
+	width: 350px;
+	}
+#jive-latest-activity h4 {
+	font-size: 13pt;
+	margin: 15px 0 4px 0;
+	}
+#jive-latest-activity h5 {
+	font-size: 9pt;
+	font-weight: normal;
+    margin: 15px 0 5px 5px;
+	padding: 0;
+	}
+#jive-latest-activity .jive-blog-date {
+    font-size: 8pt;
+    white-space: nowrap;
+	}
+#jive-latest-activity .jive-feed-icon {
+    float: right;
+    padding-top: 10px;
+	}
 </style>
 
-<div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<thead>
-    <tr>
-        <th colspan="2"><fmt:message key="index.properties" /></th>
-    </tr>
-</thead>
-<tbody>
+<p>
+<fmt:message key="index.title.info" />
+</p>
+<table border="0" width="100%">
+    <td valign="top">
 
-    <%  if (serverOn) { %>
+        <!-- <div class="jive-table"> -->
+        <table cellpadding="2" cellspacing="2" border="0" width="100%">
+        <thead>
+            <tr>
+                <th align="left" colspan="3"><fmt:message key="index.properties" /></th>
+            </tr>
+        </thead>
+        <tbody>
 
-         <tr>
-            <td class="c1"><fmt:message key="index.uptime" /></td>
-            <td>
-                <%
-                    long now = System.currentTimeMillis();
-                    long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
-                    long uptime = now - lastStarted;
-                    String uptimeDisplay = StringUtils.getElapsedTime(uptime);
+            <%  if (serverOn) { %>
+
+                 <tr>
+                     <td width="5%">&nbsp;</td>
+                    <td class="c1"><fmt:message key="index.uptime" /></td>
+                    <td>
+                        <%
+                            long now = System.currentTimeMillis();
+                            long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
+                            long uptime = now - lastStarted;
+                            String uptimeDisplay = StringUtils.getElapsedTime(uptime);
+                        %>
+
+                        <%  if (uptimeDisplay != null) { %>
+                            <%= uptimeDisplay %> -- started
+                        <%  } %>
+
+                        <%= JiveGlobals.formatDateTime(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
+                    </td>
+                </tr>
+
+            <%  } %>
+
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1"><fmt:message key="index.version" /></td>
+                <td class="c2">
+                    <%= AdminConsole.getAppName() %>
+                    <%= AdminConsole.getVersionString() %>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1"><fmt:message key="index.home" /></td>
+                <td class="c2">
+                    <%= JiveGlobals.getHomeDirectory() %>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1">
+                    <fmt:message key="index.server_name" />
+                </td>
+                <td class="c2">
+                    <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
+                    <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" text="<fmt:message key="index.certificate-warning" />">&nbsp;
+                    <% } %>
+                    ${webManager.serverInfo.name}
+                </td>
+            </tr>
+            <tr><td>&nbsp;</td></tr>
+        </tbody>
+        <thead>
+            <tr>
+                <th align="left" colspan="3"><fmt:message key="index.environment" /></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1"><fmt:message key="index.jvm" /></td>
+                <td class="c2">
+                    <%
+                        String vmName = System.getProperty("java.vm.name");
+                        if (vmName == null) {
+                            vmName = "";
+                        }
+                        else {
+                            vmName = " -- " + vmName;
+                        }
+                    %>
+                    <%= System.getProperty("java.version") %> <%= System.getProperty("java.vendor") %><%= vmName %>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1"><fmt:message key="index.app" /></td>
+                <td class="c2">
+                    <%= application.getServerInfo() %>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1"><fmt:message key="index.os" /></td>
+                <td class="c2">
+                    <%= System.getProperty("os.name") %> / <%= System.getProperty("os.arch") %>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td class="c1"><fmt:message key="index.local" /></td>
+                <td class="c2">
+                    <%= JiveGlobals.getLocale() %> / <%= JiveGlobals.getTimeZone().getDisplayName(JiveGlobals.getLocale()) %>
+                    (<%= (JiveGlobals.getTimeZone().getRawOffset()/1000/60/60) %> GMT)
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td><fmt:message key="index.memory" /></td>
+                <td>
+                <%    // The java runtime
+                    Runtime runtime = Runtime.getRuntime();
+
+                    double freeMemory = (double)runtime.freeMemory()/(1024*1024);
+                    double maxMemory = (double)runtime.maxMemory()/(1024*1024);
+                    double totalMemory = (double)runtime.totalMemory()/(1024*1024);
+                    double usedMemory = totalMemory - freeMemory;
+                    double percentFree = ((maxMemory - usedMemory)/maxMemory)*100.0;
+                    double percentUsed = 100 - percentFree;
+                    int percent = 100-(int)Math.round(percentFree);
+
+                    DecimalFormat mbFormat = new DecimalFormat("#0.00");
+                    DecimalFormat percentFormat = new DecimalFormat("#0.0");
                 %>
 
-                <%  if (uptimeDisplay != null) { %>
-                    <%= uptimeDisplay %> -- started
-                <%  } %>
+                <table cellpadding="0" cellspacing="0" border="0" width="300">
+                <tr valign="middle">
+                    <td width="99%" valign="middle">
+                        <div class="bar">
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px #666 solid;">
+                        <tr>
+                            <%  if (percent == 0) { %>
 
-                <%= JiveGlobals.formatDateTime(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
-            </td>
-        </tr>
+                                <td width="100%"><img src="images/percent-bar-left.gif" width="100%" height="8" border="0" alt=""></td>
 
-    <%  } %>
+                            <%  } else { %>
 
-    <tr>
-        <td class="c1"><fmt:message key="index.version" /></td>
-        <td class="c2">
-            <%= AdminConsole.getAppName() %>
-            <%= AdminConsole.getVersionString() %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1"><fmt:message key="index.home" /></td>
-        <td class="c2">
-            <%= JiveGlobals.getHomeDirectory() %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="index.server_name" />
-        </td>
-        <td class="c2">
-            <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
-            <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" text="<fmt:message key="index.certificate-warning" />">&nbsp;
-            <% } %>
-            ${webManager.serverInfo.name}
-        </td>
-    </tr>
-</tbody>
-<thead>
-    <tr>
-        <th colspan="2"><fmt:message key="index.environment" /></th>
-    </tr>
-</thead>
-<tbody>
-    <tr>
-        <td class="c1"><fmt:message key="index.jvm" /></td>
-        <td class="c2">
-            <%
-                String vmName = System.getProperty("java.vm.name");
-                if (vmName == null) {
-                    vmName = "";
-                }
-                else {
-                    vmName = " -- " + vmName;
-                }
-            %>
-            <%= System.getProperty("java.version") %> <%= System.getProperty("java.vendor") %><%= vmName %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1"><fmt:message key="index.app" /></td>
-        <td class="c2">
-            <%= application.getServerInfo() %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1"><fmt:message key="index.os" /></td>
-        <td class="c2">
-            <%= System.getProperty("os.name") %> / <%= System.getProperty("os.arch") %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1"><fmt:message key="index.local" /></td>
-        <td class="c2">
-            <%= JiveGlobals.getLocale() %> / <%= JiveGlobals.getTimeZone().getDisplayName(JiveGlobals.getLocale()) %>
-            (<%= (JiveGlobals.getTimeZone().getRawOffset()/1000/60/60) %> GMT)
-        </td>
-    </tr>
-    <tr>
-        <td><fmt:message key="index.memory" /></td>
-        <td>
-        <%    // The java runtime
-            Runtime runtime = Runtime.getRuntime();
+                                <%  if (percent >= 90) { %>
 
-            double freeMemory = (double)runtime.freeMemory()/(1024*1024);
-            double maxMemory = (double)runtime.maxMemory()/(1024*1024);
-            double totalMemory = (double)runtime.totalMemory()/(1024*1024);
-            double usedMemory = totalMemory - freeMemory;
-            double percentFree = ((maxMemory - usedMemory)/maxMemory)*100.0;
-            double percentUsed = 100 - percentFree;
-            int percent = 100-(int)Math.round(percentFree);
+                                    <td width="<%= percent %>%" background="images/percent-bar-used-high.gif"
+                                        ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
 
-            DecimalFormat mbFormat = new DecimalFormat("#0.00");
-            DecimalFormat percentFormat = new DecimalFormat("#0.0");
-        %>
+                                <%  } else { %>
 
-        <table cellpadding="0" cellspacing="0" border="0" width="300">
-        <tr valign="middle">
-            <td width="99%" valign="middle">
-                <div class="bar">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px #666 solid;">
-                <tr>
-                    <%  if (percent == 0) { %>
+                                    <td width="<%= percent %>%" background="images/percent-bar-used-low.gif"
+                                        ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
 
-                        <td width="100%"><img src="images/percent-bar-left.gif" width="100%" height="8" border="0" alt=""></td>
-
-                    <%  } else { %>
-
-                        <%  if (percent >= 90) { %>
-
-                            <td width="<%= percent %>%" background="images/percent-bar-used-high.gif"
-                                ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
-
-                        <%  } else { %>
-
-                            <td width="<%= percent %>%" background="images/percent-bar-used-low.gif"
-                                ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
-
-                        <%  } %>
-                        <td width="<%= (100-percent) %>%" background="images/percent-bar-left.gif"
-                            ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
-                    <%  } %>
+                                <%  } %>
+                                <td width="<%= (100-percent) %>%" background="images/percent-bar-left.gif"
+                                    ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
+                            <%  } %>
+                        </tr>
+                        </table>
+                        </div>
+                    </td>
+                    <td width="1%" nowrap>
+                        <div style="padding-left:6px;">
+                        <%= mbFormat.format(usedMemory) %> MB of <%= mbFormat.format(maxMemory) %> MB (<%= percentFormat.format(percentUsed) %>%) used
+                        </div>
+                    </td>
                 </tr>
                 </table>
-                </div>
-            </td>
-            <td width="1%" nowrap>
-                <div style="padding-left:6px;">
-                <%= mbFormat.format(usedMemory) %> MB of <%= mbFormat.format(maxMemory) %> MB (<%= percentFormat.format(percentUsed) %>%) used
-                </div>
-            </td>
-        </tr>
+                </td>
+            </tr>
+        </tbody>
         </table>
-        </td>
-    </tr>
-</tbody>
+        <!-- </div> -->
+    </td>
+    <td valign="top"> 
+        <div id="jive-latest-activity">
+
+            <a href="<%= blogFeedRSS %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
+            <h4><fmt:message key="index.cs_blog" /></h4>
+            <% long nowTime = System.currentTimeMillis();
+                if (lastBlogFeed == null || lastReleaseFeed == null || nowTime - lastRRSFecth > 21600000) {
+
+                    FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
+                    FeedFetcher feedFetcher = new HttpClientWithTimeoutFeedFetcher(feedInfoCache);
+
+                    try {
+                        lastBlogFeed = feedFetcher.retrieveFeed(new URL(blogFeedRSS));
+                        lastReleaseFeed = feedFetcher.retrieveFeed(new URL(releaseFeedRSS));
+
+                        lastRRSFecth = nowTime;
+                    }
+                    catch (Exception ioe) {
+                        // ignore
+                    }
+                }
+
+                %><div class="jive-bottom-line"></div><%
+                if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
+
+                    List entries = lastBlogFeed.getEntries();
+                    for (int i = 0; i < entries.size() && i < 3; i++) {
+                        SyndEntry entry = (SyndEntry) entries.get(i); %>
+                        <h5><a href="<%= entry.getLink() %>"><%= entry.getTitle()%></a>,
+                        <span class="jive-blog-date"><%= JiveGlobals.formatDateTime(entry.getPublishedDate())%></span></h5>
+                    <% }
+
+                } else { %>
+                    <fmt:message key="index.cs_blog.unavilable" />
+                 <% }
+
+                 %><div class="jive-bottom-line"></div><%
+                if (lastReleaseFeed != null && !lastReleaseFeed.getEntries().isEmpty()) {
+
+                    List entries = lastReleaseFeed.getEntries();
+                    for (int i = 0; i < entries.size() && i < 3; i++) {
+                        SyndEntry entry = (SyndEntry) entries.get(i); %>
+                        <h5><a href="<%= entry.getLink() %>"><%= entry.getTitle()%></a>,
+                        <span class="jive-blog-date"><%= JiveGlobals.formatDateTime(entry.getPublishedDate())%></span></h5>
+                    <% }
+
+                } else { %>
+                    <fmt:message key="index.cs_blog.unavilable" />
+                 <% }
+            %>
+
+        </div>
+    </td>
 </table>
-</div>
 
 <br>
 
@@ -441,7 +552,6 @@
             <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
             <td><fmt:message key="ports.http_bind" /></td>
             <td><fmt:message key="ports.http_bind.desc_secured" /></td>
-            <td></td>
         </tr>
         <% } %>
     <% } %>
@@ -473,7 +583,7 @@
 <br>
 
 <form action="server-props.jsp">
-<input type="submit" value="<fmt:message key="global.edit_properties" />">
+<input type="submit" value="<fmt:message key="ports.edit" />">
 </form>
 
     </body>

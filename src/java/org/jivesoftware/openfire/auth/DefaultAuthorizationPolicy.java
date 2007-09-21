@@ -13,8 +13,9 @@ package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import java.util.Vector;
+
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 /**
  * Different clients perform authentication differently, so this policy 
@@ -91,7 +92,9 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             //for this policy the user portion of both must match, so lets short circut here if we can
             if(JiveGlobals.getBooleanProperty("xmpp.auth.ignorecase",true)) {
                 if(!userUser.toLowerCase().equals(authenUser.toLowerCase())){
-                    Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+                    }
                     return false;
                 }
             } else {
@@ -111,10 +114,14 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             } else { 
                 for(String realm : approvedRealms) {
                     if(authenRealm.equals(realm)) {
-                        Log.debug("DefaultAuthorizationPolicy: authenRealm = "+realm+" which is approved");
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("DefaultAuthorizationPolicy: authenRealm = "+realm+" which is approved");
+                        }
                         authorized = true;
                     } else {
-                        Log.debug("DefaultAuthorizationPolicy: authenRealm != "+realm+" which is approved");
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("DefaultAuthorizationPolicy: authenRealm != "+realm+" which is approved");
+                        }
                     }
                 }
             }
@@ -137,7 +144,9 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             } else {
                 if(authenRealm != null && authenRealm.equals(userRealm)) {
                     //authen and username are identical
-                    Log.debug("DefaultAuthorizationPolicy: userRealm = "+authenRealm+" which is approved");
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("DefaultAuthorizationPolicy: userRealm = "+authenRealm+" which is approved");
+                    }
                     authorized = true;
                 }
             }

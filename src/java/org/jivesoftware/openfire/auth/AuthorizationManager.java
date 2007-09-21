@@ -11,13 +11,13 @@
 
 package org.jivesoftware.openfire.auth;
 
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -137,7 +137,9 @@ public class AuthorizationManager {
 
     public static boolean authorize(String username, String principal) {
         for (AuthorizationPolicy ap : authorizationPolicies) {
-            Log.debug("AuthorizationManager: Trying "+ap.name()+".authorize("+username+","+principal+")");
+            if (Log.isDebugEnabled()) {
+                Log.debug("AuthorizationManager: Trying "+ap.name()+".authorize("+username+" , "+principal+")");
+            }
 
             if (ap.authorize(username, principal)) {
                 // Authorized..  but do you exist?
@@ -145,7 +147,9 @@ public class AuthorizationManager {
                     UserManager.getUserProvider().loadUser(username);
                 }
                 catch (UserNotFoundException nfe) {
-                    Log.debug("AuthorizationManager: User "+username+" not found "+nfe.toString());
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("AuthorizationManager: User " + username + " not found " + nfe.toString());
+                    }
                     // Should we add the user?
                     if(JiveGlobals.getBooleanProperty("xmpp.auth.autoadd",false)) {
                         if (UserManager.getUserProvider().isReadOnly()) {
@@ -153,13 +157,18 @@ public class AuthorizationManager {
                         }
                         try {
                             UserManager.getUserProvider().createUser(username, StringUtils.randomString(8), null, null);
-                            Log.info("AuthorizationManager: User "+username+" created.");
+                            if (Log.isDebugEnabled()) {
+                                Log.info("AuthorizationManager: User "+username+" created.");
+                            }
                             return true;
                         }
                         catch (UserAlreadyExistsException uaee) {
                             // Somehow the user got created in this very short timeframe.. 
                             // To be safe, lets fail here. The user can always try again.
-                            Log.error("AuthorizationManager: User "+username+" already exists while attempting to add user.");
+                            if (Log.isDebugEnabled()) {
+                                Log.error("AuthorizationManager: User " + username +
+                                        " already exists while attempting to add user.");
+                            }
                             return false;
                         }
                     }
@@ -183,7 +192,9 @@ public class AuthorizationManager {
 
     public static String map(String principal) {
         for (AuthorizationMapping am : authorizationMapping) {
-            Log.debug("AuthorizationManager: Trying "+am.name()+".map("+principal+")");
+            if (Log.isDebugEnabled()) {
+                Log.debug("AuthorizationManager: Trying " + am.name() + ".map(" + principal + ")");
+            }
             String username = am.map(principal);
             if( ! username.equals(principal) ) {
                 return username;

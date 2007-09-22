@@ -20,6 +20,7 @@ import org.jivesoftware.util.lock.LocalLockFactory;
 import org.jivesoftware.util.lock.LockManager;
 
 import java.util.Queue;
+import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -288,8 +289,17 @@ public class ClusterManager {
      * @param enabled if clustering support is enabled.
      */
     public static void setClusteringEnabled(boolean enabled) {
-        if (enabled == isClusteringEnabled()) {
-            return;
+        if (enabled) {
+            // Check that clustering is not already enabled and we are already in a cluster
+            if (isClusteringEnabled() && isClusteringStarted()) {
+                return;
+            }
+        }
+        else {
+            // Check that clustering is disabled
+            if (!isClusteringEnabled()) {
+                return;
+            }
         }
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, Boolean.toString(enabled));
         if (!enabled) {
@@ -332,6 +342,17 @@ public class ClusterManager {
      */
     public static boolean isSeniorClusterMember() {
         return CacheFactory.isSeniorClusterMember();
+    }
+
+    /**
+     * Returns basic information about the current members of the cluster or an empty
+     * collection if not running in a cluster.
+     *
+     * @return information about the current members of the cluster or an empty
+     *         collection if not running in a cluster.
+     */
+    public static Collection<ClusterNodeInfo> getNodesInfo() {
+        return CacheFactory.getClusterNodesInfo();
     }
 
     /**

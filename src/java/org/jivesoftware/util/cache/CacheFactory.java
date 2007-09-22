@@ -9,6 +9,7 @@ package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -153,6 +154,17 @@ public class CacheFactory {
      */
     public static boolean isSeniorClusterMember() {
         return cacheFactoryStrategy.isSeniorClusterMember();
+    }
+
+    /**
+     * Returns basic information about the current members of the cluster or an empty
+     * collection if not running in a cluster.
+     *
+     * @return information about the current members of the cluster or an empty
+     *         collection if not running in a cluster.
+     */
+    public static Collection<ClusterNodeInfo> getClusterNodesInfo() {
+        return cacheFactoryStrategy.getClusterNodesInfo();
     }
 
     /**

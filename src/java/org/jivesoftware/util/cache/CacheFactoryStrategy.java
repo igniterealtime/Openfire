@@ -7,6 +7,8 @@
  */
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -51,6 +53,15 @@ public interface CacheFactoryStrategy {
      * @return true if this node is the maste node of the cluster.
      */
     boolean isSeniorClusterMember();
+
+    /**
+     * Returns basic information about the current members of the cluster or an empty
+     * collection if not running in a cluster.
+     *
+     * @return information about the current members of the cluster or an empty
+     *         collection if not running in a cluster.
+     */
+    Collection<ClusterNodeInfo> getClusterNodesInfo();
 
     /**
      * Returns a byte[] that uniquely identifies this senior cluster member or <tt>null</tt>

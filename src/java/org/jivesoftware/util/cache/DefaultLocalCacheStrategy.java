@@ -10,6 +10,7 @@ package org.jivesoftware.util.cache;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -157,6 +158,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
     public boolean isSeniorClusterMember() {
         return true;
+    }
+
+    public Collection<ClusterNodeInfo> getClusterNodesInfo() {
+        return Collections.emptyList();
     }
 
     public byte[] getSeniorClusterMemberID() {

@@ -38,9 +38,14 @@
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("user-roster", DEFAULT_RANGE));
+    int filter = ParamUtils.getIntParameter(request,"filter",webManager.getPageProperty("user-roster", "filter", 0));
 
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("user-roster", range);
+    }
+
+    if (request.getParameter("filter") != null) {
+        webManager.setPageProperty("user-roster", "filter", filter);
     }
 
     // Get parameters //
@@ -51,7 +56,23 @@
     int rosterCount = 0;
     try {
         roster = webManager.getRosterManager().getRoster(username);
-        rosterCount = roster.getRosterItems().size();
+        if (filter == 2) {
+            for (RosterItem item : roster.getRosterItems()) {
+                if (item.isOnlyShared()) {
+                    rosterCount++;
+                }
+            }
+        }
+        else if (filter == 1) {
+            for (RosterItem item : roster.getRosterItems()) {
+                if (!item.isOnlyShared()) {
+                    rosterCount++; 
+                }
+            }
+        }
+        else {
+            rosterCount = roster.getRosterItems().size();
+        }
     }
     catch (UserNotFoundException unfe) {
         // ignore
@@ -121,10 +142,7 @@
 </fmt:message>
 </p>
 
-<div style="float:right; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
-    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><fmt:message key="user.roster.add"/><img src="images/add-16x16.gif" alt="" width="16" height="16" border="0" align="absmiddle"></a>
-</div>
-<p>
+<p style="margin-bottom: 2px">
 <fmt:message key="user.roster.total_items" />:
 <b><%= LocaleUtils.getLocalizedNumber(rosterCount) %></b> --
 
@@ -136,23 +154,10 @@
 <%  } %>
 <fmt:message key="user.roster.sorted" />
 
--- <fmt:message key="user.roster.items_per_page" />:
-<select size="1" onchange="location.href='user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=' + this.options[this.selectedIndex].value;">
-
-    <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
-
-    <option value="<%= aRANGE_PRESETS %>"
-            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
-    </option>
-
-    <% } %>
-
-</select>
-</p>
-
 <%  if (numPages > 1) { %>
 
-    <p>
+    --
+
     <fmt:message key="global.pages" />:
     [
     <%  int num = 15 + curPage;
@@ -165,7 +170,7 @@
         }
         if (s > 2) {
     %>
-        <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=<%= range %>">1</a> ...
+        <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=<%= range %>&filter=<%= filter %>">1</a> ...
 
     <%
         }
@@ -174,25 +179,53 @@
             String sep = ((i + 1) < numPages) ? " " : "";
             boolean isCurrent = (i + 1) == curPage;
     %>
-        <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= (i*range) %>&range=<%= range %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
+        <% if (!isCurrent) { %><a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= (i*range) %>&range=<%= range %>&filter=<%= filter %>"><% } %>
+        <%= (i+1) %><% if (!isCurrent) { %></a><% } %><%= sep %>
 
     <%  } %>
 
     <%  if (i < numPages) { %>
 
-        ... <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
+        ... <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= ((numPages-1)*range) %>&range=<%= range %>&filter=<%= filter %>"><%= numPages %></a>
 
     <%  } %>
 
     ]
 
-    </p>
-
 <%  } %>
+</p>
 
-<div class="jive-table">
+<div style="float:right; vertical-align: bottom; margin-bottom: 0px; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
+    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><fmt:message key="user.roster.add"/><img src="images/add-16x16.gif" alt="" width="16" height="16" border="0" align="absmiddle"></a>
+</div>
+
+<p style="margin-bottom: 2px">
+    <fmt:message key="user.roster.items_per_page" />:
+    <select size="1" onchange="location.href='user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=' + this.options[this.selectedIndex].value;">
+
+        <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
+
+        <option value="<%= aRANGE_PRESETS %>"
+                <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
+        </option>
+
+        <% } %>
+
+    </select>
+
+    --
+
+    <fmt:message key="user.roster.filter" />:
+<select size="1" onchange="location.href='user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=<%= range %>&filter=' + this.options[this.selectedIndex].value;">
+
+    <option value="0"<%= filter == 0 ? " SELECTED" : "" %>><fmt:message key="user.roster.filter.all" /></option>
+    <option value="1"<%= filter == 1 ? " SELECTED" : "" %>><fmt:message key="user.roster.filter.noshared" /></option>
+    <option value="2"<%= filter == 2 ? " SELECTED" : "" %>><fmt:message key="user.roster.filter.onlyshared" /></option>
+
+</select>
+</p>
+
+<div class="jive-table" style="clear: both">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
@@ -215,7 +248,7 @@
         </td>
     </tr>
     <%
-        } else if (roster.getRosterItems().size() < 1) {
+        } else if (rosterCount < 1) {
     %>
     <tr>
         <td colspan="7" align="center">
@@ -228,6 +261,12 @@
             Collections.sort(rosterItems, new RosterItemComparator());
             int i = 0;
             for (RosterItem rosterItem : rosterItems) {
+                if (filter == 2 && !rosterItem.isOnlyShared()) {
+                    continue;
+                }
+                if (filter == 1 && rosterItem.isOnlyShared()) {
+                    continue;
+                }
                 i++;
                 if (i < start) {
                     continue;
@@ -263,15 +302,17 @@
                     }
                 }
                 Collection<Group> sharedGroups = rosterItem.getSharedGroups();
-                if (!sharedGroups.isEmpty()) {
-                    for (Group group : sharedGroups) {
-                        if (count != 0) {
-                            out.print(", ");
+                if (filter != 1) {
+                    if (!sharedGroups.isEmpty()) {
+                        for (Group group : sharedGroups) {
+                            if (count != 0) {
+                                out.print(", ");
+                            }
+                            out.print("<a style='text-decoration: underline' href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
+                            out.print(group.getName());
+                            out.print("</a>");
+                            count++;
                         }
-                        out.print("<a style='text-decoration: underline' href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
-                        out.print(group.getName());
-                        out.print("</a>");
-                        count++;
                     }
                 }
                 if (count == 0) {

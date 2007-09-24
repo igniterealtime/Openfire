@@ -195,8 +195,8 @@
 <%  } %>
 </p>
 
-<div style="float:right; vertical-align: bottom; margin-bottom: 0px; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
-    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><fmt:message key="user.roster.add"/><img src="images/add-16x16.gif" alt="" width="16" height="16" border="0" align="absmiddle"></a>
+<div style="float:right; vertical-align: bottom; padding: 0; margin-bottom: 0; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
+    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><fmt:message key="user.roster.add"/><img style="position: relative; left: 3px; top: 3px" src="images/add-16x16.gif" alt="" width="16" height="16" border="0"></a>
 </div>
 
 <p style="margin-bottom: 2px">

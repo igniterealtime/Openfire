@@ -88,6 +88,12 @@
         <title><fmt:message key="user.roster.title"/></title>
         <meta name="subPageID" content="user-roster"/>
         <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <style type="text/css">
+        .jive-current {
+            font-weight: bold;
+            text-decoration: none;
+        }
+        </style>
     </head>
     <body>
 
@@ -179,8 +185,9 @@
             String sep = ((i + 1) < numPages) ? " " : "";
             boolean isCurrent = (i + 1) == curPage;
     %>
-        <% if (!isCurrent) { %><a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= (i*range) %>&range=<%= range %>&filter=<%= filter %>"><% } %>
-        <%= (i+1) %><% if (!isCurrent) { %></a><% } %><%= sep %>
+        <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= (i*range) %>&range=<%= range %>&filter=<%= filter %>"
+        class="<%= ((isCurrent) ? "jive-current" : "") %>"
+        ><%= (i+1) %></a><%= sep %>
 
     <%  } %>
 

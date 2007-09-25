@@ -607,8 +607,22 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public void userDeleting(User user, Map<String, Object> params) {
         JID bareJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
+        PEPService pepService = getPEPService(bareJID.toString());
         
-        // Remove the user's PEP service if it exists.
+        if (pepService == null) {
+            return;
+        }
+
+        // Delete the user's PEP nodes from memory and the database.
+        CollectionNode rootNode = pepService.getRootCollectionNode();
+        for (Node node : pepService.getNodes()) {
+            if (rootNode.isChildNode(node)) {
+                node.delete();
+            }
+        }
+        rootNode.delete();
+        
+        // Remove the user's PEP service, finally.
         pepServices.remove(bareJID.toString());
     }
 

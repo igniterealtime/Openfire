@@ -19,8 +19,8 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.lock.LocalLockFactory;
 import org.jivesoftware.util.lock.LockManager;
 
-import java.util.Queue;
 import java.util.Collection;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -32,8 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Gaston Dombiak
  */
 public class ClusterManager {
-
-    private static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
+    public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
     private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>();
 
@@ -184,7 +183,6 @@ public class ClusterManager {
      * met again then this JVM stopped being the senior member.
      */
     public static void fireLeftCluster() {
-        CacheFactory.leftCluster();
         // Now notify rest of the listeners
         for (ClusterEventListener listener : listeners) {
             try {
@@ -303,13 +301,13 @@ public class ClusterManager {
         }
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, Boolean.toString(enabled));
         if (!enabled) {
-            CacheFactory.stopClustering();
+            shutdown();
         }
         else {
             // Reload Jive properties. This will ensure that this nodes copy of the
             // properties starts correct.
            JiveProperties.getInstance().init();
-           CacheFactory.startClustering();
+           startup();
         }
     }
 
@@ -353,6 +351,16 @@ public class ClusterManager {
      */
     public static Collection<ClusterNodeInfo> getNodesInfo() {
         return CacheFactory.getClusterNodesInfo();
+    }
+
+    /**
+     * Returns the maximum number of cluster members allowed. A value of 0 will
+     * be returned when clustering is not allowed.
+     *
+     * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
+     */
+    public static int getMaxClusterNodes() {
+        return CacheFactory.getMaxClusterNodes();
     }
 
     /**

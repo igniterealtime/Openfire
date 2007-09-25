@@ -8,14 +8,19 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor,
-                 org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.openfire.Connection"
+<%@ page import="com.sun.syndication.feed.synd.SyndEntry,
+                 com.sun.syndication.feed.synd.SyndFeed,
+                 com.sun.syndication.fetcher.FeedFetcher"
 %>
-<%@ page import="org.jivesoftware.openfire.ServerPort"%>
-<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
-<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin"%>
-<%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy"%>
+<%@ page import="com.sun.syndication.fetcher.impl.FeedFetcherCache"%>
+<%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache"%>
+<%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor"%>
+<%@ page import="org.jivesoftware.admin.AdminConsole"%>
+<%@ page import="org.jivesoftware.openfire.Connection" %>
+<%@ page import="org.jivesoftware.openfire.ServerPort" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
@@ -25,18 +30,12 @@
 <%@ page import="org.jivesoftware.openfire.stun.STUNService" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
+<%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.net.InetSocketAddress" %>
 <%@ page import="java.net.SocketAddress" %>
-<%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.net.URL" %>
+<%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.jivesoftware.util.*" %>
-<%@ page import="com.sun.syndication.fetcher.FeedFetcher" %>
-<%@ page import="com.sun.syndication.fetcher.impl.FeedFetcherCache" %>
-<%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache" %>
-<%@ page import="com.sun.syndication.io.FeedException" %>
-<%@ page import="com.sun.syndication.feed.synd.SyndEntry" %>
-<%@ page import="com.sun.syndication.feed.synd.SyndFeed" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -370,7 +369,7 @@
                     List entries = lastBlogFeed.getEntries();
                     for (int i = 0; i < entries.size() && i < 3; i++) {
                         SyndEntry entry = (SyndEntry) entries.get(i); %>
-                        <h5><a href="<%= entry.getLink() %>"><%= entry.getTitle()%></a>,
+                        <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
                         <span class="jive-blog-date"><%= JiveGlobals.formatDateTime(entry.getPublishedDate())%></span></h5>
                     <% }
 
@@ -384,7 +383,7 @@
                     List entries = lastReleaseFeed.getEntries();
                     for (int i = 0; i < entries.size() && i < 3; i++) {
                         SyndEntry entry = (SyndEntry) entries.get(i); %>
-                        <h5><a href="<%= entry.getLink() %>"><%= entry.getTitle()%></a>,
+                        <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
                         <span class="jive-blog-date"><%= JiveGlobals.formatDateTime(entry.getPublishedDate())%></span></h5>
                     <% }
 

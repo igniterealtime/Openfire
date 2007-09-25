@@ -256,6 +256,15 @@ public interface RoutingTable {
     Collection<String> getServerHostnames();
 
     /**
+     * Returns the number of outgoing server sessions hosted in this JVM. When runing inside of
+     * a cluster you will need to get this value for each cluster node to learn the total number
+     * of outgoing server sessions.
+     *
+     * @return the number of outgoing server sessions hosted in this JVM.
+     */
+    int getServerSessionsCount();
+
+    /**
      * Returns the list of routes associated to the specified route address. When asking
      * for routes to a remote server then the requested JID will be included as the only
      * value of the returned collection. It is indifferent if an outgoing session to the

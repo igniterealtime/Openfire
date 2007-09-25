@@ -28,6 +28,11 @@
                   url="server-locale.jsp"
                   description="${sidebar.server-locale.descr}"/>
 
+            <!-- Clustering -->
+            <item id="system-clustering" name="${sidebar.system-clustering}"
+                  url="system-clustering.jsp"
+                  description="${sidebar.system-clustering.descr}"/>
+
             <!-- System Cache -->
             <item id="system-cache" name="${sidebar.system-cache}"
                   url="system-cache.jsp"

@@ -64,6 +64,14 @@ public interface CacheFactoryStrategy {
     Collection<ClusterNodeInfo> getClusterNodesInfo();
 
     /**
+     * Returns the maximum number of cluster members allowed. A value of 0 will
+     * be returned when clustering is not allowed.
+     *
+     * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
+     */
+    int getMaxClusterNodes();
+    
+    /**
      * Returns a byte[] that uniquely identifies this senior cluster member or <tt>null</tt>
      * when not in a cluster.
      *

@@ -65,7 +65,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
 
     /**
      * Counter of user connections. A connection is counted just after it was created and not
-     * after the user became available.
+     * after the user became available. This counter only considers sessions local to this JVM.
+     * That means that when running inside of a cluster you will need to add up this counter
+     * for each cluster node. 
      */
     private final AtomicInteger connectionsCounter = new AtomicInteger(0);
 
@@ -858,6 +860,21 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
                 }
                 total = total + (Integer) result;
             }
+        }
+        return total;
+    }
+
+    /**
+     * Returns number of sessions coming from remote servers. <i>Current implementation is only counting
+     * sessions connected to this JVM and not adding up sessions connected to other cluster nodes.</i>
+     *
+     * @param onlyLocal true if only sessions connected to this JVM will be considered. Otherwise count cluster wise.
+     * @return number of sessions coming from remote servers.
+     */
+    public int getIncomingServerSessionsCount(boolean onlyLocal) {
+        int total = localSessionManager.getIncomingServerSessions().size();
+        if (!onlyLocal) {
+            // TODO Implement this when needed
         }
         return total;
     }

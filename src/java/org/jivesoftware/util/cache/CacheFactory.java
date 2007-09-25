@@ -9,6 +9,8 @@ package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
@@ -168,6 +170,15 @@ public class CacheFactory {
     }
 
     /**
+     * Returns the maximum number of cluster members allowed. A value of 0 will
+     * be returned when clustering is not allowed.
+     *
+     * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
+     */
+    public static int getMaxClusterNodes() {
+        return cacheFactoryStrategy.getMaxClusterNodes();
+    }
+    /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
      * executed on the local cluster member. If clustering is not enabled, this method
      * will do nothing.
@@ -279,9 +290,23 @@ public class CacheFactory {
                                 destroyed = true;
                             }
                         });
+                        ClusterManager.addListener(new ClusterEventListener() {
+                            public void joinedCluster() {}
+
+                            public void joinedCluster(byte[] nodeID) {}
+
+                            public void leftCluster() {
+                                destroyed = true;
+                                ClusterManager.removeListener(this);
+                            }
+
+                            public void leftCluster(byte[] nodeID) {}
+
+                            public void markedAsSeniorClusterMember() {}
+                        });
 
                         // Run the timer indefinitely.
-                        while (!destroyed) {
+                        while (!destroyed && ClusterManager.isClusteringEnabled()) {
                             // Publish cache stats for this cluster node (assuming clustering is
                             // enabled and there are stats to publish).
                             try {
@@ -298,6 +323,7 @@ public class CacheFactory {
                                 // Ignore.
                             }
                         }
+                        statsThread = null;
                         Log.debug("Cache stats thread terminated.");
                     }
                 };

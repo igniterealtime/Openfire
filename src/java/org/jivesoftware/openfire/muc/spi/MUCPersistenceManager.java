@@ -51,7 +51,7 @@ public class MUCPersistenceManager {
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String LOAD_HISTORY =
         "SELECT sender, nickname, time, subject, body FROM mucConversationLog " +
-        "WHERE time>? AND roomID=? AND (nickname <> '' OR subject IS NOT NULL) ORDER BY time";
+        "WHERE time>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY time";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
@@ -64,7 +64,7 @@ public class MUCPersistenceManager {
         "SELECT roomID,jid, nickname FROM mucMember";
     private static final String LOAD_ALL_HISTORY =
         "SELECT roomID, sender, nickname, time, subject, body FROM mucConversationLog " +
-        "WHERE time>? AND (nickname <> '' OR subject IS NOT NULL) ORDER BY time";
+        "WHERE time>? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY time";
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +

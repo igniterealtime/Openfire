@@ -261,7 +261,7 @@
                                 memory = mbFormat.format(usedMemory) + " MB of " + mbFormat.format(maxMemory) + " MB used";
                           }
                       %>
-                        <td width="50%">
+                        <td width="30%">
                           <div class="bar">
                           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px #666 solid;">
                           <tr>
@@ -289,10 +289,8 @@
                           </table>
                           </div>
                         </td>
-                        <td>
-                          <div style="padding-left:6px;">
-                              <%= memory %>
-                          </div>
+                        <td class="jive-description">
+                          <%= memory %>
                         </td>
                       </tr>
                     </table>

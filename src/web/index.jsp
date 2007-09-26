@@ -146,7 +146,8 @@
     margin-bottom: 10px;
     min-height: 280px;
     -moz-border-radius: 4px;
-	width: 350px;
+    width: 95%;
+    margin-right: 20px;
 	}
 #jive-latest-activity h4 {
 	font-size: 13pt;
@@ -166,6 +167,25 @@
     float: right;
     padding-top: 10px;
 	}
+.info-header {
+    background-color: #f3f6fa;
+    font-size: 10pt;
+}
+.info-table {
+    margin-right: 12px;
+}
+.info-table .c1 {
+    text-align: right;
+    vertical-align: top;
+    color: #666;
+    font-weight: bold;
+    font-size: 9pt;
+    white-space: nowrap;
+}
+.info-table .c2 {
+    font-size: 9pt;
+    width: 90%;
+}
 </style>
 
 <p>
@@ -175,10 +195,10 @@
     <td valign="top">
 
         <!-- <div class="jive-table"> -->
-        <table cellpadding="2" cellspacing="2" border="0" width="100%">
+        <table border="0" cellpadding="2" cellspacing="2" width="100%" class="info-table">
         <thead>
             <tr>
-                <th align="left" colspan="3"><fmt:message key="index.properties" /></th>
+                <th colspan="2" align="left" class="info-header"><fmt:message key="index.properties" /></th>
             </tr>
         </thead>
         <tbody>
@@ -186,9 +206,8 @@
             <%  if (serverOn) { %>
 
                  <tr>
-                     <td width="5%">&nbsp;</td>
                     <td class="c1"><fmt:message key="index.uptime" /></td>
-                    <td>
+                    <td class="c2">
                         <%
                             long now = System.currentTimeMillis();
                             long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
@@ -207,7 +226,6 @@
             <%  } %>
 
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1"><fmt:message key="index.version" /></td>
                 <td class="c2">
                     <%= AdminConsole.getAppName() %>
@@ -215,14 +233,12 @@
                 </td>
             </tr>
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1"><fmt:message key="index.home" /></td>
                 <td class="c2">
                     <%= JiveGlobals.getHomeDirectory() %>
                 </td>
             </tr>
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1">
                     <fmt:message key="index.server_name" />
                 </td>
@@ -237,12 +253,11 @@
         </tbody>
         <thead>
             <tr>
-                <th align="left" colspan="3"><fmt:message key="index.environment" /></th>
+                <th colspan="2" align="left" class="info-header"><fmt:message key="index.environment" /></th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1"><fmt:message key="index.jvm" /></td>
                 <td class="c2">
                     <%
@@ -258,21 +273,18 @@
                 </td>
             </tr>
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1"><fmt:message key="index.app" /></td>
                 <td class="c2">
                     <%= application.getServerInfo() %>
                 </td>
             </tr>
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1"><fmt:message key="index.os" /></td>
                 <td class="c2">
                     <%= System.getProperty("os.name") %> / <%= System.getProperty("os.arch") %>
                 </td>
             </tr>
             <tr>
-                <td>&nbsp;</td>
                 <td class="c1"><fmt:message key="index.local" /></td>
                 <td class="c2">
                     <%= JiveGlobals.getLocale() %> / <%= JiveGlobals.getTimeZone().getDisplayName(JiveGlobals.getLocale()) %>
@@ -280,8 +292,7 @@
                 </td>
             </tr>
             <tr>
-                <td>&nbsp;</td>
-                <td><fmt:message key="index.memory" /></td>
+                <td class="c1"><fmt:message key="index.memory" /></td>
                 <td>
                 <%    // The java runtime
                     Runtime runtime = Runtime.getRuntime();
@@ -329,7 +340,7 @@
                         </div>
                     </td>
                     <td width="1%" nowrap>
-                        <div style="padding-left:6px;">
+                        <div style="padding-left:6px;" class="c2">
                         <%= mbFormat.format(usedMemory) %> MB of <%= mbFormat.format(maxMemory) %> MB (<%= percentFormat.format(percentUsed) %>%) used
                         </div>
                     </td>
@@ -341,7 +352,7 @@
         </table>
         <!-- </div> -->
     </td>
-    <td valign="top"> 
+    <td valign="top" width="40%"> 
         <div id="jive-latest-activity">
 
             <a href="<%= blogFeedRSS %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
@@ -370,7 +381,7 @@
                     for (int i = 0; i < entries.size() && i < 3; i++) {
                         SyndEntry entry = (SyndEntry) entries.get(i); %>
                         <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
-                        <span class="jive-blog-date"><%= JiveGlobals.formatDateTime(entry.getPublishedDate())%></span></h5>
+                        <span class="jive-blog-date"><%= JiveGlobals.formatDate(entry.getPublishedDate())%></span></h5>
                     <% }
 
                 } else { %>
@@ -384,7 +395,7 @@
                     for (int i = 0; i < entries.size() && i < 3; i++) {
                         SyndEntry entry = (SyndEntry) entries.get(i); %>
                         <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
-                        <span class="jive-blog-date"><%= JiveGlobals.formatDateTime(entry.getPublishedDate())%></span></h5>
+                        <span class="jive-blog-date"><%= JiveGlobals.formatDate(entry.getPublishedDate())%></span></h5>
                     <% }
 
                 } else { %>

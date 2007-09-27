@@ -41,6 +41,7 @@ public class CacheFactory {
     public static String CLUSTERED_CACHE_PROPERTY_NAME = "cache.clustering.clustered.class";
 
     private static boolean clusteringStarted = false;
+    private static boolean clusteringStarting = false;
 
     /**
      * Storage for all caches that get created.
@@ -111,6 +112,33 @@ public class CacheFactory {
     }
 
     /**
+     * Returns true if clustering is installed and can be used by
+     * this JVM to join a cluster.
+     *
+     * @return true if clustering is installed and can be used by
+     * this JVM to join a cluster.
+     */
+    public static boolean isClusteringAvailable() {
+        try {
+            Class.forName(clusteredCacheFactoryClass, true,
+                    getClusteredCacheStrategyClassLoader("enterprise"));
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true is clustering is currently being started. Once the cluster
+     * is started or failed to be started this value will be false.
+     *
+     * @return true is clustering is currently being started.
+     */
+    public static boolean isClusteringStarting() {
+        return clusteringStarting;
+    }
+
+    /**
      * Returns true if this node is currently a member of a cluster. The last step of application
      * initialization is to join a cluster, so this method returns false during most of application startup.
      *
@@ -170,13 +198,23 @@ public class CacheFactory {
     }
 
     /**
-     * Returns the maximum number of cluster members allowed. A value of 0 will
+     * Returns the maximum number of cluster members allowed. A value of 0 or 1 will
      * be returned when clustering is not allowed.
      *
-     * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
+     * @return the maximum number of cluster members allowed or 0 or 1 if clustering is not allowed.
      */
     public static int getMaxClusterNodes() {
-        return cacheFactoryStrategy.getMaxClusterNodes();
+        if (isClusteringAvailable()) {
+            try {
+                CacheFactoryStrategy cacheFactory = (CacheFactoryStrategy) Class.forName(
+                        clusteredCacheFactoryClass, true,
+                        getClusteredCacheStrategyClassLoader("enterprise")).newInstance();
+                return cacheFactory.getMaxClusterNodes();
+            } catch (Exception e) {
+                Log.error("Error instantiating clustered cache factory", e);
+            }
+        }
+        return 0;
     }
     /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
@@ -259,6 +297,7 @@ public class CacheFactory {
 
     public static void startClustering() {
         clusteringStarted = false;
+        clusteringStarting = true;
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
                     getClusteredCacheStrategyClassLoader("enterprise"))
@@ -331,6 +370,7 @@ public class CacheFactory {
                 statsThread.start();
             }
         }
+        clusteringStarting = false;
     }
 
     public static void stopClustering() {

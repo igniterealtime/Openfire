@@ -26,6 +26,7 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.Log" %>
 
 <html>
 <head>
@@ -48,19 +49,26 @@
         if (!clusteringEnabled) {
             ClusterManager.setClusteringEnabled(false);
             updateSucess = true;
-        }
-        else {
-            ClusterManager.setClusteringEnabled(true);
-            updateSucess = ClusterManager.isClusteringStarted();
+        } else {
+            if (ClusterManager.isClusteringAvailable()) {
+                ClusterManager.setClusteringEnabled(true);
+                updateSucess = ClusterManager.isClusteringStarted();
+            } else {
+                Log.error("Failed to enable clustering. Clustering is not installed.");
+            }
         }
     }
 
-    clusteringEnabled = ClusterManager.isClusteringStarted();
+    boolean clusteringAvailable = ClusterManager.isClusteringAvailable();
+    boolean clusteringStarting = ClusterManager.isClusteringStarting();
+    int maxClusterNodes = ClusterManager.getMaxClusterNodes();
+    clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 
     Collection<ClusterNodeInfo> clusterNodesInfo = ClusterManager.getNodesInfo();
     // Get some basic statistics from the cluster nodes
     // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
-    Collection<Object> statistics = CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true);
+    Collection<Object> statistics =
+            CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true);
     // Calculate percentages
     int clients = 0;
     int incoming = 0;
@@ -125,12 +133,28 @@
     </div>
     <br>
 <%  }
-}
+} else if (!clusteringAvailable) {
 %>
-
-<%
-    // TODO Check that clustering is available. Give a new error message if not. 
-%>
+    <div class="warning">
+    <table cellpadding="0" cellspacing="0" border="0" >
+    <tbody>
+        <tr>
+            <td class="jive-icon-label">
+            <b><fmt:message key="system.clustering.not-available" /></b><br/><br/>
+            </td>
+        </tr>
+        <td valign="top" align="left" colspan="2">
+            <% if (maxClusterNodes == 0) { %>
+                <span><fmt:message key="system.clustering.not-installed"/></span>
+            <% } else { %>
+                <span><fmt:message key="system.clustering.not-valid-license"/></span>
+            <% } %>
+        </td>
+    </tbody>
+    </table>
+    </div>
+    <br>
+<% } %> 
 
 <!-- BEGIN 'Clustering Enabled' -->
 <form action="system-clustering.jsp" method="post">
@@ -143,7 +167,7 @@
 			<tr>
 				<td width="1%" valign="top" nowrap>
 					<input type="radio" name="clusteringEnabled" value="false" id="rb01"
-					 <%= (!clusteringEnabled ? "checked" : "") %>>
+					 <%= (!clusteringEnabled ? "checked" : "") %> <%= (!clusteringAvailable || clusteringStarting ? "disabled" : "") %>>
 				</td>
 				<td width="99%">
 					<label for="rb01">
@@ -154,7 +178,7 @@
 			<tr>
 				<td width="1%" valign="top" nowrap>
 					<input type="radio" name="clusteringEnabled" value="true" id="rb02"
-					 <%= (clusteringEnabled ? "checked" : "") %>>
+					 <%= (clusteringEnabled ? "checked" : "") %> <%= (!clusteringAvailable || clusteringStarting ? "disabled" : "") %>>
 				</td>
 				<td width="99%">
 					<label for="rb02">
@@ -165,8 +189,10 @@
 		</tbody>
 		</table>
         <br/>
-		<input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
-	</div>
+        <% if (clusteringAvailable  && !clusteringStarting) { %>
+        <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+        <% } %>
+    </div>
 </form>
 <!-- END 'Clustering Enabled' -->
 <br>
@@ -177,7 +203,7 @@
     <p>
         <fmt:message key="system.clustering.overview.info">
             <fmt:param value="<%= clusterNodesInfo.size() %>" />
-            <fmt:param value="<%= ClusterManager.getMaxClusterNodes() %>" />
+            <fmt:param value="<%= maxClusterNodes %>" />
             <fmt:param value="<%= "<span style='background-color:#ffc;'>" %>" />
             <fmt:param value="<%= "</span>" %>" />
         </fmt:message>
@@ -208,26 +234,29 @@
               </tr>
           </thead>
           <tbody>
-              <% for (ClusterNodeInfo nodeInfo : clusterNodesInfo) {
-                  boolean isLocalMember = XMPPServer.getInstance().getNodeID().equals(nodeInfo.getNodeID());
-                  String nodeID = new String(nodeInfo.getNodeID().toByteArray());
+            <% if (!clusterNodesInfo.isEmpty()) {
+                for (ClusterNodeInfo nodeInfo : clusterNodesInfo) {
+                  boolean isLocalMember =
+                          XMPPServer.getInstance().getNodeID().equals(nodeInfo.getNodeID());
+                  int nodeID = nodeInfo.getNodeID().hashCode();
                   Map<String, Object> nodeStats = null;
                   for (Object stat : statistics) {
                       Map<String, Object> statsMap = (Map<String, Object>) stat;
-                      if (Arrays.equals((byte[]) statsMap.get(GetBasicStatistics.NODE), nodeInfo.getNodeID().toByteArray())) {
+                      if (Arrays.equals((byte[]) statsMap.get(GetBasicStatistics.NODE),
+                              nodeInfo.getNodeID().toByteArray())) {
                           nodeStats = statsMap;
                           break;
                       }
                   }
               %>
-              <tr valign="top" class="<%= (isLocalMember ? "local" : "") %>" valign="middle">
+              <tr class="<%= (isLocalMember ? "local" : "") %>" valign="middle">
                   <td align="center" width="1%">
-                      <a href="system-clustering-node.jsp?UID=<%= nodeID%>"
+                      <a href="plugins/enterprise/system-clustering-node.jsp?UID=<%= nodeID %>"
                        title="Click for more details"
                        ><img src="images/server-network-24x24.gif" width="24" height="24" border="0" alt=""></a>
                   </td>
                   <td class="jive-description" nowrap width="1%" valign="middle">
-                      <a href="system-clustering.jsp?UID=<%= nodeID %>">
+                      <a href="plugins/enterprise/system-clustering-node.jsp?UID=<%= nodeID %>">
                       <%  if (isLocalMember) { %>
                           <b><%= nodeInfo.getHostName() %></b>
                       <%  } else { %>
@@ -296,6 +325,16 @@
                     </table>
                   </td>
                   <td width="20%">&nbsp;</td>
+              </tr>
+              <% }
+              } else if (clusteringStarting) { %>
+              <tr valign="middle" align="middle" class="local">
+                  <td colspan=8>
+                      <fmt:message key="system.clustering.starting">
+                          <fmt:param value="<%= "<a href='system-clustering.jsp'>" %>" />
+                          <fmt:param value="<%= "</a>" %>" />
+                      </fmt:message>
+                  </td>
               </tr>
               <% } %>
         </tbody>

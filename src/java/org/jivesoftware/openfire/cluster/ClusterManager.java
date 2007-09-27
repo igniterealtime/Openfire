@@ -322,6 +322,27 @@ public class ClusterManager {
     }
 
     /**
+     * Returns true if clustering is installed and can be used by
+     * this JVM to join a cluster.
+     *
+     * @return true if clustering is installed and can be used by 
+     * this JVM to join a cluster.
+     */
+    public static boolean isClusteringAvailable() {
+        return CacheFactory.isClusteringAvailable();
+    }
+
+    /**
+     * Returns true is clustering is currently being started. Once the cluster
+     * is started or failed to be started this value will be false.
+     *
+     * @return true is clustering is currently being started.
+     */
+    public static boolean isClusteringStarting() {
+        return CacheFactory.isClusteringStarting();
+    }
+
+    /**
      * Returns true if this JVM is part of a cluster. The cluster may have many nodes
      * or this JVM could be the only node.
      *

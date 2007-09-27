@@ -123,12 +123,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public boolean addClientRoute(JID route, LocalClientSession destination) {
+        boolean added;
         boolean available = destination.getPresence().isAvailable();
-        boolean added = localRoutingTable.addRoute(route.toString(), destination);
+        localRoutingTable.addRoute(route.toString(), destination);
         if (destination.getAuthToken().isAnonymous()) {
-            anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available));
+            added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
             // Add the session to the list of user sessions
-            if (route.getResource() != null && !available) {
+            if (route.getResource() != null && (!available || added)) {
                 Lock lock = LockManager.getLock(route.toBareJID());
                 try {
                     lock.lock();
@@ -140,9 +141,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         else {
-            usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available));
+            added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
             // Add the session to the list of user sessions
-            if (route.getResource() != null && !available) {
+            if (route.getResource() != null && (!available || added)) {
                 Lock lock = LockManager.getLock(route.toBareJID());
                 try {
                     lock.lock();

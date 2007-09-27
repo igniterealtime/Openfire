@@ -176,6 +176,11 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/commons-lang.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/commons-lang.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/commons-logging.jar" />
       <url>jar://$MODULE_DIR$/../lib/merge/commons-logging.jar!/</url>
     </containerElement>
@@ -193,6 +198,16 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/jaxen.jar" />
       <url>jar://$MODULE_DIR$/../lib/merge/jaxen.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jdom.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/jdom.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jetty-sslengine.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/jetty-sslengine.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -236,13 +251,38 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/mina-core.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/mina-core.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/mina-filter-compression-1.2.0.jar" />
       <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-compression-1.2.0.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/mina-filter-compression.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-compression.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/mina-filter-ssl-1.2.0.jar" />
       <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-ssl-1.2.0.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/mina-filter-ssl.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-ssl.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/rome-fetcher.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/rome-fetcher.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/rome.jar" />
+      <url>jar://$MODULE_DIR$/../lib/merge/rome.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />

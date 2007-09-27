@@ -136,7 +136,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     }
 
     public void send(Packet packet) {
-        XMPPServer.getInstance().getPacketRouter().route(packet);
+        XMPPServer.getInstance().getRoutingTable().routePacket(userAddress, packet, false);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

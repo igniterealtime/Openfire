@@ -2,7 +2,7 @@
 <module version="4" relativePaths="true" type="J2EE_WEB_MODULE">
   <component name="AppServerSpecificValidatorsManager" />
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$/../../src/spank" />
@@ -37,6 +37,11 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/Clover_for_IDEA_2848.jar" />
+      <url>jar://$MODULE_DIR$/../../../../Documents and Settings/gato/.IntelliJIdea60/config/plugins/Clover_for_IDEA_2848.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/ant-contrib.jar" />
       <url>jar://$MODULE_DIR$/../lib/ant-contrib.jar!/</url>
     </containerElement>
@@ -54,6 +59,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/ant.jar" />
       <url>jar://$MODULE_DIR$/../lib/ant.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/cglib-nodep.jar" />
+      <url>jar://$MODULE_DIR$/../lib/cglib-nodep.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -102,6 +112,16 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/hamcrest-api.jar" />
+      <url>jar://$MODULE_DIR$/../lib/hamcrest-api.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/hamcrest-library.jar" />
+      <url>jar://$MODULE_DIR$/../lib/hamcrest-library.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/i4jruntime.jar" />
       <url>jar://$MODULE_DIR$/../lib/i4jruntime.jar!/</url>
     </containerElement>
@@ -114,6 +134,16 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/jasper-runtime.jar" />
       <url>jar://$MODULE_DIR$/../lib/jasper-runtime.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jmock-junit4.jar" />
+      <url>jar://$MODULE_DIR$/../lib/jmock-junit4.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/jmock.jar" />
+      <url>jar://$MODULE_DIR$/../lib/jmock.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />
@@ -234,6 +264,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/lib/xpp3.jar" />
       <url>jar://$MODULE_DIR$/../lib/merge/xpp3.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/objenesis.jar" />
+      <url>jar://$MODULE_DIR$/../lib/objenesis.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />

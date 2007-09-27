@@ -75,12 +75,18 @@
     int outgoing = 0;
     for (Object stat : statistics) {
         Map<String, Object> statsMap = (Map<String, Object>) stat;
+        if (statsMap == null) {
+            continue;
+        }
         clients += (Integer) statsMap.get(GetBasicStatistics.CLIENT);
         incoming += (Integer) statsMap.get(GetBasicStatistics.INCOMING);
         outgoing += (Integer) statsMap.get(GetBasicStatistics.OUTGOING);
     }
     for (Object stat : statistics) {
         Map<String, Object> statsMap = (Map<String, Object>) stat;
+        if (statsMap == null) {
+            continue;
+        }
         int current = (Integer) statsMap.get(GetBasicStatistics.CLIENT);
         int percentage = clients == 0 ? 0 : current * 100 / clients;
         statsMap.put(GetBasicStatistics.CLIENT, current + " (" + Math.round(percentage) + "%)");
@@ -242,6 +248,9 @@
                   Map<String, Object> nodeStats = null;
                   for (Object stat : statistics) {
                       Map<String, Object> statsMap = (Map<String, Object>) stat;
+                      if (statsMap == null) {
+                          continue;
+                      }
                       if (Arrays.equals((byte[]) statsMap.get(GetBasicStatistics.NODE),
                               nodeInfo.getNodeID().toByteArray())) {
                           nodeStats = statsMap;

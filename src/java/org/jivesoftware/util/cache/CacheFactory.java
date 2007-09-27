@@ -112,20 +112,16 @@ public class CacheFactory {
     }
 
     /**
-     * Returns true if clustering is installed and can be used by
-     * this JVM to join a cluster.
+     * Returns true if clustering is installed and can be used by this JVM
+     * to join a cluster. A false value could mean that either clustering
+     * support is not available or the license does not allow to have more
+     * than 1 cluster node.
      *
      * @return true if clustering is installed and can be used by
      * this JVM to join a cluster.
      */
     public static boolean isClusteringAvailable() {
-        try {
-            Class.forName(clusteredCacheFactoryClass, true,
-                    getClusteredCacheStrategyClassLoader("enterprise"));
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-        return true;
+        return getMaxClusterNodes() > 1;
     }
 
     /**
@@ -204,15 +200,13 @@ public class CacheFactory {
      * @return the maximum number of cluster members allowed or 0 or 1 if clustering is not allowed.
      */
     public static int getMaxClusterNodes() {
-        if (isClusteringAvailable()) {
-            try {
-                CacheFactoryStrategy cacheFactory = (CacheFactoryStrategy) Class.forName(
-                        clusteredCacheFactoryClass, true,
-                        getClusteredCacheStrategyClassLoader("enterprise")).newInstance();
-                return cacheFactory.getMaxClusterNodes();
-            } catch (Exception e) {
-                Log.error("Error instantiating clustered cache factory", e);
-            }
+        try {
+            CacheFactoryStrategy cacheFactory = (CacheFactoryStrategy) Class.forName(
+                    clusteredCacheFactoryClass, true,
+                    getClusteredCacheStrategyClassLoader("enterprise")).newInstance();
+            return cacheFactory.getMaxClusterNodes();
+        } catch (Exception e) {
+            Log.error("Error instantiating clustered cache factory", e);
         }
         return 0;
     }

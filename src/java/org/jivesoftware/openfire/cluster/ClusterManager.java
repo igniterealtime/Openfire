@@ -322,8 +322,10 @@ public class ClusterManager {
     }
 
     /**
-     * Returns true if clustering is installed and can be used by
-     * this JVM to join a cluster.
+     * Returns true if clustering is installed and can be used by this JVM
+     * to join a cluster. A false value could mean that either clustering
+     * support is not available or the license does not allow to have more
+     * than 1 cluster node.
      *
      * @return true if clustering is installed and can be used by 
      * this JVM to join a cluster.
@@ -375,10 +377,11 @@ public class ClusterManager {
     }
 
     /**
-     * Returns the maximum number of cluster members allowed. A value of 0 will
-     * be returned when clustering is not allowed.
+     * Returns the maximum number of cluster members allowed. Both values 0 and 1 mean that clustering
+     * is not available. However, a value of 1 means that it's a license problem rather than not having
+     * the ability to do clustering as defined with value 0.
      *
-     * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
+     * @return the maximum number of cluster members allowed or 0 or 1 if clustering is not allowed.
      */
     public static int getMaxClusterNodes() {
         return CacheFactory.getMaxClusterNodes();

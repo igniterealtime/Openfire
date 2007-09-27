@@ -593,7 +593,7 @@
 <br>
 
 <form action="server-props.jsp">
-<input type="submit" value="<fmt:message key="ports.edit" />">
+<input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
 
     </body>

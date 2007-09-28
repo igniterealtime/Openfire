@@ -555,20 +555,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         if (jidFrom.getResource() != null) {
             if (remotePresenceSet != null) {
-                if (remotePresenceSet.add(jidFrom)) {
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
-                    }
-                }
+                remotePresenceSet.add(jidFrom);
             }
             else {
                 remotePresenceSet = new HashSet<JID>();
-                if (remotePresenceSet.add(jidFrom)) {
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("PEP: added " + jidFrom + " to " + jidTo + "'s knownRemotePresences");
-                    }
-                    knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
-                }
+                remotePresenceSet.add(jidFrom);
+                knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
             }
 
             // Send the presence packet recipient's last published items to the remote user.
@@ -586,10 +578,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // Manage the cache of remote presence resources.
         Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
         
-        if (remotePresenceSet != null && remotePresenceSet.remove(jidFrom)) {
-            if (Log.isDebugEnabled()) {
-                Log.debug("PEP: removed " + jidFrom + " from " + jidTo + "'s knownRemotePresences");
-            }
+        if (remotePresenceSet != null) {
+            remotePresenceSet.remove(jidFrom);
         }
     }
 

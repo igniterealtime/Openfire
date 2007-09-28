@@ -337,9 +337,11 @@ public class PEPService implements PubSubService {
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
         Set<JID> recipientFullJIDs = new HashSet<JID>();
-        if (recipientJID.getResource() == null && XMPPServer.getInstance().isLocal(recipientJID)) {
-            for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
-                recipientFullJIDs.add(clientSession.getAddress());
+        if (XMPPServer.getInstance().isLocal(recipientJID)) {
+            if (recipientJID.getResource() == null) {
+                for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
+                    recipientFullJIDs.add(clientSession.getAddress());
+                }
             }
         }
         else {

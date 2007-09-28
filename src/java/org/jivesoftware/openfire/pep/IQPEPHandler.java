@@ -301,9 +301,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(), nodeID, creator);
                     newNode.addOwner(creator);
                     newNode.saveToDB();
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("PEP: Created node ('" + newNode.getNodeID() + "') for " + jidFrom);
-                    }
                 }
             }
 
@@ -431,10 +428,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         NodeSubscription nodeSubscription = rootNode.getSubscription(unsubscriber);
         if (nodeSubscription != null) {
             rootNode.cancelSubscription(nodeSubscription);
-
-            if (Log.isDebugEnabled()) {
-                Log.debug("PEP: " + unsubscriber + " subscription to " + serviceOwner + "'s PEP service was cancelled.");
-            }
         }
         else {
             return;
@@ -519,10 +512,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID) {
-        if (Log.isDebugEnabled()) {
-            Log.debug("PEP: " + unsubscriberJID + " unsubscribed from " + recipientJID + "'s presence.");
-        }
-
         cancelSubscriptionToPEPService(unsubscriberJID, recipientJID);
     }
 
@@ -586,10 +575,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public void contactDeleted(Roster roster, RosterItem item) {
         JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
         JID deletedContact = item.getJid();
-
-        if (Log.isDebugEnabled()) {
-            Log.debug("PEP: contactDeleted: rosterOwner is " + rosterOwner + " and deletedContact is" + deletedContact);
-        }
 
         cancelSubscriptionToPEPService(deletedContact, rosterOwner);
 

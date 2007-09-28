@@ -317,7 +317,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 pubSubEngine.process(pepService, packet);
             }
             else {
-                // Process with PubSub using a dummyService.
+                // Process with PubSub using a dummyService. In the case where an IQ packet is sent to
+                // a user who does not have a PEP service, we wish to utilize the error reporting flow
+                // already present in the PubSubEngine. Hence, the sole purpose of the dummyService is
+                // to forward this ill formed IQ packet to the PubSubEngine and trigger the correct error.
                 PEPService dummyService = new PEPService(XMPPServer.getInstance(), senderJID.toBareJID());
                 pubSubEngine.process(dummyService, packet);
             }

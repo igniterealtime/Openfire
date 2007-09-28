@@ -12,13 +12,15 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%@ page import="org.jivesoftware.openfire.XMPPServer"
+<%@ page import="org.jivesoftware.database.DbConnectionManager"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterNodeInfo" %>
 <%@ page import="org.jivesoftware.openfire.cluster.GetBasicStatistics" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
 <%@ page import="java.text.DecimalFormat" %>
@@ -26,7 +28,6 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.util.Log" %>
 
 <html>
 <head>
@@ -49,17 +50,20 @@
         if (!clusteringEnabled) {
             ClusterManager.setClusteringEnabled(false);
             updateSucess = true;
-        } else {
+        }
+        else {
             if (ClusterManager.isClusteringAvailable()) {
                 ClusterManager.setClusteringEnabled(true);
                 updateSucess = ClusterManager.isClusteringStarted();
-            } else {
+            }
+            else {
                 Log.error("Failed to enable clustering. Clustering is not installed.");
             }
         }
     }
 
-    boolean clusteringAvailable = ClusterManager.isClusteringAvailable();
+    boolean usingEmbeddedDB = DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.hsqldb;
+    boolean clusteringAvailable = !usingEmbeddedDB && ClusterManager.isClusteringAvailable();
     boolean clusteringStarting = ClusterManager.isClusteringStarting();
     int maxClusterNodes = ClusterManager.getMaxClusterNodes();
     clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
@@ -150,7 +154,9 @@
             </td>
         </tr>
         <td valign="top" align="left" colspan="2">
-            <% if (maxClusterNodes == 0) { %>
+            <% if (usingEmbeddedDB) { %>
+                <span><fmt:message key="system.clustering.using-embedded-db"/></span>
+            <% } else if (maxClusterNodes == 0) { %>
                 <span><fmt:message key="system.clustering.not-installed"/></span>
             <% } else { %>
                 <span><fmt:message key="system.clustering.not-valid-license"/></span>

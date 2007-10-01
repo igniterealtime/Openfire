@@ -239,74 +239,75 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
         JID senderJID = packet.getFrom();
-        if (packet.getTo() == null && packet.getType() == IQ.Type.set) {
-            String jidFrom = senderJID.toBareJID();
-
-            PEPService pepService = getPEPService(jidFrom);
-
-            // If no service exists yet for jidFrom, create one.
-            if (pepService == null) {
-                // Return an error if the packet is from an anonymous, unregistered user
-                // or remote user
-                if (!XMPPServer.getInstance().isLocal(senderJID) ||
-                        !UserManager.getInstance().isRegisteredUser(senderJID.getNode())) {
-                    IQ reply = IQ.createResultIQ(packet);
-                    reply.setChildElement(packet.getChildElement().createCopy());
-                    reply.setError(PacketError.Condition.not_allowed);
-                    return reply;
-                }
-                
-                pepService = new PEPService(XMPPServer.getInstance(), jidFrom);
-                pepServices.put(jidFrom, pepService);
-
-                // Probe presences
-                pubSubEngine.start(pepService);
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: " + jidFrom + " had a PEPService created");
-                }
-
-                // Those who already have presence subscriptions to jidFrom
-                // will now automatically be subscribed to this new PEPService.
-                try {
-                    Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(senderJID.getNode());
-                    for (RosterItem item : roster.getRosterItems()) {
-                        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-                            createSubscriptionToPEPService(pepService, item.getJid(), senderJID);
+        if (packet.getTo() == null) {
+            if (packet.getType() == IQ.Type.set) {
+                String jidFrom = senderJID.toBareJID();
+    
+                PEPService pepService = getPEPService(jidFrom);
+    
+                // If no service exists yet for jidFrom, create one.
+                if (pepService == null) {
+                    // Return an error if the packet is from an anonymous, unregistered user
+                    // or remote user
+                    if (!XMPPServer.getInstance().isLocal(senderJID) ||
+                            !UserManager.getInstance().isRegisteredUser(senderJID.getNode())) {
+                        IQ reply = IQ.createResultIQ(packet);
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.not_allowed);
+                        return reply;
+                    }
+                    
+                    pepService = new PEPService(XMPPServer.getInstance(), jidFrom);
+                    pepServices.put(jidFrom, pepService);
+    
+                    // Probe presences
+                    pubSubEngine.start(pepService);
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("PEP: " + jidFrom + " had a PEPService created");
+                    }
+    
+                    // Those who already have presence subscriptions to jidFrom
+                    // will now automatically be subscribed to this new PEPService.
+                    try {
+                        Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(senderJID.getNode());
+                        for (RosterItem item : roster.getRosterItems()) {
+                            if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
+                                createSubscriptionToPEPService(pepService, item.getJid(), senderJID);
+                            }
                         }
                     }
+                    catch (UserNotFoundException e) {
+                        // Do nothing
+                    }
                 }
-                catch (UserNotFoundException e) {
-                    // Do nothing
+    
+                // If publishing a node, and the node doesn't exist, create it.
+                Element childElement = packet.getChildElement();
+                Element publishElement = childElement.element("publish");
+                if (publishElement != null) {
+                    String nodeID = publishElement.attributeValue("node");
+    
+                    // Do not allow User Avatar nodes to be created.
+                    // TODO: Implement XEP-0084
+                    if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
+                        IQ reply = IQ.createResultIQ(packet);
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.feature_not_implemented);
+                        return reply;
+                    }
+    
+                    if (pepService.getNode(nodeID) == null) {
+                        // Create the node
+                        JID creator = new JID(jidFrom);
+                        LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(), nodeID, creator);
+                        newNode.addOwner(creator);
+                        newNode.saveToDB();
+                    }
                 }
+    
+                // Process with PubSub as usual.
+                pubSubEngine.process(pepService, packet);
             }
-
-            // If publishing a node, and the node doesn't exist, create it.
-            Element childElement = packet.getChildElement();
-            Element publishElement = childElement.element("publish");
-            if (publishElement != null) {
-                String nodeID = publishElement.attributeValue("node");
-
-                // Do not allow User Avatar nodes to be created.
-                // TODO: Implement XEP-0084
-                if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
-                    IQ reply = IQ.createResultIQ(packet);
-                    reply.setChildElement(packet.getChildElement().createCopy());
-                    reply.setError(PacketError.Condition.feature_not_implemented);
-                    return reply;
-                }
-
-                if (pepService.getNode(nodeID) == null) {
-                    // Create the node
-                    JID creator = new JID(jidFrom);
-                    LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(), nodeID, creator);
-                    newNode.addOwner(creator);
-                    newNode.saveToDB();
-                }
-            }
-
-            // Process with PubSub as usual.
-            pubSubEngine.process(pepService, packet);
-
         }
         else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
             String jidTo = packet.getTo().toBareJID();
@@ -319,8 +320,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             else {
                 // Process with PubSub using a dummyService. In the case where an IQ packet is sent to
                 // a user who does not have a PEP service, we wish to utilize the error reporting flow
-                // already present in the PubSubEngine. Hence, the sole purpose of the dummyService is
-                // to forward this ill formed IQ packet to the PubSubEngine and trigger the correct error.
+                // already present in the PubSubEngine. This gives the illusion that every user has a
+                // PEP service, as required by the specification.
                 PEPService dummyService = new PEPService(XMPPServer.getInstance(), senderJID.toBareJID());
                 pubSubEngine.process(dummyService, packet);
             }
@@ -331,7 +332,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             return null;
         }
 
-        // Other error flows are handled in pubSubEngine.process(...)
+        // Other error flows were handled in pubSubEngine.process(...)
         return null;
     }
     

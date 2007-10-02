@@ -75,7 +75,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         // Set the max time a connection can be idle before closing it
         int idleTime = getMaxIdleTime();
         if (idleTime > 0) {
-            session.setIdleTime(IdleStatus.BOTH_IDLE, idleTime);
+            session.setIdleTime(IdleStatus.READER_IDLE, idleTime);
         }
     }
 

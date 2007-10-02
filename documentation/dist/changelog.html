@@ -185,9 +185,11 @@ hr {
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1051'>JM-1051</a>] - PluginManager can now return the JAR/WAR file that created a plugin.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1055'>JM-1055</a>] - Plugins are now initialized using plugin class loader.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1056'>JM-1056</a>] - Port listeners are started once plugins have been loaded.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1075'>JM-1075</a>] - Message sent to unavailable full JID of existing user was not routed to bare JID.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1075'>JM-1075</a>] - Message sent to unavailable full JID of existing user was not routed to the bare JID.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1084'>JM-1084</a>] - Users in another domain could set the vCard of an Openfire user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1066'>JM-1066</a>] - Client idle timeout was considering incoming and outgoing traffic. <b>(3 votes)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1082'>JM-1082</a>] - Fixed NPE in MUCRoomImpl.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1131'>JM-1131</a>] - Multiple consecutive spaces in a contact's group name were replaced with a single space.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1050'>JM-1050</a>] - Proxy transfer streams are now closed more reliably.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1052'>JM-1052</a>] - Media proxy could fail when using SRV record.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1059'>JM-1059</a>] - Clients could hang when trying to use stream compression.</li>
@@ -207,17 +209,22 @@ hr {
 <h3>Openfire Enterprise</h3>
 <ul>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-43'>ENT-43</a>] - Added clustering support. <b>(38 votes)</b></li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-151'>ENT-151</a>] - Added missing emoticons to Sparkweb.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-171'>ENT-171</a>] - Nicknames were displayed as null when the avatar was a broken image.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-173'>ENT-173</a>] - Full name was empty in the user profile.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-179'>ENT-179</a>] - Initial doubleclick on contact list was being registered as a single click.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-180'>ENT-180</a>] - SparkWeb could stop polling causing a silent disconnect.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-181'>ENT-181</a>] - Fixed contrast/color issues.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-189'>ENT-189</a>] - (SparkWeb) Removed top bar since it's not longer needed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-190'>ENT-190</a>] - (SparkWeb) Improved how renaming of contacts works.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-191'>ENT-191</a>] - (SparkWeb) Renamed field names in add contact dialog.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-192'>ENT-192</a>] - (SparkWeb) Profile button is now a toggle.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-193'>ENT-193</a>] - (SparkWeb) Name and password fields are not cleared if invalid.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-194'>ENT-194</a>] - (SparkWeb) A guess of the JID is now filled in in the add contact field based on the name.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-195'>ENT-195</a>] - (SparkWeb) Added localized text support.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-157'>ENT-157</a>] - (SparkWeb) Added feedback when trying to register a new user failed for some reason.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-174'>ENT-174</a>] - (SparkWeb) The alert of new incoming messages did not disappear when the chat box was selected.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-188'>ENT-188</a>] - (SparkWeb) Removed <i>online</i> text from contacts grouped in the offline group.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-181'>ENT-181</a>] - (SparkWeb) Fixed contrast/color issues.</li>
 </ul>
 
 <h3>Openfire Connection Manager Module</h3>
 <ul>
-    <li>No changes</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1066'>JM-1066</a>] - Client idle timeout was considering incoming and outgoing traffic. <b>(3 votes)</b></li>
 </ul>
 
 <h2>3.3.3 -- <span style="font-weight: normal;">September 20, 2007</span></h2>

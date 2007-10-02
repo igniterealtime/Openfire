@@ -162,6 +162,42 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.3.3 -- <span style="font-weight: normal;">September 20, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1018'>JM-1054</a>] - Updated MINA library to latest version. <i>Nice optimizations and fixes</i>.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1126'>JM-1126</a>] - Added debug information when quering LDAP for groups of a given user.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1127'>JM-1127</a>] - Parsing XML containing multibyte characters could add null characters to the resulting stanza. Thanks to Tim.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1125'>JM-1125</a>] - An IQ of type error is now returned instead of closing the connection when an internal error occurs while processing an IQ packet.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-135'>ENT-135</a>] - Added SparkWeb Flash Beta.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-129'>ENT-129</a>] - Round robin algorithm is no longer used when transfering/invitating a single user.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-131'>ENT-131</a>] - Fixed "Agent never joined" issue with Webchat.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-133'>ENT-133</a>] - Removing Demo workgroup and user was causing other workgroups to fail.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-136'>ENT-136</a>] - Workgroup queues page was showing wrong number of agents logged in.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-65'>ENT-65</a>] - An empty list was being shown when no workgroups were configured in Spark Fastpath Webchat Plugin.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-112'>ENT-112</a>] - Conversation archiving was sometimes logging a conversation as two conversations.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-36'>ENT-36</a>] - There was no way to disable chat transcript settings once set.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-86'>ENT-86</a>] - Logging into fastpath was using the users current presence, and no longer defaulting to "Available".</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-166'>ENT-166</a>] - Emails were not being encoded in email transcripts.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-78'>ENT-78</a>] - User is now alerted in offline settings if their email settings were not set.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-81'>ENT-81</a>] - Fixed Javascript error in webchat userinfo page. (province not found)</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-137'>ENT-137</a>] - Crossdomain servlet was not sending out correct response occasionally.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1127'>JM-1127</a>] - Parsing XML containing multibyte characters could add null characters to the resulting stanza.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1018'>JM-1054</a>] - Updated MINA library to latest version.</li>
+</ul>
 
 <h2>3.3.2 -- <span style="font-weight: normal;">June 22, 2007</span></h2>
 

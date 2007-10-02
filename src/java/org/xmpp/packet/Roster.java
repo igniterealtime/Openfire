@@ -220,7 +220,7 @@ public class Roster extends IQ {
                 Collection<String> groups = new ArrayList<String>();
                 for (Iterator j=item.elementIterator("group"); j.hasNext(); ) {
                     Element group = (Element)j.next();
-                    groups.add(group.getTextTrim());
+                    groups.add(group.getText().trim());
                 }
                 Ask askStatus = ask == null ? null : Ask.valueOf(ask);
                 Subscription subStatus = subscription == null ?

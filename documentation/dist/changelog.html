@@ -162,6 +162,64 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.4.0 Beta -- <span style="font-weight: normal;">October 3, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1122'>JM-1122</a>] - Added support for XEP-0163: Personal Eventing via Pubsub.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-65'>JM-65</a>] - Added roster management from the admin console. <b>(53 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-635'>JM-635</a>] - Plugins can now be uploaded from the admin console. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1124'>JM-1124</a>] - Improved performance of SSL HTTP binding.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1128'>JM-1128</a>] - Added RSS feed to the admin console to read igniterealtime news.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1046'>JM-1046</a>] - Added support for privacy list event listener.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1121'>JM-1121</a>] - Events are now triggered when an available or unavailable presence is received for remote users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1061'>JM-1061</a>] - Events are now triggered after trying to load/unload plugins.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1118'>JM-1118</a>] - Allowed to add new identities to be included in disco#info replies.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1119'>JM-1119</a>] - Allowed to add new items to disco#item replies sent to bare JIDs.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1120'>JM-1120</a>] - Modified PresenceEventListener to include presence subscription events.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1089'>JM-1089</a>] - Updated bouncycastle library to latest version.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1051'>JM-1051</a>] - PluginManager can now return the JAR/WAR file that created a plugin.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1055'>JM-1055</a>] - Plugins are now initialized using plugin class loader.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1056'>JM-1056</a>] - Port listeners are started once plugins have been loaded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1075'>JM-1075</a>] - Message sent to unavailable full JID of existing user was not routed to bare JID.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1084'>JM-1084</a>] - Users in another domain could set the vCard of an Openfire user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1082'>JM-1082</a>] - Fixed NPE in MUCRoomImpl.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1050'>JM-1050</a>] - Proxy transfer streams are now closed more reliably.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1052'>JM-1052</a>] - Media proxy could fail when using SRV record.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1059'>JM-1059</a>] - Clients could hang when trying to use stream compression.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1085'>JM-1085</a>] - Active sessions are now closed and a <not-authorized/> stream error is returned when cancelling a user account.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1091'>JM-1091</a>] - Connected but not available sessions appeared as online in the session summary page.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1092'>JM-1092</a>] - Plugins that failed to be unloaded were reloaded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1095'>JM-1095</a>] - Fixed session counter when closing session that never authenticated.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1070'>JM-1070</a>] - Counter of sent packets from the server to the client was always zero.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1096'>JM-1096</a>] - HTTP binding could allow packets to be sent on behalf of other users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1097'>JM-1097</a>] - A not-authorized error is now returned when user tries to bind a resource before authenticating.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1113'>JM-1113</a>] - XML properties could be set which contain XML entities.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1123'>JM-1123</a>] - Presences sent between components are now routed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1129'>JM-1129</a>] - Retrieving room history was not working in Oracle.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1069'>JM-1069</a>] - Modules were cleaned up before stopping plugins.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-43'>ENT-43</a>] - Added clustering support. <b>(38 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-151'>ENT-151</a>] - Added missing emoticons to Sparkweb.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-171'>ENT-171</a>] - Nicknames were displayed as null when the avatar was a broken image.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-173'>ENT-173</a>] - Full name was empty in the user profile.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-179'>ENT-179</a>] - Initial doubleclick on contact list was being registered as a single click.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-180'>ENT-180</a>] - SparkWeb could stop polling causing a silent disconnect.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-181'>ENT-181</a>] - Fixed contrast/color issues.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
 <h2>3.3.3 -- <span style="font-weight: normal;">September 20, 2007</span></h2>
 
 <h3>Openfire New Features</h3>

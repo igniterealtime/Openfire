@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * that have been created are periodically published to the clustered cache
  * named "opt-$cacheStats".
  *
- * @src.include false
  */
 public class CacheFactory {
 

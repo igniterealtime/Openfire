@@ -494,6 +494,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
     /**
      * Returns the collection of searchable field names that does not include the fields
      * listed in the EXCLUDEDFIELDS property list.
+     *
+     * @return  collection of searchable field names.
      */
     public Collection<String> getFilteredSearchFields() {
        Collection<String> searchFields;
@@ -518,7 +520,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * in the case of preventing users email addresses from being revealed as part of
      * the search results. 
      *
-     * @param set of fields that can not be searched on or shown to the client
+     * @param exculudedFields fields that can not be searched on or shown to the client
      */
     public void setExcludedFields(Collection<String> exculudedFields) {
        this.exculudedFields = exculudedFields;
@@ -602,6 +604,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * Returns the collection of field names that can be used to search for a
      * user. Typical fields are username, name, and email. These values can be
      * used to contruct a data form.
+     *
+     * @return the collection of field names that can be used to search.
      */
     public Collection<String> getSearchPluginUserManagerSearchFields() {
         return Arrays.asList("Username", "Name", "Email");

@@ -1086,6 +1086,33 @@
     <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of openfire.">
         <antcall target="dist.src"/>
 
+        <mkdir dir="${target.rpm}/SPECS" />
+        <mkdir dir="${target.rpm}/SOURCES" />
+        <mkdir dir="${target.rpm}/BUILD" />
+        <mkdir dir="${target.rpm}/SRPMS" />
+        <mkdir dir="${target.rpm}/RPMS" />
+
+        <copy todir="${target.rpm}/SPECS" file="${basedir}/build/rpm/openfire.spec" />
+        <copy todir="${target.rpm}/SOURCES" file="${basedir}/build/rpm/jre-dist.tar.gz" />
+        <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+
+        <rpm specFile="openfire.spec"
+             topDir="${target.rpm}"
+             command="-ba"
+             failOnError="true"
+             />
+             
+        <copy todir="${release.dest.dir}" >
+            <fileset dir="${target.rpm}/SRPMS" />
+            <fileset dir="${target.rpm}/RPMS/i386" />
+        </copy>
+    </target>
+    
+    <!-- installer.rpm.old ========================================================================= -->
+    <property name="target.rpm" value="${work.dir}/rpm" />
+    <target name="installer.rpm.old" depends="init, dist.init" description="Builds a rpm of openfire.">
+        <antcall target="dist.src"/>
+
         <antcall target="dist.bin">
             <!-- Don't need package for installer build -->
             <param name="no.package" value="true"/>

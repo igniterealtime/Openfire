@@ -123,7 +123,9 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             componentManager = null;
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            if (componentManager != null) {
+                componentManager.getLog().error(e);
+            }
         }
         serviceName = null;
         userManager = null;

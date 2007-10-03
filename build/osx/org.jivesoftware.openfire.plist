@@ -6,8 +6,8 @@
 	<false/>
 	<key>EnvironmentVariables</key>
 	<dict>
-		<key>WILDFIRE_HOME</key>
-		<string>/usr/local/wildfire/</string>
+		<key>OPENFIRE_HOME</key>
+		<string>/usr/local/openfire</string>
 	</dict>
 	<key>Label</key>
 	<string>org.jivesoftware.openfire</string>

@@ -500,11 +500,15 @@ public class JID implements Comparable<JID>, Serializable, Externalizable {
     public int compareTo(JID jid) {
         // Comparison order is domain, node, resource.
         int compare = domain.compareTo(jid.domain);
-        if (compare == 0 && node != null && jid.node != null) {
-            compare = node.compareTo(jid.node);
+        if (compare == 0) {
+            String myNode = node != null ? node : "";
+            String hisNode = jid.node != null ? jid.node : "";
+            compare = myNode.compareTo(hisNode);
         }
-        if (compare == 0 && resource != null && jid.resource != null) {
-            compare = resource.compareTo(jid.resource);
+        if (compare == 0) {
+            String myResource = resource != null ? resource : "";
+            String hisResource = jid.resource != null ? jid.resource : "";
+            compare = myResource.compareTo(hisResource);
         }
         return compare;
     }

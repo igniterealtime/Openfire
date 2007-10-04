@@ -77,7 +77,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %preun
 [ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire stop
-/sbin/chkconfig --del openfire
+if [ "$1" != 0 ]; then
+	/sbin/chkconfig --del openfire
+fi
 
 %post
 /sbin/chkconfig --add openfire

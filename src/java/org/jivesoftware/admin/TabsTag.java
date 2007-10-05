@@ -11,15 +11,15 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.StringUtils;
 import org.dom4j.Element;
+import org.jivesoftware.util.StringUtils;
 
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
+import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * <p>A simple JSP tag for displaying tab information in the admin console. The
@@ -115,7 +115,6 @@ public class TabsTag extends BodyTagSupport {
      */
     public int doEndTag() throws JspException {
         HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
-        String beanName = getBean();
         // Get the page data bean from the request:
         // If the page info bean is not in the request then no tab will be selected - so, it'll fail gracefully
         String pageID = (String)request.getAttribute("pageID");

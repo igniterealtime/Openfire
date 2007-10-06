@@ -28,6 +28,7 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.Base64" %>
 
 <html>
 <head>
@@ -248,22 +249,22 @@
           <tbody>
             <% if (!clusterNodesInfo.isEmpty()) {
                 for (ClusterNodeInfo nodeInfo : clusterNodesInfo) {
-                  boolean isLocalMember =
-                          XMPPServer.getInstance().getNodeID().equals(nodeInfo.getNodeID());
-                  int nodeID = nodeInfo.getNodeID().hashCode();
-                  Map<String, Object> nodeStats = null;
-                  for (Object stat : statistics) {
-                      Map<String, Object> statsMap = (Map<String, Object>) stat;
-                      if (statsMap == null) {
-                          continue;
-                      }
-                      if (Arrays.equals((byte[]) statsMap.get(GetBasicStatistics.NODE),
-                              nodeInfo.getNodeID().toByteArray())) {
-                          nodeStats = statsMap;
-                          break;
-                      }
-                  }
-              %>
+                    boolean isLocalMember =
+                            XMPPServer.getInstance().getNodeID().equals(nodeInfo.getNodeID());
+                    String nodeID = Base64.encodeBytes(nodeInfo.getNodeID().toByteArray(), Base64.URL_SAFE);
+                    Map<String, Object> nodeStats = null;
+                    for (Object stat : statistics) {
+                        Map<String, Object> statsMap = (Map<String, Object>) stat;
+                        if (statsMap == null) {
+                            continue;
+                        }
+                        if (Arrays.equals((byte[]) statsMap.get(GetBasicStatistics.NODE),
+                                nodeInfo.getNodeID().toByteArray())) {
+                            nodeStats = statsMap;
+                            break;
+                        }
+                    }
+            %>
               <tr class="<%= (isLocalMember ? "local" : "") %>" valign="middle">
                   <td align="center" width="1%">
                       <a href="plugins/enterprise/system-clustering-node.jsp?UID=<%= nodeID %>"

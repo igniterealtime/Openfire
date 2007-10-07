@@ -18,6 +18,7 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.group.Group" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%!
     final int DEFAULT_RANGE = 15;
@@ -144,7 +145,7 @@
 
 <p>
 <fmt:message key="user.roster.info">
-    <fmt:param value="<%= "<b>"+username+"</b>" %>" />
+    <fmt:param value="<%= "<b>"+JID.unescapeNode(username)+"</b>" %>" />
 </fmt:message>
 </p>
 

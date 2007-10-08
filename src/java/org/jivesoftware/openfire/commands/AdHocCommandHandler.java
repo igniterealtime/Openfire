@@ -2,7 +2,7 @@
  * $Revision: 3023 $
  * $Date: 2005-11-02 18:00:15 -0300 (Wed, 02 Nov 2005) $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -112,23 +112,19 @@ public class AdHocCommandHandler extends IQHandler
         }
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
-        List<Element> answer = new ArrayList<Element>();
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
+        List<DiscoItem> answer = new ArrayList<DiscoItem>();
         if (!NAMESPACE.equals(node)) {
             answer = Collections.emptyList();
         }
         else {
-            Element item;
             for (AdHocCommand command : manager.getCommands()) {
                 // Only include commands that the sender can invoke (i.e. has enough permissions)
                 if (command.hasPermission(senderJID)) {
-                    item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", serverName);
-                    item.addAttribute("node", command.getCode());
-                    item.addAttribute("name", command.getLabel());
-
-                    answer.add(item);
-                }
+					final DiscoItem item = new DiscoItem(new JID(serverName),
+							command.getLabel(), command.getCode(), null);
+					answer.add(item);
+				}
             }
         }
         return answer.iterator();

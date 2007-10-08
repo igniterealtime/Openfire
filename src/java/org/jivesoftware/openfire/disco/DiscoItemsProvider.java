@@ -11,7 +11,6 @@
 
 package org.jivesoftware.openfire.disco;
 
-import org.dom4j.Element;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;
@@ -30,7 +29,7 @@ import java.util.Iterator;
 public interface DiscoItemsProvider {
 
     /**
-     * Returns an Iterator (of Element) with the target entity's items or null if none. Each Element
+     * Returns an Iterator (of DiscoItem) with the target entity's items or null if none. Each DiscoItem
      * must include a JID attribute and may include the name and node attributes of the entity. In
      * case that the sender of the disco request is not authorized to discover items an
      * UnauthorizedException will be thrown.
@@ -38,8 +37,8 @@ public interface DiscoItemsProvider {
      * @param name the recipient JID's name.
      * @param node the requested disco node.
      * @param senderJID the XMPPAddress of user that sent the disco items request.
-     * @return an Iterator (of Element) with the target entity's items or null if none.
+     * @return an Iterator (of DiscoItem) with the target entity's items or null if none.
      */
-    public abstract Iterator<Element> getItems(String name, String node, JID senderJID);
+    public abstract Iterator<DiscoItem> getItems(String name, String node, JID senderJID);
 
 }

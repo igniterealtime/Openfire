@@ -15,6 +15,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.resultsetmanager.Result;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Matt Tucker
  */
-public class User implements Cacheable, Externalizable {
+public class User implements Cacheable, Externalizable, Result {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveUserProp WHERE username=?";
@@ -529,4 +530,13 @@ public class User implements Cacheable, Externalizable {
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
         modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
     }
+    
+    /*
+     * (non-Javadoc)
+     * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
+     */
+	public String getUID()
+	{
+		return username;
+	}    
 }

@@ -18,16 +18,14 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.disco.DiscoInfoProvider;
-import org.jivesoftware.openfire.disco.DiscoItemsProvider;
-import org.jivesoftware.openfire.disco.DiscoServerItem;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.forms.DataForm;
 import org.jivesoftware.openfire.forms.FormField;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.*;
+import org.jivesoftware.openfire.resultsetmanager.ResultSet;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.util.*;
@@ -52,8 +50,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * Temporary rooms are held in memory as long as they have occupants. They will be destroyed after
  * the last occupant left the room. On the other hand, persistent rooms are always present in memory
- * even after the last occupant left the room. In order to keep memory clean of peristent rooms that
- * have been forgotten or abandonded this class includes a clean up process. The clean up process
+ * even after the last occupant left the room. In order to keep memory clean of persistent rooms that
+ * have been forgotten or abandoned this class includes a clean up process. The clean up process
  * will remove from memory rooms that haven't had occupants for a while. Moreover, forgotten or
  * abandoned rooms won't be loaded into memory when the Multi-User Chat service starts up.
  *
@@ -129,6 +127,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
      * The handler of packets with namespace jabber:iq:register for the server.
      */
     private IQMUCRegisterHandler registerHandler = null;
+    
+    /**
+     * The handler of search requests ('jabber:iq:search' namespace).
+     */
+    private IQMUCSearchHandler searchHandler = null;
+    
     /**
      * The total time all agents took to chat *
      */
@@ -186,7 +190,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     /**
      * The time to elapse between each rooms cleanup. Default frequency is 60 minutes.
      */
-    private final long cleanup_frequency = 60 * 60 * 1000;
+    private static final long CLEANUP_FREQUENCY = 60 * 60 * 1000;
 
     /**
      * Total number of received messages in all rooms since the last reset. The counter
@@ -270,6 +274,10 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         }
         if ("jabber:iq:register".equals(namespace)) {
             IQ reply = registerHandler.handleIQ(iq);
+            router.route(reply);
+        }
+        else if ("jabber:iq:search".equals(namespace)) {
+            IQ reply = searchHandler.handleIQ(iq);
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
@@ -616,9 +624,9 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     /**
-     * Returns the limit date after which rooms whithout activity will be removed from memory.
+     * Returns the limit date after which rooms without activity will be removed from memory.
      *
-     * @return the limit date after which rooms whithout activity will be removed from memory.
+     * @return the limit date after which rooms without activity will be removed from memory.
      */
     private Date getCleanupDate() {
         return new Date(System.currentTimeMillis() - (emptyLimit * 3600000));
@@ -862,12 +870,14 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         timer.schedule(logConversationTask, log_timeout, log_timeout);
         // Remove unused rooms from memory
         cleanupTask = new CleanupTask();
-        timer.schedule(cleanupTask, cleanup_frequency, cleanup_frequency);
+        timer.schedule(cleanupTask, CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
 
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
         // Configure the handler of iq:register packets
         registerHandler = new IQMUCRegisterHandler(this);
+        // Configure the handler of jabber:iq:search packets
+        searchHandler = new IQMUCSearchHandler(this);
         // Listen to cluster events
         ClusterManager.addListener(this);
     }
@@ -1073,44 +1083,32 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public Iterator<DiscoServerItem> getItems() {
-        // Check if the service is disabled. Info is not available when disabled.
-        if (!isServiceEnabled()) {
-            return null;
-        }
-        ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-        items.add(new DiscoServerItem() {
-            public String getJID() {
-                return getServiceDomain();
-            }
+        // Check if the service is disabled. Info is not available when
+		// disabled.
+		if (!isServiceEnabled())
+		{
+			return null;
+		}
+		
+		final ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+		final String name;
+		// Check if there is a system property that overrides the default value
+		String serviceName = JiveGlobals.getProperty("muc.service-name");
+		if (serviceName != null && serviceName.trim().length() > 0)
+		{
+			name = serviceName;
+		}
+		else
+		{
+			// Return the default service name based on the current locale
+			name = LocaleUtils.getLocalizedString("muc.service-name");
+		}
 
-            public String getName() {
-                // Check if there is a system property that overrides the default value
-                String serviceName = JiveGlobals.getProperty("muc.service-name");
-                if (serviceName != null && serviceName.trim().length() > 0) {
-                    return serviceName;
-                }
-                // Return the default service name based on the current locale
-                return LocaleUtils.getLocalizedString("muc.service-name");
-            }
-
-            public String getAction() {
-                return null;
-            }
-
-            public String getNode() {
-                return null;
-            }
-
-            public DiscoInfoProvider getDiscoInfoProvider() {
-                return MultiUserChatServerImpl.this;
-            }
-
-            public DiscoItemsProvider getDiscoItemsProvider() {
-                return MultiUserChatServerImpl.this;
-            }
-        });
-        return items.iterator();
-    }
+		final DiscoServerItem item = new DiscoServerItem(new JID(
+			getServiceDomain()), name, null, null, this, this);
+		items.add(item);
+		return items.iterator();
+	}
 
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
         ArrayList<Element> identities = new ArrayList<Element>();
@@ -1122,6 +1120,12 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             identity.addAttribute("type", "text");
 
             identities.add(identity);
+            
+            Element searchId = DocumentHelper.createElement("identity");
+            searchId.addAttribute("category", "directory");
+            searchId.addAttribute("name", "Public Chatroom Search");
+            searchId.addAttribute("type", "chatroom");
+            identities.add(searchId);            
         }
         else if (name != null && node == null) {
             // Answer the identity of a given room
@@ -1160,6 +1164,8 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
             features.add("http://jabber.org/protocol/muc");
             features.add("http://jabber.org/protocol/disco#info");
             features.add("http://jabber.org/protocol/disco#items");
+            features.add("jabber:iq:search");
+            features.add(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
         }
         else if (name != null && node == null) {
             // Answer the features of a given room
@@ -1266,36 +1272,31 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return false;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
             return null;
         }
-        List<Element> answer = new ArrayList<Element>();
-        if (name == null && node == null) {
-            Element item;
-            // Answer all the public rooms as items
-            for (MUCRoom room : rooms.values()) {
-                if (canDiscoverRoom(room)) {
-                    item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", room.getRole().getRoleAddress().toString());
-                    item.addAttribute("name", room.getNaturalLanguageName());
-
-                    answer.add(item);
-                }
-            }
-        }
+        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+		if (name == null && node == null)
+		{
+			// Answer all the public rooms as items
+			for (MUCRoom room : rooms.values())
+			{
+				if (canDiscoverRoom(room))
+				{
+					answer.add(new DiscoItem(room.getRole().getRoleAddress(),
+						room.getNaturalLanguageName(), null, null));
+				}
+			}
+		}
         else if (name != null && node == null) {
             // Answer the room occupants as items if that info is publicly available
             MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room)) {
-                Element item;
                 for (MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
-                    item = DocumentHelper.createElement("item");
-                    item.addAttribute("jid", role.getRoleAddress().toString());
-
-                    answer.add(item);
+                	answer.add(new DiscoItem(role.getRoleAddress(), null, null, null));
                 }
             }
         }

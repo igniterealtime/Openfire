@@ -2197,4 +2197,15 @@ public class LocalMUCRoom implements MUCRoom {
         emptyDate = otherRoom.emptyDate;
         savedToDB = otherRoom.savedToDB;
     }
+
+    /*
+     * (non-Javadoc)
+     * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
+     */
+    @Override
+	public String getUID()
+	{
+		// name is unique for each one particular MUC service.
+		return name;
+	}
 }

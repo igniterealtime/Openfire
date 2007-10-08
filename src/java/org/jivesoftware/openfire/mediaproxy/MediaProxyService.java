@@ -16,10 +16,7 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.disco.DiscoInfoProvider;
-import org.jivesoftware.openfire.disco.DiscoItemsProvider;
-import org.jivesoftware.openfire.disco.DiscoServerItem;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -91,7 +88,9 @@ public class MediaProxyService extends BasicModule
                 Thread t = new Thread(echo);
                 t.start();
             } catch (UnknownHostException e) {
+                // Ignore
             } catch (SocketException e) {
+                // Ignore
             }
 
             routingTable.addComponentRoute(getAddress(), this);
@@ -117,9 +116,9 @@ public class MediaProxyService extends BasicModule
         return serviceName;
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
-        return new ArrayList<Element>().iterator();
+        return new ArrayList<DiscoItem>().iterator();
     }
 
     public void process(Packet packet) throws UnauthorizedException, PacketException {
@@ -287,39 +286,19 @@ public class MediaProxyService extends BasicModule
         return new JID(null, getServiceDomain(), null);
     }
 
-    public Iterator<DiscoServerItem> getItems() {
-        List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-        if (!isEnabled()) {
-            return items.iterator();
-        }
+    public Iterator<DiscoServerItem> getItems()
+	{
+		List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+		if (!isEnabled())
+		{
+			return items.iterator();
+		}
 
-        items.add(new DiscoServerItem() {
-            public String getJID() {
-                return getServiceDomain();
-            }
-
-            public String getName() {
-                return "Media Proxy Service";
-            }
-
-            public String getAction() {
-                return null;
-            }
-
-            public String getNode() {
-                return null;
-            }
-
-            public DiscoInfoProvider getDiscoInfoProvider() {
-                return MediaProxyService.this;
-            }
-
-            public DiscoItemsProvider getDiscoItemsProvider() {
-                return MediaProxyService.this;
-            }
-        });
-        return items.iterator();
-    }
+		final DiscoServerItem item = new DiscoServerItem(new JID(
+			getServiceDomain()), "Media Proxy Service", null, null, this, this);
+		items.add(item);
+		return items.iterator();
+	}
 
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
         List<Element> identities = new ArrayList<Element>();

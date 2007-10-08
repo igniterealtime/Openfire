@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
 import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
 import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
+import org.jivesoftware.openfire.resultsetmanager.Result;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -40,7 +41,7 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 @JiveID(JiveConstants.MUC_ROOM)
-public interface MUCRoom extends Externalizable {
+public interface MUCRoom extends Externalizable, Result {
 
     /**
      * Get the name of this room.

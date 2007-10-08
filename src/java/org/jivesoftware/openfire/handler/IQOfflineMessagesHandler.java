@@ -159,20 +159,14 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
     }
 
-    public Iterator<Element> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
-        List<Element> answer = new ArrayList<Element>();
-        Element item;
+        List<DiscoItem> answer = new ArrayList<DiscoItem>();
         for (OfflineMessage offlineMessage : messageStore.getMessages(senderJID.getNode(), false)) {
-            item = DocumentHelper.createElement("item");
-            item.addAttribute("jid", senderJID.toBareJID());
-            item.addAttribute("name", offlineMessage.getFrom().toString());
             synchronized (dateFormat) {
-                item.addAttribute("node", dateFormat.format(offlineMessage.getCreationDate()));
+                answer.add(new DiscoItem(new JID(senderJID.toBareJID()), offlineMessage.getFrom().toString(), dateFormat.format(offlineMessage.getCreationDate()), null));
             }
-
-            answer.add(item);
         }
 
         return answer.iterator();

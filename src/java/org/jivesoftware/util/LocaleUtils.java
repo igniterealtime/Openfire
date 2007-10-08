@@ -208,7 +208,7 @@ public class LocaleUtils {
         nameMap.put(timeZoneIds[55], "Krasnoyarsk");
         nameMap.put(timeZoneIds[56], "Beijing, Chongqing, Hong Kong, Urumqi");
         nameMap.put(timeZoneIds[57], "Irkutsk, Ulaan Bataar");
-        nameMap.put(timeZoneIds[58], "Kuala Lampur, Singapore");
+        nameMap.put(timeZoneIds[58], "Kuala Lumpur, Singapore");
         nameMap.put(timeZoneIds[59], "Perth");
         nameMap.put(timeZoneIds[60], "Taipei");
         nameMap.put(timeZoneIds[61], "Osaka, Sapporo, Tokyo");

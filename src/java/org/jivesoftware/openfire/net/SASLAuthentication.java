@@ -15,12 +15,12 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.session.*;
-import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -213,9 +213,9 @@ public class SASLAuthentication {
                                     new XMPPCallbackHandler());
                             // evaluateResponse doesn't like null parameter
                             byte[] token = new byte[0];
-                            if (doc.isTextOnly()) {
+                            if (!doc.getText().isEmpty()) {
                                 // If auth request includes a value then validate it
-                                token = StringUtils.decodeBase64(doc.getTextTrim());
+                                token = StringUtils.decodeBase64(doc.getText().trim());
                                 if (token == null) {
                                     token = new byte[0];
                                 }

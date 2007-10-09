@@ -13,11 +13,11 @@ package org.jivesoftware.openfire.roster;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import java.sql.Connection;
@@ -105,6 +105,7 @@ public class RosterItemProvider {
             insertGroups(rosterID, item.getGroups().iterator(), con);
         }
         catch (SQLException e) {
+            Log.warn("Error trying to insert a new row in jiveRoster", e);
             throw new UserAlreadyExistsException(item.getJid().toBareJID());
         }
         finally {

@@ -91,12 +91,9 @@ public class ClientStanzaHandler extends StanzaHandler {
     }
 
     void startTLS() throws Exception {
-
         Connection.ClientAuth policy;
         try {
-            policy =
-                    Connection.ClientAuth.valueOf(JiveGlobals.getProperty("xmpp.client.cert.policy",
-                        "required"));
+            policy = Connection.ClientAuth.valueOf(JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled"));
         } catch (IllegalArgumentException e) {
             policy = Connection.ClientAuth.disabled;
         }

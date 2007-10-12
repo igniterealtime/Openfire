@@ -12,7 +12,10 @@ import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,7 +40,7 @@ import java.util.Map;
  *
  * @author Matt Tucker
  */
-public class JID implements Comparable<JID>, Serializable, Externalizable {
+public class JID implements Comparable<JID>, Externalizable {
 
     // Stringprep operations are very expensive. Therefore, we cache node, domain and
     // resource values that have already had stringprep applied so that we can check

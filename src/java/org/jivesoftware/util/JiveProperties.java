@@ -12,6 +12,7 @@
 package org.jivesoftware.util;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -154,53 +155,86 @@ public class JiveProperties implements Map<String, String> {
         return properties.keySet();
     }
 
-    public synchronized String remove(Object key) {
-        String value = properties.remove(key);
-        // Also remove any children.
-        Collection<String> propNames = getPropertyNames();
-        for (String name : propNames) {
-            if (name.startsWith((String)key)) {
-                properties.remove(name);
+    public String remove(Object key) {
+        String value;
+        synchronized (this) {
+            value = properties.remove(key);
+            // Also remove any children.
+            Collection<String> propNames = getPropertyNames();
+            for (String name : propNames) {
+                if (name.startsWith((String)key)) {
+                    properties.remove(name);
+                }
             }
+            deleteProperty((String)key);
         }
-        deleteProperty((String)key);
 
         // Generate event.
         Map<String, Object> params = Collections.emptyMap();
         PropertyEventDispatcher.dispatchEvent((String)key, PropertyEventDispatcher.EventType.property_deleted, params);
 
+        // Send update to other cluster members.
+        CacheFactory.doClusterTask(PropertyClusterEventTask.createDeteleTask((String) key));
+
         return value;
     }
 
-    public synchronized String put(String key, String value) {
+    void localRemove(String key) {
+        properties.remove(key);
+        // Also remove any children.
+        Collection<String> propNames = getPropertyNames();
+        for (String name : propNames) {
+            if (name.startsWith(key)) {
+                properties.remove(name);
+            }
+        }
+
+        // Generate event.
+        Map<String, Object> params = Collections.emptyMap();
+        PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_deleted, params);
+    }
+
+    public String put(String key, String value) {
         if (key == null || value == null) {
             throw new NullPointerException("Key or value cannot be null. Key=" +
                     key + ", value=" + value);
-        }
-        if (!(key instanceof String) || !(value instanceof String)) {
-            throw new IllegalArgumentException("Key and value must be of type String.");
         }
         if (key.endsWith(".")) {
             key = key.substring(0, key.length()-1);
         }
         key = key.trim();
-        if (properties.containsKey(key)) {
-            if (!properties.get(key).equals(value)) {
-                updateProperty(key, value);
+        String result;
+        synchronized (this) {
+            if (properties.containsKey(key)) {
+                if (!properties.get(key).equals(value)) {
+                    updateProperty(key, value);
+                }
             }
-        }
-        else {
-            insertProperty(key, value);
-        }
+            else {
+                insertProperty(key, value);
+            }
 
-        String result = properties.put(key, value);
+            result = properties.put(key, value);
+        }
 
         // Generate event.
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
 
+        // Send update to other cluster members.
+        CacheFactory.doClusterTask(PropertyClusterEventTask.createPutTask(key, value));
+
         return result;
+    }
+
+    void localPut(String key, String value) {
+        properties.put(key, value);
+
+        // Generate event.
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("value", value);
+        PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
     }
 
     public String getProperty(String name, String defaultValue) {

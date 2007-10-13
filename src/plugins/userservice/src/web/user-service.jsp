@@ -1,5 +1,4 @@
 <%@ page import="java.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.util.*,
                  org.jivesoftware.openfire.plugin.UserServicePlugin"
@@ -19,6 +18,7 @@
     boolean success = request.getParameter("success") != null;
     String secret = ParamUtils.getParameter(request, "secret");
     boolean enabled = ParamUtils.getBooleanParameter(request, "enabled");
+    String allowedIPs = ParamUtils.getParameter(request, "allowedIPs");
 
     UserServicePlugin plugin = (UserServicePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userservice");
 
@@ -26,8 +26,9 @@
     Map errors = new HashMap();
     if (save) {
         if (errors.size() == 0) {
-                plugin.setEnabled(enabled);
+            plugin.setEnabled(enabled);
         	plugin.setSecret(secret);
+            plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
             response.sendRedirect("user-service.jsp?success=true");
             return;
         }
@@ -35,6 +36,7 @@
 
     secret = plugin.getSecret();
     enabled = plugin.isEnabled();
+    allowedIPs = StringUtils.collectionToString(plugin.getAllowedIPs());
 %>
 
 <html>
@@ -76,9 +78,10 @@ HTTP requests to the service will be ignored.
     simple integration with other applications.</p>
 
     <p>However, the presence of this service exposes a security risk. Therefore,
-    a secret key is used to validate legitimate requests to this service. For
-    full security, it's recommended that you deploy other security measures in front
-    of the user service, such as restricted network access.
+    a secret key is used to validate legitimate requests to this service. Moreover,
+    for extra security you can specify the list of IP addresses that are allowed to
+    use this service. An empty list means that the service can be accessed from any
+    location. Addresses are delimited by commas.
     </p>
     <ul>
         <input type="radio" name="enabled" value="true" id="rb01"
@@ -92,6 +95,10 @@ HTTP requests to the service will be ignored.
 
         <label for="text_secret">Secret key:</label>
         <input type="text" name="secret" value="<%= secret %>" id="text_secret">
+        <br><br>
+
+        <label for="text_secret">Allowed IP Addresses:</label>
+        <textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><%= ((allowedIPs != null) ? allowedIPs : "") %></textarea>
     </ul>
     </div>
 </fieldset>

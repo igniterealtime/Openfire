@@ -96,29 +96,28 @@ The following parameters can be passed into the request:<p>
     Possible values are add, delete, update</td>
 </tr>
 <tr>
-    <td class="name">secret</td><td>required</td>
+    <td class="name">secret</td><td>Required</td>
     <td>The secret key that allows access to the User Service.</td>
 </tr>
 <tr>
-    <td class="name">jid</td><td>required for delete and update operations</td>
-    <td>The bare JID (address) of the user to be administered(ie includes @yourdomain.com). 
-    </td>
+    <td class="name">username</td><td>Required</td>
+    <td>The username of the user to add, update or delete. ie the part before the @ symbol.</td>
 </tr>
 <tr>
-    <td class="name">username</td><td>required for add operation</td>
-    <td>The username of the new user. ie the part before the @ symbol.</td>
-</tr>
-<tr>
-    <td class="name">password</td><td>required for add operation</td>
+    <td class="name">password</td><td>Required for add operation</td>
     <td>The password of the new user or the user being updated.</td>
 </tr>
 <tr>
-    <td class="name">name</td><td>optional</td>
+    <td class="name">name</td><td>Optional</td>
     <td>The display name of the new user or the user being updated.</td>
 </tr>
 <tr>
-    <td class="name">email</td><td>optional</td>
+    <td class="name">email</td><td>Optional</td>
     <td>The email address of the new user or the user being updated.</td>
+</tr>
+<tr>
+    <td class="name">groups</td><td>Optional</td>
+    <td>List of groups where the user is a member. Values are comma delimited.</td>
 </tr>
 
 
@@ -142,7 +141,7 @@ The following example deletes a user
 <ul>
 <form>
 <textarea cols=65 rows=4 wrap=virtual>
-http://example.com:9090/plugins/userService/userservice?type=delete&secret=bigsecret&jid=kafka@example.com
+http://example.com:9090/plugins/userService/userservice?type=delete&secret=bigsecret&username=kafka
 </textarea>
 </form>
 </ul>
@@ -152,7 +151,7 @@ This example updates a user
 <ul>
 <form>
 <textarea cols=65 rows=3 wrap=virtual>
-http://example.com:9090/plugins/userService/userservice?type=update&secret=bigsecret&jid=kafka@example.com&password=drowssap&name=franz&email=beetle@kafka.com
+http://example.com:9090/plugins/userService/userservice?type=update&secret=bigsecret&username=kafka&password=drowssap&name=franz&email=beetle@kafka.com
 </textarea>
 </form>
 </ul>
@@ -192,7 +191,7 @@ If the request was unsuccessful, the return will be an "error" element with a te
 </tr>
 <tr>
     <td class="name">RequestNotAuthorised</td>
-    <td>The supplied secret does not match the secret specified in the Admin Console.</td>
+    <td>The supplied secret does not match the secret specified in the Admin Console or the requester is not a valid IP address.</td>
 </tr>
 <tr>
     <td class="name">UserServiceDisabled</td>

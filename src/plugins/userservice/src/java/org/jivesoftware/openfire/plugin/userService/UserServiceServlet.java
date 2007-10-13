@@ -56,18 +56,37 @@ public class UserServiceServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
+        // Printwriter for writing out responses to browser
+        PrintWriter out = response.getWriter();
+
+        if (!plugin.getAllowedIPs().isEmpty()) {
+            // Get client's IP address
+            String ipAddress = request.getHeader("x-forwarded-for");
+            if (ipAddress == null) {
+                ipAddress = request.getHeader("X_FORWARDED_FOR");
+                if (ipAddress == null) {
+                    ipAddress = request.getHeader("X-Forward-For");
+                    if (ipAddress == null) {
+                        ipAddress = request.getRemoteAddr();
+                    }
+                }
+            }
+            if (!plugin.getAllowedIPs().contains(ipAddress)) {
+                Log.warn("User service rejected service to IP address: " + ipAddress);
+                replyError("RequestNotAuthorised",response, out);
+                return;
+            }
+        }
+
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         String name = request.getParameter("name");
         String email = request.getParameter("email");
-        String jid = request.getParameter("jid");
         String type = request.getParameter("type");
         String secret = request.getParameter("secret");
+        String groupNames = request.getParameter("groups");
         //No defaults, add, delete, update only
         //type = type == null ? "image" : type;
-       
-        // Printwriter for writing out responses to browser
-        PrintWriter out = response.getWriter();
        
        // Check that our plugin is enabled.
         if (!plugin.isEnabled()) {
@@ -85,17 +104,17 @@ public class UserServiceServlet extends HttpServlet {
         // Check the request type and process accordingly
         try {
             if ("add".equals(type)) {
-                plugin.createUser(username, password, name, email);
+                plugin.createUser(username, password, name, email, groupNames);
                 replyMessage("ok",response, out);
                 //imageProvider.sendInfo(request, response, presence);
             }
             else if ("delete".equals(type)) {
-                plugin.deleteUser(jid);
+                plugin.deleteUser(username);
                 replyMessage("ok",response,out);
                 //xmlProvider.sendInfo(request, response, presence);
             }
             else if ("update".equals(type)) {
-                plugin.updateUser(jid, password,name,email);
+                plugin.updateUser(username, password,name,email, groupNames);
                 replyMessage("ok",response,out);
                 //xmlProvider.sendInfo(request, response, presence);
             }

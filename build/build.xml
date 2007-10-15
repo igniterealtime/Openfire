@@ -67,7 +67,7 @@
     <property name="version.major" value="3"/>
     <property name="version.minor" value="4"/>
     <property name="version.revision" value="0"/>
-    <property name="version.extra" value="beta"/>    <!-- For 'beta' or 'alpha' -->
+    <property name="version.extra" value="beta2"/>    <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="openfire"/>
 
     <property file="${basedir}/build/build.properties"/>

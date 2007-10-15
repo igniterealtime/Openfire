@@ -12,10 +12,11 @@
 package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -368,6 +369,10 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
                 }
             }
         }
+    }
+
+    public void answerTimeout(String packetId) {
+        Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }
 
     public Iterator<String> getFeatures() {

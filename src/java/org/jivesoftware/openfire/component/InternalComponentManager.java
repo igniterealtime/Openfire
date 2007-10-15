@@ -199,6 +199,10 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             public void receivedAnswer(IQ packet) {
                 answer.offer(packet);
             }
+
+            public void answerTimeout(String packetId) {
+                Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
+            }
         });
         sendPacket(component, packet);
         IQ reply = null;

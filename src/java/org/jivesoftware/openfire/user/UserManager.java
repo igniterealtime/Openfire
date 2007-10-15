@@ -393,6 +393,10 @@ public class UserManager implements IQResultListener {
         }
     }
 
+    public void answerTimeout(String packetId) {
+        Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
+    }
+
     private void initProvider() {
         String className = JiveGlobals.getXMLProperty("provider.user.className",
                 "org.jivesoftware.openfire.user.DefaultUserProvider");

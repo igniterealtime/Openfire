@@ -39,12 +39,11 @@ public interface SessionEventListener {
      * @param session the authenticated session of an anonymous user.
      */
     public void anonymousSessionCreated(Session session);
-    
+
     /**
-     /**
-      * An authenticated session of an anonymous user was destroyed.
-      *
-      * @param session the authenticated session of an anonymous user.
+     * An authenticated session of an anonymous user was destroyed.
+     *
+     * @param session the authenticated session of an anonymous user.
      */
     public void anonymousSessionDestroyed(Session session);
 }

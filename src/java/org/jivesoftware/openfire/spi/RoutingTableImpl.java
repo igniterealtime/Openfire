@@ -429,7 +429,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // Get session with most recent activity (and highest show value)
                 Collections.sort(targets, new Comparator<ClientSession>() {
                     public int compare(ClientSession o1, ClientSession o2) {
-                        return o1.getLastActiveDate().compareTo(o2.getLastActiveDate());
+                        return o2.getLastActiveDate().compareTo(o1.getLastActiveDate());
                     }
                 });
                 // Deliver stanza to session with highest priority, highest show value and most recent activity

@@ -17,7 +17,8 @@
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager,
                  org.jivesoftware.openfire.session.ConnectionMultiplexerSession,
-                 org.jivesoftware.util.ParamUtils"
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Collection"%>
@@ -65,7 +66,28 @@
             else {
                 connectionManager.enableConnectionManagerListener(true);
                 connectionManager.setConnectionManagerListenerPort(port);
-                ConnectionMultiplexerManager.setDefaultSecret(defaultSecret);
+
+                // Get hash value of existing default secret
+                String existingHashDefaultSecret = "";
+                if (ConnectionMultiplexerManager.getDefaultSecret() != null) {
+                    existingHashDefaultSecret = StringUtils.hash(ConnectionMultiplexerManager.getDefaultSecret());
+                }
+
+                // Check if the new default secret was changed. If it wasn't changed, then it is the original hashed
+                // default secret
+                // NOTE: if the new PLAIN default secret equals the previous HASHED default secret this fails,
+                // but is unlikely.
+                if (!existingHashDefaultSecret.equals(defaultSecret)) {
+                    // Hash the new default secret since it was changed
+                    String newHashDefaultSecret = "";
+                    if (defaultSecret != null) {
+                            newHashDefaultSecret = StringUtils.hash(defaultSecret);
+                    }
+                    // Change default secret if hash values are different
+                    if (!existingHashDefaultSecret.equals(newHashDefaultSecret)) {
+                        ConnectionMultiplexerManager.setDefaultSecret(defaultSecret);
+                    }
+                }
             }
             updateSucess = true;
         }
@@ -182,8 +204,8 @@
                         <fmt:message key="connection-manager.settings.defaultSecret" />
                     </td>
                     <td width="99%">
-                        <input type="text" size="15" maxlength="70" name="defaultSecret"
-                         value="<%= ((defaultSecret != null) ? defaultSecret : "") %>">
+                        <input type="password" size="30" maxlength="150" name="defaultSecret"
+                         value="<%= ((defaultSecret != null) ? StringUtils.hash(defaultSecret) : "") %>">
                     </td>
                 </tr>
                 </table>

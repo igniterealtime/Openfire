@@ -49,19 +49,26 @@
             service.setPort(25);
         }
         service.setUsername(username);
-        // Get hash values of existing password and new one
+        // Get hash value of existing password
         String existingHashPassword = "";
-        String newHashPassword = "";
         if (service.getPassword() != null) {
             existingHashPassword = StringUtils.hash(service.getPassword());
         }
-        if (password != null) {
-            newHashPassword = StringUtils.hash(password);
+
+        // Check if the new password was changed. If it wasn't changed, then it is the original hashed password
+        // NOTE: if the new PLAIN password equals the previous HASHED password this fails, but is unlikely.
+        if (!existingHashPassword.equals(password)) {
+            // Hash the new password since it was changed
+            String newHashPassword = "";
+            if (password != null) {
+                    newHashPassword = StringUtils.hash(password);
+            }
+            // Change password if hash values are different
+            if (!existingHashPassword.equals(newHashPassword)) {
+                service.setPassword(password);
+            }
         }
-        // Change password if hash values are different
-        if (!existingHashPassword.equals(newHashPassword)) {
-            service.setPassword(password);
-        }
+        
         service.setDebugEnabled(debug);
         service.setSSLEnabled(ssl);
 

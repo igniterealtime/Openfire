@@ -371,7 +371,7 @@ public class PluginManager {
                     }
                 }
 
-                String className = pluginXML.selectSingleNode("/plugin/class").getText();
+                String className = pluginXML.selectSingleNode("/plugin/class").getText().trim();
                 plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
                 if (parentPluginNode != null) {
                     String parentPlugin = parentPluginNode.getTextTrim();

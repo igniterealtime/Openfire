@@ -14,6 +14,8 @@
 <%@ page import="org.jivesoftware.util.*"%>
 <%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -50,27 +52,31 @@
     }
 %>
 
-<%	// get parameters
-    String username = ParamUtils.getParameter(request,"username");
-    if(username != null){
+<% // get parameters
+    String username = ParamUtils.getParameter(request, "username");
+    if (username != null) {
         username = JID.escapeNode(username);
     }
     // Escape HTML tags in username to prevent cross-site scripting attacks. This
     // is necessary because we display the username in the page below.
     username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
 
-    String password = ParamUtils.getParameter(request,"password");
-    String url = ParamUtils.getParameter(request,"url");
+    String password = ParamUtils.getParameter(request, "password");
+    String url = ParamUtils.getParameter(request, "url");
+
+    // SSO between cluster nodes
+    String secret = ParamUtils.getParameter(request, "secret");
+    String nodeID = ParamUtils.getParameter(request, "nodeID");
 
     // The user auth token:
     AuthToken authToken;
 
     // Check the request/response for a login token
-    
+
     boolean errors = false;
 
-	if (ParamUtils.getBooleanParameter(request,"login")) {
-		try {
+    if (ParamUtils.getBooleanParameter(request, "login")) {
+        try {
             if (authorizedUsernames != null && !authorizedUsernames.isEmpty()) {
                 if (!authorizedUsernames.containsKey(username)) {
                     throw new UnauthorizedException("User '" + username + "' no allowed to login.");
@@ -81,16 +87,26 @@
                     throw new UnauthorizedException("Only user 'admin' may login.");
                 }
             }
-            authToken = AuthFactory.authenticate(username, password);
+            if (secret != null && nodeID != null) {
+                if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
+                    authToken = new AuthToken(username);
+                }
+                else {
+                    throw new UnauthorizedException("SSO failed. Invalid secret or node ID was provided");
+                }
+            }
+            else {
+                authToken = AuthFactory.authenticate(username, password);
+            }
             session.setAttribute("jive.admin.authToken", authToken);
             response.sendRedirect(go(url));
             return;
-		}
-		catch (UnauthorizedException ue) {
+        }
+        catch (UnauthorizedException ue) {
             Log.debug(ue);
             errors = true;
-		}
-	}
+        }
+    }
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">

@@ -445,8 +445,8 @@ public class IQRouter extends BasicModule {
                 final Map.Entry<String, Long> pointer = it.next();
 
                 if (System.currentTimeMillis() < pointer.getValue()) {
-                    // All other values do not time out yet. Abort this run.
-                    break;
+                    // This entry has not expired yet. Ignore it.
+                    continue;
                 }
 
                 final String packetId = pointer.getKey();

@@ -2,7 +2,7 @@
  * $Revision: 3034 $
  * $Date: 2005-11-04 21:02:33 -0300 (Fri, 04 Nov 2005) $
  *
- * Copyright (C) 2004-2006 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -10,9 +10,9 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.util.*;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -22,6 +22,7 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.webapp.WebAppContext;
+
 import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.security.KeyStore;
@@ -35,6 +36,12 @@ import java.util.List;
  * @author Matt Tucker
  */
 public class AdminConsolePlugin implements Plugin {
+
+    /**
+     * Random secret used by JVM to allow SSO. Only other cluster nodes can use this secret
+     * as a way to integrate the admin consoles of each cluster node.
+     */
+    public final static String secret = StringUtils.randomString(64);
 
     private int adminPort;
     private int adminSecurePort;
@@ -77,13 +84,7 @@ public class AdminConsolePlugin implements Plugin {
         if (adminPort > 0) {
             Connector httpConnector = new SelectChannelConnector();
             // Listen on a specific network interface if it has been set.
-            String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-            String bindInterface = null;
-            if (interfaceName != null) {
-                if (interfaceName.trim().length() > 0) {
-                    bindInterface = interfaceName;
-                }
-            }
+            String bindInterface = getBindInterface();
             httpConnector.setHost(bindInterface);
             httpConnector.setPort(adminPort);
             adminServer.addConnector(httpConnector);
@@ -99,13 +100,7 @@ public class AdminConsolePlugin implements Plugin {
                 }
                          
                 JiveSslConnector httpsConnector = new JiveSslConnector();
-                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-                String bindInterface = null;
-                if (interfaceName != null) {
-                    if (interfaceName.trim().length() > 0) {
-                        bindInterface = interfaceName;
-                    }
-                }
+                String bindInterface = getBindInterface();
                 httpsConnector.setHost(bindInterface);
                 httpsConnector.setPort(adminSecurePort);
 
@@ -186,6 +181,24 @@ public class AdminConsolePlugin implements Plugin {
      */
     public boolean isRestartNeeded() {
         return restartNeeded;
+    }
+
+    /**
+     * Returns <tt>null</tt> if the admin console will be available in all network interfaces of this machine
+     * or a String representing the only interface where the admin console will be available.
+     *
+     * @return String representing the only interface where the admin console will be available or null if it
+     * will be available in all interfaces.
+     */
+    public String getBindInterface() {
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        String bindInterface = null;
+        if (interfaceName != null) {
+            if (interfaceName.trim().length() > 0) {
+                bindInterface = interfaceName;
+            }
+        }
+        return bindInterface;
     }
 
     /**

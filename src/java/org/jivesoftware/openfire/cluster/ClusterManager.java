@@ -401,6 +401,23 @@ public class ClusterManager {
         return NodeID.getInstance(clusterMemberID);
     }
 
+    /**
+     * Returns true if the specified node ID belongs to a known cluster node
+     * of this cluster.
+     *
+     * @param nodeID the ID of the node to verify.
+     * @return true if the specified node ID belongs to a known cluster node
+     *         of this cluster.
+     */
+    public static boolean isClusterMember(byte[] nodeID) {
+        for (ClusterNodeInfo nodeInfo : getNodesInfo()) {
+            if (nodeInfo.getNodeID().equals(nodeID)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static class Event {
         private EventType type;
         private byte[] nodeID;

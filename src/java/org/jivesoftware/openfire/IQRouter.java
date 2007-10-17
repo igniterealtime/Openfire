@@ -294,8 +294,8 @@ public class IQRouter extends BasicModule {
         }
         try {
             // Check for registered components, services or remote servers
-            if (recipientJID != null && routingTable.hasComponentRoute(recipientJID) ||
-                    routingTable.hasServerRoute(recipientJID)) {
+            if (recipientJID != null &&
+                    (routingTable.hasComponentRoute(recipientJID) || routingTable.hasServerRoute(recipientJID))) {
                 // A component/service/remote server was found that can handle the Packet
                 routingTable.routePacket(recipientJID, packet, false);
                 return;

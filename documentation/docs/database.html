@@ -98,19 +98,15 @@ Choose your database from the list below for setup details:
     
     MySQL does not have proper Unicode support, which makes supporting data
     in non-Western languages difficult. However, the MySQL JDBC driver has a workaround
-    which can be enabled by adding 
-    <tt>&lt;mysql&gt;&lt;useUnicode&gt;true&lt;/useUnicode&gt;&lt;/mysql&gt;</tt>
-    to the <tt>&lt;database&gt;</tt> section of your <tt>openfire.xml</tt> file.
-    When using this setting, you should also set the Jive character encoding
-    to utf-8 in the admin tool.
+    which can be enabled by adding <tt>?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8</tt>
+    to the URL of the JDBC driver. You can edit the conf/openfire.xml file to add this value.
 	
 	<p><b>Further Help</b><p>
 
 	If you need help setting up MySQL, refer to the 
 	following sites:<p>
 	
-	<a href="http://www.mysql.com/doc.html">http://www.mysql.com/doc.html</a><br>
-	<a href="http://www.devshed.com/Server_Side/MySQL">http://www.devshed.com/Server_Side/MySQL</a>
+	<a href="http://dev.mysql.com/doc/refman/5.1/en/connector-j-reference-configuration-properties.html"> MySQL Reference Manual </a><br>
     </p>
 </ul>
 

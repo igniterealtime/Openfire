@@ -63,7 +63,7 @@ public class PresenceRouter extends BasicModule {
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
-            if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
+            if (session == null || session.getStatus() != Session.STATUS_CONNECTED) {
                 handle(packet);
             }
             else {

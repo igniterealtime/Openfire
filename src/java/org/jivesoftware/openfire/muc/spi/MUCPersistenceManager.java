@@ -50,8 +50,8 @@ public class MUCPersistenceManager {
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM mucMember WHERE roomID=?";
     private static final String LOAD_HISTORY =
-        "SELECT sender, nickname, time, subject, body FROM mucConversationLog " +
-        "WHERE time>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY time";
+        "SELECT sender, nickname, logTime, subject, body FROM mucConversationLog " +
+        "WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
@@ -63,8 +63,8 @@ public class MUCPersistenceManager {
     private static final String LOAD_ALL_MEMBERS =
         "SELECT roomID,jid, nickname FROM mucMember";
     private static final String LOAD_ALL_HISTORY =
-        "SELECT roomID, sender, nickname, time, subject, body FROM mucConversationLog " +
-        "WHERE time>? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY time";
+        "SELECT roomID, sender, nickname, logTime, subject, body FROM mucConversationLog " +
+        "WHERE logTime>? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
@@ -102,7 +102,7 @@ public class MUCPersistenceManager {
         "DELETE FROM mucAffiliation WHERE roomID=? AND jid=?";
 
     private static final String ADD_CONVERSATION_LOG =
-        "INSERT INTO mucConversationLog (roomID,sender,nickname,time,subject,body) " +
+        "INSERT INTO mucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
         "VALUES (?,?,?,?,?,?)";
 
     /**

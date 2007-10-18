@@ -211,11 +211,11 @@ CREATE TABLE mucConversationLog (
   roomID              INT            NOT NULL,
   sender              TEXT           NOT NULL,
   nickname            NVARCHAR(255)  NULL,
-  time                CHAR(15)       NOT NULL,
+  logTime             CHAR(15)       NOT NULL,
   subject             NVARCHAR(255)  NULL,
   body                TEXT           NULL
 );
-CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
+CREATE INDEX mucLog_time_idx ON mucConversationLog (logTime);
 
 /* PubSub Tables */
 
@@ -332,7 +332,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 11);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 12);
 
 /* Entry for admin user */
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

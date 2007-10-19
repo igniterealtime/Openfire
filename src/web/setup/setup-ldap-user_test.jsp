@@ -7,6 +7,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -123,6 +124,13 @@ html>body .jive-testPanel {
                     %>
 					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.birthday" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
+				</tr>
+				<tr>
+                    <% value = attributes.get(LdapUserTester.PHOTO);
+                       failed = value != null && value.contains("{");
+                    %>
+					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.photo" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : StringUtils.chopAtWord(value , 17) + "..."%></td>
 				</tr>
 				<tr>
 					<td colspan="2"></td>

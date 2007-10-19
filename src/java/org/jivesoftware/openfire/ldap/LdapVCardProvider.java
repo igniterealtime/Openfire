@@ -147,7 +147,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                     value = "";
                 }
                 else {
-                    value = (String) attrs.get(attribute).get();
+                    Object ob = attrs.get(attribute).get();
+                    if(ob instanceof String) {
+                        value = (String)ob;
+                    } else {
+                        value = Base64.encodeBytes((byte[])ob);
+                    }
                 }
                 Log.debug("Ldap attribute '" + attribute + "'=>'" + value + "'");
                 map.put(attribute, value);

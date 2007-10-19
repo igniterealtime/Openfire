@@ -12,6 +12,7 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.Base64;
 import org.jivesoftware.openfire.ldap.LdapManager;
 import org.xmpp.packet.JID;
 
@@ -40,6 +41,7 @@ public class LdapUserTester {
     public static final String FULL_NAME = "FullName";
     public static final String NICKNAME = "Nickname";
     public static final String BIRTHDAY = "Birthday";
+    public static final String PHOTO = "Photo";
     public static final String HOME_STREET = "HomeStreet";
     public static final String HOME_CITY = "HomeCity";
     public static final String HOME_STATE = "HomeState";
@@ -163,7 +165,14 @@ public class LdapUserTester {
                 for (String field : mapping.getFields()) {
                     Attribute ldapField = attrs.get(field);
                     if (ldapField != null) {
-                        value = value.replace("{"+field+"}", (String)ldapField.get());
+                        String answer;
+                        Object ob = ldapField.get();
+                        if (ob instanceof String) {
+                            answer = (String) ob;
+                        } else {
+                            answer = Base64.encodeBytes((byte[]) ob);
+                        }
+                        value = value.replace("{" + field + "}", answer);
                     }
                 }
                 userAttributes.put(attribute, value);
@@ -203,6 +212,9 @@ public class LdapUserTester {
         }
         if (profile.getBirthday() != null && profile.getBirthday().trim().length() > 0) {
             map.put(BIRTHDAY, new PropertyMapping(profile.getBirthday()));
+        }
+        if (profile.getPhoto() != null && profile.getPhoto().trim().length() > 0) {
+            map.put(PHOTO, new PropertyMapping(profile.getPhoto()));
         }
         if (profile.getHomeStreet() != null && profile.getHomeStreet().trim().length() > 0) {
             map.put(HOME_STREET, new PropertyMapping(profile.getHomeStreet()));

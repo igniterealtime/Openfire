@@ -300,6 +300,14 @@
 				</tr>
 				<tr>
 					<td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
+						<strong><fmt:message key="setup.ldap.user.vcard.photo" /></strong>
+					</td>
+					<td class="jive-vcardTable-value jive-vardBorderBottom">
+						<input type="text" name="photo" value="<%= vcardBean.getPhoto() %>" id="photo" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+					</td>
+				</tr>
+				<tr>
+					<td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
 						<strong><fmt:message key="setup.ldap.user.vcard.home" /></strong>
 					</td>
 					<td class="jive-vcardTable-value jive-vardBorderBottom">

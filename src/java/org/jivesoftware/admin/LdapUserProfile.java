@@ -13,11 +13,11 @@ package org.jivesoftware.admin;
 
 import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
+import org.jivesoftware.openfire.ldap.LdapManager;
+import org.jivesoftware.openfire.ldap.LdapVCardProvider;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLWriter;
-import org.jivesoftware.openfire.ldap.LdapManager;
-import org.jivesoftware.openfire.ldap.LdapVCardProvider;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -36,6 +36,7 @@ public class LdapUserProfile {
     private String fullName = "";
     private String nickname = "";
     private String birthday = "";
+    private String photo = "";
     private String homeStreet = "";
     private String homeCity = "";
     private String homeState = "";
@@ -95,6 +96,14 @@ public class LdapUserProfile {
 
     public void setBirthday(String birthday) {
         this.birthday = birthday;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 
     public String getHomeStreet() {
@@ -346,6 +355,12 @@ public class LdapUserProfile {
         // Add birthday
         if (birthday != null && birthday.trim().length() > 0) {
             vCard.addElement("BDAY").setText(birthday.trim());
+        }
+        // Add photo/avatar
+        if (photo != null && photo.trim().length() > 0) {
+            Element element = vCard.addElement("PHOTO");
+            element.addElement("TYPE").setText("image/jpeg");
+            element.addElement("BINVAL").setText(photo.trim());
         }
         // Add home address
         subelement = vCard.addElement("ADR");

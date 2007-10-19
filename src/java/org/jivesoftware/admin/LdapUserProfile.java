@@ -275,6 +275,7 @@ public class LdapUserProfile {
         fullName = "{displayName}";
         nickname = "";
         birthday = "";
+        photo = "{jpegPhoto}";
         homeStreet = "{homePostalAddress}";
         homeCity = "";
         homeState = "";
@@ -306,6 +307,7 @@ public class LdapUserProfile {
         fullName = "{displayName}";
         nickname = "{uid}";
         birthday = "";
+        photo = "{jpegPhoto}";
         homeStreet = "{homePostalAddress}";
         homeCity = "";
         homeState = "";

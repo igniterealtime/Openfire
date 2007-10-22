@@ -331,6 +331,9 @@ public class PluginServlet extends HttpServlet {
             else if (pathInfo.endsWith(".js")) {
                 contentType = "text/javascript";
             }
+            else if (pathInfo.endsWith(".html") || pathInfo.endsWith(".htm")) {
+                contentType = "text/html";
+            }
 
             // setting the content-disposition header breaks IE when downloading CSS
             // response.setHeader("Content-disposition", "filename=\"" + file + "\";");

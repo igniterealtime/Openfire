@@ -1514,7 +1514,6 @@
                     <exclude name="web/WEB-INF/web.xml"/>
                     <exclude name="web/**/*.jsp"/>
                     <exclude name="web/**/*.jspf"/>
-                    <exclude name="web/**/*.html"/>
                     <exclude name="java/**/*.java"/>
                 </fileset>
             </copy>

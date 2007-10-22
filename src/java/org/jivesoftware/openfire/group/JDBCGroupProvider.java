@@ -11,17 +11,16 @@
 package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
-import java.sql.DriverManager;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The JDBC group provider allows you to use an external database to define the make up of groups.
@@ -72,6 +71,8 @@ public class JDBCGroupProvider implements GroupProvider {
     private String userGroupsSQL;
     private String loadMembersSQL;
     private String loadAdminsSQL;
+
+    private XMPPServer server = XMPPServer.getInstance();  
 
     /**
      * Constructor of the JDBCGroupProvider class.
@@ -168,7 +169,13 @@ public class JDBCGroupProvider implements GroupProvider {
             while (rs.next()) {
                 String user = rs.getString(1);
                 if (user != null) {
-                    JID userJID = new JID(user);
+                    JID userJID;
+                    if (user.contains("@")) {
+                        userJID = new JID(user);
+                    }
+                    else {
+                        userJID = server.createJID(user, null); 
+                    }
                     members.add(userJID);
                 }
             }
@@ -282,7 +289,7 @@ public class JDBCGroupProvider implements GroupProvider {
         try {
             con = DriverManager.getConnection(connectionString);
             pstmt = con.prepareStatement(userGroupsSQL);
-            pstmt.setString(1, user.toString());
+            pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toString());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));

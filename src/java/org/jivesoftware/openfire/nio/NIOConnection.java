@@ -33,8 +33,8 @@ import org.xmpp.packet.Packet;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -147,13 +147,13 @@ public class NIOConnection implements Connection {
         boolean closedSuccessfully = false;
         synchronized (this) {
             if (!isClosed()) {
-                if (session != null) {
-                    session.setStatus(Session.STATUS_CLOSED);
-                }
                 try {
                     deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
                 } catch (Exception e) {
                     // Ignore
+                }
+                if (session != null) {
+                    session.setStatus(Session.STATUS_CLOSED);
                 }
                 ioSession.close();
                 closed = true;
@@ -271,7 +271,8 @@ public class NIOConnection implements Connection {
                 Log.debug("Error delivering raw text" + "\n" + this.toString(), e);
                 errorDelivering = true;
             }
-            if (errorDelivering) {
+            // Close the connection if delivering text fails and we are already not closing the connection
+            if (errorDelivering && asynchronous) {
                 close();
             }
         }

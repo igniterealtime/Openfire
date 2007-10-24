@@ -100,8 +100,11 @@ Choose your database from the list below for setup details:
     in non-Western languages difficult. However, the MySQL JDBC driver has a workaround
     which can be enabled by adding <tt>?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8</tt>
     to the URL of the JDBC driver. You can edit the conf/openfire.xml file to add this value.
+
+    <p>Note: If the mechanism you use to configure a JDBC URL is XML-based, you will need to use the XML character
+    literal &amp;amp; to separate configuration parameters, as the ampersand is a reserved character for XML.</p>
 	
-	<p><b>Further Help</b><p>
+    <p><b>Further Help</b><p>
 
 	If you need help setting up MySQL, refer to the 
 	following sites:<p>

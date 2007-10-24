@@ -28,7 +28,7 @@ jmock.jar                           | 2.1.0
 jmock-junit4.jar                    | 2.1.0
 jmock-legacy.jar                    | 2.1.0
 jsp-api.jar                         | Jetty 6.0.1 (2.0)
-jtds.jar                            | 1.2
+jtds.jar                            | 1.2.2
 junit.jar                           | 4.3.1
 jzlib.jar                           | 1.0.7
 mail.jar                            | 1.4.0 (JavaMail)

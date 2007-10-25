@@ -1,10 +1,465 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module version="4" relativePaths="true" type="J2EE_WEB_MODULE">
-  <component name="AppServerSpecificValidatorsManager" />
-  <component name="ModuleRootManager" />
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="web" name="Spank">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/../../src/spank/WEB-INF/web.xml" optional="false" version="2.5" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/../../src/spank/WEB-INF" relative="/WEB-INF" />
+        </webroots>
+        <building>
+          <setting name="EXPLODED_URL" value="file://" />
+          <setting name="EXPLODED_ENABLED" value="false" />
+          <setting name="JAR_URL" value="file://" />
+          <setting name="JAR_ENABLED" value="false" />
+          <setting name="BUILD_MODULE_ON_FRAME_DEACTIVATION" value="false" />
+          <setting name="BUILD_EXTERNAL_DEPENDENCIES" value="false" />
+          <setting name="EXCLUDE_EXPLODED_DIRECTORY" value="true" />
+          <setting name="RUN_JASPER_VALIDATION" value="true" />
+          <setting name="BUILD_ONLY_WEB_RESOURCES" value="false" />
+        </building>
+        <packaging>
+          <containerElement type="module" name="Spank">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+          </containerElement>
+          <containerElement type="module" name="Openfire">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../../../../Documents and Settings/gato/.IntelliJIdea60/config/plugins/Clover_for_IDEA_2848.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/ant-contrib.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/ant-jive-edition.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/ant-subdirtask.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/ant.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/cglib-nodep.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/commons-el.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/activation.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/bouncycastle.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/hsqldb.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/jdic.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/mail.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/mysql.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/dist/postgres.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="&lt;N/A&gt;" />
+            <url>jar://$MODULE_DIR$/../lib/dist/servlet.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/hamcrest-api.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/hamcrest-library.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/i4jruntime.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/jasper-compiler.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/jasper-runtime.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/jmock-junit4.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/jmock.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/junit.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/commons-codec.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/commons-httpclient.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/commons-logging.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/dbutil.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/dom4j.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jaxen.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jetty-util.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jetty.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jmdns.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="&lt;N/A&gt;" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jsp-api.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jstl.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jstun-0.6.1.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/jzlib.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/mina-core-1.2.0.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-compression-1.2.0.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-ssl-1.2.0.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/shaj.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/sitemesh.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/slf4j-api-1.1.0.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/slf4j-simple-1.1.0.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/standard.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/stringprep.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/xpp3.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/objenesis.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/xmltask.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/ant-contrib.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/ant-contrib.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/ant-subdirtask.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/ant-subdirtask.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/ant.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/ant.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/commons-el.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/commons-el.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/activation.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/activation.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/bouncycastle.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/bouncycastle.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/hsqldb.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/hsqldb.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jdic.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/jdic.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/mail.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/mail.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/mysql.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/mysql.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/postgres.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/postgres.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="&lt;N/A&gt;" />
+            <url>jar://$MODULE_DIR$/build/lib/dist/servlet.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/i4jruntime.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/i4jruntime.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jasper-compiler.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/jasper-compiler.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jasper-runtime.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/jasper-runtime.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/junit.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/junit.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/commons-codec.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/commons-codec.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/commons-httpclient.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/commons-httpclient.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/commons-logging.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/commons-logging.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/dom4j.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/dom4j.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jaxen.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jaxen.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jetty-util.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jetty-util.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jetty.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jetty.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jmdns.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jmdns.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="&lt;N/A&gt;" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jsp-api.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jstl.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jstl.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/jzlib.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/jzlib.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/shaj.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/shaj.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/sitemesh.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/sitemesh.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/standard.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/standard.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/stringprep.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/stringprep.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/xpp3.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/merge/xpp3.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/lib/xmltask.jar" />
+            <url>jar://$MODULE_DIR$/build/lib/xmltask.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+            <url>file://$MODULE_DIR$/src/resources/jar</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="1" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+            <url>file://$MODULE_DIR$/target/resources</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+            <url>file://$MODULE_DIR$/../../src/resources/jar</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="&lt;N/A&gt;" />
+            <url>jar://$APPLICATION_HOME_DIR$/lib/j2ee.jar!/</url>
+          </containerElement>
+        </packaging>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <exclude-output />
-    <exclude-exploded />
     <content url="file://$MODULE_DIR$/../../src/spank" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -20,451 +475,5 @@
     <orderEntry type="module" module-name="Openfire" />
     <orderEntryProperties />
   </component>
-  <component name="WebModuleBuildComponent">
-    <setting name="EXPLODED_URL" value="file://" />
-    <setting name="EXPLODED_ENABLED" value="false" />
-    <setting name="JAR_URL" value="file://" />
-    <setting name="JAR_ENABLED" value="false" />
-    <setting name="SYNC_EXPLODED_DIR" value="true" />
-    <setting name="BUILD_MODULE_ON_FRAME_DEACTIVATION" value="false" />
-    <setting name="BUILD_EXTERNAL_DEPENDENCIES" value="false" />
-    <setting name="RUN_JASPER_VALIDATION" value="true" />
-  </component>
-  <component name="WebModuleProperties">
-    <containerElement type="module" name="Openfire">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/classes" />
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/Clover_for_IDEA_2848.jar" />
-      <url>jar://$MODULE_DIR$/../../../../Documents and Settings/gato/.IntelliJIdea60/config/plugins/Clover_for_IDEA_2848.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/ant-contrib.jar" />
-      <url>jar://$MODULE_DIR$/../lib/ant-contrib.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/ant-jive-edition.jar" />
-      <url>jar://$MODULE_DIR$/../lib/ant-jive-edition.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/ant-subdirtask.jar" />
-      <url>jar://$MODULE_DIR$/../lib/ant-subdirtask.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/ant.jar" />
-      <url>jar://$MODULE_DIR$/../lib/ant.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/cglib-nodep.jar" />
-      <url>jar://$MODULE_DIR$/../lib/cglib-nodep.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-el.jar" />
-      <url>jar://$MODULE_DIR$/../lib/commons-el.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/activation.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/activation.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/bouncycastle.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/bouncycastle.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/hsqldb.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/hsqldb.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jdic.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/jdic.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mail.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/mail.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mysql.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/mysql.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/postgres.jar" />
-      <url>jar://$MODULE_DIR$/../lib/dist/postgres.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="&lt;N/A&gt;" />
-      <url>jar://$MODULE_DIR$/../lib/dist/servlet.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/hamcrest-api.jar" />
-      <url>jar://$MODULE_DIR$/../lib/hamcrest-api.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/hamcrest-library.jar" />
-      <url>jar://$MODULE_DIR$/../lib/hamcrest-library.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/i4jruntime.jar" />
-      <url>jar://$MODULE_DIR$/../lib/i4jruntime.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jasper-compiler.jar" />
-      <url>jar://$MODULE_DIR$/../lib/jasper-compiler.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jasper-runtime.jar" />
-      <url>jar://$MODULE_DIR$/../lib/jasper-runtime.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jmock-junit4.jar" />
-      <url>jar://$MODULE_DIR$/../lib/jmock-junit4.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jmock.jar" />
-      <url>jar://$MODULE_DIR$/../lib/jmock.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/junit.jar" />
-      <url>jar://$MODULE_DIR$/../lib/junit.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-codec.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/commons-codec.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-httpclient.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/commons-httpclient.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-logging.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/commons-logging.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/dbutil.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/dbutil.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/dom4j.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/dom4j.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jaxen.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jaxen.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jetty-util.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jetty-util.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jetty.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jetty.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jmdns.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jmdns.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="&lt;N/A&gt;" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jsp-api.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jstl.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jstl.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jstun-0.6.1.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jstun-0.6.1.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/jzlib.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/jzlib.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mina-core-1.2.0.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/mina-core-1.2.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mina-filter-compression-1.2.0.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-compression-1.2.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/mina-filter-ssl-1.2.0.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-ssl-1.2.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/shaj.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/shaj.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/sitemesh.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/sitemesh.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/slf4j-api-1.1.0.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/slf4j-api-1.1.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/slf4j-simple-1.1.0.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/slf4j-simple-1.1.0.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/standard.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/standard.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/stringprep.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/stringprep.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/xpp3.jar" />
-      <url>jar://$MODULE_DIR$/../lib/merge/xpp3.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/objenesis.jar" />
-      <url>jar://$MODULE_DIR$/../lib/objenesis.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/lib/xmltask.jar" />
-      <url>jar://$MODULE_DIR$/../lib/xmltask.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/ant-contrib.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/ant-contrib.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/ant-subdirtask.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/ant-subdirtask.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/ant.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/ant.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-el.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/commons-el.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/activation.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/activation.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/bouncycastle.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/bouncycastle.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/hsqldb.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/hsqldb.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jdic.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/jdic.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/mail.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/mail.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/mysql.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/mysql.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/postgres.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/postgres.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="&lt;N/A&gt;" />
-      <url>jar://$MODULE_DIR$/build/lib/dist/servlet.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/i4jruntime.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/i4jruntime.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jasper-compiler.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/jasper-compiler.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jasper-runtime.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/jasper-runtime.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/junit.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/junit.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-codec.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/commons-codec.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-httpclient.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/commons-httpclient.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/commons-logging.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/commons-logging.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/dom4j.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/dom4j.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jaxen.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jaxen.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jetty-util.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jetty-util.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jetty.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jetty.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jmdns.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jmdns.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="&lt;N/A&gt;" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jsp-api.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jstl.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jstl.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/jzlib.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/jzlib.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/shaj.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/shaj.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/sitemesh.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/sitemesh.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/standard.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/standard.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/stringprep.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/stringprep.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/xpp3.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/merge/xpp3.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/xmltask.jar" />
-      <url>jar://$MODULE_DIR$/build/lib/xmltask.jar!/</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/classes" />
-      <url>file://$MODULE_DIR$/src/resources/jar</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/classes" />
-      <url>file://$MODULE_DIR$/target/resources</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="/WEB-INF/classes" />
-      <url>file://$MODULE_DIR$/../../src/resources/jar</url>
-    </containerElement>
-    <containerElement type="library" level="module">
-      <attribute name="method" value="0" />
-      <attribute name="URI" value="&lt;N/A&gt;" />
-      <url>jar://$APPLICATION_HOME_DIR$/lib/j2ee.jar!/</url>
-    </containerElement>
-    <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/../../src/spank/WEB-INF/web.xml" optional="false" version="2.4" />
-    <webroots>
-      <root url="file://$MODULE_DIR$/../../src/spank/WEB-INF" relative="/WEB-INF" />
-    </webroots>
-  </component>
-  <component name="WeblogicWebModuleProperties" />
 </module>
 

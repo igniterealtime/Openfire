@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.sip.SipManager</class>
+    <name>SIP Phone Plugin</name>
+    <description>Provides support for SIP account management</description>
+    <author>Jive Software</author>
+    <version>1.0.0</version>
+    <date>10/31/2007</date>
+    <databaseKey>sip</databaseKey>
+    <databaseVersion>1</databaseVersion>
+    <minServerVersion>3.3.0</minServerVersion>
+    
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="siderbar-sip" name="${admin.item.sipark}">
+                <item id="sipark-user-summary" name="${admin.item.sipark.user.name}" description="${admin.item.sipark.user.description}" url="sipark-user-summary.jsp"/>
+                <item id="sipark-settings" name="${admin.item.sipark.settings.name}" description="${admin.item.sipark.settings.description}" url="sipark-settings.jsp"/>
+                <item id="sipark-log-summary" name="${admin.item.sipark.calls.name}" description="${admin.item.sipark.calls.description}" url="sipark-log-summary.jsp"/>
+            </sidebar>
+
+        </tab>
+    </adminconsole>
+</plugin>

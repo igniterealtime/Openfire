@@ -63,7 +63,7 @@
         }
     }
 
-    boolean usingEmbeddedDB = DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.hsqldb;
+    boolean usingEmbeddedDB = DbConnectionManager.isEmbeddedDB();
     boolean clusteringAvailable = !usingEmbeddedDB && ClusterManager.isClusteringAvailable();
     boolean clusteringStarting = ClusterManager.isClusteringStarting();
     int maxClusterNodes = ClusterManager.getMaxClusterNodes();

@@ -793,6 +793,10 @@ public class DbConnectionManager {
         return batchUpdatesSupported;
     }
 
+    public static boolean isEmbeddedDB() {
+        return connectionProvider != null && connectionProvider instanceof EmbeddedConnectionProvider;
+    }
+
     /**
      * A class that identifies the type of the database that Jive is connected
      * to. In most cases, we don't want to make any database specific calls

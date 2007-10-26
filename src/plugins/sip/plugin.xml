@@ -4,7 +4,7 @@
     <class>org.jivesoftware.openfire.sip.SipManager</class>
     <name>SIP Phone Plugin</name>
     <description>Provides support for SIP account management</description>
-    <author>Jive Software</author>
+    <author>Ignite Realtime</author>
     <version>1.0.0</version>
     <date>10/31/2007</date>
     <databaseKey>sip</databaseKey>

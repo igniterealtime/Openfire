@@ -173,7 +173,7 @@
 
             }
             catch (Exception e) {
-                Log.debug("Problem adding new user to existing group", e);
+                Log.warn("Problem adding new user to existing group", e);
                 errorBuf.append("<br>").append(
                         LocaleUtils.getLocalizedString("group.edit.inexistent_user", Arrays.asList(username)));
             }

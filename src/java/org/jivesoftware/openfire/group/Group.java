@@ -270,16 +270,6 @@ public class Group implements Cacheable, Externalizable {
         }
     }
 
-    private void writeObject(java.io.ObjectOutputStream out)  throws IOException {
-        out.defaultWriteObject();
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        groupManager = GroupManager.getInstance();
-        provider = groupManager.getProvider();
-    }
-
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -624,6 +614,9 @@ public class Group implements Cacheable, Externalizable {
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        groupManager = GroupManager.getInstance();
+        provider = groupManager.getProvider();
+
         name = ExternalizableUtil.getInstance().readSafeUTF(in);
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             description = ExternalizableUtil.getInstance().readSafeUTF(in);

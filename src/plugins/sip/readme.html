@@ -58,7 +58,9 @@ the newest version or you can just update the plugin from the admin console in t
 </p>
 <p>
 If you are using Openfire Enterprise make sure that you are using Openfire Enterprise 3.4.0 or a latest
-version. Otherwise this plugin might fail to load due to a conflict of XMPP services.
+version. Otherwise this plugin might fail to load due to a conflict of XMPP services. Installations upgrading
+to Openfire Enterprise 3.4.0 should execute the proper SQL migration script located in the <i>database/extras</i>
+folder. The migration script will copy the SIP accounts registered in enterprise to this plugin.
 </p>
 
 <h2>Using the Plugin</h2>

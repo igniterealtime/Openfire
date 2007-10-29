@@ -41,11 +41,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class PrivateStorage extends BasicModule implements UserEventListener {
 
     private static final String LOAD_PRIVATE =
-        "SELECT value FROM jivePrivate WHERE username=? AND namespace=?";
+        "SELECT privateData FROM jivePrivate WHERE username=? AND namespace=?";
     private static final String INSERT_PRIVATE =
-        "INSERT INTO jivePrivate (value,name,username,namespace) VALUES (?,?,?,?)";
+        "INSERT INTO jivePrivate (privateData,name,username,namespace) VALUES (?,?,?,?)";
     private static final String UPDATE_PRIVATE =
-        "UPDATE jivePrivate SET value=?, name=? WHERE username=? AND namespace=?";
+        "UPDATE jivePrivate SET privateData=?, name=? WHERE username=? AND namespace=?";
     private static final String DELETE_PRIVATES =
         "DELETE FROM jivePrivate WHERE username=?";
 

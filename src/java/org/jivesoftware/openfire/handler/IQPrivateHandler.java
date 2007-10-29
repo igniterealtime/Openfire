@@ -11,13 +11,18 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.*;
+import org.dom4j.Element;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PrivateStorage;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.xmpp.packet.IQ;
+
 import java.util.ArrayList;
 import java.util.Iterator;
-import org.dom4j.Element;
-import org.xmpp.packet.IQ;
+import java.util.List;
 
 /**
  * Implements the TYPE_IQ jabber:iq:private protocol. Clients
@@ -56,7 +61,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
-        IQ replyPacket = null;
+        IQ replyPacket;
         Element child = packet.getChildElement();
         Element dataElement = (Element) child.elementIterator().next();
 
@@ -92,8 +97,8 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         return info;
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        List<String> features = new ArrayList<String>();
         features.add("jabber:iq:private");
         return features.iterator();
     }

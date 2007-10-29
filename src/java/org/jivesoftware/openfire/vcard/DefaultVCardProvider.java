@@ -35,13 +35,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class DefaultVCardProvider implements VCardProvider {
 
     private static final String LOAD_PROPERTIES =
-        "SELECT value FROM jiveVCard WHERE username=?";
+        "SELECT vcard FROM jiveVCard WHERE username=?";
     private static final String DELETE_PROPERTIES =
         "DELETE FROM jiveVCard WHERE username=?";
     private static final String UPDATE_PROPERTIES =
-        "UPDATE jiveVCard SET value=? WHERE username=?";
+        "UPDATE jiveVCard SET vcard=? WHERE username=?";
     private static final String INSERT_PROPERTY =
-        "INSERT INTO jiveVCard (username, value) VALUES (?, ?)";
+        "INSERT INTO jiveVCard (username, vcard) VALUES (?, ?)";
 
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.

@@ -3,7 +3,7 @@
 
 CREATE TABLE jiveUser (
   username              VARCHAR(64)     NOT NULL,
-  password              VARCHAR(32),
+  plainPassword         VARCHAR(32),
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
   email                 VARCHAR(100),
@@ -44,7 +44,7 @@ CREATE TABLE jivePrivate (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
-  value                 TEXT            NOT NULL,
+  privateData           TEXT            NOT NULL,
   PRIMARY KEY (username, name, namespace(100))
 );
 
@@ -53,7 +53,7 @@ CREATE TABLE jiveOffline (
   messageID             BIGINT          NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
-  message               TEXT            NOT NULL,
+  stanza                TEXT            NOT NULL,
   PRIMARY KEY (username, messageID)
 );
 
@@ -86,7 +86,7 @@ CREATE TABLE jiveRosterGroups (
 
 CREATE TABLE jiveVCard (
   username              VARCHAR(64)     NOT NULL,
-  value                 TEXT            NOT NULL,
+  vcard                 MEDIUMTEXT      NOT NULL,
   PRIMARY KEY (username)
 );
 
@@ -117,10 +117,10 @@ CREATE TABLE jiveExtComponentConf (
 );
 
 CREATE TABLE jiveRemoteServerConf (
-  domain                VARCHAR(255)    NOT NULL,
+  xmppDomain            VARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
-  PRIMARY KEY (domain)
+  PRIMARY KEY (xmppDomain)
 );
 
 CREATE TABLE jivePrivacyList (
@@ -155,7 +155,7 @@ CREATE TABLE mucRoom (
   moderated           TINYINT       NOT NULL,
   membersOnly         TINYINT       NOT NULL,
   canInvite           TINYINT       NOT NULL,
-  password            VARCHAR(50)   NULL,
+  roomPassword        VARCHAR(50)   NULL,
   canDiscoverJID      TINYINT       NOT NULL,
   logEnabled          TINYINT       NOT NULL,
   subject             VARCHAR(100)  NULL,
@@ -265,9 +265,9 @@ CREATE TABLE pubsubItem (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
-  jid                 VARCHAR(255) NOT NULL,
+  jid                 VARCHAR(255)  NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
-  payload             TEXT          NULL,
+  payload             MEDIUMTEXT    NULL,
   PRIMARY KEY (serviceID, nodeID, id)
 );
 
@@ -318,7 +318,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 12);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 13);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

@@ -3,7 +3,7 @@
 
 CREATE TABLE jiveUser (
   username              NVARCHAR(64)    NOT NULL,
-  password              NVARCHAR(32),
+  plainPassword         NVARCHAR(32),
   encryptedPassword     NVARCHAR(255),
   name                  NVARCHAR(100),
   email                 VARCHAR(100),
@@ -26,7 +26,7 @@ CREATE TABLE jivePrivate (
   username              NVARCHAR(64)    NOT NULL,
   name                  NVARCHAR(100)   NOT NULL,
   namespace             NVARCHAR(200)   NOT NULL,
-  value                 NTEXT           NOT NULL,
+  privateData           NTEXT           NOT NULL,
   CONSTRAINT JivePrivate_pk PRIMARY KEY (username, name, namespace)
 );
 
@@ -36,7 +36,7 @@ CREATE TABLE jiveOffline (
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
-  message               NTEXT           NOT NULL,
+  stanza                NTEXT           NOT NULL,
   CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
 );
 
@@ -74,7 +74,7 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 CREATE TABLE jiveVCard (
   username              NVARCHAR(64)    NOT NULL,
-  value                 NTEXT           NOT NULL,
+  vcard                 NTEXT           NOT NULL,
   CONSTRAINT JiveVCard_pk PRIMARY KEY (username)
 );
 
@@ -130,10 +130,10 @@ CREATE TABLE jiveExtComponentConf (
 );
 
 CREATE TABLE jiveRemoteServerConf (
-  domain                NVARCHAR(255)    NOT NULL,
+  xmppDomain            NVARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
   permission            NVARCHAR(10)     NOT NULL,
-  CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (domain)
+  CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (xmppDomain)
 );
 
 CREATE TABLE jivePrivacyList (
@@ -168,7 +168,7 @@ CREATE TABLE mucRoom (
   moderated           INT           NOT NULL,
   membersOnly         INT           NOT NULL,
   canInvite           INT           NOT NULL,
-  password            NVARCHAR(50)  NULL,
+  roomPassword        NVARCHAR(50)  NULL,
   canDiscoverJID      INT           NOT NULL,
   logEnabled          INT           NOT NULL,
   subject             NVARCHAR(100) NULL,
@@ -332,7 +332,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 12);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 13);
 
 /* Entry for admin user */
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

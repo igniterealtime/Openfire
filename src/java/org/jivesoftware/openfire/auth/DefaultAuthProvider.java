@@ -31,9 +31,9 @@ import java.sql.*;
 public class DefaultAuthProvider implements AuthProvider {
 
     private static final String LOAD_PASSWORD =
-            "SELECT password,encryptedPassword FROM jiveUser WHERE username=?";
+            "SELECT plainPassword,encryptedPassword FROM jiveUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE jiveUser SET password=?, encryptedPassword=? WHERE username=?";
+            "UPDATE jiveUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
 
     /**
      * Constructs a new DefaultAuthProvider.

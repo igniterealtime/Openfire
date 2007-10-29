@@ -49,12 +49,12 @@ import java.util.regex.Pattern;
 public class OfflineMessageStore extends BasicModule implements UserEventListener {
 
     private static final String INSERT_OFFLINE =
-        "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, message) " +
+        "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, stanza) " +
         "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
-        "SELECT message, creationDate FROM jiveOffline WHERE username=?";
+        "SELECT stanza, creationDate FROM jiveOffline WHERE username=?";
     private static final String LOAD_OFFLINE_MESSAGE =
-        "SELECT message FROM jiveOffline WHERE username=? AND creationDate=?";
+        "SELECT stanza FROM jiveOffline WHERE username=? AND creationDate=?";
     private static final String SELECT_SIZE_OFFLINE =
         "SELECT SUM(messageSize) FROM jiveOffline WHERE username=?";
     private static final String SELECT_SIZE_ALL_OFFLINE =

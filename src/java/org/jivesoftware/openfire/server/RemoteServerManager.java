@@ -36,13 +36,13 @@ import java.util.Collection;
 public class RemoteServerManager {
 
     private static final String ADD_CONFIGURATION =
-        "INSERT INTO jiveRemoteServerConf (domain,remotePort,permission) VALUES (?,?,?)";
+        "INSERT INTO jiveRemoteServerConf (xmppDomain,remotePort,permission) VALUES (?,?,?)";
     private static final String DELETE_CONFIGURATION =
-        "DELETE FROM jiveRemoteServerConf WHERE domain=?";
+        "DELETE FROM jiveRemoteServerConf WHERE xmppDomain=?";
     private static final String LOAD_CONFIGURATION =
-        "SELECT remotePort,permission FROM jiveRemoteServerConf where domain=?";
+        "SELECT remotePort,permission FROM jiveRemoteServerConf where xmppDomain=?";
     private static final String LOAD_CONFIGURATIONS =
-        "SELECT domain,remotePort FROM jiveRemoteServerConf where permission=?";
+        "SELECT xmppDomain,remotePort FROM jiveRemoteServerConf where permission=?";
 
     private static Cache configurationsCache;
 

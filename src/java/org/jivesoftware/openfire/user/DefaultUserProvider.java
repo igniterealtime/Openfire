@@ -46,7 +46,7 @@ public class DefaultUserProvider implements UserProvider {
     private static final String ALL_USERS =
             "SELECT username FROM jiveUser ORDER BY username";
     private static final String INSERT_USER =
-            "INSERT INTO jiveUser (username,password,encryptedPassword,name,email,creationDate,modificationDate) " +
+            "INSERT INTO jiveUser (username,plainPassword,encryptedPassword,name,email,creationDate,modificationDate) " +
             "VALUES (?,?,?,?,?,?,?)";
     private static final String DELETE_USER_PROPS =
             "DELETE FROM jiveUserProp WHERE username=?";

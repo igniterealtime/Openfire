@@ -43,7 +43,7 @@ public class MUCPersistenceManager {
     private static final String LOAD_ROOM =
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
-        "password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
+        "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
         "canChangeNick, canRegister FROM mucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid, affiliation FROM mucAffiliation WHERE roomID=?";
@@ -55,7 +55,7 @@ public class MUCPersistenceManager {
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, password, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister " +
         "FROM mucRoom WHERE emptyDate IS NULL or emptyDate > ?";
     private static final String LOAD_ALL_AFFILIATIONS =
@@ -68,12 +68,12 @@ public class MUCPersistenceManager {
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
-        "canInvite=?, password=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
+        "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
         "useReservedNick=?, canChangeNick=?, canRegister=? WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
-        "membersOnly, canInvite, password, canDiscoverJID, logEnabled, subject, " +
+        "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
         "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?," +
             "?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =

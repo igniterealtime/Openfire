@@ -162,75 +162,15 @@ hr {
 	
 	<div id="pageBody">
 
-<h2>3.4.0 Beta 2 -- <span style="font-weight: normal;">October 18, 2007</span></h2>
-
-<h3>Openfire New Features</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1147'>JM-1147</a>] - Added support for XEP-0059: Result Set Management.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1142'>JM-1142</a>] - Updated Base64 implementation.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1151'>JM-1151</a>] - IQResultListeners are now alerted when no answer was received after a while.</li>
-</ul>
-
-<h3>Openfire Bug Fixes</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1150'>JM-1150</a>] - Messages sent to bare JID were being sent to session with oldest activity rather than latest activity.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1145'>JM-1145</a>] - SASL authentication was sometimes ignoring initial tokens.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-845'>JM-845</a>] - Password no longer changes randomly in "Email Settings".</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1137'>JM-1137</a>] - JIDs were incorrectly compared.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1141'>JM-1141</a>] - Usernames were not un-escaped in the roster window in the admin console.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1144'>JM-1144</a>] - Messages with body and subject were processed as attempts to change the room subject.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1146'>JM-1146</a>] - Discovery of room occupants was not working.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1153'>JM-1153</a>] - Column in mucConversationLog was using a reserved work in Blackfish SQL.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1152'>JM-1152</a>] - Plugins failed to load if there was a newline in the class name.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1143'>JM-1143</a>] - Fixed typo in Kuala Lumpur time zone.</li>
-</ul>
-
-<h3>Openfire Enterprise</h3>
-<ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-235'>ENT-235</a>] - System properties are now updated across the cluster.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-236'>ENT-236</a>] - Added clustering support to chat archiving.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-206'>ENT-206</a>] - Fastpath is now provided only by the senior cluster member.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-205'>ENT-205</a>] - Table entConParticipant failed to be created in MySQL when using charset utf8.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-234'>ENT-234</a>] - Conversation transcript failed to export to PDF.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-199'>ENT-199</a>] - Fixed typo in statistic sever_sessions.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-207'>ENT-207</a>] - (SparkWeb) Sparkweb is now included as part of enterprise.jar.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-208'>ENT-208</a>] - (SparkWeb) Big reduction in the size of sparkweb.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-210'>ENT-210</a>] - (SparkWeb) Login window now requires a JID instead of a username.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-213'>ENT-213</a>] - (SparkWeb) Added support for logging into multiple domains.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-185'>ENT-185</a>] - (SparkWeb) Added scrollwheel support outside of the message view.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-221'>ENT-221</a>] - (SparkWeb) Reduced avatar size in contact list rows.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-224'>ENT-224</a>] - (SparkWeb) When searching the group population numbers reflects the filtered contacts.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-230'>ENT-230</a>] - (SparkWeb) Improved notifications system in the page title.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-209'>ENT-209</a>] - (SparkWeb) Added security protection to sparkweb.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-149'>ENT-149</a>] - (SparkWeb) Login with an existing logged user was not dropping the first one properly.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-152'>ENT-152</a>] - (SparkWeb) The menu option "View Profile" in the roster was not working.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-174'>ENT-174</a>] - (SparkWeb) The alert of new incoming messages was not disappearing when the chat box was selected.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-200'>ENT-200</a>] - (SparkWeb) A white space is now used for keepalives.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-201'>ENT-201</a>] - (SparkWeb) A new chat is no longer opened when pressing Enter when editing the nickname.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-202'>ENT-202</a>] - (SparkWeb) Nicknames are no longer edited on click unless the contact was already selected.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-203'>ENT-203</a>] - (SparkWeb) Search no longer breaks contact autosizing.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-204'>ENT-204</a>] - (SparkWeb) Doubleclicking could unintentionally trigger renaming a contact.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-215'>ENT-215</a>] - (SparkWeb) Gap between sparkweb icon and top of login window was too small.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-217'>ENT-217</a>] - (SparkWeb) Contact list was too wide by default.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-219'>ENT-219</a>] - (SparkWeb) Search field placeholder text was not being restored when unfocused and empty.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-226'>ENT-226</a>] - (SparkWeb) Contact list search was not applied to people newly signing on.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-233'>ENT-233</a>] - (SparkWeb) Account creation on ignite was causes spurious error messages.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-243'>ENT-243</a>] - (SparkWeb) Login dialog could appear focused at load but actually wasn't.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-245'>ENT-245</a>] - (SparkWeb) Long status messages were breaking the contact list width.</li>
-</ul>
-
-<h3>Openfire Connection Manager Module</h3>
-<ul>
-    <li>No changes</li>
-</ul>
-
-<h2>3.4.0 Beta -- <span style="font-weight: normal;">October 3, 2007</span></h2>
+<h2>3.4.0 -- <span style="font-weight: normal;">October 31, 2007</span></h2>
 
 <h3>Openfire New Features</h3>
 <ul>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1122'>JM-1122</a>] - Added support for XEP-0163: Personal Eventing via Pubsub. <i>Thanks to Armando Jagucki.</i></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-65'>JM-65</a>] - Added roster management from the admin console. <b>(53 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-773'>JM-773</a>] - Photos can now be retrieved from LDAP for vcards. <b>(42 votes)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-635'>JM-635</a>] - Plugins can now be uploaded from the admin console. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1147'>JM-1147</a>] - Added support for XEP-0059: Result Set Management.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1124'>JM-1124</a>] - Improved performance of SSL HTTP binding.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1128'>JM-1128</a>] - Added RSS feed to the admin console to read igniterealtime news.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1046'>JM-1046</a>] - Added support for privacy list event listener.</li>
@@ -239,49 +179,58 @@ hr {
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1118'>JM-1118</a>] - Allowed to add new identities to be included in disco#info replies.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1119'>JM-1119</a>] - Allowed to add new items to disco#item replies sent to bare JIDs.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1120'>JM-1120</a>] - Modified PresenceEventListener to include presence subscription events.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1151'>JM-1151</a>] - IQResultListeners are now alerted when no answer was received after a while.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1159'>JM-1159</a>] - Updated MySQL driver to latest version.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1089'>JM-1089</a>] - Updated bouncycastle library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1142'>JM-1142</a>] - Updated Base64 implementation.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1158'>JM-1158</a>] - Updated jTDS to latest version.</li>
 </ul>
 
 <h3>Openfire Bug Fixes</h3>
 <ul>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1051'>JM-1051</a>] - PluginManager can now return the JAR/WAR file that created a plugin.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1055'>JM-1055</a>] - Plugins are now initialized using plugin class loader.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1056'>JM-1056</a>] - Port listeners are started once plugins have been loaded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1150'>JM-1150</a>] - Messages sent to bare JID were being sent to session with oldest activity rather than latest activity.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1075'>JM-1075</a>] - Message sent to unavailable full JID of existing user was not routed to the bare JID.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1145'>JM-1145</a>] - SASL authentication was sometimes ignoring initial tokens.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1084'>JM-1084</a>] - Users in another domain could set the vCard of an Openfire user.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1066'>JM-1066</a>] - Client idle timeout was considering incoming and outgoing traffic. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1144'>JM-1144</a>] - Messages with body and subject were processed as attempts to change the room subject.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1153'>JM-1153</a>] - Column in mucConversationLog was using a reserved work in Blackfish SQL.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1082'>JM-1082</a>] - Fixed NPE in MUCRoomImpl.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1058'>JM-1058</a>] - Renamed many column names to be comparible with Firebird SQL and Blackfish SQL. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1169'>JM-1169</a>] - Big vcards were being truncated in mysql.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1154'>JM-1154</a>] - End of stream was not being sent to client when closing connections from the server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1080'>JM-1080</a>] - Fixed custom database groups integration bug.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1131'>JM-1131</a>] - Multiple consecutive spaces in a contact's group name were replaced with a single space.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1050'>JM-1050</a>] - Proxy transfer streams are now closed more reliably.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1052'>JM-1052</a>] - Media proxy could fail when using SRV record.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1059'>JM-1059</a>] - Clients could hang when trying to use stream compression.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1085'>JM-1085</a>] - Active sessions are now closed and a <not-authorized/> stream error is returned when cancelling a user account.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1091'>JM-1091</a>] - Connected but not available sessions appeared as online in the session summary page.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1051'>JM-1051</a>] - PluginManager can now return the JAR/WAR file that created a plugin.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1055'>JM-1055</a>] - Plugins are now initialized using plugin class loader.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1056'>JM-1056</a>] - Port listeners are started once plugins have been loaded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1152'>JM-1152</a>] - Plugins failed to load if there was a newline in the class name.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1092'>JM-1092</a>] - Plugins that failed to be unloaded were reloaded.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1095'>JM-1095</a>] - Fixed session counter when closing session that never authenticated.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1070'>JM-1070</a>] - Counter of sent packets from the server to the client was always zero.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1096'>JM-1096</a>] - HTTP binding could allow packets to be sent on behalf of other users.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1097'>JM-1097</a>] - A not-authorized error is now returned when user tries to bind a resource before authenticating.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1137'>JM-1137</a>] - JIDs were incorrectly compared.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-845'>JM-845</a>] - Password no longer changes randomly in "Email Settings".</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1113'>JM-1113</a>] - XML properties could be set which contain XML entities.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1123'>JM-1123</a>] - Presences sent between components are now routed.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1129'>JM-1129</a>] - Retrieving room history was not working in Oracle.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1069'>JM-1069</a>] - Modules were cleaned up before stopping plugins.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1143'>JM-1143</a>] - Fixed typo in Kuala Lumpur time zone.</li>
 </ul>
 
 <h3>Openfire Enterprise</h3>
 <ul>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-43'>ENT-43</a>] - Added clustering support. <b>(38 votes)</b></li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-189'>ENT-189</a>] - (SparkWeb) Removed top bar since it's not longer needed.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-190'>ENT-190</a>] - (SparkWeb) Improved how renaming of contacts works.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-191'>ENT-191</a>] - (SparkWeb) Renamed field names in add contact dialog.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-192'>ENT-192</a>] - (SparkWeb) Profile button is now a toggle.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-193'>ENT-193</a>] - (SparkWeb) Name and password fields are not cleared if invalid.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-194'>ENT-194</a>] - (SparkWeb) A guess of the JID is now filled in in the add contact field based on the name.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-195'>ENT-195</a>] - (SparkWeb) Added localized text support.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-157'>ENT-157</a>] - (SparkWeb) Added feedback when trying to register a new user failed for some reason.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-174'>ENT-174</a>] - (SparkWeb) The alert of new incoming messages did not disappear when the chat box was selected.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-188'>ENT-188</a>] - (SparkWeb) Removed <i>online</i> text from contacts grouped in the offline group.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-181'>ENT-181</a>] - (SparkWeb) Fixed contrast/color issues.</li>
+<li>Added web client named SparkWeb.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-205'>ENT-205</a>] - Table entConParticipant failed to be created in MySQL when using charset UTF-8.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-234'>ENT-234</a>] - Conversation transcript failed to export to PDF.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-199'>ENT-199</a>] - Fixed typo in statistic sever_sessions.</li>
 </ul>
 
 <h3>Openfire Connection Manager Module</h3>

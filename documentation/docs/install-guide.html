@@ -192,7 +192,22 @@ To create parameters for the normal launcher, create a file called openfired.vmo
 
 <h2><a name="unix">Running Openfire in Linux/Unix</a></h2>
 
-You can start and stop Openfire using the <tt>bin/openfire</tt> script in your Openfire installation:
+If you are running on a Red Hat or Red Hat like system (CentOS, Fedora, etc), we recommend using the
+RPM as it contains some custom handling of the standard Red Hat like environment.  Assuming that you
+have used the RPM, you can start and stop Openfire using the <tt>/etc/init.d/openfire</tt> script.
+
+<p>
+<tt>
+# /etc/init.d/openfire<br>
+Usage /etc/init.d/openfire {start|stop|restart|status|condrestart|reload}<br>
+# /etc/init.d/openfire start<br>
+Starting openfire:
+</tt>
+</p>
+
+
+If you are running on a different Linux/Unix varient, and/or you have used the .tar.gz 'installer',
+you can start and stop Openfire using the <tt>bin/openfire</tt> script in your Openfire installation:
 
 <p>
 <tt>
@@ -206,11 +221,18 @@ Starting openfire
 If you would like to install Openfire as a service, two scripts are provided in the <tt>bin/extra</tt>
 directory:
 <ul>
-    <li>redhat-postinstall.sh -- automatically installs Openfire as a service on Red Hat. It does so by creating a "jive" user and then copying the openfired script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
+    <li>redhat-postinstall.sh --   automatically installs Openfire as a service on Red Hat. It does so by creating a "jive" user and then copying the openfired script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
     <li>openfired -- script to run Openfire as a service. You must manually configure this script. See the comments in
 the script for additional details.</li>
-
 </ul>
+<b>It is not recommended that you use either of these scripts if you installed via RPM.  The RPM has already taken care of what these scripts take care of.</b>
+
+<h3>Custom Parameters</h3>
+
+<p>Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize
+    the runtime environment of Openfire. If you installed via RPM, you can customize this by
+    editing /etc/sysconfig/openfire and looking at the OPENFIRE_OPTS option.  If you installed
+    via .tar.gz, you will need to tweak your startup script to fit your needs.</p>
 
 <h2><a name="plugins">Plugins</a></h2>
 
@@ -226,6 +248,8 @@ If you download a plugin from inside the Openfire administration console, it wil
 be installed. If you manually download the plugin (packaged as a .jar file), you can deploy it
 by copying the plugin file to the <tt>plugins/</tt> directory of your Openfire installation. A
 plugin monitor will automatically extract the plugin into a directory and install the plugin in Openfire.
+You may also use the "upload plugin" feature in the admin console (under the Plugins tab) to load
+a plugin from your local file system to the server.
 
 
 <h3>Managing Plugins</h3>

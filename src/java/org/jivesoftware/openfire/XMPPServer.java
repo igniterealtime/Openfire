@@ -515,6 +515,7 @@ public class XMPPServer {
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(UpdateManager.class.getName());
+        loadModule(FlashCrossDomainHandler.class.getName());
         loadModule(InternalComponentManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
@@ -1375,6 +1376,17 @@ public class XMPPServer {
      */
     public STUNService getSTUNService() {
         return (STUNService) modules.get(STUNService.class);
+    }
+
+    /**
+     * Returns the <code>FlashCrossDomainHandler</code> registered with this server. The
+     * <code>FlashCrossDomainHandler</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>FlashCrossDomainHandler</code> registered with this server.
+     */
+    public FlashCrossDomainHandler getFlashCrossDomainHandler() {
+        return (FlashCrossDomainHandler) modules.get(FlashCrossDomainHandler.class);
     }
 
     /**

@@ -36,6 +36,7 @@
 <%@ page import="java.net.URL" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.jivesoftware.openfire.FlashCrossDomainHandler" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -80,6 +81,7 @@
     HttpBindManager httpBindManager = HttpBindManager.getInstance();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
     STUNService stunService = XMPPServer.getInstance().getSTUNService();
+    FlashCrossDomainHandler flashCrossDomainHandler = XMPPServer.getInstance().getFlashCrossDomainHandler();
 
     // Search for s2s and external component ports info
     for (ServerPort port : XMPPServer.getInstance().getServerInfo().getServerPorts()) {
@@ -587,6 +589,13 @@
         <td><fmt:message key="ports.stun.desc" /></td>
     </tr>
     <% } %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= flashCrossDomainHandler.getPort() %></td>
+        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><fmt:message key="ports.flash_cross_domain" /></td>
+        <td><fmt:message key="ports.flash_cross_domain.desc" /></td>
+    </tr>
 </tbody>
 </table>
 </div>

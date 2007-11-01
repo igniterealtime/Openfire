@@ -92,6 +92,7 @@
         }
     }
 
+    boolean rssEnabled = JiveGlobals.getBooleanProperty("rss.enabled", true);
 %>
 
 <html>
@@ -354,6 +355,7 @@
         </table>
         <!-- </div> -->
     </td>
+    <% if (rssEnabled) { %>
     <td valign="top" width="40%"> 
         <div id="jive-latest-activity">
 
@@ -387,7 +389,7 @@
                     <% }
 
                 } else { %>
-                    <fmt:message key="index.cs_blog.unavilable" />
+                    <fmt:message key="index.cs_blog.unavailable" />
                  <% }
 
                  %><div class="jive-bottom-line"></div><%
@@ -401,12 +403,13 @@
                     <% }
 
                 } else { %>
-                    <fmt:message key="index.cs_blog.unavilable" />
+                    <fmt:message key="index.cs_blog.unavailable" />
                  <% }
             %>
 
         </div>
     </td>
+    <% } %>
 </table>
 
 <br>

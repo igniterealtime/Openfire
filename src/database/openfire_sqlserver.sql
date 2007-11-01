@@ -335,5 +335,5 @@ INSERT INTO jiveID (idType, id) VALUES (23, 1);
 INSERT INTO jiveVersion (name, version) VALUES ('openfire', 13);
 
 /* Entry for admin user */
-INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)
+INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');

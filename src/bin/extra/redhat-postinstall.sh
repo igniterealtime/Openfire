@@ -23,7 +23,7 @@ if [ ! $OPENFIRE_HOME ]; then
 	fi
 fi
 
-# Grant execution permissions
+# Grant execution permissions 
 chmod +x $OPENFIRE_HOME/bin/extra/openfired
 
 # Install the init script

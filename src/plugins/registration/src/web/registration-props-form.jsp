@@ -14,6 +14,7 @@
            org.jivesoftware.openfire.group.*,
            org.jivesoftware.util.*"
    errorPage="error.jsp"%>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt"%>
@@ -53,6 +54,14 @@
         else {
             contactIM = contactIM.trim().toLowerCase();
         
+            if(contactIM.contains("@")) {
+                if (!XMPPServer.getInstance().isLocal(new JID(contactIM))) {
+                    errors.put("remoteContact", "remoteContact");
+                }
+                contactIM = contactIM.substring(0,contactIM.lastIndexOf("@"));
+            }
+        }
+        if (errors.isEmpty()) {
             try  {
                 XMPPServer.getInstance().getUserManager().getUser(contactIM);
                 plugin.addIMContact(contactIM);
@@ -308,6 +317,19 @@ function addEmailContact() {
     </table>
     </div>
    
+    <% } else if (errors.containsKey("remoteContact")) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.registration_remote_contact" /></td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+
     <% } else if (errors.containsKey("userNotFound")) { %>
    
     <div class="jive-error">

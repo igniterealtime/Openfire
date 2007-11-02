@@ -5,8 +5,8 @@
     <name>Registration</name>
     <description>Performs various actions whenever a new user account is created.</description>
     <author>Ryan Graham</author>
-    <version>1.4.0</version>
-    <date>4/12/2007</date>
+    <version>1.4.1</version>
+    <date>11/2/2007</date>
     <minServerVersion>3.3.0</minServerVersion>
 	
 	<adminconsole>

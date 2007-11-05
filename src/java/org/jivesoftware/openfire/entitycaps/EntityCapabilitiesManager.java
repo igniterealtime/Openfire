@@ -11,12 +11,6 @@
 
 package org.jivesoftware.openfire.entitycaps;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.IQRouter;
@@ -29,6 +23,8 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+
+import java.util.*;
 
 /**
  * Implements server side mechanics for XEP-0115: "Entity Capabilities"
@@ -99,6 +95,10 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     }
 
     public void process(Presence packet) {
+        // Ignore unavailable presences
+        if (Presence.Type.unavailable == packet.getType()) {
+            return;
+        }
 
         // Examine the packet and check if it has caps info and a 'ver' hash,
         // if not -- do nothing by returning.
@@ -168,12 +168,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         String newVerHash = generateVerHash(packet);
 
         String originalVerAttribute = verAttributes.get(packet.getID());
-        if (originalVerAttribute.equals(newVerHash)) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return originalVerAttribute.equals(newVerHash);
     }
 
     /**
@@ -185,7 +180,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      * The value of the 'ver' attribute is generated according to the method
      * outlined in XEP-0115.
      * 
-     * @param packet
+     * @param packet IQ reply to the entity cap request.
      * @return the generated 'ver' hash
      */
     private String generateVerHash(IQ packet) {
@@ -277,9 +272,10 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     }
 
     /**
-     * Returns the entity capabilities for a specific JID.
+     * Returns the entity capabilities for a specific JID. The specified JID
+     * should be a full JID that identitied the entity's connection.
      * 
-     * @param jid the entity
+     * @param jid the full JID of entity
      * @return the entity capabilities of jid.
      */
     public EntityCapabilities getEntityCapabilities(JID jid) {
@@ -335,8 +331,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete this user's association in entityCapabilitiesUserMap.
         JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null);
-        String verHashOfUser = entityCapabilitiesUserMap.get(jid);
-        entityCapabilitiesUserMap.remove(jid);
+        String verHashOfUser = entityCapabilitiesUserMap.remove(jid);
         
         /*
          * If there are no other references to the deleted user's 'ver' hash,
@@ -354,16 +349,13 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
             }
         }      
         entityCapabilitiesMap.remove(verHashOfUser);
-        
     }
 
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing.
-        
     }
 
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing.
-        
     }
 }

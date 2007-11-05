@@ -34,6 +34,13 @@ import java.util.*;
  * "filtered-notifications" for use with Pubsub (XEP-0060) for contacts that
  * may not want to receive notifications for all payload types.
  * 
+ * The server's role in managing Entity Capabilities is to cache previously
+ * encountered entity capabilities for XMPP clients supporting the same
+ * identities and features. If the server has not seen a particular
+ * combination of identities and features, a Discover Information query is
+ * sent to that client and its reply is cached for future use by clients
+ * sharing those same entity capabilities.
+ * 
  * @author Armando Jagucki
  *
  */
@@ -42,7 +49,8 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private static final EntityCapabilitiesManager instance = new EntityCapabilitiesManager();
 
     /**
-     * Entity Capabilities cache map.
+     * Entity Capabilities cache map. This cache stores entity capabilities
+     * that may be shared among users.
      * 
      * When we want to look up the entity capabilities for a user, we first
      * find their most recently advertised 'ver' hash using the
@@ -55,7 +63,8 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private Cache<String, EntityCapabilities> entityCapabilitiesMap;
 
     /**
-     * Entity Capabilities user cache map.
+     * Entity Capabilities user cache map. This map is used to determine which
+     * entity capabilities are in use for a particular user.
      * 
      * When we want to look up the entity capabilities for a user, we first
      * find their most recently advertised 'ver' hash using this map. Then we
@@ -67,12 +76,21 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private Cache<JID, String> entityCapabilitiesUserMap;
 
     /**
+     * Ver attributes are the hash strings that correspond to a certain
+     * combination of entity capabilities. This hash string, representing a
+     * particular identities+features combination, is found in the 'ver'
+     * attribute of the caps element in a presence packet (caps packet).
+     * 
      * Each unrecognized caps packet that is encountered has its verAttribute
      * added to this map. Since results to our disco#info queries can be
      * received in any order, the map is used by {@link #isValid(IQ)} so the
      * method can be sure it is comparing its generated 'ver' hash to the
      * correct 'ver' hash in the map, that was previously encountered in the
      * caps packet.
+     * 
+     * We use a cache for this map so it is cluster safe for remote users
+     * whose disco#info replies are handled by new nodes in the cluster (after
+     * an s2s disconnection for example).
      * 
      * Key:   Packet ID of our disco#info request.
      * Value: The 'ver' hash string from the original caps packet.
@@ -82,7 +100,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private EntityCapabilitiesManager() {
         entityCapabilitiesMap = CacheFactory.createCache("Entity Capabilities");
         entityCapabilitiesUserMap = CacheFactory.createCache("Entity Capabilities Users");
-        verAttributes = CacheFactory.createCache("Entity Capabilities ver Attributes");
+        verAttributes = CacheFactory.createCache("Entity Capabilities Pending Hashes");
     }
 
     /**
@@ -114,18 +132,14 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 
         // Check to see if the 'ver' hash is already in our cache.
         if (isInCapsCache(newVerAttribute)) {
-            /* 
-             * The 'ver' hash is in the cache already, so let's update the
-             * entityCapabilitiesUserMap for the user that sent the caps
-             * packet.
-             */
+            // The 'ver' hash is in the cache already, so let's update the
+            // entityCapabilitiesUserMap for the user that sent the caps
+            // packet.
             entityCapabilitiesUserMap.put(packet.getFrom(), newVerAttribute);
         }
         else {
-            /*
-            * The 'ver' hash is not in the cache so send out a disco#info query
-            * so that we may begin recognizing this 'ver' hash.
-            */
+            // The 'ver' hash is not in the cache so send out a disco#info query
+            // so that we may begin recognizing this 'ver' hash.
             IQ iq = new IQ(IQ.Type.get);
             iq.setTo(packet.getFrom());
 
@@ -187,17 +201,13 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         // Initialize an empty string S.
         String S = "";
 
-        /*
-         * Sort the service discovery identities by category and then by type
-         * (if it exists), formatted as 'category' '/' 'type'.
-         */
+        // Sort the service discovery identities by category and then by type
+        // (if it exists), formatted as 'category' '/' 'type'.
         List<String> discoIdentities = getIdentitiesFrom(packet);
         Collections.sort(discoIdentities);
 
-        /*
-         * For each identity, append the 'category/type' to S, followed by the
-         * '<' character.
-         */
+        // For each identity, append the 'category/type' to S, followed by the
+        // '<' character.
         for (String discoIdentity : discoIdentities) {
             S += discoIdentity;
             S += '<';
@@ -207,21 +217,17 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         List<String> discoFeatures = getFeaturesFrom(packet);
         Collections.sort(discoFeatures);
 
-        /*
-         * For each feature, append the feature to S, followed by the '<'
-         * character.
-         */
+        // For each feature, append the feature to S, followed by the '<'
+        // character.
         for (String discoFeature : discoFeatures) {
             S += discoFeature;
             S += '<';
         }
 
-        /*
-         * Compute ver by hashing S using the SHA-1 algorithm as specified in
-         * RFC 3174 (with binary output) and encoding the hash using Base64 as
-         * specified in Section 4 of RFC 4648 (note: the Base64 output
-         * MUST NOT include whitespace and MUST set padding bits to zero).
-         */
+        // Compute ver by hashing S using the SHA-1 algorithm as specified in
+        // RFC 3174 (with binary output) and encoding the hash using Base64 as
+        // specified in Section 4 of RFC 4648 (note: the Base64 output
+        // MUST NOT include whitespace and MUST set padding bits to zero).
         S = StringUtils.hash(S, "SHA-1");
         S = StringUtils.encodeBase64(StringUtils.decodeHex(S));
 
@@ -229,10 +235,8 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     }
 
     public void answerTimeout(String packetId) {
-        /*
-         * If we never received an answer, we can discard the cached
-         * 'ver' attribute.
-         */
+        // If we never received an answer, we can discard the cached
+        // 'ver' attribute.
         verAttributes.remove(packetId);
     }
 
@@ -240,10 +244,8 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         String packetId = packet.getID();
 
         if (isValid(packet)) {
-            /* 
-             * The packet was validated, so it can be added to the Entity
-             * Capabilities cache map.
-             */
+            // The packet was validated, so it can be added to the Entity
+            // Capabilities cache map.
 
             // Create the entity capabilities object and add it to the cache map...
             EntityCapabilities entityCapabilities = new EntityCapabilities();
@@ -332,22 +334,18 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         // Delete this user's association in entityCapabilitiesUserMap.
         JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null);
         String verHashOfUser = entityCapabilitiesUserMap.remove(jid);
-        
-        /*
-         * If there are no other references to the deleted user's 'ver' hash,
-         * it is safe to remove that 'ver' hash's associated entity
-         * capabilities from the entityCapabilitiesMap cache.
-         */
+
+        // If there are no other references to the deleted user's 'ver' hash,
+        // it is safe to remove that 'ver' hash's associated entity
+        // capabilities from the entityCapabilitiesMap cache.
         for (String verHash : entityCapabilitiesUserMap.values()) {
             if (verHash.equals(verHashOfUser)) {
-                /*
-                 * A different user is making use of the deleted user's same
-                 * 'ver' hash, so let's not remove the associated entity
-                 * capabilities from the entityCapabilitiesMap.
-                 */
+                // A different user is making use of the deleted user's same
+                // 'ver' hash, so let's not remove the associated entity
+                // capabilities from the entityCapabilitiesMap.
                 return;
             }
-        }      
+        }
         entityCapabilitiesMap.remove(verHashOfUser);
     }
 

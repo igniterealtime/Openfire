@@ -80,6 +80,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheNames.put("Disco Server Items", "serverItems");
         cacheNames.put("Remote Server Configurations", "serversConfigurations");
         cacheNames.put("Entity Capabilities", "entityCapabilities");
+        cacheNames.put("Entity Capabilities Users", "entityCapabilitiesUsers");
+        cacheNames.put("Entity Capabilities ver Attributes", "entityCapabilitiesVers");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.maxLifetime", 1000 * 60 * 10l);
@@ -141,8 +143,11 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         cacheProps.put("cache.serversConfigurations.maxLifetime", JiveConstants.MINUTE * 30);
         cacheProps.put("cache.entityCapabilities.size", -1l);
         cacheProps.put("cache.entityCapabilities.maxLifetime", JiveConstants.DAY * 2);
+        cacheProps.put("cache.entityCapabilitiesUsers.size", -1l);
+        cacheProps.put("cache.entityCapabilitiesUsers.maxLifetime", JiveConstants.DAY * 2);
+        cacheProps.put("cache.entityCapabilitiesVers.size", -1l);
+        cacheProps.put("cache.entityCapabilitiesVers.maxLifetime", JiveConstants.DAY * 2);
     }
-
 
     public boolean startCluster() {
         return false;

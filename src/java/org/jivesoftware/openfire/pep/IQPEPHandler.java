@@ -494,6 +494,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public void availableSession(ClientSession session, Presence presence) {
         JID newlyAvailableJID = presence.getFrom();
+        
+        if (newlyAvailableJID == null) {
+            return;
+        }
 
         // Send the last published items for the contacts on newlyAvailableJID's roster. 
         try {

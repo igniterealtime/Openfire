@@ -18,6 +18,8 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
@@ -38,8 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * A PEPService is a PubSubService for use with XEP-0163: "Personal Eventing via
- * Pubsub."
+ * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
+ * Pubsub" Version 1.0
  * 
  * @author Armando Jagucki
  * 
@@ -105,7 +107,12 @@ public class PEPService implements PubSubService {
      * Manager that keeps the list of ad-hoc commands and processing command
      * requests.
      */
-    private AdHocCommandManager manager;
+    private AdHocCommandManager adHocCommandManager;
+
+    /**
+     * Used to handle filtered-notifications.
+     */
+    private EntityCapabilitiesManager entityCapsManager = EntityCapabilitiesManager.getInstance();
 
     /**
      * The time to elapse between each execution of the maintenance process.
@@ -144,8 +151,8 @@ public class PEPService implements PubSubService {
         router = server.getPacketRouter();
 
         // Initialize the ad-hoc commands manager to use for this pep service
-        manager = new AdHocCommandManager();
-        manager.addCommand(new PendingSubscriptionsCommand(this));
+        adHocCommandManager = new AdHocCommandManager();
+        adHocCommandManager.addCommand(new PendingSubscriptionsCommand(this));
 
         // Save or delete published items from the database every 2 minutes
         // starting in 2 minutes (default values)
@@ -391,10 +398,11 @@ public class PEPService implements PubSubService {
                 // Check if the recipientFullJID is interested in notifications for this node.
                 // If the recipient has not yet requested any notification filtering, continue and send
                 // the notification.
-                Map<String, Set<String>> filteredNodesMap = XMPPServer.getInstance().getIQPEPHandler().getFilteredNodesMap();
-                Set<String> filteredNodesSet = filteredNodesMap.get(recipientFullJID.toString());
-                if (filteredNodesSet != null && !filteredNodesSet.contains(nodeID + "+notify")) {
-                    return;
+                EntityCapabilities entityCaps = entityCapsManager.getEntityCapabilities(recipientFullJID);
+                if (entityCaps != null) {
+                    if (!entityCaps.containsFeature(nodeID + "+notify")) {
+                        return;
+                    }
                 }
 
                 // Get the full JID of the item publisher from the node that was published to.
@@ -534,7 +542,7 @@ public class PEPService implements PubSubService {
     }
 
     public AdHocCommandManager getManager() {
-        return manager;
+        return adHocCommandManager;
     }
 
     public PublishedItemTask getPublishedItemTask() {

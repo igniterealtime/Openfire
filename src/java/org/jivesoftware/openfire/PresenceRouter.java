@@ -12,6 +12,7 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
@@ -39,6 +40,7 @@ public class PresenceRouter extends BasicModule {
     private PresenceSubscribeHandler subscribeHandler;
     private PresenceManager presenceManager;
     private SessionManager sessionManager;
+    private EntityCapabilitiesManager entityCapsManager;
     private MulticastRouter multicastRouter;
     private String serverName;
 
@@ -127,12 +129,14 @@ public class PresenceRouter extends BasicModule {
                         "".equals(recipientJID.getDomain()) || (recipientJID.getNode() == null &&
                         recipientJID.getResource() == null) &&
                         serverName.equals(recipientJID.getDomain())) {
+                    entityCapsManager.process(packet);
                     updateHandler.process(packet);
                 }
                 else {
                     // Trigger events for presences of remote users
                     if (senderJID != null && !serverName.equals(senderJID.getDomain()) &&
                             !routingTable.hasComponentRoute(senderJID)) {
+                        entityCapsManager.process(packet);
                         if (type == null) {
                             // Remote user has become available
                             RemotePresenceEventDispatcher.remoteUserAvailable(packet);
@@ -203,6 +207,7 @@ public class PresenceRouter extends BasicModule {
         presenceManager = server.getPresenceManager();
         multicastRouter = server.getMulticastRouter();
         sessionManager = server.getSessionManager();
+        entityCapsManager = EntityCapabilitiesManager.getInstance();
     }
 
     /**

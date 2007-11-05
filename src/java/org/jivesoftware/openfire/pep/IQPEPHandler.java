@@ -50,19 +50,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>
- * An IQHandler used to implement XEP-0163: "Personal Eventing via Pubsub."
+ * An {@link IQHandler} used to implement XEP-0163: "Personal Eventing via Pubsub"
+ * Version 1.0
  * </p>
  * 
  * <p>
- * For each user on the server there is an associated PEPService interacting
- * with a single PubSubEngine for managing the user's PEP nodes.
+ * For each user on the server there is an associated {@link PEPService} interacting
+ * with a single {@link PubSubEngine} for managing the user's PEP nodes.
  * </p>
  * 
  * <p>
  * An IQHandler can only handle one namespace in its IQHandlerInfo. However, PEP
  * related packets are seen having a variety of different namespaces. Thus,
- * classes like IQPEPOwnerHandler are used to forward packets having these other
- * namespaces to IQPEPHandler.handleIQ().
+ * classes like {@link IQPEPOwnerHandler} are used to forward packets having these other
+ * namespaces to {@link IQPEPHandler#handleIQ(IQ)}.
  * <p>
  * 
  * <p>
@@ -84,15 +85,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
      */
     private Map<String, PEPService> pepServices;
-
-    /**
-     * Nodes to send filtered notifications for, table: key JID (String); value Set of nodes
-     * 
-     * filteredNodesMap are used for Contact Notification Filtering as described in XEP-0163. The JID
-     * of a user is associated with a set of PEP node IDs they are interested in receiving notifications
-     * for.
-     */
-    private Map<String, Set<String>> filteredNodesMap = new ConcurrentHashMap<String, Set<String>>();
 
     private IQHandlerInfo info;
 
@@ -125,19 +117,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         // Listen to roster events for PEP subscription cancelling on contact deletion.
         RosterEventDispatcher.addListener(this);
-        
+
         // Listen to user events in order to destroy a PEP service when a user is deleted.
         UserEventDispatcher.addListener(this);
 
         pubSubEngine = new PubSubEngine(server.getPacketRouter());
-
-        // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
-        /*
-        // Add this PEP handler as a packet interceptor so we may deal with
-        // client packets that send disco#info's explaining capabilities
-        // including PEP contact notification filters.
-        InterceptorManager.getInstance().addInterceptor(this);
-        */
     }
 
     /**
@@ -147,10 +131,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * @return the loaded PEP service, or null if not found.
      */
     private PEPService loadPEPServiceFromDB(String jid) {
-        String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM pubsubNode " +
-                                 "WHERE serviceID='" + jid + "'";
+        String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM pubsubNode " + "WHERE serviceID='" + jid + "'";
         PEPService pepService = null;
-        
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -166,7 +149,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 pepService = new PEPService(XMPPServer.getInstance(), serviceID);
                 pepServices.put(serviceID, pepService);
                 pubSubEngine.start(pepService);
-                
+
                 if (Log.isDebugEnabled()) {
                     Log.debug("PEP: Restored service for " + serviceID + " from the database.");
                 }
@@ -193,7 +176,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 Log.error(e);
             }
         }
-        
+
         return pepService;
     }
 
@@ -219,15 +202,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     /**
-     * Returns the filteredNodesMap.
-     * 
-     * @return the filteredNodesMap
-     */
-    public Map<String, Set<String>> getFilteredNodesMap() {
-        return filteredNodesMap;
-    }
-
-    /**
      * Returns the knownRemotePresences map.
      * 
      * @return the knownRemotePresences map
@@ -242,30 +216,29 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         if (packet.getTo() == null) {
             if (packet.getType() == IQ.Type.set) {
                 String jidFrom = senderJID.toBareJID();
-    
+
                 PEPService pepService = getPEPService(jidFrom);
-    
+
                 // If no service exists yet for jidFrom, create one.
                 if (pepService == null) {
                     // Return an error if the packet is from an anonymous, unregistered user
                     // or remote user
-                    if (!XMPPServer.getInstance().isLocal(senderJID) ||
-                            !UserManager.getInstance().isRegisteredUser(senderJID.getNode())) {
+                    if (!XMPPServer.getInstance().isLocal(senderJID) || !UserManager.getInstance().isRegisteredUser(senderJID.getNode())) {
                         IQ reply = IQ.createResultIQ(packet);
                         reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.not_allowed);
                         return reply;
                     }
-                    
+
                     pepService = new PEPService(XMPPServer.getInstance(), jidFrom);
                     pepServices.put(jidFrom, pepService);
-    
+
                     // Probe presences
                     pubSubEngine.start(pepService);
                     if (Log.isDebugEnabled()) {
                         Log.debug("PEP: " + jidFrom + " had a PEPService created");
                     }
-    
+
                     // Those who already have presence subscriptions to jidFrom
                     // will now automatically be subscribed to this new PEPService.
                     try {
@@ -280,13 +253,13 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                         // Do nothing
                     }
                 }
-    
+
                 // If publishing a node, and the node doesn't exist, create it.
                 Element childElement = packet.getChildElement();
                 Element publishElement = childElement.element("publish");
                 if (publishElement != null) {
                     String nodeID = publishElement.attributeValue("node");
-    
+
                     // Do not allow User Avatar nodes to be created.
                     // TODO: Implement XEP-0084
                     if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
@@ -295,7 +268,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                         reply.setError(PacketError.Condition.feature_not_implemented);
                         return reply;
                     }
-    
+
                     if (pepService.getNode(nodeID) == null) {
                         // Create the node
                         JID creator = new JID(jidFrom);
@@ -304,7 +277,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                         newNode.saveToDB();
                     }
                 }
-    
+
                 // Process with PubSub as usual.
                 pubSubEngine.process(pepService, packet);
             }
@@ -335,7 +308,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // Other error flows were handled in pubSubEngine.process(...)
         return null;
     }
-    
+
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the database.
      * 
@@ -343,11 +316,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     private PEPService getPEPService(String jid) {
         PEPService pepService = pepServices.get(jid);
-        
+
         if (pepService == null) {
             pepService = loadPEPServiceFromDB(jid);
         }
-        
+
         return pepService;
     }
 
@@ -520,7 +493,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void availableSession(ClientSession session, Presence presence) {
-         JID newlyAvailableJID = presence.getFrom();
+        JID newlyAvailableJID = presence.getFrom();
 
         // Send the last published items for the contacts on newlyAvailableJID's roster. 
         try {
@@ -541,7 +514,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public void remoteUserAvailable(Presence presence) {
         JID jidFrom = presence.getFrom();
-        JID jidTo   = presence.getTo();
+        JID jidTo = presence.getTo();
 
         // Manage the cache of remote presence resources.
         Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
@@ -566,11 +539,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public void remoteUserUnavailable(Presence presence) {
         JID jidFrom = presence.getFrom();
-        JID jidTo   = presence.getTo();
-        
+        JID jidTo = presence.getTo();
+
         // Manage the cache of remote presence resources.
         Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
-        
+
         if (remotePresenceSet != null) {
             remotePresenceSet.remove(jidFrom);
         }
@@ -587,7 +560,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public void userDeleting(User user, Map<String, Object> params) {
         JID bareJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
         PEPService pepService = getPEPService(bareJID.toString());
-        
+
         if (pepService == null) {
             return;
         }
@@ -600,120 +573,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             }
         }
         rootNode.delete();
-        
+
         // Remove the user's PEP service, finally.
         pepServices.remove(bareJID.toString());
     }
-
-    // TODO: This will need to be refactored once XEP-0115 (Entity Capabilities) is implemented.
-    /*
-    public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
-        if (processed && packet instanceof IQ && ((IQ) packet).getType() == IQ.Type.result) {
-            // Examine the packet and return if it does not look like a disco#info result containing
-            // Entity Capabilities for a client. The sooner we return the better, as this method will be called
-            // quite a lot.
-            Element element = packet.getElement();
-            if (element == null) {
-                return;
-            }
-            Element query = element.element("query");
-            if (query == null) {
-                return;
-            }
-            else {
-                if (query.attributeValue("node") == null) {
-                    return;
-                }
-                String queryNamespace = query.getNamespaceURI();
-                if (queryNamespace == null || !queryNamespace.equals("http://jabber.org/protocol/disco#info")) {
-                    return;
-                }
-            }
-
-            if (Log.isDebugEnabled()) {
-                Log.debug("PEP: Intercepted a caps result packet: " + packet.toString());
-            }
-
-            Iterator featuresIterator = query.elementIterator("feature");
-            if (featuresIterator == null) {
-                return;
-            }
-
-            // Get the sender's full JID considering they may be logged in from multiple
-            // clients with different notification filters.
-            String jidFrom = packet.getFrom().toString();
-
-            // For each feature variable, or in this case node ID, ending in "+notify" -- add
-            // the node ID to the set of filtered nodes that jidFrom is interested in being
-            // notified about.
-            //
-            // If none of the feature variables contain the node ID ending in "+notify",
-            // remove it from the set of filtered nodes that jidFrom is interested in being
-            // notified about.
-            Set<String> supportedNodesSet = new HashSet<String>();
-            while (featuresIterator.hasNext()) {
-                Element featureElement = (Element) featuresIterator.next();
-
-                String featureVar = featureElement.attributeValue("var");
-                if (featureVar == null) {
-                    continue;
-                }
-
-                supportedNodesSet.add(featureVar);
-            }
-
-            for (String nodeID : supportedNodesSet) {
-                if (nodeID.endsWith("+notify")) {
-                    // Add the nodeID to the sender's filteredNodesSet.
-                    Set<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
-
-                    if (filteredNodesSet == null) {
-                        filteredNodesSet = new HashSet<String>();
-                        filteredNodesSet.add(nodeID);
-                        filteredNodesMap.put(jidFrom, filteredNodesSet);
-
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: Created filteredNodesSet for " + jidFrom);
-                            Log.debug("PEP: Added " + nodeID + " to " + jidFrom + "'s set of filtered nodes.");
-                        }
-                    }
-                    else {
-                        if (filteredNodesSet.add(nodeID)) {
-                            if (Log.isDebugEnabled()) {
-                                Log.debug("PEP: Added " + nodeID + " to " + jidFrom + "'s set of filtered nodes: ");
-                                Iterator tempIter = filteredNodesSet.iterator();
-                                while (tempIter.hasNext()) {
-                                    Log.debug("PEP: " + tempIter.next());
-                                }
-                            }
-                        }
-                    }
-
-                }
-                else {
-                    // Remove the nodeID from the sender's filteredNodesSet if nodeIDPlusNotify
-                    // is not in supportedNodesSet.
-                    Set<String> filteredNodesSet = filteredNodesMap.get(jidFrom);
-                    if (filteredNodesSet == null) {
-                        return;
-                    }
-
-                    String nodeIDPlusNotify = nodeID + "+notify";
-
-                    if (!supportedNodesSet.contains(nodeIDPlusNotify) && filteredNodesSet.remove(nodeIDPlusNotify)) {
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("PEP: Removed " + nodeIDPlusNotify + " from " + jidFrom + "'s set of filtered nodes: ");
-                            Iterator tempIter = filteredNodesSet.iterator();
-                            while (tempIter.hasNext()) {
-                                Log.debug("PEP: " + tempIter.next());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    */
 
     /**
      *  The following functions are unimplemented required interface methods.
@@ -755,12 +618,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing
-        
+
     }
 
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing
-        
+
     }
 
 }

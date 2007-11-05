@@ -19,7 +19,8 @@ import org.xmpp.packet.IQ;
 
 /**
  * <p>
- * An IQHandler used to implement XEP-0163: "Personal Eventing via Pubsub."
+ * An {@link IQHandler} used to implement XEP-0163: "Personal Eventing via Pubsub"
+ * Version 1.0
  * </p>
  * 
  * <p>

@@ -38,7 +38,7 @@
     boolean updateMember = request.getParameter("updateMember") != null;
     boolean update = request.getParameter("save") != null;
     boolean cancel = request.getParameter("cancel") != null;
-    String users = ParamUtils.getParameter(request, "users");
+    String username = ParamUtils.getParameter(request, "username");
     String [] adminIDs = ParamUtils.getParameters(request, "admin");
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String groupName = ParamUtils.getParameter(request, "group");
@@ -130,53 +130,50 @@
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
         return;
     }
-    else if (add && users != null) {
-        StringTokenizer tokenizer = new StringTokenizer(users, ", \t\n\r\f");
+    else if (add && username != null) {
         int count = 0;
-        while (tokenizer.hasMoreTokens()) {
-            String username = tokenizer.nextToken();
-            username = username.trim();
-            username = username.toLowerCase();
+        username = username.trim();
+        username = username.toLowerCase();
 
-            if(username.indexOf('@') != -1){
-                try {
-                    UserManager.getInstance().getUser(JID.escapeNode(username));
-                    // That means that this user has an email address as their node.
-                    username = JID.escapeNode(username);
-                }
-                catch (UserNotFoundException e) {
-
-                }
-            }
-
-            // Add to group as member by default.
+        if(username.indexOf('@') != -1){
             try {
-                boolean added;
-                if (username.indexOf('@') == -1) {
-                    // No @ was found so assume this is a JID of a local user
-                    username = Stringprep.nodeprep(username);
-                    UserManager.getInstance().getUser(username);
-                    added = group.getMembers().add(webManager.getXMPPServer().createJID(username, null));
-                }
-                else {
-                    // Admin entered a JID. Add the JID directly to the list of group members
-                    added = group.getMembers().add(new JID(username));
-                }
-
-                if (added) {
-                    count++;
-                }
-                else {
-                    errorBuf.append("<br>").append(
-                            LocaleUtils.getLocalizedString("group.edit.already_user", Arrays.asList(username)));
-                }
+                UserManager.getInstance().getUser(JID.escapeNode(username));
+                // That means that this user has an email address as their node.
+                username = JID.escapeNode(username);
+            }
+            catch (UserNotFoundException e) {
 
             }
-            catch (Exception e) {
-                Log.warn("Problem adding new user to existing group", e);
+        }
+
+        // Add to group as member by default.
+        try {
+            boolean added;
+            if (username.indexOf('@') == -1) {
+                // No @ was found so assume this is a JID of a local user
+                username = JID.escapeNode(username);
+                username = Stringprep.nodeprep(username);
+                UserManager.getInstance().getUser(username);
+                added = group.getMembers().add(webManager.getXMPPServer().createJID(username, null));
+            }
+            else {
+                // Admin entered a JID. Add the JID directly to the list of group members
+                added = group.getMembers().add(new JID(username));
+            }
+
+            if (added) {
+                count++;
+            }
+            else {
                 errorBuf.append("<br>").append(
-                        LocaleUtils.getLocalizedString("group.edit.inexistent_user", Arrays.asList(username)));
+                        LocaleUtils.getLocalizedString("group.edit.already_user", Arrays.asList(username)));
             }
+
+        }
+        catch (Exception e) {
+            Log.warn("Problem adding new user to existing group", e);
+            errorBuf.append("<br>").append(
+                    LocaleUtils.getLocalizedString("group.edit.inexistent_user", Arrays.asList(username)));
         }
         if (count > 0) {
             response.sendRedirect("group-edit.jsp?group=" +
@@ -189,7 +186,7 @@
         }
 
     }
-    else if(add && users == null){
+    else if(add && username == null){
         add = false;
     }
     else if (delete) {
@@ -456,7 +453,7 @@
                     <fmt:message key="group.edit.add_user" />
                 </td>
                 <td nowrap class="c1" align="left">
-                    <input type="text" size="45" name="users"/>
+                    <input type="text" size="45" name="username"/>
                     &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
                 </td>
             </tr>

@@ -8,14 +8,20 @@
   - Use is subject to license terms.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.openfire.muc.*,
-                 org.xmpp.packet.IQ,
-                 org.dom4j.Element,
-                 java.net.URLEncoder"
+<%@ page import="org.dom4j.Element,
+                 org.jivesoftware.openfire.muc.ConflictException,
+                 org.jivesoftware.openfire.muc.MUCRoom,
+                 org.jivesoftware.openfire.muc.NotAllowedException,
+                 org.jivesoftware.util.ParamUtils,
+                 org.xmpp.packet.IQ"
     errorPage="error.jsp"
 %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -51,6 +57,10 @@
 
         if (errors.size() == 0) {
             try {
+                // Escape username
+                String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
+                String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                userJID = username + rest;
                 IQ iq = new IQ(IQ.Type.set);
                 if ("owner".equals(affiliation) || "admin".equals(affiliation)) {
                     Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");
@@ -207,11 +217,15 @@
                 ArrayList<String> owners = new ArrayList<String>(room.getOwners());
                 Collections.sort(owners);
                 for (String user : owners) {
+                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                    String rest = user.substring(user.indexOf('@'), user.length());
+                    String userDisplay = username + rest;
+
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= user %>
+                    <%= userDisplay %>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=owner"
@@ -237,11 +251,14 @@
                 ArrayList<String> admins = new ArrayList<String>(room.getAdmins());
                 Collections.sort(admins);
                 for (String user : admins) {
+                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                    String rest = user.substring(user.indexOf('@'), user.length());
+                    String userDisplay = username + rest;
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= user %>
+                    <%= userDisplay %>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=admin"
@@ -267,13 +284,17 @@
                 ArrayList<String> members = new ArrayList<String>(room.getMembers());
                 Collections.sort(members);
                 for (String user : members) {
+                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                    String rest = user.substring(user.indexOf('@'), user.length());
+                    String userDisplay = username + rest;
+
                     String nickname = room.getReservedNickname(user);
                     nickname = (nickname == null ? "" : " (" + nickname + ")");
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= user %><%=  nickname %>
+                    <%= userDisplay %><%=  nickname %>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=member"
@@ -299,11 +320,14 @@
                 ArrayList<String> outcasts = new ArrayList<String>(room.getOutcasts());
                 Collections.sort(outcasts);
                 for (String user : outcasts) {
+                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                    String rest = user.substring(user.indexOf('@'), user.length());
+                    String userDisplay = username + rest;
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= user %>
+                    <%= userDisplay %>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=outcast"

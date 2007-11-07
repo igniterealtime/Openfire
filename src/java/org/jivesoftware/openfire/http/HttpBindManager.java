@@ -338,6 +338,37 @@ public final class HttpBindManager {
         return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, HTTP_BIND_SECURE_PORT_DEFAULT);
     }
 
+    /**
+     * Returns true if script syntax is enabled. Script syntax allows BOSH to be used in
+     * environments where clients may be restricted to using a particular server. Instead of using
+     * standard HTTP Post requests to transmit data,  HTTP Get requests are used.
+     *
+     * @return true if script syntax is enabled.
+     * @see <a href="http://www.xmpp.org/extensions/xep-0124.html#script">BOSH: Alternative Script
+     * Syntax</a>
+     */
+    public boolean isScriptSyntaxEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.httpbind.scriptSyntax.enabled", false);
+    }
+
+    /**
+     * Enables or disables script syntax.
+     *
+     * @param isEnabled true to enable script syntax and false to disable it.
+     * @see #isScriptSyntaxEnabled()
+     * @see <a href="http://www.xmpp.org/extensions/xep-0124.html#script">BOSH: Alternative Script
+     * Syntax</a>
+     */
+    public void setScriptSyntaxEnabled(boolean isEnabled) {
+        final String property = "xmpp.httpbind.scriptSyntax.enabled";
+        if(!isEnabled) {
+            JiveGlobals.deleteProperty(property);
+        }
+        else {
+            JiveGlobals.setProperty(property, String.valueOf(isEnabled));
+        }
+    }
+
     private void setUnsecureHttpBindPort(int value) {
         if (value == bindPort) {
             return;

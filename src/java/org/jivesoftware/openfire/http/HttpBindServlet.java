@@ -13,7 +13,6 @@ package org.jivesoftware.openfire.http;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.dom4j.io.XMPPPacketReader;
@@ -45,6 +44,7 @@ import java.net.URLDecoder;
  */
 public class HttpBindServlet extends HttpServlet {
     private HttpSessionManager sessionManager;
+    private HttpBindManager boshManager;
 
     private static XmlPullParserFactory factory;
 
@@ -66,7 +66,8 @@ public class HttpBindServlet extends HttpServlet {
     @Override
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
-        sessionManager = HttpBindManager.getInstance().getSessionManager();
+        boshManager = HttpBindManager.getInstance();
+        sessionManager = boshManager.getSessionManager();
         sessionManager.start();
     }
 
@@ -81,8 +82,8 @@ public class HttpBindServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
-        boolean isScriptSyntaxEnabled =
-                JiveGlobals.getBooleanProperty("xmpp.httpbind.scriptSyntax.enabled", false);
+        boolean isScriptSyntaxEnabled = boshManager.isScriptSyntaxEnabled();
+                
         if(!isScriptSyntaxEnabled) {
             sendLegacyError(response, BoshBindingError.itemNotFound);
             return;
@@ -302,6 +303,7 @@ public class HttpBindServlet extends HttpServlet {
         byte[] byteContent = content.getBytes("utf-8");
         response.setContentLength(byteContent.length);
         response.getOutputStream().write(byteContent);
+        response.getOutputStream().close();
     }
 
     private static String createEmptyBody() {

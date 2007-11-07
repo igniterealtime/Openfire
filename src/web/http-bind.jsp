@@ -20,10 +20,13 @@
 
     Map<String, String> handleUpdate(HttpServletRequest request) {
         Map<String, String> errorMap = new HashMap<String, String>();
-        boolean isEnabled = ParamUtils.getBooleanParameter(request, "httpBindEnabled");
+        boolean isEnabled = ParamUtils.getBooleanParameter(request, "httpBindEnabled",
+                serverManager.isHttpBindEnabled());
         if (isEnabled) {
-            int requestedPort = ParamUtils.getIntParameter(request, "port", -1);
-            int requestedSecurePort = ParamUtils.getIntParameter(request, "securePort", -1);
+            int requestedPort = ParamUtils.getIntParameter(request, "port",
+                    serverManager.getHttpBindUnsecurePort());
+            int requestedSecurePort = ParamUtils.getIntParameter(request, "securePort",
+                    serverManager.getHttpBindSecurePort());
             try {
                 serverManager.setHttpBindPorts(requestedPort, requestedSecurePort);
             }
@@ -31,6 +34,9 @@
                 Log.error("An error has occured configuring the HTTP binding ports", e);
                 errorMap.put("port", e.getMessage());
             }
+            boolean isScriptSyntaxEnabled = ParamUtils.getBooleanParameter(request,
+                    "scriptSyntaxEnabled", serverManager.isScriptSyntaxEnabled());
+            serverManager.setScriptSyntaxEnabled(isScriptSyntaxEnabled);
         }
         if (errorMap.size() <= 0) {
             serverManager.setHttpBindEnabled(isEnabled);
@@ -48,6 +54,7 @@
     boolean isHttpBindEnabled = serverManager.isHttpBindEnabled();
     int port = serverManager.getHttpBindUnsecurePort();
     int securePort = serverManager.getHttpBindSecurePort();
+    boolean isScriptSyntaxEnabled = serverManager.isScriptSyntaxEnabled();
 %>
 <html>
 <head>
@@ -60,6 +67,8 @@
         var setEnabled = function() {
             $("port").disabled = !enabled
             $("securePort").disabled = !enabled;
+            $("rb03").disabled = !enabled
+            $("rb04").disabled = !enabled
         }
         window.onload = setTimeout("setEnabled()", 500);
     </script>
@@ -141,6 +150,35 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+    <div class="jive-contentBoxHeader">Script Syntax</div>
+    <div class="jive-contentbox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="scriptSyntaxEnabled" value="true" id="rb03"
+					 <%= (isScriptSyntaxEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb03">
+					<b><fmt:message key="httpbind.settings.script.label_enable" /></b> - <fmt:message key="httpbind.settings.script.label_enable_info" />
+					</label>
+				</td>
+			</tr>
+            <tr valign="middle">
+				<td width="1%" nowrap>
+					<input type="radio" name="scriptSyntaxEnabled" value="false" id="rb04"
+					 <%= (!isScriptSyntaxEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb04">
+					<b><fmt:message key="httpbind.settings.script.label_disable" /></b> - <fmt:message key="httpbind.settings.script.label_disable_info" />
+					</label>
+				</td>
+			</tr>
+		</tbody>
+		</table>
     </div>
     <input type="submit" id="settingsUpdate" name="update"
                value="<fmt:message key="global.save_settings" />">

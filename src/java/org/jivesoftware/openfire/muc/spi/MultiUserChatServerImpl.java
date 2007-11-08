@@ -619,6 +619,17 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
         return user;
     }
 
+    public Collection<MUCRole> getMUCRoles(JID user) {
+        List<MUCRole> userRoles = new ArrayList<MUCRole>();
+        for (LocalMUCRoom room : rooms.values()) {
+            MUCRole role = room.getOccupantByFullJID(user);
+            if (role != null) {
+                userRoles.add(role);
+            }
+        }
+        return userRoles;
+    }
+
     public void setServiceName(String name) {
         JiveGlobals.setProperty("xmpp.muc.service", name);
     }

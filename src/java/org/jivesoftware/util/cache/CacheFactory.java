@@ -204,6 +204,8 @@ public class CacheFactory {
                     clusteredCacheFactoryClass, true,
                     getClusteredCacheStrategyClassLoader("enterprise")).newInstance();
             return cacheFactory.getMaxClusterNodes();
+        } catch (ClassNotFoundException e) {
+            // Do nothing
         } catch (Exception e) {
             Log.error("Error instantiating clustered cache factory", e);
         }
@@ -283,7 +285,7 @@ public class CacheFactory {
             return pluginLoader;
         }
         else {
-            Log.warn("Unable to find PluginClassloader for plugin: " + pluginName + " in CacheFactory.");
+            Log.debug("Unable to find PluginClassloader for plugin: " + pluginName + " in CacheFactory.");
             return Thread.currentThread().getContextClassLoader();
         }
     }

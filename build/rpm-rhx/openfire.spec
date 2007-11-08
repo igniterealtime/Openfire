@@ -1,9 +1,9 @@
 Summary: Openfire XMPP Server
 Name: openfire
-Version: 3.3.1
+Version: 3.4.1
 Release: 1
 BuildRoot: %{_builddir}/%{name}-root
-Source0: %{name}_src_3_3_1.tar.gz
+Source0: %{name}_src_3_4_1.tar.gz
 Group: Applications/Communications
 Vendor: Jive Software
 Packager: Jive Software
@@ -126,5 +126,8 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/sysconfig/openfire
 
 %changelog
+* Thu Nov 08 2007 Daniel Henninger <jadestorm@nc.rr.com> 3.4.1-1
+- Updated to version 3.4.1.
+
 * Mon Apr 30 2007 Daniel Henninger <jadestorm@nc.rr.com> 3.3.1-1
 - Initial RPM creation.

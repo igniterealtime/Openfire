@@ -72,11 +72,11 @@ public class SipAccountDAO {
 			String server = rs.getString("sipserver");
 			String stunServer = rs.getString("stunserver");
 			String stunPort = rs.getString("stunport");
-			boolean useStun = rs.getBoolean("usestun");
-			boolean enabled = rs.getBoolean("enabled");
+			boolean useStun = rs.getInt("usestun") == 1;
+			boolean enabled = rs.getInt("enabled") == 1;
             String voicemail = rs.getString("voicemail");
             String outboundproxy = rs.getString("outboundproxy");
-            boolean promptCredentials = rs.getBoolean("promptCredentials");
+            boolean promptCredentials = rs.getInt("promptCredentials") == 1;
             SipRegisterStatus status = SipRegisterStatus.valueOf(rs.getString("status"));
 			sipAccount = new SipAccount(username);
 
@@ -118,14 +118,14 @@ public class SipAccountDAO {
 			psmt.setString(4, sipAccount.getDisplayName());
 			psmt.setString(5, sipAccount.getPassword());
 			psmt.setString(6, sipAccount.getServer());
-			psmt.setBoolean(7, sipAccount.isEnabled());
+			psmt.setInt(7, sipAccount.isEnabled() ? 1 : 0);
 			psmt.setString(8, sipAccount.getStatus().name());
 			psmt.setString(9, sipAccount.getStunServer());
 			psmt.setString(10, sipAccount.getStunPort());
-			psmt.setBoolean(11, sipAccount.isUseStun());
+			psmt.setInt(11, sipAccount.isUseStun() ? 1 : 0);
             psmt.setString(12, sipAccount.getVoiceMailNumber());
             psmt.setString(13, sipAccount.getOutboundproxy());
-            psmt.setBoolean(14, sipAccount.isPromptCredentials());
+            psmt.setInt(14, sipAccount.isPromptCredentials() ? 1 : 0);
             psmt.executeUpdate();
 
 		} catch (SQLException e) {
@@ -154,14 +154,14 @@ public class SipAccountDAO {
 			psmt.setString(3, sipAccount.getDisplayName());
 			psmt.setString(4, sipAccount.getPassword());
 			psmt.setString(5, sipAccount.getServer());
-			psmt.setBoolean(6, sipAccount.isEnabled());
+			psmt.setInt(6, sipAccount.isEnabled() ? 1 : 0);
 			psmt.setString(7, sipAccount.getStatus().name());
 			psmt.setString(8, sipAccount.getStunServer());
 			psmt.setString(9, sipAccount.getStunPort());
-			psmt.setBoolean(10, sipAccount.isUseStun());
+			psmt.setInt(10, sipAccount.isUseStun() ? 1 : 0);
             psmt.setString(11, sipAccount.getVoiceMailNumber());
             psmt.setString(12, sipAccount.getOutboundproxy());
-            psmt.setBoolean(13, sipAccount.isPromptCredentials());
+            psmt.setInt(13, sipAccount.isPromptCredentials() ? 1 : 0);
             psmt.setString(14, sipAccount.getUsername());
 
             psmt.executeUpdate();

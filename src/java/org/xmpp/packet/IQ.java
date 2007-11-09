@@ -124,6 +124,26 @@ public class IQ extends Packet {
     }
 
     /**
+     * Convenience routine to indicate if this is a request stanza. (get or set)
+     *
+     * @return True or false if this is a request stanza
+     */
+    public boolean isRequest() {
+        Type type = getType();
+        return (type != null && (type.equals(Type.get) || type.equals(Type.set)));
+    }
+
+    /**
+     * Convenience routine to indicate if this is a response stanza. (result or error)
+     *
+     * @return True or false if this is a response stanza
+     */
+    public boolean isResponse() {
+        Type type = getType();
+        return (type != null && (type.equals(Type.result) || type.equals(Type.error)));
+    }
+
+    /**
      * Returns the child element of this IQ. IQ packets may have a single child
      * element in an extended namespace. This is a convenience method to
      * avoid manipulating the underlying packet's Element instance directly.<p>

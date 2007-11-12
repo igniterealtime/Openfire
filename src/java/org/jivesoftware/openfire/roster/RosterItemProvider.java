@@ -88,9 +88,8 @@ public class RosterItemProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            con = DbConnectionManager.getConnection();
-
             long rosterID = SequenceManager.nextID(JiveConstants.ROSTER);
+            con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM);
             pstmt.setString(1, username);
             pstmt.setLong(2, rosterID);

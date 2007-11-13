@@ -1,13 +1,19 @@
 /**
- * $Revision$
- * $Date$
+ * $RCSfile$
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 1999-2007 Jive Software. All rights reserved.
- * This software is the proprietary information of Jive Software. Use is subject to license terms.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
+import org.jivesoftware.openfire.container.CacheInfo;
+import org.jivesoftware.openfire.container.PluginCacheRegistry;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -161,7 +167,16 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         if (propname == null) {
             propname = name;
         }
-        return new DefaultCache(name, getMaxSizeFromProperty(propname), getMaxLifetimeFromProperty(propname));
+        // Check if there is a cache configuration. If not check for system properties to configure cache
+        CacheInfo cacheInfo = PluginCacheRegistry.getCacheInfo(name);
+        long maxSizeFromProperty = cacheInfo != null ? getMaxSizeFromProperty(cacheInfo) : getMaxSizeFromProperty(propname);
+        long lifetimeFromProperty = cacheInfo != null ? getMaxLifetimeFromProperty(cacheInfo) : getMaxLifetimeFromProperty(propname);
+        // Create cache with located properties
+        return new DefaultCache(name, maxSizeFromProperty, lifetimeFromProperty);
+    }
+
+    public void destroyCache(Cache cache) {
+        cache.clear();
     }
 
     public boolean isSeniorClusterMember() {
@@ -253,6 +268,23 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return defaultSize == null ? DEFAULT_MAX_CACHE_SIZE : defaultSize;
     }
 
+    private static long getMaxSizeFromProperty(CacheInfo cacheInfo) {
+        String sizeProp = cacheInfo.getParams().get("back-size-high");
+        if (sizeProp != null) {
+            if ("0".equals(sizeProp)) {
+                return -1l;
+            }
+            try {
+                return Integer.parseInt(sizeProp);
+            }
+            catch (NumberFormatException nfe) {
+                Log.warn("Unable to parse back-size-high for cache: " + cacheInfo.getCacheName());
+            }
+        }
+        // Return default
+        return DEFAULT_MAX_CACHE_SIZE;
+    }
+
      /**
      * If a local property is found for the supplied name which specifies a value for cache entry lifetime, it
       * is returned. Otherwise, the defaultLifetime argument is returned.
@@ -274,5 +306,32 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
          // Check if there is a default lifetime value for this cache
          Long defaultLifetime = cacheProps.get(propName);
          return defaultLifetime == null ? DEFAULT_MAX_CACHE_LIFETIME : defaultLifetime;
+    }
+
+    private static long getMaxLifetimeFromProperty(CacheInfo cacheInfo) {
+        String lifetimeProp = cacheInfo.getParams().get("back-size-high");
+        if (lifetimeProp != null) {
+            if ("0".equals(lifetimeProp)) {
+                return -1l;
+            }
+            long factor = 1;
+            if (lifetimeProp.endsWith("m")) {
+                factor = JiveConstants.MINUTE;
+            }
+            else if (lifetimeProp.endsWith("h")) {
+                factor = JiveConstants.HOUR;
+            }
+            else if (lifetimeProp.endsWith("d")) {
+                factor = JiveConstants.DAY;
+            }
+            try {
+                return Long.parseLong(lifetimeProp.substring(0, lifetimeProp.length()-1)) * factor;
+            }
+            catch (NumberFormatException nfe) {
+                Log.warn("Unable to parse back-size-high for cache: " + cacheInfo.getCacheName());
+            }
+        }
+        // Return default
+        return DEFAULT_MAX_CACHE_LIFETIME;
     }
 }

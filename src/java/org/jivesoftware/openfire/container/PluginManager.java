@@ -306,7 +306,7 @@ public class PluginManager {
                         // See if the parent plugin exists but just hasn't been loaded yet.
                         // This can only be the case if this plugin name is alphabetically before
                         // the parent.
-                        if (pluginDir.getName().compareTo(parentPlugin) < 0) {
+                        if (pluginName.compareTo(parentPlugin) < 0) {
                             // See if the parent exists.
                             File file = new File(pluginDir.getParentFile(), parentPlugin + ".jar");
                             if (file.exists()) {
@@ -322,7 +322,7 @@ public class PluginManager {
                                     return;
                                 }
                                 else {
-                                    String msg = "Ignoring plugin " + pluginDir.getName() + ": parent plugin " +
+                                    String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
                                         parentPlugin + " not present.";
                                     Log.warn(msg);
                                     System.out.println(msg);
@@ -331,7 +331,7 @@ public class PluginManager {
                             }
                         }
                         else {
-                            String msg = "Ignoring plugin " + pluginDir.getName() + ": parent plugin " +
+                            String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
                                 parentPlugin + " not present.";
                             Log.warn(msg);
                             System.out.println(msg);
@@ -391,8 +391,7 @@ public class PluginManager {
                     }
                 }
 
-
-                plugins.put(pluginDir.getName(), plugin);
+                plugins.put(pluginName, plugin);
                 pluginDirs.put(plugin, pluginDir);
 
                 // If this is a child plugin, register it as such.
@@ -403,7 +402,7 @@ public class PluginManager {
                         childrenPlugins = new ArrayList<String>();
                         parentPluginMap.put(plugins.get(parentPlugin), childrenPlugins);
                     }
-                    childrenPlugins.add(pluginDir.getName());
+                    childrenPlugins.add(pluginName);
                     // Also register child to parent relationship.
                     childPluginMap.put(plugin, parentPlugin);
                 }
@@ -438,6 +437,9 @@ public class PluginManager {
                 if (dev != null) {
                     pluginDevelopment.put(plugin, dev);
                 }
+
+                // Configure caches of the plugin
+                configureCaches(pluginDir, pluginName);
 
                 // Init the plugin.
                 ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
@@ -494,7 +496,7 @@ public class PluginManager {
 
                     AdminConsole.addModel(pluginName, adminElement);
                 }
-                firePluginCreatedEvent(pluginDir.getName(), plugin);
+                firePluginCreatedEvent(pluginName, plugin);
             }
             else {
                 Log.warn("Plugin " + pluginDir + " could not be loaded: no plugin.xml file found");
@@ -502,6 +504,20 @@ public class PluginManager {
         }
         catch (Throwable e) {
             Log.error("Error loading plugin: " + pluginDir, e);
+        }
+    }
+
+    private void configureCaches(File pluginDir, String pluginName) {
+        File cacheConfig = new File(pluginDir, "cache-config.xml");
+        if (cacheConfig.exists()) {
+            PluginCacheConfigurator configurator = new PluginCacheConfigurator();
+            try {
+                configurator.setInputStream(new BufferedInputStream(new FileInputStream(cacheConfig)));
+                configurator.configure(pluginName);
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
     }
 
@@ -593,6 +609,9 @@ public class PluginManager {
         }
 
         if (plugin != null && !dir.exists()) {
+            // Unregister plugin caches
+            PluginCacheRegistry.unregisterCaches(pluginName);
+
             plugins.remove(pluginName);
             pluginDirs.remove(plugin);
             classloaders.remove(plugin);

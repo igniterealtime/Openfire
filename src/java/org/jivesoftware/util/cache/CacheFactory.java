@@ -93,6 +93,18 @@ public class CacheFactory {
         return wrapCache(cache, name);
     }
 
+    /**
+     * Destroys the cache for the cache name specified.
+     *
+     * @param name the name of the cache to destroy.
+     */
+    public static void destroyCache(String name) {
+        Cache cache = caches.remove(name);
+        if (cache != null) {
+            cacheFactoryStrategy.destroyCache(cache);
+        }
+    }
+
     public static void lockKey(Object key, long timeout) {
         cacheFactoryStrategy.lockKey(key, timeout);
     }

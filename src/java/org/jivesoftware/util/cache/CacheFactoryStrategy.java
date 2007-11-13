@@ -47,6 +47,13 @@ public interface CacheFactoryStrategy {
     Cache createCache(String name);
 
     /**
+     * Destroys the supplied cache.
+     *
+     * @param cache the cache to destroy.
+     */
+    void destroyCache(Cache cache);
+
+    /**
      * Returns true if this node is the maste node of the cluster. When not running
      * in cluster mode a value of true should be returned.
      *

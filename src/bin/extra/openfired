@@ -47,7 +47,7 @@ if [ ! $OPENFIRE_HOME ]; then
 fi
 
 
-function execCommand() {
+execCommand() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_HOME/bin
 	CMD="./openfire.sh $1"

@@ -5,8 +5,8 @@
     <name>SIP Phone Plugin</name>
     <description>Provides support for SIP account management</description>
     <author>Ignite Realtime</author>
-    <version>1.0.1</version>
-    <date>11/9/2007</date>
+    <version>1.0.2</version>
+    <date>11/13/2007</date>
     <databaseKey>sip</databaseKey>
     <databaseVersion>1</databaseVersion>
     <minServerVersion>3.3.0</minServerVersion>

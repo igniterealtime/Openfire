@@ -81,7 +81,7 @@ public class SIPConfig {
 
     private static String retransmissionFilter = "";
 
-    private static String routerPath = "com.jivesoftware.openfire.enterprise.sip.tester.stack.SipCommRouter";
+    private static String routerPath = "org.jivesoftware.openfire.sip.tester.stack.SipCommRouter";
 
     private static String stackName = "SIPark";
 

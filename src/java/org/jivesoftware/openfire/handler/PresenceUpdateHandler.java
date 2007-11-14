@@ -444,8 +444,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     for (String receiver : directedPresence.getReceivers()) {
                         Presence presence = update.createCopy();
                         presence.setTo(receiver);
-                        routingTable.routePacket(directedPresence.getHandler(), presence, false);
-
+                        localServer.getPresenceRouter().route(presence);
                     }
                 }
                 localDirectedPresences.remove(from.toString());

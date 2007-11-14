@@ -147,9 +147,9 @@ public class PresenceRouter extends BasicModule {
                         }
                     }
                     
-                    // Check that sender session is still active
+                    // Check that sender session is still active (let unavailable presence go through)
                     Session session = sessionManager.getSession(packet.getFrom());
-                    if (session != null && session.getStatus() == Session.STATUS_CLOSED) {
+                    if (session != null && session.getStatus() == Session.STATUS_CLOSED && type == null) {
                         Log.warn("Rejected available presence: " + packet + " - " + session);
                         return;
                     }

@@ -11,15 +11,15 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.dom4j.io.SAXReader;
 import org.dom4j.Document;
-import org.dom4j.Node;
 import org.dom4j.DocumentException;
+import org.dom4j.Node;
+import org.dom4j.io.SAXReader;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * A helper class to read cache configuration data for a plugin and register the defined caches with
@@ -82,12 +82,12 @@ public class PluginCacheConfigurator {
 
         Map<String, String> initParams = readInitParams(configData);
         CacheInfo info = new CacheInfo(cacheName, CacheInfo.Type.valueof(schemeName), initParams);
-        PluginCacheRegistry.registerCache(pluginName, info);
+        PluginCacheRegistry.getInstance().registerCache(pluginName, info);
     }
 
     private Map<String, String> readInitParams(Node configData) {
         Map<String, String> paramMap = new HashMap<String, String>();
-        List<Node> params = configData.selectNodes("//init-param");
+        List<Node> params = configData.selectNodes("init-params/init-param");
         for (Node param : params) {
             String paramName = param.selectSingleNode("param-name").getStringValue();
             String paramValue = param.selectSingleNode("param-value").getStringValue();

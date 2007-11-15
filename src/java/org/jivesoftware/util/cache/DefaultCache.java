@@ -484,7 +484,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      */
     public void setMaxCacheSize(int maxCacheSize) {
         this.maxCacheSize = maxCacheSize;
-        DefaultLocalCacheStrategy.setMaxSizeProperty(name, maxCacheSize);
+        CacheFactory.setMaxSizeProperty(name, maxCacheSize);
         // It's possible that the new max size is smaller than our current cache
         // size. If so, we need to delete infrequently used items.
         cullCache();
@@ -512,7 +512,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      */
     public void setMaxLifetime(long maxLifetime) {
         this.maxLifetime = maxLifetime;
-        DefaultLocalCacheStrategy.setMaxLifetimeProperty(name, maxLifetime);
+        CacheFactory.setMaxLifetimeProperty(name, maxLifetime);
     }
 
     /**

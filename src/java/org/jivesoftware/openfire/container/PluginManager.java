@@ -610,7 +610,7 @@ public class PluginManager {
 
         if (plugin != null && !dir.exists()) {
             // Unregister plugin caches
-            PluginCacheRegistry.unregisterCaches(pluginName);
+            PluginCacheRegistry.getInstance().unregisterCaches(pluginName);
 
             plugins.remove(pluginName);
             pluginDirs.remove(plugin);

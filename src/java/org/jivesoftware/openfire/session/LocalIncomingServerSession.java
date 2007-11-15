@@ -100,7 +100,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
                 ServerDialback method = new ServerDialback(connection, serverName);
                 return method.createIncomingSession(reader);
             }
-            Log.debug("Server dialback is disabled. Rejecting connection: " + connection);
+            Log.debug("LocalIncomingServerSession: Server dialback is disabled. Rejecting connection: " + connection);
         }
         String version = xpp.getAttributeValue("", "version");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
@@ -117,7 +117,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
             else {
                 connection.deliverRawText(
                         new StreamError(StreamError.Condition.invalid_namespace).toXML());
-                Log.debug("Server TLS is disabled. Rejecting connection: " + connection);
+                Log.debug("LocalIncomingServerSession: Server TLS is disabled. Rejecting connection: " + connection);
             }
         }
         // Close the connection since remote server is not XMPP 1.0 compliant and is not

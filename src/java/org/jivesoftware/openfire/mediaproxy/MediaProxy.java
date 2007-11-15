@@ -158,7 +158,7 @@ public class MediaProxy implements SessionListener {
         MediaProxySession proxySession = sessions.get(sid);
         if (proxySession != null) {
             if (Log.isDebugEnabled()) {
-                Log.debug("SID: " + sid + " agentSID: " + proxySession.getSID());
+                Log.debug("MediaProxy: SID: " + sid + " agentSID: " + proxySession.getSID());
                 return proxySession;
             }
         }
@@ -174,7 +174,7 @@ public class MediaProxy implements SessionListener {
     public void sessionClosed(MediaProxySession session) {
         sessions.remove(session.getSID());
         if (Log.isDebugEnabled()) {
-            Log.debug("Session: " + session.getSID() + " removed.");
+            Log.debug("MediaProxy: Session: " + session.getSID() + " removed.");
         }
     }
 

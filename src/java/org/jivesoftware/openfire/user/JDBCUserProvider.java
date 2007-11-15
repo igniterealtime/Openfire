@@ -169,7 +169,7 @@ public class JDBCUserProvider implements UserProvider {
 			// to load the entire result set into memory.
 			DbConnectionManager.setFetchSize(rs, 500);
 			while (rs.next()) {
-				Log.debug(rs.getString(1));
+				Log.debug("JDBCUserProvider: "+rs.getString(1));
 				usernames.add(rs.getString(1));
 			}
 		}
@@ -195,7 +195,7 @@ public class JDBCUserProvider implements UserProvider {
 			DbConnectionManager.scrollResultSet(rs, startIndex);
 			int count = 0;
 			while (rs.next() && count < numResults) {
-				Log.debug(rs.getString(1));
+				Log.debug("JDBCUserProvider: "+rs.getString(1));
 				usernames.add(rs.getString(1));
 				count++;
 			}
@@ -300,7 +300,7 @@ public class JDBCUserProvider implements UserProvider {
 						.append(" LIKE '")
 						.append(StringUtils.escapeForSQL(query)).append("'");
 			}
-			Log.debug(sql.toString());
+			Log.debug("JDBCUserProvider: "+sql.toString());
 			rs = stmt.executeQuery(sql.toString());
 			while (rs.next()) {
 				usernames.add(rs.getString(1));
@@ -375,7 +375,7 @@ public class JDBCUserProvider implements UserProvider {
 						.append(" LIKE '")
 						.append(StringUtils.escapeForSQL(query)).append("'");
 			}
-			Log.debug(sql.toString());
+			Log.debug("JDBCUserProvider: "+sql.toString());
 			rs = stmt.executeQuery(sql.toString());
 			// Scroll to the start index.
 			DbConnectionManager.scrollResultSet(rs, startIndex);

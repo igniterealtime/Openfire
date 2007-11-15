@@ -272,7 +272,7 @@ public class ClusterManager {
         // Reset packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
         if (isClusteringStarted()) {
-            Log.debug("Shutting down clustered cache service.");
+            Log.debug("ClusterManager: Shutting down clustered cache service.");
             CacheFactory.stopClustering();
         }
         // Reset the session locator to use

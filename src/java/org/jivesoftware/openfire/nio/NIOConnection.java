@@ -221,7 +221,7 @@ public class NIOConnection implements Connection {
                 ioSession.write(buffer);
             }
             catch (Exception e) {
-                Log.debug("Error delivering packet" + "\n" + this.toString(), e);
+                Log.debug("NIOConnection: Error delivering packet" + "\n" + this.toString(), e);
                 errorDelivering = true;
             }
             if (errorDelivering) {
@@ -268,7 +268,7 @@ public class NIOConnection implements Connection {
                 }
             }
             catch (Exception e) {
-                Log.debug("Error delivering raw text" + "\n" + this.toString(), e);
+                Log.debug("NIOConnection: Error delivering raw text" + "\n" + this.toString(), e);
                 errorDelivering = true;
             }
             // Close the connection if delivering text fails and we are already not closing the connection

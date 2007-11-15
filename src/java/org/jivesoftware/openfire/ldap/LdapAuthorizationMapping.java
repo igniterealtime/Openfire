@@ -77,7 +77,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
         String username = principal;
         DirContext ctx = null;
         try {
-            Log.debug("Starting LDAP search...");
+            Log.debug("LdapAuthorizationMapping: Starting LDAP search...");
             String usernameField = manager.getUsernameField();
             String baseDN = manager.getBaseDN();
             boolean subTreeSearch = manager.isSubTreeSearch();
@@ -95,9 +95,9 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
 
             NamingEnumeration answer = ctx.search("", princSearchFilter, new String[] {principal},
                     constraints);
-            Log.debug("... search finished");
+            Log.debug("LdapAuthorizationMapping: ... search finished");
             if (answer == null || !answer.hasMoreElements()) {
-                Log.debug("Username based on principal '" + principal + "' not found.");
+                Log.debug("LdapAuthorizationMapping: Username based on principal '" + principal + "' not found.");
                 return principal;
             }
             Attributes atrs = ((SearchResult)answer.next()).getAttributes();

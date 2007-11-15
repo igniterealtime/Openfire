@@ -108,7 +108,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             throw new ComponentException("Domain (" + subdomain +
                     ") already taken by another component: " + existingComponent);
         }
-        Log.debug("Registering component for domain: " + subdomain);
+        Log.debug("InternalComponentManager: Registering component for domain: " + subdomain);
         // Register that the domain is now taken by the component
         components.put(subdomain, component);
 
@@ -133,7 +133,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             // Send a disco#info request to the new component. If the component provides information
             // then it will be added to the list of discoverable server items.
             checkDiscoSupport(component, componentJID);
-            Log.debug("Component registered for domain: " + subdomain);
+            Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
         }
         catch (Exception e) {
             // Unregister the componet's domain
@@ -151,7 +151,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     public void removeComponent(String subdomain) {
-        Log.debug("Unregistering component for domain: " + subdomain);
+        Log.debug("InternalComponentManager: Unregistering component for domain: " + subdomain);
         Component component = components.remove(subdomain);
         // Remove any info stored with the component being removed
         componentInfo.remove(subdomain);
@@ -179,7 +179,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         for (ComponentEventListener listener : listeners) {
             listener.componentUnregistered(component, componentJID);
         }
-        Log.debug("Component unregistered for domain: " + subdomain);
+        Log.debug("InternalComponentManager: Component unregistered for domain: " + subdomain);
     }
 
     public void sendPacket(Component component, Packet packet) {
@@ -315,7 +315,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             }
 
             public void debug(String msg) {
-                Log.debug(msg);
+                Log.debug("InternalComponentManager: "+msg);
             }
 
             public void debug(String msg, Throwable throwable) {
@@ -323,7 +323,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             }
 
             public void debug(Throwable throwable) {
-                Log.debug(throwable);
+                Log.debug("InternalComponentManager: ",throwable);
             }
         };
     }

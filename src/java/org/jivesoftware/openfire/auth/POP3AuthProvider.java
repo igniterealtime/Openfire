@@ -99,7 +99,7 @@ public class POP3AuthProvider implements AuthProvider {
         port = JiveGlobals.getXMLProperty("pop3.port", useSSL ? 995 : 110);
 
         if (Log.isDebugEnabled()) {
-            Log.debug("Created new POP3AuthProvider instance, fields:");
+            Log.debug("POP3AuthProvider: Created new POP3AuthProvider instance, fields:");
             Log.debug("\t host: " + host);
             Log.debug("\t port: " + port);
             Log.debug("\t domain: " + domain);
@@ -188,7 +188,7 @@ public class POP3AuthProvider implements AuthProvider {
         catch (UserNotFoundException unfe) {
             String email = username + "@" + (domain!=null?domain:host);
             try {
-                Log.debug("Automatically creating new user account for " + username);
+                Log.debug("POP3AuthProvider: Automatically creating new user account for " + username);
                 // Create user; use a random password for better safety in the future.
                 // Note that we have to go to the user provider directly -- because the
                 // provider is read-only, UserManager will usually deny access to createUser.

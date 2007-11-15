@@ -108,7 +108,7 @@ public class OutgoingServerSocketReader {
                         else {
                             message = message + "No session to close.";
                         }
-                        Log.debug(message, e);
+                        Log.debug("OutgoingServerSocketReader: "+message, e);
                         closeSession();
                     }
                     catch (Exception e) {

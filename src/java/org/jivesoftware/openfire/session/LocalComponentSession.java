@@ -64,7 +64,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         XmlPullParser xpp = reader.getXPPParser();
         String domain = xpp.getAttributeValue("", "to");
 
-        Log.debug("[ExComp] Starting registration of new external component for domain: " + domain);
+        Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: " + domain);
 
         Writer writer = connection.getWriter();
         // Default answer header in case of an error
@@ -80,7 +80,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
-            Log.debug("[ExComp] Domain not specified in stanza: " + xpp.getText());
+            Log.debug("LocalComponentSession: [ExComp] Domain not specified in stanza: " + xpp.getText());
             // Include the bad-format in the response
             StreamError error = new StreamError(StreamError.Condition.bad_format);
             sb.append(error.toXML());
@@ -101,7 +101,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         JID componentJID = new JID(domain);
         // Check that an external component for the specified subdomain may connect to this server
         if (!ExternalComponentManager.canAccess(subdomain)) {
-            Log.debug("[ExComp] Component is not allowed to connect with subdomain: " + subdomain);
+            Log.debug("LocalComponentSession: [ExComp] Component is not allowed to connect with subdomain: " + subdomain);
             StreamError error = new StreamError(StreamError.Condition.host_unknown);
             sb.append(error.toXML());
             writer.write(sb.toString());
@@ -113,7 +113,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         // Check that a secret key was configured in the server
         String secretKey = ExternalComponentManager.getSecretForComponent(subdomain);
         if (secretKey == null) {
-            Log.debug("[ExComp] A shared secret for the component was not found.");
+            Log.debug("LocalComponentSession: [ExComp] A shared secret for the component was not found.");
             // Include the internal-server-error in the response
             StreamError error = new StreamError(StreamError.Condition.internal_server_error);
             sb.append(error.toXML());
@@ -125,7 +125,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         }
         // Check that the requested subdomain is not already in use
         if (InternalComponentManager.getInstance().hasComponent(componentJID)) {
-            Log.debug("[ExComp] Another component is already using domain: " + domain);
+            Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
             StreamError error = new StreamError(StreamError.Condition.conflict);
@@ -142,7 +142,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         session.component = new LocalExternalComponent(session, connection);
 
         try {
-            Log.debug("[ExComp] Send stream header with ID: " + session.getStreamID() +
+            Log.debug("LocalComponentSession: [ExComp] Send stream header with ID: " + session.getStreamID() +
                     " for component with domain: " +
                     domain);
             // Build the start packet response
@@ -166,7 +166,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             String anticipatedDigest = AuthFactory.createDigest(session.getStreamID().getID(), secretKey);
             // Check that the provided handshake (secret key + sessionID) is correct
             if (!anticipatedDigest.equalsIgnoreCase(digest)) {
-                Log.debug("[ExComp] Incorrect handshake for component with domain: " + domain);
+                Log.debug("LocalComponentSession: [ExComp] Incorrect handshake for component with domain: " + domain);
                 //  The credentials supplied by the initiator are not valid (answer an error
                 // and close the connection)
                 writer.write(new StreamError(StreamError.Condition.not_authorized).toXML());
@@ -184,7 +184,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
                 // Bind the domain to this component
                 ExternalComponent component = session.getExternalComponent();
                 InternalComponentManager.getInstance().addComponent(subdomain, component);
-                Log.debug("[ExComp] External component was registered SUCCESSFULLY with domain: " + domain);
+                Log.debug("LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: " + domain);
                 return session;
             }
         }

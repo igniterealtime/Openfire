@@ -1300,7 +1300,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     }
 
     public void stop() {
-        Log.debug("Stopping server");
+        Log.debug("SessionManager: Stopping server");
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {

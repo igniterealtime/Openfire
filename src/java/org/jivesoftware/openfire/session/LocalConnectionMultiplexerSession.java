@@ -59,7 +59,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             throws XmlPullParserException {
         String domain = xpp.getAttributeValue("", "to");
 
-        Log.debug("[ConMng] Starting registration of new connection manager for domain: " + domain);
+        Log.debug("LocalConnectionMultiplexerSession: [ConMng] Starting registration of new connection manager for domain: " + domain);
 
         // Default answer header in case of an error
         StringBuilder sb = new StringBuilder();
@@ -74,7 +74,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
-            Log.debug("[ConMng] Domain not specified in stanza: " + xpp.getText());
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Domain not specified in stanza: " + xpp.getText());
             // Include the bad-format in the response
             StreamError error = new StreamError(StreamError.Condition.bad_format);
             sb.append(error.toXML());
@@ -89,7 +89,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         // Check that a secret key was configured in the server
         String secretKey = ConnectionMultiplexerManager.getDefaultSecret();
         if (secretKey == null) {
-            Log.debug("[ConMng] A shared secret for connection manager was not found.");
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] A shared secret for connection manager was not found.");
             // Include the internal-server-error in the response
             StreamError error = new StreamError(StreamError.Condition.internal_server_error);
             sb.append(error.toXML());
@@ -100,7 +100,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         }
         // Check that the requested subdomain is not already in use
         if (SessionManager.getInstance().getConnectionMultiplexerSession(address) != null) {
-            Log.debug("[ConMng] Another connection manager is already using domain: " + domain);
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Another connection manager is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response
             StreamError error = new StreamError(StreamError.Condition.conflict);
@@ -130,7 +130,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         connection.init(session);
 
         try {
-            Log.debug("[ConMng] Send stream header with ID: " + session.getStreamID() +
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Send stream header with ID: " + session.getStreamID() +
                     " for connection manager with domain: " +
                     domain);
             // Build the start packet response
@@ -209,7 +209,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
                 ConnectionMultiplexerManager.getDefaultSecret());
         // Check that the provided handshake (secret key + sessionID) is correct
         if (!anticipatedDigest.equalsIgnoreCase(digest)) {
-            Log.debug("[ConMng] Incorrect handshake for connection manager with domain: " +
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Incorrect handshake for connection manager with domain: " +
                     getAddress().getDomain());
             //  The credentials supplied by the initiator are not valid (answer an error
             // and close the connection)
@@ -223,7 +223,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             setStatus(STATUS_AUTHENTICATED);
             // Send empty handshake element to acknowledge success
             conn.deliverRawText("<handshake></handshake>");
-            Log.debug("[ConMng] Connection manager was AUTHENTICATED with domain: " + getAddress());
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Connection manager was AUTHENTICATED with domain: " + getAddress());
             sendClientOptions();
             return true;
         }

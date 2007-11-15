@@ -120,7 +120,7 @@ public class ServerStanzaHandler extends StanzaHandler {
      */
     private void packetReceived(Packet packet) throws UnauthorizedException {
         if (packet.getTo() == null || packet.getFrom() == null) {
-            Log.debug("Closing IncomingServerSession due to packet with no TO or FROM: " +
+            Log.debug("ServerStanzaHandler: Closing IncomingServerSession due to packet with no TO or FROM: " +
                     packet.toXML());
             // Send a stream error saying that the packet includes no TO or FROM
             StreamError error = new StreamError(StreamError.Condition.improper_addressing);
@@ -128,7 +128,7 @@ public class ServerStanzaHandler extends StanzaHandler {
             throw new UnauthorizedException("Packet with no TO or FROM attributes");
         }
         else if (!((LocalIncomingServerSession) session).isValidDomain(packet.getFrom().getDomain())) {
-            Log.debug("Closing IncomingServerSession due to packet with invalid domain: " +
+            Log.debug("ServerStanzaHandler: Closing IncomingServerSession due to packet with invalid domain: " +
                     packet.toXML());
             // Send a stream error saying that the packet includes an invalid FROM
             StreamError error = new StreamError(StreamError.Condition.invalid_from);

@@ -152,7 +152,7 @@ public class PrivacyList implements Cacheable, Externalizable {
                     return false;
                 }
                 if (Log.isDebugEnabled()) {
-                    Log.debug("Packet was blocked: " + packet);
+                    Log.debug("PrivacyList: Packet was blocked: " + packet);
                 }
                 return true;
             }

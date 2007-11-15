@@ -419,7 +419,7 @@ public class STUNService extends BasicModule {
             }
 
             try {
-                Log.debug("RETURNED:" + reply.toXML());
+                Log.debug("STUNService: RETURNED:" + reply.toXML());
             }
             catch (Exception e) {
                 Log.error(e);

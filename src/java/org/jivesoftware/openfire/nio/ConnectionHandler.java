@@ -91,7 +91,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         Connection connection = (Connection) session.getAttribute(CONNECTION);
         // Close idle connection
         if (Log.isDebugEnabled()) {
-            Log.debug("Closing connection that has been idle: " + connection);
+            Log.debug("ConnectionHandler: Closing connection that has been idle: " + connection);
         }
         connection.close();
     }
@@ -99,7 +99,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
         if (cause instanceof IOException) {
             // TODO Verify if there were packets pending to be sent and decide what to do with them
-            Log.debug(cause);
+            Log.debug("ConnectionHandler: ",cause);
         }
         else if (cause instanceof ProtocolDecoderException) {
             Log.warn("Closing session due to exception: " + session, cause);

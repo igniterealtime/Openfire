@@ -111,7 +111,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     private void initTemplate() {
         String property = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
-        Log.debug("Found vcard mapping: '" + property);
+        Log.debug("LdapVCardProvider: Found vcard mapping: '" + property);
         try {
             // Remove CDATA wrapping element
             if (property.startsWith("<![CDATA[")) {
@@ -124,7 +124,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             Log.error("Error loading vcard mapping: " + e.getMessage());
         }
 
-        Log.debug("attributes size==" + template.getAttributes().length);
+        Log.debug("LdapVCardProvider: attributes size==" + template.getAttributes().length);
     }
 
     private Map<String, String> getLdapAttributes(String username) {
@@ -143,7 +143,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                 javax.naming.directory.Attribute attr = attrs.get(attribute);
                 String value;
                 if (attr == null) {
-                    Log.debug("No ldap value found for attribute '" + attribute + "'");
+                    Log.debug("LdapVCardProvider: No ldap value found for attribute '" + attribute + "'");
                     value = "";
                 }
                 else {
@@ -154,7 +154,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                         value = Base64.encodeBytes((byte[])ob);
                     }
                 }
-                Log.debug("Ldap attribute '" + attribute + "'=>'" + value + "'");
+                Log.debug("LdapVCardProvider: Ldap attribute '" + attribute + "'=>'" + value + "'");
                 map.put(attribute, value);
             }
             return map;
@@ -179,9 +179,9 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         // Un-escape username.
         username = JID.unescapeNode(username);
         Map<String, String> map = getLdapAttributes(username);
-        Log.debug("Getting mapped vcard for " + username);
+        Log.debug("LdapVCardProvider: Getting mapped vcard for " + username);
         Element vcard = new VCard(template).getVCard(map);
-        Log.debug("Returning vcard");
+        Log.debug("LdapVCardProvider: Returning vcard");
         return vcard;
     }
 

@@ -1646,7 +1646,7 @@ public class PubSubEngine {
                 formField.addValue(accessModel);
             }
             else {
-                Log.debug("Owner sent access model in data form and as attribute: " +
+                Log.debug("PubSubEngine: Owner sent access model in data form and as attribute: " +
                         configureElement.asXML());
             }
             // Check if a list of groups was specified

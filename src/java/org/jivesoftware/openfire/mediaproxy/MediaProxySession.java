@@ -91,7 +91,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
             this.socketB = new DatagramSocket(localPortB, this.localAddress);
             this.socketBControl = new DatagramSocket(localPortB + 1, this.localAddress);
             if (Log.isDebugEnabled()) {
-                Log.debug("Session Created at: A " + localPortA + " : B " + localPortB);
+                Log.debug("MediaProxySession: Session Created at: A " + localPortA + " : B " + localPortB);
             }
         }
         catch (Exception e) {
@@ -259,7 +259,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
 
         dispatchAgentStopped();
 
-        Log.debug("Session Stopped");
+        Log.debug("MediaProxySession: Session Stopped");
     }
 
     /**
@@ -296,7 +296,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      */
     public void setPortA(int portA) {
         if (Log.isDebugEnabled()) {
-            Log.debug("PORT CHANGED(A):" + portA);
+            Log.debug("MediaProxySession: PORT CHANGED(A):" + portA);
         }
         this.portA = portA;
     }
@@ -308,7 +308,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      */
     public void setPortB(int portB) {
         if (Log.isDebugEnabled()) {
-            Log.debug("PORT CHANGED(B):" + portB);
+            Log.debug("MediaProxySession: PORT CHANGED(B):" + portB);
         }
         this.portB = portB;
     }

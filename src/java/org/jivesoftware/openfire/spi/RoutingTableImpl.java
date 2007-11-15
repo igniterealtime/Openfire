@@ -296,7 +296,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         if (!routed) {
             if (Log.isDebugEnabled()) {
-                Log.debug("Failed to route packet to JID: " + jid + " packet: " + packet);
+                Log.debug("RoutingTableImpl: Failed to route packet to JID: " + jid + " packet: " + packet);
             }
             if (packet instanceof IQ) {
                 iqRouter.routingFailed(jid, packet);

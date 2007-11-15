@@ -154,13 +154,13 @@ public class ServerDialback {
             DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
             realHostname = address.getHost();
             realPort = address.getPort();
-            Log.debug("OS - Trying to connect to " + hostname + ":" + port +
+            Log.debug("ServerDialback: OS - Trying to connect to " + hostname + ":" + port +
                         "(DNS lookup: " + realHostname + ":" + realPort + ")");
             // Connect to the remote server
             Socket socket = new Socket();
             socket.connect(new InetSocketAddress(realHostname, realPort),
                     RemoteServerManager.getSocketTimeout());
-            Log.debug("OS - Connection to " + hostname + ":" + port + " successful");
+            Log.debug("ServerDialback: OS - Connection to " + hostname + ":" + port + " successful");
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
                             false);
@@ -206,7 +206,7 @@ public class ServerDialback {
                 }
             }
             else {
-                Log.debug("OS - Invalid namespace in packet: " + xpp.getText());
+                Log.debug("ServerDialback: OS - Invalid namespace in packet: " + xpp.getText());
                 // Send an invalid-namespace stream error condition in the response
                 connection.deliverRawText(
                         new StreamError(StreamError.Condition.invalid_namespace).toXML());
@@ -215,7 +215,7 @@ public class ServerDialback {
             }
         }
         catch (IOException e) {
-            Log.debug("Error connecting to the remote server: " + hostname + "(DNS lookup: " +
+            Log.debug("ServerDialback: Error connecting to the remote server: " + hostname + "(DNS lookup: " +
                     realHostname + ":" + realPort + ")", e);
             // Close the connection
             if (connection != null) {
@@ -253,7 +253,7 @@ public class ServerDialback {
     public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String domain,
             String hostname, String id) {
         String key = AuthFactory.createDigest(id, getSecretkey());
-        Log.debug("OS - Sent dialback key to host: " + hostname + " id: " + id + " from domain: " +
+        Log.debug("ServerDialback: OS - Sent dialback key to host: " + hostname + " id: " + id + " from domain: " +
                 domain);
 
         synchronized (socketReader) {
@@ -271,7 +271,7 @@ public class ServerDialback {
                 Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(),
                         TimeUnit.MILLISECONDS);
                 if (doc == null) {
-                    Log.debug("OS - Time out waiting for answer in validation from: " + hostname +
+                    Log.debug("ServerDialback: OS - Time out waiting for answer in validation from: " + hostname +
                             " id: " +
                             id +
                             " for domain: " +
@@ -280,7 +280,7 @@ public class ServerDialback {
                 }
                 else if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                     boolean success = "valid".equals(doc.attributeValue("type"));
-                    Log.debug("OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
+                    Log.debug("ServerDialback: OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
                             hostname +
                             " id: " +
                             id +
@@ -289,7 +289,7 @@ public class ServerDialback {
                     return success;
                 }
                 else {
-                    Log.debug("OS - Unexpected answer in validation from: " + hostname + " id: " +
+                    Log.debug("ServerDialback: OS - Unexpected answer in validation from: " + hostname + " id: " +
                             id +
                             " for domain: " +
                             domain +
@@ -299,7 +299,7 @@ public class ServerDialback {
                 }
             }
             catch (InterruptedException e) {
-                Log.debug("OS - Validation FAILED from: " + hostname +
+                Log.debug("ServerDialback: OS - Validation FAILED from: " + hostname +
                         " id: " +
                         id +
                         " for domain: " +
@@ -371,7 +371,7 @@ public class ServerDialback {
                     connection.close();
                     String verifyFROM = doc.attributeValue("from");
                     String id = doc.attributeValue("id");
-                    Log.debug("AS - Connection closed for host: " + verifyFROM + " id: " + id);
+                    Log.debug("ServerDialback: AS - Connection closed for host: " + verifyFROM + " id: " + id);
                     return null;
                 }
                 else {
@@ -419,13 +419,13 @@ public class ServerDialback {
         StringBuilder sb;
         String recipient = doc.attributeValue("to");
         String hostname = doc.attributeValue("from");
-        Log.debug("RS - Received dialback key from host: " + hostname + " to: " + recipient);
+        Log.debug("ServerDialback: RS - Received dialback key from host: " + hostname + " to: " + recipient);
         if (!RemoteServerManager.canAccess(hostname)) {
             // Remote server is not allowed to establish a connection to this server
             connection.deliverRawText(new StreamError(StreamError.Condition.host_unknown).toXML());
             // Close the underlying connection
             connection.close();
-            Log.debug("RS - Error, hostname is not allowed to establish a connection to " +
+            Log.debug("ServerDialback: RS - Error, hostname is not allowed to establish a connection to " +
                     "this server: " +
                     recipient);
             return false;
@@ -435,7 +435,7 @@ public class ServerDialback {
             connection.deliverRawText(new StreamError(StreamError.Condition.host_unknown).toXML());
             // Close the underlying connection
             connection.close();
-            Log.debug("RS - Error, hostname not recognized: " + recipient);
+            Log.debug("ServerDialback: RS - Error, hostname not recognized: " + recipient);
             return false;
         }
         else {
@@ -452,7 +452,7 @@ public class ServerDialback {
                         new StreamError(StreamError.Condition.not_authorized).toXML());
                 // Close the underlying connection
                 connection.close();
-                Log.debug("RS - Error, incoming connection already exists from: " + hostname);
+                Log.debug("ServerDialback: RS - Error, incoming connection already exists from: " + hostname);
                 return false;
             }
             else {
@@ -465,7 +465,7 @@ public class ServerDialback {
                     boolean valid = verifyKey(key, streamID.toString(), recipient, hostname,
                             address.getHost(), address.getPort());
 
-                    Log.debug("RS - Sending key verification result to OS: " + hostname);
+                    Log.debug("ServerDialback: RS - Sending key verification result to OS: " + hostname);
                     sb = new StringBuilder();
                     sb.append("<db:result");
                     sb.append(" from=\"").append(recipient).append("\"");
@@ -516,14 +516,14 @@ public class ServerDialback {
         XMPPPacketReader reader;
         Writer writer = null;
         // Establish a TCP connection back to the domain name asserted by the Originating Server
-        Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port +
+        Log.debug("ServerDialback: RS - Trying to connect to Authoritative Server: " + hostname + ":" + port +
                         "(DNS lookup: " + host + ":" + port + ")");
         // Connect to the Authoritative server
         Socket socket = new Socket();
         socket.connect(new InetSocketAddress(host, port), RemoteServerManager.getSocketTimeout());
         // Set a read timeout
         socket.setSoTimeout(RemoteServerManager.getSocketTimeout());
-        Log.debug("RS - Connection to AS: " + hostname + ":" + port + " successful");
+        Log.debug("ServerDialback: RS - Connection to AS: " + hostname + ":" + port + " successful");
         try {
             reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);
@@ -549,7 +549,7 @@ public class ServerDialback {
                 eventType = xpp.next();
             }
             if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
-                Log.debug("RS - Asking AS to verify dialback key for id" + streamID);
+                Log.debug("ServerDialback: RS - Asking AS to verify dialback key for id" + streamID);
                 // Request for verification of the key
                 StringBuilder sb = new StringBuilder();
                 sb.append("<db:verify");
@@ -592,14 +592,14 @@ public class ServerDialback {
                         }
                         else {
                             boolean valid = "valid".equals(doc.attributeValue("type"));
-                            Log.debug("RS - Key was " + (valid ? "" : "NOT ") +
+                            Log.debug("ServerDialback: RS - Key was " + (valid ? "" : "NOT ") +
                                     "VERIFIED by the Authoritative Server for: " +
                                     hostname);
                             return valid;
                         }
                     }
                     else {
-                        Log.debug("db:verify answer was: " + doc.asXML());
+                        Log.debug("ServerDialback: db:verify answer was: " + doc.asXML());
                     }
                 }
                 catch (DocumentException e) {
@@ -621,7 +621,7 @@ public class ServerDialback {
         }
         finally {
             try {
-                Log.debug("RS - Closing connection to Authoritative Server: " + hostname);
+                Log.debug("ServerDialback: RS - Closing connection to Authoritative Server: " + hostname);
                 // Close the stream
                 StringBuilder sb = new StringBuilder();
                 sb.append("</stream:stream>");
@@ -652,7 +652,7 @@ public class ServerDialback {
         String verifyTO = doc.attributeValue("to");
         String key = doc.getTextTrim();
         String id = doc.attributeValue("id");
-        Log.debug("AS - Verifying key for host: " + verifyFROM + " id: " + id);
+        Log.debug("ServerDialback: AS - Verifying key for host: " + verifyFROM + " id: " + id);
 
         // TODO If the value of the 'to' address does not match a recognized hostname,
         // then generate a <host-unknown/> stream error condition
@@ -674,7 +674,7 @@ public class ServerDialback {
         sb.append(verified ? "valid" : "invalid");
         sb.append("\" id=\"").append(id).append("\"/>");
         connection.deliverRawText(sb.toString());
-        Log.debug("AS - Key was: " + (verified ? "VALID" : "INVALID") + " for host: " +
+        Log.debug("ServerDialback: AS - Key was: " + (verified ? "VALID" : "INVALID") + " for host: " +
                 verifyFROM +
                 " id: " +
                 id);

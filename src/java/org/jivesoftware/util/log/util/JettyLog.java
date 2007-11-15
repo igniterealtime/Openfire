@@ -34,15 +34,15 @@ public class JettyLog implements Logger {
 
     public void info(String string, Object object, Object object1) {
         // Send info log messages to debug because they are generally not useful.
-        Log.debug(string);
+        Log.debug("JettyLog: "+string);
     }
 
     public void debug(String string, Throwable throwable) {
-        Log.debug(string, throwable);
+        Log.debug("JettyLog: "+string, throwable);
     }
 
     public void debug(String string, Object object, Object object1) {
-        Log.debug(string);
+        Log.debug("JettyLog: "+string);
     }
 
     public void warn(String string, Object object, Object object1) {

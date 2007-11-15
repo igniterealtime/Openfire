@@ -1478,7 +1478,7 @@ public class LocalMUCRoom implements MUCRoom {
             occupantRole.setPresence(updatePresence.getPresence());
         }
         else {
-            Log.debug("Failed to update presence of room occupant. Occupant nickname: " + updatePresence.getNickname());
+            Log.debug("LocalMUCRoom: Failed to update presence of room occupant. Occupant nickname: " + updatePresence.getNickname());
         }
     }
 
@@ -1500,7 +1500,7 @@ public class LocalMUCRoom implements MUCRoom {
             }
         }
         else {
-            Log.debug("Failed to update information of room occupant. Occupant nickname: " + update.getNickname());
+            Log.debug("LocalMUCRoom: Failed to update information of room occupant. Occupant nickname: " + update.getNickname());
         }
     }
 
@@ -1514,7 +1514,7 @@ public class LocalMUCRoom implements MUCRoom {
             return occupantRole.getPresence();
         }
         else {
-            Log.debug("Failed to update information of local room occupant. Occupant nickname: " +
+            Log.debug("LocalMUCRoom: Failed to update information of local room occupant. Occupant nickname: " +
                     updateRequest.getNickname());
         }
         return null;

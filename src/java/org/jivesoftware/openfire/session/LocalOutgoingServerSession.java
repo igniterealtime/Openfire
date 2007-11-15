@@ -247,12 +247,12 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
                 realHostname = address.getHost();
                 realPort = address.getPort();
-                Log.debug("OS - Trying to connect to " + hostname + ":" + port +
+                Log.debug("LocalOutgoingServerSession: OS - Trying to connect to " + hostname + ":" + port +
                         "(DNS lookup: " + realHostname + ":" + realPort + ")");
                 // Establish a TCP connection to the Receiving Server
                 socket.connect(new InetSocketAddress(realHostname, realPort),
                         RemoteServerManager.getSocketTimeout());
-                Log.debug("OS - Plain connection to " + hostname + ":" + port + " successful");
+                Log.debug("LocalOutgoingServerSession: OS - Plain connection to " + hostname + ":" + port + " successful");
             }
             catch (Exception e) {
                 Log.error("Error trying to connect to remote server: " + hostname +
@@ -308,7 +308,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                         }
                     }
                     else {
-                        Log.debug("OS - Error, <starttls> was not received");
+                        Log.debug("LocalOutgoingServerSession: OS - Error, <starttls> was not received");
                     }
                 }
                 // Something went wrong so close the connection and try server dialback over
@@ -318,7 +318,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 }
             }
             catch (SSLHandshakeException e) {
-                Log.debug("Handshake error while creating secured outgoing session to remote " +
+                Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
                         "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
                         ")", e);
                 // Close the connection
@@ -344,7 +344,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             }
         }
         if (ServerDialback.isEnabled()) {
-            Log.debug("OS - Going to try connecting using server dialback with: " + hostname);
+            Log.debug("LocalOutgoingServerSession: OS - Going to try connecting using server dialback with: " + hostname);
             // Use server dialback over a plain connection
             return new ServerDialback().createOutgoingSession(domain, hostname, port);
         }
@@ -355,19 +355,19 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream,
             String domain) throws Exception {
         Element features;
-        Log.debug("OS - Indicating we want TLS to " + hostname);
+        Log.debug("LocalOutgoingServerSession: OS - Indicating we want TLS to " + hostname);
         connection.deliverRawText("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
 
         MXParser xpp = reader.getXPPParser();
         // Wait for the <proceed> response
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
-            Log.debug("OS - Negotiating TLS with " + hostname);
+            Log.debug("LocalOutgoingServerSession: OS - Negotiating TLS with " + hostname);
             boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
                     JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
                     !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
             connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
-            Log.debug("OS - TLS negotiation with " + hostname + " was successful");
+            Log.debug("LocalOutgoingServerSession: OS - TLS negotiation with " + hostname + " was successful");
 
             // TLS negotiation was successful so initiate a new stream
             connection.deliverRawText(openingStream.toString());
@@ -408,7 +408,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                                 // Server confirmed that we can use zlib compression
                                 connection.addCompression();
                                 connection.startCompression();
-                                Log.debug("OS - Stream compression was successful with " + hostname);
+                                Log.debug("LocalOutgoingServerSession: OS - Stream compression was successful with " + hostname);
                                 // Stream compression was successful so initiate a new stream
                                 connection.deliverRawText(openingStream.toString());
                                 // Reset the parser to use stream compression over TLS
@@ -424,22 +424,22 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                                 // Get new stream features
                                 features = reader.parseDocument().getRootElement();
                                 if (features == null || features.element("mechanisms") == null) {
-                                    Log.debug("OS - Error, EXTERNAL SASL was not offered by " + hostname);
+                                    Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL was not offered by " + hostname);
                                     return null;
                                 }
                             }
                             else {
-                                Log.debug("OS - Stream compression was rejected by " + hostname);
+                                Log.debug("LocalOutgoingServerSession: OS - Stream compression was rejected by " + hostname);
                             }
                         }
                         else {
                             Log.debug(
-                                    "OS - Stream compression found but zlib method is not supported by" +
+                                    "LocalOutgoingServerSession: OS - Stream compression found but zlib method is not supported by" +
                                             hostname);
                         }
                     }
                     else {
-                        Log.debug("OS - Stream compression not supoprted by " + hostname);
+                        Log.debug("LocalOutgoingServerSession: OS - Stream compression not supoprted by " + hostname);
                     }
                 }
 
@@ -447,9 +447,9 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 while (it.hasNext()) {
                     Element mechanism = (Element) it.next();
                     if ("EXTERNAL".equals(mechanism.getTextTrim())) {
-                        Log.debug("OS - Starting EXTERNAL SASL with " + hostname);
+                        Log.debug("LocalOutgoingServerSession: OS - Starting EXTERNAL SASL with " + hostname);
                         if (doExternalAuthentication(domain, connection, reader)) {
-                            Log.debug("OS - EXTERNAL SASL with " + hostname + " was successful");
+                            Log.debug("LocalOutgoingServerSession: OS - EXTERNAL SASL with " + hostname + " was successful");
                             // SASL was successful so initiate a new stream
                             connection.deliverRawText(openingStream.toString());
 
@@ -475,20 +475,20 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                             return session;
                         }
                         else {
-                            Log.debug("OS - Error, EXTERNAL SASL authentication with " + hostname +
+                            Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL authentication with " + hostname +
                                     " failed");
                             return null;
                         }
                     }
                 }
-                Log.debug("OS - Error, EXTERNAL SASL was not offered by " + hostname);
+                Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL was not offered by " + hostname);
             }
             else {
-                Log.debug("OS - Error, no SASL mechanisms were offered by " + hostname);
+                Log.debug("LocalOutgoingServerSession: OS - Error, no SASL mechanisms were offered by " + hostname);
             }
         }
         else {
-            Log.debug("OS - Error, <proceed> was not received");
+            Log.debug("LocalOutgoingServerSession: OS - Error, <proceed> was not received");
         }
         return null;
     }

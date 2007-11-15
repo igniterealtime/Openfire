@@ -326,7 +326,7 @@ public class LdapManager {
         buf.append("\t groupSearchFilter: ").append(groupSearchFilter).append("\n");
 
         if (Log.isDebugEnabled()) {
-            Log.debug(buf.toString());
+            Log.debug("LdapManager: "+buf.toString());
         }
         if (ldapDebugEnabled) {
             System.err.println(buf.toString());
@@ -367,7 +367,7 @@ public class LdapManager {
     public LdapContext getContext(String baseDN) throws NamingException {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
-            Log.debug("Creating a DirContext in LdapManager.getContext()...");
+            Log.debug("LdapManager: Creating a DirContext in LdapManager.getContext()...");
         }
 
          // Set up the environment for creating the initial context
@@ -404,12 +404,12 @@ public class LdapManager {
         }
 
         if (debug) {
-            Log.debug("Created hashtable with context values, attempting to create context...");
+            Log.debug("LdapManager: Created hashtable with context values, attempting to create context...");
         }
         // Create new initial context
         LdapContext context = new InitialLdapContext(env, null);
         if (debug) {
-            Log.debug("... context created successfully, returning.");
+            Log.debug("LdapManager: ... context created successfully, returning.");
         }
         return context;
     }
@@ -425,7 +425,7 @@ public class LdapManager {
     public boolean checkAuthentication(String userDN, String password) {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
-            Log.debug("In LdapManager.checkAuthentication(userDN, password), userDN is: " + userDN + "...");
+            Log.debug("LdapManager: In LdapManager.checkAuthentication(userDN, password), userDN is: " + userDN + "...");
         }
 
         DirContext ctx = null;
@@ -458,11 +458,11 @@ public class LdapManager {
             }
 
             if (debug) {
-                Log.debug("Created context values, attempting to create context...");
+                Log.debug("LdapManager: Created context values, attempting to create context...");
             }
             ctx = new InitialDirContext(env);
             if (debug) {
-                Log.debug("... context created successfully, returning.");
+                Log.debug("LdapManager: ... context created successfully, returning.");
             }
         }
         catch (NamingException ne) {
@@ -501,20 +501,20 @@ public class LdapManager {
                         env.put(Context.REFERRAL, "follow");
                     }
                     if (debug) {
-                        Log.debug("Created context values, attempting to create context...");
+                        Log.debug("LdapManager: Created context values, attempting to create context...");
                     }
                     ctx = new InitialDirContext(env);
                 }
                 catch (NamingException e) {
                     if (debug) {
-                        Log.debug("Caught a naming exception when creating InitialContext", ne);
+                        Log.debug("LdapManager: Caught a naming exception when creating InitialContext", ne);
                     }
                     return false;
                 }
             }
             else {
                 if (debug) {
-                    Log.debug("Caught a naming exception when creating InitialContext", ne);
+                    Log.debug("LdapManager: Caught a naming exception when creating InitialContext", ne);
                 }
                 return false;
             }
@@ -600,14 +600,14 @@ public class LdapManager {
         //Support for usernameSuffix
         username = username + usernameSuffix;
         if (debug) {
-            Log.debug("Trying to find a user's DN based on their username. " + usernameField + ": " + username
+            Log.debug("LdapManager: Trying to find a user's DN based on their username. " + usernameField + ": " + username
                     + ", Base DN: " + baseDN + "...");
         }
         DirContext ctx = null;
         try {
             ctx = getContext(baseDN);
             if (debug) {
-                Log.debug("Starting LDAP search...");
+                Log.debug("LdapManager: Starting LDAP search...");
             }
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
@@ -625,12 +625,12 @@ public class LdapManager {
                     constraints);
 
             if (debug) {
-                Log.debug("... search finished");
+                Log.debug("LdapManager: ... search finished");
             }
 
             if (answer == null || !answer.hasMoreElements()) {
                 if (debug) {
-                    Log.debug("User DN based on username '" + username + "' not found.");
+                    Log.debug("LdapManager: User DN based on username '" + username + "' not found.");
                 }
                 throw new UserNotFoundException("Username " + username + " not found");
             }
@@ -642,7 +642,7 @@ public class LdapManager {
             // The baseDN must be set correctly so that this doesn't happen.
             if (answer.hasMoreElements()) {
                 if (debug) {
-                    Log.debug("Search for userDN based on username '" + username + "' found multiple " +
+                    Log.debug("LdapManager: Search for userDN based on username '" + username + "' found multiple " +
                             "responses, throwing exception.");
                 }
                 throw new UserNotFoundException("LDAP username lookup for " + username +
@@ -671,7 +671,7 @@ public class LdapManager {
         }
         catch (Exception e) {
             if (debug) {
-                Log.debug("Exception thrown when searching for userDN based on username '" + username + "'", e);
+                Log.debug("LdapManager: Exception thrown when searching for userDN based on username '" + username + "'", e);
             }
             throw e;
         }

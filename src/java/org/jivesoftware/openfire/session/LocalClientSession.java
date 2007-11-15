@@ -173,7 +173,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             if (forbidAccess) {
                 // Client cannot connect from this IP address so end the stream and
                 // TCP connection
-                Log.debug("Closed connection to client attempting to connect from: " + hostAddress);
+                Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
                 // Include the not-authorized error in the response
                 StreamError error = new StreamError(StreamError.Condition.not_authorized);
                 connection.deliverRawText(error.toXML());

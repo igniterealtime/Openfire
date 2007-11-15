@@ -295,7 +295,7 @@ public class JDBCAuthProvider implements AuthProvider {
         }
         catch (UserNotFoundException unfe) {
             try {
-                Log.debug("Automatically creating new user account for " + username);
+                Log.debug("JDBCAuthProvider: Automatically creating new user account for " + username);
                 UserManager.getUserProvider().createUser(username, StringUtils.randomString(8),
                         null, null);
             }

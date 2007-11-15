@@ -159,7 +159,7 @@ public class MediaProxyService extends BasicModule
                 childElementCopy.remove(candidateElement);
                 Element candidate = childElementCopy.addElement("candidate ");
                 ProxyCandidate proxyCandidate = mediaProxy.addRelayAgent(sid, iq.getFrom().toString());
-                Log.debug(sid);
+                Log.debug("MediaProxyService: "+sid);
                 proxyCandidate.start();
                 candidate.addAttribute("name", "voicechannel");
                 candidate.addAttribute("ip", mediaProxy.getPublicIP());
@@ -171,7 +171,7 @@ public class MediaProxyService extends BasicModule
                 candidateElement = childElementCopy.element("relay");
                 if (candidateElement != null) {
                     MediaProxySession session = mediaProxy.getSession(sid);
-                    Log.debug(sid);
+                    Log.debug("MediaProxyService: "+sid);
                     if (session != null) {
                         Attribute pass = candidateElement.attribute("pass");
 
@@ -225,7 +225,7 @@ public class MediaProxyService extends BasicModule
 
         try {
             if (Log.isDebugEnabled()) {
-                Log.debug("RETURNED:" + reply.toXML());
+                Log.debug("MediaProxyService: RETURNED:" + reply.toXML());
             }
             router.route(reply);
         }

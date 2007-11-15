@@ -131,7 +131,7 @@ public abstract class SocketReader implements Runnable {
                 packet = new Message(doc);
             }
             catch(IllegalArgumentException e) {
-                Log.debug("Rejecting packet. JID malformed", e);
+                Log.debug("SocketReader: Rejecting packet. JID malformed", e);
                 // The original packet contains a malformed JID so answer with an error.
                 Message reply = new Message();
                 reply.setID(doc.attributeValue("id"));
@@ -149,7 +149,7 @@ public abstract class SocketReader implements Runnable {
                 packet = new Presence(doc);
             }
             catch (IllegalArgumentException e) {
-                Log.debug("Rejecting packet. JID malformed", e);
+                Log.debug("SocketReader: Rejecting packet. JID malformed", e);
                 // The original packet contains a malformed JID so answer an error
                 Presence reply = new Presence();
                 reply.setID(doc.attributeValue("id"));
@@ -194,7 +194,7 @@ public abstract class SocketReader implements Runnable {
                 packet = getIQ(doc);
             }
             catch(IllegalArgumentException e) {
-                Log.debug("Rejecting packet. JID malformed", e);
+                Log.debug("SocketReader: Rejecting packet. JID malformed", e);
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();
                 if (!doc.elements().isEmpty()) {

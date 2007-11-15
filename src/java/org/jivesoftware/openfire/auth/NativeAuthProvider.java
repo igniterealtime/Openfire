@@ -104,7 +104,7 @@ public class NativeAuthProvider implements AuthProvider {
             }
 
             public void debug(String string) {
-                Log.debug(string);
+                Log.debug("NativeAuthProvider: "+string);
             }
         });
     }

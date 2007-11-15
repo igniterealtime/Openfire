@@ -152,7 +152,7 @@ public class LdapGroupProvider implements GroupProvider {
 
     public int getGroupCount() {
         if (manager.isDebugEnabled()) {
-            Log.debug("Trying to get the number of groups in the system.");
+            Log.debug("LdapGroupProvider: Trying to get the number of groups in the system.");
         }
 
         int count = 0;
@@ -602,7 +602,7 @@ public class LdapGroupProvider implements GroupProvider {
      */
     private Collection<Group> populateGroups(Enumeration<SearchResult> answer) throws NamingException {
         if (manager.isDebugEnabled()) {
-            Log.debug("Starting to populate groups with users.");
+            Log.debug("LdapGroupProvider: Starting to populate groups with users.");
         }
         DirContext ctx = null;
         try {
@@ -714,7 +714,7 @@ public class LdapGroupProvider implements GroupProvider {
                                 // the user didn't pass the search filter that's defined.
                                 // So, we want to simply ignore the user as a group member.
                                 if (manager.isDebugEnabled()) {
-                                    Log.debug("User not found: " + username);
+                                    Log.debug("LdapGroupProvider: User not found: " + username);
                                 }
                             }
                         }
@@ -722,7 +722,7 @@ public class LdapGroupProvider implements GroupProvider {
                         ne.close();
                     }
                     if (manager.isDebugEnabled()) {
-                        Log.debug("Adding group \"" + name + "\" with " + members.size() +
+                        Log.debug("LdapGroupProvider: Adding group \"" + name + "\" with " + members.size() +
                                 " members.");
                     }
                     Collection<JID> admins = Collections.emptyList();
@@ -732,12 +732,12 @@ public class LdapGroupProvider implements GroupProvider {
                 catch (Exception e) {
                     e.printStackTrace();
                     if (manager.isDebugEnabled()) {
-                        Log.debug("Error while populating group, " + name + ".", e);
+                        Log.debug("LdapGroupProvider: Error while populating group, " + name + ".", e);
                     }
                 }
             }
             if (manager.isDebugEnabled()) {
-                Log.debug("Finished populating group(s) with users.");
+                Log.debug("LdapGroupProvider: Finished populating group(s) with users.");
             }
 
             return groups.values();

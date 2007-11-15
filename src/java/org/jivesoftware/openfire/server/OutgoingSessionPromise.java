@@ -187,7 +187,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     catch (Exception e) {
                         returnErrorToSender(packet);
                         Log.debug(
-                                "Error sending packet to remote server: " + packet,
+                                "OutgoingSessionPromise: Error sending packet to remote server: " + packet,
                                 e);
                     }
                 }

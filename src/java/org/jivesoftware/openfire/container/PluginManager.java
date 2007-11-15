@@ -248,7 +248,7 @@ public class PluginManager {
         if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getName().equals("admin"))) {
             return;
         }
-        Log.debug("Loading plugin " + pluginDir.getName());
+        Log.debug("PluginManager: Loading plugin " + pluginDir.getName());
         Plugin plugin;
         try {
             File pluginConfig = new File(pluginDir, "plugin.xml");
@@ -546,7 +546,7 @@ public class PluginManager {
      * @param pluginName the name of the plugin to unload.
      */
     public void unloadPlugin(String pluginName) {
-        Log.debug("Unloading plugin " + pluginName);
+        Log.debug("PluginManager: Unloading plugin " + pluginName);
 
         Plugin plugin = plugins.get(pluginName);
         if (plugin != null) {
@@ -556,7 +556,7 @@ public class PluginManager {
             // See if any child plugins are defined.
             if (parentPluginMap.containsKey(plugin)) {
                 for (String childPlugin : parentPluginMap.get(plugin)) {
-                    Log.debug("Unloading child plugin: " + childPlugin);
+                    Log.debug("PluginManager: Unloading child plugin: " + childPlugin);
                     unloadPlugin(childPlugin);
                 }
                 parentPluginMap.remove(plugin);
@@ -1041,7 +1041,7 @@ public class PluginManager {
                 dir.mkdir();
                 // Set the date of the JAR file to the newly created folder
                 dir.setLastModified(file.lastModified());
-                Log.debug("Extracting plugin: " + pluginName);
+                Log.debug("PluginManager: Extracting plugin: " + pluginName);
                 for (Enumeration e = zipFile.entries(); e.hasMoreElements();) {
                     JarEntry entry = (JarEntry)e.nextElement();
                     File entryFile = new File(dir, entry.getName());
@@ -1154,7 +1154,7 @@ public class PluginManager {
             for (String file : children) {
                 boolean success = deleteDir(new File(dir, file));
                 if (!success) {
-                    Log.debug("Plugin removal: could not delete: " + new File(dir, file));
+                    Log.debug("PluginManager: Plugin removal: could not delete: " + new File(dir, file));
                     return false;
                 }
             }

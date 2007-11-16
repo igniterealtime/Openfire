@@ -11,16 +11,16 @@
 
 package org.jivesoftware.openfire.entitycaps;
 
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.cache.ExternalizableUtil;
 
 /**
  * Contains identities and supported features describing client capabilities
@@ -55,7 +55,7 @@ public class EntityCapabilities implements Cacheable, Externalizable {
      * @return true if the entity capabilities did not already include the
      *         identity
      */
-    public boolean addIdentity(String identity) {
+    boolean addIdentity(String identity) {
         return identities.add(identity);
     }
 
@@ -66,7 +66,7 @@ public class EntityCapabilities implements Cacheable, Externalizable {
      * @return true if the entity capabilities did not already include the
      *         feature
      */
-    public boolean addFeature(String feature) {
+    boolean addFeature(String feature) {
         return features.add(feature);
     }
 
@@ -74,11 +74,12 @@ public class EntityCapabilities implements Cacheable, Externalizable {
      * Determines whether or not a given identity is included in these entity
      * capabilities.
      * 
-     * @param identity the identity
+     * @param category the category of the identity
+     * @param type the type of the identity
      * @return true if identity is included, false if not
      */
-    public boolean containsIdentity(String identity) {
-        return identities.contains(identity);
+    public boolean containsIdentity(String category, String type) {
+        return identities.contains(category + "/" + type);
     }
 
     /**
@@ -93,16 +94,9 @@ public class EntityCapabilities implements Cacheable, Externalizable {
     }
 
     /**
-     * @return the verAttribute
-     */
-    public String getVerAttribute() {
-        return verAttribute;
-    }
-
-    /**
      * @param verAttribute the verAttribute to set
      */
-    public void setVerAttribute(String verAttribute) {
+    void setVerAttribute(String verAttribute) {
         this.verAttribute = verAttribute;
     }
 

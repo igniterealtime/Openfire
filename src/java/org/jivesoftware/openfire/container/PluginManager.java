@@ -587,6 +587,14 @@ public class PluginManager {
             }
         }
 
+        // Remove references to the plugin so it can be unloaded from memory
+        // If plugin still fails to be removed then we will add references back
+        // Anyway, for a few seconds admins may not see the plugin in the admin console
+        // and in a subsequent refresh it will appear if failed to be removed
+        plugins.remove(pluginName);
+        File pluginFile = pluginDirs.remove(plugin);
+        PluginClassLoader pluginLoader = classloaders.remove(plugin);
+
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
@@ -612,10 +620,6 @@ public class PluginManager {
             // Unregister plugin caches
             PluginCacheRegistry.getInstance().unregisterCaches(pluginName);
 
-            plugins.remove(pluginName);
-            pluginDirs.remove(plugin);
-            classloaders.remove(plugin);
-
             // See if this is a child plugin. If it is, we should unload
             // the parent plugin as well.
             if (childPluginMap.containsKey(plugin)) {
@@ -623,6 +627,12 @@ public class PluginManager {
             }
             childPluginMap.remove(plugin);
             firePluginDestroyedEvent(pluginName, plugin);
+        }
+        else {
+            // Restore references since we failed to remove the plugin
+            plugins.put(pluginName, plugin);
+            pluginDirs.put(plugin, pluginFile);
+            classloaders.put(plugin, pluginLoader);
         }
     }
 

@@ -15,10 +15,7 @@ import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A simple registry of cache configuration data for plugins.
@@ -70,8 +67,16 @@ public class PluginCacheRegistry {
         if (caches != null) {
             for (CacheInfo info : caches) {
                 extraCacheMappings.remove(info.getCacheName());
+                // Check if other cluster nodes have this plugin installed
+                Collection<Object> answers =
+                        CacheFactory.doSynchronousClusterTask(new IsPluginInstalledTask(pluginName), false);
+                for (Object installed : answers) {
+                    if ((Boolean) installed) {
+                        return;
+                    }
+                }
+                // Destroy cache if we are the last node hosting this plugin
                 try {
-                    // TODO Destroy cache if we are the last node hosting this plugin 
                     CacheFactory.destroyCache(info.getCacheName());
                 }
                 catch (Exception e) {

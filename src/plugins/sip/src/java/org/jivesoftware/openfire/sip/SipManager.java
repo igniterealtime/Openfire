@@ -77,15 +77,17 @@ public class SipManager implements Plugin, PropertyEventListener {
     public void destroyPlugin() {
         PropertyEventDispatcher.removeListener(this);
         // Unregister component.
-        try {
-            componentManager.removeComponent(serviceName);
-        } catch (Exception e) {
-            componentManager.getLog().error(e);
-        }
-        try {
-            componentManager.removeComponent(LogComponent.NAME);
-        } catch (Exception e) {
-            componentManager.getLog().error(e);
+        if (componentManager != null) {
+            try {
+                componentManager.removeComponent(serviceName);
+            } catch (Exception e) {
+                componentManager.getLog().error(e);
+            }
+            try {
+                componentManager.removeComponent(LogComponent.NAME);
+            } catch (Exception e) {
+                componentManager.getLog().error(e);
+            }
         }
         sipComponent = null;
         logComponent = null;

@@ -3,7 +3,7 @@ Name: openfire
 Version: 3.4.2
 Release: 1
 BuildRoot: %{_builddir}/%{name}-root
-Source0: %{name}_src_3_4_2.tar.gz
+Source0: %{name}_src_3_4_2_beta.tar.gz
 Source1: jre-dist.tar.gz
 Group: Applications/Communications
 Vendor: Jive Software

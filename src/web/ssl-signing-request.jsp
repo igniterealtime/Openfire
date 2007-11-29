@@ -62,6 +62,13 @@
                 issuerDN.append(", L=").append(city);
                 issuerDN.append(", ST=").append(state);
                 issuerDN.append(", C=").append(countryCode);
+                StringBuilder subjectDN = new StringBuilder();
+                subjectDN.append("CN=").append(domain);
+                subjectDN.append(", OU=").append(organizationalUnit);
+                subjectDN.append(", O=").append(organization);
+                subjectDN.append(", L=").append(city);
+                subjectDN.append(", ST=").append(state);
+                subjectDN.append(", C=").append(countryCode);
                 // Update certs with new issuerDN information
                 for (Enumeration<String> certAliases = keyStore.aliases(); certAliases.hasMoreElements();) {
                     String alias = certAliases.nextElement();
@@ -74,10 +81,10 @@
                     if (isSelfSigned || isSigningPending) {
                         if (CertificateManager.isDSACertificate(certificate)) {
                             CertificateManager.createDSACert(keyStore, SSLConfig.getKeyPassword(), alias,
-                                    issuerDN.toString(), "cn=" + domain, "*." + domain);
+                                    issuerDN.toString(), subjectDN.toString(), "*." + domain);
                         } else {
                             CertificateManager.createRSACert(keyStore, SSLConfig.getKeyPassword(), alias,
-                                    issuerDN.toString(), "cn=" + domain, "*." + domain);
+                                    issuerDN.toString(), subjectDN.toString(), "*." + domain);
                         }
                     }
                 }

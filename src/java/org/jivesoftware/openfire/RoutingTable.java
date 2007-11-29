@@ -265,6 +265,14 @@ public interface RoutingTable {
     int getServerSessionsCount();
 
     /**
+     * Returns domains of components hosted by the server. When running in a cluster, domains of
+     * components running in any node will be returned.
+     *
+     * @return domains of components hosted by the server.
+     */
+    Collection<String> getComponentsDomains();
+
+    /**
      * Returns the list of routes associated to the specified route address. When asking
      * for routes to a remote server then the requested JID will be included as the only
      * value of the returned collection. It is indifferent if an outgoing session to the

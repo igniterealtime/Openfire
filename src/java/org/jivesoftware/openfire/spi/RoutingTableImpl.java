@@ -546,6 +546,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return localRoutingTable.getServerRoutes().size();
     }
 
+    public Collection<String> getComponentsDomains() {
+        return componentsCache.keySet();
+    }
+
     public boolean hasClientRoute(JID jid) {
         return usersCache.containsKey(jid.toString()) || isAnonymousRoute(jid);
     }

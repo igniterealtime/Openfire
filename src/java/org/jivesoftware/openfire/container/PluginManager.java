@@ -628,7 +628,7 @@ public class PluginManager {
             childPluginMap.remove(plugin);
             firePluginDestroyedEvent(pluginName, plugin);
         }
-        else {
+        else if (plugin != null) {
             // Restore references since we failed to remove the plugin
             plugins.put(pluginName, plugin);
             pluginDirs.put(plugin, pluginFile);

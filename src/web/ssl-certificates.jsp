@@ -130,6 +130,8 @@
               <fmt:message key="ssl.certificates.no_installed">
                   <fmt:param value="<%= "<a href='ssl-certificates.jsp?generate=true'>" %>" />
                   <fmt:param value="<%= "</a>" %>" />
+                  <fmt:param value="<%= "<a href='import-certificate.jsp'>" %>" />
+                  <fmt:param value="<%= "</a>" %>" />
               </fmt:message>
           </td></tr>
       </tbody>
@@ -239,7 +241,10 @@
 
   <!-- BEGIN 'Installed Certificates' -->
   <p>
-  <fmt:message key="ssl.certificates.info" />
+  <fmt:message key="ssl.certificates.info">
+      <fmt:param value="<%= "<a href='import-certificate.jsp'>" %>" />
+      <fmt:param value="<%= "</a>" %>" />
+  </fmt:message>
   </p>
 
   <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">

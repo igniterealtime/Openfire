@@ -19,6 +19,7 @@ import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PasswordFinder;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
 import java.io.*;
@@ -434,6 +435,7 @@ public class CertificateManager {
      * @param keyPassword password of the keystore.
      * @param alias the alias of the the new signed certificate.
      * @param pkInputStream the stream containing the private key.
+     * @param passPhrase is the password phrased used when creating the private key.
      * @param inputStream the stream containing the signed certificate.
      * @param trustCACerts true if certificates present in the truststore file will be used to verify the
      *        identity of the entity signing the certificate.
@@ -443,8 +445,8 @@ public class CertificateManager {
      * @throws Exception if no certificates were found in the inputStream.
      */
     public static boolean installCert(KeyStore keyStore, KeyStore trustStore, String keyPassword, String alias,
-                                      InputStream pkInputStream, InputStream inputStream, boolean trustCACerts,
-                                      boolean validateRoot) throws Exception {
+                                      InputStream pkInputStream, final String passPhrase, InputStream inputStream,
+                                      boolean trustCACerts, boolean validateRoot) throws Exception {
         // Check that there is a certificate for the specified alias
         X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
         if (certificate != null) {
@@ -452,7 +454,12 @@ public class CertificateManager {
             return false;
         }
         // Retrieve the private key of the stored certificate
-        PEMReader pemReader = new PEMReader(new InputStreamReader(pkInputStream));
+        PasswordFinder passwordFinder = new PasswordFinder() {
+            public char[] getPassword() {
+                return passPhrase != null ? passPhrase.toCharArray() : new char[] {};
+            }
+        };
+        PEMReader pemReader = new PEMReader(new InputStreamReader(pkInputStream), passwordFinder);
         KeyPair kp = (KeyPair) pemReader.readObject();
         PrivateKey privKey = kp.getPrivate();
 

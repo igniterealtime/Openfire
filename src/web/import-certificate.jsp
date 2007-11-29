@@ -20,6 +20,7 @@
 <% // Get parameters:
     boolean save = ParamUtils.getParameter(request, "save") != null;
     String privateKey = ParamUtils.getParameter(request, "private-key");
+    String passPhrase = ParamUtils.getParameter(request, "passPhrase");
     String certificate = ParamUtils.getParameter(request, "certificate");
 
     Map<String, Object> errors = new HashMap<String, Object>();
@@ -42,7 +43,7 @@
                 }
                 // Import certificate
                 CertificateManager.installCert(SSLConfig.getKeyStore(), SSLConfig.getTrustStore(),
-                        SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(privateKey.getBytes()),
+                        SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(privateKey.getBytes()), passPhrase,
                         new ByteArrayInputStream(certificate.getBytes()), true, true);
                 // Save keystore
                 SSLConfig.saveStores();
@@ -121,6 +122,14 @@
       <div class="jive-contentBox">
           <table cellpadding="3" cellspacing="0" border="0">
           <tbody>
+              <tr valign="top">
+                  <td width="1%" nowrap class="c1">
+                      <fmt:message key="ssl.import.certificate.pass-phrase" />
+                  </td>
+                  <td width="99%">
+                      <input type="text" size="30" maxlength="100" name="passPhrase">
+                  </td>
+              </tr>
               <tr valign="top">
                   <td width="1%" nowrap class="c1">
                       <fmt:message key="ssl.import.certificate.private-key" />

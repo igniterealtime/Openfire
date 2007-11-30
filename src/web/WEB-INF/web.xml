@@ -116,6 +116,11 @@
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>FlashCrossDomainServlet</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.http.FlashCrossDomainServlet</servlet-class>
+    </servlet>
+
 
     <!--@@JSPC-SERVLETS@@-->
 
@@ -132,6 +137,11 @@
     <servlet-mapping>
         <servlet-name>PluginIconServlet</servlet-name>
         <url-pattern>/geticon</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>FlashCrossDomainServlet</servlet-name>
+        <url-pattern>/crossdomain.xml</url-pattern>
     </servlet-mapping>
 
 

@@ -111,16 +111,16 @@
   <% } %>
 
   <p>
-  <fmt:message key="ssl.import.certificate.info" />
+  <fmt:message key="ssl.import.certificate.info">
+      <fmt:param value="<%= "<a href='http://java.sun.com/javase/downloads/index.jsp'>" %>" />
+      <fmt:param value="<%= "</a>" %>" />
+  </fmt:message>
   </p>
 
   <!-- BEGIN 'Import Private Key and Certificate' -->
   <form action="import-certificate.jsp" method="post" name="f">
       <div class="jive-contentBoxHeader">
-          <fmt:message key="ssl.import.certificate.boxtitle">
-              <fmt:param value="<%= "<a href='http://java.sun.com/javase/downloads/index.jsp'>" %>" />
-              <fmt:param value="<%= "</a>" %>" />
-          </fmt:message>
+          <fmt:message key="ssl.import.certificate.boxtitle" />
       </div>
       <div class="jive-contentBox">
           <table cellpadding="3" cellspacing="0" border="0">

@@ -42,7 +42,7 @@
                     alias = domain + "_" + index;
                 }
                 // Import certificate
-                CertificateManager.installCert(SSLConfig.getKeyStore(), SSLConfig.getTrustStore(),
+                CertificateManager.installCert(SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore(),
                         SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(privateKey.getBytes()), passPhrase,
                         new ByteArrayInputStream(certificate.getBytes()), true, true);
                 // Save keystore

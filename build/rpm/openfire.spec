@@ -115,6 +115,7 @@ chown -R daemon:daemon %{homedir}
 %dir %{homedir}/resources/security
 %config(noreplace) %{homedir}/resources/security/keystore
 %config(noreplace) %{homedir}/resources/security/truststore
+%config(noreplace) %{homedir}/resources/security/client.truststore
 %doc %{homedir}/documentation
 %doc %{homedir}/LICENSE.html 
 %doc %{homedir}/README.html 

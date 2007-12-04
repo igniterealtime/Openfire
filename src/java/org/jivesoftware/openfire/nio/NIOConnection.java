@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
 import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.net.ClientTrustManager;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
@@ -279,20 +280,29 @@ public class NIOConnection implements Connection {
     }
 
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
+        boolean c2s = (remoteServer == null);
         KeyStore ksKeys = SSLConfig.getKeyStore();
         String keypass = SSLConfig.getKeyPassword();
 
-        KeyStore ksTrust = SSLConfig.getTrustStore();
-        String trustpass = SSLConfig.getTrustPassword();
-
+        KeyStore ksTrust = (c2s ? SSLConfig.getc2sTrustStore() : SSLConfig.gets2sTrustStore() );
+        String trustpass = (c2s ? SSLConfig.getc2sTrustPassword() : SSLConfig.gets2sTrustPassword() );
+        if (c2s)  Log.debug("NIOConnection: startTLS: using c2s");
+        else Log.debug("NIOConnection: startTLS: using s2s");
         // KeyManager's decide which key material to use.
         KeyManager[] km = SSLJiveKeyManagerFactory.getKeyManagers(ksKeys, keypass);
 
         // TrustManager's decide whether to allow connections.
         TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
+
         if (clientMode || authentication == ClientAuth.needed || authentication == ClientAuth.wanted) {
-            // Check if we can trust certificates presented by the server
-            tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
+            // We might need to verify a certificate from our peer, so get different TrustManager[]'s
+            if(c2s) {
+                // Check if we can trust certificates presented by the client
+                tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
+            } else {
+                // Check if we can trust certificates presented by the server
+                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
+            }
         }
 
         SSLContext tlsContext = SSLContext.getInstance("TLS");

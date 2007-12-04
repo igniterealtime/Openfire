@@ -104,9 +104,9 @@ public class AdminConsolePlugin implements Plugin {
                 httpsConnector.setHost(bindInterface);
                 httpsConnector.setPort(adminSecurePort);
 
-                httpsConnector.setTrustPassword(SSLConfig.getTrustPassword());
+                httpsConnector.setTrustPassword(SSLConfig.gets2sTrustPassword());
                 httpsConnector.setTruststoreType(SSLConfig.getStoreType());
-                httpsConnector.setTruststore(SSLConfig.getTruststoreLocation());
+                httpsConnector.setTruststore(SSLConfig.gets2sTruststoreLocation());
                 httpsConnector.setNeedClientAuth(false);
                 httpsConnector.setWantClientAuth(false);
 

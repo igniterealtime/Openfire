@@ -35,15 +35,25 @@ import java.util.List;
  */
 public class SSLConfig {
 
-    private static SSLServerSocketFactory sslFactory;
-    private static KeyStore keyStore;
-    private static String keypass;
-    private static KeyStore trustStore;
-    private static String trustpass;
-    private static String keyStoreLocation;
-    private static String trustStoreLocation;
+    private static SSLServerSocketFactory s2sFactory;
+    private static SSLServerSocketFactory c2sFactory;
+
     private static String storeType;
-    private static SSLContext sslContext;
+    private static SSLContext s2sContext;
+    private static SSLContext c2sContext;
+
+    private static KeyStore keyStore;
+    private static String keyStoreLocation;
+    private static String keypass;
+
+    private static KeyStore s2sTrustStore;
+    private static String s2sTrustStoreLocation;
+    private static String s2sTrustpass;
+
+    private static KeyStore c2sTrustStore;
+    private static String c2sTrustStoreLocation;
+    private static String c2sTrustpass;
+
 
     private SSLConfig() {
     }
@@ -61,34 +71,70 @@ public class SSLConfig {
         keypass = JiveGlobals.getProperty("xmpp.socket.ssl.keypass", "changeit");
         keypass = keypass.trim();
 
-        // Get the truststore location; default at security/truststore
-        trustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
+        // Get the truststore location for c2s connections
+        c2sTrustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.client.truststore",
+                "resources" + File.separator + "security" + File.separator + "client.truststore");
+        c2sTrustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + c2sTrustStoreLocation;
+
+        c2sTrustpass = JiveGlobals.getProperty("xmpp.socket.ssl.client.trustpass", "changeit");
+        c2sTrustpass = c2sTrustpass.trim();
+
+        // Get the truststore location for s2s connections
+        s2sTrustStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.truststore",
                 "resources" + File.separator + "security" + File.separator + "truststore");
-        trustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + trustStoreLocation;
+        s2sTrustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + s2sTrustStoreLocation;
 
         // Get the truststore passwprd; default is "changeit".
-        trustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
-        trustpass = trustpass.trim();
+        s2sTrustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
+        s2sTrustpass = s2sTrustpass.trim();
 
+	    // Load s2s keystore and trusstore
         try {
             keyStore = KeyStore.getInstance(storeType);
             keyStore.load(new FileInputStream(keyStoreLocation), keypass.toCharArray());
 
-            trustStore = KeyStore.getInstance(storeType);
-            trustStore.load(new FileInputStream(trustStoreLocation), trustpass.toCharArray());
-            resetFactory();
+            s2sTrustStore = KeyStore.getInstance(storeType);
+            s2sTrustStore.load(new FileInputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
+
+
         }
         catch (Exception e) {
             Log.error("SSLConfig startup problem.\n" +
                     "  storeType: [" + storeType + "]\n" +
                     "  keyStoreLocation: [" + keyStoreLocation + "]\n" +
                     "  keypass: [" + keypass + "]\n" +
-                    "  trustStoreLocation: [" + trustStoreLocation+ "]\n" +
-                    "  trustpass: [" + trustpass + "]", e);
+                    "  s2sTrustStoreLocation: [" + s2sTrustStoreLocation + "]\n" +
+                    "  s2sTrustpass: [" + s2sTrustpass + "]\n"); 
             keyStore = null;
-            trustStore = null;
-            sslFactory = null;
+            s2sTrustStore = null;
+            s2sFactory = null;
         }
+        // Load c2s trusstore
+        try {
+            if (s2sTrustStoreLocation.equals(c2sTrustStoreLocation)) {
+                c2sTrustStore = s2sTrustStore;
+                c2sTrustpass = s2sTrustpass;
+            }
+            else {
+                c2sTrustStore = KeyStore.getInstance(storeType);
+                c2sTrustStore.load(new FileInputStream(c2sTrustStoreLocation), c2sTrustpass.toCharArray());
+            }
+        }
+        catch (Exception e) {
+            try {
+                c2sTrustStore = KeyStore.getInstance(storeType);
+                c2sTrustStore.load(null, c2sTrustpass.toCharArray());
+            }
+            catch (Exception ex) {
+                Log.error("SSLConfig startup problem.\n" +
+                        "  storeType: [" + storeType + "]\n" +
+                        "  c2sTrustStoreLocation: [" + c2sTrustStoreLocation + "]\n" +
+                        "  c2sTrustPass: [" + c2sTrustpass + "]", e);
+                c2sTrustStore = null;
+                c2sFactory = null;
+            }
+        }
+        resetFactory();
 
         // Reset ssl factoty when certificates are modified
         CertificateManager.addListener(new CertificateEventListener() {
@@ -96,9 +142,11 @@ public class SSLConfig {
             public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
                 resetFactory();
             }
+
             public void certificateDeleted(KeyStore keyStore, String alias) {
                 resetFactory();
             }
+
             public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
                 resetFactory();
             }
@@ -109,63 +157,109 @@ public class SSLConfig {
         try {
             String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
 
-            sslContext = SSLContext.getInstance(algorithm);
+            s2sContext = SSLContext.getInstance(algorithm);
+            c2sContext = SSLContext.getInstance(algorithm);
 
             KeyManagerFactory keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyFactory.init(keyStore, SSLConfig.getKeyPassword().toCharArray());
 
-            TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustFactory.init(trustStore);
+            TrustManagerFactory s2sTrustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            s2sTrustFactory.init(s2sTrustStore);
 
-            sslContext.init(keyFactory.getKeyManagers(),
-                    trustFactory.getTrustManagers(),
+            s2sContext.init(keyFactory.getKeyManagers(),
+                    s2sTrustFactory.getTrustManagers(),
                     new java.security.SecureRandom());
 
-            sslFactory = sslContext.getServerSocketFactory();
+            s2sFactory = s2sContext.getServerSocketFactory();
+
+            if (s2sTrustStore == c2sTrustStore) {
+                c2sContext = s2sContext;
+                c2sFactory = s2sFactory;
+            }
+            else {
+                TrustManagerFactory c2sTrustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                c2sTrustFactory.init(c2sTrustStore);
+
+                c2sContext.init(keyFactory.getKeyManagers(),
+                    s2sTrustFactory.getTrustManagers(),
+                    new java.security.SecureRandom());
+
+                c2sFactory = c2sContext.getServerSocketFactory();
+            }
+
         }
         catch (Exception e) {
             Log.error("SSLConfig factory setup problem.\n" +
                     "  storeType: [" + storeType + "]\n" +
                     "  keyStoreLocation: [" + keyStoreLocation + "]\n" +
                     "  keypass: [" + keypass + "]\n" +
-                    "  trustStoreLocation: [" + trustStoreLocation+ "]\n" +
-                    "  trustpass: [" + trustpass + "]", e);
+                    "  s2sTrustStoreLocation: [" + s2sTrustStoreLocation+ "]\n" +
+                    "  s2sTrustpass: [" + s2sTrustpass + "]" +
+                    "  c2sTrustStoreLocation: [" + c2sTrustStoreLocation + "]\n" +
+                    "  c2sTrustpass: [" + c2sTrustpass + "]", e);
             keyStore = null;
-            trustStore = null;
-            sslFactory = null;
+            s2sTrustStore = null;
+            c2sTrustStore = null;
+            s2sFactory = null;
+            c2sFactory = null;
         }
     }
 
+    /**
+     * Get the Key Store password
+     *
+     * @return the key store password
+     */
     public static String getKeyPassword() {
         return keypass;
     }
 
-    public static String getTrustPassword() {
-        return trustpass;
+    /**
+     * Return the Trust Store password for s2s connections.
+     *
+     * @return the s2s trust store password.
+     */
+    public static String gets2sTrustPassword() {
+        return s2sTrustpass;
+    }
+
+
+    /**
+     * Return the Trust Store password for c2s connections.
+     *
+     * @return the c2s trust store password.
+     */
+    public static String getc2sTrustPassword() {
+        return c2sTrustpass;
     }
 
     public static String[] getDefaultCipherSuites() {
         String[] suites;
-        if (sslFactory == null) {
+        if (s2sFactory == null) {
             suites = new String[]{};
         }
         else {
-            suites = sslFactory.getDefaultCipherSuites();
+            suites = s2sFactory.getDefaultCipherSuites();
         }
         return suites;
     }
 
-    public static String[] getSpportedCipherSuites() {
+    public static String[] getSupportedCipherSuites() {
         String[] suites;
-        if (sslFactory == null) {
+        if (s2sFactory == null) {
             suites = new String[]{};
         }
         else {
-            suites = sslFactory.getSupportedCipherSuites();
+            suites = s2sFactory.getSupportedCipherSuites();
         }
         return suites;
     }
 
+    /**
+     * Get the Key Store
+     *
+     * @return the Key Store
+     */
     public static KeyStore getKeyStore() throws IOException {
         if (keyStore == null) {
             throw new IOException();
@@ -173,17 +267,40 @@ public class SSLConfig {
         return keyStore;
     }
 
-    public static KeyStore getTrustStore() throws IOException {
-        if (trustStore == null) {
+    /**
+     * Get the Trust Store for s2s connections
+     *
+     * @return the s2s Trust Store
+     */
+    public static KeyStore gets2sTrustStore() throws IOException {
+        if (s2sTrustStore == null) {
             throw new IOException();
         }
-        return trustStore;
+        return s2sTrustStore;
     }
 
+    /** 
+     * Get the Trust Store for c2s connections
+     *
+     * @return the c2s Trust Store
+     */ 
+    public static KeyStore getc2sTrustStore() throws IOException {
+        if (c2sTrustStore == null) {
+            throw new IOException();
+        }
+        return c2sTrustStore;
+    }
+
+    /**
+     * Save all key and trust stores.
+     */
     public static void saveStores() throws IOException {
         try {
             keyStore.store(new FileOutputStream(keyStoreLocation), keypass.toCharArray());
-            trustStore.store(new FileOutputStream(trustStoreLocation), trustpass.toCharArray());
+            s2sTrustStore.store(new FileOutputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
+            if (c2sTrustStore != s2sTrustStore) {
+                c2sTrustStore.store(new FileOutputStream(c2sTrustStoreLocation), c2sTrustpass.toCharArray());
+            }
         }
         catch (IOException e) {
             throw e;
@@ -193,33 +310,99 @@ public class SSLConfig {
         }
     }
 
+    /**
+     * Create a ServerSocket for s2s connections
+     *
+     * @return the ServerSocket for an s2s connection
+     */
     public static ServerSocket createServerSocket(int port, InetAddress ifAddress) throws
             IOException {
-        if (sslFactory == null) {
+        if (s2sFactory == null) {
             throw new IOException();
         }
         else {
-            return sslFactory.createServerSocket(port, -1, ifAddress);
+            return s2sFactory.createServerSocket(port, -1, ifAddress);
         }
     }
 
+    /**
+     * Create a ServerSocket for c2s connections
+     *
+     * @return the ServerSocket for an c2s connection
+     */
+    public static ServerSocket createc2sServerSocket(int port, InetAddress ifAddress) throws
+            IOException {
+        if (c2sFactory == null) {
+            throw new IOException();
+        }
+        else {
+            return c2sFactory.createServerSocket(port, -1, ifAddress);
+        }
+    }
+
+    /**
+     * Get the Key Store location
+     *
+     * @return the keystore location
+     */
     public static String getKeystoreLocation() {
         return keyStoreLocation;
     }
 
-    public static String getTruststoreLocation() {
-        return trustStoreLocation;
+    /**
+     * Get the s2s Trust Store location
+     *
+     * @return the s2s Trust Store location
+     */
+    public static String gets2sTruststoreLocation() {
+        return s2sTrustStoreLocation;
+    }
+
+    /**
+     * Get the c2s Trust Store location
+     *
+     * @return the c2s Trust Store location
+     */
+    public static String getc2sTruststoreLocation() {
+        return c2sTrustStoreLocation;
     }
 
     public static String getStoreType() {
         return storeType;
     }
 
+    /**
+     * Get the SSLContext for s2s connections
+     *
+     * @return the SSLContext for s2s connections
+     */
     public static SSLContext getSSLContext() {
-        return sslContext;
+        return s2sContext;
     }
 
+    /**
+     * Get the SSLContext for c2s connections
+     *
+     * @return the SSLContext for c2s connections
+     */
+    public static SSLContext getc2sSSLContext() {
+        return c2sContext;
+    }
+
+    /**
+     * Get the SSLServerSocketFactory for s2s connections
+     *
+     * @return the SSLServerSocketFactory for s2s connections
+     */
     public static SSLServerSocketFactory getServerSocketFactory() {
-        return sslFactory;
+        return s2sFactory;
+    }
+    /**
+     * Get the SSLServerSocketFactory for c2s connections
+     *
+     * @return the SSLServerSocketFactory for c2s connections
+     */
+    public static SSLServerSocketFactory getc2sServerSocketFactory() {
+        return c2sFactory;
     }
 }

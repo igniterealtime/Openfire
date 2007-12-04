@@ -91,6 +91,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{confdir}/openfire.xml
 %config(noreplace) %{confdir}/security/keystore
 %config(noreplace) %{confdir}/security/truststore
+%config(noreplace) %{confdir}/security/client.truststore
 %dir %{homedir}/lib
 %{homedir}/lib/*.jar
 %{homedir}/logs

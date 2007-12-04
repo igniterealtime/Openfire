@@ -58,6 +58,7 @@ public class TLSWrapper {
 
     public TLSWrapper(boolean clientMode, boolean needClientAuth, String remoteServer) {
 
+        boolean c2sConnection = (remoteServer == null);
         if (debug) {
             System.setProperty("javax.net.debug", "all");
         }
@@ -68,8 +69,8 @@ public class TLSWrapper {
             KeyStore ksKeys = SSLConfig.getKeyStore();
             String keypass = SSLConfig.getKeyPassword();
 
-            KeyStore ksTrust = SSLConfig.getTrustStore();
-            String trustpass = SSLConfig.getTrustPassword();
+            KeyStore ksTrust = (c2sConnection ? SSLConfig.getc2sTrustStore() : SSLConfig.gets2sTrustStore());
+            String trustpass = (c2sConnection ? SSLConfig.getc2sTrustPassword() : SSLConfig.gets2sTrustPassword());
 
             // KeyManager's decide which key material to use.
             KeyManager[] km = SSLJiveKeyManagerFactory.getKeyManagers(ksKeys, keypass);
@@ -77,8 +78,14 @@ public class TLSWrapper {
             // TrustManager's decide whether to allow connections.
             TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
             if (clientMode || needClientAuth) {
-                // Check if we can trust certificates presented by the server
-                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
+                if (c2sConnection) {
+                    // Check if we can trust certificates presented by the client
+                    tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
+                }
+                else {
+                    // Check if we can trust certificates presented by the server
+                    tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
+                }
             }
 
             SSLContext tlsContext = SSLContext.getInstance(PROTOCOL);

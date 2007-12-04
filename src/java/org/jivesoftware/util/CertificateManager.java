@@ -223,17 +223,17 @@ public class CertificateManager {
                         // Ignore
                     }
                     catch (Exception e) {
-                        Log.error("Error decoding subjectAltName", e);
+                        Log.error("CertificateManager: Error decoding subjectAltName", e);
                     }
                 }
                 // Other types are not good for XMPP so ignore them
                 else if (Log.isDebugEnabled()) {
-                    Log.debug("SubjectAltName of invalid type found: " + certificate);
+                    Log.debug("CertificateManager: SubjectAltName of invalid type found: " + certificate.getSubjectDN());
                 }
             }
         }
         catch (CertificateParsingException e) {
-            Log.error("Error parsing SubjectAltName in certificate: " + certificate, e);
+            Log.error("CertificateManager: Error parsing SubjectAltName in certificate: " + certificate.getSubjectDN(), e);
         }
         return identities;
     }

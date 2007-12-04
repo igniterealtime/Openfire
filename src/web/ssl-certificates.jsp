@@ -73,7 +73,7 @@
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
             try {
-                CertificateManager.installReply(SSLConfig.getKeyStore(), SSLConfig.getTrustStore(),
+                CertificateManager.installReply(SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore(),
                         SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(reply.getBytes()), true, true);
                 SSLConfig.saveStores();
                 response.sendRedirect("ssl-certificates.jsp?importsuccess=true");

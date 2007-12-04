@@ -76,6 +76,8 @@ public class SSLJiveTrustManagerFactory {
         return trustManagers;
     }
     
+
+    //TODO: Is this for c2s or s2s connections? Or both?
     public static TrustManager[] getTrustManagers(KeyStore truststore,
 			String trustpass) {
 		TrustManager[] trustManagers;
@@ -86,7 +88,7 @@ public class SSLJiveTrustManagerFactory {
 				TrustManagerFactory trustFactory = TrustManagerFactory
 						.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 				if (trustpass == null) {
-					trustpass = SSLConfig.getTrustPassword();
+					trustpass = SSLConfig.gets2sTrustPassword();
 				}
 
 				trustFactory.init(truststore);

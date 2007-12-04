@@ -141,9 +141,9 @@ public final class HttpBindManager {
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
 
-                sslConnector.setTrustPassword(SSLConfig.getTrustPassword());
+                sslConnector.setTrustPassword(SSLConfig.getc2sTrustPassword());
                 sslConnector.setTruststoreType(SSLConfig.getStoreType());
-                sslConnector.setTruststore(SSLConfig.getTruststoreLocation());
+                sslConnector.setTruststore(SSLConfig.getc2sTruststoreLocation());
                 sslConnector.setNeedClientAuth(false);
                 sslConnector.setWantClientAuth(false);
 

@@ -396,7 +396,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 KeyManagerFactory keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 keyFactory.init(SSLConfig.getKeyStore(), SSLConfig.getKeyPassword().toCharArray());
                 TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustFactory.init(SSLConfig.getTrustStore());
+                trustFactory.init(SSLConfig.getc2sTrustStore());
 
                 sslContext.init(keyFactory.getKeyManagers(),
                         trustFactory.getTrustManagers(),

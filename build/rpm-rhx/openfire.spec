@@ -127,6 +127,9 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/sysconfig/openfire
 
 %changelog
+* Thu Dec 04 2007 Daniel Henninger <jadestorm@nc.rr.com> 3.4.2-1
+- Updated to version 3.4.1.
+
 * Thu Nov 08 2007 Daniel Henninger <jadestorm@nc.rr.com> 3.4.1-1
 - Updated to version 3.4.1.
 

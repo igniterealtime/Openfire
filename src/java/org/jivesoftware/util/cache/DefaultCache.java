@@ -385,14 +385,18 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return false;
     }
 
-    public Set entrySet() {
+    public Set<Entry<K, V>> entrySet() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
         // TODO Make this work right
 
         synchronized (this) {
-            return new HashSet(map.entrySet());
+            final Map<K, V> result = new HashMap<K, V>();
+            for (final Entry<K, DefaultCache.CacheObject<V>> entry : map.entrySet()) {
+                result.put(entry.getKey(), entry.getValue().object);
+            }
+            return result.entrySet();
         }
     }
 

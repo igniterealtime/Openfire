@@ -35,7 +35,7 @@ mail.jar                            | 1.4.0 (JavaMail)
 mina-core.jar                       | 1.1.5 (https://svn.apache.org/repos/asf/mina/branches/1.1)
 mina-filter-compression.jar         | 1.1.5 (https://svn.apache.org/repos/asf/mina/branches/1.1)
 mina-filter-ssl.jar                 | 1.1.5 (https://svn.apache.org/repos/asf/mina/branches/1.1)
-mysql.jar                           | 5.1.5
+mysql.jar                           | 5.0.8
 objenesis                           | 1.0 (JMock 2.1.0)
 pack200task.jar                     | August 5, 2004
 postgres.jar                        | 8.2-506.jdbc3

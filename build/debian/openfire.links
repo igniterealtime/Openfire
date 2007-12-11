@@ -2,3 +2,4 @@
 /etc/openfire/security /usr/share/openfire/resources/security
 /var/lib/openfire/embedded-db /usr/share/openfire/embedded-db
 /var/lib/openfire/plugins /usr/share/openfire/plugins
+/var/log/openfire /usr/share/openfire/logs

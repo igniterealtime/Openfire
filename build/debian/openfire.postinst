@@ -29,6 +29,7 @@ case "$1" in
  
 		mkdir -p /var/log/openfire
 		mkdir -p /var/lib/openfire/embedded-db
+		chown -R openfire:openfire /usr/share/openfire
 		chown -R openfire:openfire /var/lib/openfire
 		chown -R openfire:openfire /var/log/openfire
 		chown -R openfire:openfire /etc/openfire

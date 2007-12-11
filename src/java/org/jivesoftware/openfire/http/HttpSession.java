@@ -14,18 +14,26 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.SessionPacketRouter;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
+import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.Log;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -41,6 +49,27 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author Alexander Wenckus
  */
 public class HttpSession extends LocalClientSession {
+    private static XmlPullParserFactory factory = null;
+    private static ThreadLocal<XMPPPacketReader> localParser = null;
+    static {
+        try {
+            factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
+            factory.setNamespaceAware(true);
+        }
+        catch (XmlPullParserException e) {
+            Log.error("Error creating a parser factory", e);
+        }
+        // Create xmpp parser to keep in each thread
+        localParser = new ThreadLocal<XMPPPacketReader>() {
+            protected XMPPPacketReader initialValue() {
+                XMPPPacketReader parser = new XMPPPacketReader();
+                factory.setNamespaceAware(true);
+                parser.setXPPFactory(factory);
+                return parser;
+            }
+        };
+    }
+
     private int wait;
     private int hold = 0;
     private String language;
@@ -513,16 +542,10 @@ public class HttpSession extends LocalClientSession {
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
-        if (hold <= 0 || (pendingElements.size() > 0 && connection.getRequestId()
-                == lastRequestID + 1)) {
-            try {
-                deliver(connection, pendingElements);
-                lastRequestID = connection.getRequestId();
-                pendingElements.clear();
-            }
-            catch (HttpConnectionClosedException he) {
-                throw he;
-            }
+        if (hold <= 0 || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
+            deliver(connection, pendingElements);
+            lastRequestID = connection.getRequestId();
+            pendingElements.clear();
         }
         else {
             // With this connection we need to check if we will have too many connections open,
@@ -651,7 +674,7 @@ public class HttpSession extends LocalClientSession {
 
     private void failDelivery() {
         for (Deliverable deliverable : pendingElements) {
-            Collection<Packet> packet = deliverable.packets;
+            Collection<Packet> packet = deliverable.getPackets();
             if (packet != null) {
                 failDelivery(packet);
             }
@@ -735,7 +758,7 @@ public class HttpSession extends LocalClientSession {
 
     private class Deliverable implements Comparable<Deliverable> {
         private final String text;
-        private final Collection<Packet> packets;
+        private final Collection<String> packets;
         private long requestID;
 
         public Deliverable(String text) {
@@ -745,17 +768,17 @@ public class HttpSession extends LocalClientSession {
 
         public Deliverable(Collection<Packet> elements) {
             this.text = null;
-            this.packets = new ArrayList<Packet>();
-            for (Packet element : elements) {
-                this.packets.add(element.createCopy());
+            this.packets = new ArrayList<String>();
+            for (Packet packet : elements) {
+                this.packets.add(packet.toXML());
             }
         }
 
         public String getDeliverable() {
             if (text == null) {
                 StringBuilder builder = new StringBuilder();
-                for (Packet packet : packets) {
-                    builder.append(packet.toXML());
+                for (String packet : packets) {
+                    builder.append(packet);
                 }
                 return builder.toString();
             }
@@ -770,6 +793,33 @@ public class HttpSession extends LocalClientSession {
 
         public long getRequestID() {
             return requestID;
+        }
+
+        public Collection<Packet> getPackets() {
+            List<Packet> answer = new ArrayList<Packet>();
+            for (String packetXML : packets) {
+                try {
+                    Packet packet = null;
+                    // Parse the XML stanza
+                    Element element = localParser.get().read(new StringReader(packetXML)).getRootElement();
+                    String tag = element.getName();
+                    if ("message".equals(tag)) {
+                        packet = new Message(element, true);
+                    }
+                    else if ("presence".equals(tag)) {
+                        packet = new Presence(element, true);
+                    }
+                    else if ("iq".equals(tag)) {
+                        packet = new IQ(element, true);
+                    }
+                    // Add the reconstructed packet to the result
+                    answer.add(packet);
+                }
+                catch (Exception e) {
+                    Log.error("Error while parsing Privacy Property", e);
+                }
+            }
+            return answer;
         }
 
         public int compareTo(Deliverable o) {
@@ -797,7 +847,7 @@ public class HttpSession extends LocalClientSession {
             List<Packet> packets = new ArrayList<Packet>();
             for (Deliverable deliverable : deliverables) {
                 if (deliverable.packets != null) {
-                    packets.addAll(deliverable.packets);
+                    packets.addAll(deliverable.getPackets());
                 }
             }
             return packets;

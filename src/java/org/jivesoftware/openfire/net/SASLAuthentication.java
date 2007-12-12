@@ -432,10 +432,11 @@ public class SASLAuthentication {
             SocketConnection connection = (SocketConnection) session.getConnection();
             try {
                 for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                    if (CertificateManager.getPeerIdentities((X509Certificate) certificate)
-                            .contains(hostname)) {
-                        authenticationSuccessful(session, hostname, null);
-                        return Status.authenticated;
+                    for (String identity : CertificateManager.getPeerIdentities((X509Certificate) certificate)) {
+                        if (identity.equals(hostname) || identity.equals("*." + hostname)) {
+                            authenticationSuccessful(session, hostname, null);
+                            return Status.authenticated;
+                        }
                     }
                 }
             }

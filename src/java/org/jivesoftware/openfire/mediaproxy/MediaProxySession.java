@@ -334,7 +334,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
     /**
      * Get the Port A IP
      *
-     * @return
+     * @return the port for A
      */
     public int getPortA() {
         return portA;

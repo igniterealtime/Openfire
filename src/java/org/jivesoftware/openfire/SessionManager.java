@@ -882,8 +882,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     /**
      * Returns the number of sessions for a user that are available. For the count
      * of all sessions for the user, including sessions that are just starting
-     * or closed, see {@see #getConnectionsCount(String)}.
+     * or closed.
      *
+     * @see #getConnectionsCount(boolean)
      * @param username the user.
      * @return number of available sessions for a user.
      */

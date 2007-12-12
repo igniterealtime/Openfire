@@ -15,8 +15,8 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
@@ -84,12 +84,12 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     void startTLS() throws Exception {
-        // TODO Finish implementation. We need to get the name of the remote server!?!?
+        // TODO Finish implementation. We need to get the name of the remote server if we want to validate certificates of the remote server that requested TLS
 
         boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
                 JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
                 !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
-        connection.startTLS(true, "IMPLEMENT_ME", needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+        connection.startTLS(false, "IMPLEMENT_ME", needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
     }
     protected void processIQ(IQ packet) throws UnauthorizedException {
         packetReceived(packet);

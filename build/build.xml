@@ -1084,6 +1084,9 @@
     
     <!-- installer.rpm ========================================================================= -->
     <property name="target.rpm" value="${work.dir}/rpm" />
+    <tstamp>
+        <format property="rpm.builddate" pattern="EEE MMM dd yyyy" locale="en"/>
+    </tstamp>
     <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of openfire.">
         <antcall target="dist.src"/>
 
@@ -1099,7 +1102,7 @@
 
         <rpm specFile="openfire.spec"
              topDir="${target.rpm}"
-             command="-ba"
+             command="-ba --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
              failOnError="true"
              />
              

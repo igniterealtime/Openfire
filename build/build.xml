@@ -1083,7 +1083,10 @@
     </target>
     
     <!-- installer.rpm ========================================================================= -->
-    <property name="target.rpm" value="${work.dir}/rpm" />
+    <property name="bundle.jre" value="true" />
+    <property name="target.work.subdir" value="rpm" />
+    <property name="target.rpm" value="${work.dir}/${target.work.subdir}" />
+    <property name="rpm.spec.file" value="${basedir}/build/rpm/openfire.spec"/>
     <tstamp>
         <format property="rpm.builddate" pattern="EEE MMM dd yyyy" locale="en"/>
     </tstamp>
@@ -1096,9 +1099,16 @@
         <mkdir dir="${target.rpm}/SRPMS" />
         <mkdir dir="${target.rpm}/RPMS" />
 
-        <copy todir="${target.rpm}/SPECS" file="${basedir}/build/rpm/openfire.spec" />
-        <copy todir="${target.rpm}/SOURCES" file="${basedir}/build/rpm/jre-dist.tar.gz" />
+        <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
+        <if>
+            <equals arg1="${bundle.jre}" arg2="true"/>
+            <then>
+                <!-- Include bundled jre -->
+                <copy todir="${target.rpm}/SOURCES" file="${basedir}/build/rpm/jre-dist.tar.gz" />
+            </then>
+        </if>
         <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+
 
         <rpm specFile="openfire.spec"
              topDir="${target.rpm}"
@@ -1111,7 +1121,7 @@
             <fileset dir="${target.rpm}/RPMS/i386" />
         </copy>
     </target>
-    
+
     <!-- plugins =============================================================================== -->
     <target name="plugins" description="Builds all plugins">
         <!-- Call jar task, can't do this is as a 'depends' call of this target because

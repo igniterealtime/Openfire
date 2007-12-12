@@ -1642,7 +1642,7 @@
         <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
     </tstamp>
 
-    <target name="installer-debian" depends="dist.src" description="Creates a Debian package">
+    <target name="installer.debian" depends="dist.src" description="Creates a Debian package">
         <!-- Copy the sources to some place to work -->
         <copy todir="${debian.work.dir}"> 
             <fileset dir="${release.src.out.dir}">

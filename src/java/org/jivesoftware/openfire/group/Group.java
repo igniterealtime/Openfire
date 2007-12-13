@@ -263,7 +263,7 @@ public class Group implements Cacheable, Externalizable {
      */
     public boolean isUser(String username) {
         if  (username != null) {
-            return isUser(XMPPServer.getInstance().createJID(username, null));
+            return isUser(XMPPServer.getInstance().createJID(username, null, true));
         }
         else {
             return false;

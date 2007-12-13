@@ -11,15 +11,18 @@
 
 package org.jivesoftware.openfire.group;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.util.Collection;
@@ -340,7 +343,7 @@ public class GroupManager {
      * @return all groups the user belongs to.
      */
     public Collection<Group> getGroups(User user) {
-        return getGroups(XMPPServer.getInstance().createJID(user.getUsername(), null));
+        return getGroups(XMPPServer.getInstance().createJID(user.getUsername(), null, true));
     }
 
     /**

@@ -83,7 +83,7 @@ public class PrivacyList implements Cacheable, Externalizable {
     }
 
     public PrivacyList(String username, String name, boolean isDefault, Element listElement) {
-        this.userJID = XMPPServer.getInstance().createJID(username, null);
+        this.userJID = XMPPServer.getInstance().createJID(username, null, true);
         this.name = name;
         this.isDefault = isDefault;
         // Set the new list items

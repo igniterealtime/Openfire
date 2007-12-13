@@ -650,7 +650,7 @@ public class Roster implements Cacheable, Externalizable {
     }
 
     private void broadcast(org.xmpp.packet.Roster roster) {
-        JID recipient = server.createJID(username, null);
+        JID recipient = server.createJID(username, null, true);
         roster.setTo(recipient);
         if (sessionManager == null) {
             sessionManager = SessionManager.getInstance();
@@ -1098,7 +1098,7 @@ public class Roster implements Cacheable, Externalizable {
     }
 
     private JID getUserJID() {
-        return XMPPServer.getInstance().createJID(getUsername(), null);
+        return XMPPServer.getInstance().createJID(getUsername(), null, true);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

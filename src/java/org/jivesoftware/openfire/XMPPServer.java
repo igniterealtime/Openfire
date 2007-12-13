@@ -244,6 +244,19 @@ public class XMPPServer {
     }
 
     /**
+     * Creates an XMPPAddress local to this server. The construction of the new JID
+     * can be optimized by skipping stringprep operations.
+     *
+     * @param username the user name portion of the id or null to indicate none is needed.
+     * @param resource the resource portion of the id or null to indicate none is needed.
+     * @param skipStringprep true if stringprep should not be applied.
+     * @return an XMPPAddress for the server.
+     */
+    public JID createJID(String username, String resource, boolean skipStringprep) {
+        return new JID(username, name, resource, skipStringprep);
+    }
+
+    /**
      * Returns a collection with the JIDs of the server's admins. The collection may include
      * JIDs of local users and users of remote servers.
      *

@@ -332,7 +332,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete this user's association in entityCapabilitiesUserMap.
-        JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null);
+        JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
         String verHashOfUser = entityCapabilitiesUserMap.remove(jid);
 
         // If there are no other references to the deleted user's 'ver' hash,

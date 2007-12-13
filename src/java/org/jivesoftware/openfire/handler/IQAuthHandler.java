@@ -208,7 +208,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         // Verify if there is a resource conflict between new resource and existing one.
         // Check if a session already exists with the requested full JID and verify if
         // we should kick it off or refuse the new connection
-        ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource));
+        ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
         if (oldSession != null) {
             try {
                 oldSession.incrementConflictCount();

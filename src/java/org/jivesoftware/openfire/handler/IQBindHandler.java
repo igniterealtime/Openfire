@@ -104,7 +104,7 @@ public class IQBindHandler extends IQHandler {
             String username = authToken.getUsername().toLowerCase();
             // If a session already exists with the requested JID, then check to see
             // if we should kick it off or refuse the new connection
-            ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource));
+            ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
             if (oldSession != null) {
                 try {
                     oldSession.incrementConflictCount();

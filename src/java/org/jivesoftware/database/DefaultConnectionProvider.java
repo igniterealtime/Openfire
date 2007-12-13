@@ -65,9 +65,20 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             synchronized (initLock) {
                 // if still null, something has gone wrong
                 if (connectionPool == null) {
-                    Log.error("Warning: DbConnectionDefaultPool.getConnection() was " +
-                            "called before the internal pool has been initialized.");
-                    return null;
+                    Log.error("DbConnectionDefaultPool.getConnection() was " +
+                    "called before the internal pool has been initialized or " +
+                    "there was a problem connecting to the database.");
+                    // Attempt to connect again if setup was already done
+                    if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
+                        this.restart();
+                        if (connectionPool == null) {
+                            Log.error("Recovery logic failed to reconnect to the database.");
+                            return null;
+                        }
+                    }
+                    else {
+                        return null;
+                    }
                 }
             }
         }

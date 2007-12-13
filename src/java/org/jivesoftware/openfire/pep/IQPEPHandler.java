@@ -53,19 +53,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * An {@link IQHandler} used to implement XEP-0163: "Personal Eventing via Pubsub"
  * Version 1.0
  * </p>
- * 
+ *
  * <p>
  * For each user on the server there is an associated {@link PEPService} interacting
  * with a single {@link PubSubEngine} for managing the user's PEP nodes.
  * </p>
- * 
+ *
  * <p>
  * An IQHandler can only handle one namespace in its IQHandlerInfo. However, PEP
  * related packets are seen having a variety of different namespaces. Thus,
  * classes like {@link IQPEPOwnerHandler} are used to forward packets having these other
  * namespaces to {@link IQPEPHandler#handleIQ(IQ)}.
  * <p>
- * 
+ *
  * <p>
  * This handler is used for the following namespaces:
  * <ul>
@@ -73,13 +73,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * <li><i>http://jabber.org/protocol/pubsub#owner</i></li>
  * </ul>
  * </p>
- * 
+ *
  * @author Armando Jagucki
- * 
+ *
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
         RosterEventListener, UserEventListener {
+
+    final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM pubsubNode WHERE serviceID=?";
 
     /**
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService
@@ -93,9 +95,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     /**
      * A map of all known full JIDs that have sent presences from a remote server.
      * table: key Bare JID (String); value Set of JIDs
-     * 
+     *
      * This map is convenient for sending notifications to the full JID of remote users
-     * that have sent available presences to the PEP service. 
+     * that have sent available presences to the PEP service.
      */
     private Map<String, Set<JID>> knownRemotePresences = new ConcurrentHashMap<String, Set<JID>>();
 
@@ -126,12 +128,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     /**
      * Loads a PEP service from the database, if it exists.
-     * 
+     *
      * @param jid the JID of the owner of the PEP service.
      * @return the loaded PEP service, or null if not found.
      */
     private PEPService loadPEPServiceFromDB(String jid) {
-        String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM pubsubNode " + "WHERE serviceID='" + jid + "'";
         PEPService pepService = null;
 
         Connection con = null;
@@ -140,6 +141,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             con = DbConnectionManager.getConnection();
             // Get all PEP services
             pstmt = con.prepareStatement(GET_PEP_SERVICE);
+            pstmt.setString(1, jid);
             ResultSet rs = pstmt.executeQuery();
             // Restore old PEPServices
             while (rs.next()) {
@@ -203,7 +205,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     /**
      * Returns the knownRemotePresences map.
-     * 
+     *
      * @return the knownRemotePresences map
      */
     public Map<String, Set<JID>> getKnownRemotePresenes() {
@@ -310,8 +312,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     /**
-     * Retrieves a PEP service -- attempting first from memory, then from the database.
-     * 
+     * Retrieves a PEP service -- attempting first from memory, then from the database. Note
+     * that if no PEP service was found the next request of the PEP service will hit the
+     * database since we are not caching 'no PEP services'.
+     *
+     * @param jid the bare JID of the user that owns the PEP service.
      * @return the requested PEP service if found or null if not found.
      */
     private PEPService getPEPService(String jid) {
@@ -326,7 +331,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     /**
      * Generates and processes an IQ stanza that subscribes to a PEP service.
-     * 
+     *
      * @param pepService the PEP service of the owner.
      * @param subscriber the JID of the entity that is subscribing to the PEP service.
      * @param owner      the JID of the owner of the PEP service.
@@ -389,7 +394,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     /**
      * Cancels a subscription to a PEPService's root collection node.
-     * 
+     *
      * @param unsubscriber the JID of the subscriber whose subscription is being canceled.
      * @param serviceOwner the JID of the owner of the PEP service for which the subscription is being canceled.
      */
@@ -405,9 +410,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         NodeSubscription nodeSubscription = rootNode.getSubscription(unsubscriber);
         if (nodeSubscription != null) {
             rootNode.cancelSubscription(nodeSubscription);
-        }
-        else {
-            return;
         }
     }
 
@@ -494,12 +496,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     public void availableSession(ClientSession session, Presence presence) {
         JID newlyAvailableJID = presence.getFrom();
-        
+
         if (newlyAvailableJID == null) {
             return;
         }
 
-        // Send the last published items for the contacts on newlyAvailableJID's roster. 
+        // Send the last published items for the contacts on newlyAvailableJID's roster.
         try {
             Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(newlyAvailableJID.getNode());
             for (RosterItem item : roster.getRosterItems()) {

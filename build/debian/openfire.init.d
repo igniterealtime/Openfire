@@ -7,7 +7,7 @@
 # Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
 #
 
-JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+JAVA_HOME=/etc/alternatives/jre
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:$JAVA_HOME/bin
 DAEMON=$JAVA_HOME/bin/java
 NAME=openfire

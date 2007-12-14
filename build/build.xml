@@ -1123,20 +1123,25 @@
     </target>
 
     <!-- installer.solaris ========================================================================= -->
-    <property name="target.solaris" value="${work.dir}/solaris" />
-    <property name="target.solaris.root" value="${target.solaris}/root" />
-    <property name="target.solaris.pkg" value="${target.solaris}/pkg" />
-    <property name="solaris.pkg.name" value="JSopenfire"/>
-    <property name="solaris.pkg.filename" value="${solaris.pkg.name}-${version}-ALL.pkg"/>
-    <tstamp>
-        <format property="solaris.builddate" pattern="yyyymmdd" locale="en"/>
-    </tstamp>
-    <target name="installer.solaris" depends="init, dist.init" description="Builds a solaris pkg of openfire.">
-<!--        <antcall target="dist.bin"/> -->
+    <target name="installer.solaris" depends="init, dist.init, dist.bin" description="Builds a solaris pkg of openfire.">
+        <property name="target.solaris" value="${work.dir}/solaris" />
+        <property name="target.solaris.root" value="${target.solaris}/root" />
+<!--        <property name="target.solaris.pkg" value="${target.solaris}/pkg" /> -->
+        <property name="target.solaris.pkg" value="/var/spool/pkg" />
+        <property name="solaris.pkg.name" value="JSopenfire"/>
+        <property name="solaris.pkg.filename" value="${solaris.pkg.name}-${version}-ALL.pkg"/>
+        <tstamp>
+            <format property="solaris.builddate" pattern="yyyymmdd" locale="en"/>
+        </tstamp>
+
+        <antcall target="dist.bin">
+            <!-- Don't need package for installer build -->
+            <param name="no.package" value="true"/>
+        </antcall>
 
         <mkdir dir="${target.solaris.root}" />
         <mkdir dir="${target.solaris.root}/opt" />
-        <mkdir dir="${target.solaris.pkg}" />
+<!--        <mkdir dir="${target.solaris.pkg}" /> -->
 
         <copy todir="${target.solaris.root}/opt/openfire">
             <fileset dir="${release.out.dir}"/>
@@ -1152,7 +1157,7 @@
 
         <exec executable="/usr/bin/pkgmk" dir="${target.solaris.root}" failonerror="true">
             <arg value="-o"/>
-            <arg value="-d ${target.solaris.pkg}"/>
+<!--            <arg value="-d ${target.solaris.pkg}"/> this doesn't work as advertised -->
             <arg value="-v ${version}"/>
             <arg value="-p ${solaris.builddate}"/>
         </exec>
@@ -1160,10 +1165,15 @@
         <touch file="${release.dest.dir}/${solaris.pkg.filename}"/>
 
         <exec executable="/usr/bin/pkgtrans" failonerror="true">
-            <arg value="-s ${target.solaris.pkg}"/>
+            <arg value="-s"/>
+            <arg value="${target.solaris.pkg}"/>
             <arg value="${release.dest.dir}/${solaris.pkg.filename}"/>
             <arg value="${solaris.pkg.name}"/>
         </exec>
+
+        <gzip src="${release.dest.dir}/${solaris.pkg.filename}" destfile="${release.dest.dir}/${solaris.pkg.filename}.gz"/>
+
+        <delete dir="${target.solaris.pkg}/${solaris.pkg.name}"/>
     </target>
 
     <!-- plugins =============================================================================== -->

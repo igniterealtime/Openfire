@@ -102,7 +102,7 @@
 						  nil,
 						  nil,
 						  self,
-						  @"Could not start the Openfire server.",
+						  @"Could not toggle Openfire startup.",
 						  nil);
 		[statusTimer invalidate];
 		[self checkStatus];

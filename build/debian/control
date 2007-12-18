@@ -2,13 +2,13 @@ Source: openfire
 Section: net
 Priority: optional
 Maintainer: Jive Software <webmaster@jivesoftware.com>
-Build-Depends: debhelper (>= 5), cdbs, patchutils, sun-java5-jdk | sun-java6-jdk, ant
+Build-Depends: debhelper (>= 5), cdbs, patchutils, sun-java5-jdk, ant
 Standards-Version: 3.7.2
 
 Package: openfire
 Section: net
 Priority: optional
-Depends: sun-java5-jre | sun-java6-jre
+Depends: sun-java5-jre
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP

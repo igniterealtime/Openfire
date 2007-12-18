@@ -13,7 +13,7 @@ ETCDIR := $(DEST)/etc/openfire
 LOGDIR := $(DEST)/var/log/openfire
 VARDIR := $(DEST)/var/lib/openfire
 
-JAVA_HOME := /etc/alternatives/jre
+JAVA_HOME := /usr/lib/jvm/java-1.5.0-sun
 DEB_ANT_BUILDFILE := build/build.xml
 DEB_ANT_CLEAN_TARGET := clean
 	

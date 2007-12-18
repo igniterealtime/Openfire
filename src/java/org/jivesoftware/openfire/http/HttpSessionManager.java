@@ -10,20 +10,22 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.TaskEngine;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.dom4j.*;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.TaskEngine;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.net.InetAddress;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.*;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocal,
@@ -33,7 +35,7 @@ public class HttpSessionManager {
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
     private TimerTask inactivityTask;
-    private Executor sendPacketPool = Executors.newCachedThreadPool();
+    private Executor sendPacketPool;
     private SessionListener sessionListener = new SessionListener() {
         public void connectionOpened(HttpSession session, HttpConnection connection) {
         }
@@ -52,6 +54,11 @@ public class HttpSessionManager {
      */
     public HttpSessionManager() {
         this.sessionManager = SessionManager.getInstance();
+
+        // Set the executor to use for processing http requests
+        int eventThreads = JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16);
+        sendPacketPool = new ThreadPoolExecutor(
+            eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>() );
     }
 
     /**

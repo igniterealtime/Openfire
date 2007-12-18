@@ -90,6 +90,7 @@ chown -R daemon:daemon %{homedir}
 %dir %{homedir}
 %dir %{homedir}/bin
 %{homedir}/bin/openfire.sh
+%{homedir}/bin/openfirectl
 %config(noreplace) %{homedir}/bin/embedded-db.rc
 %{homedir}/bin/embedded-db-viewer.sh
 %dir %{homedir}/conf

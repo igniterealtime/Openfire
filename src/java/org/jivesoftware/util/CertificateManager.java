@@ -44,6 +44,7 @@ import java.util.regex.Pattern;
 public class CertificateManager {
 
     private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
+    private static Pattern valuesPattern = Pattern.compile("(?i)(=)([^,]*)");
 
     private static Provider provider = new BouncyCastleProvider();
 
@@ -303,6 +304,42 @@ public class CertificateManager {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns true if the specified certificate is a self-signed certificate.
+     *
+     * @param keyStore key store that holds the certificate to verify.
+     * @param alias alias of the certificate in the key store.
+     * @return true if the specified certificate is a self-signed certificate.
+     * @throws KeyStoreException if an error happens while usign the keystore
+     */
+    public static boolean isSelfSignedCertificate(KeyStore keyStore, String alias) throws KeyStoreException {
+        // Get certificate chain
+        java.security.cert.Certificate[] certificateChain = keyStore.getCertificateChain(alias);
+        // Verify that the chain is empty or was signed by himself
+        return certificateChain == null || certificateChain.length == 1;
+    }
+
+    /**
+     * Returns true if the specified certificate is ready to be signed by a Certificate Authority. Self-signed
+     * certificates need to get their issuer information entered to be able to generate a Certificate
+     * Signing Request (CSR).
+     *
+     * @param keyStore key store that holds the certificate to verify.
+     * @param alias alias of the certificate in the key store.
+     * @return true if the specified certificate is ready to be signed by a Certificate Authority.
+     * @throws KeyStoreException if an error happens while usign the keystore
+     */
+    public static boolean isSigningRequestPending(KeyStore keyStore, String alias) throws KeyStoreException {
+        // Verify that this is a self-signed certificate
+        if (!isSelfSignedCertificate(keyStore, alias)) {
+            return false;
+        }
+        // Verify that the issuer information has been entered
+        X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
+        Matcher matcher = valuesPattern.matcher(certificate.getIssuerDN().toString());
+        return matcher.find() && matcher.find();
     }
 
     /**

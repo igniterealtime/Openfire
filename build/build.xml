@@ -1147,13 +1147,31 @@
             <fileset dir="${release.out.dir}"/>
         </copy>
 
+	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/openfirectl" />
+	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/openfire.sh" />
+	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.sh" />
+
+	<delete file="${target.solaris.root}/opt/openfire/bin/openfire.bat" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/openfire-dev.bat" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/openfire-launchd-wrapper.sh" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/openfired" />
+	<delete dir="${target.solaris.root}/opt/openfire/bin/extra/redhat" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/redhat-postinstall.sh" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.bat" />
+
         <copy tofile="${target.solaris.root}/pkginfo" file="${basedir}/build/pkg/pkginfo" />
 
         <copy tofile="${target.solaris.root}/Prototype" file="${basedir}/build/pkg/Prototype.template" overwrite="true"/>
         <exec executable="/usr/bin/pkgproto" output="${target.solaris.root}/Prototype" append="true" failonerror="true">
-            <arg value="${target.solaris.root}/opt=/opt"/>
+            <arg value="${target.solaris.root}/opt/openfire=/opt/openfire"/>
         </exec>
+
         <replaceregexp file="${target.solaris.root}/Prototype" match="(.* .* .* .*) .* .*" replace="\1 daemon daemon" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/conf/openfire.xml=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/keystore=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/truststore=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/client.truststore=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/bin/embedded-db.rc=.* .* .* .*)" replace="e \1" byline="true"/>
 
         <exec executable="/usr/bin/pkgmk" dir="${target.solaris.root}" failonerror="true">
             <arg value="-o"/>

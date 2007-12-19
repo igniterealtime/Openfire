@@ -1,16 +1,28 @@
 #!/bin/sh
 
-if [ -f /usr/local/openfire ]; then
+if [ -d /usr/local/openfire ]; then
 
-# stop openfire
-/bin/launchctl unload /Library/LaunchDaemons/org.jivesoftware.openfire.plist
+	# stop openfire
+	/bin/launchctl unload /Library/LaunchDaemons/org.jivesoftware.openfire.plist
 
-# preserve these files, they should never be upgraded
-cp /usr/local/openfire/conf/openfire.xml /tmp/
-cp -r /usr/local/openfire/resources/security /tmp/
-cp -r /usr/local/openfire/embedded-db /tmp/
-cp -r /usr/local/openfire/enterprise /tmp/
-cp -r /usr/local/openfire/plugins /tmp/
+	# remove existing tmp storage
+	/bin/rm -rf /tmp/openfireInstallBackup
+
+	# create tmp storage location and assorted pieces
+	/bin/mkdir -p /tmp/openfireInstallBackup
+
+	# preserve these files, they should never be upgraded
+	if [ -f /usr/local/openfire/conf/openfire.xml ]; then
+		/bin/cp /usr/local/openfire/conf/openfire.xml /tmp/openfireInstallBackup/openfire.xml
+	fi
+	if [ -f /usr/local/openfire/resources/security/keystore ]; then
+		/bin/cp /usr/local/openfire/resources/security/keystore /tmp/openfireInstallBackup/keystore
+	fi
+	if [ -f /usr/local/openfire/resources/security/truststore ]; then
+		/bin/cp /usr/local/openfire/resources/security/truststore /tmp/openfireInstallBackup/truststore
+	fi
+	if [ -f /usr/local/openfire/resources/security/client.truststore ]; then
+		/bin/cp /usr/local/openfire/resources/security/client.truststore /tmp/openfireInstallBackup/client.truststore
+	fi
 
 fi
-

@@ -1,23 +1,19 @@
 #!/bin/sh
 
-if [ -f /tmp/openfire.xml ]; then 
-	mv /tmp/openfire.xml /usr/local/openfire/conf/
+if [ -f /tmp/openfireInstallBackup/openfire.xml ]; then 
+	/bin/mv /tmp/openfireInstallBackup/openfire.xml /usr/local/openfire/conf/openfire.xml
 fi
 
-if [ -f /tmp/security ]; then
-	mv /tmp/security /usr/local/openfire/resources/
+if [ -f /tmp/openfireInstallBackup/keystore ]; then
+	/bin/mv /tmp/openfireInstallBackup/keystore /usr/local/openfire/resources/security/keystore
 fi
 
-if [ -f /tmp/embedded-db ]; then
-    mv /tmp/embedded-db /usr/local/openfire/embedded-db
+if [ -f /tmp/openfireInstallBackup/truststore ]; then
+	/bin/mv /tmp/openfireInstallBackup/truststore /usr/local/openfire/resources/security/truststore
 fi
 
-if [ -f /tmp/enterprise ]; then
-    mv /tmp/enterprise /usr/local/openfire/enterprise
-fi
-
-if [ -f /tmp/plugins ]; then
-    mv /tmp/plugins /usr/local/openfire/plugins
+if [ -f /tmp/openfireInstallBackup/client.truststore ]; then
+	/bin/mv /tmp/openfireInstallBackup/client.truststore /usr/local/openfire/resources/security/client.truststore
 fi
 
 OPENFIRE_HOME=/usr/local/openfire/

@@ -356,7 +356,7 @@
                               ${java.home}
                             </webRoot>
                             <classesDir>
-                              dafasdfdsa
+                              XXXXXXXXX
                             </classesDir>
                           </development>
                         ]]>
@@ -1619,21 +1619,27 @@
     </target>
 
     <!-- Mac installer ========================================================================= -->
-    <property name="mac.pkg.dir" value="${basedir}/macpkg"/>
-    <property name="mac.dmg.dir" value="${basedir}/Openfire"/>
-    <property name="mac.dmg.file" value="${basedir}/openfire.dmg"/>
-    <property name="mac.template" value="${basedir}/build/osx/template"/>
+    <property name="target.osx" value="${work.dir}/osx" />
+    <property name="mac.pkg.dir" value="${target.osx}/macpkg"/>
+    <property name="mac.dmg.dir" value="${target.osx}/Openfire"/>
+    <property name="mac.dmg.file" value="${release.dest.dir}/openfire.dmg"/>
+    <property name="mac.template" value="${target.osx}/template"/>
+    <property name="mac.prefpane.build" value="${target.osx}/prefPane"/>
 
     <target name="mac.delete">
-        <delete dir="${mac.pkg.dir}"/>
-        <delete dir="${mac.dmg.dir}"/>
-        <delete file="${mac.dmg.file}"/>
-        <delete dir="${mac.template}"/>
+        <delete dir="${mac.pkg.dir}" failonerror="false"/>
+        <delete dir="${mac.dmg.dir}" failonerror="false"/>
+        <delete file="${mac.dmg.file}" failonerror="false"/>
+        <delete dir="${mac.template}" failonerror="false"/>
+        <delete dir="${mac.prefpane.build}" failonerror="false"/>
     </target>
     
     <target name="mac.prefpane">
     <!-- install will put it in macpkg/Library/PreferencePanes/ as specified in the target settings -->
-        <exec executable="/usr/bin/xcodebuild" dir="${basedir}/build/osx/openfirePrefPane/" failonerror="true">
+        <copy todir="${mac.prefpane.build}" >
+            <fileset dir="${basedir}/build/osx/openfirePrefPane" />
+        </copy>
+        <exec executable="/usr/bin/xcodebuild" dir="${mac.prefpane.build}" failonerror="true">
             <arg value="-configuration"/>
             <arg value="Deployment"/>
             <arg value="-target"/>
@@ -1647,6 +1653,7 @@
         <copy todir="${mac.pkg.dir}/usr/local/openfire">
             <fileset dir="${target.dir}/openfire">
                 <exclude name="**/openfired"/>
+                <exclude name="**/openfirectl"/>
                 <exclude name="**/redhat"/>
                 <exclude name="**/embedded-db*"/>
                 <exclude name="**/redhat-postinstall.sh"/>
@@ -1658,7 +1665,7 @@
         <mkdir dir="${mac.dmg.dir}"/>
         <mkdir dir="${mac.pkg.dir}/Library/PreferencePanes"/>
         <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
-            <fileset dir="${basedir}/build/osx/openfirePrefPane/build/UninstalledProducts/"/>
+            <fileset dir="${mac.prefpane.build}/build/UninstalledProducts/"/>
         </copy>
         <chmod perm="o+x">
             <fileset dir="${mac.pkg.dir}/Library/PreferencePanes/Openfire.prefPane/Contents/MacOS/">
@@ -1679,22 +1686,43 @@
 
     <!-- Create a Mac OS X installer -->
     <target name="mac.pkg" depends="mac.prepare">
-        <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
+        <tstamp>
+            <format property="copyrightyear" pattern="yyyy"/>
+        </tstamp>
+        <copy todir="${target.osx}" file="${basedir}/build/osx/Info.plist"/>
+        <replace file="${target.osx}/Info.plist">
+            <replacefilter token="%VERSION%" value="${version}"/>
+            <replacefilter token="%VERSIONMAJOR%" value="${version.major}"/>
+            <replacefilter token="%VERSIONMINOR%" value="${version.minor}"/>
+            <replacefilter token="%COPYRIGHT%" value="${copyrightyear}"/>
+        </replace>
+        <copy todir="${target.osx}" file="${basedir}/build/osx/Description.plist"/>
+        <exec executable="/Developer/Tools/packagemaker">
             <arg value="-build"/>
-            <arg value="-proj"/>
-            <arg value="${basedir}/build/osx/openfire.pmproj"/>
+            <arg value="-f"/>
+            <arg value="${mac.pkg.dir}"/>
+            <arg value="-i"/>
+            <arg value="${target.osx}/Info.plist"/>
+            <arg value="-d"/>
+            <arg value="${target.osx}/Description.plist"/>
+            <arg value="-r"/>
+            <arg value="${basedir}/build/osx/resources"/>
+            <!--<arg value="-proj"/>
+            <arg value="${basedir}/build/osx/openfire.pmproj"/> -->
             <arg value="-p"/>
             <arg value="${mac.template}/Openfire.pkg"/>
+            <arg value="-ds"/>
             <arg value="-v"/>
         </exec>
     </target>
 
     <target name="installer.mac" depends="mac.pkg" description="Creates a Mac OS X package">
+        <mkdir dir="${release.dest.dir}"/>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="create -srcfolder '${mac.template}' -volname 'Openfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${basedir}/tmp.dmg'"/>
+            <arg line="create -srcfolder '${mac.template}' -volname 'Openfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${target.osx}/tmp.dmg'"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="attach '${basedir}/tmp.dmg' -readwrite -noverify -noautoopen -mountpoint '${mac.dmg.dir}'"/>
+            <arg line="attach '${target.osx}/tmp.dmg' -readwrite -noverify -noautoopen -noidme -mountpoint '${mac.dmg.dir}'"/>
         </exec>
         <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
             <arg value="dmg_openfire.scpt"/>
@@ -1710,9 +1738,9 @@
             <arg line="detach ${mac.dmg.dir} -quiet -force"/>
         </exec>
         <exec executable="hdiutil" failonerror="true">
-            <arg line="convert ${basedir}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${mac.dmg.file}"/>
+            <arg line="convert ${target.osx}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${mac.dmg.file}"/>
         </exec>
-        <delete file="${basedir}/tmp.dmg"/>
+        <delete file="${target.osx}/tmp.dmg"/>
     </target>
 
     <!-- Debian package ========================================================================= -->

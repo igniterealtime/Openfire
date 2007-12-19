@@ -1,4 +1,5 @@
 #!/bin/sh
+
 OPENFIRE_HOME=/usr/local/openfire/
 OPENFIRE_GID=`cat /private/tmp/openfiregid`
 rm /private/tmp/openfiregid

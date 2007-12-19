@@ -76,14 +76,21 @@ rm -rf $RPM_BUILD_ROOT%{homedir}/resources/spank
 rm -rf $RPM_BUILD_ROOT
 
 %preun
-[ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire stop
-if [ "$1" != 0 ]; then
+if [ "$1" == "0" ]; then
+	# This is an uninstall, instead of an upgrade.
 	/sbin/chkconfig --del openfire
+	[ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire stop
 fi
 
 %post
-/sbin/chkconfig --add openfire
 chown -R daemon:daemon %{homedir}
+if [ "$1" == "1" ]; then
+	# This is a fresh install, instead of an upgrade.
+	/sbin/chkconfig --add openfire
+fi
+
+# Trigger a restart.
+[ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire condrestart
 
 %files
 %defattr(-,daemon,daemon)

@@ -82,6 +82,18 @@
         searchFilter = ParamUtils.getParameter(request, "searchFilter");
         // Set the properties to the vCard bean with the user input
         BeanUtils.setProperties(vcardBean, request);
+        if (request.getParameter("storeAvatarInDB") != null) {
+            vcardBean.setAvatarStoredInDB(true);
+        }
+        else {
+            vcardBean.setAvatarStoredInDB(false);
+        }
+        // Store the vcard db setting for later saving.
+        Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+        if (xmppSettings != null) {
+            xmppSettings.put("ldap.avatarDBStorage", vcardBean.getAvatarStoredInDB().toString());
+            session.setAttribute("xmppSettings", xmppSettings);
+        }
 
         // Save settings and redirect.
         if (errors.isEmpty()) {
@@ -143,7 +155,7 @@
             sb.append("&userIndex=").append(request.getParameter("userIndex"));
         }
     %>
-        <a href="<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+        <a href="<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"/>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
@@ -155,7 +167,7 @@
     <% } %>
 
     <% if (initialSetup) { %>
-	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.user_mapping" /></h1>
+	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h1>
     <% } %>
 
 	<!-- BEGIN jive-contentBox_stepbar -->
@@ -193,7 +205,7 @@
 			</tr>
 			<tr>
 			<td align="right"><fmt:message key="setup.ldap.user.username_field" />:</td>
-			<td><input type="text" name="usernameField" id="jiveLDAPusername" size="22" maxlength="50" value="<%= usernameField!=null?usernameField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.username_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+			<td><input type="text" name="usernameField" id="jiveLDAPusername" size="22" maxlength="50" value="<%= usernameField!=null?usernameField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.username_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"/></td>
 			</tr>
 			</table>
 
@@ -209,11 +221,11 @@
 						<table border="0" cellpadding="0" cellspacing="2">
 						<tr>
 						<td align="right"><fmt:message key="setup.ldap.user.search_fields" />:</td>
-						<td><input type="text" name="searchFields" value="<%= searchFields!=null?searchFields:""%>" id="jiveLDAPsearchfields" size="40" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.search_fields_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+						<td><input type="text" name="searchFields" value="<%= searchFields!=null?searchFields:""%>" id="jiveLDAPsearchfields" size="40" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.search_fields_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"/></td>
 						</tr>
 						<tr>
 						<td align="right"><fmt:message key="setup.ldap.user.user_filter" />:</td>
-						<td><input type="text" name="searchFilter" value="<%= searchFilter!=null?searchFilter:""%>" id="jiveLDAPsearchfilter" size="40" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.user_filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+						<td><input type="text" name="searchFilter" value="<%= searchFilter!=null?searchFilter:""%>" id="jiveLDAPsearchfilter" size="40" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.user_filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"/></td>
 						</tr>
 						</table>
 					</div>
@@ -239,7 +251,8 @@
 		<!-- BEGIN jive-contentBox_greybox -->
 		<div class="jive-contentBox_greybox">
 			<strong><fmt:message key="setup.ldap.user.vcard.mapping" /></strong>
-			<p><fmt:message key="setup.ldap.user.vcard.description" /></p>
+			<p><fmt:message key="setup.ldap.user.vcard.description" /><br/>
+            <input type="checkbox" value="enabled" name="storeAvatarInDB"<%= vcardBean.getAvatarStoredInDB() ? " checked" : ""%>/> <fmt:message key="setup.ldap.user.vcard.avatardb" /></p>
 
 			<!-- BEGIN vcard table -->
 			<table border="0" cellpadding="0" cellspacing="1" class="jive-vcardTable" id="jivevCardTable">

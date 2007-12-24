@@ -17,6 +17,7 @@ import org.dom4j.Node;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
+import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attributes;
@@ -101,14 +102,30 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     private LdapManager manager;
     private VCardTemplate template;
+    private Boolean dbStorageEnabled = false;
+
+    /**
+     * The default vCard provider is used to handle the vCard in the database.
+     *
+     * This is used/created only if we are storing avatars in the database.
+     */
+    private DefaultVCardProvider defaultProvider = null;
 
     public LdapVCardProvider() {
         manager = LdapManager.getInstance();
         initTemplate();
         // Listen to property events so that the template is always up to date
         PropertyEventDispatcher.addListener(this);
+        // If avatars will be loaded from the database, load the DefaultVCardProvider
+        if (JiveGlobals.getBooleanProperty("ldap.avatarDBStorage", false)) {
+            defaultProvider = new DefaultVCardProvider();
+            dbStorageEnabled = true;
+        }
     }
 
+    /**
+     * Initializes the VCard template as set by the administrator.
+     */
     private void initTemplate() {
         String property = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
         Log.debug("LdapVCardProvider: Found vcard mapping: '" + property);
@@ -127,6 +144,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         Log.debug("LdapVCardProvider: attributes size==" + template.getAttributes().length);
     }
 
+    /**
+     * Creates a mapping of requested LDAP attributes to their values for the given user.
+     *
+     * @param username User we are looking up in LDAP.
+     * @return Map of LDAP attribute to setting.
+     */
     private Map<String, String> getLdapAttributes(String username) {
         // Un-escape username
         username = JID.unescapeNode(username);
@@ -175,39 +198,370 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         }
     }
 
+    /**
+     * Loads the avatar from LDAP, based off the vcard template.
+     *
+     * If enabled, will replace a blank PHOTO element with one from a DB stored vcard.
+     *
+     * @param username User we are loading the vcard for.
+     * @return The loaded vcard element, or null if none found.
+     */
     public Element loadVCard(String username) {
         // Un-escape username.
         username = JID.unescapeNode(username);
         Map<String, String> map = getLdapAttributes(username);
         Log.debug("LdapVCardProvider: Getting mapped vcard for " + username);
         Element vcard = new VCard(template).getVCard(map);
+        // If we have a vcard from ldap, but it doesn't have an avatar filled in, then we
+        // may fill it with a locally stored vcard element.
+        if (dbStorageEnabled && vcard != null && (vcard.element("PHOTO") == null || vcard.element("PHOTO").element("BINVAL") == null || vcard.element("PHOTO").element("BINVAL").getText().matches("\\s*"))) {
+            Element avatarElement = loadAvatarFromDatabase(username);
+            if (avatarElement != null) {
+                Log.debug("LdapVCardProvider: Adding avatar element from local storage");
+                Element currentElement = vcard.element("PHOTO");
+                if (currentElement != null) {
+                    vcard.remove(currentElement);
+                }
+                vcard.add(avatarElement);
+            }
+        }
         Log.debug("LdapVCardProvider: Returning vcard");
         return vcard;
     }
 
-    public void createVCard(String username, Element vCardElement) throws AlreadyExistsException {
-        throw new UnsupportedOperationException();
+    /**
+     * Loads the avatar element from the user's DB stored vcard.
+     *
+     * @param username User whose vcard/avatar element we are loading.
+     * @return Loaded avatar element or null if not found.
+     */
+    private Element loadAvatarFromDatabase(String username) {
+        Element vcardElement = defaultProvider.loadVCard(username);
+        Element avatarElement = null;
+        if (vcardElement != null && vcardElement.element("PHOTO") != null) {
+            avatarElement = vcardElement.element("PHOTO").createCopy();
+        }
+        return avatarElement;
     }
 
-    public void updateVCard(String username, Element vCardElement) throws NotFoundException {
-        throw new UnsupportedOperationException();
+    /**
+     * Handles when a user creates a new vcard.
+     *
+     * @param username User that created a new vcard.
+     * @param vCardElement vCard element containing the new vcard.
+     * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
+     */
+    public void createVCard(String username, Element vCardElement) throws UnsupportedOperationException {
+        if (dbStorageEnabled && defaultProvider != null) {
+            if (isValidVCardChange(username, vCardElement)) {
+                updateOrCreateVCard(username, vCardElement);
+            }
+            else {
+                throw new UnsupportedOperationException("LdapVCardProvider: Invalid vcard changes.");
+            }
+        }
+        else {
+            throw new UnsupportedOperationException("LdapVCardProvider: VCard changes not allowed.");
+        }
     }
 
-    public void deleteVCard(String username) {
-        throw new UnsupportedOperationException();
+    /**
+     * Handles when a user updates their vcard.
+     *
+     * @param username User that updated their vcard.
+     * @param vCardElement vCard element containing the new vcard.
+     * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
+     */
+    public void updateVCard(String username, Element vCardElement) throws UnsupportedOperationException {
+        if (dbStorageEnabled && defaultProvider != null) {
+            if (isValidVCardChange(username, vCardElement)) {
+                updateOrCreateVCard(username, vCardElement);
+            }
+            else {
+                throw new UnsupportedOperationException("LdapVCardProvider: Invalid vcard changes.");
+            }
+        }
+        else {
+            throw new UnsupportedOperationException("LdapVCardProvider: VCard changes not allowed.");
+        }
     }
 
-    public boolean isReadOnly() {
+    /**
+     * Handles when a user deletes their vcard.
+     *
+     * @param username User that deketed their vcard.
+     * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
+     */
+    public void deleteVCard(String username) throws UnsupportedOperationException {
+        if (dbStorageEnabled && defaultProvider != null) {
+            defaultProvider.deleteVCard(username);
+        }
+        else {
+            throw new UnsupportedOperationException("LdapVCardProvider: Attempted to delete vcard in read-only mode.");
+        }
+    }
+
+    /**
+     * Updates or creates a local copy of the passed vcard.
+     *
+     * @param username User we are setting the vcard for.
+     * @param vCardElement vCard element we are storing.
+     */
+    private void updateOrCreateVCard(String username, Element vCardElement) {
+        Element vcard = vCardElement.createCopy();
+        // Trim away everything but the PHOTO element
+        for (Object obj : vcard.elements()) {
+            Element elem = (Element)obj;
+            if (!elem.getName().equals("PHOTO")) {
+                vcard.remove(elem);
+            }
+        }
+        // If the vcard exists, update it, otherwise create it.
+        try {
+            defaultProvider.createVCard(username, vcard);
+        }
+        catch (AlreadyExistsException e) {
+            try {
+                defaultProvider.updateVCard(username, vcard);
+            }
+            catch (NotFoundException ee) {
+                Log.error("LdapVCardProvider: Unable to find vcard, despite having been told it existed.");
+            }
+        }
+    }
+
+    /**
+     * Simple helper function to check if an element is empty (null or contains whitespace)
+     *
+     * @param elem element to check.
+     * @return True if the string is null or all whitespace/empty.
+     */
+    private Boolean isEmptyElement(Element elem) {
+        if (elem == null) return true;
+        return elem.getText().matches("\\s*");
+    }
+
+    /**
+     * Compares two tree paths for equal contents.
+     *
+     * @param path Path to compare, separate pieces of path as elements in array
+     * @param firstElem First element to compare
+     * @param secondElem Second element to compare
+     * @return True or false if the path contents are different
+     */
+    private Boolean isPathEqual(List<String> path, Element firstElem, Element secondElem) {
+        Element currentA = firstElem;
+        Element currentB = secondElem;
+        for (String node : path) {
+            if (currentA.element(node) != null && currentB.element(node) != null) {
+                currentA = currentA.element(node);
+                currentB = currentB.element(node);
+            }
+            else {
+                // Don't have the node in both trees, they are "equal".
+                return true;
+            }
+        }
+        // Current A and current B are pointing to the same equivalent node now
+        if (!isEmptyElement(currentA) && !isEmptyElement(currentB)) {
+            // Both not empty, lets compare
+            return currentA.getText().equals(currentB.getText());
+        }
+        else if (isEmptyElement(currentA) && isEmptyElement(currentB)) {
+            // Both empty, no problem, no change
+            return true;
+        }
+        else {
+            // Hrm, one empty, one not, that's not the same.  ;)
+            return false;
+        }
+    }
+
+    /**
+     * Returns true or false if the change to the existing vcard is valid (only to PHOTO element)
+     *
+     * @param username User who's LDAP-based vcard we will compare with.
+     * @param othervCard Other vCard Element we will compare against.
+     * @return True or false if the changes made were valid (only to PHOTO element)
+     */
+    private Boolean isValidVCardChange(String username, Element othervCard) {
+        if (othervCard == null) {
+            // Well if there's nothing to change, of course it's valid.
+            return true;
+        }
+        // Un-escape username.
+        username = JID.unescapeNode(username);
+        Map<String, String> map = getLdapAttributes(username);
+        // Retrieve LDAP created vcard for comparison
+        Element vcard = new VCard(template).getVCard(map);
+        if (vcard == null) {
+            // This person has no vcard at all, may not change it!
+            return false;
+        }
+        // Check Name
+        if (!isPathEqual(Arrays.asList("N","GIVEN"), vcard, othervCard)) return false;
+        // Check Email
+        if (!isPathEqual(Arrays.asList("EMAIL","USERID"), vcard, othervCard)) return false;
+        // Check Full Name
+        if (!isPathEqual(Arrays.asList("FN"), vcard, othervCard)) return false;
+        // Check Nickname
+        if (!isPathEqual(Arrays.asList("NICKNAME"), vcard, othervCard)) return false;
+        // Check Birthday
+        if (!isPathEqual(Arrays.asList("BDAY"), vcard, othervCard)) return false;
+        // Check Photo/Avatar
+        // We allow this, so moving on
+        // Check Addresses
+        for (Object obja : vcard.elements("ADR")) {
+            Element firstelem = (Element)obja;
+            if (firstelem.element("HOME") != null) {
+                for (Object objb : othervCard.elements("ADR")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("HOME") != null) {
+                        // Check Home - Street Address
+                        if (!isPathEqual(Arrays.asList("STREET"), firstelem, secondelem)) return false;
+                        // Check Home - City
+                        if (!isPathEqual(Arrays.asList("LOCALITY"), firstelem, secondelem)) return false;
+                        // Check Home - State/Province
+                        if (!isPathEqual(Arrays.asList("REGION"), firstelem, secondelem)) return false;
+                        // Check Home - Postal Code
+                        if (!isPathEqual(Arrays.asList("PCODE"), firstelem, secondelem)) return false;
+                        // Check Home - Country
+                        if (!isPathEqual(Arrays.asList("CTRY"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("WORK") != null) {
+                for (Object objb : othervCard.elements("ADR")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("WORK") != null) {
+                        // Check Business - Street Address
+                        if (!isPathEqual(Arrays.asList("STREET"), firstelem, secondelem)) return false;
+                        // Check business - City
+                        if (!isPathEqual(Arrays.asList("LOCALITY"), firstelem, secondelem)) return false;
+                        // Check Business - State/Province
+                        if (!isPathEqual(Arrays.asList("REGION"), firstelem, secondelem)) return false;
+                        // Check Business - Postal Code
+                        if (!isPathEqual(Arrays.asList("PCODE"), firstelem, secondelem)) return false;
+                        // Check Business - Country
+                        if (!isPathEqual(Arrays.asList("CTRY"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+        }
+        // Check Phone Numbers
+        for (Object obja : vcard.elements("TEL")) {
+            Element firstelem = (Element)obja;
+            if (firstelem.element("HOME") != null && firstelem.element("VOICE") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("HOME") != null && secondelem.element("VOICE") != null) {
+                        // Check Home - Phone Number
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("HOME") != null && firstelem.element("CELL") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("HOME") != null && secondelem.element("CELL") != null) {
+                        // Check Home - Mobile Number
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("HOME") != null && firstelem.element("FAX") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("HOME") != null && secondelem.element("FAX") != null) {
+                        // Check Home - Fax
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("HOME") != null && firstelem.element("PAGER") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("HOME") != null && secondelem.element("PAGER") != null) {
+                        // Check Home - Pager
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            if (firstelem.element("WORK") != null && firstelem.element("VOICE") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("WORK") != null && secondelem.element("VOICE") != null) {
+                        // Check Business - Phone Number
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("WORK") != null && firstelem.element("CELL") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("WORK") != null && secondelem.element("CELL") != null) {
+                        // Check Business - Mobile Number
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("WORK") != null && firstelem.element("FAX") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("WORK") != null && secondelem.element("FAX") != null) {
+                        // Check Business - Fax
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+            else if (firstelem.element("WORK") != null && firstelem.element("PAGER") != null) {
+                for (Object objb : othervCard.elements("TEL")) {
+                    Element secondelem = (Element)objb;
+                    if (secondelem.element("WORK") != null && secondelem.element("PAGER") != null) {
+                        // Check Business - Pager
+                        if (!isPathEqual(Arrays.asList("NUMBER"), firstelem, secondelem)) return false;
+                    }
+                }
+            }
+        }
+        // Check Business - Job Title
+        if (!isPathEqual(Arrays.asList("TITLE"), vcard, othervCard)) return false;
+        // Check Business - Department
+        if (!isPathEqual(Arrays.asList("ORG","ORGUNIT"), vcard, othervCard)) return false;
+        // Well.. we're through the gauntlet.  Guess we're good.
         return true;
     }
 
 
+    public boolean isReadOnly() {
+        return !dbStorageEnabled;
+    }
+
     public void propertySet(String property, Map params) {
-        //Ignore
+        if ("ldap.vcardDBStorage".equals(property)) {
+            Boolean enabled = Boolean.parseBoolean((String)params.get("value"));
+            if (enabled) {
+                if (defaultProvider == null) {
+                    defaultProvider = new DefaultVCardProvider();
+                    dbStorageEnabled = true;
+                }
+            }
+            else {
+                if (defaultProvider != null) {
+                    dbStorageEnabled = false;
+                    defaultProvider = null;
+                }
+            }
+        }
     }
 
     public void propertyDeleted(String property, Map params) {
-        //Ignore
+        if ("ldap.vcardDBStorage".equals(property)) {
+            if (defaultProvider != null) {
+                dbStorageEnabled = false;
+                defaultProvider = null;
+            }
+        }
     }
 
     public void xmlPropertySet(String property, Map params) {

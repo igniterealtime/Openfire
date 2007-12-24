@@ -57,6 +57,7 @@ public class LdapUserProfile {
     private String businessMobile = "";
     private String businessFax = "";
     private String businessPager = "";
+    private Boolean avatarStoredInDB = false;
 
     public String getName() {
         return name;
@@ -266,6 +267,19 @@ public class LdapUserProfile {
         this.businessPager = businessPager;
     }
 
+    public Boolean getAvatarStoredInDB() {
+        return avatarStoredInDB;
+    }
+
+    public void setAvatarStoredInDB(Boolean avatarStoredInDB) {
+        if (avatarStoredInDB == null) {
+            this.avatarStoredInDB = false;
+        }
+        else {
+            this.avatarStoredInDB = avatarStoredInDB;
+        }
+    }
+
     /**
      * Sets default mapping values when using an Active Directory server.
      */
@@ -296,6 +310,7 @@ public class LdapUserProfile {
         businessMobile = "{mobile}";
         businessFax = "{facsimileTelephoneNumber}";
         businessPager = "{pager}";
+        avatarStoredInDB = false;
     }
 
     /**
@@ -328,10 +343,11 @@ public class LdapUserProfile {
         businessMobile = "{mobile}";
         businessFax = "";
         businessPager = "{pager}";
+        avatarStoredInDB = false;
     }
 
     /**
-     * Saves current configuration as XML properties.
+     * Saves current configuration as XML/DB properties.
      */
     public void saveProperties() {
         Element vCard = DocumentHelper.createElement(QName.get("vCard", "vcard-temp"));
@@ -489,11 +505,14 @@ public class LdapUserProfile {
         // Save duplicated fields in LdapManager (should be removed in the future)
         LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
         LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
+
+        // Store the DB storage variable in the actual database.
+        JiveGlobals.setProperty("ldap.avatarDBStorage", avatarStoredInDB.toString());
     }
 
     /**
-     * Returns true if the vCard mappings where successfully loaded from the XML
-     * property.
+     * Returns true if the vCard mappings where successfully loaded from the XML/DB
+     * properties.
      *
      * @return true if mappings where loaded from saved property.
      */
@@ -614,6 +633,7 @@ public class LdapUserProfile {
                     businessDepartment = element.elementTextTrim("ORGUNIT");
                 }
             }
+            avatarStoredInDB = JiveGlobals.getBooleanProperty("ldap.avatarDBStorage", false);
         }
         catch (DocumentException e) {
             Log.error("Error loading vcard mappings from property", e);

@@ -91,7 +91,7 @@
         // Store the vcard db setting for later saving.
         Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
         if (xmppSettings != null) {
-            xmppSettings.put("ldap.avatarDBStorage", vcardBean.getAvatarStoredInDB().toString());
+            xmppSettings.put("ldap.override.avatar", vcardBean.getAvatarStoredInDB().toString());
             session.setAttribute("xmppSettings", xmppSettings);
         }
 

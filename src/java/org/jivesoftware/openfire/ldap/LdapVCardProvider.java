@@ -105,7 +105,8 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     private Boolean dbStorageEnabled = false;
 
     /**
-     * The default vCard provider is used to handle the vCard in the database.
+     * The default vCard provider is used to handle the vCard in the database. vCard
+     * fields that can be overriden are stored in the database.
      *
      * This is used/created only if we are storing avatars in the database.
      */
@@ -116,11 +117,10 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         initTemplate();
         // Listen to property events so that the template is always up to date
         PropertyEventDispatcher.addListener(this);
-        // If avatars will be loaded from the database, load the DefaultVCardProvider
-        if (JiveGlobals.getBooleanProperty("ldap.avatarDBStorage", false)) {
-            defaultProvider = new DefaultVCardProvider();
-            dbStorageEnabled = true;
-        }
+        // DB vcard provider used for loading properties overwritten in the DB
+        defaultProvider = new DefaultVCardProvider();
+        // Check of avatars can be overwritten (and stored in the database)
+        dbStorageEnabled = JiveGlobals.getBooleanProperty("ldap.override.avatar", false);
     }
 
     /**
@@ -251,18 +251,9 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * @param vCardElement vCard element containing the new vcard.
      * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
      */
-    public void createVCard(String username, Element vCardElement) throws UnsupportedOperationException {
-        if (dbStorageEnabled && defaultProvider != null) {
-            if (isValidVCardChange(username, vCardElement)) {
-                updateOrCreateVCard(username, vCardElement);
-            }
-            else {
-                throw new UnsupportedOperationException("LdapVCardProvider: Invalid vcard changes.");
-            }
-        }
-        else {
-            throw new UnsupportedOperationException("LdapVCardProvider: VCard changes not allowed.");
-        }
+    public void createVCard(String username, Element vCardElement)
+            throws UnsupportedOperationException, AlreadyExistsException {
+        throw new UnsupportedOperationException("LdapVCardProvider: VCard changes not allowed.");
     }
 
     /**
@@ -275,7 +266,15 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     public void updateVCard(String username, Element vCardElement) throws UnsupportedOperationException {
         if (dbStorageEnabled && defaultProvider != null) {
             if (isValidVCardChange(username, vCardElement)) {
-                updateOrCreateVCard(username, vCardElement);
+                try {
+                    defaultProvider.updateVCard(username, vCardElement);
+                } catch (NotFoundException e) {
+                    try {
+                        defaultProvider.createVCard(username, vCardElement);
+                    } catch (AlreadyExistsException e1) {
+                        // Ignore
+                    }
+                }
             }
             else {
                 throw new UnsupportedOperationException("LdapVCardProvider: Invalid vcard changes.");
@@ -293,41 +292,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
      */
     public void deleteVCard(String username) throws UnsupportedOperationException {
-        if (dbStorageEnabled && defaultProvider != null) {
-            defaultProvider.deleteVCard(username);
-        }
-        else {
-            throw new UnsupportedOperationException("LdapVCardProvider: Attempted to delete vcard in read-only mode.");
-        }
-    }
-
-    /**
-     * Updates or creates a local copy of the passed vcard.
-     *
-     * @param username User we are setting the vcard for.
-     * @param vCardElement vCard element we are storing.
-     */
-    private void updateOrCreateVCard(String username, Element vCardElement) {
-        Element vcard = vCardElement.createCopy();
-        // Trim away everything but the PHOTO element
-        for (Object obj : vcard.elements()) {
-            Element elem = (Element)obj;
-            if (!elem.getName().equals("PHOTO")) {
-                vcard.remove(elem);
-            }
-        }
-        // If the vcard exists, update it, otherwise create it.
-        try {
-            defaultProvider.createVCard(username, vcard);
-        }
-        catch (AlreadyExistsException e) {
-            try {
-                defaultProvider.updateVCard(username, vcard);
-            }
-            catch (NotFoundException ee) {
-                Log.error("LdapVCardProvider: Unable to find vcard, despite having been told it existed.");
-            }
-        }
+        throw new UnsupportedOperationException("LdapVCardProvider: Attempted to delete vcard in read-only mode.");
     }
 
     /**
@@ -538,29 +503,14 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     }
 
     public void propertySet(String property, Map params) {
-        if ("ldap.vcardDBStorage".equals(property)) {
-            Boolean enabled = Boolean.parseBoolean((String)params.get("value"));
-            if (enabled) {
-                if (defaultProvider == null) {
-                    defaultProvider = new DefaultVCardProvider();
-                    dbStorageEnabled = true;
-                }
-            }
-            else {
-                if (defaultProvider != null) {
-                    dbStorageEnabled = false;
-                    defaultProvider = null;
-                }
-            }
+        if ("ldap.override.avatar".equals(property)) {
+            dbStorageEnabled = Boolean.parseBoolean((String)params.get("value"));
         }
     }
 
     public void propertyDeleted(String property, Map params) {
-        if ("ldap.vcardDBStorage".equals(property)) {
-            if (defaultProvider != null) {
-                dbStorageEnabled = false;
-                defaultProvider = null;
-            }
+        if ("ldap.override.avatar".equals(property)) {
+            dbStorageEnabled = false;
         }
     }
 

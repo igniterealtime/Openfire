@@ -57,6 +57,10 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
         return new SimpleSSLSocketFactory();
     }
 
+    public Socket createSocket() throws IOException {
+        return factory.createSocket();
+    }
+
     public Socket createSocket(Socket socket, String s, int i, boolean flag)
             throws IOException
     {

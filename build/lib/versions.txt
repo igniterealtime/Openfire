@@ -31,7 +31,7 @@ jsp-api.jar                         | Jetty 6.0.1 (2.0)
 jtds.jar                            | 1.2.2
 junit.jar                           | 4.3.1
 jzlib.jar                           | 1.0.7
-mail.jar                            | 1.4.0 (JavaMail)
+mail.jar                            | 1.4.1 (JavaMail)
 mina-core.jar                       | 1.1.5 (https://svn.apache.org/repos/asf/mina/branches/1.1)
 mina-filter-compression.jar         | 1.1.5 (https://svn.apache.org/repos/asf/mina/branches/1.1)
 mina-filter-ssl.jar                 | 1.1.5 (https://svn.apache.org/repos/asf/mina/branches/1.1)

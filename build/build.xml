@@ -1142,6 +1142,7 @@
         <mkdir dir="${target.solaris.root}" />
         <mkdir dir="${target.solaris.root}/opt" />
 <!--        <mkdir dir="${target.solaris.pkg}" /> -->
+        <mkdir dir="${target.solaris.root}/opt/openfire/resources/solaris" />
 
         <copy todir="${target.solaris.root}/opt/openfire">
             <fileset dir="${release.out.dir}"/>
@@ -1160,6 +1161,10 @@
 	<delete file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.bat" />
 
         <copy tofile="${target.solaris.root}/pkginfo" file="${basedir}/build/pkg/pkginfo" />
+        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/openfire.xml" file="${basedir}/build/solaris/openfire.xml" />
+        <copy tofile="${target.solaris.root}/checkinstall" file="${basedir}/build/solaris/checkinstall" />
+        <copy tofile="${target.solaris.root}/postinstall" file="${basedir}/build/solaris/postinstall" />
+        <copy tofile="${target.solaris.root}/preremove" file="${basedir}/build/solaris/preremove" />
 
         <copy tofile="${target.solaris.root}/Prototype" file="${basedir}/build/pkg/Prototype.template" overwrite="true"/>
         <exec executable="/usr/bin/pkgproto" output="${target.solaris.root}/Prototype" append="true" failonerror="true">

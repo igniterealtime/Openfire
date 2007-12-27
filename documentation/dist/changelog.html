@@ -162,6 +162,56 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.4.3 -- <span style="font-weight: normal;">December 27, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-460'>JM-460</a>] - Avatars may now be updated when using LDAP. <b>(60 votes)</b></li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1216'>JM-1216</a>] - Improved login performance by reducing PEP work.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1210'>JM-1210</a>] - Optimized general performance when doing JID operations.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1215'>JM-1215</a>] - Improved http binding throughput by setting a maximum number of http worker threads.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1205'>JM-1205</a>] - Optimized memory consumption when using http-binding.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1208'>JM-1208</a>] - New database connections are opened when no database connections were found.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-765'>JM-765</a>] - Created Ubuntu/Debian installer package. <b>(19 votes)</b></li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1161'>JM-1161</a>] - Created Solaris installer package.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1222'>JM-1222</a>] - Updated JavaMail library to latests version.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1204'>JM-1204</a>] - Certificate Signing Requests were not generated when issuer name matched xmpp domain.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1206'>JM-1206</a>] - Fixed encrypted connections for server-2-server (broken in 3.4.2).</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1207'>JM-1207</a>] - SASL EXTERNAL for server-2-server was not accepting wildcard certificates.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1211'>JM-1211</a>] - Fixed Openfire RPM to properly handle service removal and also shutdowns/startups. <b>(1 vote)</b></li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1201'>JM-1201</a>] - Fixed DMG installer to not overwrite config files.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-107'>ENT-107</a>] - Fixed table reference when deleting chat from fastpath.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-138'>ENT-138</a>] - SparkWeb - Added HTTPS and HTTP support to SparkWeb. <b>(2 votes)</b></li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-288'>ENT-288</a>] - SparkWeb - SparkWeb can now get the crossdomain.xml file from the http binding port.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-325'>ENT-325</a>] - SparkWeb - Added support for room invitations.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-336'>ENT-336</a>] - SparkWeb - Login window can now be skipped when using programmatic launch.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-333'>ENT-333</a>] - SparkWeb - Autocomplete domain when only only username was entered when adding a contact.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-261'>ENT-261</a>] - SparkWeb - Tab width was too small.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-296'>ENT-296</a>] - SparkWeb - Loading large contact lists was too slow.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-301'>ENT-301</a>] - SparkWeb - User search window is no longer transparent.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-318'>ENT-318</a>] - SparkWeb - Fixed message counter that was incremented with local messages.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-322'>ENT-322</a>] - SparkWeb - Some users were displayed in the online and offline group.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-323'>ENT-323</a>] - SparkWeb - Avatars were not in a proper order in the roster.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-324'>ENT-324</a>] - SparkWeb - Avatars did not always appear.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-328'>ENT-328</a>] - SparkWeb - Fixed adding a contact from the user seach window.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-329'>ENT-329</a>] - SparkWeb - Contacts with pending subscription were not listed in the roster correctly.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-341'>ENT-341</a>] - SparkWeb - Pending contacts that were already in your list when you log in were not placed correctly.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-343'>ENT-343</a>] - SparkWeb - Fixed error when adding bookmarks from the Conferences tab.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
 <h2>3.4.2 -- <span style="font-weight: normal;">December 6, 2007</span></h2>
 
 <h3>Openfire New Features</h3>

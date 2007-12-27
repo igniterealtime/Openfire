@@ -22,6 +22,7 @@
 #####
 
 # Initialization
+CMD=$1
 PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
 
@@ -182,7 +183,7 @@ status() {
 
 
 # Handle how we were called.
-case "$1" in
+case "$CMD" in
 	start)
 		start
 		;;

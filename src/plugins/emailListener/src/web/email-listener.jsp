@@ -24,30 +24,25 @@
     boolean ssl = ParamUtils.getBooleanParameter(request,"ssl");
     String folder = ParamUtils.getParameter(request,"folder");
     int frequency = ParamUtils.getIntParameter(request,"frequency",0);
+    String users = ParamUtils.getParameter(request,"users");
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
     boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean testSuccess = false;
 
-    // Handle a test request
     EmailListener emailListener = EmailListener.getInstance();
-    if (test) {
-        testSuccess = emailListener.testConnection();
-    }
-
-    // Save the email settings if requested
-    Map errors = new HashMap();
-    if (save) {
-        if (host == null) {
+    Map<String, String> errors = new HashMap<String, String>();
+    if (test || save) {
+        if (host == null || host.trim().length() == 0) {
             errors.put("host","");
         }
-        if (username == null) {
+        if (username == null || username.trim().length() == 0) {
             errors.put("username","");
         }
-        if (password == null) {
+        if (password == null || password.trim().length() == 0) {
             errors.put("password","");
         }
-        if (folder == null) {
+        if (folder == null || folder.trim().length() == 0) {
             errors.put("folder","");
         }
         if (frequency <= 0) {
@@ -56,50 +51,69 @@
         if (port <= 0) {
             errors.put("port","");
         }
-        if (errors.isEmpty()) {
-
-            // Get hash value of existing password
-            String existingHashPassword = "";
-            if (emailListener.getPassword() != null) {
-                existingHashPassword = StringUtils.hash(emailListener.getPassword());
-            }
-
-            // Check if the new password was changed. If it wasn't changed, then it is the original hashed password
-            // NOTE: if the new PLAIN password equals the previous HASHED password this fails, but is unlikely.
-            if (!existingHashPassword.equals(password)) {
-                // Hash the new password since it was changed
-                String newHashPassword = "";
-                if (password != null) {
-                    newHashPassword = StringUtils.hash(password);
-                }
-                // Change password if hash values are different
-                if (!existingHashPassword.equals(newHashPassword)) {
-                    emailListener.setPassword(password);
-                }
-            }
-
-            emailListener.setHost(host);
-            emailListener.setPort(port);
-            emailListener.setSSLEnabled(ssl);
-            emailListener.setUser(username);
-            emailListener.setFolder(folder);
-            emailListener.setFrequency(frequency);
-
-            // Restart the email listener service
-            emailListener.stop();
-            emailListener.start();
-
-            response.sendRedirect("email-listener.jsp?success=true");
+        if (users == null || users.trim().length() == 0) {
+            errors.put("users","");
         }
+
+        // Get hash value of existing password
+        String existingHashPassword = "";
+        if (emailListener.getPassword() != null) {
+            existingHashPassword = StringUtils.hash(emailListener.getPassword());
+        }
+
+        // Check if the new password was changed. If it wasn't changed, then it is the original hashed password
+        // NOTE: if the new PLAIN password equals the previous HASHED password this fails, but is unlikely.
+        if (!existingHashPassword.equals(password)) {
+            // Hash the new password since it was changed
+            String newHashPassword = "";
+            if (password != null) {
+                newHashPassword = StringUtils.hash(password);
+            }
+            // Change password if hash values are different
+            if (!existingHashPassword.equals(newHashPassword)) {
+                //password = password;
+            }
+        }
+        else {
+            password = emailListener.getPassword();
+        }
+
     }
 
-    host = emailListener.getHost();
-    port = emailListener.getPort();
-    ssl = emailListener.isSSLEnabled();
-    username = emailListener.getUser();
-    password = emailListener.getPassword();
-    folder = emailListener.getFolder();
-    frequency = emailListener.getFrequency();
+    // Handle a test request
+    if (test && errors.isEmpty()) {
+        testSuccess = EmailListener.testConnection(host, port, ssl, username, password, folder);
+    }
+    else {
+        // Save the email settings if requested
+        if (save) {
+            if (errors.isEmpty()) {
+                emailListener.setHost(host);
+                emailListener.setPort(port);
+                emailListener.setSSLEnabled(ssl);
+                emailListener.setUser(username);
+                emailListener.setPassword(password);
+                emailListener.setFolder(folder);
+                emailListener.setFrequency(frequency);
+                emailListener.setUsers(StringUtils.stringToCollection(users));
+
+                // Restart the email listener service
+                emailListener.stop();
+                emailListener.start();
+
+                response.sendRedirect("email-listener.jsp?success=true");
+            }
+        }
+
+        host = emailListener.getHost();
+        port = emailListener.getPort();
+        ssl = emailListener.isSSLEnabled();
+        username = emailListener.getUser();
+        password = emailListener.getPassword();
+        folder = emailListener.getFolder();
+        frequency = emailListener.getFrequency();
+        users = StringUtils.collectionToString(emailListener.getUsers());
+    }
 %>
 
 <html>
@@ -111,7 +125,7 @@
 
 <p>
 Configure the email listener service with the following form. The email listener service
-connects to an SMTP server and listens for new messages. Specified users are then alerted by
+connects to an email server using IMAP and listens for new messages. Specified users are then alerted by
 IM when new messages were detected. Messages are not deleted from the mail server.    
 </p>
 
@@ -130,7 +144,7 @@ IM when new messages were detected. Messages are not deleted from the mail serve
 
 <%  } %>
 
-<%  if (test && testSuccess) { %>
+<%  if (test && testSuccess && errors.isEmpty()) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -143,7 +157,7 @@ IM when new messages were detected. Messages are not deleted from the mail serve
     </table>
     </div>
 
-<%  } else if (test && !testSuccess) { %>
+<%  } else if (test && !testSuccess && errors.isEmpty()) { %>
 
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -236,6 +250,19 @@ IM when new messages were detected. Messages are not deleted from the mail serve
     </table>
     </div>
 
+<%	} else if (errors.containsKey("users")) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+        	<td class="jive-icon"><img src="/images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        	<td class="jive-icon-label">Please specify one or more users that will get the notifications.</td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+
 <%	} %>
 
 <p>
@@ -293,15 +320,24 @@ IM when new messages were detected. Messages are not deleted from the mail serve
 				Folder:
 			</td>
 			<td nowrap>
-                <input type="text" name="folder" value="<%= (folder != null) ? folder : "" %>" size="40" maxlength="150">
+                <input type="text" name="folder" value="<%= (folder != null) ? folder : "Inbox" %>" size="40" maxlength="150">
 			</td>
 		</tr>
         <tr>
             <td nowrap>
-                Check Frequency:
+                Check Frequency (millis):
             </td>
             <td nowrap>
                 <input type="text" name="frequency" value="<%= (frequency > 0) ? String.valueOf(frequency) : "" %>" size="10" maxlength="15">
+            </td>
+        </tr>
+        <tr>
+            <td nowrap>
+                JID of users to notify:<br>
+                <i>(comma delimited)</i>
+            </td>
+            <td nowrap>
+                <textarea name="users" cols="40" rows="3" wrap="virtual"><%= users%></textarea>
             </td>
         </tr>
 		</table>

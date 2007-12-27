@@ -126,7 +126,7 @@ start() {
         # Start daemons.
         echo "Starting openfire: \c"
 
-	PID=`su - $OPENFIRE_USER -c '(nohup $OPENFIRE_RUN_CMD 2>&1 &) ; echo $!' &`
+	PID=`su - $OPENFIRE_USER -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &"`
 	RETVAL=$?
 
 	if [ $RETVAL -eq 0 -a ! -z "$OPENFIRE_PIDFILE" ]; then

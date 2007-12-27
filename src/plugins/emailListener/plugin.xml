@@ -6,10 +6,10 @@
 <plugin>
     <class>org.jivesoftware.openfire.plugin.EmailListenerPlugin</class>
     <name>Email Listener</name>
-    <description>Listen for emails and send alerts to specific users.</description>
+    <description>Listens for emails and sends alerts to specific users.</description>
     <author>Jive Software</author>
-    <version>1.0</version>
-    <date>12/25/2007</date>
+    <version>1.0.0</version>
+    <date>12/27/2007</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>3.4.3</minServerVersion>
 

@@ -344,9 +344,9 @@ public class UserManager implements IQResultListener {
                     server.getIQRouter().addIQResultListener(iq.getID(), this);
                     synchronized (user.toBareJID().intern()) {
                         server.getIQRouter().route(iq);
-                        // Wait for the reply to be processed. Time out in 10 minutes.
+                        // Wait for the reply to be processed. Time out in 1 minute.
                         try {
-                            user.toBareJID().intern().wait(600000);
+                            user.toBareJID().intern().wait(60000);
                         }
                         catch (InterruptedException e) {
                             // Do nothing

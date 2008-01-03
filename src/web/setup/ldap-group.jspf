@@ -144,7 +144,7 @@
     <% } %>
 
     <% if (initialSetup) { %>
-	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.group_mapping" /></h1>
+	<h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.group_mapping" /></span></h1>
     <% } %>
 
 	<!-- BEGIN jive-contentBox_stepbar -->

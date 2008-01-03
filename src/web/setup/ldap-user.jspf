@@ -40,7 +40,11 @@
         defaultUsernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
         defaultSearchFields = JiveGlobals.getXMLProperty("ldap.searchFields");
         defaultSearchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
-        if (serverType.equals("activedirectory")) {
+        vcardBean = new LdapUserProfile();
+        if (vcardBean.loadFromProperties()) {
+            // Loaded from stored settings, no need to do anything else.  
+        }
+        else if (serverType.equals("activedirectory")) {
             if (!vcardBean.loadFromProperties()) {
                 // Initialize vCard mappings
                 vcardBean.initForActiveDirectory();
@@ -52,7 +56,8 @@
             if (defaultSearchFilter == null) {
                 defaultSearchFilter = "(objectClass=organizationalPerson)";
             }
-        } else {
+        }
+        else {
             if (!vcardBean.loadFromProperties()) {
                 // Initialize vCard mappings
                 vcardBean.initForOpenLDAP();

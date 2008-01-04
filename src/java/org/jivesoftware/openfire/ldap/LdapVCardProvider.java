@@ -388,6 +388,11 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                 }
             }
         }
+        else {
+            // No vcard exists in database
+            Log.debug("LdapVCardProvider: Database has no vCard stored, accepting update.");
+            return true;
+        }
         // Ok, either something bad changed or nothing changed.  Either way, user either:
         // 1. should not have tried to change something 'readonly'
         // 2. shouldn't have bothered submitting no changes

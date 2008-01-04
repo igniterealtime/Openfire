@@ -81,6 +81,8 @@ if [ "$1" == "0" ]; then
 	/sbin/chkconfig --del openfire
 	[ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire stop
 fi
+# Force a happy exit even if openfire shutdown script didn't exit cleanly.
+exit 0
 
 %post
 chown -R daemon:daemon %{homedir}
@@ -91,6 +93,9 @@ fi
 
 # Trigger a restart.
 [ -x "/etc/init.d/openfire" ] && /etc/init.d/openfire condrestart
+
+# Force a happy exit even if openfire condrestart script didn't exit cleanly.
+exit 0
 
 %files
 %defattr(-,daemon,daemon)

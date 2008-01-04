@@ -1,0 +1,53 @@
+#!/bin/bash
+#determine safe uid/gid
+
+NIUTIL_PRESENT=`which niutil`
+
+if [ -z $NIUTIL_PRESENT] ; then
+	echo "No niutil"
+	OPENFIRE_USER=`dscl . -search /Users name openfire | awk '{print $1}'`
+
+	OPENFIRE_GID=`dscl . -readall /Users PrimaryGroupID | awk '/PrimaryGroupID/{print $2}' | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+	let "OPENFIRE_GID=$OPENFIRE_GID+1"
+	echo $OPENFIRE_GID > /private/tmp/openfiregid
+
+	if [ -z $OPENFIRE_USER ] ; then
+		OPENFIRE_UID=`dscl . -readall /Users UniqueID | awk '/UniqueID/{print $2}' | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+		let "OPENFIRE_UID=$OPENFIRE_UID+1"
+		echo $OPENFIRE_UID
+
+		#create user
+		dscl . -create /Users/openfire
+
+		#set properties
+		dscl . -create /Users/openfire PrimaryGroupID $OPENFIRE_GID
+		dscl . -create /Users/openfire UniqueID $OPENFIRE_UID
+		dscl . -create /Users/openfire UserShell /usr/bin/false
+		dscl . -create /Users/openfire NFSHomeDirectory /usr/local/openfire/
+		dscl . -create /Users/openfire RealName "Jive Openfire"
+		dscl . -passwd /Users/openfire '*'
+	fi
+else
+	OPENFIRE_USER=`nireport / /users name | grep "openfire"`
+
+	OPENFIRE_GID=`nireport / /users gid | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+	let "OPENFIRE_GID=$OPENFIRE_GID+1"
+	echo $OPENFIRE_GID > /private/tmp/openfiregid
+
+	if [ -z $OPENFIRE_USER] ; then
+		OPENFIRE_UID=`nireport / /users uid | sort -n | egrep -v "\b[5-9][0-9]{2,5}\b" | tail -n 1`
+		let "OPENFIRE_UID=$OPENFIRE_UID+1"
+		echo $OPENFIRE_UID
+
+		#create user
+		niutil -create . /users/openfire
+
+		#set properties
+		niutil -createprop . /users/openfire gid $OPENFIRE_GID
+		niutil -createprop . /users/openfire uid $OPENFIRE_UID
+		niutil -createprop . /users/openfire shell /usr/bin/false
+		niutil -createprop . /users/openfire home /usr/local/openfire/
+		niutil -createprop . /users/openfire realname "Jive Openfire"
+		niutil -createprop . /users/openfire passwd '*'
+	fi
+fi

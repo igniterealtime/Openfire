@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Plugin configuration for the sessions debugger plugin.
+-->
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.DebuggerPlugin</class>
+    <name>Debugger Plugin</name>
+    <description>Prints XML traffic to the stdout (raw and interpreted XML)</description>
+    <author>Jive Software</author>
+    <version>1.0</version>
+    <minServerVersion>3.2.0</minServerVersion>
+</plugin>

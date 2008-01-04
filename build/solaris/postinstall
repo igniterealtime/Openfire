@@ -34,3 +34,5 @@ fi
 if [ -x "/usr/sbin/svcadm" ]; then
 	/usr/sbin/svcadm enable openfire
 fi
+
+/bin/chmod o-rwx /opt/openfire

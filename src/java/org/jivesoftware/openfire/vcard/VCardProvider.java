@@ -36,26 +36,36 @@ public interface VCardProvider {
      * UnsupportedOperationException if this operation is not supported by
      * the backend vcard store.
      *
+     * The method is expected to return the vCard after it has had a chance
+     * to make any modifications to it that it needed to.  In many cases, this
+     * may be a simple return of the passed in vCard.  This change was made in 3.4.4.
+     *
      * @param username the username.
      * @param vCardElement the vCard to save.
+     * @return vCard as it is after the provider has a chance to adjust it.
      * @throws AlreadyExistsException if the user already has a vCard.
      * @throws UnsupportedOperationException if the provider does not support the
      *      operation.
      */
-    void createVCard(String username, Element vCardElement) throws AlreadyExistsException;
+    Element createVCard(String username, Element vCardElement) throws AlreadyExistsException;
 
     /**
      * Updates the user vcard in the backend store. This method should throw an
      * UnsupportedOperationException if this operation is not supported by
      * the backend vcard store.
      *
+     * The method is expected to return the vCard after it has had a chance
+     * to make any modifications to it that it needed to.  In many cases, this
+     * may be a simple return of the passed in vCard.  This change was made in 3.4.4.
+     *
      * @param username the username.
      * @param vCardElement the vCard to save.
+     * @return vCard as it is after the provider has a chance to adjust it.
      * @throws NotFoundException if the vCard to update does not exist.
      * @throws UnsupportedOperationException if the provider does not support the
      *      operation.
      */
-    void updateVCard(String username, Element vCardElement) throws NotFoundException;
+    Element updateVCard(String username, Element vCardElement) throws NotFoundException;
 
     /**
      * Delets a user vcard. This method should throw an UnsupportedOperationException

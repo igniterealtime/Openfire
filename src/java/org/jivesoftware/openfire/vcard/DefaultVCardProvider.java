@@ -94,7 +94,7 @@ public class DefaultVCardProvider implements VCardProvider {
         }
     }
 
-    public void createVCard(String username, Element vCardElement) throws AlreadyExistsException {
+    public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException {
         if (loadVCard(username) != null) {
             // The user already has a vCard
             throw new AlreadyExistsException("Username " + username + " already has a vCard");
@@ -118,9 +118,10 @@ public class DefaultVCardProvider implements VCardProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
+        return vCardElement;
     }
 
-    public void updateVCard(String username, Element vCardElement) throws NotFoundException {
+    public Element updateVCard(String username, Element vCardElement) throws NotFoundException {
         if (loadVCard(username) == null) {
             // The user already has a vCard
             throw new NotFoundException("Username " + username + " does not have a vCard");
@@ -143,6 +144,7 @@ public class DefaultVCardProvider implements VCardProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
+        return vCardElement;
     }
 
     public void deleteVCard(String username) {

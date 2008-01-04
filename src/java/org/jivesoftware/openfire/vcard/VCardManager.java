@@ -129,28 +129,31 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             // Only update the vCard in the database if the vCard has changed.
             if (!oldVCard.equals(vCardElement)) {
                 try {
-                    provider.updateVCard(username, vCardElement);
+                    Element newvCard = provider.updateVCard(username, vCardElement);
+                    vcardCache.put(username, newvCard);
                     updated = true;
                 }
                 catch (NotFoundException e) {
                     Log.warn("Tried to update a vCard that does not exist", e);
-                    provider.createVCard(username, vCardElement);
+                    Element newvCard = provider.createVCard(username, vCardElement);
+                    vcardCache.put(username, newvCard);
                     created = true;
                 }
             }
         }
         else {
             try {
-                provider.createVCard(username, vCardElement);
+                Element newvCard = provider.createVCard(username, vCardElement);
+                vcardCache.put(username, newvCard);
                 created = true;
             }
             catch (AlreadyExistsException e) {
                 Log.warn("Tried to create a vCard when one already exist", e);
-                provider.updateVCard(username, vCardElement);
+                Element newvCard = provider.updateVCard(username, vCardElement);
+                vcardCache.put(username, newvCard);
                 updated = true;
             }
         }
-        vcardCache.put(username, vCardElement);
         // Dispatch vCard events
         if (created) {
             // Alert listeners that a new vCard has been created
@@ -187,6 +190,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      * returned vCard will not be stored in the database. Use the returned vCard as a
      * read-only vCard.
      *
+     * @param username Username (not full JID) whose vCard to retrieve.
      * @return the vCard of a given user.
      */
     public Element getVCard(String username) {

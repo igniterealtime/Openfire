@@ -378,10 +378,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             }
             else {
                 Element newPhotoElem = newvCard.element("PHOTO");
+                if (newPhotoElem == null) {
+                    Log.debug("LdapVCardProvider: Photo element was removed, accepting update.");
+                    return true;
+                }
                 // Note: NodeComparator never seems to consider these equal, even if they are?
                 if (!dbPhotoElem.asXML().equals(newPhotoElem.asXML())) {
-                    Log.debug("LdapVCardProvider: DB photo element is:\n"+dbPhotoElem.asXML());
-                    Log.debug("LdapVCardProvider: New photo element is:\n"+newPhotoElem.asXML());
                     // Photo element was changed.  Ignore all other changes and accept this.
                     Log.debug("LdapVCardProvider: PHOTO element changed, accepting update.");
                     return true;

@@ -247,6 +247,10 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             // No vcard passed in?  Hrm.  Fine, return LDAP vcard.
             return vcard;
         }
+        if (mergeVCard.element("PHOTO") == null) {
+            // Merged vcard has no photo element, return LDAP vcard as is.
+            return vcard;
+        }
         Element photoElement = mergeVCard.element("PHOTO").createCopy();
         if (photoElement == null || photoElement.element("BINVAL") == null || photoElement.element("BINVAL").getText().matches("\\s*")) {
             // We were passed something null or empty, so lets just return the LDAP based vcard.

@@ -1789,7 +1789,7 @@
 
 	<!-- Copy the resulting files into target -->
 	<copy todir="${debian.release.dir}">
-            <fileset dir="${debian.work.dir}/..">
+            <fileset dir="${debian.work.dir}/.." followsymlinks="false">
 		<include name="**/*.deb" />
 		<include name="**/*.changes" />
 		<include name="**/*.dsc" />

@@ -7,15 +7,21 @@
 # Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
 #
 
-JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+# Attempt to locate JAVA_HOME, code borrowed from jabref package
+if [ -z $JAVA_HOME ]
+then
+	t=/usr/lib/jvm/java-1.5.0-sun && test -d $t && JAVA_HOME=$t
+	t=/usr/lib/jvm/java-6-sun && test -d $t && JAVA_HOME=$t
+fi
+
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:${JAVA_HOME}/bin
-DAEMON=${JAVA_HOME}/bin/java
+JAVA=${JAVA_HOME}/bin/java
 NAME=openfire
 DESC=openfire
 DAEMON_DIR=/usr/share/openfire
 DAEMON_LIB=${DAEMON_DIR}/lib
 
-test -x $DAEMON || exit 0
+test -x $JAVA || exit 0
 
 # Include openfire defaults if available
 if [ -f /etc/default/openfire ] ; then
@@ -32,12 +38,12 @@ DAEMON_OPTS="-server -DopenfireHome=${DAEMON_DIR} \
 start() {
         start-stop-daemon --start --quiet --background --make-pidfile \
                 --pidfile /var/run/$NAME.pid --chuid openfire:openfire \
-                --exec $DAEMON -- $DAEMON_OPTS
+                --exec $JAVA -- $DAEMON_OPTS
 }
 
 stop() {
         start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON --retry 4
+		--exec $JAVA --retry 4
 }
 
 case "$1" in

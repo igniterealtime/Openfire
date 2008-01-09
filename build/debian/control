@@ -8,7 +8,7 @@ Standards-Version: 3.7.2
 Package: openfire
 Section: net
 Priority: optional
-Depends: sun-java5-jre
+Depends: sun-java5-jre | sun-java6-jre
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP

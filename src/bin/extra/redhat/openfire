@@ -114,7 +114,6 @@ start() {
 	su -s /bin/sh -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &" $OPENFIRE_USER
 	RETVAL=$?
 	PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
-	echo $PID
 
 	if [ $RETVAL -eq 0 -a ! -z "$PID" -a ! -z "$OPENFIRE_PIDFILE" ]; then
 		echo $PID > $OPENFIRE_PIDFILE

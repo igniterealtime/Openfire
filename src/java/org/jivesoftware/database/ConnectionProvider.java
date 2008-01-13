@@ -45,6 +45,7 @@ public interface ConnectionProvider {
      * on the wrapper class will release the connection from the pool.
      *
      * @return a Connection object.
+     * @throws SQLException is an SQL error occured while retrieving the connection.
      */
     public Connection getConnection() throws SQLException;
 

@@ -9,6 +9,7 @@
         <webroots>
           <root url="file://$MODULE_DIR$/../../src/web" relative="/" />
         </webroots>
+        <sourceRoots />
         <building>
           <setting name="EXPLODED_URL" value="file://" />
           <setting name="EXPLODED_ENABLED" value="false" />
@@ -342,6 +343,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../src/web/WEB-INF/lib/commons-io.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/merge/proxool.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

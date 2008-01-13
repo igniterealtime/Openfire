@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.DriverManager;
+import java.util.Properties;
 
 /**
  * A connection provider for the embedded hsqlDB database. The database file is stored at
@@ -30,55 +32,56 @@ import java.sql.Statement;
  */
 public class EmbeddedConnectionProvider implements ConnectionProvider {
 
-    private ConnectionPool connectionPool = null;
-    private final Object initLock = new Object();
+    private Properties settings;
+    private String serverURL;
+    private String driver = "org.hsqldb.jdbcDriver";
+    private String proxoolURL;
+
+    public EmbeddedConnectionProvider() {
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
+    }
 
     public boolean isPooled() {
         return true;
     }
 
     public Connection getConnection() throws SQLException {
-        if (connectionPool == null) {
-            // Block until the init has been done
-            synchronized (initLock) {
-                // If still null, something has gone wrong
-                if (connectionPool == null) {
-                    Log.error("Error: EmbeddedConnectionProvider.getConnection() was" +
-                            "called before the internal pool has been initialized.");
-                    return null;
-                }
+        Connection connection = null;
+        try {
+            Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
+            try {
+                connection = DriverManager.getConnection(proxoolURL, settings);
+            }
+            catch (SQLException e) {
+                Log.error("EmbeddedConnectionProvider: Error while getting connection: ", e);
             }
         }
-        return connectionPool.getConnection();
+        catch (ClassNotFoundException e) {
+            Log.error("EmbeddedConnectionProvider: Unable to find driver: ", e);
+        }
+        return connection;
     }
 
     public void start() {
-        // Acquire lock so that no connections can be returned while creating the pool.
-        synchronized (initLock) {
-            try {
-                String driver = "org.hsqldb.jdbcDriver";
-                File databaseDir = new File(JiveGlobals.getHomeDirectory(), File.separator +
-                        "embedded-db");
-                // If the database doesn't exist, create it.
-                if (!databaseDir.exists()) {
-                    databaseDir.mkdirs();
-                }
-
-                String serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() +
-                        File.separator + "openfire";
-                String username = "sa";
-                String password = "";
-                int minConnections = 3;
-                int maxConnections = 25;
-                double connectionTimeout = 0.5;
-
-                connectionPool = new ConnectionPool(driver, serverURL, username, password,
-                        minConnections, maxConnections, connectionTimeout, false);
-            }
-            catch (IOException ioe) {
-                Log.error("Error starting connection pool.", ioe);
-            }
+        File databaseDir = new File(JiveGlobals.getHomeDirectory(), File.separator + "embedded-db");
+        // If the database doesn't exist, create it.
+        if (!databaseDir.exists()) {
+            databaseDir.mkdirs();
         }
+
+        try {
+            serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() + File.separator + "openfire";
+        }
+        catch (IOException ioe) {
+            Log.error("EmbeddedConnectionProvider: Error starting connection pool: ", ioe);
+        }
+        proxoolURL = "proxool.openfire:"+driver+":"+serverURL;
+        settings = new Properties();
+        settings.setProperty("proxool.maximum-connection-count", "25");
+        settings.setProperty("proxool.minimum-connection-count", "3");
+        settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * 0.5)));
+        settings.setProperty("user", "sa");
+        settings.setProperty("password", "");
     }
 
     public void restart() {
@@ -89,9 +92,6 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
     }
 
     public void destroy() {
-        if (connectionPool == null) {
-            return;
-        }
         // Shutdown the database.
         Connection con = null;
         try {
@@ -107,15 +107,8 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             try { if (con != null) { con.close(); } }
             catch (Exception e) { Log.error(e); }
         }
-        // Close the connection pool.
-        try {
-            connectionPool.destroy();
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        // Release reference to connectionPool
-        connectionPool = null;
+        // Blank out the settings
+        settings = null;
     }
 
     public void finalize() throws Throwable {

@@ -14,9 +14,10 @@ package org.jivesoftware.database;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.DriverManager;
+import java.util.Properties;
 
 /**
  * Default Jive connection provider, which uses an internal connection pool.<p>
@@ -25,10 +26,10 @@ import java.sql.SQLException;
  */
 public class DefaultConnectionProvider implements ConnectionProvider {
 
-    private ConnectionPool connectionPool = null;
-
+    private Properties settings;
     private String driver;
     private String serverURL;
+    private String proxoolURL;
     private String username;
     private String password;
     private int minConnections = 3;
@@ -46,13 +47,13 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     private boolean mysqlUseUnicode;
 
-    private Object initLock = new Object();
-
     /**
      * Creates a new DefaultConnectionProvider.
      */
     public DefaultConnectionProvider() {
         loadProperties();
+
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");        
     }
 
     public boolean isPooled() {
@@ -60,71 +61,40 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     public Connection getConnection() throws SQLException {
-        if (connectionPool == null) {
-            // block until the init has been done
-            synchronized (initLock) {
-                // if still null, something has gone wrong
-                if (connectionPool == null) {
-                    Log.error("DbConnectionDefaultPool.getConnection() was " +
-                    "called before the internal pool has been initialized or " +
-                    "there was a problem connecting to the database.");
-                    // Attempt to connect again if setup was already done
-                    if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
-                        this.restart();
-                        if (connectionPool == null) {
-                            Log.error("Recovery logic failed to reconnect to the database.");
-                            return null;
-                        }
-                    }
-                    else {
-                        return null;
-                    }
-                }
+        Connection connection = null;
+        try {
+            Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
+            try {
+                connection = DriverManager.getConnection(proxoolURL, settings);
+            }
+            catch (SQLException e) {
+                Log.error("DbConnectionProvider: Error while getting connection: ", e);
             }
         }
-
-        return connectionPool.getConnection();
+        catch (ClassNotFoundException e) {
+            Log.error("DbConnectionProvider: Unable to find driver: ", e);
+        }
+        return connection;
     }
 
     public void start() {
-        // acquire lock so that no connections can be returned.
-        synchronized (initLock) {
-
-            try {
-                connectionPool = new ConnectionPool(driver, serverURL, username,
-                        password, minConnections, maxConnections, connectionTimeout,
-                        mysqlUseUnicode);
-            }
-            catch (IOException e) {
-                Log.error(e);
-            }
-        }
+        proxoolURL = "proxool.openfire:"+getDriver()+":"+getServerURL();
+        settings = new Properties();
+        settings.setProperty("proxool.maximum-connection-count", Integer.toString(getMaxConnections()));
+        settings.setProperty("proxool.minimum-connection-count", Integer.toString(getMinConnections()));
+        settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * getConnectionTimeout())));
+        settings.setProperty("proxool.test-before-use", "true");
+        settings.setProperty("proxool.test-after-use", "true");
+        settings.setProperty("proxool.house-keeping-test-sql", "select 1");
+        settings.setProperty("user", getUsername());
+        settings.setProperty("password", getPassword());
     }
 
     public void restart() {
-        // Kill off pool.
-        destroy();
-        // Reload properties.
-        loadProperties();
-        // Start a new pool.
-        start();
     }
 
     public void destroy() {
-        if (connectionPool != null) {
-            try {
-                connectionPool.destroy();
-            }
-            catch (Exception e) {
-                Log.error(e);
-            }
-        }
-        // Release reference to connectionPool
-        connectionPool = null;
-    }
-
-    public void finalize() {
-        destroy();
+        settings = null;
     }
 
     /**
@@ -293,7 +263,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         String maxCons = JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections");
         String conTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout");
         // See if we should use Unicode under MySQL
-        mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode")).booleanValue();
+        mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));
         try {
             if (minCons != null) {
                 minConnections = Integer.parseInt(minCons);
@@ -330,6 +300,6 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     public String toString() {
-        return connectionPool.toString();
+        return "Default Connection Provider";
     }
 }

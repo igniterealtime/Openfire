@@ -39,6 +39,7 @@ mysql.jar                           | 5.0.8
 objenesis                           | 1.0 (JMock 2.1.0)
 pack200task.jar                     | August 5, 2004
 postgres.jar                        | 8.2-506.jdbc3
+proxool.jar                         | 0.9.0RC3
 rome.jar                            | 0.9
 rome-fetcher.jar                    | 0.9
 servlet.jar                         | Jetty 6.1.0 (2.5)

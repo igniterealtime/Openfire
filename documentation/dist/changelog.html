@@ -164,18 +164,25 @@ hr {
 
 <h2>3.4.4 -- <span style="font-weight: normal;">January 17, 2008</span></h2>
 
+<h3>Openfire New Features</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
 <h3>Openfire Bug Fixes</h3>
 <ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1242'>JM-1242</a>] - Jetty upgraded to fix announced security issue (http://www.kb.cert.org/vuls/id/553235)</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1232'>JM-1232</a>] - LDAP vCard database storage fixed to work properly with Active Directory and others.  !!NOTE!!  API Changes for providers were required.  See important notes below. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1240'>JM-1240</a>] - Can now delete an avatar when using LDAP.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1230'>JM-1230</a>] - Current LDAP settings now being kept when editing config from admin interface.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1231'>JM-1231</a>] - Openfire install directories, log directories, etc are no longer world readable.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1232'>JM-1232</a>] - LDAP vCard database storage fixed to work properly with Active Directory and others.  !!NOTE!!  API Changes for providers were required.  See important notes below.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1231'>JM-1231</a>] - Openfire install directories, log directories, etc are no longer world readable. <b>(1 vote)</b></li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1233'>JM-1233</a>] - RPM uninstall no longer fails if Openfire not currently running.</li>
 </ul>
 
-<h3>Important Notes</h3>
+<h3><font color="red"><b>!</b></font> Important Notes</h3>
 <p>
 The VCardProvider interface/API was updated to make vCard handling more
-robust.  The change involved changing createVCard and updateVCard to return
+robust.  The change involved changing #createVCard and #updateVCard to return
 the vCard (after the provider has possibly altered it) instead of having
 no return at all (void).  If you are not making any modifications to the
 vCard, you will want to adjust your provider to simply return what was passed
@@ -185,7 +192,30 @@ adjusted vCard to be cached.
 
 <h3>Openfire Enterprise</h3>
 <ul>
-    <li>No changes</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1243'>JM-1243</a>] - Fixed serialization/deserialization of RemoteServerConfiguration between cluster nodes.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-222'>ENT-222</a>] - SparkWeb - Improved tooltip information.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-326'>ENT-326</a>] - SparkWeb - Added support for viewing vCard information.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-344'>ENT-344</a>] - SparkWeb - Background colors of windows can now be programmatically modified.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-345'>ENT-345</a>] - SparkWeb - User search window can now render fields found in the data form.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-354'>ENT-354</a>] - SparkWeb - Added support for slash commands. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-223'>ENT-223</a>] - SparkWeb - Groups are now expanded while searching, remember which to collapse when done searching.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-253'>ENT-253</a>] - SparkWeb - Set priority based on presence as Spark does.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-283'>ENT-283</a>] - SparkWeb - Improved 'add conference server' UI.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-293'>ENT-293</a>] - SparkWeb - Improved selection of server during login.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-334'>ENT-334</a>] - SparkWeb - Nickname is now autocompleted with vcard information when adding new contact.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-342'>ENT-342</a>] - SparkWeb - Spacing is no longer displayed for groups that were not displayed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-346'>ENT-346</a>] - SparkWeb - Added search button to user search window.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-358'>ENT-358</a>] - SparkWeb - Display names are now used instead of JIDs for chats.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-319'>ENT-319</a>] - SparkWeb - Added timestamp to chat window.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-321'>ENT-321</a>] - SparkWeb - Conference room window no longer shows all services.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-335'>ENT-335</a>] - SparkWeb - Backslashes were duplicated in one-to-one chat and group-chat windows.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-339'>ENT-339</a>] - SparkWeb - Bookmarks were not being displayed in conference tab.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-348'>ENT-348</a>] - SparkWeb - Fixed offline status in user profile while the user was online.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-373'>ENT-373</a>] - SparkWeb - Distance between groups were not uniform.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-375'>ENT-375</a>] - SparkWeb - Fixed incorrect error message for conference invitations.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-376'>ENT-376</a>] - SparkWeb - Only allow inviting online contacts to conference rooms.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-377'>ENT-377</a>] - SparkWeb - Chat presence icons weren't updating properly.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-378'>ENT-378</a>] - SparkWeb - Friendlier naming is now used for conference rooms in the message window.</li>
 </ul>
 
 <h3>Openfire Connection Manager Module</h3>

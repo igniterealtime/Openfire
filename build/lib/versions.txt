@@ -15,8 +15,8 @@ dbutil.jar                          | Jive Code, no release version.
 hamcrest.jar                        | 1.0 (JMock 2.1.0)
 hamcrest-api.jar                    | 1.0 (JMock 2.1.0)
 hsqldb.jar                          | 1.8.0.5
-jetty.jar                           | Jetty 6.1.0
-jetty-util.jar                      | Jetty 6.1.0
+jetty.jar                           | Jetty 6.1.7
+jetty-util.jar                      | Jetty 6.1.7
 jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)
 jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)
 jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)
@@ -42,7 +42,7 @@ postgres.jar                        | 8.2-506.jdbc3
 proxool.jar                         | 0.9.0RC3
 rome.jar                            | 0.9
 rome-fetcher.jar                    | 0.9
-servlet.jar                         | Jetty 6.1.0 (2.5)
+servlet.jar                         | Jetty 6.1.7 (2.5)
 shaj.jar                            | 0.5
 sitemesh.jar                        | 2.2.1
 standard.jar                        | Jakarta standard taglib 1.1.2

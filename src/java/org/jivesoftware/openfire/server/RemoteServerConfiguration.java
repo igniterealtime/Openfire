@@ -24,6 +24,9 @@ public class RemoteServerConfiguration implements Cacheable, Externalizable {
 
     private int remotePort;
 
+    public RemoteServerConfiguration() {
+    }
+
     public RemoteServerConfiguration(String domain) {
         this.domain = domain;
     }

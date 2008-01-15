@@ -55,6 +55,7 @@ public class ComponentSocketReader extends SocketReader {
             ComponentSession.ExternalComponent component = componentSession.getExternalComponent();
             String initialDomain = component.getInitialSubdomain();
             String extraDomain = doc.attributeValue("name");
+            String allowMultiple = doc.attributeValue("allowMultiple");
             if (extraDomain == null || "".equals(extraDomain)) {
                 // No new bind domain was specified so return a bad_request error
                 Element reply = doc.createCopy();
@@ -68,7 +69,7 @@ public class ComponentSocketReader extends SocketReader {
             }
             else if (extraDomain.endsWith(initialDomain)) {
                 // Only accept subdomains under the initial registered domain
-                if (component.getSubdomains().contains(extraDomain)) {
+                if (allowMultiple != null && component.getSubdomains().contains(extraDomain)) {
                     // Domain already in use so return a conflict error
                     Element reply = doc.createCopy();
                     reply.add(new PacketError(PacketError.Condition.conflict).getElement());
@@ -110,11 +111,11 @@ public class ComponentSocketReader extends SocketReader {
         return false;
     }
 
-    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
+    boolean createSession(String namespace, Boolean allowMultiple) throws UnauthorizedException, XmlPullParserException,
             IOException {
         if ("jabber:component:accept".equals(namespace)) {
             // The connected client is a component so create a ComponentSession
-            session = LocalComponentSession.createSession(serverName, reader, connection);
+            session = LocalComponentSession.createSession(serverName, reader, connection, allowMultiple);
             return true;
         }
         return false;

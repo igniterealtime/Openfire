@@ -360,6 +360,7 @@ public abstract class SocketReader implements Runnable {
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
+        String allowMultiple = reader.getXPPParser().getAttributeValue("", "allowMultiple");
         if (validateHost() && isHostUnknown(host)) {
             StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
@@ -387,7 +388,7 @@ public abstract class SocketReader implements Runnable {
         // Create the correct session based on the sent namespace. At this point the server
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
-        else if (!createSession(xpp.getNamespace(null))) {
+        else if (!createSession(xpp.getNamespace(null), allowMultiple != null)) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
             StringBuilder sb = new StringBuilder(250);
@@ -456,11 +457,12 @@ public abstract class SocketReader implements Runnable {
      * Creates the appropriate {@link org.jivesoftware.openfire.session.Session} subclass based on the specified namespace.
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
+     * @param allowMultiple Allow multiple bindings to the specified domain.
      * @return the created session or null.
      * @throws UnauthorizedException
      * @throws XmlPullParserException
      * @throws IOException
      */
-    abstract boolean createSession(String namespace) throws UnauthorizedException,
+    abstract boolean createSession(String namespace, Boolean allowMultiple) throws UnauthorizedException,
             XmlPullParserException, IOException;
 }

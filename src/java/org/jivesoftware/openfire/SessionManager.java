@@ -1140,7 +1140,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
                 // Unbind registered domains for this external component
                 for (String domain : session.getExternalComponent().getSubdomains()) {
                     String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
-                    InternalComponentManager.getInstance().removeComponent(subdomain);
+                    InternalComponentManager.getInstance().removeComponent(subdomain, session.getExternalComponent());
                 }
             }
             catch (Exception e) {

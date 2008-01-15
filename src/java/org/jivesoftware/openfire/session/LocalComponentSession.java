@@ -55,10 +55,11 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
      * @param serverName the name of the server where the session is connecting to.
      * @param reader     the reader that is reading the provided XML through the connection.
      * @param connection the connection with the component.
+     * @param allowMultiple     the specified domain is allowed to be connected to multiple times.
      * @return a newly created session between the server and a component.
      */
     public static LocalComponentSession createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection) throws UnauthorizedException, IOException,
+            SocketConnection connection, Boolean allowMultiple) throws UnauthorizedException, IOException,
             XmlPullParserException
     {
         XmlPullParser xpp = reader.getXPPParser();
@@ -124,7 +125,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             return null;
         }
         // Check that the requested subdomain is not already in use
-        if (InternalComponentManager.getInstance().hasComponent(componentJID)) {
+        if (!allowMultiple && InternalComponentManager.getInstance().hasComponent(componentJID)) {
             Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
             // Include the conflict error in the response

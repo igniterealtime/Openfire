@@ -204,8 +204,9 @@ public class ServerSocketReader extends SocketReader {
         threadPool.shutdown();
     }
 
-    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
+    boolean createSession(String namespace, Boolean allowMultiple) throws UnauthorizedException, XmlPullParserException,
             IOException {
+        // TODO: Should we ever consider allowing multiple of this?
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
             session = LocalIncomingServerSession.createSession(serverName, reader, connection);

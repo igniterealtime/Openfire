@@ -118,10 +118,10 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         else {
             routable = new RoutableComponent(componentJID, component);
             routables.put(subdomain, routable);
+            
+            // Add the route to the new service provided by the component
+            XMPPServer.getInstance().getRoutingTable().addComponentRoute(componentJID, routable);
         }
-
-        // Add the route to the new service provided by the component
-        XMPPServer.getInstance().getRoutingTable().addComponentRoute(componentJID, routable);
 
         // Initialize the new component
         try {
@@ -174,34 +174,38 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         routable.removeComponent(component);
         if (routable.numberOfComponents() == 0) {
             routables.remove(subdomain);
-        }
-        // Remove any info stored with the component being removed
-        componentInfo.remove(subdomain);
 
-        JID componentJID = new JID(subdomain + "." + serverDomain);
+            // Remove any info stored with the component being removed
+            componentInfo.remove(subdomain);
 
-        // Remove the route for the service provided by the component
-        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-        if (routingTable != null) {
-            routingTable.removeComponentRoute(componentJID);
-        }
+            JID componentJID = new JID(subdomain + "." + serverDomain);
 
-        // Remove the disco item from the server for the component that is being removed
-        IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
-        if (iqDiscoItemsHandler != null) {
-            iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
-        }
+            // Remove the route for the service provided by the component
+            RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+            if (routingTable != null) {
+                routingTable.removeComponentRoute(componentJID);
+            }
 
-        // Ask the component to shutdown
-        if (component != null) {
-            component.shutdown();
-        }
+            // Remove the disco item from the server for the component that is being removed
+            IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
+            if (iqDiscoItemsHandler != null) {
+                iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
+            }
 
-        // Notify listeners that an existing component has been unregistered
-        for (ComponentEventListener listener : listeners) {
-            listener.componentUnregistered(component, componentJID);
+            // Ask the component to shutdown
+            if (component != null) {
+                component.shutdown();
+            }
+
+            // Notify listeners that an existing component has been unregistered
+            for (ComponentEventListener listener : listeners) {
+                listener.componentUnregistered(component, componentJID);
+            }
+            Log.debug("InternalComponentManager: Component unregistered for domain: " + subdomain);
         }
-        Log.debug("InternalComponentManager: Component unregistered for domain: " + subdomain);
+        else {
+            Log.debug("InternalComponentManager: Other components still tied to domain: " + subdomain);
+        }
     }
 
     public void sendPacket(Component component, Packet packet) {
@@ -552,7 +556,6 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             synchronized (components) {
                 component = components.get(0);
                 Collections.rotate(components, 1);
-                Log.debug("Returning a component and rotated list of size "+components.size());
             }
             return component;
         }

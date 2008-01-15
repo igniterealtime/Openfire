@@ -89,11 +89,6 @@
         <servlet-name>dwr-invoker</servlet-name>
     </filter-mapping>
 
-    <filter-mapping>
-        <filter-name>AuthCheck</filter-name>
-        <servlet-name>Proxool</servlet-name>
-    </filter-mapping>
-
 
     <listener>
         <listener-class>org.jivesoftware.openfire.XMPPContextListener</listener-class>
@@ -121,22 +116,8 @@
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
-    <servlet>
-        <servlet-name>Proxool</servlet-name>
-        <servlet-class>org.logicalcobwebs.proxool.admin.servlet.AdminServlet</servlet-class>
-        <init-param>
-            <param-name>output</param-name>
-            <param-value>full</param-value>
-        </init-param>
-    </servlet>
-
 
     <!--@@JSPC-SERVLETS@@-->
-
-    <servlet-mapping>
-        <servlet-name>Proxool</servlet-name>
-        <url-pattern>/proxool</url-pattern>
-    </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>PluginServlet</servlet-name>

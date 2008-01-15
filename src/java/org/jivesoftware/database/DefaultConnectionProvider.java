@@ -34,6 +34,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     private String password;
     private int minConnections = 3;
     private int maxConnections = 10;
+    private String testSQL = "select 1";
+    private Boolean testBeforeUse = true;
+    private Boolean testAfterUse = true;
 
     /**
      * Maximum time a connection can be open before it's reopened (in days)
@@ -83,9 +86,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         settings.setProperty("proxool.maximum-connection-count", Integer.toString(getMaxConnections()));
         settings.setProperty("proxool.minimum-connection-count", Integer.toString(getMinConnections()));
         settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * getConnectionTimeout())));
-        settings.setProperty("proxool.test-before-use", "true");
-        settings.setProperty("proxool.test-after-use", "true");
-        settings.setProperty("proxool.house-keeping-test-sql", "select 1");
+        settings.setProperty("proxool.test-before-use", testBeforeUse.toString());
+        settings.setProperty("proxool.test-after-use", testAfterUse.toString());
+        settings.setProperty("proxool.house-keeping-test-sql", testSQL);
         settings.setProperty("user", getUsername());
         settings.setProperty("password", getPassword());
     }
@@ -247,6 +250,65 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         saveProperties();
     }
 
+    /**
+     * Returns the SQL statement used to test if a connection is valid.
+     *
+     * @return the SQL statement that will be run to test a connection.
+     */
+    public String getTestSQL() {
+        return testSQL;
+    }
+
+    /**
+     * Sets the SQL statement used to test if a connection is valid.  House keeping
+     * and before/after connection tests make use of this.  This
+     * should be something that causes the minimal amount of work by the database
+     * server and is as quick as possible.
+     *
+     * @param testSQL the SQL statement that will be run to test a connection.
+     */
+    public void setTestSQL(String testSQL) {
+        this.testSQL = testSQL;
+    }
+
+    /**
+     * Returns whether returned connections will be tested before being handed over
+     * to be used.
+     *
+     * @return True if connections are tested before use.
+     */
+    public Boolean getTestBeforeUse() {
+        return testBeforeUse;
+    }
+
+    /**
+     * Sets whether connections will be tested before being handed over to be used.
+     *
+     * @param testBeforeUse True or false if connections are to be tested before use.
+     */
+    public void setTestBeforeUse(Boolean testBeforeUse) {
+        this.testBeforeUse = testBeforeUse;
+    }
+
+    /**
+     * Returns whether returned connections will be tested after being returned to
+     * the pool.
+     *
+     * @return True if connections are tested after use.
+     */
+    public Boolean getTestAfterUse() {
+        return testAfterUse;
+    }
+
+    /**
+     * Sets whether connections will be tested after being returned to the pool.
+     *
+     * @param testAfterUse True or false if connections are to be tested after use.
+     */
+    public void setTestAfterUse(Boolean testAfterUse) {
+        this.testAfterUse = testAfterUse;
+    }
+
     public boolean isMysqlUseUnicode() {
         return mysqlUseUnicode;
     }
@@ -262,6 +324,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         String minCons = JiveGlobals.getXMLProperty("database.defaultProvider.minConnections");
         String maxCons = JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections");
         String conTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout");
+        testSQL = JiveGlobals.getXMLProperty("database.defaultProvider.testSQL", "select 1");
+        testBeforeUse = JiveGlobals.getXMLProperty("database.defaultProvider.testBeforeUse", true);
+        testAfterUse = JiveGlobals.getXMLProperty("database.defaultProvider.testAfterUse", true);
+
         // See if we should use Unicode under MySQL
         mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));
         try {
@@ -290,6 +356,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);
         JiveGlobals.setXMLProperty("database.defaultProvider.username", username);
         JiveGlobals.setXMLProperty("database.defaultProvider.password", password);
+        JiveGlobals.setXMLProperty("database.defaultProvider.testSQL", testSQL);
+        JiveGlobals.setXMLProperty("database.defaultProvider.testBeforeUse", testBeforeUse.toString());
+        JiveGlobals.setXMLProperty("database.defaultProvider.testAfterUse", testAfterUse.toString());
 
         JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
                 Integer.toString(minConnections));

@@ -54,6 +54,7 @@ public class TabsTag extends BodyTagSupport {
     private String bean;
     private String css;
     private String currentcss;
+    private Boolean justlinks = false;
 
     /**
      * The name of the request attribute which holds a {@link AdminPageBean} instance.
@@ -99,6 +100,20 @@ public class TabsTag extends BodyTagSupport {
     }
 
     /**
+     * Returns whether we are in just links mode.
+     */
+    public Boolean getJustlinks() {
+        return justlinks;
+    }
+
+    /**
+     * Sets whether we are just to display links, no list.
+     */
+    public void setJustlinks(Boolean justlinks) {
+        this.justlinks = justlinks;
+    }
+
+    /**
      * Does nothing, returns {@link #EVAL_BODY_BUFFERED} always.
      */
     public int doStartTag() throws JspException {
@@ -124,7 +139,7 @@ public class TabsTag extends BodyTagSupport {
             JspWriter out = pageContext.getOut();
             // Build up the output in a buffer (is probably faster than a bunch of out.write's)
             StringBuilder buf = new StringBuilder();
-            buf.append("<ul>");
+            if (!justlinks) { buf.append("<ul>"); }
             String body = getBodyContent().getString();
             // For each tab, print out an <LI>.
             Element currentTab = null;
@@ -150,12 +165,13 @@ public class TabsTag extends BodyTagSupport {
                 if (tab.equals(currentTab)) {
                     css = getCurrentcss();
                 }
-                buf.append("<li class=\"").append(css).append("\">");
+                if (!justlinks) { buf.append("<li class=\"").append(css).append("\">"); }
+                if (justlinks && i > 0) { buf.append(" | "); }
                 buf.append(value);
-                buf.append("</li>");
+                if (!justlinks) { buf.append("</li>"); }
             }
 
-            buf.append("</ul>");
+            if (!justlinks) { buf.append("</ul>"); }
             try {
                 out.write(buf.toString());
             }

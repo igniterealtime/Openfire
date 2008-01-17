@@ -463,7 +463,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
 
 <div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
- <tr style="background:#f3f7fa;">
+ <tr style="background:#eee;">
 
     <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.description"/></td>

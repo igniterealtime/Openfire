@@ -111,11 +111,11 @@ public class ComponentSocketReader extends SocketReader {
         return false;
     }
 
-    boolean createSession(String namespace, Boolean allowMultiple) throws UnauthorizedException, XmlPullParserException,
+    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
             IOException {
         if ("jabber:component:accept".equals(namespace)) {
             // The connected client is a component so create a ComponentSession
-            session = LocalComponentSession.createSession(serverName, reader, connection, allowMultiple);
+            session = LocalComponentSession.createSession(serverName, reader, connection);
             return true;
         }
         return false;

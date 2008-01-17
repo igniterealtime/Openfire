@@ -55,15 +55,18 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
      * @param serverName the name of the server where the session is connecting to.
      * @param reader     the reader that is reading the provided XML through the connection.
      * @param connection the connection with the component.
-     * @param allowMultiple     the specified domain is allowed to be connected to multiple times.
      * @return a newly created session between the server and a component.
+     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws XmlPullParserException if there was an XML error while creating the session.
+     * @throws IOException if an IO error occured while creating the session.
      */
     public static LocalComponentSession createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection, Boolean allowMultiple) throws UnauthorizedException, IOException,
+            SocketConnection connection) throws UnauthorizedException, IOException,
             XmlPullParserException
     {
         XmlPullParser xpp = reader.getXPPParser();
         String domain = xpp.getAttributeValue("", "to");
+        Boolean allowMultiple = reader.getXPPParser().getAttributeValue("", "allowMultiple") != null;
 
         Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: " + domain);
 

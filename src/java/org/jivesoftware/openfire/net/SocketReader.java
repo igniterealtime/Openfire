@@ -231,6 +231,7 @@ public abstract class SocketReader implements Runnable {
      * another thread.
      *
      * @param packet the received packet.
+     * @throws UnauthorizedException if the connection required security but was not secured.
      */
     protected void processIQ(IQ packet) throws UnauthorizedException {
         // Ensure that connection was secured if TLS was required
@@ -253,6 +254,7 @@ public abstract class SocketReader implements Runnable {
      * another thread.
      *
      * @param packet the received packet.
+     * @throws UnauthorizedException if the connection required security but was not secured.
      */
     protected void processPresence(Presence packet) throws UnauthorizedException {
         // Ensure that connection was secured if TLS was required
@@ -275,6 +277,7 @@ public abstract class SocketReader implements Runnable {
      * another thread.
      *
      * @param packet the received packet.
+     * @throws UnauthorizedException if the connection required security but was not secured.
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
         // Ensure that connection was secured if TLS was required
@@ -348,6 +351,10 @@ public abstract class SocketReader implements Runnable {
      * If the connection remains open, the XPP will be set to be ready for the
      * first packet. A call to next() should result in an START_TAG state with
      * the first packet in the stream.
+     *
+     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws XmlPullParserException if there was an XML error while creating the session.
+     * @throws IOException if an IO error occured while creating the session.
      */
     protected void createSession()
             throws UnauthorizedException, XmlPullParserException, IOException {
@@ -360,7 +367,6 @@ public abstract class SocketReader implements Runnable {
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
-        String allowMultiple = reader.getXPPParser().getAttributeValue("", "allowMultiple");
         if (validateHost() && isHostUnknown(host)) {
             StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
@@ -388,7 +394,7 @@ public abstract class SocketReader implements Runnable {
         // Create the correct session based on the sent namespace. At this point the server
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
-        else if (!createSession(xpp.getNamespace(null), allowMultiple != null)) {
+        else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
             StringBuilder sb = new StringBuilder(250);
@@ -457,12 +463,11 @@ public abstract class SocketReader implements Runnable {
      * Creates the appropriate {@link org.jivesoftware.openfire.session.Session} subclass based on the specified namespace.
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
-     * @param allowMultiple Allow multiple bindings to the specified domain.
      * @return the created session or null.
-     * @throws UnauthorizedException
-     * @throws XmlPullParserException
-     * @throws IOException
+     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws XmlPullParserException if there was an XML error while creating the session.
+     * @throws IOException if an IO error occured while creating the session.
      */
-    abstract boolean createSession(String namespace, Boolean allowMultiple) throws UnauthorizedException,
+    abstract boolean createSession(String namespace) throws UnauthorizedException,
             XmlPullParserException, IOException;
 }

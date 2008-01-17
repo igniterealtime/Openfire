@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
 
-    private Map<String, RoutableComponent> routables = new ConcurrentHashMap<String, RoutableComponent>();
+    final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<String, RoutableComponents>();
     private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
     /**
@@ -104,107 +104,112 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     public void addComponent(String subdomain, Component component) throws ComponentException {
-        RoutableComponent routable = routables.get(subdomain);
-        if (routable != null && routable.hasComponent(component)) {
-            // This component has already registered with this subdomain.
-            // TODO: Is this all we should do?  Should we return an error?
-            return;
-        }
-        Log.debug("InternalComponentManager: Registering component for domain: " + subdomain);
-        JID componentJID = new JID(subdomain + "." + serverDomain);
-        if (routable != null) {
-            routable.addComponent(component);
-        }
-        else {
-            routable = new RoutableComponent(componentJID, component);
-            routables.put(subdomain, routable);
-            
-            // Add the route to the new service provided by the component
-            XMPPServer.getInstance().getRoutingTable().addComponentRoute(componentJID, routable);
-        }
+        synchronized (routables) {
+            RoutableComponents routable = routables.get(subdomain);
+            if (routable != null && routable.hasComponent(component)) {
+                // This component has already registered with this subdomain.
+                // TODO: Is this all we should do?  Should we return an error?
+                return;
+            }
+            Log.debug("InternalComponentManager: Registering component for domain: " + subdomain);
+            JID componentJID = new JID(subdomain + "." + serverDomain);
+            if (routable != null) {
+                routable.addComponent(component);
+            }
+            else {
+                routable = new RoutableComponents(componentJID, component);
+                routables.put(subdomain, routable);
 
-        // Initialize the new component
-        try {
-            component.initialize(componentJID, this);
-            component.start();
-
-            // Notify listeners that a new component has been registered
-            for (ComponentEventListener listener : listeners) {
-                listener.componentRegistered(component, componentJID);
+                // Add the route to the new service provided by the component
+                XMPPServer.getInstance().getRoutingTable().addComponentRoute(componentJID, routable);
             }
 
-            // Check for potential interested users.
-            checkPresences();
-            // Send a disco#info request to the new component. If the component provides information
-            // then it will be added to the list of discoverable server items.
-            checkDiscoSupport(component, componentJID);
-            Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
-        }
-        catch (Exception e) {
-            // Unregister the component's domain
-            routable.removeComponent(component);
-            if (e instanceof ComponentException) {
+            // Initialize the new component
+            try {
+                component.initialize(componentJID, this);
+                component.start();
+
+                // Notify listeners that a new component has been registered
+                for (ComponentEventListener listener : listeners) {
+                    listener.componentRegistered(component, componentJID);
+                }
+
+                // Check for potential interested users.
+                checkPresences();
+                // Send a disco#info request to the new component. If the component provides information
+                // then it will be added to the list of discoverable server items.
+                checkDiscoSupport(component, componentJID);
+                Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
+            }
+            catch (Exception e) {
+                // Unregister the component's domain
+                routable.removeComponent(component);
+                if (e instanceof ComponentException) {
+                    // Rethrow the exception
+                    throw (ComponentException)e;
+                }
                 // Rethrow the exception
-                throw (ComponentException)e;
+                throw new ComponentException(e);
             }
-            // Rethrow the exception
-            throw new ComponentException(e);
-        }
-        finally {
-            if (routable.numberOfComponents() == 0) {
-                // If there are no more components associated with this subdomain, remove it.
-                routables.remove(subdomain);
-                // Remove the route
-                XMPPServer.getInstance().getRoutingTable().removeComponentRoute(componentJID);
+            finally {
+                if (routable.numberOfComponents() == 0) {
+                    // If there are no more components associated with this subdomain, remove it.
+                    routables.remove(subdomain);
+                    // Remove the route
+                    XMPPServer.getInstance().getRoutingTable().removeComponentRoute(componentJID);
+                }
             }
         }
-
     }
 
     public void removeComponent(String subdomain) {
-        Log.debug("InternalComponentManager: Unregistering all components for domain: " + subdomain);
-        RoutableComponent routable = routables.get(subdomain);
-        routable.removeAllComponents();
-        routables.remove(subdomain);
+        synchronized (routables) {
+            Log.debug("InternalComponentManager: Unregistering all components for domain: " + subdomain);
+            RoutableComponents routable = routables.get(subdomain);
+            routable.removeAllComponents();
+            routables.remove(subdomain);
+        }
     }
 
     public void removeComponent(String subdomain, Component component) {
-        Log.debug("InternalComponentManager: Unregistering component for domain: " + subdomain);
-        RoutableComponent routable = routables.get(subdomain);
-        routable.removeComponent(component);
-        if (routable.numberOfComponents() == 0) {
-            routables.remove(subdomain);
+        synchronized (routables) {
+            Log.debug("InternalComponentManager: Unregistering component for domain: " + subdomain);
+            RoutableComponents routable = routables.get(subdomain);
+            routable.removeComponent(component);
+            if (routable.numberOfComponents() == 0) {
+                routables.remove(subdomain);
 
-            // Remove any info stored with the component being removed
-            componentInfo.remove(subdomain);
+                // Remove any info stored with the component being removed
+                componentInfo.remove(subdomain);
 
-            JID componentJID = new JID(subdomain + "." + serverDomain);
+                JID componentJID = new JID(subdomain + "." + serverDomain);
 
-            // Remove the route for the service provided by the component
-            RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-            if (routingTable != null) {
-                routingTable.removeComponentRoute(componentJID);
+                // Remove the route for the service provided by the component
+                RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+                if (routingTable != null) {
+                    routingTable.removeComponentRoute(componentJID);
+                }
+
+                // Remove the disco item from the server for the component that is being removed
+                IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
+                if (iqDiscoItemsHandler != null) {
+                    iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
+                }
+
+                // Ask the component to shutdown
+                if (component != null) {
+                    component.shutdown();
+                }
+
+                // Notify listeners that an existing component has been unregistered
+                for (ComponentEventListener listener : listeners) {
+                    listener.componentUnregistered(component, componentJID);
+                }
+                Log.debug("InternalComponentManager: Component unregistered for domain: " + subdomain);
             }
-
-            // Remove the disco item from the server for the component that is being removed
-            IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
-            if (iqDiscoItemsHandler != null) {
-                iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
+            else {
+                Log.debug("InternalComponentManager: Other components still tied to domain: " + subdomain);
             }
-
-            // Ask the component to shutdown
-            if (component != null) {
-                component.shutdown();
-            }
-
-            // Notify listeners that an existing component has been unregistered
-            for (ComponentEventListener listener : listeners) {
-                listener.componentUnregistered(component, componentJID);
-            }
-            Log.debug("InternalComponentManager: Component unregistered for domain: " + subdomain);
-        }
-        else {
-            Log.debug("InternalComponentManager: Other components still tied to domain: " + subdomain);
         }
     }
 
@@ -212,7 +217,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         if (packet != null && packet.getFrom() == null) {
             throw new IllegalArgumentException("Packet with no FROM address was received from component.");
         }
-
+        
         PacketRouter router = XMPPServer.getInstance().getPacketRouter();
         if (router != null) {
             router.route(packet);
@@ -259,9 +264,9 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     public void addListener(ComponentEventListener listener) {
         listeners.add(listener);
         // Notify the new listener about existing components
-        for (Map.Entry<String, RoutableComponent> entry : routables.entrySet()) {
+        for (Map.Entry<String, RoutableComponents> entry : routables.entrySet()) {
             String subdomain = entry.getKey();
-            RoutableComponent routable = entry.getValue();
+            RoutableComponents routable = entry.getValue();
             for (Component component : routable.getComponents()) {
                 JID componentJID = new JID(subdomain + "." + serverDomain);
                 listener.componentRegistered(component, componentJID);
@@ -366,26 +371,28 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * @return the component with the specified id.
      */
     private Component getComponent(JID componentJID) {
-        if (componentJID.getNode() != null) {
-            return null;
-        }
-        RoutableComponent routable = routables.get(componentJID.getDomain());
-        if (routable != null) {
-            return routable.getNextComponent();
-        }
-        else {
-            // Search again for those JIDs whose domain include the server name but this
-            // time remove the server name from the JID's domain
-            String serverName = componentJID.getDomain();
-            int index = serverName.lastIndexOf("." + serverDomain);
-            if (index > -1) {
-                routable = routables.get(serverName.substring(0, index));
-                if (routable != null) {
-                    return routable.getNextComponent();
+        synchronized (routables) {
+            if (componentJID.getNode() != null) {
+                return null;
+            }
+            RoutableComponents routable = routables.get(componentJID.getDomain());
+            if (routable != null) {
+                return routable.getNextComponent();
+            }
+            else {
+                // Search again for those JIDs whose domain include the server name but this
+                // time remove the server name from the JID's domain
+                String serverName = componentJID.getDomain();
+                int index = serverName.lastIndexOf("." + serverDomain);
+                if (index > -1) {
+                    routable = routables.get(serverName.substring(0, index));
+                    if (routable != null) {
+                        return routable.getNextComponent();
+                    }
                 }
             }
+            return null;
         }
-        return null;
     }
 
     /**
@@ -396,13 +403,15 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * @return true if a component is associated to the specified address.
      */
     public boolean hasComponent(JID componentJID) {
-        if (componentJID.getNode() != null || componentJID.getResource() != null) {
-            return false;
+        synchronized (routables) {
+            if (componentJID.getNode() != null || componentJID.getResource() != null) {
+                return false;
+            }
+    //        if (componentJID.getDomain().lastIndexOf("." + serverDomain) == -1) {
+    //            componentJID = new JID(componentJID.getDomain() + "." + serverDomain);
+    //        }
+            return routingTable.hasComponentRoute(componentJID);
         }
-//        if (componentJID.getDomain().lastIndexOf("." + serverDomain) == -1) {
-//            componentJID = new JID(componentJID.getDomain() + "." + serverDomain);
-//        }
-        return routingTable.hasComponentRoute(componentJID);
     }
 
     /**
@@ -446,7 +455,8 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
         // Send the disco#info request to the component. The reply (if any) will be processed in
         // #process(Packet)
-        sendPacket(component, iq);
+//        sendPacket(component, iq);
+        component.processPacket(iq);
     }
 
     public JID getAddress() {
@@ -468,39 +478,38 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             if (packet instanceof IQ && IQ.Type.result == ((IQ) packet).getType()) {
                 IQ iq = (IQ) packet;
                 Element childElement = iq.getChildElement();
-                String namespace = null;
                 if (childElement != null) {
-                    namespace = childElement.getNamespaceURI();
-                }
-                if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-                    // Add a disco item to the server for the component that supports disco
-                    Element identity = childElement.element("identity");
-                    if (identity == null) {
-                        // Do nothing since there are no identities in the disco#info packet
-                        return;
-                    }
-                    try {
-                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
-                                .toBareJID(),
-                                identity.attributeValue("name"));
-                        if (component instanceof ComponentSession.ExternalComponent) {
-                            ComponentSession.ExternalComponent externalComponent =
-                                    (ComponentSession.ExternalComponent) component;
-                            externalComponent.setName(identity.attributeValue("name"));
-                            externalComponent.setType(identity.attributeValue("type"));
-                            externalComponent.setCategory(identity.attributeValue("category"));
+                    String namespace = childElement.getNamespaceURI();
+                    if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
+                        // Add a disco item to the server for the component that supports disco
+                        Element identity = childElement.element("identity");
+                        if (identity == null) {
+                            // Do nothing since there are no identities in the disco#info packet
+                            return;
                         }
-                    }
-                    catch (Exception e) {
-                        Log.error("Error processing disco packet of component: " + component +
-                                " - " + packet.toXML(), e);
-                    }
-                    // Store the IQ disco#info returned by the component
-                    String subdomain = packet.getFrom().getDomain().replace("." + serverDomain, "");
-                    componentInfo.put(subdomain, iq);
-                    // Notify listeners that a component answered the disco#info request
-                    for (ComponentEventListener listener : listeners) {
-                        listener.componentInfoReceived(component, iq);
+                        try {
+                            XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
+                                    .toBareJID(),
+                                    identity.attributeValue("name"));
+                            if (component instanceof ComponentSession.ExternalComponent) {
+                                ComponentSession.ExternalComponent externalComponent =
+                                        (ComponentSession.ExternalComponent) component;
+                                externalComponent.setName(identity.attributeValue("name"));
+                                externalComponent.setType(identity.attributeValue("type"));
+                                externalComponent.setCategory(identity.attributeValue("category"));
+                            }
+                        }
+                        catch (Exception e) {
+                            Log.error("Error processing disco packet of component: " + component +
+                                    " - " + packet.toXML(), e);
+                        }
+                        // Store the IQ disco#info returned by the component
+                        String subdomain = packet.getFrom().getDomain().replace("." + serverDomain, "");
+                        componentInfo.put(subdomain, iq);
+                        // Notify listeners that a component answered the disco#info request
+                        for (ComponentEventListener listener : listeners) {
+                            listener.componentInfoReceived(component, iq);
+                        }
                     }
                 }
             }
@@ -510,12 +519,12 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     /**
      * Exposes a Component as a RoutableChannelHandler.
      */
-    public static class RoutableComponent implements RoutableChannelHandler {
+    private static class RoutableComponents implements RoutableChannelHandler {
 
         private JID jid;
         final private List<Component> components;
 
-        public RoutableComponent(JID jid, Component component) {
+        public RoutableComponents(JID jid, Component component) {
             this.jid = jid;
             this.components = new ArrayList<Component>();
             addComponent(component);

@@ -1150,8 +1150,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             finally {
                 // Remove the session
                 localSessionManager.getComponentsSessions().remove(session);
+
                 // Remove track of the cluster node hosting the external component
-                componentSessionsCache.remove(session.getAddress().toString());
+                // if no more components are handling it.
+                if (!InternalComponentManager.getInstance().hasComponent(session.getAddress())) {
+                    componentSessionsCache.remove(session.getAddress().toString());
+                }
             }
         }
     }

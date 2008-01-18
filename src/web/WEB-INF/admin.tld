@@ -34,12 +34,7 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
-        <attribute>
-            <name>justlinks</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
+	</tag>
 	<tag>
 		<name>sidebar</name>
 		<tagclass>org.jivesoftware.admin.SidebarTag</tagclass>

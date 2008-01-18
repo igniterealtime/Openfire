@@ -79,23 +79,19 @@
 <div id="main">
 
     <div id="jive-header">
-        <div id="jive-logo">
-            <a href="/index.jsp"><img src="/images/login_logo.gif" alt="Openfire" width="179" height="53" /></a>
+        <div id="jive-logo-image_new">
+            <strong>Administration Console</strong>
         </div>
-        <div id="jive-userstatus">
-            <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
-            <fmt:message key="admin.logged_in_as"><fmt:param value="<%= "<strong>"+StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername()))+"</strong>" %>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a>
+        <div id="jive-logout" style="float: right;">
+
+            <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %> [<%= StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) %>]</a>
         </div>
-        <div id="jive-nav">
-            <div id="jive-nav-left"></div>
+        <div id="jive-tabs">
             <admin:tabs css="" currentcss="currentlink">
             <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
             </admin:tabs>
-            <div id="jive-nav-right"></div>
         </div>
-        <div id="jive-subnav">
-            &nbsp;
-        </div>
+        <div id="sidebar-top"></div>
     </div>
 
     <%--
@@ -111,24 +107,20 @@
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr valign="top">
-            <td width="1%">
-                <div id="jive-sidebar-container">
-                    <div id="jive-sidebar-box">
-                        <div id="jive-sidebar">
-                            <admin:sidebar css="" currentcss="currentlink" headercss="category">
-                                <a href="[url]" title="[description]"
-                                  onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                                  >[name]</a>
-                                 <admin:subsidebar css="" currentcss="currentlink">
-                                    <a href="[url]" title="[description]"
-                                     onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                                     >[name]</a>
-                                 </admin:subsidebar>
-                            </admin:sidebar>
-                            <br>
-                            <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
-                        </div>
-                    </div>
+            <td width="1%" id="jive-sidebar-box">
+                <div id="jive-sidebar">
+                    <admin:sidebar css="" currentcss="currentlink" headercss="category">
+                        <a href="[url]" title="[description]"
+                          onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                          >[name]</a>
+                         <admin:subsidebar css="" currentcss="currentlink">
+                            <a href="[url]" title="[description]"
+                             onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                             >[name]</a>
+                         </admin:subsidebar>
+                    </admin:sidebar>
+                    <br>
+                    <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
                 </div>
             </td>
             <td width="99%" id="jive-content">
@@ -139,13 +131,12 @@
 
                 <%  } %>
 
-                <h1>
+                <div id="jive-title">
                     <decorator:title default="&nbsp;"/>
-                </h1>
-
-                <div id="jive-main-content">
-                    <decorator:body/>
                 </div>
+
+                <decorator:body/>
+
             </td>
         </tr>
     </tbody>
@@ -156,14 +147,11 @@
 <!-- END main -->
 
 <!-- BEGIN footer -->
-	<div id="jive-footer">
-        <div class="jive-footer-nav">
-            <admin:tabs css="" currentcss="currentlink" justlinks="true">
-            <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
-            </admin:tabs>
-        </div>
-        <div class="jive-footer-copyright">
-            Built by <a href="http://www.jivesoftware.com">Jive Software</a> and the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+	<div id="footer">
+        <div id="footer_padding">
+        <div id="footer_content">
+			<span><%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>, built by <a href="http://www.jivesoftware.com">Jive Software</a> and the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community</span>
+		</div>
         </div>
     </div>
 <!-- END footer -->

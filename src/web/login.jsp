@@ -152,12 +152,13 @@
 <div align="center">
     <!-- BEGIN login box -->
     <div id="jive-loginBox">
-        
-        <div align="center" id="jive-loginTable">
 
-            <span id="jive-login-header" style="background: transparent url(images/login_logo.gif) no-repeat left; padding: 29px 0px 10px 205px;">
-            <fmt:message key="admin.console" />
-            </span>
+        <div id="jive-loginLogo"></div>
+        <div id="jive-loginHeader"><fmt:message key="admin.console" /></div>
+
+
+
+        <div align="center" id="jive-loginTable">
 
             <div style="text-align: center; width: 380px;">
             <table cellpadding="0" cellspacing="0" border="0" align="center">
@@ -221,6 +222,11 @@
     </div>
     <!-- END login box -->
 </div>
+
+<!-- old login log image
+ <img src="<%= AdminConsole.getLoginLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %>">
+ -->
+
 
 </form>
 

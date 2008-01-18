@@ -252,7 +252,7 @@
 <div class="light-gray-border" style="padding:10px;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
-    <tr style="background:#eee;">
+    <tr style="background:#f3f7fa;">
         <td class="table-header-left">&nbsp;</td>
         <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
         <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>

@@ -417,7 +417,7 @@ public class XMLProperties {
             element.addCDATA(value.substring(9, value.length()-3));
         }
         else {
-            element.setText(StringEscapeUtils.escapeXml(value));
+            element.setText(value);
         }
         // Write the XML properties to disk
         saveProperties();

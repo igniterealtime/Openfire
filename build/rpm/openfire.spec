@@ -99,7 +99,7 @@ exit 0
 
 %files
 %defattr(-,daemon,daemon)
-%attr(750, -, -) %dir %{homedir}
+%attr(750, daemon, daemon) %dir %{homedir}
 %dir %{homedir}/bin
 %{homedir}/bin/openfire.sh
 %{homedir}/bin/openfirectl

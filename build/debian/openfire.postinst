@@ -26,6 +26,9 @@ case "$1" in
 			--home /var/lib/openfire \
 			--gecos "Openfire XMPP server" --group openfire
 		fi
+		if ! getent group openfire >/dev/null; then
+			adduser --system openfire
+		fi
  
 		mkdir -p /var/log/openfire
 		mkdir -p /var/lib/openfire/embedded-db

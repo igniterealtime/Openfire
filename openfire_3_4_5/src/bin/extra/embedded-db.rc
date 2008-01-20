@@ -1,0 +1,5 @@
+# Connection settings for the embedded Openfire database.
+urlid embedded-db
+url jdbc:hsqldb:../../embedded-db/openfire
+username sa
+password

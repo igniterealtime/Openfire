@@ -1,3 +1,5 @@
+package org.jivesoftware.openfire.plugin.packetfilter.test;
+
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.PacketFilter;

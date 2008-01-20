@@ -1,3 +1,5 @@
+package org.jivesoftware.openfire.plugin.packetfilter.test;
+
 import org.jivesoftware.openfire.plugin.PacketFilterUtil;
 import org.xmpp.packet.JID;
 

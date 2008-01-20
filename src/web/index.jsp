@@ -134,7 +134,7 @@
 %>
 <style type="text/css">
 .bar TD {
-    padding : 0px;
+    padding : 0;
 }
 #jive-latest-activity .jive-bottom-line {
 	padding-top: 10px;
@@ -246,8 +246,12 @@
                     <fmt:message key="index.server_name" />
                 </td>
                 <td class="c2">
+                    <% try { %>
                     <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
-                    <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" text="<fmt:message key="index.certificate-warning" />">&nbsp;
+                    <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
+                    <% } %>
+                    <% } catch (Exception e) { %>
+                    <img src="images/error-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
                     <% } %>
                     ${webManager.serverInfo.name}
                 </td>
@@ -378,7 +382,7 @@
                     }
                 }
 
-                %><div class="jive-bottom-line"></div><%
+                %><div class="jive-bottom-line"/><%
                 if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
 
                     List entries = lastBlogFeed.getEntries();
@@ -392,7 +396,7 @@
                     <fmt:message key="index.cs_blog.unavailable" />
                  <% }
 
-                 %><div class="jive-bottom-line"></div><%
+                 %><div class="jive-bottom-line"/><%
                 if (lastReleaseFeed != null && !lastReleaseFeed.getEntries().isEmpty()) {
 
                     List entries = lastReleaseFeed.getEntries();
@@ -435,9 +439,9 @@
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
         <% if (LocalClientSession.getTLSPolicy() == Connection.TLSPolicy.disabled) { %>
-            <td><img src="images/blank.gif" width="1" height="1"></td>
+            <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } else { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
         <% } %>
         <td><fmt:message key="ports.client_to_server" /></td>
         <td><fmt:message key="ports.client_to_server.desc">
@@ -454,7 +458,7 @@
     <tr>
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
-        <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
         <td><fmt:message key="ports.client_to_server" /></td>
         <td><fmt:message key="ports.client_to_server.desc_old_ssl">
             <fmt:param value="<a href='ssl-settings.jsp'>" />
@@ -470,9 +474,9 @@
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : serverPort.getIPAddress() %></td>
         <td><%= serverPort.getPort() %></td>
         <% if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
         <% } else { %>
-            <td><img src="images/blank.gif" width="1" height="1"></td>
+            <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } %>
         <td><fmt:message key="ports.server_to_server" /></td>
         <td><fmt:message key="ports.server_to_server.desc">
@@ -492,9 +496,9 @@
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
         <% if (LocalConnectionMultiplexerSession.getTLSPolicy() == Connection.TLSPolicy.disabled) { %>
-            <td><img src="images/blank.gif" width="1" height="1"></td>
+            <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <% } else { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
         <% } %>
         <td><fmt:message key="ports.connection_manager" /></td>
         <td><fmt:message key="ports.connection_manager.desc">
@@ -510,7 +514,7 @@
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : componentPort.getIPAddress() %></td>
         <td><%= componentPort.getPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.external_components" /></td>
         <td><fmt:message key="ports.external_components.desc">
             <fmt:param value="<a href='external-components-settings.jsp'>" />
@@ -522,14 +526,14 @@
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= adminConsolePlugin.getAdminUnsecurePort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_unsecured" /></td>
     </tr>
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
-        <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_secured" /></td>
     </tr>
@@ -539,7 +543,7 @@
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= fileTransferProxy.getProxyPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.file_proxy" /></td>
         <td><fmt:message key="ports.file_proxy.desc" /></td>
     </tr>
@@ -553,7 +557,7 @@
         <tr>
             <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
             <td><%= httpBindManager.getHttpBindUnsecurePort() %></td>
-            <td><img src="images/blank.gif" width="1" height="1"></td>
+            <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
             <td><fmt:message key="ports.http_bind" /></td>
             <td><fmt:message key="ports.http_bind.desc_unsecured" /></td>
         </tr>
@@ -564,7 +568,7 @@
         <tr>
             <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
             <td><%= httpBindManager.getHttpBindSecurePort() %></td>
-            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
             <td><fmt:message key="ports.http_bind" /></td>
             <td><fmt:message key="ports.http_bind.desc_secured" /></td>
         </tr>
@@ -576,7 +580,7 @@
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= mediaProxyService.getMinPort() %> - <%= mediaProxyService.getMaxPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.media_proxy" /></td>
         <td><fmt:message key="ports.media_proxy.desc" /></td>
     </tr>
@@ -587,7 +591,7 @@
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= stunService.getPrimaryPort() %> & <%= stunService.getSecondaryPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.stun" /></td>
         <td><fmt:message key="ports.stun.desc" /></td>
     </tr>
@@ -595,7 +599,7 @@
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= flashCrossDomainHandler.getPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.flash_cross_domain" /></td>
         <td><fmt:message key="ports.flash_cross_domain.desc" /></td>
     </tr>

@@ -28,10 +28,17 @@
     String state = ParamUtils.getParameter(request, "state");
     String countryCode = ParamUtils.getParameter(request, "country");
 
-    KeyStore keyStore = SSLConfig.getKeyStore();
     Map<String, Object> errors = new HashMap<String, Object>();
 
     if (save) {
+        KeyStore keyStore;
+        try {
+            keyStore = SSLConfig.getKeyStore();
+        }
+        catch (Exception e) {
+            keyStore = SSLConfig.initializeKeyStore();
+        }
+
         // Verify that fields were completed
         if (name == null) {
             errors.put("name", "");

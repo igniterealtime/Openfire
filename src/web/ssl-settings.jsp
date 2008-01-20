@@ -296,8 +296,7 @@
 						</table>
 					</td>
 				</tr>
-			</tr>
-		</tbody>
+		    </tbody>
 		</table>
 
 
@@ -376,8 +375,7 @@
 						</table>
 					</td>
 				</tr>
-			</tr>
-		</tbody>
+		    </tbody>
 		</table>
 	</div>
 

@@ -6,6 +6,7 @@
                 java.util.HashMap,
                 java.util.Map"
          errorPage="error.jsp"%>
+<%@ page import="java.security.KeyStore" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -41,8 +42,15 @@
                     index = index + 1;
                     alias = domain + "_" + index;
                 }
+                KeyStore keystore;
+                try {
+                    keystore = SSLConfig.getKeyStore();
+                }
+                catch (Exception e) {
+                    keystore = SSLConfig.initializeKeyStore();
+                }
                 // Import certificate
-                CertificateManager.installCert(SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore(),
+                CertificateManager.installCert(keystore, SSLConfig.gets2sTrustStore(),
                         SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(privateKey.getBytes()), passPhrase,
                         new ByteArrayInputStream(certificate.getBytes()), true, true);
                 // Save keystore
@@ -138,7 +146,7 @@
                       <fmt:message key="ssl.import.certificate.private-key" />
                   </td>
                   <td width="99%">
-                      <textarea name="private-key" cols="60" rows="5" wrap="virtual"></textarea>
+                      <textarea name="private-key" cols="60" rows="5" wrap="virtual"/>
                   </td>
               </tr>
               <tr valign="top">
@@ -146,7 +154,7 @@
                       <fmt:message key="ssl.import.certificate.certificate" />
                   </td>
                   <td width="99%">
-                      <textarea name="certificate" cols="60" rows="5" wrap="virtual"></textarea>
+                      <textarea name="certificate" cols="60" rows="5" wrap="virtual"/>
                   </td>
               </tr>
           </tbody>

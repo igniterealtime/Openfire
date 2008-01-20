@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
@@ -289,6 +290,22 @@ public class SSLConfig {
             throw new IOException();
         }
         return c2sTrustStore;
+    }
+
+    /**
+     * Initializes (wipes and recreates) the keystore, and returns the new keystore.
+     *
+     * @return Newly initialized keystore.
+     */
+    public static KeyStore initializeKeyStore() {
+        try {
+            keyStore = KeyStore.getInstance(storeType);
+            keyStore.load(null, keypass.toCharArray());
+        }
+        catch (Exception e) {
+            Log.error("Unable to initialize keystore: ", e);
+        }
+        return keyStore;
     }
 
     /**

@@ -171,7 +171,7 @@
     padding-top: 10px;
 	}
 .info-header {
-    background-color: #f3f6fa;
+    background-color: #eee;
     font-size: 10pt;
 }
 .info-table {

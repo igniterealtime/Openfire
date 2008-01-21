@@ -41,6 +41,7 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 
+<fmt:setBundle basename="openfire_i18n"/>
 <html>
 <head>
     <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" />: <decorator:title /></title>
@@ -132,6 +133,7 @@
                 </div>
             </td>
             <td width="99%" id="jive-content">
+
 
                 <%  if (message != null) { %>
 

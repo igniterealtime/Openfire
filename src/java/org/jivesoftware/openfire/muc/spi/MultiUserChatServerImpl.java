@@ -327,20 +327,20 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     private void checkForTimedOutUsers() {
-        // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
-        if (user_idle == -1) {
-            return;
-        }
         final long deadline = System.currentTimeMillis() - user_idle;
         for (LocalMUCUser user : users.values()) {
             try {
+                // If user is not present in any room then remove the user from
+                // the list of users
+                if (!user.isJoined()) {
+                    removeUser(user.getAddress());
+                    continue;
+                }
+                // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
+                if (user_idle == -1) {
+                    return;
+                }
                 if (user.getLastPacketTime() < deadline) {
-                    // If user is not present in any room then remove the user from
-                    // the list of users
-                    if (!user.isJoined()) {
-                        removeUser(user.getAddress());
-                        continue;
-                    }
                     // Kick the user from all the rooms that he/she had previuosly joined
                     MUCRoom room;
                     Presence kickedPresence;

@@ -28,9 +28,9 @@ if [ -f /etc/default/openfire ] ; then
 	. /etc/default/openfire
 fi
 
-DAEMON_OPTS="-server -DopenfireHome=${DAEMON_DIR} \
+DAEMON_OPTS="$DAEMON_OPTS -server -DopenfireHome=${DAEMON_DIR} \
  -Dopenfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\
- -jar ${DAEMON_LIB}/startup.jar $DAEMON_OPTS"
+ -jar ${DAEMON_LIB}/startup.jar"
 
 #set -e
 

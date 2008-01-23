@@ -176,14 +176,20 @@ public class IQMUCSearchHandler
 			final FormField userAmountFF = df.getField("num_users");
 			if (userAmountFF != null)
 			{
-				numusers = Integer.parseInt(getFirstValue(userAmountFF));
+                String value = getFirstValue(userAmountFF);
+                if (value != null && !"".equals(value)) {
+                    numusers = Integer.parseInt(value);
+                }
 			}
 
 			final FormField maxUsersFF = df.getField("num_max_users");
 			if (maxUsersFF != null)
 			{
-				numaxusers = Integer.parseInt(getFirstValue(maxUsersFF));
-			}
+                String value = getFirstValue(maxUsersFF);
+                if (value != null && !"".equals(value)) {
+                    numaxusers = Integer.parseInt(value);
+                }
+            }
 		}
 		catch (NumberFormatException e)
 		{

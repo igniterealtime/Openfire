@@ -16,6 +16,8 @@
                  java.text.DateFormat"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.muc.NotAllowedException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -24,6 +26,8 @@
 
 <%  // Get parameters
     String roomName = ParamUtils.getParameter(request,"roomName");
+    String nickName = ParamUtils.getParameter(request,"nickName");
+    String kick = ParamUtils.getParameter(request,"kick");
 
     // Load the room object
     MUCRoom room = webManager.getMultiUserChatServer().getChatRoom(roomName);
@@ -31,6 +35,24 @@
         // The requested room name does not exist so return to the list of the existing rooms
         response.sendRedirect("muc-room-summary.jsp");
         return;
+    }
+
+    // Kick nick specified
+    if (kick != null) {
+        MUCRole role = room.getOccupant(nickName);
+        if (role != null) {
+            try {
+                room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), "");
+                // Done, so redirect
+                response.sendRedirect("muc-room-occupants.jsp?roomName="+URLEncoder.encode(room.getName(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletesuccess=true");
+                return;
+            }
+            catch (NotAllowedException e) {
+                // Done, so redirect
+                response.sendRedirect("muc-room-occupants.jsp?roomName="+URLEncoder.encode(room.getName(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletefailed=true");
+                return;
+            }
+        }
     }
 
     // Formatter for dates
@@ -48,6 +70,41 @@
     <p>
     <fmt:message key="muc.room.occupants.info" />
     </p>
+
+    <%  if (request.getParameter("deletesuccess") != null) { %>
+
+        <div class="jive-success">
+        <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label">
+            <fmt:message key="muc.room.occupants.kicked">
+                <fmt:param value="<%= nickName %>"/>
+            </fmt:message>
+            </td></tr>
+        </tbody>
+        </table>
+        </div><br>
+
+    <%  } %>
+
+    <%  if (request.getParameter("deletefailed") != null) { %>
+
+        <div class="jive-success">
+        <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+            <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label">
+            <fmt:message key="muc.room.occupants.kickfailed">
+                <fmt:param value="<%= nickName %>"/>
+            </fmt:message>
+            </td></tr>
+        </tbody>
+        </table>
+        </div><br>
+
+    <%  } %>
+
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
@@ -82,6 +139,7 @@
             <th scope="col"><fmt:message key="muc.room.occupants.nickname" /></th>
             <th scope="col"><fmt:message key="muc.room.occupants.role" /></th>
             <th scope="col"><fmt:message key="muc.room.occupants.affiliation" /></th>
+            <th scope="col"><fmt:message key="muc.room.occupants.kick" /></th>
         </tr>
     </thead>
     <tbody>
@@ -91,6 +149,7 @@
             <td><%= role.getNickname() %></td>
             <td><%= role.getRole() %></td>
             <td><%= role.getAffiliation() %></td>
+            <td><a href="muc-room-occupants.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
         </tr>
         <% } %>
     </tbody>

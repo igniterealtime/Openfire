@@ -138,7 +138,9 @@ public class TabsTag extends BodyTagSupport {
 
         if (pageID == null) {
             Element subPage = AdminConsole.getElemnetByID(subPageID);
-            pageID = subPage.getParent().getParent().attributeValue("id");
+            if (subPage != null) {
+                pageID = subPage.getParent().getParent().attributeValue("id");
+            }
         }
         
         // Get tabs from the model:

@@ -90,7 +90,7 @@
 
     <%  if (request.getParameter("deletefailed") != null) { %>
 
-        <div class="jive-success">
+        <div class="jive-error">
         <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
             <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>

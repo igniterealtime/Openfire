@@ -63,7 +63,7 @@ public class IQMUCSearchHandler
 	{
 		final XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
 		searchForm.setTitle("Chat Rooms Search");
-		searchForm.addInstruction("instrunctions");
+		searchForm.addInstruction("Instructions");
 
 		final FormField typeFF = new XFormFieldImpl("FORM_TYPE");
 		typeFF.setType(FormField.TYPE_HIDDEN);

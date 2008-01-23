@@ -95,18 +95,13 @@
             <div id="jive-nav-right"></div>
         </div>
         <div id="jive-subnav">
-            &nbsp;
+            <admin:subnavbar css="" currentcss="current">
+                <a href="[url]" title="[description]"
+                  onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                  >[name]</a>
+            </admin:subnavbar>
         </div>
     </div>
-
-    <%--
-    <div id="jive-secondary">
-        <ul>
-            <li><a href="">Server Manager</a></li>
-            <li><a href="">Server Settings</a></li>
-        </ul>
-    </div>
-    --%>
 
     <div id="jive-main">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">

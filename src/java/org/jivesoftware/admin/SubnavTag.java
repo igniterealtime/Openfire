@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision$
- * $Date$
+ * $Revision: 4092 $
+ * $Date: 2006-06-24 18:58:11 -0400 (Sat, 24 Jun 2006) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -12,6 +12,7 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.Log;
 import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;
@@ -19,11 +20,10 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
-import java.util.Iterator;
 import java.io.IOException;
 
 /**
- * <p>A simple JSP tag for displaying sidebar information in the admin console. The
+ * <p>A simple JSP tag for displaying sub-navigation bar information in the admin console. The
  * {@link TabsTag} is similiar to this one.</p>
  *
  * <p>Attributes: <ul>
@@ -56,12 +56,10 @@ import java.io.IOException;
  *      <li><tt>[url]</tt> - the URL of the sidebar item.</li>
  *      <li><tt>[description]</tt> - the description of the sidebar item, good for mouse rollovers.</li></ul></p>
  */
-public class SidebarTag extends BodyTagSupport {
+public class SubnavTag extends BodyTagSupport {
 
     private String css;
     private String currentcss;
-    private String headercss;
-    private SubSidebarTag subsidebarTag;
 
     /**
      * Returns the value of the CSS class to be used for tab decoration. If not set will return a blank string.
@@ -93,34 +91,6 @@ public class SidebarTag extends BodyTagSupport {
     }
 
     /**
-     * Returns the value of the CSS class to be used for sidebar header sections.
-     */
-    public String getHeadercss() {
-        return headercss;
-    }
-
-    /**
-     * Sets the CSS value used for the sidebar header sections.
-     */
-    public void setHeadercss(String headercss) {
-        this.headercss = headercss;
-    }
-
-    /**
-     * Returns the subsidebar tag - should be declared in the body of this tag (see class description).
-     */
-    public SubSidebarTag getSubsidebarTag() {
-        return subsidebarTag;
-    }
-
-    /**
-     * Sets the subsidebar tag - used by the container.
-     */
-    public void setSubSidebar(SubSidebarTag subsidebarTag) {
-        this.subsidebarTag = subsidebarTag;
-    }
-
-    /**
      * Does nothing, returns {@link #EVAL_BODY_BUFFERED} always.
      */
     public int doStartTag() throws JspException {
@@ -144,14 +114,10 @@ public class SidebarTag extends BodyTagSupport {
         if (getBodyContent().getString() == null) {
             throw new JspException("Error, no template (body value) set for the sidebar tag.");
         }
-        if (subsidebarTag.getBody() == null) {
-            throw new JspException("Error, no template (body value) set for the subsidebar tag");
-        }
 
         // Get the initial subpage and page IDs
         String subPageID = (String)request.getAttribute("subPageID");
         String pageID = (String)request.getAttribute("pageID");
-        String subnavID = (String)request.getAttribute("subnavID");
 
         // If the pageID is null, use the subPageID to set it. If both the pageID and
         // subPageIDs are null, return because these are key to execution of the tag.
@@ -175,38 +141,31 @@ public class SidebarTag extends BodyTagSupport {
                 }
                 current = AdminConsole.getElemnetByID(pageID);
                 if (current != null) {
-                    subnav = current.getParent();
+                    if (subcurrent != null) {
+                        subnav = subcurrent.getParent().getParent().getParent();
+                    }
+                    else {
+                        subnav = current.getParent();
+                    }
                 }
+                Log.debug("\n\n\nXXXFFINDXXX\npageID = "+pageID+"\nsubPageID = "+subPageID+"\ncurrent = "+current+"\nsubcurrent = "+subcurrent+"\nsubnav = "+subnav+"\n\n\n");
 
                 Element currentTab = (Element)AdminConsole.getModel().selectSingleNode(
                         "//*[@id='" + pageID + "']/ancestor::tab");
 
-                boolean isSubmenu = false;
-                if (subcurrent != null) {
-                    isSubmenu = subcurrent.getParent().getParent().getName().equals("item");
-                }
-
                 // Loop through all items in the root, print them out
-                if (currentTab != null && subnav != null) {
-                    Element sidebar = subnav.getParent().getParent();
-                    String header = sidebar.attributeValue("name");
-                    String pluginName = sidebar.attributeValue("plugin");
-                    // Print the header:
-                    String hcss = getHeadercss();
-                    if (hcss == null) {
-                        hcss = "";
-                    }
-                    Collection items = subnav.elements();
+                if (currentTab != null) {
+                    Collection items = currentTab.elements();
                     if (items.size() > 0) {
                         buf.append("<ul>");
-                        // Now print all items:
                         for (Object itemObj : items) {
-                            Element item = (Element)itemObj;
+                            Element item = (Element) itemObj;
+                            Element firstSubItem = (Element)item.elements().get(0);
+                            String pluginName = item.attributeValue("plugin");
                             String subitemID = item.attributeValue("id");
                             String subitemName = item.attributeValue("name");
-                            String subitemURL = item.attributeValue("url");
+                            String subitemURL = firstSubItem.attributeValue("url");
                             String subitemDescr = item.attributeValue("description");
-                            pluginName = item.attributeValue("plugin");
                             String value = getBodyContent().getString();
                             if (value != null) {
                                 value = StringUtils.replace(value, "[id]", clean(subitemID));
@@ -218,61 +177,11 @@ public class SidebarTag extends BodyTagSupport {
                                         request.getContextPath() + "/" + clean(subitemURL));
                             }
                             String css = getCss();
-                            boolean isCurrent = item.equals(current);
-                            boolean showSubmenu = subPageID != null;
-                            if (isCurrent && !showSubmenu) {
+                            boolean isCurrent = subnav != null && item.equals(subnav);
+                            if (isCurrent) {
                                 css = getCurrentcss();
                             }
                             buf.append("<li class=\"").append(css).append("\">").append(value).append("</li>");
-
-                            // Print out a submenu if one exists:
-                            if (isSubmenu && isCurrent) {
-                                // Get the parent of the current item so we can get its
-                                // items - those will be siblings of the current item:
-                                Iterator siblings = subcurrent.getParent().elementIterator();
-                                boolean hadNext = siblings.hasNext();
-                                if (hadNext) {
-                                    // Print out beginning UL
-                                    buf.append("<ul class=\"subitems\">\n");
-                                    // Print the header LI
-                                    String subheader = subcurrent.getParent().attributeValue("name");
-                                    pluginName = subcurrent.getParent().attributeValue("plugin");
-                                    buf.append("<li class=\"").append(hcss).append("\">").append(
-                                            clean(AdminConsole.getAdminText(subheader, pluginName))).append("</li>");
-                                }
-                                String extraParams = (String)request.getAttribute("extraParams");
-                                while (siblings.hasNext()) {
-                                    Element sibling = (Element)siblings.next();
-                                    String sibID = sibling.attributeValue("id");
-                                    String sibName = sibling.attributeValue("name");
-                                    String sibDescr = sibling.attributeValue("description");
-                                    String sibURL = sibling.attributeValue("url");
-                                    pluginName = sibling.attributeValue("plugin");
-                                    if (extraParams != null) {
-                                        sibURL += ((sibURL.indexOf('?') > -1 ? "&" : "?") + extraParams);
-                                    }
-                                    boolean isSubCurrent = sibling.equals(subcurrent);
-                                    String subcss = getCss();
-                                    if (isSubCurrent) {
-                                        subcss = getCurrentcss();
-                                    }
-                                    String svalue = getSubsidebarTag().getBody();
-                                    if (svalue != null) {
-                                        svalue = StringUtils.replace(svalue, "[id]", clean(sibID));
-                                        svalue = StringUtils.replace(svalue, "[name]",
-                                                clean(AdminConsole.getAdminText(sibName, pluginName)));
-                                        svalue = StringUtils.replace(svalue, "[description]",
-                                                clean(AdminConsole.getAdminText(sibDescr, pluginName)));
-                                        svalue = StringUtils.replace(svalue, "[url]",
-                                                request.getContextPath() + "/" + clean(sibURL));
-                                    }
-                                    buf.append("<li class=\"").append(subcss).append("\">").append(svalue).append("</li>\n");
-                                }
-                                if (hadNext) {
-                                    // Print out ending UL
-                                    buf.append("<br></ul>\n");
-                                }
-                            }
                         }
                         buf.append("</ul>");
                         try {

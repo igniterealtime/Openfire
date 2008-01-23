@@ -248,19 +248,23 @@ public class AdminConsole {
 
         // Load other admin-sidebar.xml files from the classpath
         ClassLoader[] classLoaders = getClassLoaders();
-        for (int i=0; i<classLoaders.length; i++) {
+        for (ClassLoader classLoader : classLoaders) {
             URL url = null;
             try {
-                if (classLoaders[i] != null) {
-                    Enumeration e = classLoaders[i].getResources("/META-INF/admin-sidebar.xml");
+                if (classLoader != null) {
+                    Enumeration e = classLoader.getResources("/META-INF/admin-sidebar.xml");
                     while (e.hasMoreElements()) {
-                        url = (URL)e.nextElement();
+                        url = (URL) e.nextElement();
                         try {
                             in = url.openStream();
                             addModel("admin", in);
                         }
                         finally {
-                            try { if (in != null) { in.close(); } }
+                            try {
+                                if (in != null) {
+                                    in.close();
+                                }
+                            }
                             catch (Exception ignored) {
                                 // Ignore.
                             }
@@ -333,8 +337,8 @@ public class AdminConsole {
                 }
             }
             // Tabs
-            for (Iterator i=element.selectNodes("//tab").iterator(); i.hasNext(); ) {
-                Element tab = (Element)i.next();
+            for (Object o : element.selectNodes("//tab")) {
+                Element tab = (Element) o;
                 String id = tab.attributeValue("id");
                 Element existingTab = getElemnetByID(id);
                 // Simple case, there is no existing tab with the same id.
@@ -342,7 +346,7 @@ public class AdminConsole {
                     // Make sure that the URL on the tab is set. If not, default to the
                     // url of the first item.
                     if (tab.attributeValue("url") == null) {
-                        Element firstItem = (Element)tab.selectSingleNode(
+                        Element firstItem = (Element) tab.selectSingleNode(
                                 "//item[@url]");
                         if (firstItem != null) {
                             tab.addAttribute("url", firstItem.attributeValue("url"));

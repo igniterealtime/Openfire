@@ -40,7 +40,33 @@
             <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
-	<tag>
+    <tag>
+        <name>subnavbar</name>
+        <tagclass>org.jivesoftware.admin.SubnavTag</tagclass>
+        <bodycontent>JSP</bodycontent>
+        <info />
+        <attribute>
+            <name>css</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>currentcss</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>role</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>minEdition</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
 		<name>sidebar</name>
 		<tagclass>org.jivesoftware.admin.SidebarTag</tagclass>
         <bodycontent>JSP</bodycontent>

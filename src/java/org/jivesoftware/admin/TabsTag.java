@@ -13,6 +13,7 @@ package org.jivesoftware.admin;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.Log;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -133,6 +134,13 @@ public class TabsTag extends BodyTagSupport {
         // Get the page data bean from the request:
         // If the page info bean is not in the request then no tab will be selected - so, it'll fail gracefully
         String pageID = (String)request.getAttribute("pageID");
+        String subPageID = (String)request.getAttribute("subPageID");
+
+        if (pageID == null) {
+            Element subPage = AdminConsole.getElemnetByID(subPageID);
+            pageID = subPage.getParent().getParent().attributeValue("id");
+        }
+        
         // Get tabs from the model:
         List tabs = AdminConsole.getModel().selectNodes("//tab");
         if (tabs.size() > 0) {
@@ -147,6 +155,7 @@ public class TabsTag extends BodyTagSupport {
                 currentTab = (Element)AdminConsole.getModel().selectSingleNode(
                             "//*[@id='" + pageID + "']/ancestor::tab");
             }
+            Log.debug("\n\n\nXXXFFIND2222XXX\npageID = "+pageID+"\nsubPageID = "+subPageID+"\ncurrentTab = "+currentTab+"\n\n\n");
             for (int i=0; i<tabs.size(); i++) {
                 Element tab = (Element)tabs.get(i);
                 String value = body;

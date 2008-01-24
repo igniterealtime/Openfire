@@ -332,7 +332,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 13);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 14);
 
 /* Entry for admin user */
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)

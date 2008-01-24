@@ -58,6 +58,7 @@ CREATE TABLE jiveRoster (
   CONSTRAINT jiveRoster_pk PRIMARY KEY (rosterID)
 );
 CREATE INDEX jiveR_userid_idx ON jiveRoster (username ASC);
+CREATE INDEX jiveR_jid_idx ON jiveRoster (jid ASC);
 
 
 CREATE TABLE jiveRosterGroups (
@@ -342,7 +343,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 13);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 14);
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)

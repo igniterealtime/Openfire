@@ -30,21 +30,24 @@ import java.util.Date;
 public class XMPPServerInfoImpl implements XMPPServerInfo {
 
     private Date startDate;
-    private String name;
+    private String xmppDomain;
+    private String hostname;
     private Version ver;
     private ConnectionManager connectionManager;
 
     /**
      * Simple constructor
      *
-     * @param serverName the server's serverName (e.g. example.org).
+     * @param xmppDomain the server's XMPP domain name (e.g. example.org).
+     * @param hostname the server's host name (e.g. server1.example.org).
      * @param version the server's version number.
      * @param startDate the server's last start time (can be null indicating
      *      it hasn't been started).
      * @param connectionManager the object that keeps track of the active ports.
      */
-    public XMPPServerInfoImpl(String serverName, Version version, Date startDate, ConnectionManager connectionManager) {
-        this.name = serverName;
+    public XMPPServerInfoImpl(String xmppDomain, String hostname, Version version, Date startDate, ConnectionManager connectionManager) {
+        this.xmppDomain = xmppDomain;
+        this.hostname = hostname;
         this.ver = version;
         this.startDate = startDate;
         this.connectionManager = connectionManager;
@@ -54,17 +57,34 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         return ver;
     }
 
+    @Deprecated
     public String getName() {
-        return name;
+        return getXmppDomain();
     }
 
+    @Deprecated
     public void setName(String serverName) {
-        name = serverName;
-        if (serverName == null) {
+        setXmppDomain(serverName);
+    }
+
+    public String getHostname()
+	{
+		return hostname;
+	}
+
+	public String getXmppDomain()
+	{
+		return xmppDomain;
+	}
+
+	public void setXmppDomain(String domainName)
+	{
+        this.xmppDomain = domainName;
+        if (domainName == null) { 
             JiveGlobals.deleteProperty("xmpp.domain");
         }
         else {
-            JiveGlobals.setProperty("xmpp.domain", serverName);
+            JiveGlobals.setProperty("xmpp.domain", domainName);
         }
     }
 

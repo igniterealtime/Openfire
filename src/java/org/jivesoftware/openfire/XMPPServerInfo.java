@@ -33,19 +33,47 @@ public interface XMPPServerInfo {
     public Version getVersion();
 
     /**
-     * Obtain the server name (ip address or hostname).
+     * Obtain the server name (IP address or hostname).
      *
-     * @return the server's name as an ip address or host name.
+     * @return the server's name as an IP address or host name.
+     * @deprecated replaced by {@link #getXmppDomain()}
      */
+    @Deprecated
     public String getName();
 
     /**
-     * Set the server name (ip address or hostname). The server
+     * Set the server name (IP address or hostname). The server
      * must be restarted for this change to take effect.
      *
-     * @param serverName the server's name as an ip address or host name.
+     * @param serverName the server's name as an IP address or host name.
+     * @deprecated replaced by {@link #setXmppDomain(String)}
      */
+    @Deprecated
     public void setName(String serverName);
+
+    /**
+     * Obtain the host name (IP address or hostname) of this server node.
+     *
+     * @return the server's host name as an IP address or host name.
+     */
+    public String getHostname();
+
+    /**
+     * Obtain the server XMPP domain name. Note that, if unconfigured, the
+     * returned value will equal the hostname or IP address of the server.
+     *
+     * @return the name of the XMPP domain that this server is part of.
+     */
+    public String getXmppDomain();
+
+    /**
+     * Set the server XMPP domain name. The server must be
+     * restarted for this change to take effect.
+     *
+     * @param domainName
+     *             the XMPP domain that this server is part of.
+     */
+    public void setXmppDomain(String domainName);
 
     /**
      * Obtain the date when the server was last started.

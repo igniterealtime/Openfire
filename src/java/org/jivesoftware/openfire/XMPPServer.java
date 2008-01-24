@@ -59,6 +59,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -94,6 +96,7 @@ public class XMPPServer {
     private static XMPPServer instance;
 
     private String name;
+    private String host;
     private Version version;
     private Date startDate;
     private boolean initialized = false;
@@ -326,6 +329,13 @@ public class XMPPServer {
 
         name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException ex) {
+            Log.warn("Unable to determine local hostname.", ex);
+        }
+
         version = new Version(3, 4, 5, Version.ReleaseStatus.Release, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
@@ -425,7 +435,7 @@ public class XMPPServer {
             setupMode = false;
 
             // Update server info
-            xmppServerInfo = new XMPPServerInfoImpl(name, version, startDate, getConnectionManager());
+            xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate, getConnectionManager());
         }
     }
 
@@ -435,7 +445,7 @@ public class XMPPServer {
 
             startDate = new Date();
             // Store server info
-            xmppServerInfo = new XMPPServerInfoImpl(name, version, startDate, getConnectionManager());
+            xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate, getConnectionManager());
 
             // Create PluginManager now (but don't start it) so that modules may use it
             File pluginDir = new File(openfireHome, "plugins");

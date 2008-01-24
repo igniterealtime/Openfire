@@ -295,7 +295,7 @@ html>body .jive-vcardTable {
     margin-top : 10px;
 	margin-bottom: 20px;
     padding-left : 28px;
-    background-image : url(../../images/error-16x16.gif);
+    background-image : url(/images/error-16x16.gif);
     background-repeat : no-repeat;
     background-position : 5px 5px;
 	-moz-border-radius: 3px;
@@ -326,7 +326,7 @@ html>body .jive-vcardTable {
 	float: left;
 	width: 17px;
 	height: 17px;
-    margin: 3px 0px 0px 5px;
+    margin: 3px 0 0 5px;
 	background: transparent url(../images/setup_helpicon.gif) no-repeat;
     }
 div.jiveTooltip {

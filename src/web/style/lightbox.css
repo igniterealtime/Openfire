@@ -19,14 +19,14 @@ Modified for DSG's bragging board : August 3, 2006
 	z-index: 8999;
 	width: 725px;
 	margin: -50px 0 0 -300px;
-	padding: 0px 0px 0px 0px;
+	padding: 0 0 0 0;
 	background: transparent;
 	text-align: left;
-	}
+}
 
 #lightbox[id]{
 	position: fixed;
-	}
+}
 
 #overlay{
 	display: none;
@@ -40,21 +40,19 @@ Modified for DSG's bragging board : August 3, 2006
 	-moz-opacity: 0.4;
 	opacity: .40;
 	filter: alpha(opacity=40);
-	
-	}
+}
 #overlay[id]{
 	position: fixed;
-	}
-
+}
 #lightbox.done #lbLoadMessage{
 	display: none;
-	}
+}
 #lightbox.done #lbContent{
 	display: block;
-	}
+}
 #lightbox.loading #lbContent{
 	display: none;
-	}
+}
 #lightbox.loading #lbLoadMessage{
 	display: block;
-	}
+}

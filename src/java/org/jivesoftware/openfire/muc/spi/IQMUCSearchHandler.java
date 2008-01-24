@@ -340,8 +340,11 @@ public class IQMUCSearchHandler
 			innerfield.setType(FormField.TYPE_BOOLEAN);
 			innerfield.addValue(Boolean.toString(room.isMembersOnly()));
 			fields.add(innerfield);
-
-			resultform.addItemFields(fields);
+            innerfield = new XFormFieldImpl("jid");
+            innerfield.setType(FormField.TYPE_TEXT_SINGLE);
+            innerfield.addValue(room.getRole().getRoleAddress().toString());
+            fields.add(innerfield);
+            resultform.addItemFields(fields);
 			atLeastoneResult = true;
 		}
 		if (atLeastoneResult)
@@ -366,8 +369,12 @@ public class IQMUCSearchHandler
 				"is_password_protected");
 			rffPasswordProtected.setLabel("Is a password protected room.");
 			resultform.addReportedField(rffPasswordProtected);
-			
-			FormField innerfield = new XFormFieldImpl("is_member_only");
+
+            final FormField rffJID = new XFormFieldImpl("jid");
+            rffJID.setLabel("JID");
+            resultform.addReportedField(rffJID);
+
+            FormField innerfield = new XFormFieldImpl("is_member_only");
 			innerfield.setType(FormField.TYPE_TEXT_SINGLE);
 			innerfield.setLabel("Is a member only room.");
 			resultform.addReportedField(innerfield);

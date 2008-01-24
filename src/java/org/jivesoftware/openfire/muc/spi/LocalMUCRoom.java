@@ -157,7 +157,7 @@ public class LocalMUCRoom implements MUCRoom {
      * Maximum number of occupants that could be present in the room. If the limit's been reached
      * and a user tries to join, a not-allowed error will be returned.
      */
-    private int maxUsers = 30;
+    private int maxUsers = JiveGlobals.getIntProperty("muc.room.maxUsers", 30);
 
     /**
      * List of roles of which presence will be broadcasted to the rest of the occupants. This

@@ -247,13 +247,13 @@
                 </td>
                 <td class="c2">
                     <% try { %>
-                    <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
+                    <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXmppDomain())) {%>
                     <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
                     <% } %>
                     <% } catch (Exception e) { %>
                     <img src="images/error-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
                     <% } %>
-                    ${webManager.serverInfo.name}
+                    ${webManager.serverInfo.xmppDomain}
                 </td>
             </tr>
             <tr><td>&nbsp;</td></tr>
@@ -283,6 +283,14 @@
                 <td class="c1"><fmt:message key="index.app" /></td>
                 <td class="c2">
                     <%= application.getServerInfo() %>
+                </td>
+            </tr>
+            <tr>
+                <td class="c1">
+                    <fmt:message key="index.host_name" />
+                </td>
+                <td class="c2">
+                    ${webManager.serverInfo.hostname}
                 </td>
             </tr>
             <tr>

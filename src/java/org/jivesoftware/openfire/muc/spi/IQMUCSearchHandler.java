@@ -63,7 +63,7 @@ public class IQMUCSearchHandler
 	{
 		final XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
 		searchForm.setTitle("Chat Rooms Search");
-		searchForm.addInstruction("instrunctions");
+		searchForm.addInstruction("Instructions");
 
 		final FormField typeFF = new XFormFieldImpl("FORM_TYPE");
 		typeFF.setType(FormField.TYPE_HIDDEN);
@@ -176,13 +176,19 @@ public class IQMUCSearchHandler
 			final FormField userAmountFF = df.getField("num_users");
 			if (userAmountFF != null)
 			{
-				numusers = Integer.parseInt(getFirstValue(userAmountFF));
+                String value = getFirstValue(userAmountFF);
+                if (value != null && !"".equals(value)) {
+                    numusers = Integer.parseInt(value);
+                }
 			}
 
 			final FormField maxUsersFF = df.getField("num_max_users");
 			if (maxUsersFF != null)
 			{
-				numaxusers = Integer.parseInt(getFirstValue(maxUsersFF));
+                String value = getFirstValue(maxUsersFF);
+                if (value != null && !"".equals(value)) {
+                    numaxusers = Integer.parseInt(value);
+                }
 			}
 		}
 		catch (NumberFormatException e)
@@ -334,7 +340,10 @@ public class IQMUCSearchHandler
 			innerfield.setType(FormField.TYPE_BOOLEAN);
 			innerfield.addValue(Boolean.toString(room.isMembersOnly()));
 			fields.add(innerfield);
-
+            innerfield = new XFormFieldImpl("jid");
+            innerfield.setType(FormField.TYPE_TEXT_SINGLE);
+            innerfield.addValue(room.getRole().getRoleAddress().toString());
+            fields.add(innerfield);
 			resultform.addItemFields(fields);
 			atLeastoneResult = true;
 		}
@@ -361,6 +370,10 @@ public class IQMUCSearchHandler
 			rffPasswordProtected.setLabel("Is a password protected room.");
 			resultform.addReportedField(rffPasswordProtected);
 			
+            final FormField rffJID = new XFormFieldImpl("jid");
+            rffJID.setLabel("JID");
+            resultform.addReportedField(rffJID);
+
 			FormField innerfield = new XFormFieldImpl("is_member_only");
 			innerfield.setType(FormField.TYPE_TEXT_SINGLE);
 			innerfield.setLabel("Is a member only room.");

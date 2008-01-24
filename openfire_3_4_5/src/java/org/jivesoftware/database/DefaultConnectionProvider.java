@@ -90,7 +90,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         settings.setProperty("proxool.test-after-use", testAfterUse.toString());
         settings.setProperty("proxool.house-keeping-test-sql", testSQL);
         settings.setProperty("user", getUsername());
-        settings.setProperty("password", getPassword());
+        settings.setProperty("password", (getPassword() != null ? getPassword() : ""));
     }
 
     public void restart() {

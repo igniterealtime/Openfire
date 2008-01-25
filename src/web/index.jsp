@@ -390,7 +390,7 @@
                     }
                 }
 
-                %><div class="jive-bottom-line"/><%
+                %><div class="jive-bottom-line"></div><%
                 if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
 
                     List entries = lastBlogFeed.getEntries();
@@ -404,7 +404,7 @@
                     <fmt:message key="index.cs_blog.unavailable" />
                  <% }
 
-                 %><div class="jive-bottom-line"/><%
+                 %><div class="jive-bottom-line"></div><%
                 if (lastReleaseFeed != null && !lastReleaseFeed.getEntries().isEmpty()) {
 
                     List entries = lastReleaseFeed.getEntries();

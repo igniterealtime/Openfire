@@ -8,7 +8,7 @@
 #jive-loginHeader {
     font-size: 14pt;
     font-weight: bold;
-    color: #06698c;
+    color: #555555;
     margin: 0;
 }
 #jive-loginTable {
@@ -25,8 +25,8 @@
 }
 #jive-loginTable td.loginFormTable {
     padding: 17px 17px 7px 55px;
-    background: #d8e4e9 url(../images/jive-login-form-bg.gif) repeat-x top;
-    border: 1px solid #b6c5d3;
+    background: #ffffff url(../images/jive-login-form-bg-gray.gif) repeat-x top;
+    border: 1px solid #bbbbbb;
     -moz-border-radius: 5px;
 }
 .loginFormTable TD {
@@ -52,7 +52,7 @@
 #jive-login-header {
     font-size: 14pt;
     font-weight: bold;
-    color: #06698c;
+    color: #555555;
     margin: 0;
 }
 

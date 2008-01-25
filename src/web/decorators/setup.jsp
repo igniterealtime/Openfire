@@ -9,7 +9,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.util.ClassUtils"%>
 <%@ page import="java.beans.PropertyDescriptor"%>
 <%@ page import="java.io.File"%>
 <%@ page import="org.jivesoftware.database.DbConnectionManager"%>
@@ -17,7 +16,7 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.sql.Statement"%>
 <%@ page import="java.sql.SQLException"%>
-<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.admin.AdminConsole" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
@@ -39,9 +38,9 @@
 
 <%!
     final PropertyDescriptor getPropertyDescriptor(PropertyDescriptor[] pd, String name) {
-        for (int i=0; i<pd.length; i++) {
-            if (name.equals(pd[i].getName())) {
-                return pd[i];
+        for (PropertyDescriptor aPd : pd) {
+            if (name.equals(aPd.getName())) {
+                return aPd;
             }
         }
         return null;
@@ -88,96 +87,125 @@
 
 <html>
 <head>
-<title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
+    <title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
 
-<style type="text/css" title="setupStyle" media="screen">
-	@import "../style/setup.css";
-	@import "../style/lightbox.css";
-</style>
+    <style type="text/css" title="setupStyle" media="screen">
+        @import "../style/global.css";
+        @import "../style/setup.css";
+        @import "../style/lightbox.css";
+    </style>
 
-<script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
-<script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
-<script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
-<script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
-<script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
-<script language="javascript" type="text/javascript" src="../js/setup.js"></script>
-<decorator:head />
+    <script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
+    <script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
+    <script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/setup.js"></script>
+    <decorator:head />
 </head>
 
 <body onload="<decorator:getProperty property="body.onload" />">
 
+<!-- BEGIN jive-main -->
+<div id="main">
 
-<!-- BEGIN jive-header -->
-<div id="jive-header">
-	<div id="jive-logo" title="openfire"></div>
-	<div id="jive-header-text"><fmt:message key="setup.title" /></div>
-	<div id="sidebar-top"></div>
-</div>
-<!-- END jive-header -->
+    <!-- BEGIN jive-header -->
+    <div id="jive-header">
+        <div id="jive-logo">
+            <a href="/index.jsp"><img src="/images/login_logo.gif" alt="Openfire" width="179" height="53" /></a>
+        </div>
+        <div id="jive-userstatus">
+            <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
+        </div>
+        <div id="jive-nav">
+            <div id="jive-nav-left"></div>
+            <ul>
+                <li><a><fmt:message key="setup.title"/></a></li>
+            </ul>
+            <div id="jive-nav-right"></div>
+        </div>
+        <div id="jive-subnav">
+            &nbsp;
+        </div>
+    </div>
+    <!-- END jive-header -->
 
+
+    <div id="jive-main">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr valign="top">
+            <td width="1%">
+                <div id="jive-sidebar-container">
+                    <div id="jive-sidebar-box">
 
 
 <!-- BEGIN jive-sidebar -->
-<div id="jive-sidebar">
-    <%  if (showSidebar) {
-               String[] names = {
-                    LocaleUtils.getLocalizedString("setup.sidebar.language"),
-                    LocaleUtils.getLocalizedString("setup.sidebar.settings"),
-                    LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
-                    LocaleUtils.getLocalizedString("setup.sidebar.profile"),
-                    LocaleUtils.getLocalizedString("setup.sidebar.admin")
-                };
-                String[] links = {
-                    "index.jsp",
-                    "setup-host-settings.jsp",
-                    "setup-datasource-settings.jsp",
-                    "setup-profile-settings.jsp",
-                    "setup-admin-settings.jsp"
-                };
-            %>
-	<div class="jive-sidebar-group">
-	<strong><fmt:message key="setup.sidebar.title" /></strong>
-		<ul>
-			<%  for (int i=0; i<names.length; i++) { %>
-				<%  if (currentStep < i) { %>
-				<li><%= names[i] %></li>
-				<%  } else if (currentStep == i) { %>
-				<li class="jiveCurrent"><%= names[i] %></li>
-				<%  } else { %>
-				<li class="jiveComplete"><!--<a href="<%= links[i] %>">--><%= names[i] %></li>
-				<%  } %>
-			<%  } %>
-		</ul>
-	</div>
+                        <div id="jive-sidebar">
+                            <%  if (showSidebar) {
+                                       String[] names = {
+                                            LocaleUtils.getLocalizedString("setup.sidebar.language"),
+                                            LocaleUtils.getLocalizedString("setup.sidebar.settings"),
+                                            LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
+                                            LocaleUtils.getLocalizedString("setup.sidebar.profile"),
+                                            LocaleUtils.getLocalizedString("setup.sidebar.admin")
+                                        };
+                                        String[] links = {
+                                            "index.jsp",
+                                            "setup-host-settings.jsp",
+                                            "setup-datasource-settings.jsp",
+                                            "setup-profile-settings.jsp",
+                                            "setup-admin-settings.jsp"
+                                        };
+                                    %>
+                                <ul id="jive-sidebar-progress">
+                                    <li class="category"><fmt:message key="setup.sidebar.title" /></li>
+                                    <li><img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13" border="0"></li>
+                                    <%  for (int i=0; i<names.length; i++) { %>
+                                        <%  if (currentStep < i) { %>
+                                        <li><a href="<%= links[i] %>"><%= names[i] %></a></li>
+                                        <%  } else if (currentStep == i) { %>
+                                        <li class="currentlink"><a href="<%= links[i] %>"><%= names[i] %></a></li>
+                                        <%  } else { %>
+                                        <li class="completelink"><a href="<%= links[i] %>"><%= names[i] %></a></li>
+                                        <%  } %>
+                                    <%  } %>
+                                </ul>
 
-    <div class="jive-sidebar-group">
-		<strong><fmt:message key="setup.sidebar.title" /></strong>
-		<img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13" border="0">
-	</div>
-
-    <%  } %>
+                            <%  } %>
 
 
-</div>
+                        </div>
 <!-- END jive-sidebar -->
 
-
+                    </div>
+                </div>
+            </td>
+            <td width="99%" id="jive-content">
 
 <!-- BEGIN jive-body -->
-<div id="jive-body">
 
-    <decorator:body/>
+                <div id="jive-main-content">
+                    <decorator:body/>
+                </div>
+
+<!-- END jive-body -->
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
 
 </div>
-<!-- END jive-body -->
-
-
+<!-- END jive-main -->
 
 <!-- BEGIN jive-footer -->
-<div id="jive-footer"></div>
+    <div id="jive-footer">
+        <div class="jive-footer-copyright">
+            Built by <a href="http://www.jivesoftware.com">Jive Software</a> and the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+        </div>
+    </div>
 <!-- END jive-footer -->
-
-
 
 </body>
 </html>

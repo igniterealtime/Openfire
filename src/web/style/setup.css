@@ -1,178 +1,36 @@
-body {
-	margin: 0;
-	padding: 0;
-	background: #fff url("../images/setup_sidebar_bg.gif") repeat-y;
-	font-family: arial, helvetica, sans-serif;
-}
-body, div, p, td, th {
-	font-size: 10pt;
-}
-form {
-	margin: 0;
-	padding: 0;
+/* completed step */
+#jive-sidebar ul li.completelink {
+    background:transparent url(/images/setup_sidebar_check.gif) no-repeat scroll left center;
+    font-weight:bold;
 }
 
-
-/* --------------------------------------------- */
-/*  Header                                       */
-/* --------------------------------------------- */
-
-#jive-header {
-	width: 100%;
-	height: 82px;
-	border: 0;
-	background: #fff url("../images/setup_header_bg.gif") repeat-x;
-	min-width: 720px;
+/* progress bar */
+#jive-sidebar-progress {
 }
-#jive-logo {
-	display: block;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 150px;
-	height: 50px;
-	background: url("../images/setup_header_logo.gif") no-repeat;
-	overflow: hidden;
+#jive-sidebar-progress img {
+    display: block;
+    border: 1px solid #9e9e9e;
+    margin: 3px 0 3px 9px;
 }
-#jive-header-text {
-	display: block;
-	position: absolute;
-	left: 158px;
-	top: 24px;
-	color: #fff;
-	font-size: 20px;
+#jive-sidebar-progress a {
+    padding-left: 15px;
 }
-
-
-/* --------------------------------------------- */
-/*  Sidebar                                      */
-/* --------------------------------------------- */
-
-#jive-header #sidebar-top {
-	display: block;
-	position: absolute;
-	width: 192px;
-	height: 9px;
-	left: 0;
-	top: 73px;
-	background: url("../images/setup_sidebar_bg-top.gif") no-repeat;
-	overflow: hidden;
-}
-#jive-sidebar {
-	width: 192px;
-	margin: 0;
-	padding: 0;
-	float: left;
-}
-.jive-sidebar-group {
-	display: block;
-	position: relative;
-	width: 161px;
-	margin: 0 0 16px 13px;
-	padding: 0 0 8px 0;
-	background-color: #cad6e2;
-	-moz-border-radius: 3px;
-}
-.jive-sidebar-group strong {
-	display: block;
-	color: #143350;
-	padding: 7px 9px 2px 9px;
-	margin: 0;
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-	font-size: 8pt;
-}
-.jive-sidebar-group img {
-	display: block;
-	border: 1px solid #9e9e9e;
-	margin: 3px 0 3px 9px;
-}
-.jive-sidebar-group ul {
-	margin: 0; /*removes indent IE and Opera*/
-	margin-left: 9px;
-	padding: 0 0 0 0; /*removes indent Mozilla and NN7*/
-	list-style-type: none; /*turns off display of bullet*/
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-	font-size: 10px;
-	width: 143px;
-}
-.jive-sidebar-group ul li {
-	margin: 1px 0 2px 0;
-	padding: 2px 0 2px 15px;
-	color: #474747;
-}
-.jive-sidebar-group ul li.jiveCurrent {
-	border: 1px solid #34679A;
-	background-color: #5C7D9D;
-	color: #fff;
-	font-weight: bold;
-	-moz-border-radius: 3px;
-}
-.jive-sidebar-group ul li.jiveComplete {
-	color: #003366;
-	background: transparent url(../images/setup_sidebar_check.gif) no-repeat left;
-}
-
-
-
-
-/* --------------------------------------------- */
-/*  Body                                         */
-/* --------------------------------------------- */
-
-#jive-body {
-	display: block;
-	position: absolute;
-	left: 192px;
-	padding: 17px 28px 15px 28px;
-}
-#jive-body h1 {
-	font-size: 13pt;
-	margin: 0;
-	padding: 0 0 14px 0;
-}
-#jive-body h1 span {
-	color: #255480;
-}
-#jive-body p {
-	margin: 0;
-	padding: 0 0 14px 0;
-}
-#jive-body tt {
-	font-size: 8pt;
-	font-weight: bold;
-}
-.jive-contentBox {
-	display: block;
-	margin: 5px 0 20px 0;
-	padding: 18px 20px 18px 20px;
-	border: 1px solid #dcdcdc;
-	background: #f5f5f5 url(../images/setup_contentbox_bg.gif) repeat-x top;
-	-moz-border-radius: 4px;
-}
-.jive-contentBox h2 {
-	margin: 0;
-	padding: 0 0 10px 0;
-	font-size: 11pt;
-	color: #09345b;
-}
-
-
 
 /* styles specific to the 'stepbar' (seen on the LDAP screens) */
 #jive-contentBox_stepbar {
 	display: block;
 	margin: 5px 0 0 0;
 	padding: 3px;
-	border: 1px solid #aec2d6;
-	background-color: #eaf1f8;
-	color: #09345b;
+	border: 1px solid #bbbbbb;
+	background-color: #eeeeee;
+	color: #000000;
 	font-size: 8pt;
 }
 #jive-contentBox_stepbar span {
 	margin-right: 32px;
 }
 #jive-contentBox_stepbar span strong {
-	color: #09345b;
+	color: #000000;
 }
 #jive-contentBox_stepbar span em {
 	color: #666;
@@ -186,7 +44,7 @@ form {
 }
 .jive-contentBox_for-stepbar h2 {
 	font-size: 14pt;
-	color: #396b9c;
+	color: #555555;
 }
 .jive-contentBox_for-stepbar h2 span {
 	font-size: 10pt;
@@ -197,8 +55,8 @@ form {
 .jive-contentBox_bluebox {
 	display: block;
 	position: relative;
-	border: 1px solid #dcdcdc;
-	background-color: #eaeff4;
+	border: 1px solid #bbbbbb;
+	background-color: #eeeeee;
 	-moz-border-radius: 3px;
 	margin: 0 0 12px 0;
 	padding: 12px;
@@ -206,7 +64,7 @@ form {
 .jive-contentBox_bluebox strong {
 	display: block;
 	position: relative;
-	color: #09345b;
+	color: #000000;
 	padding-bottom: 3px;
 }
 
@@ -214,8 +72,8 @@ form {
 .jive-contentBox_greybox {
 	display: block;
 	position: relative;
-	border: 1px solid #dcdcdc;
-	background-color: #ececec;
+	border: 1px solid #bbbbbb;
+	background-color: #eeeeee;
 	-moz-border-radius: 3px;
 	margin: 0 0 12px 0;
 	padding: 12px;
@@ -223,7 +81,7 @@ form {
 .jive-contentBox_greybox strong {
 	display: block;
 	position: relative;
-	color: #09345b;
+	color: #555555;
 	padding-bottom: 3px;
 }
 
@@ -271,7 +129,7 @@ form {
 	margin: 0 0 5px 0;
 	background: url('../images/twisty_closed_9x9.gif') no-repeat left;
 	background-position: 1px;
-	color: #34679a;
+	color: #555555;
 }
 a.jiveAdvancedButtonOn {
 	background: transparent url('../images/twisty_opened_9x9.gif') no-repeat left;
@@ -286,8 +144,8 @@ a.jiveAdvancedButtonOn {
 	position: relative;
 	clear: both;
 	width: 100%;
-	background: #ececec;
-	border: 1px solid #dcdcdc;
+	background: #eeeeee;
+	border: 1px solid #bbbbbb;
 	margin: 5px 0 10px 0;
 	padding: 0;
 	overflow: hidden;
@@ -307,14 +165,14 @@ a.jiveAdvancedButtonOn {
 }
 .jiveadvancedPanelcs div table th,
 .jive-vcardTable th {
-	color: #fff;
+	color: #000;
 	font-weight: bold;
-	background-color: #82a1bc;
+	background-color: #dddddd;
 }
 .jiveadvancedPanelcs div table td.jive-advancedLabel {
-	color: #09345b;
+	color: #000000;
 	font-weight: bold;
-	background-color: #eaeff4;
+	background-color: #dddddd;
 	text-align: right;
 }
 .jiveadvancedPanelcs div table td.jive-advancedDesc {
@@ -469,7 +327,7 @@ html>body .jive-vcardTable {
 	font-weight: bold;
 	color: #fff;
 	border: 1px solid #0c2d4c;
-	background: #255480 url(../images/setup_btn_bg-bigblue.gif) repeat-x;
+	background: #D76C0D url(../images/setup_btn_bg-orange.gif) repeat-x;
 	text-decoration: none;
 	-moz-border-radius: 4px;
 }
@@ -554,7 +412,7 @@ div.jiveTooltip .contents {
 }
 .jive-testPanel-content h2 {
 	font-size: 14pt;
-	color: #396b9c;
+	color: #555555;
 	margin: 0 0 10px 0;
 	padding: 0;
 }
@@ -577,7 +435,7 @@ div.jiveTooltip .contents {
 	display: block;
 	float: left;
 	width: 682px;
-	border: 1px solid #d8d7c6;
+	border: 1px solid #bbbbbb;
 	padding: 4px;
 	background-color: #fff;
 }
@@ -603,7 +461,7 @@ div.jiveTooltip .contents {
 	font-size: 8pt;
 }
 .jive-testpanel-vcard-value a {
-	color: #34679a;
+	color: #555555;
 }
 .jive-testpanel-vcard-value strong {
 	color: #890000;
@@ -619,19 +477,6 @@ div.jiveTooltip .contents {
 	padding-right: 18px;
 	margin-right: 4px;
 	background: transparent url(../images/setup_nextprofile.gif) no-repeat right;
-	color: #34679a;
+	color: #555555;
 	text-decoration: none;
-}
-
-
-
-
-/* --------------------------------------------- */
-/*  Footer                                       */
-/* --------------------------------------------- */
-
-/* not relevant here, so hiding it. */
-#jive-footer {
-	display: none;
-	visibility: hidden;
 }

@@ -155,7 +155,7 @@
         
         <div align="center" id="jive-loginTable">
 
-            <span id="jive-login-header" style="background: transparent url(images/login_logo.gif) no-repeat left; padding: 29px 0px 10px 205px;">
+            <span id="jive-login-header" style="background: transparent url(images/login_logo.gif) no-repeat left; padding: 29px 0 10px 205px;">
             <fmt:message key="admin.console" />
             </span>
 
@@ -200,11 +200,6 @@
                             <td>&nbsp;</td>
                         </tr>
                         </table>
-                            <script language="JavaScript" type="text/javascript">
-                                <!--
-                                document.loginForm.username.focus();
-                                //-->
-                            </script>
                     </td>
                 </tr>
                 <tr>

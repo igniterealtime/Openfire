@@ -394,7 +394,7 @@
               <span class="jive-description">
               <fmt:message key="ssl.certificates.ca-reply" />
               </span>
-              <textarea name="reply" cols="40" rows="3" style="width:100%;font-size:8pt;" wrap="virtual"/>
+              <textarea name="reply" cols="40" rows="3" style="width:100%;font-size:8pt;" wrap="virtual"></textarea>
           </td>
           <td valign="bottom">
               <input type="submit" name="install" value="<fmt:message key="global.save" />">   

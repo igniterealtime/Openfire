@@ -146,7 +146,7 @@
                       <fmt:message key="ssl.import.certificate.private-key" />
                   </td>
                   <td width="99%">
-                      <textarea name="private-key" cols="60" rows="5" wrap="virtual"/>
+                      <textarea name="private-key" cols="60" rows="5" wrap="virtual"></textarea>
                   </td>
               </tr>
               <tr valign="top">
@@ -154,7 +154,7 @@
                       <fmt:message key="ssl.import.certificate.certificate" />
                   </td>
                   <td width="99%">
-                      <textarea name="certificate" cols="60" rows="5" wrap="virtual"/>
+                      <textarea name="certificate" cols="60" rows="5" wrap="virtual"></textarea>
                   </td>
               </tr>
           </tbody>

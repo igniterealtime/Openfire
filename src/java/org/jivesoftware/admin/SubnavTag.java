@@ -148,7 +148,6 @@ public class SubnavTag extends BodyTagSupport {
                         subnav = current.getParent();
                     }
                 }
-                Log.debug("\n\n\nXXXFFINDXXX\npageID = "+pageID+"\nsubPageID = "+subPageID+"\ncurrent = "+current+"\nsubcurrent = "+subcurrent+"\nsubnav = "+subnav+"\n\n\n");
 
                 Element currentTab = (Element)AdminConsole.getModel().selectSingleNode(
                         "//*[@id='" + pageID + "']/ancestor::tab");
@@ -160,28 +159,30 @@ public class SubnavTag extends BodyTagSupport {
                         buf.append("<ul>");
                         for (Object itemObj : items) {
                             Element item = (Element) itemObj;
-                            Element firstSubItem = (Element)item.elements().get(0);
-                            String pluginName = item.attributeValue("plugin");
-                            String subitemID = item.attributeValue("id");
-                            String subitemName = item.attributeValue("name");
-                            String subitemURL = firstSubItem.attributeValue("url");
-                            String subitemDescr = item.attributeValue("description");
-                            String value = getBodyContent().getString();
-                            if (value != null) {
-                                value = StringUtils.replace(value, "[id]", clean(subitemID));
-                                value = StringUtils.replace(value, "[name]",
-                                        clean(AdminConsole.getAdminText(subitemName, pluginName)));
-                                value = StringUtils.replace(value, "[description]",
-                                        clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
-                                value = StringUtils.replace(value, "[url]",
-                                        request.getContextPath() + "/" + clean(subitemURL));
+                            if (item.elements().size() > 0) {
+                                Element firstSubItem = (Element)item.elements().get(0);
+                                String pluginName = item.attributeValue("plugin");
+                                String subitemID = item.attributeValue("id");
+                                String subitemName = item.attributeValue("name");
+                                String subitemURL = firstSubItem.attributeValue("url");
+                                String subitemDescr = item.attributeValue("description");
+                                String value = getBodyContent().getString();
+                                if (value != null) {
+                                    value = StringUtils.replace(value, "[id]", clean(subitemID));
+                                    value = StringUtils.replace(value, "[name]",
+                                            clean(AdminConsole.getAdminText(subitemName, pluginName)));
+                                    value = StringUtils.replace(value, "[description]",
+                                            clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
+                                    value = StringUtils.replace(value, "[url]",
+                                            request.getContextPath() + "/" + clean(subitemURL));
+                                }
+                                String css = getCss();
+                                boolean isCurrent = subnav != null && item.equals(subnav);
+                                if (isCurrent) {
+                                    css = getCurrentcss();
+                                }
+                                buf.append("<li class=\"").append(css).append("\">").append(value).append("</li>");
                             }
-                            String css = getCss();
-                            boolean isCurrent = subnav != null && item.equals(subnav);
-                            if (isCurrent) {
-                                css = getCurrentcss();
-                            }
-                            buf.append("<li class=\"").append(css).append("\">").append(value).append("</li>");
                         }
                         buf.append("</ul>");
                         try {

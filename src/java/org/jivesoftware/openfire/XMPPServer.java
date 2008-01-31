@@ -336,7 +336,7 @@ public class XMPPServer {
             Log.warn("Unable to determine local hostname.", ex);
         }
 
-        version = new Version(3, 4, 5, Version.ReleaseStatus.Release, -1);
+        version = new Version(3, 5, 0, Version.ReleaseStatus.Alpha, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

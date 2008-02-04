@@ -282,7 +282,7 @@ public interface MultiUserChatServer extends Component {
      * the disco#items list. Moreover, service discovery features will be disabled. 
      *
      * @param enabled true if the service is enabled.
-     * @param persistent true if the new setting will persist accorss restarts.
+     * @param persistent true if the new setting will persist across restarts.
      */
     void enableService(boolean enabled, boolean persistent);
 

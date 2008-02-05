@@ -16,9 +16,8 @@
 <%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache"%>
 <%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor"%>
 <%@ page import="org.jivesoftware.admin.AdminConsole"%>
-<%@ page import="org.jivesoftware.openfire.Connection" %>
-<%@ page import="org.jivesoftware.openfire.ServerPort" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.database.DbConnectionManager" %>
+<%@ page import="org.jivesoftware.openfire.*" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
@@ -31,12 +30,20 @@
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.beans.PropertyDescriptor" %>
+<%@ page import="java.io.File" %>
+<%@ page import="java.net.InetAddress" %>
 <%@ page import="java.net.InetSocketAddress" %>
 <%@ page import="java.net.SocketAddress" %>
 <%@ page import="java.net.URL" %>
+<%@ page import="java.sql.Connection" %>
+<%@ page import="java.sql.SQLException" %>
+<%@ page import="java.sql.Statement" %>
 <%@ page import="java.text.DecimalFormat" %>
+<%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.jivesoftware.openfire.FlashCrossDomainHandler" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -247,13 +254,13 @@
                 </td>
                 <td class="c2">
                     <% try { %>
-                    <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXmppDomain())) {%>
+                    <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {%>
                     <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
                     <% } %>
                     <% } catch (Exception e) { %>
                     <img src="images/error-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
                     <% } %>
-                    ${webManager.serverInfo.xmppDomain}
+                    ${webManager.serverInfo.XMPPDomain}
                 </td>
             </tr>
             <tr><td>&nbsp;</td></tr>

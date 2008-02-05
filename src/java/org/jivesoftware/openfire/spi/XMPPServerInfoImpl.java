@@ -59,12 +59,12 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
 
     @Deprecated
     public String getName() {
-        return getXmppDomain();
+        return getXMPPDomain();
     }
 
     @Deprecated
     public void setName(String serverName) {
-        setXmppDomain(serverName);
+        setXMPPDomain(serverName);
     }
 
     public String getHostname()
@@ -72,12 +72,12 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
 		return hostname;
 	}
 
-	public String getXmppDomain()
+	public String getXMPPDomain()
 	{
 		return xmppDomain;
 	}
 
-	public void setXmppDomain(String domainName)
+	public void setXMPPDomain(String domainName)
 	{
         this.xmppDomain = domainName;
         if (domainName == null) { 

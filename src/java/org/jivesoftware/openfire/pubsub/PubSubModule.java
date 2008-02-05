@@ -28,10 +28,7 @@ import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -46,7 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Matt Tucker
  */
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
-        DiscoItemsProvider, RoutableChannelHandler, PubSubService, ClusterEventListener {
+        DiscoItemsProvider, RoutableChannelHandler, PubSubService, ClusterEventListener, PropertyEventListener {
 
     /**
      * the chat service's hostname
@@ -289,7 +286,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public String getServiceDomain() {
-        return serviceName + "." + XMPPServer.getInstance().getServerInfo().getName();
+        return serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
     public JID getAddress() {
@@ -355,6 +352,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void initialize(XMPPServer server) {
         super.initialize(server);
 
+        // Listen to property events so that the template is always up to date
+        PropertyEventDispatcher.addListener(this);
+
+        serviceEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.enabled", true);
         serviceName = JiveGlobals.getProperty("xmpp.pubsub.service");
         if (serviceName == null) {
             serviceName = "pubsub";
@@ -451,6 +452,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public void start() {
+        // Check that the service is enabled
+        if (!isServiceEnabled()) {
+            return;
+        }
         super.start();
         // Add the route to this service
         routingTable.addComponentRoute(getAddress(), this);
@@ -492,6 +497,23 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
     }
 
+    public void setServiceEnabled(boolean enabled) {
+        // Enable/disable the service
+        enableService(enabled);
+        // Store the new setting
+        JiveGlobals.setProperty("xmpp.pubsub.enabled", Boolean.toString(enabled));
+    }
+
+    /**
+     * Returns true if the service is available. Use {@link #setServiceEnabled(boolean)} to
+     * enable or disable the service.
+     *
+     * @return true if the MUC service is available.
+     */
+    public boolean isServiceEnabled() {
+        return serviceEnabled;
+    }
+
     public void joinedCluster() {
         // Disable the service until we know that we are the senior cluster member
         enableService(false);
@@ -516,6 +538,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public Iterator<DiscoServerItem> getItems() {
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!isServiceEnabled()) {
+            return null;
+        }
         ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
 		final DiscoServerItem item = new DiscoServerItem(new JID(
 			getServiceDomain()), "Publish-Subscribe service", null, null, this,
@@ -652,6 +678,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!isServiceEnabled()) {
+            return false;
+        }
         if (name == null && node == null) {
             // We always have info about the Pubsub service
             return true;
@@ -664,6 +694,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!isServiceEnabled()) {
+            return null;
+        }
         List<DiscoItem> answer = new ArrayList<DiscoItem>();
         String serviceDomain = getServiceDomain();
         if (name == null && node == null) {
@@ -803,5 +837,28 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public void setItemsTaskTimeout(int timeout) {
         items_task_timeout = timeout;
+    }
+
+    public void propertySet(String property, Map<String, Object> params) {
+        if (property.equals("xmpp.pubsub.enabled")) {
+            boolean enabled = Boolean.parseBoolean((String)params.get("value"));
+            // Enable/disable the service
+            enableService(enabled);
+        }
+    }
+
+    public void propertyDeleted(String property, Map<String, Object> params) {
+        if (property.equals("xmpp.pubsub.enabled")) {
+            // Enable/disable the service
+            enableService(true);
+        }
+    }
+
+    public void xmlPropertySet(String property, Map<String, Object> params) {
+        // Do nothing
+    }
+
+    public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+        // Do nothing
     }
 }

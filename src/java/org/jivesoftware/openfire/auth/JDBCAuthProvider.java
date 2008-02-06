@@ -10,18 +10,16 @@
 
 package org.jivesoftware.openfire.auth;
 
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.openfire.user.*;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.database.DbConnectionManager;
 
-import java.sql.DriverManager;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 /**
  * The JDBC auth provider allows you to authenticate users against any database
@@ -195,10 +193,10 @@ public class JDBCAuthProvider implements AuthProvider {
             String domain = username.substring(index + 1);
             if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                 username = username.substring(0, index);
+            } else {
+                // Unknown domain.
+                throw new UserNotFoundException();
             }
-        } else {
-            // Unknown domain. Return authentication failed.
-            throw new UserNotFoundException();
         }
         return getPasswordValue(username);
     }

@@ -261,7 +261,7 @@ public class SequenceManager {
             pstmt.execute();
         }
         finally {
-            DbConnectionManager.closeConnection(pstmt, null);
+            DbConnectionManager.closeStatement(pstmt);
         }
     }
 }

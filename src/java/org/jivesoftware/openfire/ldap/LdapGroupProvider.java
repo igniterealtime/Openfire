@@ -669,7 +669,7 @@ public class LdapGroupProvider implements GroupProvider {
                                         String userDNPart = ldapName.get(ldapName.size() - 1);
                                         NamingEnumeration usrAnswer = ctx.search("",
                                                 userDNPart, searchControls);
-                                        if (usrAnswer.hasMoreElements()) {
+                                        if (usrAnswer != null && usrAnswer.hasMoreElements()) {
                                             username = (String) ((SearchResult) usrAnswer.next())
                                                     .getAttributes().get(
                                                     manager.getUsernameField()).get();

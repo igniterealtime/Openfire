@@ -128,7 +128,9 @@ int main(int inArgsCount, char * const inArgs[])
 	int err = GetPathToSelf(&selfPath);
 	const char* correctPath = "/Library/PreferencePanes/Openfire.prefPane/Contents/MacOS/HelperTool";
 	if(err == 0 && strncmp(correctPath, selfPath, strlen(correctPath)) == 0) {
-		setuid(0);
+		//if setuid somehow fails, it's unsafe to continue
+		if(setuid(0) != 0)
+			return;
 
 		if(inArgs[1] && strlen(inArgs[1]) == strlen("boot") && strncmp("boot", inArgs[1], strlen("boot")) == 0) {
 			toggleStartOpenfireAtBoot();

@@ -56,6 +56,12 @@ public class EmailListener {
     /**
      * Returns true if a connection to the IMAP server was successful.
      *
+     * @param host Host to connect to.
+     * @param port Port to connect over.
+     * @param isSSLEnabled True if an SSL connection will be attempted.
+     * @param user Username to use for authentication.
+     * @param password Password to use for authentication.
+     * @param folderName Folder to check.
      * @return true if a connection to the IMAP server was successful.
      */
     public static boolean testConnection(String host, int port, boolean isSSLEnabled, String user, String password,
@@ -180,7 +186,7 @@ public class EmailListener {
         for (String user : getUsers()) {
             // Create notification message
             org.xmpp.packet.Message notification = new org.xmpp.packet.Message();
-            notification.setFrom(XMPPServer.getInstance().getServerInfo().getName());
+            notification.setFrom(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
             notification.setTo(user);
             notification.setSubject("New email has been received");
             notification.setBody(sb.toString());
@@ -235,8 +241,11 @@ public class EmailListener {
         }
     }
 
-    private static Folder openFolder(String host, int port, boolean isSSLEnabled, String user, String password,
+    private static Folder openFolder(String host, Integer port, Boolean isSSLEnabled, String user, String password,
                                      String folder) {
+        if (host == null || port == null || isSSLEnabled == null || user == null || password == null || folder == null) {
+            return null;
+        }
         try {
             Properties props = System.getProperties();
 

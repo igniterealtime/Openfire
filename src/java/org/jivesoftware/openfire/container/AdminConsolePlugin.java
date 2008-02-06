@@ -95,7 +95,7 @@ public class AdminConsolePlugin implements Plugin {
             if (adminSecurePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*"))
             {
                 if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
-                        XMPPServer.getInstance().getServerInfo().getName())) {
+                        XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
                          
@@ -286,18 +286,18 @@ public class AdminConsolePlugin implements Plugin {
 
         if (isPlainStarted && isSecureStarted) {
             log(listening + ":" + System.getProperty("line.separator") +
-                    "  http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    "  http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                     adminPort + System.getProperty("line.separator") +
-                    "  https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+                    "  https://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                     adminSecurePort);
         }
         else if (isSecureStarted) {
             log(listening + " https://" +
-                    XMPPServer.getInstance().getServerInfo().getName() + ":" + adminSecurePort);
+                    XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + adminSecurePort);
         }
         else if (isPlainStarted) {
             log(listening + " http://" +
-                    XMPPServer.getInstance().getServerInfo().getName() + ":" + adminPort);
+                    XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + adminPort);
         }
     }
 

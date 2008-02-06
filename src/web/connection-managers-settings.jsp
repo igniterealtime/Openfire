@@ -42,7 +42,7 @@
     String secret = ParamUtils.getParameter(request,"secret");
     boolean updateSucess = false;
 
-    String serverName = XMPPServer.getInstance().getServerInfo().getName();
+    String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
 
@@ -248,7 +248,7 @@
 	}
 </style>
 <b><fmt:message key="connection-manager.details.title" >
-        <fmt:param value="<%= XMPPServer.getInstance().getServerInfo().getName() %>" />
+        <fmt:param value="<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>" />
     </fmt:message>
 </b>
 <br>

@@ -288,7 +288,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         userManager = server.getUserManager();
         sessionManager = server.getSessionManager();
         routingTable = server.getRoutingTable();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
     }
 
     public IQHandlerInfo getInfo() {

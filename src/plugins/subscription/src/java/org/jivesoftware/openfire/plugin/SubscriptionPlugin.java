@@ -55,7 +55,7 @@ public class SubscriptionPlugin implements Plugin {
     public SubscriptionPlugin() {
         XMPPServer server = XMPPServer.getInstance();
         router = server.getPresenceRouter();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
 
         String list = JiveGlobals.getProperty(WHITE_LIST);
         if (list != null) {
@@ -132,11 +132,7 @@ public class SubscriptionPlugin implements Plugin {
 
     private List<String> csvToList(String csv) {
         List<String> list = new ArrayList<String>();
-
-        for (String s : csv.split(",")) {
-            list.add(s);
-        }
-
+        list.addAll(Arrays.asList(csv.split(",")));
         return list;
     }
 

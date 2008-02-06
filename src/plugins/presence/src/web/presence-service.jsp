@@ -41,7 +41,7 @@
 
 <div class="information">
     <%
-        String serverName = XMPPServer.getInstance().getServerInfo().getName();
+        String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         int port = JiveGlobals.getXMLProperty("adminConsole.port", -1);
         int securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", -1);
         boolean secureOnly = (port == -1);

@@ -50,7 +50,7 @@ public class ImportExportPlugin implements Plugin {
     public ImportExportPlugin() {
         userManager = XMPPServer.getInstance().getUserManager();
         provider = UserManager.getUserProvider();
-        serverName = XMPPServer.getInstance().getServerInfo().getName();
+        serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {

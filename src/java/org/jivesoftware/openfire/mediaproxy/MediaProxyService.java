@@ -65,7 +65,7 @@ public class MediaProxyService extends BasicModule
         // In some cases, the domain name of the server may not be the actual address of the machine
         // (ie, when using DNS SRV records). In that case, the "mediaproxy.externalip" property should be
         // set to the IP address of the actual server where the media proxy is listening.
-        String ipAddress = JiveGlobals.getProperty("mediaproxy.externalip", server.getServerInfo().getName());
+        String ipAddress = JiveGlobals.getProperty("mediaproxy.externalip", server.getServerInfo().getXMPPDomain());
         mediaProxy = new MediaProxy(ipAddress);
 
         String defaultName = "rtpbridge";
@@ -279,7 +279,7 @@ public class MediaProxyService extends BasicModule
      * @return the file transfer server domain (service name + host name).
      */
     public String getServiceDomain() {
-        return serviceName + "." + XMPPServer.getInstance().getServerInfo().getName();
+        return serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
     public JID getAddress() {

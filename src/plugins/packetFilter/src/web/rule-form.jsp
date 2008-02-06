@@ -40,7 +40,7 @@
     Rule.SourceDestType[] type = Rule.SourceDestType.values();
 
     Collection<String> userList = UserManager.getInstance().getUsernames();
-    String serverName = XMPPServer.getInstance().getServerInfo().getName();
+    String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     Collection<String> components = cList.getComponentDomains();
     
     Map<String, String> errors = new HashMap<String, String>();

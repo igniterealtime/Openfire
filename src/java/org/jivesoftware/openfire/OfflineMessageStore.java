@@ -113,7 +113,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             return;
         }
         else
-        if (!XMPPServer.getInstance().getServerInfo().getName().equals(recipient.getDomain())) {
+        if (!XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals(recipient.getDomain())) {
             // Do not store messages sent to users of remote servers
             return;
         }
@@ -190,7 +190,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 }
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
-                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
                 messages.add(message);
             }
@@ -248,7 +248,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                         xmlReader.read(new StringReader(msgXML)).getRootElement());
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
-                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
             }
         }

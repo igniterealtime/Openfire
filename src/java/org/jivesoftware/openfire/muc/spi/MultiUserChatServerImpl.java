@@ -307,7 +307,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
     }
 
     public String getServiceDomain() {
-        return chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getName();
+        return chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
     public JID getAddress() {

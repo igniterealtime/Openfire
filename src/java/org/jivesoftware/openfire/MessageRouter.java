@@ -169,7 +169,7 @@ public class MessageRouter extends BasicModule {
         sessionManager = server.getSessionManager();
         multicastRouter = server.getMulticastRouter();
         userManager = server.getUserManager();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
     }
 
     /**

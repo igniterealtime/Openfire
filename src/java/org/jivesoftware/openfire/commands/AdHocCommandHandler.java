@@ -132,7 +132,7 @@ public class AdHocCommandHandler extends IQHandler
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         infoHandler = server.getIQDiscoInfoHandler();
         itemsHandler = server.getIQDiscoItemsHandler();
     }

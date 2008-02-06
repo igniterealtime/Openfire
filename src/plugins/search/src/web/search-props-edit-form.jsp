@@ -17,26 +17,27 @@
     SearchPlugin plugin = (SearchPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("search");
 
     // Handle a save
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         if (searchName == null || searchName.indexOf('.') >= 0 || searchName.trim().length() < 1) {
             errors.put("searchname", "searchname");
         }
-        
-        if (errors.size() == 0) {
-            plugin.setServiceEnabled(searchEnabled);
-            plugin.setServiceName(searchName.trim());
-            
-            ArrayList<String> excludedFields = new ArrayList<String>();
-            for (String field : UserManager.getInstance().getSearchFields()) {
-                if (!ParamUtils.getBooleanParameter(request, field)) {
-                     excludedFields.add(field);
+        else {
+            if (errors.size() == 0) {
+                plugin.setServiceEnabled(searchEnabled);
+                plugin.setServiceName(searchName.trim());
+
+                ArrayList<String> excludedFields = new ArrayList<String>();
+                for (String field : UserManager.getInstance().getSearchFields()) {
+                    if (!ParamUtils.getBooleanParameter(request, field)) {
+                         excludedFields.add(field);
+                    }
                 }
+                plugin.setExcludedFields(excludedFields);
+
+                response.sendRedirect("search-props-edit-form.jsp?success=true");
+                return;
             }
-            plugin.setExcludedFields(excludedFields);
-            
-            response.sendRedirect("search-props-edit-form.jsp?success=true");
-            return;
         }
     }
     else {
@@ -67,7 +68,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             <fmt:message key="search.props.edit.form.successful_edit" />
         </td></tr>
@@ -80,7 +81,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             <fmt:message key="search.props.edit.form.error" />
         </td></tr>
@@ -131,7 +132,7 @@
            <fmt:message key="search.props.edit.form.search_service_name" />:
         </td>
         <td>
-        <input type="text" size="30" maxlength="150" name="searchname"  value="<%= (searchName != null ? searchName : "") %>">.<%=XMPPServer.getInstance().getServerInfo().getName() %>
+        <input type="text" size="30" maxlength="150" name="searchname"  value="<%= (searchName != null ? searchName : "") %>">.<%=XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>
 
         <%  if (errors.containsKey("searchname")) { %>
 

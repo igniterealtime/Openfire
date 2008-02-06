@@ -98,7 +98,7 @@ public class MulticastDNSService extends BasicModule {
                     if (jmdns == null) {
                         jmdns = new JmDNS();
                     }
-                    String serverName = XMPPServer.getInstance().getServerInfo().getName();
+                    String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
                     if (clientPortNum != -1) {
                         ServiceInfo clientService = new ServiceInfo("_xmpp-client._tcp.local.",

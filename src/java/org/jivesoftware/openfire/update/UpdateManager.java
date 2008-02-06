@@ -165,7 +165,7 @@ public class UpdateManager extends BasicModule {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         router = server.getMessageRouter();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
     }
 
     /**

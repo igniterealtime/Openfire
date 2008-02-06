@@ -99,8 +99,8 @@
         }
         if (errors.size() == 0) {
             boolean needRestart = false;
-            if (!serverName.equals(server.getServerInfo().getName())) {
-                server.getServerInfo().setName(serverName);
+            if (!serverName.equals(server.getServerInfo().getXMPPDomain())) {
+                server.getServerInfo().setXMPPDomain(serverName);
                 needRestart = true;
             }
             connectionManager.setClientListenerPort(port);
@@ -124,7 +124,7 @@
             return;
         }
     } else {
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         sslEnabled = connectionManager.isClientSSLListenerEnabled();
         port = connectionManager.getClientListenerPort();
         sslPort = connectionManager.getClientSSLListenerPort();
@@ -163,7 +163,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if ("true".equals(request.getParameter("restart"))) { %>
             <fmt:message key="server.props.update" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="server.props.update2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).

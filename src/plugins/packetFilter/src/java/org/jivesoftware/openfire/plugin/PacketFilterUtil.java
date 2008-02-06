@@ -4,17 +4,14 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.plugin.component.ComponentList;
 import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
 
 import java.util.Collection;
 /*
    Static util methods.
 */
 public class PacketFilterUtil  {
-    static String serverName = XMPPServer.getInstance().getServerInfo().getName();
+    static String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
     public static boolean isGroup(String name) {
         try {

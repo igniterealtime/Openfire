@@ -231,7 +231,7 @@ public class IQRouter extends BasicModule {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         TaskEngine.getInstance().scheduleAtFixedRate(new TimeoutTask(), 5000, 5000);
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();
         multicastRouter = server.getMulticastRouter();
         iqHandlers.addAll(server.getIQHandlers());

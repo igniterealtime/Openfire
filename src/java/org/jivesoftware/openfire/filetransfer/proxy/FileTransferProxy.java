@@ -268,7 +268,7 @@ public class FileTransferProxy extends BasicModule
      * @return the file transfer server domain (service name + host name).
      */
     public String getServiceDomain() {
-        return proxyServiceName + "." + XMPPServer.getInstance().getServerInfo().getName();
+        return proxyServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
     public JID getAddress() {

@@ -95,7 +95,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         List<String> targets = new ArrayList<String>();
         Packet localBroadcast = packet.createCopy();
         Element addresses = getAddresses(localBroadcast);
-        String localDomain = "@" + server.getServerInfo().getName();
+        String localDomain = "@" + server.getServerInfo().getXMPPDomain();
         // Build the <addresses> element to be included for local users and identify
         // remote domains that should receive the packet too
         for (Iterator it=addresses.elementIterator("address");it.hasNext();) {
@@ -183,7 +183,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             // supports JEP-33 (Extended Stanza Addressing). The reply to the disco
             // request is going to be process in #receivedAnswer(IQ packet)
             IQ iq = new IQ(IQ.Type.get);
-            iq.setFrom(server.getServerInfo().getName());
+            iq.setFrom(server.getServerInfo().getXMPPDomain());
             iq.setTo(domain);
             iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
             // Indicate that we are searching for info of the specified domain
@@ -301,7 +301,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
                 if (isRoot && IQ.Type.error != packet.getType()) {
                     // Discover node items with the hope that a sub-item supports JEP-33
                     IQ iq = new IQ(IQ.Type.get);
-                    iq.setFrom(server.getServerInfo().getName());
+                    iq.setFrom(server.getServerInfo().getXMPPDomain());
                     iq.setTo(packet.getFrom());
                     iq.setChildElement("query", "http://jabber.org/protocol/disco#items");
                     // Send the disco#items request to the remote server or component. The reply will be
@@ -356,7 +356,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
                 for (Element item : items) {
                     // Discover if remote server supports JEP-33 (Extended Stanza Addressing)
                     IQ iq = new IQ(IQ.Type.get);
-                    iq.setFrom(server.getServerInfo().getName());
+                    iq.setFrom(server.getServerInfo().getXMPPDomain());
                     iq.setTo(item.attributeValue("jid"));
                     Element child = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
                     if (item.attributeValue("node") != null) {

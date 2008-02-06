@@ -621,7 +621,7 @@ public class LdapGroupProvider implements GroupProvider {
             }
 
             XMPPServer server = XMPPServer.getInstance();
-            String serverName = server.getServerInfo().getName();
+            String serverName = server.getServerInfo().getXMPPDomain();
             // Build 3 groups.
             // group 1: uid=
             // group 2: rest of the text until first comma

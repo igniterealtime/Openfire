@@ -37,7 +37,7 @@ public class ClientSessionConnection extends VirtualConnection {
     public ClientSessionConnection(String connectionManagerName) {
         this.connectionManagerName = connectionManagerName;
         multiplexerManager = ConnectionMultiplexerManager.getInstance();
-        serverName = XMPPServer.getInstance().getServerInfo().getName();
+        serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
     /**

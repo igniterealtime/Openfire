@@ -45,7 +45,7 @@
     boolean blockSuccess = false;
     boolean deleteSuccess = false;
 
-    String serverName = XMPPServer.getInstance().getServerInfo().getName();
+    String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
 

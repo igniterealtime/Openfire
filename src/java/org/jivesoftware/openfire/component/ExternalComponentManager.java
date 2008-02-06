@@ -71,7 +71,7 @@ public class ExternalComponentManager {
         config.setPermission(Permission.blocked);
         addConfiguration(config);
         // Check if the component was connected and proceed to close the connection
-        String domain = subdomain + "." + XMPPServer.getInstance().getServerInfo().getName();
+        String domain = subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Session session = SessionManager.getInstance().getComponentSession(domain);
         if (session != null) {
             session.close();

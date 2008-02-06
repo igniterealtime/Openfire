@@ -263,7 +263,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         }
         else {
             // Recipient is remote so we just forward the packet to them
-            String serverDomain = localServer.getServerInfo().getName();
+            String serverDomain = localServer.getServerInfo().getXMPPDomain();
             // Check if the recipient may be hosted by this server
             if (!recipient.getDomain().contains(serverDomain)) {
                 // TODO Implete when s2s is implemented

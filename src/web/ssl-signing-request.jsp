@@ -61,7 +61,7 @@
         if (errors.size() == 0) {
             try {
                 // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN
-                String domain = XMPPServer.getInstance().getServerInfo().getName();
+                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                 StringBuilder issuerDN = new StringBuilder();
                 issuerDN.append("CN=").append(name);
                 issuerDN.append(", OU=").append(organizationalUnit);

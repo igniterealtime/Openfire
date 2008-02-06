@@ -1218,7 +1218,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         router = server.getPacketRouter();
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         serverAddress = new JID(serverName);
 
         if (JiveGlobals.getBooleanProperty("xmpp.audit.active")) {

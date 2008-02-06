@@ -35,7 +35,7 @@
         if (errors.isEmpty()) {
             try {
                 // Create an alias for the signed certificate
-                String domain = XMPPServer.getInstance().getServerInfo().getName();
+                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                 int index = 1;
                 String alias = domain + "_" + index;
                 while (SSLConfig.getKeyStore().containsAlias(alias)) {

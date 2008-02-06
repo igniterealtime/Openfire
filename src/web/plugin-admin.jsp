@@ -18,7 +18,6 @@
 <%@ page import="java.util.Collections" %>
 <%@ page import="java.util.Comparator" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.apache.commons.fileupload.DiskFileUpload" %>
 <%@ page import="java.io.*" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.Log" %>
@@ -39,7 +38,6 @@
     String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
     boolean showReadme = ParamUtils.getBooleanParameter(request, "showReadme", false);
     boolean showChangelog = ParamUtils.getBooleanParameter(request, "showChangelog", false);
-    boolean showIcon = ParamUtils.getBooleanParameter(request, "showIcon", false);
     boolean downloadRequested = request.getParameter("download") != null;
     boolean uploadPlugin = request.getParameter("uploadplugin") != null;
     String url = request.getParameter("url");
@@ -601,7 +599,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
         <td colspan="8" align="center" class="update">
             <table>
                 <tr>
-                    <td id="<%= update.hashCode()%>-image"><img src="images/working-16x16.gif" border="0"/></td>
+                    <td id="<%= update.hashCode()%>-image"><img src="images/working-16x16.gif" border="0" alt=""/></td>
                     <td id="<%= update.hashCode()%>-text" class="table-font"><fmt:message key="plugin.admin.updating" /></td>
                 </tr>
             </table>

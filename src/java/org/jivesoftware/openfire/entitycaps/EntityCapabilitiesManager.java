@@ -143,7 +143,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
             IQ iq = new IQ(IQ.Type.get);
             iq.setTo(packet.getFrom());
 
-            String serverName = XMPPServer.getInstance().getServerInfo().getName();
+            String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
             iq.setFrom(serverName);
 
             iq.setChildElement("query", "http://jabber.org/protocol/disco#info");

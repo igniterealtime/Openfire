@@ -103,7 +103,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // DiscoInfoProvider responsibility to provide information about the JID's name together 
         // with any possible requested node.  
         DiscoInfoProvider infoProvider = getProvider(packet.getTo() == null ?
-                XMPPServer.getInstance().getServerInfo().getName() : packet.getTo().getDomain());
+                XMPPServer.getInstance().getServerInfo().getXMPPDomain() : packet.getTo().getDomain());
         if (infoProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();
@@ -328,7 +328,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             }
         }
 
-        setProvider(server.getServerInfo().getName(), getServerInfoProvider());
+        setProvider(server.getServerInfo().getXMPPDomain(), getServerInfoProvider());
         // Listen to cluster events
         ClusterManager.addListener(this);
     }

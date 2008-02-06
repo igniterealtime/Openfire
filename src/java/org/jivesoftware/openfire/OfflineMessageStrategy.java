@@ -174,7 +174,7 @@ public class OfflineMessageStrategy extends BasicModule {
         super.initialize(server);
         messageStore = server.getOfflineMessageStore();
         router = server.getPacketRouter();
-        serverAddress = new JID(server.getServerInfo().getName());
+        serverAddress = new JID(server.getServerInfo().getXMPPDomain());
 
         String quota = JiveGlobals.getProperty("xmpp.offline.quota");
         if (quota != null && quota.length() > 0) {

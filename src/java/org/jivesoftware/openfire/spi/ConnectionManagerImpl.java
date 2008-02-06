@@ -800,7 +800,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public void start() {
         super.start();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         createListeners();
         startListeners();
         SocketSendingTracker.getInstance().start();

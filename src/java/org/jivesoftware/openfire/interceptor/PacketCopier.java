@@ -73,7 +73,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         // a component is no longer valid
         InternalComponentManager.getInstance().addListener(this);
         XMPPServer server = XMPPServer.getInstance();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();
 
         // Add new instance to the PacketInterceptors list

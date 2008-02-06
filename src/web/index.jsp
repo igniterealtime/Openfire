@@ -453,7 +453,7 @@
     <tr>
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
-        <% if (LocalClientSession.getTLSPolicy() == Connection.TLSPolicy.disabled) { %>
+        <% if (LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } else { %>
             <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
@@ -510,7 +510,7 @@
     <tr>
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
-        <% if (LocalConnectionMultiplexerSession.getTLSPolicy() == Connection.TLSPolicy.disabled) { %>
+        <% if (LocalConnectionMultiplexerSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <% } else { %>
             <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>

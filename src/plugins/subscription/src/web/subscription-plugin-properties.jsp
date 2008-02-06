@@ -92,7 +92,7 @@
 	<table cellpadding="0" cellspacing="0" border="0">
 	<tbody>
 	   <tr>
-         <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+         <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
          <td class="jive-icon-label">Service properties edited successfully.</td>
       </tr>
    </tbody>
@@ -112,8 +112,8 @@
    <tbody>
       <tr>
          <td width="1%">
-            <input type="radio" name="type" value="<%=plugin.DISABLED %>" id="rb01"
-               <%= (type.equals(plugin.DISABLED) ? "checked" : "") %>>
+            <input type="radio" name="type" value="<%= SubscriptionPlugin.DISABLED %>" id="rb01"
+               <%= (type.equals(SubscriptionPlugin.DISABLED) ? "checked" : "") %>>
          </td>
          <td width="99%">
             <label for="rb01"><strong>Disabled</strong></label> - No subscriptions requests will be intercepted.
@@ -121,8 +121,8 @@
       </tr>      
       <tr>
          <td width="1%">
-            <input type="radio" name="type" value="<%=plugin.ACCEPT %>" id="rb02"
-               <%= (type.equals(plugin.ACCEPT) ? "checked" : "") %>>
+            <input type="radio" name="type" value="<%= SubscriptionPlugin.ACCEPT %>" id="rb02"
+               <%= (type.equals(SubscriptionPlugin.ACCEPT) ? "checked" : "") %>>
          </td>
          <td width="99%">
             <label for="rb02"><strong>Accept</strong></label> - Subscription requests will be intercepted and accepted.
@@ -135,17 +135,17 @@
             <table cellpadding="4" cellspacing="0" border="0" width="100%">
                <tr>
                   <td width="1%">
-                     <input type="radio" name="accept" value="<%=plugin.LOCAL %>" id="rb03"
-                        <%= (level.equals(plugin.LOCAL) ? "checked" : "") %>>
+                     <input type="radio" name="accept" value="<%= SubscriptionPlugin.LOCAL %>" id="rb03"
+                        <%= (level.equals(SubscriptionPlugin.LOCAL) ? "checked" : "") %>>
                   </td>
                   <td width="99%">
-                     <label for="rb03"><strong>Local</strong></label> - Only subscription requests sent by users <u>who have</u> an account on <i><%=XMPPServer.getInstance().getServerInfo().getName() %></i> will be intercepted and accepted.
+                     <label for="rb03"><strong>Local</strong></label> - Only subscription requests sent by users <u>who have</u> an account on <i><%=XMPPServer.getInstance().getServerInfo().getXMPPDomain() %></i> will be intercepted and accepted.
                   </td>
                </tr>
                <tr>
                   <td width="1%">
-                     <input type="radio" name="accept" value="<%=plugin.ALL %>" id="rb04"
-                        <%= (level.equals(plugin.ALL) ? "checked" : "") %>>
+                     <input type="radio" name="accept" value="<%= SubscriptionPlugin.ALL %>" id="rb04"
+                        <%= (level.equals(SubscriptionPlugin.ALL) ? "checked" : "") %>>
                   </td>
                   <td width="99%">
                      <label for="rb04"><strong>All</strong></label> - All subscription requests will be intercepted and automatically accepted.
@@ -156,8 +156,8 @@
       </tr>
       <tr>
          <td width="1%">
-            <input type="radio" name="type" value="<%=plugin.REJECT %>" id="rb05"
-               <%= (type.equals(plugin.REJECT) ? "checked" : "") %>>
+            <input type="radio" name="type" value="<%= SubscriptionPlugin.REJECT %>" id="rb05"
+               <%= (type.equals(SubscriptionPlugin.REJECT) ? "checked" : "") %>>
          </td>
          <td width="99%">
             <label for="rb05"><strong>Reject</strong></label> - Subscription requests will be intercepted and rejected.
@@ -169,17 +169,17 @@
             <table cellpadding="4" cellspacing="0" border="0" width="100%">
                <tr>
                   <td width="1%">
-                     <input type="radio" name="reject" value="<%=plugin.LOCAL %>" id="rb06"
-                        <%= (level.equals(plugin.LOCAL) ? "checked" : "") %>>
+                     <input type="radio" name="reject" value="<%= SubscriptionPlugin.LOCAL %>" id="rb06"
+                        <%= (level.equals(SubscriptionPlugin.LOCAL) ? "checked" : "") %>>
                   </td>
                   <td width="99%">
-                     <label for="rb06"><strong>Local</strong></label> - Only subscription requests sent by users <u>who do not have</u> an account on <i><%=XMPPServer.getInstance().getServerInfo().getName() %></i> will be intercepted and rejected.
+                     <label for="rb06"><strong>Local</strong></label> - Only subscription requests sent by users <u>who do not have</u> an account on <i><%=XMPPServer.getInstance().getServerInfo().getXMPPDomain() %></i> will be intercepted and rejected.
                   </td>
                </tr>
                <tr>
                   <td width="1%">
-                     <input type="radio" name="reject" value="<%=plugin.ALL %>" id="rb07"
-                        <%= (level.equals(plugin.ALL) ? "checked" : "") %>>
+                     <input type="radio" name="reject" value="<%= SubscriptionPlugin.ALL %>" id="rb07"
+                        <%= (level.equals(SubscriptionPlugin.ALL) ? "checked" : "") %>>
                   </td>
                   <td width="99%">
                      <label for="rb07"><strong>All</strong></label> - All subscription requests will be intercepted and rejected.
@@ -210,7 +210,7 @@
    <table cellpadding="0" cellspacing="0" border="0">
    <tbody>
       <tr>
-         <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+         <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
          <td class="jive-icon-label">User successfully removed.</td>
       </tr>
    </tbody>
@@ -223,7 +223,7 @@
    <table cellpadding="0" cellspacing="0" border="0">
    <tbody>
       <tr>
-         <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+         <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
          <td class="jive-icon-label">User successfully added.</td>
       </tr>
    </tbody>
@@ -236,7 +236,7 @@
    <table cellpadding="0" cellspacing="0" border="0">
    <tbody>
       <tr>
-         <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+         <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
          <td class="jive-icon-label">Missing user.</td>
       </tr>
    </tbody>
@@ -249,7 +249,7 @@
    <table cellpadding="0" cellspacing="0" border="0">
    <tbody>
       <tr>
-         <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+         <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
          <td class="jive-icon-label">User not found.</td>
       </tr>
    </tbody>
@@ -291,7 +291,7 @@
                      title="Delete User?"
                      onclick="return confirm('Are you sure you want to delete this user?');"><img
                      src="images/delete-16x16.gif" width="16" height="16"
-                     border="0"></a>
+                     border="0" alt=""></a>
       </td>
    </tr>
    

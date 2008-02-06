@@ -31,11 +31,10 @@
 <%  // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
-    String name = ParamUtils.getParameter(request,"servername");
     String muc = ParamUtils.getParameter(request,"mucname");
 
     // Handle a save
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         // Make sure that the MUC Service is lower cased.
         muc = muc.toLowerCase();
@@ -51,11 +50,9 @@
         }
     }
     else if(muc == null) {
-        name = webManager.getServerInfo().getName() == null ? "" : webManager.getServerInfo().getName();
         muc = webManager.getMultiUserChatServer().getServiceName() == null  ? "" : webManager.getMultiUserChatServer().getServiceName();
     }
 
-    name = webManager.getServerInfo().getName();
     if (errors.size() == 0 && muc == null) {
         muc = webManager.getMultiUserChatServer().getServiceName();
     }
@@ -78,7 +75,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
             <fmt:message key="groupchat.service.properties.saved_successfully" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="groupchat.service.properties.saved_successfully2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).
         </td></tr>
@@ -91,7 +88,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="groupchat.service.properties.error_service_name" />
         </td></tr>

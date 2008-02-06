@@ -336,7 +336,7 @@ public class UserManager implements IQResultListener {
                     // A disco#info is going to be sent to the bare JID of the user. This packet
                     // is going to be handled by the remote server.
                     IQ iq = new IQ(IQ.Type.get);
-                    iq.setFrom(server.getServerInfo().getName());
+                    iq.setFrom(server.getServerInfo().getXMPPDomain());
                     iq.setTo(user.toBareJID());
                     iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
                     // Send the disco#info request to the remote server. The reply will be

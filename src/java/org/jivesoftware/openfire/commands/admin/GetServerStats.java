@@ -64,7 +64,7 @@ public class GetServerStats extends AdHocCommand {
         field = form.addField();
         field.setLabel(LocaleUtils.getLocalizedString("index.domain_name"));
         field.setVariable("domain");
-        field.addValue(XMPPServer.getInstance().getServerInfo().getName());
+        field.addValue(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
 
         field = form.addField();
         field.setLabel(LocaleUtils.getLocalizedString("index.jvm"));

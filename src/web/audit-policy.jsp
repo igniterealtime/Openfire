@@ -113,7 +113,7 @@
                     String tok = tokenizer.nextToken();
                     String username = tok;
                     if (tok.contains("@")) {
-                        if (tok.contains("@" + webManager.getServerInfo().getName())) {
+                        if (tok.contains("@" + webManager.getServerInfo().getXMPPDomain())) {
                            username = new JID(tok).getNode();
                         }
                         else {

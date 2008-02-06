@@ -692,7 +692,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         iqRouter = server.getIQRouter();
         messageRouter = server.getMessageRouter();
         presenceRouter = server.getPresenceRouter();

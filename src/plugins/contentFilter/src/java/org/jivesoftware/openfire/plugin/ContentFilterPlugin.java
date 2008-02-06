@@ -216,7 +216,7 @@ public class ContentFilterPlugin implements Plugin, PacketInterceptor {
         contentFilter = new ContentFilter();
         interceptorManager = InterceptorManager.getInstance();
         violationNotificationFrom = new JID(XMPPServer.getInstance()
-                .getServerInfo().getName());
+                .getServerInfo().getXMPPDomain());
         messageRouter = XMPPServer.getInstance().getMessageRouter();
     }
 

@@ -86,7 +86,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         ComponentManagerFactory.setComponentManager(instance);
 
         XMPPServer server = XMPPServer.getInstance();
-        serverDomain = server.getServerInfo().getName();
+        serverDomain = server.getServerInfo().getXMPPDomain();
         // Set the address of this internal service. component.[domain]
         serviceAddress = new JID(null, "component." + serverDomain, null);
         if (!server.isSetupMode()) {

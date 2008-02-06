@@ -111,7 +111,7 @@ public class RegistrationPlugin implements Plugin {
     private List<String> emailContacts = new ArrayList<String>();
     
     public RegistrationPlugin() {
-        serverName = XMPPServer.getInstance().getServerInfo().getName();
+        serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         serverAddress = new JID(serverName);
         router = XMPPServer.getInstance().getMessageRouter();
        
@@ -237,7 +237,7 @@ public class RegistrationPlugin implements Plugin {
     }
     
     public String webRegistrationAddress() {
-        return  "http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" 
+        return  "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":"
             + JiveGlobals.getXMLProperty("adminConsole.port") + "/plugins/" + URL;
     }
     

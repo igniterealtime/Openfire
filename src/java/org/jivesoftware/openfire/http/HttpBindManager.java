@@ -132,7 +132,7 @@ public final class HttpBindManager {
         try {
             if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*")) {
                 if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
-                        XMPPServer.getInstance().getServerInfo().getName())) {
+                        XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
                             "the hosted domain");
                 }
@@ -180,17 +180,17 @@ public final class HttpBindManager {
     }
 
     public String getHttpBindUnsecureAddress() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+        return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                 bindPort + "/http-bind/";
     }
 
     public String getHttpBindSecureAddress() {
-        return "https://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+        return "https://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                 bindSecurePort + "/http-bind/";
     }
 
     public String getJavaScriptUrl() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getName() + ":" +
+        return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                 bindPort + "/scripts/";
     }
 

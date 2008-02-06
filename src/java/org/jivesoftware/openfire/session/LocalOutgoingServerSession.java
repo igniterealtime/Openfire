@@ -173,7 +173,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                         int index = hostname.indexOf('.');
                         while (index > -1 && index < hostname.length()) {
                             String newHostname = hostname.substring(index + 1);
-                            String serverName = XMPPServer.getInstance().getServerInfo().getName();
+                            String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                             if ("com".equals(newHostname) || "net".equals(newHostname) ||
                                     "org".equals(newHostname) ||
                                     "gov".equals(newHostname) ||

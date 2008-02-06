@@ -59,7 +59,7 @@ public class IQSharedGroupHandler extends IQHandler {
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
         rosterManager = server.getRosterManager();
     }
 }

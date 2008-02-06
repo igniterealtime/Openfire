@@ -92,7 +92,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         serviceEnabled = JiveGlobals.getBooleanProperty(SERVICEENABLED, true);
         exculudedFields = StringUtils.stringToCollection(JiveGlobals.getProperty(EXCLUDEDFIELDS, ""));
         
-        serverName = XMPPServer.getInstance().getServerInfo().getName();
+        serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         userManager = UserManager.getInstance();
                
         // Some clients, such as Miranda, are hard-coded to search specific fields,
@@ -980,6 +980,10 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * A possible future improvement would be to have a third parameter that
      * sets the maximum number of users returned and/or the number of users
      * that are searched.
+     *
+     * @param field Field we will be searching on.
+     * @param query Comparison to make on specified field.
+     * @return Collection of User's matching query.
      */
     public Collection<User> findUsers(String field, String query) {
         List<User> foundUsers = new ArrayList<User>();

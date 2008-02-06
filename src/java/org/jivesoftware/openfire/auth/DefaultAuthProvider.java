@@ -51,7 +51,7 @@ public class DefaultAuthProvider implements AuthProvider {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
             String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                 username = username.substring(0, index);
             } else {
                 // Unknown domain. Return authentication failed.
@@ -78,7 +78,7 @@ public class DefaultAuthProvider implements AuthProvider {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
             String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                 username = username.substring(0, index);
             } else {
                 // Unknown domain. Return authentication failed.
@@ -117,7 +117,7 @@ public class DefaultAuthProvider implements AuthProvider {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
             String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                 username = username.substring(0, index);
             } else {
                 // Unknown domain.
@@ -163,7 +163,7 @@ public class DefaultAuthProvider implements AuthProvider {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
             String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getName())) {
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                 username = username.substring(0, index);
             } else {
                 // Unknown domain.

@@ -154,7 +154,7 @@ Use the form below to edit content filter settings.<br>
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-	        <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+	        <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
 	        <td class="jive-icon-label">Settings updated successfully.</td>
         </tr>
     </tbody>
@@ -167,7 +167,7 @@ Use the form below to edit content filter settings.<br>
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         	<td class="jive-icon-label">Error saving the settings.</td>
         </tr>
     </tbody>
@@ -227,7 +227,7 @@ Use the form below to edit content filter settings.<br>
 	</tr>
 	<tr>
 		<td>&nbsp;</td>
-        <td><input type="checkbox" name="filterstatus" value="filterstatus" <%= filterStatusEnabled ? "checked" : "" %>>Filter users presence status.</input></td>
+        <td><input type="checkbox" name="filterstatus" value="filterstatus" <%= filterStatusEnabled ? "checked" : "" %>/>Filter users presence status.</td>
 	</tr>
     </tbody>
     </table>
@@ -278,7 +278,7 @@ Use the form below to edit content filter settings.<br>
 	    </tr>
 	    <tr>
 		<td>&nbsp;</td>
-        <td><input type="checkbox" name="maskenabled" value="maskenabled" <%= maskEnabled ? "checked" : "" %>>Enable mask.</input></td>
+        <td><input type="checkbox" name="maskenabled" value="maskenabled" <%= maskEnabled ? "checked" : "" %>/>Enable mask.</td>
 	</tr>
     </tbody>
     </table>
@@ -366,7 +366,7 @@ Use the form below to edit content filter settings.<br>
         <tr>
         	    <td>&nbsp;</td>
 	        <td align="left">Username:&nbsp
-                <input type="text" size="20" maxlength="100" name="contactname" value="<%= (contactName != null ? contactName : "") %>">@<%= XMPPServer.getInstance().getServerInfo().getName() %>
+                <input type="text" size="20" maxlength="100" name="contactname" value="<%= (contactName != null ? contactName : "") %>">@<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>
 		        <% if (errors.containsKey("missingContactName")) { %>
 		            <span class="jive-error-text">
 		            <br>Please enter a username.
@@ -381,9 +381,9 @@ Use the form below to edit content filter settings.<br>
 	    <tr>
 	        <td>&nbsp;</td>
 	        <td>
-                <input type="checkbox" name="notificationcb" value="notificationbyim" <%= notificationByIMEnabled ? "checked" : "" %>>Notify by IM.</input>
-                <input type="checkbox" name="notificationcb" value="notificationbyemail" <%= notificationByEmailEnabled ? "checked" : "" %>>Notify by Email.</input>
-	            <input type="checkbox" name="notificationcb" value="notificationincludeoriginal" <%= includeOriginalEnabled ? "checked" : "" %>>Include original packet.</input>
+                <input type="checkbox" name="notificationcb" value="notificationbyim" <%= notificationByIMEnabled ? "checked" : "" %>/>Notify by IM.
+                <input type="checkbox" name="notificationcb" value="notificationbyemail" <%= notificationByEmailEnabled ? "checked" : "" %>/>Notify by Email.
+	            <input type="checkbox" name="notificationcb" value="notificationincludeoriginal" <%= includeOriginalEnabled ? "checked" : "" %>/>Include original packet.
 	            <% if (errors.containsKey("mailServerNotConfigured")) { %>
 		            <span class="jive-error-text">
 		            <br>Error, sending an email will fail because the mail server is not setup. Please go to the <a href="/system-email.jsp">mail settings page</a> and set the mail host.

@@ -31,7 +31,7 @@ public class MotDPlugin implements Plugin {
    private MotDSessionEventListener listener = new MotDSessionEventListener();
 
    public void initializePlugin(PluginManager manager, File pluginDirectory) {
-      serverAddress = new JID(XMPPServer.getInstance().getServerInfo().getName());
+      serverAddress = new JID(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
       router = XMPPServer.getInstance().getMessageRouter();
 
       SessionEventDispatcher.addListener(listener);

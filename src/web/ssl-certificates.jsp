@@ -47,7 +47,7 @@
     }
 
     if (generate) {
-        String domain = XMPPServer.getInstance().getServerInfo().getName();
+        String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         try {
             if (errors.containsKey("ioerror") && keyStore == null) {
                 keyStore = SSLConfig.initializeKeyStore();
@@ -144,7 +144,7 @@
       </tbody>
       </table>
       </div><br>
-  <% } else if (keyStore != null && keyStore.size() > 1 && !CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) { %>
+  <% } else if (keyStore != null && keyStore.size() > 1 && !CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain())) { %>
       <div class="warning">
       <table cellpadding="0" cellspacing="0" border="0">
       <tbody>

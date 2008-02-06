@@ -77,7 +77,7 @@ public class ComponentList implements IQResultListener {
         iqRouter = server.getIQRouter();
         for (String componentDomain : components) {
             IQ iq = new IQ(IQ.Type.get);
-            iq.setFrom(server.getServerInfo().getName());
+            iq.setFrom(server.getServerInfo().getXMPPDomain());
             iq.setTo(componentDomain);
             iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
             iqRouter.addIQResultListener(iq.getID(), this);

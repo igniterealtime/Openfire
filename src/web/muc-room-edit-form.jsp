@@ -11,7 +11,6 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  java.text.DateFormat,
-                 org.jivesoftware.admin.*,
                  java.util.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.openfire.forms.spi.*,
@@ -119,7 +118,7 @@
                 }
                 else {
                     // Try to create a new room
-                    JID address = new JID(webManager.getUser().getUsername(), webManager.getServerInfo().getName(), null);
+                    JID address = new JID(webManager.getUser().getUsername(), webManager.getServerInfo().getXMPPDomain(), null);
                     try {
                         room = webManager.getMultiUserChatServer().getChatRoom(roomName, address);
                         // Check if the room was created concurrently by another user
@@ -325,7 +324,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
 
             <% if (errors.get("roomconfig_roomname") != null) { %>
@@ -358,7 +357,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if (success) { %>
 
@@ -526,7 +525,7 @@
             </tr>
             <tr>
                 <td><input type="checkbox" name="roomconfig_enablelogging" value="true" id="enablelogging" <% if ("true".equals(enableLog)) out.write("checked");%>>
-                    <LABEL FOR="enablelogging"><fmt:message key="muc.room.edit.form.log" /></td>
+                    <LABEL FOR="enablelogging"><fmt:message key="muc.room.edit.form.log" /></LABEL></td>
             </tr>
         </tbody>
         </table>
@@ -536,7 +535,6 @@
             <td colspan="2"><input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />">
             <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
         </tr>
-    </tbody>
     </table>
 </form>
 

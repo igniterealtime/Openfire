@@ -140,7 +140,7 @@ public class IQBindHandler extends IQHandler {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         routingTable = server.getRoutingTable();
-        serverName = server.getServerInfo().getName();
+        serverName = server.getServerInfo().getXMPPDomain();
      }
 
     public IQHandlerInfo getInfo() {

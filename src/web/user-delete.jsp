@@ -51,7 +51,7 @@
         // Delete the user
         webManager.getUserManager().deleteUser(user);
         // Delete the user's roster
-        JID userAddress = new JID(username, webManager.getServerInfo().getName(), null);
+        JID userAddress = new JID(username, webManager.getServerInfo().getXMPPDomain(), null);
         // Delete the roster of the user
         webManager.getRosterManager().deleteRoster(userAddress);
         // Delete the user from all the Groups

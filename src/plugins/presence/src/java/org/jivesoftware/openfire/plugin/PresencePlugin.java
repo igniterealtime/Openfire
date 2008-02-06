@@ -65,7 +65,7 @@ public class PresencePlugin implements Plugin, Component {
         XMPPServer server = XMPPServer.getInstance();
         userManager = server.getUserManager();
         presenceManager = server.getPresenceManager();
-        hostname = server.getServerInfo().getName();
+        hostname = server.getServerInfo().getXMPPDomain();
         probedPresence = new ConcurrentHashMap<String, Presence>();
         componentJID = new JID(subdomain + "." + hostname);
         // Register new component

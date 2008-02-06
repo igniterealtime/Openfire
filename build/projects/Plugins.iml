@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/contentFilter/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/debugger/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/dumper/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/emailListener/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/gateway/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/gateway/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/loadStats/src/java" isTestSource="false" />
@@ -19,6 +20,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/presence/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/registration/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/search/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/sip/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/subscription/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/userCreation/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/userImportExport/src/java" isTestSource="false" />
@@ -233,6 +235,24 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/concurrent.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/sip/lib/JainSipApi1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/sip/lib/nist-sip-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

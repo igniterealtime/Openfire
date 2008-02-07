@@ -1292,6 +1292,8 @@ public class LocalMUCRoom implements MUCRoom {
             nickname,
             MUCRole.Affiliation.member,
             oldAffiliation);
+        // Update other cluster nodes with new member
+        CacheFactory.doClusterTask(new AddMember(this, bareJID, (nickname == null ? "" : nickname)));
         // Update the presence with the new affiliation and inform all occupants
         try {
             return changeOccupantAffiliation(bareJID, MUCRole.Affiliation.member,
@@ -1518,6 +1520,11 @@ public class LocalMUCRoom implements MUCRoom {
                     updateRequest.getNickname());
         }
         return null;
+    }
+
+    public void memberAdded(AddMember addMember) {
+        // Associate the reserved nickname with the bareJID
+        members.put(addMember.getBareJID(), addMember.getNickname());
     }
 
     public void nicknameChanged(MUCRole occupantRole, Presence newPresence, String oldNick, String newNick) {

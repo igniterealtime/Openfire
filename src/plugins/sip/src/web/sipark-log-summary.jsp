@@ -103,7 +103,7 @@
         /* Default DOM Tooltip Style */
         div.domTT {
             border: 1px solid #bbb;
-            background-color: #F9F5D5;
+            background-color: #FFFBE2;
             font-family: Arial, Helvetica sans-serif;
             font-size: 9px;
             padding: 5px;
@@ -144,7 +144,7 @@
     <script type="text/javascript">
         function grayOut(ele) {
             if (ele.value == 'Any') {
-                ele.style.backgroundColor = "#EAF1F8";
+                ele.style.backgroundColor = "#FFFBE2";
             }
             else {
                 ele.style.backgroundColor = "#ffffff";

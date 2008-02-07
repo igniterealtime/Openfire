@@ -236,7 +236,7 @@ IFRAME {
 <form action="logviewer.jsp" name="logViewer" method="get">
 <input type="hidden" name="log" value="<%= log %>">
 
-<div class="jive-tabs">
+<div class="logviewer">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tbody>
     <tr>
@@ -415,7 +415,6 @@ IFRAME {
             <%  } %>
 
             </table>
-            </div>
         </td>
     </tr>
 </tbody>

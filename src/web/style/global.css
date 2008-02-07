@@ -42,7 +42,7 @@ fieldset {
 	-moz-border-radius-bottomright:3px;
 	-moz-border-radius-topleft:3px;
 	-moz-border-radius-topright:3px;
-	border:1px solid #CCCCCC;
+	border:2px solid #CCCCCC;
 	width:95%;
 }
 fieldset legend {
@@ -301,29 +301,29 @@ iframe {
 /*  Logviewer tabs                               */
 /* --------------------------------------------- */
 
-#logviewer .jive-nav td {
+#logviewer td {
     font-family:verdana,sans-serif;
     font-size:8pt;
 }
-#logviewer .jive-nav .jive-tab, .jive-nav .jive-tab-active {
+#logviewer .jive-tab, .jive-tab-active {
     background-color:#DDDDDD;
     border:1px solid #CCCCCC;
     padding:4px 1em;
     white-space:nowrap;
 }
-#logviewer .jive-nav .jive-tab-active {
+#logviewer .jive-tab-active {
     background-color:#FFFFFF;
     border-bottom:1px solid #FFFFFF;
 }
-#logviewer .jive-nav .jive-spacer, .jive-nav .jive-stretch {
+#logviewer .jive-spacer, .jive-stretch {
     border-bottom:1px solid #CCCCCC;
 }
-#logviewer .jive-nav .jive-tab a, #logviewer .jive-nav .jive-tab-active a {
+#logviewer .jive-tab a, #logviewer .jive-tab-active a {
     color:#000000;
     font-weight:bold;
     text-decoration:none;
 }
-#logviewer .jive-nav .jive-tab a:hover, #logviewer .jive-nav .jive-tab-active a:hover {
+#logviewer .jive-tab a:hover, #logviewer .jive-tab-active a:hover {
     text-decoration:underline;
 }
 

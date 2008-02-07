@@ -16,7 +16,6 @@
 <%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache"%>
 <%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor"%>
 <%@ page import="org.jivesoftware.admin.AdminConsole"%>
-<%@ page import="org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.*" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
@@ -30,20 +29,11 @@
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
 <%@ page import="org.jivesoftware.util.*" %>
-<%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="java.beans.PropertyDescriptor" %>
-<%@ page import="java.io.File" %>
-<%@ page import="java.net.InetAddress" %>
 <%@ page import="java.net.InetSocketAddress" %>
 <%@ page import="java.net.SocketAddress" %>
 <%@ page import="java.net.URL" %>
-<%@ page import="java.sql.Connection" %>
-<%@ page import="java.sql.SQLException" %>
-<%@ page import="java.sql.Statement" %>
 <%@ page import="java.text.DecimalFormat" %>
-<%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -149,7 +139,7 @@
 	}
 #jive-latest-activity {
     border: 1px #E8A400 solid;
-    background-color: #FFF4D8;
+    background-color: #FFFBE2;
 	font-family: Lucida Grande, Arial, Helvetica, sans-serif;
 	font-size: 9pt;
     padding: 0 10px 10px 10px;

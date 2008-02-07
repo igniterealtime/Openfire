@@ -24,10 +24,10 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.*;
 
-import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -162,15 +162,29 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
+    /**
+     * Removes a component. The {@link Component#shutdown} method will be called on the
+     * component. Note that if the component was an external component that was connected
+     * several times then all its connections will be terminated.
+     *
+     * @param subdomain the subdomain of the component's address.
+     */
     public void removeComponent(String subdomain) {
-        synchronized (routables) {
-            Log.debug("InternalComponentManager: Unregistering all components for domain: " + subdomain);
-            RoutableComponents routable = routables.get(subdomain);
-            routable.removeAllComponents();
-            routables.remove(subdomain);
+        List<Component> componentsToRemove = new ArrayList<Component>(routables.get(subdomain).getComponents());
+        for (Component component : componentsToRemove) {
+            removeComponent(subdomain, component);
         }
     }
 
+    /**
+     * Removes a given component. Unlike {@link #removeComponent(String)} this method will just
+     * remove a single component instead of all components associated to the subdomain. External
+     * components may connect several times and register for the same subdomain. This method
+     * just removes a singled connection not all of them.
+     *
+     * @param subdomain the subdomain of the component's address.
+     * @param component specific component to remove.
+     */
     public void removeComponent(String subdomain, Component component) {
         synchronized (routables) {
             Log.debug("InternalComponentManager: Unregistering component for domain: " + subdomain);

@@ -352,7 +352,7 @@
     }
 %>
 <tr><td><br/></td></tr>
-<tr style="background:#f3f7fa;">
+<tr style="background:#eee;">
     <td class="table-header-left">&nbsp;</td>
     <td nowrap colspan="7" class="row-header"><fmt:message key="plugin.available.commercial_plugins" /></td>
 </tr>

@@ -25,7 +25,7 @@
 }
 #jive-loginTable td.loginFormTable {
     padding: 17px 17px 7px 55px;
-    background: #ffffff url(../images/jive-login-form-bg-gray.gif) repeat-x top;
+    background: #e0e0e0 url(../images/jive-login-form-bg-gray.gif) repeat-x top;
     border: 1px solid #bbbbbb;
     -moz-border-radius: 5px;
 }

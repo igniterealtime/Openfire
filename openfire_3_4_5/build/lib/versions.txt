@@ -1,5 +1,5 @@
-Name                   |  Version
----------------------------------------------
+Name                                |  Version
+------------------------------------------------------------------------------------------------------
 ant.jar                             | Jetty 6.1.0 (1.6.5)
 ant-contrib.jar                     | 1.0b1
 ant-subdirtask.jar                  | Revision 1.4 (CVS)
@@ -39,7 +39,7 @@ mysql.jar                           | 5.0.8
 objenesis                           | 1.0 (JMock 2.1.0)
 pack200task.jar                     | August 5, 2004
 postgres.jar                        | 8.2-506.jdbc3
-proxool.jar                         | 0.9.0RC3
+proxool.jar                         | 0.9.0RC3+ (see note #1)
 rome.jar                            | 0.9
 rome-fetcher.jar                    | 0.9
 servlet.jar                         | Jetty 6.1.7 (2.5)
@@ -48,3 +48,8 @@ sitemesh.jar                        | 2.2.1
 standard.jar                        | Jakarta standard taglib 1.1.2
 xmltask.jar                         | 1.11
 xpp3.jar                            | XPP_3 1.1.4c
+
+
+Notes
+-----
+1) proxool - patched ProxyConnection to send log message in #registerClosedStatement to debug instead of warn

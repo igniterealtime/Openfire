@@ -256,41 +256,11 @@
     </tab>
 
     <!-- Group Chat -->
-    <tab id="tab-groupchat" name="${tab.tab-groupchat}" url="muc-server-props-edit-form.jsp"
+    <tab id="tab-groupchat" name="${tab.tab-groupchat}" url="muc-room-summary.jsp"
          description="${tab.tab-groupchat.descr}">
-
-        <!-- Group Chat Settings -->
-        <sidebar id="sidebar-groupchat-settings" name="${sidebar.sidebar-groupchat-settings}">
-
-            <!-- Service Properties -->
-            <item id="muc-server-props" name="${sidebar.muc-server-props}"
-                  url="muc-server-props-edit-form.jsp"
-                  description="${sidebar.muc-server-props.descr}"/>
-
-            <!-- History Settings -->
-            <item id="muc-history" name="${sidebar.muc-history}"
-                  url="muc-history-settings.jsp"
-                  description="${sidebar.muc-history.descr}"/>
-
-            <!-- Administrators -->
-            <item id="muc-sysadmin" name="${sidebar.muc-sysadmin}"
-                  url="muc-sysadmins.jsp"
-                  description="${sidebar.muc-sysadmin.descr}"/>
-
-            <!-- Room Creation Permissions -->
-            <item id="muc-perms" name="${sidebar.muc-perms}"
-                  url="muc-create-permission.jsp"
-                  description="${sidebar.muc-perms.descr}"/>
-
-            <!-- Other Settings -->
-            <item id="muc-tasks" name="${sidebar.muc-tasks}"
-                  url="muc-tasks.jsp"
-                  description="${sidebar.muc-tasks.descr}"/>
-        </sidebar>
 
         <!-- Room Administration -->
         <sidebar id="sidebar-groupchat-administration" name="${sidebar.sidebar-groupchat-administration}">
-
             <!-- Room Summary -->
             <item id="muc-room-summary" name="${sidebar.muc-room-summary}"
                   url="muc-room-summary.jsp"
@@ -320,7 +290,35 @@
             <item id="muc-room-create" name="${sidebar.muc-room-create}"
                   url="muc-room-create.jsp"
                   description="${sidebar.muc-room-create.descr}"/>
+        </sidebar>
 
+        <!-- Group Chat Settings -->
+        <sidebar id="sidebar-groupchat-settings" name="${sidebar.sidebar-groupchat-settings}">
+
+            <!-- Service Properties -->
+            <item id="muc-server-props" name="${sidebar.muc-server-props}"
+                  url="muc-server-props-edit-form.jsp"
+                  description="${sidebar.muc-server-props.descr}"/>
+
+            <!-- History Settings -->
+            <item id="muc-history" name="${sidebar.muc-history}"
+                  url="muc-history-settings.jsp"
+                  description="${sidebar.muc-history.descr}"/>
+
+            <!-- Administrators -->
+            <item id="muc-sysadmin" name="${sidebar.muc-sysadmin}"
+                  url="muc-sysadmins.jsp"
+                  description="${sidebar.muc-sysadmin.descr}"/>
+
+            <!-- Room Creation Permissions -->
+            <item id="muc-perms" name="${sidebar.muc-perms}"
+                  url="muc-create-permission.jsp"
+                  description="${sidebar.muc-perms.descr}"/>
+
+            <!-- Other Settings -->
+            <item id="muc-tasks" name="${sidebar.muc-tasks}"
+                  url="muc-tasks.jsp"
+                  description="${sidebar.muc-tasks.descr}"/>
         </sidebar>
     </tab>
 

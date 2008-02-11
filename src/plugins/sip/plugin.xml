@@ -5,11 +5,11 @@
     <name>SIP Phone Plugin</name>
     <description>Provides support for SIP account management</description>
     <author>Ignite Realtime</author>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <date>11/13/2007</date>
     <databaseKey>sip</databaseKey>
     <databaseVersion>1</databaseVersion>
-    <minServerVersion>3.3.0</minServerVersion>
+    <minServerVersion>3.5.0</minServerVersion>
     
     <adminconsole>
         <tab id="tab-server">

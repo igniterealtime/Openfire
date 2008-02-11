@@ -16,6 +16,7 @@ import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
@@ -135,7 +136,7 @@ public class IQBindHandler extends IQHandler {
         // Send the response directly since a route does not exist at this point.
         session.process(reply);
         // After the client has been informed, inform all listeners as well.
-        SessionEventDispatcher.dispatchEvent(session, EventType.resource_bound);
+        SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
         return null;
     }
 

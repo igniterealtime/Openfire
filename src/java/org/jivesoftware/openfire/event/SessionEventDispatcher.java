@@ -74,7 +74,10 @@ public class SessionEventDispatcher {
                       listener.anonymousSessionDestroyed(session);
                       break;
                     }
-                   
+                    case resource_bound: {
+                      listener.resourceBound(session);
+                      break;
+                    }
                     default:
                         break;
                 }
@@ -109,6 +112,10 @@ public class SessionEventDispatcher {
          * A anonymous session was destroyed
          */
         anonymous_session_destroyed,
-                
+
+        /**
+         * A resource was bound to the session.
+         */
+        resource_bound
     }
 }

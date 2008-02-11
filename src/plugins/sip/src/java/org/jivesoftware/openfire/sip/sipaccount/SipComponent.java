@@ -195,4 +195,8 @@ public class SipComponent implements Component, SessionEventListener {
         }
 
     }
+
+    public void resourceBound(Session session) {
+    	// Do nothing.
+    }
 }

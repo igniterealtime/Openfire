@@ -134,6 +134,8 @@ public class IQBindHandler extends IQHandler {
         child.addElement("jid").setText(session.getAddress().toString());
         // Send the response directly since a route does not exist at this point.
         session.process(reply);
+        // After the client has been informed, inform all listeners as well.
+        SessionEventDispatcher.dispatchEvent(session, EventType.resource_bound);
         return null;
     }
 

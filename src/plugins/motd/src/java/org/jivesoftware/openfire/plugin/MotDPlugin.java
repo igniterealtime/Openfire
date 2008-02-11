@@ -92,6 +92,10 @@ public class MotDPlugin implements Plugin {
          //ignore
       }
 
+      public void resourceBound(Session session) {
+         // Do nothing.
+      }
+
       public void anonymousSessionCreated(Session session) {
          //ignore
       }

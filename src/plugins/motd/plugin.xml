@@ -5,9 +5,9 @@
    <name>MotD (Message of the Day)</name>
    <description>Allows admins to have a message sent to users each time they log in.</description>
    <author>Ryan Graham</author>
-   <version>1.0.3</version>
+   <version>1.0.4</version>
    <date>12/27/2007</date>
-   <minServerVersion>3.4.0</minServerVersion>
+   <minServerVersion>3.5.0</minServerVersion>
 
    <adminconsole>
       <tab id="tab-users">

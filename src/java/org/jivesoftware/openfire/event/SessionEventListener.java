@@ -46,4 +46,11 @@ public interface SessionEventListener {
      * @param session the authenticated session of an anonymous user.
      */
     public void anonymousSessionDestroyed(Session session);
+
+    /**
+     * A session has finished resource binding.
+     *
+     * @param session the session on which resource binding was performed.
+     */
+    public void resourceBound(Session session);
 }

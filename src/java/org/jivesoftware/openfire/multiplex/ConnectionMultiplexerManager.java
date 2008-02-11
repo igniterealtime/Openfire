@@ -283,6 +283,10 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         removeSession(session);
     }
 
+    public void resourceBound(Session session) {
+    	// Do nothing.
+    }
+
     private void removeSession(Session session) {
         // Remove trace indicating that a connection manager is hosting a connection
         String streamID = session.getStreamID().getID();

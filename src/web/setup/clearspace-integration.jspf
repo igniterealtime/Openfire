@@ -1,0 +1,189 @@
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%
+    String host;
+    int port = 8080;
+    String sharedSecret;
+
+    // Get parameters
+    boolean save = request.getParameter("save") != null;
+    boolean test = request.getParameter("test") != null;
+
+    ClearspaceManager manager = ClearspaceManager.getInstance();
+    Map<String, String> errors = new HashMap<String, String>();
+
+    if (save || test) {
+        host = ParamUtils.getParameter(request, "host");
+        if (host == null) {
+            errors.put("host", LocaleUtils.getLocalizedString("setup.clearspace.service.host_error"));
+        }
+        port = ParamUtils.getIntParameter(request, "port", port);
+        if (port <= 0) {
+            errors.put("port", LocaleUtils.getLocalizedString("setup.clearspace.service.port_error"));
+        }
+        sharedSecret = ParamUtils.getParameter(request, "sharedSecret");
+
+        if (errors.isEmpty()) {
+            // Store settings in a map and keep it in the session
+            Map<String, String> settings = new HashMap<String, String>();
+            settings.put("clearspace.host", host);
+            settings.put("clearspace.port", Integer.toString(port));
+            settings.put("clearspace.sharedSecret", sharedSecret);
+            session.setAttribute("clearspaceSettings", settings);
+
+            if (save) {
+                // Save settings and redirect
+                manager.setHost(host);
+                manager.setPort(port);
+                manager.setSharedSecret(sharedSecret);
+
+                // Enable the Clearspace user, auth, group, and vcard providers.
+                JiveGlobals.setXMLProperty("provider.user.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceUserProvider");
+                JiveGlobals.setXMLProperty("provider.auth.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider");
+                JiveGlobals.setXMLProperty("provider.group.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceGroupProvider");
+                JiveGlobals.setXMLProperty("provider.vcard.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceVCardProvider");
+
+                // Redirect to next step.
+                response.sendRedirect(nextPage);
+                return;
+            }
+        }
+    } else {
+        // See if there are already values for the variables defined.
+        host = manager.getHost();
+        port = manager.getPort();
+        sharedSecret = manager.getSharedSecret();
+    }
+%>
+<html>
+<head>
+    <title><fmt:message key="setup.clearspace.title" /></title>
+    <% for (Map.Entry<String, String> entry : meta.entrySet()) { %>
+    <meta name="<%= entry.getKey()%>" content="<%= entry.getValue()%>"/>
+    <% } %>
+</head>
+<body>
+
+    <% if (test && errors.isEmpty()) { %>
+
+        <a href="<%= testPage%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+        <script type="text/javascript">
+            function loadMsg() {
+                var lb = new lightbox(document.getElementById('lbmessage'));
+                lb.activate();
+            }
+            setTimeout('loadMsg()', 250);
+        </script>
+
+    <% } %>
+
+    <% if (initialSetup) { %>
+    <h1><fmt:message key="setup.clearspace.profile" />: <span><fmt:message key="setup.clearspace.service.integration" /></span></h1>
+    <% } %>
+
+    <div id="jive-contentBox_stepbar">
+        <span class="jive-stepbar_step"><strong><fmt:message key="setup.clearspace.service.connection_settings" /></strong></span>
+    </div>
+
+    <div class="jive-contentBox jive-contentBox_for-stepbar">
+    <h2><span><fmt:message key="setup.clearspace.service.connection_settings" /></span></h2>
+
+    <p><fmt:message key="setup.clearspace.service.description" /></p>
+
+    <%  if (errors.size() > 0) { %>
+
+    <div class="error">
+        <% for (String error:errors.values()) { %>
+            <%= error%><br/>
+        <% } %>
+    </div>
+
+    <%  } %>
+
+    <form action="<%= currentPage%>" method="post">
+		<!-- BEGIN jive-contentBox_bluebox -->
+		<div class="jive-contentBox_bluebox">
+			<table border="0" cellpadding="0" cellspacing="2" width="100%">
+			<tr>
+			    <td colspan="4"><strong><fmt:message key="setup.clearspace.service" /></strong></td>
+			</tr>
+            <tr>
+			    <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.clearspace.service.host" />:</td>
+                <td width="1%">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                        <td width="1%" nowrap="nowrap">
+                            <input type="text" name="host" id="jiveCLEARSPACEhost" size="22" maxlength="50" value="<%= host!=null?host:"" %>">
+                        </td>
+                        <td width="99%">
+                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+                <td align="right" width="1%" nowrap="nowrap">&nbsp;&nbsp; <fmt:message key="setup.clearspace.service.port" />:</td>
+                <td>
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                        <td width="1%" nowrap="nowrap">
+                            <input type="text" name="port" id="jiveCLEARSPACEport" size="5" maxlength="5" value="<%= port %>">
+                        </td>
+                        <td width="99%">
+                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+			</tr>
+			<tr>
+                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.clearspace.service.secret" />:</td>
+                <td colspan="3">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                        <td width="1%" nowrap="nowrap">
+                            <input type="password" name="sharedSecret" id="jiveCLEARSPACEsecret" size="22" maxlength="30" value="<%= sharedSecret!=null?sharedSecret:""%>">
+                        </td>
+                        <td width="99%">
+                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.secret_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+			</tr>
+			</table>
+		</div>
+		<!-- END jive-contentBox_bluebox -->
+
+        <!-- BEGIN jive-buttons -->
+		<div class="jive-buttons">
+
+			<!-- BEGIN right-aligned buttons -->
+			<div align="right">
+
+                <input type="Submit" name="test" value="<fmt:message key="setup.clearspace.test" />" id="jive-setup-test" border="0">
+
+                <input type="Submit" name="save" value="<fmt:message key="setup.clearspace.continue" />" id="jive-setup-save" border="0">
+			</div>
+			<!-- END right-aligned buttons -->
+
+		</div>
+		<!-- END jive-buttons -->
+
+	</form>
+    </div>
+    <!-- END jive-contentBox -->
+
+
+
+</body>
+</html>

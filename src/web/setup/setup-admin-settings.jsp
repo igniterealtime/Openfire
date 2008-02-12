@@ -47,7 +47,7 @@
     boolean doTest = request.getParameter("test") != null;
 
     boolean ldap = "true".equals(request.getParameter("ldap"));
-
+    boolean clearspace = "true".equals(request.getParameter("clearspace"));
 
     boolean addAdmin = request.getParameter("addAdministrator") != null;
     boolean deleteAdmins = request.getParameter("deleteAdmins") != null;
@@ -56,6 +56,15 @@
     // Handle a skip request
     if (doSkip) {
         // assume the admin account is setup, so we're done:
+        setSetupFinished(session);
+        // redirect
+        response.sendRedirect("setup-finished.jsp");
+        return;
+    }
+
+    // Handle clearspace completion
+    if (clearspace) {
+        // admin accounts are pulled from Clearspace, so we're done:
         setSetupFinished(session);
         // redirect
         response.sendRedirect("setup-finished.jsp");

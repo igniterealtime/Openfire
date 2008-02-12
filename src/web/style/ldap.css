@@ -4,83 +4,83 @@
 	display: block;
 	margin: 5px 0 0 0;
 	padding: 3px;
-	border: 1px solid #aec2d6;
-	background-color: #eaf1f8;
-	color: #09345b;
+	border: 1px solid #bbbbbb;
+	background-color: #eeeeee;
+	color: #000000;
 	font-size: 8pt;
-	}
+}
 #jive-contentBox_stepbar span {
 	margin-right: 32px;
-	}
+}
 #jive-contentBox_stepbar span strong {
-	color: #09345b;
-	}
+	color: #000000;
+}
 #jive-contentBox_stepbar span em {
 	color: #666;
 	font-style: normal;
-	}
+}
 /* contentBox style, used with 'stepbar' above (seen on the LDAP screens) */
 .jive-contentBox_for-stepbar {
 	margin: 0 0 20px 0;
 	border-top: 0;
 	-moz-border-radius: 0 0 4px 4px;
-	}
+}
 .jive-contentBox_for-stepbar h2 {
 	font-size: 14pt;
-	color: #396b9c;
-	}
+	color: #555555;
+}
 .jive-contentBox_for-stepbar h2 span {
 	font-size: 10pt;
 	color: #000;
-	}
+}
 
 /* blue div container (seen on the LDAP screens) */
 .jive-contentBox_bluebox {
 	display: block;
 	position: relative;
-	border: 1px solid #dcdcdc;
-	background-color: #eaeff4;
+	border: 1px solid #bbbbbb;
+	background-color: #eeeeee;
 	-moz-border-radius: 3px;
 	margin: 0 0 12px 0;
 	padding: 12px;
-	}
+}
 .jive-contentBox_bluebox strong {
 	display: block;
 	position: relative;
-	color: #09345b;
+	color: #000000;
 	padding-bottom: 3px;
-	}
+}
 
 /* grey div container (seen on the LDAP screens) */
 .jive-contentBox_greybox {
 	display: block;
 	position: relative;
-	border: 1px solid #dcdcdc;
-	background-color: #ececec;
+	border: 1px solid #bbbbbb;
+	background-color: #eeeeee;
 	-moz-border-radius: 3px;
 	margin: 0 0 12px 0;
 	padding: 12px;
-	}
+}
 .jive-contentBox_greybox strong {
 	display: block;
 	position: relative;
-	color: #09345b;
+	color: #555555;
 	padding-bottom: 3px;
-	}
+}
 
 /* form elements for LDAP */
 .jive-contentBox td select {
 	z-index: 10;
 	float: left;
-	}
+}
 .jive-contentBox td input {
 	float: left;
-	}
+}
 .jive-contentBox td select#jiveLDAPserverType,
 .jive-contentBox td input#jiveLDAPbasedn,
 .jive-contentBox td input#jiveLDAPadmindn {
 	width: 320px;
-	}
+}
 .jive-contentBox td input#jiveLDAPhost,
 .jive-contentBox td input#jiveLDAPadminpwd,
 .jive-contentBox td input#jiveLDAPusername,
@@ -89,14 +89,14 @@
 .jive-contentBox td input#jiveLDAPgroupdesc,
 .jive-contentBox td input#jiveLDAPgroupsearchfilter{
 	width: 160px;
-	}
+}
 .jive-contentBox td input#jiveLDAPsearchfields,
 .jive-contentBox td input#jiveLDAPsearchfilter {
 	width: 220px;
-	}
+}
 .jive-contentBox td label {
 	margin-right: 5px;
-	}
+}
 
 
 /* button to toggle the advanced settings panel */
@@ -106,75 +106,75 @@
 	width: auto;
 	clear: both;
 	margin-top: 0;
-	}
+}
 .jiveAdvancedButton a {
 	padding: 2px 0 2px 14px;
 	margin: 0 0 5px 0;
 	background: url('../images/twisty_closed_9x9.gif') no-repeat left;
 	background-position: 1px;
-	color: #34679a;
-	}
+	color: #555555;
+}
 a.jiveAdvancedButtonOn {
 	background: transparent url('../images/twisty_opened_9x9.gif') no-repeat left;
 	background-position: 1px;
-	}
+}
 .jiveAdvancedButtonTopPad {
 	margin-top: 7px;
-	}
+}
 /* advanced settings panel (for Connection Settings) */
 .jiveadvancedPanelcs {
 	display: block;
 	position: relative;
 	clear: both;
 	width: 100%;
-	background: #ececec;
-	border: 1px solid #dcdcdc;
+	background: #eeeeee;
+	border: 1px solid #bbbbbb;
 	margin: 5px 0 10px 0;
 	padding: 0;
 	overflow: hidden;
 	-moz-border-radius: 4px;
-	}
+}
 .jiveadvancedPanelcs div {
 	margin: 12px;
-	}
+}
 .jiveadvancedPanelcs div table {
 	background-color: #fff;
 	border: 1px solid #ccc;
-	}
+}
 .jiveadvancedPanelcs div table th,
 .jiveadvancedPanelcs div table td {
 	font-size: 11px;
 	padding: 3px 5px 3px 5px;
-	}
+}
 .jiveadvancedPanelcs div table th,
 .jive-vcardTable th {
-	color: #fff;
+	color: #000;
 	font-weight: bold;
-	background-color: #82a1bc;
-	}
+	background-color: #dddddd;
+}
 .jiveadvancedPanelcs div table td.jive-advancedLabel {
-	color: #09345b;
+	color: #000000;
 	font-weight: bold;
-	background-color: #eaeff4;
+	background-color: #dddddd;
 	text-align: right;
-	}
+}
 .jiveadvancedPanelcs div table td.jive-advancedDesc {
 	color: #333;
-	}
+}
 .jiveadvancedPanelcs div table td.jive-advancedCenter {
 	text-align: center;
-	}
+}
 .jiveadvancedPanelcs div table td input {
 	float: none;
-	}
+}
 .jiveadvancedPanelcs div table td.jive-advancedBorderBottom,
 .jive-vcardTable td.jive-vardBorderBottom {
 	border-bottom: 1px solid #e8e8e8;
-	}
+}
 .jiveadvancedPanelcs div table td.jive-advancedBorderRight,
 .jive-vcardTable td.jive-vardBorderRight {
 	border-right: 1px solid #e8e8e8;
-	}
+}
 .jiveadvancedPanelu {
 	margin-top: 8px;
 	width: 97%;
@@ -182,10 +182,10 @@ a.jiveAdvancedButtonOn {
 	border: 1px solid #dcdcdc;
 	-moz-border-radius: 3px;
 	padding: 8px;
-	}
+}
 .jiveadvancedPanelu td {
 	white-space: nowrap;
-	}
+}
 
 
 
@@ -193,40 +193,40 @@ a.jiveAdvancedButtonOn {
 	width: 90%;
 	background-color: #fff;
 	border: 1px solid #ccc;
-	}
+}
 html>body .jive-vcardTable {
 	width: 100%;
-	}
+}
 .jive-vcardTable th,
 .jive-vcardTable td {
 	font-size: 11px;
 	padding: 2px 5px 2px 5px;
-	}
+}
 .jive-vcardTable th {
 	text-align: left;
-	}
+}
 .jive-vcardTable td.jive-vcardTable-label,
 .jive-vcardTable td.jive-vcardTable-label strong {
 	color: #333;
-	}
+}
 .jive-vcardTable td.jive-vcardTable-value input {
 	font-size: 10px;
 	width: 230px;
-	}
+}
 
 /* language selection specific styles */
 #jive-setup-language {
 	padding: 0 0 10px 18px;
-	}
+}
 #jive-setup-language p {
 	line-height: 180%;
-	}
+}
 
 
 /* form buttons throughout setup process */
 .jive-buttons {
 	padding-top: 15px;
-	}
+}
 .jive-contentBox input#jive-setup-save {
 	padding: 2px 5px 2px 5px;
 	margin: 0;
@@ -236,7 +236,7 @@ html>body .jive-vcardTable {
 	color: #fff;
 	border: 1px solid #7c7c7c;
 	background: #d6892c url(../images/setup_btn_bg-orange.gif) repeat-x;
-	}
+}
 .jive-contentBox input#jive-setup-skip,
 .jive-contentBox input#jive-setup-back {
 	padding: 2px 5px 2px 5px;
@@ -247,7 +247,7 @@ html>body .jive-vcardTable {
 	color: #fff;
 	border: 1px solid #7c7c7c;
 	background: #8c8c8c url(../images/setup_btn_bg-grey.gif) repeat-x;
-	}
+}
 .jive-contentBox input#jive-setup-test {
 	padding: 2px 5px 2px 5px;
 	margin: 0 0 0 0;
@@ -257,13 +257,13 @@ html>body .jive-vcardTable {
 	color: #fff;
 	border: 1px solid #7c7c7c;
 	background: #8c8c8c url(../images/setup_btn_bg-grey.gif) repeat-x;
-	}
+}
 .jive-contentBox button#jive-setup-test img {
 	vertical-align: text-top;
 	margin: 0;
 	padding: 0;
 	border: 0;
-	}
+}
 .jive-contentBox a#jive-setup-test2 {
 	padding: 3px 5px 3px 5px;
 	margin: 0 10px 0 0;
@@ -274,18 +274,18 @@ html>body .jive-vcardTable {
 	border: 1px solid #7c7c7c;
 	text-decoration: none;
 	background: #8c8c8c url(../images/setup_btn_bg-grey.gif) repeat-x;
-	}
+}
 .jive-contentBox a#jive-setup-test2 img {
 	vertical-align: text-top;
 	margin: 0;
 	padding: 0;
 	border: 0;
-	}
+}
 .jive-description {
 	display: block;
 	clear: both;
 	font-size: 11px;
-	}
+}
 .error {
     color : #900;
     font-weight : bold;
@@ -310,10 +310,10 @@ html>body .jive-vcardTable {
 	font-weight: bold;
 	color: #fff;
 	border: 1px solid #0c2d4c;
-	background: #255480 url(../images/setup_btn_bg-bigblue.gif) repeat-x;
+	background: #D76C0D url(../images/setup_btn_bg-orange.gif) repeat-x;
 	text-decoration: none;
 	-moz-border-radius: 4px;
-	}
+}
 
 
 
@@ -328,7 +328,7 @@ html>body .jive-vcardTable {
 	height: 17px;
     margin: 3px 0 0 5px;
 	background: transparent url(../images/setup_helpicon.gif) no-repeat;
-    }
+}
 div.jiveTooltip {
 	position: absolute;
 	width: 330px;
@@ -341,7 +341,7 @@ div.jiveTooltip {
 	filter: progid:DXImageTransform.Microsoft.Alpha(opacity=92);
 	-moz-opacity: .92;
 	-khtml-opacity: .92;
-	}
+}
 div.jiveTooltip .contents {
 	font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size: 11px;
@@ -351,7 +351,7 @@ div.jiveTooltip .contents {
 	filter: progid:DXImageTransform.Microsoft.Alpha(opacity=100);
 	-moz-opacity: 1;
 	-khtml-opacity: 1;
-	}
+}
 
 
 
@@ -370,14 +370,14 @@ div.jiveTooltip .contents {
 	overflow: hidden;
 	z-index: 9997;
 	-moz-border-radius: 6px;
-	}
+}
 .jive-testPanel-content {
 	display: block;
 	float: left;
 	padding: 20px;
 	font-size: 8pt;
 	z-index: 9999;
-	}
+}
 .jive-testPanel-close a,
 .jive-testPanel-close a:visited {
 	float: right;
@@ -389,70 +389,70 @@ div.jiveTooltip .contents {
 	background-position: 4;
 	border: 1px solid #ccc;
 	z-index: 9999;
-	}
+}
 .jive-testPanel-close a:hover {
 	background-color: #e9e8d9;
-	}
+}
 .jive-testPanel-content h2 {
 	font-size: 14pt;
-	color: #396b9c;
+	color: #555555;
 	margin: 0 0 10px 0;
 	padding: 0;
-	}
+}
 .jive-testPanel-content h2 span {
 	font-size: 10pt;
 	color: #000;
-	}
+}
 .jive-testPanel-content h4 {
 	font-size: 12pt;
 	margin: 0 0 10px 0;
 	padding: 0;
-	}
+}
 .jive-testPanel-content h4.jive-testSuccess {
 	color: #1e7100;
-	}
+}
 .jive-testPanel-content h4.jive-testError {
 	color: #890000;
-	}
+}
 .jive-testpanel-vcard {
 	display: block;
 	float: left;
 	width: 682px;
-	border: 1px solid #d8d7c6;
+	border: 1px solid #bbbbbb;
 	padding: 4px;
 	background-color: #fff;
-	}
+}
 .jive-testTable-vcard {
 	float: left;
-	}
+}
 .jive-testpanel-vcard-header {
 	border: 1px solid #dddddd;
 	background-color: #eaeaea;
 	font-weight: bold;
 	padding: 1px 2px 1px 4px;
 	font-size: 8pt;
-	}
+}
 .jive-testpanel-vcard-label {
 	text-align: right;
 	padding: 1px 2px 1px 6px;
 	color: #666;
 	font-size: 8pt;
-	}
+}
 .jive-testpanel-vcard-value {
 	text-align: left;
 	padding: 1px 8px 1px 2px;
 	font-size: 8pt;
-	}
+}
 .jive-testpanel-vcard-value a {
-	color: #34679a;
-	}
+	color: #555555;
+}
 .jive-testpanel-vcard-value strong {
 	color: #890000;
-	}
+}
 .jive-testpanel-vcard-next {
 	text-align: right;
 	padding-top: 12px;
-	}
+}
 .jive-testpanel-vcard-next a {
 	display: block;
 	float: right;
@@ -460,6 +460,6 @@ div.jiveTooltip .contents {
 	padding-right: 18px;
 	margin-right: 4px;
 	background: transparent url(../images/setup_nextprofile.gif) no-repeat right;
-	color: #34679a;
+	color: #555555;
 	text-decoration: none;
-	}
+}

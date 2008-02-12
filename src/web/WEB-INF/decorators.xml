@@ -12,6 +12,7 @@
         <pattern>/setup/setup-ldap-server_test.jsp*</pattern>
         <pattern>/setup/setup-ldap-user_test.jsp*</pattern>
         <pattern>/setup/setup-ldap-group_test.jsp*</pattern>
+        <pattern>/setup/setup-clearspace-integration_test.jsp*</pattern>
         <pattern>/setup/setup-admin-settings_test.jsp*</pattern>
         <pattern>/login.jsp*</pattern>
         <pattern>/plugin-icon.jsp*</pattern>

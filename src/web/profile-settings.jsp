@@ -1,5 +1,6 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
 <%--
   -	$RCSfile$
   -	$Revision: $
@@ -16,10 +17,14 @@
 
 <%
     // Get parameters
-    boolean edit = request.getParameter("edit") != null;
-    if (edit) {
+    if (request.getParameter("ldapedit") != null) {
         // Redirect to first step.
         response.sendRedirect("ldap-server.jsp");
+        return;
+    }
+    else if (request.getParameter("clearspaceedit") != null) {
+        // Redirect to clearspace setup.
+        response.sendRedirect("clearspace-integration.jsp");
         return;
     }
 %>
@@ -33,18 +38,8 @@
     <%
         boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
                 JiveGlobals.getXMLProperty("provider.auth.className"));
-        StringBuilder sb = new StringBuilder();
-        for (String host : LdapManager.getInstance().getHosts()) {
-            sb.append(host).append(", ");
-        }
-        String hosts = sb.toString();
-        if (hosts.trim().length() > 0) {
-            hosts = hosts.substring(0, hosts.length()-2);
-        }
-        int port = LdapManager.getInstance().getPort();
-        String baseDN = LdapManager.getInstance().getBaseDN();
-        String adminDN = LdapManager.getInstance().getAdminDN();
-
+        boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
+                JiveGlobals.getXMLProperty("provider.auth.className"));
     %>
     <p>
     <fmt:message key="profile-settings.info"/>
@@ -59,8 +54,8 @@
             <tbody>
                 <tr>
                     <td width="1%" nowrap>
-                        <input type="radio" <%= isLDAP ? "disabled" : "readonly"%>
-                        <%= (isLDAP ? "" : "checked") %>>
+                        <input type="radio" <%= (isLDAP || isCLEARSPACE) ? "disabled" : "readonly"%>
+                        <%= ((isLDAP || isCLEARSPACE) ? "" : "checked") %>>
                     </td>
                     <td width="99%">
                         <b><fmt:message key="setup.profile.default" /></b> - <fmt:message key="setup.profile.default_description" />
@@ -76,6 +71,19 @@
                     </td>
                 </tr>
                 <% if (isLDAP) { %>
+                <%
+                    StringBuilder sb = new StringBuilder();
+                    for (String host : LdapManager.getInstance().getHosts()) {
+                        sb.append(host).append(", ");
+                    }
+                    String hosts = sb.toString();
+                    if (hosts.trim().length() > 0) {
+                        hosts = hosts.substring(0, hosts.length()-2);
+                    }
+                    int port = LdapManager.getInstance().getPort();
+                    String baseDN = LdapManager.getInstance().getBaseDN();
+                    String adminDN = LdapManager.getInstance().getAdminDN();
+                %>
                 <tr>
                     <td width="1%" nowrap>
                         &nbsp;
@@ -125,10 +133,60 @@
                     </td>
                     <tr>
                         <td colspan="2" align="center">
-                            <input type="submit" name="edit" value="<fmt:message key="server.properties.edit" />">
+                            <input type="submit" name="ldapedit" value="<fmt:message key="server.properties.edit" />">
                         </td>
                     </tr>
+                <% } %>
+                <tr>
+                    <td width="1%" nowrap>
+                        <input type="radio" <%= isCLEARSPACE ? "readonly" : "disabled"%>
+                        <%= (isCLEARSPACE ? "checked" : "") %>>
+                    </td>
+                    <td width="99%">
+                        <b><fmt:message key="setup.profile.clearspace" /></b> - <fmt:message key="setup.profile.clearspace_description" />
+                    </td>
                 </tr>
+                <% if (isCLEARSPACE) { %>
+                <%
+                    String host = ClearspaceManager.getInstance().getHost();
+                    int port = ClearspaceManager.getInstance().getPort();
+                %>
+                <tr>
+                    <td width="1%" nowrap>
+                        &nbsp;
+                    </td>
+                    <td width="99%">
+                        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="98%" align="right">
+                        <thead>
+                            <tr>
+                                <th colspan="2"><fmt:message key="profile-settings.clearspace_mapping_info" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="c1">
+                                    <fmt:message key="setup.clearspace.service.host" />:
+                                </td>
+                                <td class="c2">
+                                    <%= host %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="c1">
+                                    <fmt:message key="setup.clearspace.service.port" />:
+                                </td>
+                                <td class="c2">
+                                    <%= port %>
+                                </td>
+                            </tr>
+                        </tbody>
+                        </table>
+                    </td>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input type="submit" name="clearspaceedit" value="<fmt:message key="server.properties.edit" />">
+                        </td>
+                    </tr>
                 <% } %>
             </tbody>
             </table>

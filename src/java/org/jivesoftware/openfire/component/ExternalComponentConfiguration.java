@@ -16,8 +16,10 @@ public class ExternalComponentConfiguration {
 
     private String secret;
 
-    public ExternalComponentConfiguration(String subdomain) {
+    public ExternalComponentConfiguration(String subdomain, Permission permission, String secret) {
         this.subdomain = subdomain;
+        this.permission = permission;
+        this.secret = secret;
     }
 
     public String getSubdomain() {
@@ -28,7 +30,7 @@ public class ExternalComponentConfiguration {
         return permission;
     }
 
-    public void setPermission(Permission permission) {
+    void setPermission(Permission permission) {
         this.permission = permission;
     }
 
@@ -36,7 +38,7 @@ public class ExternalComponentConfiguration {
         return secret;
     }
 
-    public void setSecret(String secret) {
+    void setSecret(String secret) {
         this.secret = secret;
     }
 

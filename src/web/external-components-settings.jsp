@@ -44,10 +44,9 @@
     boolean allowSuccess = false;
     boolean blockSuccess = false;
     boolean deleteSuccess = false;
+    boolean operationFailed = false;
 
     String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-    ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-
 
     // Update the session kick policy if requested
     Map<String, String> errors = new HashMap<String, String>();
@@ -63,26 +62,41 @@
         }
         // If no errors, continue:
         if (errors.isEmpty()) {
-            if (!componentEnabled) {
-                connectionManager.enableComponentListener(false);
+            try {
+                if (!componentEnabled) {
+                    ExternalComponentManager.setServiceEnabled(false);
+                }
+                else {
+                    ExternalComponentManager.setServiceEnabled(true);
+                    ExternalComponentManager.setServicePort(port);
+                    ExternalComponentManager.setDefaultSecret(defaultSecret);
+                }
+                updateSucess = true;
             }
-            else {
-                connectionManager.enableComponentListener(true);
-                connectionManager.setComponentListenerPort(port);
-                ExternalComponentManager.setDefaultSecret(defaultSecret);
+            catch (ModificationNotAllowedException e) {
+                operationFailed = true;
             }
-            updateSucess = true;
         }
     }
 
     if (permissionUpdate) {
-        ExternalComponentManager.setPermissionPolicy(permissionFilter);
-        updateSucess = true;
+        try {
+            ExternalComponentManager.setPermissionPolicy(permissionFilter);
+            updateSucess = true;
+        }
+        catch (ModificationNotAllowedException e) {
+            operationFailed = true;
+        }
     }
 
     if (configToDelete != null && configToDelete.trim().length() != 0) {
-        ExternalComponentManager.deleteConfiguration(configToDelete);
-        deleteSuccess = true;
+        try {
+            ExternalComponentManager.deleteConfiguration(configToDelete);
+            deleteSuccess = true;
+        }
+        catch (ModificationNotAllowedException e) {
+            operationFailed = true;
+        }
     }
 
     if (componentAllowed) {
@@ -97,11 +111,15 @@
         if (errors.isEmpty()) {
             // Remove the hostname if the user is not sending just the subdomain
             subdomain = subdomain.replace("." + serverName, "");
-            ExternalComponentConfiguration configuration = new ExternalComponentConfiguration(subdomain);
-            configuration.setSecret(secret);
-            configuration.setPermission(ExternalComponentConfiguration.Permission.allowed);
-            ExternalComponentManager.allowAccess(configuration);
-            allowSuccess = true;
+            ExternalComponentConfiguration configuration = new ExternalComponentConfiguration(subdomain,
+                    ExternalComponentConfiguration.Permission.allowed, secret);
+            try {
+                ExternalComponentManager.allowAccess(configuration);
+                allowSuccess = true;
+            }
+            catch (ModificationNotAllowedException e) {
+                operationFailed = true;
+            }
         }
     }
 
@@ -114,15 +132,20 @@
         if (errors.isEmpty()) {
             // Remove the hostname if the user is not sending just the subdomain
             subdomain = subdomain.replace("." + serverName, "");
-            ExternalComponentManager.blockAccess(subdomain);
-            blockSuccess = true;
+            try {
+                ExternalComponentManager.blockAccess(subdomain);
+                blockSuccess = true;
+            }
+            catch (ModificationNotAllowedException e) {
+                operationFailed = true;
+            }
         }
     }
 
     // Set page vars
     if (errors.size() == 0) {
-        componentEnabled = connectionManager.isComponentListenerEnabled();
-        port = connectionManager.getComponentListenerPort();
+        componentEnabled = ExternalComponentManager.isServiceEnabled();
+        port = ExternalComponentManager.getServicePort();
         defaultSecret = ExternalComponentManager.getDefaultSecret();
         permissionFilter = ExternalComponentManager.getPermissionPolicy().toString();
         subdomain = "";
@@ -130,7 +153,7 @@
     }
     else {
         if (port == 0) {
-            port = connectionManager.getComponentListenerPort();
+            port = ExternalComponentManager.getServicePort();
         }
         if (defaultSecret == null) {
             defaultSecret = ExternalComponentManager.getDefaultSecret();
@@ -172,6 +195,22 @@
             <% } else if (errors.get("secret") != null) { %>
                 <fmt:message key="component.settings.valid.secret" />
             <% } %>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+    <br>
+
+<%  } else if (operationFailed) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon-label">
+                <fmt:message key="component.settings.modification.denied" />
             </td>
         </tr>
     </tbody>

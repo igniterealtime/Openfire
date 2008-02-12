@@ -13,6 +13,7 @@ package org.jivesoftware.openfire.component;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permission;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.Session;
@@ -24,6 +25,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages the connection permissions for external components. When an external component is
@@ -45,13 +48,52 @@ public class ExternalComponentManager {
         "SELECT subdomain,secret FROM jiveExtComponentConf where permission=?";
 
     /**
+     * List of listeners that will be notified when vCards are created, updated or deleted.
+     */
+    private static List<ExternalComponentManagerListener> listeners =
+            new CopyOnWriteArrayList<ExternalComponentManagerListener>();
+
+    public static void setServiceEnabled(boolean enabled) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.serviceEnabled(enabled);
+        }
+        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
+        connectionManager.enableComponentListener(enabled);
+    }
+
+    public static boolean isServiceEnabled() {
+        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
+        return connectionManager.isComponentListenerEnabled();
+    }
+
+    public static void setServicePort(int port) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.portChanged(port);
+        }
+        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
+        connectionManager.setComponentListenerPort(port);
+    }
+
+    public static int getServicePort() {
+        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
+        return connectionManager.getComponentListenerPort();
+    }
+
+    /**
      * Allows an external component to connect to the local server with the specified configuration.
      *
      * @param configuration the configuration for the external component.
+     * @throws Exception if the operation was denied.
      */
-    public static void allowAccess(ExternalComponentConfiguration configuration) {
+    public static void allowAccess(ExternalComponentConfiguration configuration) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.componentAllowed(configuration.getSubdomain());
+        }
         // Remove any previous configuration for this external component
-        deleteConfiguration(configuration.getSubdomain());
+        deleteConfigurationFromDB(configuration.getSubdomain());
         // Update the database with the new granted permission and configuration
         configuration.setPermission(Permission.allowed);
         addConfiguration(configuration);
@@ -62,13 +104,17 @@ public class ExternalComponentManager {
      * connected when the permission was revoked then the connection of the entity will be closed.
      *
      * @param subdomain the subdomain of the external component that is not allowed to connect.
+     * @throws Exception if the operation was denied.
      */
-    public static void blockAccess(String subdomain) {
+    public static void blockAccess(String subdomain) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.componentBlocked(subdomain);
+        }
         // Remove any previous configuration for this external component
-        deleteConfiguration(subdomain);
+        deleteConfigurationFromDB(subdomain);
         // Update the database with the new revoked permission
-        ExternalComponentConfiguration config = new ExternalComponentConfiguration(subdomain);
-        config.setPermission(Permission.blocked);
+        ExternalComponentConfiguration config = new ExternalComponentConfiguration(subdomain, Permission.blocked, null);
         addConfiguration(config);
         // Check if the component was connected and proceed to close the connection
         String domain = subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
@@ -97,21 +143,11 @@ public class ExternalComponentManager {
 
         if (PermissionPolicy.blacklist == getPermissionPolicy()) {
             // Anyone can access except those entities listed in the blacklist
-            if (Permission.blocked == permission) {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return Permission.blocked != permission;
         }
         else {
             // Access is limited to those present in the whitelist
-            if (Permission.allowed == permission) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return Permission.allowed == permission;
         }
     }
 
@@ -137,13 +173,47 @@ public class ExternalComponentManager {
         return getConfigurations(Permission.blocked);
     }
 
+    public static void updateComponentSecret(String subdomain, String secret) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.componentSecretUpdated(subdomain, secret);
+        }
+        ExternalComponentConfiguration configuration = getConfiguration(subdomain);
+        if (configuration != null) {
+            configuration.setPermission(Permission.allowed);
+            configuration.setSecret(secret);
+            // Remove any previous configuration for this external component
+            deleteConfigurationFromDB(subdomain);
+        }
+        else {
+            configuration = new ExternalComponentConfiguration(subdomain, Permission.allowed, secret);
+        }
+        addConfiguration(configuration);
+    }
+
     /**
      * Removes any existing defined permission and configuration for the specified
      * external component.
      *
      * @param subdomain the subdomain of the external component.
+     * @throws Exception if the operation was denied.
      */
-    public static void deleteConfiguration(String subdomain) {
+    public static void deleteConfiguration(String subdomain) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.componentConfigurationDeleted(subdomain);
+        }
+        // Proceed to delete the configuration of the component
+        deleteConfigurationFromDB(subdomain);
+    }
+
+    /**
+     * Removes any existing defined permission and configuration for the specified
+     * external component from the database.
+     *
+     * @param subdomain the subdomain of the external component.
+     */
+    private static void deleteConfigurationFromDB(String subdomain) {
         // Remove the permission for the entity from the database
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
@@ -166,6 +236,8 @@ public class ExternalComponentManager {
 
     /**
      * Adds a new permission for the specified external component.
+     *
+     * @param configuration the new configuration for a component.
      */
     private static void addConfiguration(ExternalComponentConfiguration configuration) {
         // Remove the permission for the entity from the database
@@ -207,9 +279,8 @@ public class ExternalComponentManager {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                configuration = new ExternalComponentConfiguration(subdomain);
-                configuration.setSecret(rs.getString(1));
-                configuration.setPermission(Permission.valueOf(rs.getString(2)));
+                configuration = new ExternalComponentConfiguration(subdomain, Permission.valueOf(rs.getString(2)),
+                        rs.getString(1));
             }
             rs.close();
         }
@@ -238,9 +309,7 @@ public class ExternalComponentManager {
             ResultSet rs = pstmt.executeQuery();
             ExternalComponentConfiguration configuration;
             while (rs.next()) {
-                configuration = new ExternalComponentConfiguration(rs.getString(1));
-                configuration.setSecret(rs.getString(2));
-                configuration.setPermission(permission);
+                configuration = new ExternalComponentConfiguration(rs.getString(1), permission, rs.getString(2));
                 answer.add(configuration);
             }
             rs.close();
@@ -274,8 +343,13 @@ public class ExternalComponentManager {
      *
      * @param defaultSecret the default secret key to use for those external components that
      *         don't have an individual configuration.
+     * @throws Exception if the operation was denied.
      */
-    public static void setDefaultSecret(String defaultSecret) {
+    public static void setDefaultSecret(String defaultSecret) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.defaultSecretChanged(defaultSecret);
+        }
         JiveGlobals.setProperty("xmpp.component.defaultSecret", defaultSecret);
     }
 
@@ -333,8 +407,13 @@ public class ExternalComponentManager {
      * the server.
      *
      * @param policy the new PermissionPolicy to use.
+     * @throws Exception if the operation was denied.
      */
-    public static void setPermissionPolicy(PermissionPolicy policy) {
+    public static void setPermissionPolicy(PermissionPolicy policy) throws Exception {
+        // Alert listeners about this event
+        for (ExternalComponentManagerListener listener : listeners) {
+            listener.permissionPolicyChanged(policy);
+        }
         JiveGlobals.setProperty("xmpp.component.permission", policy.toString());
         // Check if connected components can remain connected to the server
         for (ComponentSession session : SessionManager.getInstance().getComponentSessions()) {
@@ -355,9 +434,32 @@ public class ExternalComponentManager {
      * the server.
      *
      * @param policy the new policy to use.
+     * @throws Exception if the operation was denied.
      */
-    public static void setPermissionPolicy(String policy) {
+    public static void setPermissionPolicy(String policy) throws Exception {
         setPermissionPolicy(PermissionPolicy.valueOf(policy));
+    }
+
+    /**
+     * Registers a listener to receive events when a configuration change happens. Listeners
+     * have the chance to deny the operation from happening.
+     *
+     * @param listener the listener.
+     */
+    public static void addListener(ExternalComponentManagerListener listener) {
+        if (listener == null) {
+            throw new NullPointerException();
+        }
+        listeners.add(listener);
+    }
+
+    /**
+     * Unregisters a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    public static void removeListener(ExternalComponentManagerListener listener) {
+        listeners.remove(listener);
     }
 
     public enum PermissionPolicy {

@@ -5,9 +5,9 @@
     <name>Registration</name>
     <description>Performs various actions whenever a new user account is created.</description>
     <author>Ryan Graham</author>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <date>11/2/2007</date>
-    <minServerVersion>3.3.0</minServerVersion>
+    <minServerVersion>3.5.0</minServerVersion>
 	
 	<adminconsole>
 		<tab id="tab-users">

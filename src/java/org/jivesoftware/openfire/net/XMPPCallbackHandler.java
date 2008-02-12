@@ -53,14 +53,14 @@ public class XMPPCallbackHandler implements CallbackHandler {
                 if (realm == null) {
                     realm = ((RealmCallback) callback).getDefaultText();
                 }
-                Log.debug("XMPPCallbackHandler: RealmCallback: " + realm);
+                //Log.debug("XMPPCallbackHandler: RealmCallback: " + realm);
             }
             else if (callback instanceof NameCallback) {
                 name = ((NameCallback) callback).getName();
                 if (name == null) {
                     name = ((NameCallback) callback).getDefaultName();
                 }
-                Log.debug("XMPPCallbackHandler: NameCallback: " + name);
+                //Log.debug("XMPPCallbackHandler: NameCallback: " + name);
             }
             else if (callback instanceof PasswordCallback) {
                 try {
@@ -69,7 +69,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
                     ((PasswordCallback) callback)
                             .setPassword(AuthFactory.getPassword(name).toCharArray());
 
-                    Log.debug("XMPPCallbackHandler: PasswordCallback");
+                    //Log.debug("XMPPCallbackHandler: PasswordCallback");
                 }
                 catch (UserNotFoundException e) {
                     throw new IOException(e.toString());
@@ -80,7 +80,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
             }
             else if (callback instanceof VerifyPasswordCallback) {
-                Log.debug("XMPPCallbackHandler: VerifyPasswordCallback");
+                //Log.debug("XMPPCallbackHandler: VerifyPasswordCallback");
                 VerifyPasswordCallback vpcb = (VerifyPasswordCallback) callback;
                 try {
                     AuthToken at = AuthFactory.authenticate(name, new String(vpcb.getPassword()));
@@ -91,7 +91,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
                 }
             }
             else if (callback instanceof AuthorizeCallback) {
-                Log.debug("XMPPCallbackHandler: AuthorizeCallback");
+                //Log.debug("XMPPCallbackHandler: AuthorizeCallback");
                 AuthorizeCallback authCallback = ((AuthorizeCallback) callback);
                 // Principal that authenticated
                 String principal = authCallback.getAuthenticationID();
@@ -106,26 +106,26 @@ public class XMPPCallbackHandler implements CallbackHandler {
                     //client perhaps made no request, get default username
                     username = AuthorizationManager.map(principal);
                     if (Log.isDebugEnabled()) {
-                        Log.debug("XMPPCallbackHandler: no username requested, using " + username);
+                        //Log.debug("XMPPCallbackHandler: no username requested, using " + username);
                     }
                 }
                 if (AuthorizationManager.authorize(username, principal)) {
                     if (Log.isDebugEnabled()) {
-                        Log.debug("XMPPCallbackHandler: " + principal + " authorized to " + username);
+                        //Log.debug("XMPPCallbackHandler: " + principal + " authorized to " + username);
                     }
                     authCallback.setAuthorized(true);
                     authCallback.setAuthorizedID(username);
                 }
                 else {
                     if (Log.isDebugEnabled()) {
-                        Log.debug("XMPPCallbackHandler: " + principal + " not authorized to " + username);
+                        //Log.debug("XMPPCallbackHandler: " + principal + " not authorized to " + username);
                     }
                     authCallback.setAuthorized(false);
                 }
             }
             else {
                 if (Log.isDebugEnabled()) {
-                    Log.debug("XMPPCallbackHandler: Callback: " + callback.getClass().getSimpleName());
+                    //Log.debug("XMPPCallbackHandler: Callback: " + callback.getClass().getSimpleName());
                 }
                 throw new UnsupportedCallbackException(callback, "Unrecognized Callback");
             }

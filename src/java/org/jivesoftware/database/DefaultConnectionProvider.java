@@ -34,7 +34,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     private String password;
     private int minConnections = 3;
     private int maxConnections = 10;
-    private String testSQL = "select 1";
+    private String testSQL = "";
     private Boolean testBeforeUse = true;
     private Boolean testAfterUse = true;
 
@@ -56,7 +56,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     public DefaultConnectionProvider() {
         loadProperties();
 
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");        
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
     public boolean isPooled() {
@@ -317,6 +317,12 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      * Load properties that already exist from Jive properties.
      */
     private void loadProperties() {
+
+        String defTestSQL = "select 1";
+        if (DbConnectionManager.isDualTableSupported() && DbConnectionManager.doesSelectRequireFrom()) {
+            defTestSQL = defTestSQL + " from dual";
+        }
+
         driver = JiveGlobals.getXMLProperty("database.defaultProvider.driver");
         serverURL = JiveGlobals.getXMLProperty("database.defaultProvider.serverURL");
         username = JiveGlobals.getXMLProperty("database.defaultProvider.username");
@@ -324,7 +330,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         String minCons = JiveGlobals.getXMLProperty("database.defaultProvider.minConnections");
         String maxCons = JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections");
         String conTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout");
-        testSQL = JiveGlobals.getXMLProperty("database.defaultProvider.testSQL", "select 1");
+        testSQL = JiveGlobals.getXMLProperty("database.defaultProvider.testSQL", defTestSQL);
         testBeforeUse = JiveGlobals.getXMLProperty("database.defaultProvider.testBeforeUse", true);
         testAfterUse = JiveGlobals.getXMLProperty("database.defaultProvider.testAfterUse", true);
 

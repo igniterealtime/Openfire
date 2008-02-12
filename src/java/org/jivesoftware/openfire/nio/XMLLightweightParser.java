@@ -11,6 +11,7 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.common.ByteBuffer;
+import org.jivesoftware.util.Log;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -81,7 +82,6 @@ class XMLLightweightParser {
 
     protected boolean insideChildrenTag = false;
 
-    ByteBuffer byteBuffer;
     Charset encoder;
 
     public XMLLightweightParser(String charset) {
@@ -153,6 +153,18 @@ class XMLLightweightParser {
         CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
         char[] buf = charBuffer.array();
         int readByte = charBuffer.remaining();
+
+        // Verify if the last received byte is an incomplete double byte character
+        char lastChar = buf[readByte-1];
+        if (Character.isISOControl(lastChar) || lastChar >= 0xfff0) {
+            Log.debug("Waiting to get complete char: " + String.valueOf(buf));
+            // Rewind the position one place so the last byte stays in the buffer
+            // The missing byte should arrive in the next iteration. Once we have both
+            // of bytes we will have the correct character
+            byteBuffer.position(byteBuffer.position()-1);
+            // Decrease the number of bytes read by one
+            readByte--;
+        }
 
         buffer.append(buf, 0, readByte);
         // Do nothing if the buffer only contains white spaces

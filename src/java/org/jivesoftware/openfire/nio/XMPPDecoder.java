@@ -35,6 +35,6 @@ public class XMPPDecoder extends CumulativeProtocolDecoder {
                 out.write(stanza);
             }
         }
-        return true;
+        return !in.hasRemaining();
     }
 }

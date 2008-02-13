@@ -157,7 +157,6 @@ public class TabsTag extends BodyTagSupport {
                 currentTab = (Element)AdminConsole.getModel().selectSingleNode(
                             "//*[@id='" + pageID + "']/ancestor::tab");
             }
-            Log.debug("\n\n\nXXXFFIND2222XXX\npageID = "+pageID+"\nsubPageID = "+subPageID+"\ncurrentTab = "+currentTab+"\n\n\n");
             for (int i=0; i<tabs.size(); i++) {
                 Element tab = (Element)tabs.get(i);
                 String value = body;

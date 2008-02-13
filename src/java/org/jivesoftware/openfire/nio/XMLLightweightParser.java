@@ -2,7 +2,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -166,6 +166,10 @@ class XMLLightweightParser {
             byteBuffer.position(byteBuffer.position()-1);
             // Decrease the number of bytes read by one
             readByte--;
+            // Just return if nothing was read 
+            if (readByte == 0) {
+                return;
+            }
         }
 
         buffer.append(buf, 0, readByte);

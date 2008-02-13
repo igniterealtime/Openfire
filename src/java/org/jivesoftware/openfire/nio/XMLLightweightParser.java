@@ -156,7 +156,6 @@ class XMLLightweightParser {
 
         // Verify if the last received byte is an incomplete double byte character
         char lastChar = buf[readByte-1];
-        //if (Character.isISOControl(lastChar) || lastChar >= 0xfff0) {
         if (lastChar >= 0xfff0) {
             if (Log.isDebugEnabled()) {
                 Log.debug("Waiting to get complete char: " + String.valueOf(buf));

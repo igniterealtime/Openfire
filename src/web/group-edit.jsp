@@ -584,7 +584,7 @@
         </form>
 
     <script type="text/javascript">
-        document.f.users.focus();
+        document.f.username.focus();
     </script>
 
 	</div>

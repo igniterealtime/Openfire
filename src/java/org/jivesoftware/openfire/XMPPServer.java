@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
@@ -1199,6 +1200,17 @@ public class XMPPServer {
      */
     public UserManager getUserManager() {
         return UserManager.getInstance();
+    }
+
+    /**
+     * Returns the <code>LockOutManager</code> registered with this server.  The
+     * <code>LockOutManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>LockOutManager</code> registered with this server.
+     */
+    public LockOutManager getLockOutManager() {
+        return LockOutManager.getInstance();
     }
 
     /**

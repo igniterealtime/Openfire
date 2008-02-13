@@ -13,6 +13,7 @@ package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -141,11 +142,16 @@ public class AuthFactory {
      * @param username the username.
      * @param password the password.
      * @return an AuthToken token if the username and password are correct.
-     * @throws UnauthorizedException if the username and password do not match any existing user.
+     * @throws UnauthorizedException if the username and password do not match any existing user
+     *      or the account is locked out.
      */
     public static AuthToken authenticate(String username, String password)
             throws UnauthorizedException
     {
+        if (LockOutManager.getInstance().isAccountDisabled(username)) {
+            LockOutManager.getInstance().recordFailedLogin(username);
+            throw new UnauthorizedException();
+        }
         authProvider.authenticate(username, password);
         return new AuthToken(username);
     }
@@ -162,11 +168,15 @@ public class AuthFactory {
      * @return an AuthToken token if the username and digest are correct for the user's
      *      password and given token.
      * @throws UnauthorizedException if the username and password do not match any
-     *      existing user.
+     *      existing user or the account is locked out.
      */
     public static AuthToken authenticate(String username, String token, String digest)
             throws UnauthorizedException
     {
+        if (LockOutManager.getInstance().isAccountDisabled(username)) {
+            LockOutManager.getInstance().recordFailedLogin(username);
+            throw new UnauthorizedException();
+        }
         authProvider.authenticate(username, token, digest);
         return new AuthToken(username);
     }

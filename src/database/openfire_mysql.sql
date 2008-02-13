@@ -20,6 +20,16 @@ CREATE TABLE jiveUserProp (
   PRIMARY KEY (username, name)
 );
 
+CREATE TABLE jiveUserFlag (
+  username              VARCHAR(64)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  startTime             CHAR(15),
+  endTime               CHAR(15),
+  PRIMARY KEY (username, name),
+  INDEX jiveUser_sTime_idx (startTime),
+  INDEX jiveUser_eTime_idx (endTime)
+);
+
 CREATE TABLE jiveGroup (
   groupName             VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
@@ -319,7 +329,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 14);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 15);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)

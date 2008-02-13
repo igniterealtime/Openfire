@@ -19,8 +19,8 @@
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.Collection"%>
-<%@ page import="java.util.Iterator"%>
 <%@ page import="org.jivesoftware.openfire.user.UserManager"%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -29,7 +29,6 @@
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
-    boolean email = request.getParameter("email") != null;
     boolean password = request.getParameter("password") != null;
     String username = ParamUtils.getParameter(request,"username");
 
@@ -60,6 +59,20 @@
     }
 
     PresenceManager presenceManager = webManager.getPresenceManager();
+    Boolean lockedOut = false;
+    Boolean pendingLockOut = false;
+    try {
+        webManager.getLockOutManager().getDisabledStatus(username);
+        if (webManager.getLockOutManager().isAccountDisabled(username)) {
+            lockedOut = true;
+        }
+        else {
+            pendingLockOut = true;
+        }
+    }
+    catch (NotLockedOutException e) {
+        // Nothing, we're good.
+    }
 %>
 
 <html>
@@ -80,9 +93,35 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.properties.created" />
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (request.getParameter("locksuccess") != null) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label">
+        <fmt:message key="user.properties.locksuccess" />
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (request.getParameter("unlocksuccess") != null) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label">
+        <fmt:message key="user.properties.unlocksuccess" />
         </td></tr>
     </tbody>
     </table>
@@ -93,7 +132,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.properties.update" />
         </td></tr>
@@ -139,6 +178,8 @@
         </td>
         <td>
             <%= JID.unescapeNode(user.getUsername()) %>
+            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" align="top" height="16" width="16" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
+            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" align="top" height="16" width="16" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
     </tr>
     <tr>
@@ -220,7 +261,7 @@
         </td>
         <td>
             <%
-                Collection groups = webManager.getGroupManager().getGroups(user);
+                Collection<Group> groups = webManager.getGroupManager().getGroups(user);
                 if (groups.isEmpty()) {
             %>
                 <i>None</i>
@@ -228,13 +269,12 @@
                 }
                 else {
                     int count = 0;
-                    for (Iterator it=groups.iterator();it.hasNext();) {
-                        Group group = (Group) it.next();
+                    for (Group group : groups) {
                         if (count != 0) {
                             out.print(", ");
                         }
                         out.print(group.getName());
-                        count ++;
+                        count++;
                     }
                 }
             %>

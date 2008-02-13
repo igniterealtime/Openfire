@@ -17,6 +17,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
@@ -551,6 +552,12 @@ public class SASLAuthentication {
 
     private static void authenticationSuccessful(LocalSession session, String username,
             byte[] successData) {
+        if (LockOutManager.getInstance().isAccountDisabled(username)) {
+            // Interception!  This person is locked out, fail instead!
+            LockOutManager.getInstance().recordFailedLogin(username);
+            authenticationFailed(session);
+            return;
+        }
         StringBuilder reply = new StringBuilder(80);
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
         if (successData != null) {

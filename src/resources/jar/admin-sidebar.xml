@@ -178,6 +178,11 @@
                           url="user-password.jsp"
                           description="${sidebar.user-password.descr}"/>
 
+                    <!-- Lock Out -->
+                    <item id="user-lockout" name="${sidebar.user-lockout}"
+                          url="user-lockout.jsp"
+                          description="${sidebar.user-lockout.descr}"/>
+
                     <!-- Delete User -->
                     <item id="user-delete" name="${sidebar.user-delete}"
                           url="user-delete.jsp"

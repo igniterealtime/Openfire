@@ -83,6 +83,7 @@ public class CacheFactory {
         cacheNames.put("Remote Users Existence", "remoteUsersCache");
         cacheNames.put("Roster", "username2roster");
         cacheNames.put("User", "userCache");
+        cacheNames.put("Locked Out Accounts", "lockOutCache");
         cacheNames.put("VCard", "vcardCache");
         cacheNames.put("File Transfer Cache", "fileTransfer");
         cacheNames.put("File Transfer", "transferProxy");
@@ -119,6 +120,8 @@ public class CacheFactory {
         cacheProps.put("cache.transferProxy.maxLifetime", 1000 * 60 * 10l);
         cacheProps.put("cache.group.size", 1024 * 1024l);
         cacheProps.put("cache.group.maxLifetime", JiveConstants.MINUTE * 15);
+        cacheProps.put("cache.lockOutCache.size", 1024 * 1024l);
+        cacheProps.put("cache.lockOutCache.maxLifetime", JiveConstants.MINUTE * 15);
         cacheProps.put("cache.groupMeta.size", 512 * 1024l);
         cacheProps.put("cache.groupMeta.maxLifetime", JiveConstants.MINUTE * 15);
         cacheProps.put("cache.javascript.size", 128 * 1024l);

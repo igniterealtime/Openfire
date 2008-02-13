@@ -12,6 +12,7 @@
 package org.jivesoftware.util;
 
 import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.muc.MultiUserChatServer;
@@ -71,6 +72,10 @@ public class WebManager extends WebBean {
 
     public GroupManager getGroupManager() {
         return GroupManager.getInstance();
+    }
+
+    public LockOutManager getLockOutManager() {
+        return LockOutManager.getInstance();
     }
 
     public RosterManager getRosterManager() {

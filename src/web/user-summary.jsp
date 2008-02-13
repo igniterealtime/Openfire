@@ -20,6 +20,7 @@
 <%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
+<%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -71,7 +72,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.summary.deleted" />
         </td></tr>
@@ -96,12 +97,13 @@
 -- <fmt:message key="user.summary.users_per_page" />:
 <select size="1" onchange="location.href='user-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
-    <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+    <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
-        <option value="<%= RANGE_PRESETS[i] %>"
-         <%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+    <option value="<%= aRANGE_PRESETS %>"
+            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
+    </option>
 
-    <%  } %>
+    <% } %>
 
 </select>
 </p>
@@ -125,7 +127,7 @@
 
     <%
         }
-        int i = 0;
+        int i;
         for (i=s; i<numPages && i<num; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
@@ -182,6 +184,20 @@
     int i = start;
     for (User user : users) {
         i++;
+        Boolean lockedOut = false;
+        Boolean pendingLockOut = false;
+        try {
+            webManager.getLockOutManager().getDisabledStatus(user.getUsername());
+            if (webManager.getLockOutManager().isAccountDisabled(user.getUsername())) {
+                lockedOut = true;
+            }
+            else {
+                pendingLockOut = true;
+            }
+        }
+        catch (NotLockedOutException e) {
+            // Nothing, we're good.
+        }
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
         <td width="1%">
@@ -215,6 +231,8 @@
         </td>
         <td width="23%">
             <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
+            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
+            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
         <td width="33%">
             <%= user.getName() %> &nbsp;
@@ -272,7 +290,6 @@
 
     <%
         }
-        i = 0;
         for (i=s; i<numPages && i<num; i++) {
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;

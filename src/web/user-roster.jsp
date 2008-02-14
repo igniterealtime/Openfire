@@ -89,12 +89,6 @@
         <title><fmt:message key="user.roster.title"/></title>
         <meta name="subPageID" content="user-roster"/>
         <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
-        <style type="text/css">
-        .jive-current {
-            font-weight: bold;
-            text-decoration: none;
-        }
-        </style>
     </head>
     <body>
 

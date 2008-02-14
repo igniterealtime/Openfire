@@ -55,7 +55,7 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)groupCount/(double)range);
     int curPage = (start/range) + 1;
-%>             
+%>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
 

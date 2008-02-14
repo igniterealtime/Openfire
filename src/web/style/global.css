@@ -1000,6 +1000,11 @@ th.jive-table-th-center {
     padding:7px;
 }
 
+.jive-current {
+    font-weight : bold;
+    text-decoration : none;
+}
+
 /* --------------------------------------------- */
 /*  Main content                                 */
 /* --------------------------------------------- */

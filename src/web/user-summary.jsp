@@ -60,13 +60,6 @@
     int curPage = (start/range) + 1;
 %>
 
-<style type="text/css">
-.jive-current {
-    font-weight : bold;
-    text-decoration : none;
-}
-</style>
-
 <%  if (request.getParameter("deletesuccess") != null) { %>
 
     <div class="jive-success">

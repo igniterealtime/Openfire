@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
+import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
 import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
 import org.jivesoftware.openfire.nio.XMPPCodecFactory;
 import org.jivesoftware.util.*;
@@ -53,7 +54,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private SocketAcceptor socketAcceptor;
     private SocketAcceptor sslSocketAcceptor;
-    private SocketAcceptThread componentSocketThread;
+    private SocketAcceptor componentAcceptor;
     private SocketAcceptThread serverSocketThread;
     private SocketAcceptor multiplexerSocketAcceptor;
     private ArrayList<ServerPort> ports;
@@ -83,7 +84,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Create the port listener for Connections Multiplexers
         createConnectionManagerListener();
         // Create the port listener for external components
-        createComponentListener(localIPAddress);
+        createComponentListener();
         // Create the port listener for clients
         createClientListeners();
         // Create the port listener for secured clients
@@ -243,23 +244,22 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    private void createComponentListener(String localIPAddress) {
+    private void createComponentListener() {
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled()) {
-            int port = getComponentListenerPort();
-            try {
-                componentSocketThread = new SocketAcceptThread(this, new ServerPort(port,
-                        serverName, localIPAddress, false, null, ServerPort.Type.component));
-                ports.add(componentSocketThread.getServerPort());
-                componentSocketThread.setDaemon(true);
-                componentSocketThread.setPriority(Thread.MAX_PRIORITY);
+            // Create SocketAcceptor with correct number of processors
+            componentAcceptor = buildSocketAcceptor();
+            // Customize Executor that will be used by processors to process incoming stanzas
+            ExecutorThreadModel threadModel = ExecutorThreadModel.getInstance("component");
+            int eventThreads = JiveGlobals.getIntProperty("xmpp.component.processing.threads", 16);
+            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)threadModel.getExecutor();
+            eventExecutor.setCorePoolSize(eventThreads + 1);
+            eventExecutor.setMaximumPoolSize(eventThreads + 1);
+            eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
 
-            }
-            catch (Exception e) {
-                System.err.println("Error starting component listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
-            }
+            componentAcceptor.getDefaultConfig().setThreadModel(threadModel);
+            // Add the XMPP codec filter
+            componentAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
         }
     }
 
@@ -268,10 +268,22 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (isComponentListenerEnabled()) {
             int port = getComponentListenerPort();
             try {
-                componentSocketThread.start();
+                // Listen on a specific network interface if it has been set.
+                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+                InetAddress bindInterface = null;
+                if (interfaceName != null) {
+                    if (interfaceName.trim().length() > 0) {
+                        bindInterface = InetAddress.getByName(interfaceName);
+                    }
+                }
+                // Start accepting connections
+                componentAcceptor
+                        .bind(new InetSocketAddress(bindInterface, port), new ComponentConnectionHandler(serverName));
+
+                ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.component));
 
                 List<String> params = new ArrayList<String>();
-                params.add(Integer.toString(componentSocketThread.getPort()));
+                params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.component", params));
             }
             catch (Exception e) {
@@ -283,10 +295,15 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void stopComponentListener() {
-        if (componentSocketThread != null) {
-            componentSocketThread.shutdown();
-            ports.remove(componentSocketThread.getServerPort());
-            componentSocketThread = null;
+        if (componentAcceptor != null) {
+            componentAcceptor.unbindAll();
+            for (ServerPort port : ports) {
+                if (port.isComponentPort()) {
+                    ports.remove(port);
+                    break;
+                }
+            }
+            componentAcceptor = null;
         }
     }
 
@@ -488,12 +505,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public SocketReader createSocketReader(Socket sock, boolean isSecure, ServerPort serverPort,
             boolean useBlockingMode) throws IOException {
-        if (serverPort.isComponentPort()) {
-            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            return new ComponentSocketReader(router, routingTable, serverName, sock, conn,
-                    useBlockingMode);
-        }
-        else if (serverPort.isServerPort()) {
+        if (serverPort.isServerPort()) {
             SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
             return new ServerSocketReader(router, routingTable, serverName, sock, conn,
                     useBlockingMode);
@@ -578,7 +590,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (enabled) {
             JiveGlobals.setProperty("xmpp.component.socket.active", "true");
             // Start the port listener for external components
-            createComponentListener(localIPAddress);
+            createComponentListener();
             startComponentListener();
         }
         else {
@@ -692,7 +704,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         stopComponentListener();
         if (isComponentListenerEnabled()) {
             // Start the port listener for external components
-            createComponentListener(localIPAddress);
+            createComponentListener();
             startComponentListener();
         }
     }

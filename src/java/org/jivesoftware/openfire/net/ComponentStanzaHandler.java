@@ -1,9 +1,8 @@
 /**
- * $RCSfile: ComponentSocketReader.java,v $
- * $Revision: 3174 $
- * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,44 +11,51 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalComponentSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.Log;
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.ComponentException;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
-
-import java.io.IOException;
-import java.net.Socket;
+import org.xmpp.packet.Presence;
 
 /**
- * A SocketReader specialized for component connections. This reader will be used when the open
- * stream contains a jabber:component:accept namespace.
+ * Handler of XML stanzas sent by external components connected directly to the server. Received packet will
+ * have their FROM attribute overriden to avoid spoofing.<p>
+ *
+ * This is an implementation of the XEP-114. In the future we will add support for XEP-225 now that
+ * we are using MINA things should be easier. Since we are now using MINA incoming traffic is handled
+ * by a set of worker threads.
  *
  * @author Gaston Dombiak
  */
-public class ComponentSocketReader extends SocketReader {
+public class ComponentStanzaHandler extends StanzaHandler {
 
-    public ComponentSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
-            Socket socket, SocketConnection connection, boolean useBlockingMode) {
-        super(router, routingTable, serverName, socket, connection, useBlockingMode);
+    public ComponentStanzaHandler(PacketRouter router, String serverName, Connection connection) {
+        super(router, serverName, connection);
     }
 
-    /**
-     * Only <tt>bind<tt> packets will be processed by this class to bind more domains
-     * to existing external components. Any other type of packet is unknown and thus
-     * rejected generating the connection to be closed.
-     *
-     * @param doc the unknown DOM element that was received
-     * @return false if packet is unknown otherwise true.
-     */
-    protected boolean processUnknowPacket(Element doc) {
-        // Handle subsequent bind packets
-        if ("bind".equals(doc.getName())) {
+    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+        String tag = doc.getName();
+        if ("handshake".equals(tag)) {
+            // External component is trying to authenticate
+            if (!((LocalComponentSession) session).authenticate(doc.getStringValue())) {
+                session.close();
+            }
+            return true;
+        } else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
+            session.close();
+            return true;
+        } else if ("bind".equals(tag)) {
+            // Handle subsequent bind packets
             LocalComponentSession componentSession = (LocalComponentSession) session;
             // Get the external component of this session
             ComponentSession.ExternalComponent component = componentSession.getExternalComponent();
@@ -107,29 +113,76 @@ public class ComponentSocketReader extends SocketReader {
             }
             return true;
         }
-        // This is an unknown packet so return false (and close the connection)
         return false;
     }
 
-    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
-            IOException {
-        if ("jabber:component:accept".equals(namespace)) {
-            // The connected client is a component so create a ComponentSession
-            session = LocalComponentSession.createSession(serverName, reader, connection);
-            return true;
+    protected void processIQ(IQ packet) throws UnauthorizedException {
+        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+            // Session is not authenticated so return error
+            IQ reply = new IQ();
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setID(packet.getID());
+            reply.setTo(packet.getFrom());
+            reply.setFrom(packet.getTo());
+            reply.setError(PacketError.Condition.not_authorized);
+            session.process(reply);
+            return;
         }
-        return false;
+        super.processIQ(packet);
+    }
+
+    protected void processPresence(Presence packet) throws UnauthorizedException {
+        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+            // Session is not authenticated so return error
+            Presence reply = new Presence();
+            reply.setID(packet.getID());
+            reply.setTo(packet.getFrom());
+            reply.setFrom(packet.getTo());
+            reply.setError(PacketError.Condition.not_authorized);
+            session.process(reply);
+            return;
+        }
+        super.processPresence(packet);
+    }
+
+    protected void processMessage(Message packet) throws UnauthorizedException {
+        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+            // Session is not authenticated so return error
+            Message reply = new Message();
+            reply.setID(packet.getID());
+            reply.setTo(packet.getFrom());
+            reply.setFrom(packet.getTo());
+            reply.setError(PacketError.Condition.not_authorized);
+            session.process(reply);
+            return;
+        }
+        super.processMessage(packet);
+    }
+
+    void startTLS() throws Exception {
+        // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
+        connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
     }
 
     String getNamespace() {
         return "jabber:component:accept";
     }
 
-    String getName() {
-        return "Component SR - " + hashCode();
+    boolean validateHost() {
+        return false;
     }
 
-    boolean validateHost() {
+    boolean validateJIDs() {
+        return false;
+    }
+
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+            throws XmlPullParserException {
+        if (getNamespace().equals(namespace)) {
+            // The connected client is a connection manager so create a ConnectionMultiplexerSession
+            session = LocalComponentSession.createSession(serverName, xpp, connection);
+            return true;
+        }
         return false;
     }
 }

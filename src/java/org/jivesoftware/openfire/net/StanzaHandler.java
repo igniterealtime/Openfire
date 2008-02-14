@@ -22,12 +22,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Roster;
-import org.xmpp.packet.StreamError;
+import org.xmpp.packet.*;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -69,7 +64,7 @@ public abstract class StanzaHandler {
     /**
      * Server name for which we are attending clients.
      */
-    private String serverName;
+    protected String serverName;
 
     /**
      * Router used to route incoming packets to the correct channels.

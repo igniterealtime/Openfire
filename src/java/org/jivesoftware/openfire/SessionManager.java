@@ -322,9 +322,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         return session;
     }
 
-    public LocalComponentSession createComponentSession(JID address, Connection conn) throws UnauthorizedException {
+    public LocalComponentSession createComponentSession(JID address, Connection conn) {
         if (serverName == null) {
-            throw new UnauthorizedException("Server not initialized");
+            throw new IllegalStateException("Server not initialized");
         }
         StreamID id = nextStreamID();
         LocalComponentSession session = new LocalComponentSession(serverName, conn, id);

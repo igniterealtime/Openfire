@@ -10,28 +10,23 @@
  */
 package org.jivesoftware.openfire.session;
 
-import org.dom4j.Element;
-import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +39,13 @@ import java.util.List;
 public class LocalComponentSession extends LocalSession implements ComponentSession {
 
     private LocalExternalComponent component;
+    /**
+     * When using XEP-114 (the old spec) components will include in the TO attribute
+     * of the intial stream header the domain they would like to have. The requested
+     * domain is used only after the authentication was successful so we need keep track
+     * of this information until the handshake is done.  
+     */
+    private String defaultSubdomain;
 
     /**
      * Returns a newly created session between the server and a component. The session will be
@@ -53,24 +55,19 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
      * the JEP-114 where the domain to bind is sent in the TO attribute of the stream header.
      *
      * @param serverName the name of the server where the session is connecting to.
-     * @param reader     the reader that is reading the provided XML through the connection.
+     * @param xpp     the parser that is reading the provided XML through the connection.
      * @param connection the connection with the component.
      * @return a newly created session between the server and a component.
-     * @throws UnauthorizedException if the connection required security but was not secured.
      * @throws XmlPullParserException if there was an XML error while creating the session.
-     * @throws IOException if an IO error occured while creating the session.
      */
-    public static LocalComponentSession createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection) throws UnauthorizedException, IOException,
-            XmlPullParserException
-    {
-        XmlPullParser xpp = reader.getXPPParser();
+    public static LocalComponentSession createSession(String serverName, XmlPullParser xpp, Connection connection)
+            throws XmlPullParserException {
         String domain = xpp.getAttributeValue("", "to");
-        Boolean allowMultiple = reader.getXPPParser().getAttributeValue("", "allowMultiple") != null;
+        Boolean allowMultiple = xpp.getAttributeValue("", "allowMultiple") != null;
 
-        Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: " + domain);
+        Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: " +
+                domain);
 
-        Writer writer = connection.getWriter();
         // Default answer header in case of an error
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
@@ -88,8 +85,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             // Include the bad-format in the response
             StreamError error = new StreamError(StreamError.Condition.bad_format);
             sb.append(error.toXML());
-            writer.write(sb.toString());
-            writer.flush();
+            connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
             return null;
@@ -105,11 +101,11 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         JID componentJID = new JID(domain);
         // Check that an external component for the specified subdomain may connect to this server
         if (!ExternalComponentManager.canAccess(subdomain)) {
-            Log.debug("LocalComponentSession: [ExComp] Component is not allowed to connect with subdomain: " + subdomain);
+            Log.debug(
+                    "LocalComponentSession: [ExComp] Component is not allowed to connect with subdomain: " + subdomain);
             StreamError error = new StreamError(StreamError.Condition.host_unknown);
             sb.append(error.toXML());
-            writer.write(sb.toString());
-            writer.flush();
+            connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
             return null;
@@ -121,8 +117,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             // Include the internal-server-error in the response
             StreamError error = new StreamError(StreamError.Condition.internal_server_error);
             sb.append(error.toXML());
-            writer.write(sb.toString());
-            writer.flush();
+            connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
             return null;
@@ -134,8 +129,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             // Include the conflict error in the response
             StreamError error = new StreamError(StreamError.Condition.conflict);
             sb.append(error.toXML());
-            writer.write(sb.toString());
-            writer.flush();
+            connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
             return null;
@@ -161,36 +155,13 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             sb.append("\" id=\"");
             sb.append(session.getStreamID().toString());
             sb.append("\">");
-            writer.write(sb.toString());
-            writer.flush();
+            connection.deliverRawText(sb.toString());
 
-            // Perform authentication. Wait for the handshake (with the secret key)
-            Element doc = reader.parseDocument().getRootElement();
-            String digest = "handshake".equals(doc.getName()) ? doc.getStringValue() : "";
-            String anticipatedDigest = AuthFactory.createDigest(session.getStreamID().getID(), secretKey);
-            // Check that the provided handshake (secret key + sessionID) is correct
-            if (!anticipatedDigest.equalsIgnoreCase(digest)) {
-                Log.debug("LocalComponentSession: [ExComp] Incorrect handshake for component with domain: " + domain);
-                //  The credentials supplied by the initiator are not valid (answer an error
-                // and close the connection)
-                writer.write(new StreamError(StreamError.Condition.not_authorized).toXML());
-                writer.flush();
-                // Close the underlying connection
-                connection.close();
-                return null;
-            }
-            else {
-                // Component has authenticated fine
-                session.setStatus(STATUS_AUTHENTICATED);
-                // Send empty handshake element to acknowledge success
-                writer.write("<handshake></handshake>");
-                writer.flush();
-                // Bind the domain to this component
-                ExternalComponent component = session.getExternalComponent();
-                InternalComponentManager.getInstance().addComponent(subdomain, component);
-                Log.debug("LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: " + domain);
-                return session;
-            }
+            // Return session although session has not been authentication yet. Until
+            // it is authenticated traffic will be rejected except for authentication
+            // requests
+            session.defaultSubdomain = subdomain;
+            return session;
         }
         catch (Exception e) {
             Log.error("An error occured while creating a ComponentSession", e);
@@ -219,6 +190,56 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
 
     public ExternalComponent getExternalComponent() {
         return component;
+    }
+
+    /**
+     * Authenticate the external component using a digest method. The digest includes the
+     * stream ID and the secret key of the main domain of the external component. A component
+     * needs to authenticate just once but it may bind several domains.
+     *
+     * @param digest the digest sent in the handshake.
+     * @return true if the authentication was successful.
+     */
+    public boolean authenticate(String digest) {
+        // Perform authentication. Wait for the handshake (with the secret key)
+        String secretKey = ExternalComponentManager.getSecretForComponent(defaultSubdomain);
+        String anticipatedDigest = AuthFactory.createDigest(getStreamID().getID(), secretKey);
+        // Check that the provided handshake (secret key + sessionID) is correct
+        if (!anticipatedDigest.equalsIgnoreCase(digest)) {
+            Log.debug("LocalComponentSession: [ExComp] Incorrect handshake for component with domain: " +
+                    defaultSubdomain);
+            //  The credentials supplied by the initiator are not valid (answer an error
+            // and close the connection)
+            conn.deliverRawText(new StreamError(StreamError.Condition.not_authorized).toXML());
+            // Close the underlying connection
+            conn.close();
+            return false;
+        }
+        else {
+            // Component has authenticated fine
+            setStatus(STATUS_AUTHENTICATED);
+            // Send empty handshake element to acknowledge success
+            conn.deliverRawText("<handshake></handshake>");
+            // Bind the domain to this component
+            ExternalComponent component = getExternalComponent();
+            try {
+                InternalComponentManager.getInstance().addComponent(defaultSubdomain, component);
+                Log.debug(
+                        "LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: " +
+                                defaultSubdomain);
+                return true;
+            }
+            catch (ComponentException e) {
+                Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: " +
+                        defaultSubdomain);
+                //  The credentials supplied by the initiator are not valid (answer an error
+                // and close the connection)
+                conn.deliverRawText(new StreamError(StreamError.Condition.conflict).toXML());
+                // Close the underlying connection
+                conn.close();
+                return false;
+            }
+        }
     }
 
     /**

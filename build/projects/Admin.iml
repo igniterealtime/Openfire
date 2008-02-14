@@ -32,6 +32,11 @@
           </containerElement>
           <containerElement type="library" level="module">
             <attribute name="method" value="0" />
+            <attribute name="URI" value="&lt;N/A&gt;" />
+            <url>jar://$APPLICATION_HOME_DIR$/lib/javaee.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
             <attribute name="URI" value="/WEB-INF/lib" />
             <url>jar://$MODULE_DIR$/../lib/ant-contrib.jar!/</url>
           </containerElement>
@@ -234,6 +239,11 @@
             <attribute name="method" value="0" />
             <attribute name="URI" value="/WEB-INF/lib" />
             <url>jar://$MODULE_DIR$/../lib/merge/mina-filter-ssl.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../lib/merge/proxool.jar!/</url>
           </containerElement>
           <containerElement type="library" level="module">
             <attribute name="method" value="0" />

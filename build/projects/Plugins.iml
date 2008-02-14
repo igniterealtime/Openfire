@@ -11,8 +11,6 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/debugger/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/dumper/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/emailListener/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/gateway/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/gateway/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/loadStats/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/motd/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/packetFilter/src/java" isTestSource="false" />
@@ -28,6 +26,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/xmldebugger/src/java" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/enterprise" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/fastpath" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/gateway" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -73,168 +72,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../src/plugins/userImportExport/lib/commons-fileupload-1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/cindy.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jml.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/joscar-protocol.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/joscar-common.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/joscar-client.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/dwr.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/log4j.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jainsipapi.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/xmlrpc.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/smack.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/smackx.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jainsipri.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jakarta-regexp.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jggapi.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/openymsg.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/jsocks.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/martyr.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../src/plugins/gateway/lib/concurrent.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

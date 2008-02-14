@@ -20,8 +20,7 @@ import java.util.*;
  * should be used to get an instace. The following properties configure this manager:
  *
  * <ul>
- *      <li>clearspace.host</li>
- *      <li>clearspace.port</li>
+ *      <li>clearspace.uri</li>
  *      <li>clearspace.sharedSecret</li>
  * </ul>
  *
@@ -90,12 +89,8 @@ public class ClearspaceManager {
         instance = new ClearspaceManager(properties);
     }
 
-
-    private String host;
-    private int port = 80;
-    private String path = "clearspace";
+    private String uri;
     private String sharedSecret;
-    private boolean secure = true;
 
     private Map<String, String> properties;
 
@@ -119,36 +114,16 @@ public class ClearspaceManager {
     public ClearspaceManager(Map<String, String> properties) {
         this.properties = properties;
 
-        String secureStr = properties.get("clearspace.secure");
-        if (secureStr != null && (secureStr.equalsIgnoreCase("false") || secureStr.equals("0"))) {
-            secure = false;
-        }
-        String host = properties.get("clearspace.host");
-        if (host != null) {
-            this.host = host;
-        }
-        String portStr = properties.get("clearspace.port");
-        if (portStr != null) {
-            try {
-                this.port = Integer.parseInt(portStr);
-            }
-            catch (NumberFormatException nfe) {
-                Log.error(nfe);
-            }
-        }
-        String path = properties.get("clearspace.path");
-        if (path != null) {
-            this.path = path;
+        String uri = properties.get("clearspace.uri");
+        if (uri != null) {
+            this.uri = uri;
         }
         sharedSecret = properties.get("clearspace.sharedSecret");
 
         StringBuilder buf = new StringBuilder();
         buf.append("Created new ClearspaceManager() instance, fields:\n");
-        buf.append("\t host: ").append(host).append("\n");
-        buf.append("\t port: ").append(port).append("\n");
-        buf.append("\t path: ").append(path).append("\n");
+        buf.append("\t URI: ").append(uri).append("\n");
         buf.append("\t sharedSecret: ").append(sharedSecret).append("\n");
-        buf.append("\t secure: ").append(secure ? "yes" : "no").append("\n");
 
         if (Log.isDebugEnabled()) {
             Log.debug("ClearspaceManager: "+buf.toString());
@@ -156,97 +131,54 @@ public class ClearspaceManager {
     }
 
     /**
-     * Temporary connection tester.
+     * Check a username/password pair for valid authentication.
      *
      * TODO: This is a temporary stub until the real interface is worked out.
      *
-     * @return True if connection test was successful.
+     * @param username Username to authenticate against.
+     * @param password Password to use for authentication.
+     * @return True or false of the authentication succeeded.
      */
-    public Boolean testConnection() {
-        if (host.equals("notlocalhost")) {
+    public Boolean checkAuthentication(String username, String password) {
+        if (username.equals("daniel")) {
             return false;
         }
         return true;
     }
 
     /**
-     * Returns whether we will be making a secure connection or not.  (http vs https)
+     * Tests the web services connection with Clearspace given the manager's current configuration.
      *
-     * @return True or false if we are using a secure connection to Clearspace.
+     * TODO: This is a temporary stub until the real interface is worked out.
+     *
+     * @return True if connection test was successful.
      */
-    public boolean isSecure() {
-        return secure;
+    public Boolean testConnection() {
+        if (uri.equals("http://localhost:80/fail")) {
+            return false;
+        }
+        return true;
     }
 
     /**
-     * Sets whether we will be using a secure (https) connection to Clearspace.
+     * Returns the Clearspace service URI; e.g. <tt>https://localhost:80/clearspace</tt>.
+     * This value is stored as the Jive Property <tt>clearspace.uri</tt>.
      *
-     * @param secure True or false, whether secure connections will be enabled.
+     * @return the Clearspace service URI.
      */
-    public void setSecure(boolean secure) {
-        this.secure = secure;
+    public String getConnectionURI() {
+        return uri;
     }
 
     /**
-     * Returns the Clearspace service host; e.g. <tt>cs.example.org</tt>.
-     * This value is stored as the Jive Property <tt>clearspace.host</tt>.
+     * Sets the URI of the Clearspace service; e.g., <tt>https://localhost:80/clearspace</tt>.
+     * This value is stored as the Jive Property <tt>clearspace.uri</tt>.
      *
-     * @return the Clearspace service host name.
+     * @param uri the Clearspace service URI.
      */
-    public String getHost() {
-        return host;
-    }
-
-    /**
-     * Sets the hostname of the Clearspace service; e.g., <tt>cs.example.org</tt>.
-     * This value is stored as the Jive Property <tt>clearspace.host</tt>.
-     *
-     * @param host the Clearspace service host name.
-     */
-    public void setHost(String host) {
-        this.host = host;
-        properties.put("clearspace.host", host);
-    }
-
-    /**
-     * Returns the Clearspace service port number. The default is 80. This value is
-     * stored as the Jive Property <tt>clearspace.port</tt>.
-     *
-     * @return the Clearspace service port number.
-     */
-    public int getPort() {
-        return port;
-    }
-
-    /**
-     * Sets the Clearspace service port number. The default is 80. This value is
-     * stored as the Jive property <tt>clearspace.port</tt>.
-     *
-     * @param port the Clearspace service port number.
-     */
-    public void setPort(int port) {
-        this.port = port;
-        properties.put("clearspace.port", Integer.toString(port));
-    }
-
-    /**
-     * Returns the path component of the Clearspace connection URI, without the prefix /.
-     * Typically clearspace for https://hostname:port/clearspace.
-     *
-     * @return The path component of the URI.
-     */
-    public String getPath() {
-        return path;
-    }
-
-    /**
-     * Sets the path component of the Clearspace connection URI, without the prefix /.
-     * Typically clearspace for https://hostname:port/clearspace.
-     *
-     * @param path the path component of the URI.
-     */
-    public void setPath(String path) {
-        this.path = path;
+    public void setConnectionURI(String uri) {
+        this.uri = uri;
+        properties.put("clearspace.uri", uri);
     }
 
     /**
@@ -267,19 +199,6 @@ public class ClearspaceManager {
     public void setSharedSecret(String sharedSecret) {
         this.sharedSecret = sharedSecret;
         properties.put("clearspace.sharedSecret", sharedSecret);
-    }
-
-    /**
-     * Returns the connection URI constructed from various settings from this manager.
-     *
-     * @return the URI that should be used to connect to Clearspace.
-     */
-    public String getConnectionURI() {
-        StringBuffer buf = new StringBuffer();
-        buf.append(secure ? "https" : "http").append("://");
-        buf.append(host).append(":").append(port);
-        buf.append("/").append(path);
-        return buf.toString();
     }
 
 }

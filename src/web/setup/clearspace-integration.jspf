@@ -7,10 +7,7 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%
-    boolean secure;
-    String host;
-    int port = 80;
-    String path;
+    String uri;
     String sharedSecret;
 
     // Get parameters
@@ -21,16 +18,10 @@
     Map<String, String> errors = new HashMap<String, String>();
 
     if (save || test) {
-        secure = ParamUtils.getBooleanParameter(request, "secure", true);
-        host = ParamUtils.getParameter(request, "host");
-        if (host == null) {
-            errors.put("host", LocaleUtils.getLocalizedString("setup.clearspace.service.host_error"));
+        uri = ParamUtils.getParameter(request, "uri");
+        if (uri == null) {
+            errors.put("uri", LocaleUtils.getLocalizedString("setup.clearspace.service.uri_error"));
         }
-        port = ParamUtils.getIntParameter(request, "port", port);
-        if (port <= 0) {
-            errors.put("port", LocaleUtils.getLocalizedString("setup.clearspace.service.port_error"));
-        }
-        path = ParamUtils.getParameter(request, "path", true);
         sharedSecret = ParamUtils.getParameter(request, "sharedSecret");
         if (sharedSecret == null || sharedSecret.length() == 0) {
             errors.put("secret", LocaleUtils.getLocalizedString("setup.clearspace.service.secret_error"));
@@ -39,19 +30,13 @@
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
             Map<String, String> settings = new HashMap<String, String>();
-            settings.put("clearspace.secure", secure ? "true" : "false");
-            settings.put("clearspace.host", host);
-            settings.put("clearspace.port", Integer.toString(port));
-            settings.put("clearspace.path", path);
+            settings.put("clearspace.uri", uri);
             settings.put("clearspace.sharedSecret", sharedSecret);
             session.setAttribute("clearspaceSettings", settings);
 
             if (save) {
                 // Save settings and redirect
-                manager.setSecure(secure);
-                manager.setHost(host);
-                manager.setPort(port);
-                manager.setPath(path);
+                manager.setConnectionURI(uri);
                 manager.setSharedSecret(sharedSecret);
 
                 // Enable the Clearspace user, auth, group, and vcard providers.
@@ -71,10 +56,7 @@
         }
     } else {
         // See if there are already values for the variables defined.
-        secure = manager.isSecure();
-        host = manager.getHost();
-        port = manager.getPort();
-        path = manager.getPath();
+        uri = manager.getConnectionURI();
         sharedSecret = manager.getSharedSecret();
     }
 %>
@@ -112,8 +94,6 @@
 
     <p><fmt:message key="setup.clearspace.service.description" /></p>
 
-    <p><strong><fmt:message key="setup.clearspace.service.connectionURI" /></strong> <span id="connectionUri">https://[hostname]:[port]/[path]</span> <img align="top" height="16" width="16" id="connectionUriStatus" src="" alt="" /></p>
-
     <%  if (errors.size() > 0) { %>
 
     <div class="error">
@@ -132,28 +112,15 @@
 			    <td colspan="4"><strong><fmt:message key="setup.clearspace.service" /></strong></td>
 			</tr>
             <tr>
-			    <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.clearspace.service.host" />:</td>
+			    <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.clearspace.service.uri" />:</td>
                 <td width="1%">
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                         <td width="1%" nowrap="nowrap">
-                            <input type="text" name="host" id="jiveCLEARSPACEhost" size="22" maxlength="50" value="<%= host!=null?host:"" %>" onKeyUp="updateURI()">
+                            <input type="text" name="uri" id="jiveCLEARSPACEuri" size="40" maxlength="255" value="<%= uri!=null?uri:"" %>">
                         </td>
                         <td width="99%">
-                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-                        </td>
-                    </tr>
-                    </table>
-                </td>
-                <td align="right" width="1%" nowrap="nowrap">&nbsp;&nbsp; <fmt:message key="setup.clearspace.service.port" />:</td>
-                <td>
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                    <tr>
-                        <td width="1%" nowrap="nowrap">
-                            <input type="text" name="port" id="jiveCLEARSPACEport" size="5" maxlength="5" value="<%= port %>" onKeyUp="updateURI()">
-                        </td>
-                        <td width="99%">
-                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.uri_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
                         </td>
                     </tr>
                     </table>
@@ -175,32 +142,6 @@
                 </td>
 			</tr>
 			</table>
-
-            <!-- BEGIN jiveAdvancedButton -->
-            <div class="jiveAdvancedButton jiveAdvancedButtonTopPad">
-                <a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink"><fmt:message key="setup.clearspace.advanced" /></a>
-            </div>
-            <!-- END jiveAdvancedButton -->
-
-            <!-- BEGIN jiveAdvancedPanelu (advanced clearspace connection settings) -->
-                <div class="jiveadvancedPanelu" id="jiveAdvanced" style="display: none;">
-                    <div>
-                        <table border="0" cellpadding="0" cellspacing="2">
-                        <tr>
-                        <td align="right"><fmt:message key="setup.clearspace.service.path" />:</td>
-                        <td><input type="text" name="path" value="<%= path %>" id="jiveCLEARSPACEpath" size="22" maxlength="250" onKeyUp="updateURI()"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.path_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"/></td>
-                        </tr>
-                        <tr>
-                        <td align="right"><fmt:message key="setup.clearspace.service.secure" />:</td>
-                        <td><select name="secure" id="jiveCLEARSPACEsecure" onChange="updateURI()">
-                            <option value="true"<%= secure ? " selected='selected'" : "" %>><fmt:message key="global.yes"/></option>
-                            <option value="false"<%= !secure ? " selected='selected'" : "" %>><fmt:message key="global.no"/></option>
-                        </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.secure_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"/></td>
-                        </tr>
-                        </table>
-                    </div>
-                </div>
-            <!-- END jiveAdvancedPanelu (advanced clearspace connection settings) -->
         </div>
 		<!-- END jive-contentBox_bluebox -->
 
@@ -222,49 +163,6 @@
 	</form>
     </div>
     <!-- END jive-contentBox -->
-
-    <script type="text/javascript">
-        function updateURI() {
-            var uri = "";
-            var valid = true;
-            if (document.getElementById("jiveCLEARSPACEsecure").options[document.getElementById("jiveCLEARSPACEsecure").selectedIndex].value == "false") {
-                uri = uri + "http";
-            }
-            else {
-                uri = uri + "https";
-            }
-            uri = uri + "://";
-            if (document.getElementById("jiveCLEARSPACEhost").value != "") {
-                uri = uri + document.getElementById("jiveCLEARSPACEhost").value;
-            }
-            else {
-                uri = uri + "[hostname]";
-                valid = false;
-            }
-            uri = uri + ":";
-            if (document.getElementById("jiveCLEARSPACEport").value != "") {
-                uri = uri + document.getElementById("jiveCLEARSPACEport").value;
-            }
-            else {
-                uri = uri + "[port]";
-                valid = false;
-            }
-            uri = uri + "/";
-            if (document.getElementById("jiveCLEARSPACEpath").value != "") {
-                uri = uri + document.getElementById("jiveCLEARSPACEpath").value;
-            }
-            document.getElementById("connectionUri").innerHTML = uri;
-            if (valid) {
-                document.getElementById("connectionUriStatus").src = "/images/check-16x16.gif";
-            }
-            else {
-                document.getElementById("connectionUriStatus").src = "/images/error-16x16.gif"
-            }
-        }
-
-        // Initialize URI
-        updateURI();
-    </script>
 
 </body>
 </html>

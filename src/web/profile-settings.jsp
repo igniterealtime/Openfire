@@ -148,8 +148,7 @@
                 </tr>
                 <% if (isCLEARSPACE) { %>
                 <%
-                    String host = ClearspaceManager.getInstance().getHost();
-                    int port = ClearspaceManager.getInstance().getPort();
+                    String uri = ClearspaceManager.getInstance().getConnectionURI();
                 %>
                 <tr>
                     <td width="1%" nowrap>
@@ -165,18 +164,10 @@
                         <tbody>
                             <tr>
                                 <td class="c1">
-                                    <fmt:message key="setup.clearspace.service.host" />:
+                                    <fmt:message key="setup.clearspace.service.uri" />:
                                 </td>
                                 <td class="c2">
-                                    <%= host %>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="c1">
-                                    <fmt:message key="setup.clearspace.service.port" />:
-                                </td>
-                                <td class="c2">
-                                    <%= port %>
+                                    <%= uri %>
                                 </td>
                             </tr>
                         </tbody>

@@ -52,19 +52,11 @@
     boolean addAdmin = request.getParameter("addAdministrator") != null;
     boolean deleteAdmins = request.getParameter("deleteAdmins") != null;
     boolean ldapFinished = request.getParameter("ldapFinished") != null;
+    boolean clearspaceFinished = request.getParameter("clearspaceFinished") != null;
 
     // Handle a skip request
     if (doSkip) {
         // assume the admin account is setup, so we're done:
-        setSetupFinished(session);
-        // redirect
-        response.sendRedirect("setup-finished.jsp");
-        return;
-    }
-
-    // Handle clearspace completion
-    if (clearspace) {
-        // admin accounts are pulled from Clearspace, so we're done:
         setSetupFinished(session);
         // redirect
         response.sendRedirect("setup-finished.jsp");
@@ -118,17 +110,34 @@
         }
     }
 
-    if (ldapFinished) {
+    if (ldapFinished || clearspaceFinished) {
         setSetupFinished(session);
         // All good so redirect
         response.sendRedirect("setup-finished.jsp");
         return;
     }
 
-    if (addAdmin) {
+    if (addAdmin && !doTest) {
         final String admin = request.getParameter("administrator");
         if (admin != null) {
             if (ldap) {
+                // Try to verify that the username exists in LDAP
+                Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
+                Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
+                if (settings != null) {
+                    LdapManager manager = new LdapManager(settings);
+                    manager.setUsernameField(userSettings.get("ldap.usernameField"));
+                    manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
+                    try {
+                        manager.findUserDN(JID.unescapeNode(admin));
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        errors.put("administrator", "");
+                    }
+                }
+            }
+            if (clearspace) {
                 // Try to verify that the username exists in LDAP
                 Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
                 Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
@@ -176,10 +185,10 @@
         }
     }
 
-    // This handles the case of reverting back to default settings from LDAP. Will
+    // This handles the case of reverting back to default settings from LDAP/Clearspace. Will
     // add admin to the authorizedUsername list if the authorizedUsername list contains
     // entries.
-    if (!ldap && !doTest) {
+    if (!ldap && !clearspace && !doTest) {
         String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
         List<String> adminCollection = new ArrayList<String>(StringUtils.stringToCollection(currentAdminList));
         if ((!adminCollection.isEmpty() && !adminCollection.contains("admin")) ||
@@ -202,7 +211,7 @@
 	<fmt:message key="setup.admin.settings.account" />
 	</h1>
 
-<% if(!ldap){ %>
+<% if(!ldap && !clearspace){ %>
     <p>
 	<fmt:message key="setup.admin.settings.info" />
 	</p>
@@ -374,7 +383,138 @@ document.acctform.newPassword.focus();
 
 
 
-<% } else {
+<% } else if (ldap) {
+if (errors.size() > 0) { %>
+
+    <div class="error">
+    <%  if (errors.get("general") != null) { %>
+
+        <%= errors.get("general") %>
+
+    <%  } else if (errors.get("administrator") != null) { %>
+
+        <fmt:message key="setup.admin.settings.username-error" />
+
+    <%  } else { %>
+
+        <fmt:message key="setup.admin.settings.error" />
+
+    <%  } %>
+    </div>
+
+<%  }
+    if (doTest) {
+        StringBuffer testLink = new StringBuffer();
+        testLink.append("setup-admin-settings_test.jsp?username=");
+        testLink.append(URLEncoder.encode(username, "UTF-8"));
+        if (password != null) {
+            testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
+        }
+        testLink.append("&ldap=true");
+%>
+
+    <a href="<%= testLink %>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+    <script type="text/javascript">
+        function loadMsg() {
+            var lb = new lightbox(document.getElementById('lbmessage'));
+            lb.activate();
+        }
+        setTimeout('loadMsg()', 250);
+    </script>
+
+<% } %>
+<p>
+ <fmt:message key="setup.admin.settings.ldap.info" />
+  </p>
+<div class="jive-contentBox">
+
+<form action="setup-admin-settings.jsp" name="acctform" method="post">
+
+    <!-- Admin Table -->
+
+<table cellpadding="3" cellspacing="2" border="0">
+    <tr valign="top">
+        <td class="jive-label">
+            <fmt:message key="setup.admin.settings.add.administrator" />:
+        </td>
+         <td>
+        <input type="text" name="administrator" size="20" maxlength="50"/>
+        </td>
+        <td>
+            <input type="submit" name="addAdministrator" value="<fmt:message key="global.add" />"/>
+        </td>
+    </tr>
+</table>
+<%
+    String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+    boolean hasAuthorizedName = authorizedUsernames != null && authorizedUsernames.length() > 0;
+%>
+    <% if(hasAuthorizedName) { %>
+    <!-- List of admins -->
+    <table class="jive-vcardTable" cellpadding="3" cellspacing="0" border="0">
+        <tr>
+            <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
+            <th width="1%" nowrap><fmt:message key="global.test" /></th>
+            <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
+        </tr>
+<%
+    for (String authUsername : StringUtils.stringToCollection(authorizedUsernames)) {
+%>
+    <tr valign="top">
+        <td>
+            <%= authUsername%>
+        </td>
+        <td width="1%" align="center">
+            <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authUsername, "UTF-8") %>"
+             title="<fmt:message key="global.click_test" />"
+             ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
+        </td>
+        <td>
+            <input type="checkbox" name="remove" value="<%=authUsername%>"/>
+        </td>
+    </tr>
+
+    <%
+        }
+        if (authorizedUsernames != null) {
+    %>
+         <tr valign="top">
+        <td>
+           &nbsp;
+        </td>
+        <td>
+           &nbsp;
+        </td>
+        <td>
+            <input type="submit" name="deleteAdmins" value="Remove"/>
+        </td>
+    </tr>
+
+        <%
+            }
+
+        %>
+</table>
+    <% } %>
+
+
+<input type="hidden" name="ldap" value="true"/>
+
+     <div align="right">
+    <br/>
+  <input type="submit" name="ldapFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" border="0" style="display:none;">
+          </div>
+ </form>
+
+</div>
+
+<%
+    if(hasAuthorizedName) {%>
+        <script type="text/javascript">
+            document.getElementById("jive-setup-save").style.display = "";
+        </script>
+    <% } %>
+<% } else if (clearspace) {
     if (errors.size() > 0) { %>
 
         <div class="error">
@@ -401,6 +541,7 @@ document.acctform.newPassword.focus();
             if (password != null) {
                 testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
             }
+            testLink.append("&clearspace=true");
     %>
 
         <a href="<%= testLink %>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
@@ -414,7 +555,7 @@ document.acctform.newPassword.focus();
 
     <% } %>
     <p>
-     <fmt:message key="setup.admin.settings.ldap.info" />
+     <fmt:message key="setup.admin.settings.clearspace.info" />
       </p>
     <div class="jive-contentBox">
 
@@ -455,7 +596,7 @@ document.acctform.newPassword.focus();
                 <%= authUsername%>
             </td>
             <td width="1%" align="center">
-                <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authUsername, "UTF-8") %>"
+                <a href="setup-admin-settings.jsp?clearspace=true&test=true&username=<%= URLEncoder.encode(authUsername, "UTF-8") %>"
                  title="<fmt:message key="global.click_test" />"
                  ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
             </td>
@@ -488,11 +629,11 @@ document.acctform.newPassword.focus();
         <% } %>
 
 
-    <input type="hidden" name="ldap" value="true"/>
+    <input type="hidden" name="clearspace" value="true"/>
 
          <div align="right">
         <br/>
-      <input type="submit" name="ldapFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" border="0" style="display:none;">
+      <input type="submit" name="clearspaceFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" border="0" style="display:none;">
               </div>
      </form>
 
@@ -506,5 +647,6 @@ document.acctform.newPassword.focus();
     <% } %>
 
 <% } %>
+
 </body>
 </html>

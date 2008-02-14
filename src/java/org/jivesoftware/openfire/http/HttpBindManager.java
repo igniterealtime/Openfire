@@ -42,11 +42,11 @@ public final class HttpBindManager {
 
     public static final String HTTP_BIND_PORT = "httpbind.port.plain";
 
-    public static final int HTTP_BIND_PORT_DEFAULT = 8080;
+    public static final int HTTP_BIND_PORT_DEFAULT = 7070;
 
     public static final String HTTP_BIND_SECURE_PORT = "httpbind.port.secure";
 
-    public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 8483;
+    public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 7443;
 
     private static HttpBindManager instance = new HttpBindManager();
 

@@ -16,6 +16,9 @@ import java.sql.*;
 import java.util.Date;
 
 /**
+ * The DefaultLockOutProvider works with the jiveUserFlag table to maintain a list of disabled/locked out
+ * accounts., and as the name implies, is the default LockOutProvider implementation.
+ *
  * @author Daniel Henninger
  */
 public class DefaultLockOutProvider implements LockOutProvider {

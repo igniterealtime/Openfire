@@ -17,6 +17,19 @@ import java.util.Map;
 import java.util.Date;
 
 /**
+ * The LockOutManager managers the LockOutProvider configured for this server, caches knowledge of
+ * whether accounts are disabled or enabled, and providers a single point of entry for handling
+ * locked/disabled accounts.
+ *
+ * The provider can be specified in <tt>openfire.xml</tt> by adding:
+ *  ...
+ *    <provider>
+ *       <lockout>
+ *          <className>my.lock.out.provider</className>
+ *       </lockout>
+ *    </provider>
+ *  ...
+ *
  * @author Daniel Henninger
  */
 public class LockOutManager {
@@ -51,6 +64,9 @@ public class LockOutManager {
     private Cache<String,LockOutFlag> lockOutCache;
     private static LockOutProvider provider = null;
 
+    /**
+     * Constructs a LockOutManager, setting up it's cache, propery listener, and setting up the provider.
+     */
     private LockOutManager() {
         // Initialize the lockout cache.
         lockOutCache = CacheFactory.createCache("Locked Out Accounts");
@@ -81,6 +97,10 @@ public class LockOutManager {
         PropertyEventDispatcher.addListener(propListener);
     }
 
+    /**
+     * Initializes the server's lock out provider, based on configuration and defaults to
+     * DefaultLockOutProvider if the specified provider is not valid or not specified.
+     */
     private static void initProvider() {
         String className = JiveGlobals.getXMLProperty("provider.lockout.className",
                 "org.jivesoftware.openfire.lockout.DefaultLockOutProvider");

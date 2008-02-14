@@ -92,8 +92,10 @@ public class ClearspaceManager {
 
 
     private String host;
-    private int port;
+    private int port = 80;
+    private String path = "clearspace";
     private String sharedSecret;
+    private boolean secure = true;
 
     private Map<String, String> properties;
 
@@ -117,12 +119,15 @@ public class ClearspaceManager {
     public ClearspaceManager(Map<String, String> properties) {
         this.properties = properties;
 
+        String secureStr = properties.get("clearspace.secure");
+        if (secureStr != null && (secureStr.equalsIgnoreCase("false") || secureStr.equals("0"))) {
+            secure = false;
+        }
         String host = properties.get("clearspace.host");
         if (host != null) {
             this.host = host;
         }
         String portStr = properties.get("clearspace.port");
-        port = 8080;
         if (portStr != null) {
             try {
                 this.port = Integer.parseInt(portStr);
@@ -131,13 +136,19 @@ public class ClearspaceManager {
                 Log.error(nfe);
             }
         }
+        String path = properties.get("clearspace.path");
+        if (path != null) {
+            this.path = path;
+        }
         sharedSecret = properties.get("clearspace.sharedSecret");
 
         StringBuilder buf = new StringBuilder();
         buf.append("Created new ClearspaceManager() instance, fields:\n");
         buf.append("\t host: ").append(host).append("\n");
         buf.append("\t port: ").append(port).append("\n");
+        buf.append("\t path: ").append(path).append("\n");
         buf.append("\t sharedSecret: ").append(sharedSecret).append("\n");
+        buf.append("\t secure: ").append(secure ? "yes" : "no").append("\n");
 
         if (Log.isDebugEnabled()) {
             Log.debug("ClearspaceManager: "+buf.toString());
@@ -156,6 +167,24 @@ public class ClearspaceManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Returns whether we will be making a secure connection or not.  (http vs https)
+     *
+     * @return True or false if we are using a secure connection to Clearspace.
+     */
+    public boolean isSecure() {
+        return secure;
+    }
+
+    /**
+     * Sets whether we will be using a secure (https) connection to Clearspace.
+     *
+     * @param secure True or false, whether secure connections will be enabled.
+     */
+    public void setSecure(boolean secure) {
+        this.secure = secure;
     }
 
     /**
@@ -180,7 +209,7 @@ public class ClearspaceManager {
     }
 
     /**
-     * Returns the Clearspace service port number. The default is 8080. This value is
+     * Returns the Clearspace service port number. The default is 80. This value is
      * stored as the Jive Property <tt>clearspace.port</tt>.
      *
      * @return the Clearspace service port number.
@@ -190,7 +219,7 @@ public class ClearspaceManager {
     }
 
     /**
-     * Sets the Clearspace service port number. The default is 8080. This value is
+     * Sets the Clearspace service port number. The default is 80. This value is
      * stored as the Jive property <tt>clearspace.port</tt>.
      *
      * @param port the Clearspace service port number.
@@ -198,6 +227,26 @@ public class ClearspaceManager {
     public void setPort(int port) {
         this.port = port;
         properties.put("clearspace.port", Integer.toString(port));
+    }
+
+    /**
+     * Returns the path component of the Clearspace connection URI, without the prefix /.
+     * Typically clearspace for https://hostname:port/clearspace.
+     *
+     * @return The path component of the URI.
+     */
+    public String getPath() {
+        return path;
+    }
+
+    /**
+     * Sets the path component of the Clearspace connection URI, without the prefix /.
+     * Typically clearspace for https://hostname:port/clearspace.
+     *
+     * @param path the path component of the URI.
+     */
+    public void setPath(String path) {
+        this.path = path;
     }
 
     /**
@@ -219,4 +268,18 @@ public class ClearspaceManager {
         this.sharedSecret = sharedSecret;
         properties.put("clearspace.sharedSecret", sharedSecret);
     }
+
+    /**
+     * Returns the connection URI constructed from various settings from this manager.
+     *
+     * @return the URI that should be used to connect to Clearspace.
+     */
+    public String getConnectionURI() {
+        StringBuffer buf = new StringBuffer();
+        buf.append(secure ? "https" : "http").append("://");
+        buf.append(host).append(":").append(port);
+        buf.append("/").append(path);
+        return buf.toString();
+    }
+
 }

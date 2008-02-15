@@ -68,9 +68,11 @@ public interface ExternalComponentManagerListener {
      * change from taking place.
      *
      * @param subdomain subdomain of the added component.
+     * @param configuration configuration for the external component.
      * @throws ModificationNotAllowedException if the operation was denied.
      */
-    void componentAllowed(String subdomain) throws ModificationNotAllowedException;
+    void componentAllowed(String subdomain, ExternalComponentConfiguration configuration)
+            throws ModificationNotAllowedException;
 
     /**
      * Notification indicating that a component was blocked to connect to the server.

@@ -12,14 +12,17 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.Iterator,
-                 org.jivesoftware.openfire.*,
-                 java.util.*,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.component.ExternalComponentConfiguration,
                  org.jivesoftware.openfire.component.ExternalComponentManager,
-                 org.jivesoftware.openfire.component.ExternalComponentConfiguration"
+                 org.jivesoftware.util.ModificationNotAllowedException,
+                 org.jivesoftware.util.ParamUtils,
+                 java.util.Collection"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Iterator" %>
+<%@ page import="java.util.Map" %>
 
 <html>
 <head>
@@ -45,6 +48,7 @@
     boolean blockSuccess = false;
     boolean deleteSuccess = false;
     boolean operationFailed = false;
+    String operationFailedDetail = null;
 
     String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
@@ -74,6 +78,7 @@
                 updateSucess = true;
             }
             catch (ModificationNotAllowedException e) {
+                operationFailedDetail = e.getMessage();
                 operationFailed = true;
             }
         }
@@ -85,6 +90,7 @@
             updateSucess = true;
         }
         catch (ModificationNotAllowedException e) {
+            operationFailedDetail = e.getMessage();
             operationFailed = true;
         }
     }
@@ -95,6 +101,7 @@
             deleteSuccess = true;
         }
         catch (ModificationNotAllowedException e) {
+            operationFailedDetail = e.getMessage();
             operationFailed = true;
         }
     }
@@ -118,6 +125,7 @@
                 allowSuccess = true;
             }
             catch (ModificationNotAllowedException e) {
+                operationFailedDetail = e.getMessage();
                 operationFailed = true;
             }
         }
@@ -137,6 +145,7 @@
                 blockSuccess = true;
             }
             catch (ModificationNotAllowedException e) {
+                operationFailedDetail = e.getMessage();
                 operationFailed = true;
             }
         }
@@ -210,7 +219,7 @@
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
             <td class="jive-icon-label">
-                <fmt:message key="component.settings.modification.denied" />
+                <fmt:message key="component.settings.modification.denied" /> <%= operationFailedDetail != null ? operationFailedDetail : ""%>
             </td>
         </tr>
     </tbody>

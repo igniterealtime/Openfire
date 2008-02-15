@@ -246,7 +246,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void createComponentListener() {
         // Start components socket unless it's been disabled.
-        if (isComponentListenerEnabled()) {
+        if (isComponentListenerEnabled() && componentAcceptor == null) {
             // Create SocketAcceptor with correct number of processors
             componentAcceptor = buildSocketAcceptor();
             // Customize Executor that will be used by processors to process incoming stanzas
@@ -265,7 +265,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void startComponentListener() {
         // Start components socket unless it's been disabled.
-        if (isComponentListenerEnabled()) {
+        if (isComponentListenerEnabled() && componentAcceptor != null &&
+                componentAcceptor.getManagedServiceAddresses().isEmpty()) {
             int port = getComponentListenerPort();
             try {
                 // Listen on a specific network interface if it has been set.

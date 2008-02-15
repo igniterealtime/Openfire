@@ -11,14 +11,15 @@
 package org.jivesoftware.openfire.component;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permission;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.ModificationNotAllowedException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -53,7 +54,7 @@ public class ExternalComponentManager {
     private static List<ExternalComponentManagerListener> listeners =
             new CopyOnWriteArrayList<ExternalComponentManagerListener>();
 
-    public static void setServiceEnabled(boolean enabled) throws Exception {
+    public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.serviceEnabled(enabled);
@@ -67,7 +68,7 @@ public class ExternalComponentManager {
         return connectionManager.isComponentListenerEnabled();
     }
 
-    public static void setServicePort(int port) throws Exception {
+    public static void setServicePort(int port) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.portChanged(port);
@@ -85,12 +86,12 @@ public class ExternalComponentManager {
      * Allows an external component to connect to the local server with the specified configuration.
      *
      * @param configuration the configuration for the external component.
-     * @throws Exception if the operation was denied.
+     * @throws ModificationNotAllowedException if the operation was denied.
      */
-    public static void allowAccess(ExternalComponentConfiguration configuration) throws Exception {
+    public static void allowAccess(ExternalComponentConfiguration configuration) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.componentAllowed(configuration.getSubdomain());
+            listener.componentAllowed(configuration.getSubdomain(), configuration);
         }
         // Remove any previous configuration for this external component
         deleteConfigurationFromDB(configuration.getSubdomain());
@@ -104,9 +105,9 @@ public class ExternalComponentManager {
      * connected when the permission was revoked then the connection of the entity will be closed.
      *
      * @param subdomain the subdomain of the external component that is not allowed to connect.
-     * @throws Exception if the operation was denied.
+     * @throws ModificationNotAllowedException if the operation was denied.
      */
-    public static void blockAccess(String subdomain) throws Exception {
+    public static void blockAccess(String subdomain) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.componentBlocked(subdomain);
@@ -173,7 +174,7 @@ public class ExternalComponentManager {
         return getConfigurations(Permission.blocked);
     }
 
-    public static void updateComponentSecret(String subdomain, String secret) throws Exception {
+    public static void updateComponentSecret(String subdomain, String secret) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.componentSecretUpdated(subdomain, secret);
@@ -196,9 +197,9 @@ public class ExternalComponentManager {
      * external component.
      *
      * @param subdomain the subdomain of the external component.
-     * @throws Exception if the operation was denied.
+     * @throws ModificationNotAllowedException if the operation was denied.
      */
-    public static void deleteConfiguration(String subdomain) throws Exception {
+    public static void deleteConfiguration(String subdomain) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.componentConfigurationDeleted(subdomain);
@@ -343,9 +344,9 @@ public class ExternalComponentManager {
      *
      * @param defaultSecret the default secret key to use for those external components that
      *         don't have an individual configuration.
-     * @throws Exception if the operation was denied.
+     * @throws ModificationNotAllowedException if the operation was denied.
      */
-    public static void setDefaultSecret(String defaultSecret) throws Exception {
+    public static void setDefaultSecret(String defaultSecret) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.defaultSecretChanged(defaultSecret);
@@ -407,9 +408,9 @@ public class ExternalComponentManager {
      * the server.
      *
      * @param policy the new PermissionPolicy to use.
-     * @throws Exception if the operation was denied.
+     * @throws ModificationNotAllowedException if the operation was denied.
      */
-    public static void setPermissionPolicy(PermissionPolicy policy) throws Exception {
+    public static void setPermissionPolicy(PermissionPolicy policy) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
             listener.permissionPolicyChanged(policy);
@@ -434,9 +435,9 @@ public class ExternalComponentManager {
      * the server.
      *
      * @param policy the new policy to use.
-     * @throws Exception if the operation was denied.
+     * @throws ModificationNotAllowedException if the operation was denied.
      */
-    public static void setPermissionPolicy(String policy) throws Exception {
+    public static void setPermissionPolicy(String policy) throws ModificationNotAllowedException {
         setPermissionPolicy(PermissionPolicy.valueOf(policy));
     }
 

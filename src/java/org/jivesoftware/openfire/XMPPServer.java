@@ -16,6 +16,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -27,6 +28,7 @@ import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.handler.*;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatServer;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
@@ -44,7 +46,6 @@ import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
-import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
@@ -54,14 +55,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -541,6 +542,7 @@ public class XMPPServer {
         loadModule(UpdateManager.class.getName());
         loadModule(FlashCrossDomainHandler.class.getName());
         loadModule(InternalComponentManager.class.getName());
+        loadModule(ClearspaceManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());

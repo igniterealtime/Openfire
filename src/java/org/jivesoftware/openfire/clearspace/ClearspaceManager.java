@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.ModificationNotAllowedException;
+import org.jivesoftware.util.StringUtils;
 
 /**
  * Centralized administration of Clearspace connections. The {@link #getInstance()} method
@@ -166,6 +167,16 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     public void start() throws IllegalStateException {
         super.start();
         if (isEnabled()) {
+            // Before starting up service make sure there is a default secret
+            if (ExternalComponentManager.getDefaultSecret() == null ||
+                    "".equals(ExternalComponentManager.getDefaultSecret())) {
+                try {
+                    ExternalComponentManager.setDefaultSecret(StringUtils.randomString(10));
+                }
+                catch (ModificationNotAllowedException e) {
+                    Log.warn("Failed to set a default secret to external component service", e);
+                }
+            }
             // Make sure that external component service is enabled
             if (!ExternalComponentManager.isServiceEnabled()) {
                 try {

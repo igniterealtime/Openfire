@@ -50,4 +50,24 @@ public interface LockOutProvider {
      */
     public boolean isReadOnly();
 
+    /**
+     * Returns true if the LockOutProvider allows for a delayed start to the lockout.
+     * e.g. you can set the lockout to start in one hour.  This is really only used for UI
+     * in the admin interface.  It's up to the provider implementation to ignore the start
+     * time.
+     *
+     * @return true if the lock out provider provides this feature.
+     */
+    public boolean isDelayedStartSupported();
+
+    /**
+     * Returns true if the LockOutProvider allows for a timeout after which the lock out will expire.
+     * e.g. you can set the lockout to only last for one day.  This is really only used for UI
+     * in the admin interface.  It's up to the provider implementation to ignore the end
+     * time.
+     *
+     * @return true if the lcok out provider provides this feature.
+     */
+    public boolean isTimeoutSupported();
+
 }

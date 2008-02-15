@@ -146,6 +146,7 @@
 </c:if>
 
 <form action="user-lockout.jsp">
+    <% if (LockOutManager.getLockOutProvider().isDelayedStartSupported()) { %>
     <b><fmt:message key="user.lockout.time.startdelay" /></b><br />
     <input type="radio" name="startdelay" value="-1" checked="checked" /> <fmt:message key="user.lockout.time.immediate" /><br />
     <input type="radio" name="startdelay" value="60" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1hour" /><br />
@@ -153,6 +154,8 @@
     <input type="radio" name="startdelay" value="10080" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1week" /><br />
     <input type="radio" name="startdelay" value="-2" /> <fmt:message key="user.lockout.time.in" /> <input type="text" size="5" maxlength="10" name="starydelay_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
     <br />
+    <% } %>
+    <% if (LockOutManager.getLockOutProvider().isTimeoutSupported()) { %>
     <b><fmt:message key="user.lockout.time.duration" /></b><br />
     <input type="radio" name="duration" value="-1" checked="checked" /> <fmt:message key="user.lockout.time.forever" /><br />
     <input type="radio" name="duration" value="60" /> <fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1hour" /><br />
@@ -160,6 +163,7 @@
     <input type="radio" name="duration" value="10080" /> <fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1week" /><br />
     <input type="radio" name="duration" value="-2" /> <fmt:message key="user.lockout.time.for" /> <input type="text" size="5" maxlength="10" name="duration_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
     <br />
+    <% } %>
     <input type="hidden" name="username" value="<%= username %>">
     <input type="submit" name="lock" value="<fmt:message key="user.lockout.lock" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

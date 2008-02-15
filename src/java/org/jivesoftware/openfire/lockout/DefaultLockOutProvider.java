@@ -150,4 +150,20 @@ public class DefaultLockOutProvider implements LockOutProvider {
         return false;
     }
 
+    /**
+     * Default provider allows delayed start to disabled status.
+     * @see org.jivesoftware.openfire.lockout.LockOutProvider#isDelayedStartSupported()
+     */
+    public boolean isDelayedStartSupported() {
+        return true;
+    }
+
+    /**
+     * Default provider allows timeout of disabled status.
+     * @see org.jivesoftware.openfire.lockout.LockOutProvider#isTimeoutSupported()
+     */
+    public boolean isTimeoutSupported() {
+        return true;
+    }
+
 }

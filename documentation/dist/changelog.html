@@ -162,6 +162,63 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.5.0 -- <span style="font-weight: normal;">March 06, 2008</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1224'>JM-1224</a>] - Added Clearspace as a backend for users, groups and authentication. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1252'>JM-1252</a>] - Added auditing support to the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1235'>JM-1235</a>] - Added ability to kick MUC members from a chatroom from the web interface. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1236'>JM-1236</a>] - Added database index for significant improvement in user management. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1269'>JM-1269</a>] - Improved throughput of external components connections.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1221'>JM-1221</a>] - Created new event listener to catch successful resource binding.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1267'>JM-1267</a>] - Created ExternalComponent listener that will listen and may deny new settings.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-160'>JM-160</a>] - Added ability to disable user accounts. <b>(13 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1218'>JM-1218</a>] - Updated admin console UI look.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-840'>JM-840</a>] - Improved i18n in plugin admin console pages.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1260'>JM-1260</a>] - Allowed to set default max number of users when creating new rooms.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1149'>JM-1149</a>] - Improved pagination for list of group chats in the admin console. <b>(2 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1262'>JM-1262</a>] - Added support for enabling/disabling the pubsub service.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1241'>JM-1241</a>] - XMPPServerInfo now makes a distinction between 'hostname' and 'xmpp domain name'.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1270'>JM-1270</a>] - Changed default HTTP binding ports to 7070 and 7443.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1271'>JM-1271</a>] - Updated MINA library to latest version.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1175'>JM-1175</a>] - Fixed double-byte characters problem. <b>(4 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1186'>JM-1186</a>] - Fixed JDBC authentication when using DIGEST-MD5. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1263'>JM-1263</a>] - Fixed highlighting of active tab in client sessions tab. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1265'>JM-1265</a>] - Adding a new member to a room is now propagated to other cluster nodes.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1266'>JM-1266</a>] - Fixed test of connections when using Oracle.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-403'>ENT-403</a>] - Fixed exception when storing big workgroup forms.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-401'>ENT-401</a>] - Webchat link was moved to under Client Management.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-256'>ENT-256</a>] - SparkWeb - Added moderator controls for "User Kick/Ban" to group chats.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-364'>ENT-364</a>] - SparkWeb - Allowed users to view and edit their own VCard profile information.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-362'>ENT-362</a>] - SparkWeb - Contact context menu now includes menu items for "Start a chat" and other common items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-400'>ENT-400</a>] - SparkWeb - Contact list us now sorted alfabetically.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-398'>ENT-398</a>] - SparkWeb - Contact list sorting was case-sensitive.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-399'>ENT-399</a>] - SparkWeb - Improved typing notification alerts.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-371'>ENT-371</a>] - SparkWeb - Localized the labels in the View Profile window.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-415'>ENT-415</a>] - SparkWeb - Made SparkWeb client link pop up new window.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-408'>ENT-408</a>] - SparkWeb - JIDs are now used in more places instead of Strings.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-231'>ENT-231</a>] - SparkWeb - Improved font choices to be consistent and cross-platform.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-404'>ENT-404</a>] - SparkWeb - Fixed overlap of timestamps in the message view.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-409'>ENT-409</a>] - SparkWeb - Newly bookmarked rooms appeared on all servers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-410'>ENT-410</a>] - SparkWeb - Fixed exception when loading bookmarks.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-411'>ENT-411</a>] - SparkWeb - Fixed error while loading certain vCards.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1175'>JM-1175</a>] - Fixed double-byte characters problem.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1271'>JM-1271</a>] - Updated MINA library to latest version.</li>
+</ul>
+
 <h2>3.4.5 -- <span style="font-weight: normal;">February 07, 2008</span></h2>
 
 <h3>Openfire New Features</h3>

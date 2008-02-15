@@ -38,15 +38,14 @@ import java.util.Set;
  */
 public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener {
 
-    private static ClearspaceManager instance;
+    private static ClearspaceManager instance = new ClearspaceManager();
 
     private Map<String, String> properties;
     private String uri;
     private String sharedSecret;
 
     /**
-     * Provides singleton access to an instance of the ClearspaceManager class. A <tt>null</tt>
-     * value will be returned before the setup is completed.
+     * Provides singleton access to an instance of the ClearspaceManager class.
      *
      * @return an ClearspaceManager instance.
      */
@@ -155,8 +154,6 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             Log.debug("ClearspaceManager: " + buf.toString());
         }
-
-        instance = this;
     }
 
     /**

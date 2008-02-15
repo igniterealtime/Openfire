@@ -292,7 +292,7 @@ iframe {
 }
 #jive-subnav ul li.current a {
     background-color:#F9F9F9;
-    border-color:#C2CFD5 rgb(194, 207, 213) rgb(242, 248, 250);
+    border-color:#cecece;
     border-style:solid;
     border-width:1px;
 }

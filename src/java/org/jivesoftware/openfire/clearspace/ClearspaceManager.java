@@ -21,6 +21,10 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.ModificationNotAllowedException;
 import org.jivesoftware.util.StringUtils;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Centralized administration of Clearspace connections. The {@link #getInstance()} method
  * should be used to get an instace. The following properties configure this manager:
@@ -34,13 +38,15 @@ import org.jivesoftware.util.StringUtils;
  */
 public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener {
 
-    private static ClearspaceManager instance = new ClearspaceManager();
+    private static ClearspaceManager instance;
 
+    private Map<String, String> properties;
     private String uri;
     private String sharedSecret;
 
     /**
-     * Provides singleton access to an instance of the ClearspaceManager class.
+     * Provides singleton access to an instance of the ClearspaceManager class. A <tt>null</tt>
+     * value will be returned before the setup is completed.
      *
      * @return an ClearspaceManager instance.
      */
@@ -53,10 +59,91 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * called instead of this method. ClearspaceManager instances should only be created directly
      * for testing purposes.
      *
+     * @param properties the Map that contains properties used by the Clearspace manager, such as
+     *      Clearspace host and shared secret.
+     */
+    public ClearspaceManager(Map<String, String> properties) {
+        super("Clearspace integration module for testing only");
+        this.properties = properties;
+
+        this.uri = properties.get("clearspace.uri");
+        sharedSecret = properties.get("clearspace.sharedSecret");
+
+        if (Log.isDebugEnabled()) {
+            StringBuilder buf = new StringBuilder();
+            buf.append("Created new ClearspaceManager() instance, fields:\n");
+            buf.append("\t URI: ").append(uri).append("\n");
+            buf.append("\t sharedSecret: ").append(sharedSecret).append("\n");
+
+            Log.debug("ClearspaceManager: " + buf.toString());
+        }
+    }
+
+    /**
+     * Constructs a new ClearspaceManager instance. Typically, {@link #getInstance()} should be
+     * called instead of this method. ClearspaceManager instances should only be created directly
+     * for testing purposes.
+     *
      */
     public ClearspaceManager() {
         super("Clearspace integration module");
-        
+        // Create a special Map implementation to wrap XMLProperties. We only implement
+        // the get, put, and remove operations, since those are the only ones used. Using a Map
+        // makes it easier to perform LdapManager testing.
+        this.properties = new Map<String, String>() {
+
+            public String get(Object key) {
+                return JiveGlobals.getXMLProperty((String)key);
+            }
+
+            public String put(String key, String value) {
+                JiveGlobals.setXMLProperty(key, value);
+                // Always return null since XMLProperties doesn't support the normal semantics.
+                return null;
+            }
+
+            public String remove(Object key) {
+                JiveGlobals.deleteXMLProperty((String)key);
+                // Always return null since XMLProperties doesn't support the normal semantics.
+                return null;
+            }
+
+
+            public int size() {
+                return 0;
+            }
+
+            public boolean isEmpty() {
+                return false;
+            }
+
+            public boolean containsKey(Object key) {
+                return false;
+            }
+
+            public boolean containsValue(Object value) {
+                return false;
+            }
+
+            public void putAll(Map<? extends String, ? extends String> t) {
+            }
+
+            public void clear() {
+            }
+
+            public Set<String> keySet() {
+                return null;
+            }
+
+            public Collection<String> values() {
+                return null;
+            }
+
+            public Set<Entry<String, String>> entrySet() {
+                return null;
+            }
+        };
+
         this.uri = JiveGlobals.getXMLProperty("clearspace.uri");
         sharedSecret = JiveGlobals.getXMLProperty("clearspace.sharedSecret");
 
@@ -68,6 +155,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             Log.debug("ClearspaceManager: " + buf.toString());
         }
+
+        instance = this;
     }
 
     /**
@@ -118,7 +207,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      */
     public void setConnectionURI(String uri) {
         this.uri = uri;
-        JiveGlobals.setXMLProperty("clearspace.uri", uri);
+         properties.put("clearspace.uri", uri);
         if (isEnabled()) {
             // TODO Reconfigure webservice connection with new setting
         }
@@ -141,7 +230,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      */
     public void setSharedSecret(String sharedSecret) {
         this.sharedSecret = sharedSecret;
-        JiveGlobals.setXMLProperty("clearspace.sharedSecret", sharedSecret);
+        properties.put("clearspace.sharedSecret", sharedSecret);
         // Set new password for external component
         ExternalComponentConfiguration configuration = new ExternalComponentConfiguration("clearspace",
                 ExternalComponentConfiguration.Permission.allowed, sharedSecret);

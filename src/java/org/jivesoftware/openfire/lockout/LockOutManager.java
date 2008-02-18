@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Date;
 
 /**
- * The LockOutManager managers the LockOutProvider configured for this server, caches knowledge of
+ * The LockOutManager manages the LockOutProvider configured for this server, caches knowledge of
  * whether accounts are disabled or enabled, and providers a single point of entry for handling
  * locked/disabled accounts.
  *

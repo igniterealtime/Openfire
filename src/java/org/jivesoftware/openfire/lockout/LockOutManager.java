@@ -18,7 +18,7 @@ import java.util.Date;
 
 /**
  * The LockOutManager manages the LockOutProvider configured for this server, caches knowledge of
- * whether accounts are disabled or enabled, and providers a single point of entry for handling
+ * whether accounts are disabled or enabled, and provides a single point of entry for handling
  * locked/disabled accounts.
  *
  * The provider can be specified in <tt>openfire.xml</tt> by adding:

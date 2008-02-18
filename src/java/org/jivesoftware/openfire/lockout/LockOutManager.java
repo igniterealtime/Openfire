@@ -34,7 +34,7 @@ import java.util.Date;
  */
 public class LockOutManager {
 
-    // Wrap this guy up so we can mock out the UserManager class.
+    // Wrap this guy up so we can mock out the LockOutManager class.
     private static final class LockOutManagerContainer {
         private static final LockOutManager instance = new LockOutManager();
     }

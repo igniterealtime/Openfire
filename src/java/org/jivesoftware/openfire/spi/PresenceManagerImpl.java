@@ -32,9 +32,9 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.lock.LockManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -432,7 +432,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         if (userManager.isRegisteredUser(userJID.getNode())) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
                 // Do not send an unavailable presence if the user sent a direct available presence
-                if (presenceUpdateHandler.hasDirectPresence(session, recipientJID)) {
+                if (presenceUpdateHandler.hasDirectPresence(session.getAddress(), recipientJID)) {
                     continue;
                 }
                 Presence presencePacket = new Presence();

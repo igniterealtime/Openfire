@@ -582,7 +582,7 @@ public class Roster implements Cacheable, Externalizable {
                     continue;
                 }
                 JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null, true);
-                for (JID jid : routingTable.getRoutes(searchNode)) {
+                for (JID jid : routingTable.getRoutes(searchNode, null)) {
                     try {
                         routingTable.routePacket(jid, packet, false);
                     }
@@ -600,7 +600,7 @@ public class Roster implements Cacheable, Externalizable {
                 // Outgoing presence notifications are blocked for this contact
                 continue;
             }
-            for (JID jid: routingTable.getRoutes(new JID(contact))) {
+            for (JID jid: routingTable.getRoutes(new JID(contact), null)) {
                 try {
                     routingTable.routePacket(jid, packet, false);
                 }

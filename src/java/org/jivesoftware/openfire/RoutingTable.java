@@ -283,16 +283,22 @@ public interface RoutingTable {
      * included in the answer in case the specified full JID exists or an empty collection
      * if the full JID does not exist. Moreover, when passing a bare JID a list of full
      * JIDs will be returned for each available resource associated to the bare JID. In
-     * any case, only JIDs of <tt>available</tt> client sessions are returned.<p>
+     * any case, only JIDs of <tt>available</tt> client sessions are returned. However,
+     * there is an exception with directed presences. Unavailable routes may be returned
+     * if and only if the owner of the route sent a directed presence to the requester
+     * thus becoming available to the requester. If requester is <tt>null</tt> then only
+     * available resources are considered.<p>
      *
      * When asking for routes to components a single element will be returned in the answer
      * only if an internal or external component is found for the specified route address.
      * If no component was found then an empty collection will be returned.
      *
      * @param route The address we want a route to.
+     * @param requester The address of the entity requesting the routes or null if we don't
+     * care about directed presences.
      * @return list of routes associated to the specified route address.
      */
-    List<JID> getRoutes(JID route);
+    List<JID> getRoutes(JID route, JID requester);
 
     /**
      * Returns true if a route of a client session has been successfully removed. When running

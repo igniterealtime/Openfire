@@ -53,7 +53,7 @@ public class SocketPacketWriteHandler implements ChannelHandler {
             }
             else {
                 // JID is of the form <user@domain>
-                for (JID route : routingTable.getRoutes(recipient)) {
+                for (JID route : routingTable.getRoutes(recipient, null)) {
                     routingTable.routePacket(route, packet, false);
                 }
             }

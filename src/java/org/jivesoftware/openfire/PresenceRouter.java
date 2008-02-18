@@ -156,7 +156,7 @@ public class PresenceRouter extends BasicModule {
 
                     // The user sent a directed presence to an entity
                     // Broadcast it to all connected resources
-                    for (JID jid : routingTable.getRoutes(recipientJID)) {
+                    for (JID jid : routingTable.getRoutes(recipientJID, senderJID)) {
                         // Register the sent directed presence
                         updateHandler.directedPresenceSent(packet, jid, recipientJID.toString());
                         // Route the packet

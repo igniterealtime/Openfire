@@ -150,7 +150,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // a module, the module will be able to handle the packet. If the handler is a
                     // Session the packet will be routed to the client. If a route cannot be found
                     // then the packet will be delivered based on its recipient and sender.
-                    List<JID> jids = routingTable.getRoutes(recipientJID);
+                    List<JID> jids = routingTable.getRoutes(recipientJID, null);
                     if (!jids.isEmpty()) {
                         for (JID jid : jids) {
                             Presence presenteToSend = presence.createCopy();

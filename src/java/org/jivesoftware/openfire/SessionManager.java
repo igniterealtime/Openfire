@@ -551,7 +551,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         Presence presence;
         // Get list of sessions of the same user
         JID searchJID = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
-        List<JID> addresses = routingTable.getRoutes(searchJID);
+        List<JID> addresses = routingTable.getRoutes(searchJID, null);
         for (JID address : addresses) {
             if (address.equals(session.getAddress())) {
                 continue;
@@ -575,7 +575,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
         // Get list of sessions of the same user
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
-        List<JID> addresses = routingTable.getRoutes(searchJID);
+        List<JID> addresses = routingTable.getRoutes(searchJID, null);
         for (JID address : addresses) {
             if (address.equals(originatingResource)) {
                 continue;
@@ -621,7 +621,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
 
         // Check presence's priority of other available resources
         JID searchJID = new JID(session.getAddress().toBareJID());
-        for (JID address : routingTable.getRoutes(searchJID)) {
+        for (JID address : routingTable.getRoutes(searchJID, null)) {
             if (address.equals(session.getAddress())) {
                 continue;
             }
@@ -812,7 +812,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     public Collection<ClientSession> getSessions(String username) {
         List<ClientSession> sessionList = new ArrayList<ClientSession>();
         if (username != null) {
-            List<JID> addresses = routingTable.getRoutes(new JID(username, serverName, null, true));
+            List<JID> addresses = routingTable.getRoutes(new JID(username, serverName, null, true), null);
             for (JID address : addresses) {
                 sessionList.add(routingTable.getClientRoute(address));
             }
@@ -889,12 +889,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return number of available sessions for a user.
      */
     public int getActiveSessionCount(String username) {
-        return routingTable.getRoutes(new JID(username, serverName, null, true)).size();
+        return routingTable.getRoutes(new JID(username, serverName, null, true), null).size();
     }
 
     public int getSessionCount(String username) {
         // TODO Count ALL sessions not only available
-        return routingTable.getRoutes(new JID(username, serverName, null, true)).size();
+        return routingTable.getRoutes(new JID(username, serverName, null, true), null).size();
     }
 
     /**
@@ -985,7 +985,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      */
     public void userBroadcast(String username, Packet packet) throws PacketException {
         // TODO broadcast to ALL sessions of the user and not only available
-        for (JID address : routingTable.getRoutes(new JID(username, serverName, null))) {
+        for (JID address : routingTable.getRoutes(new JID(username, serverName, null), null)) {
             packet.setTo(address);
             routingTable.routePacket(address, packet, true);
         }

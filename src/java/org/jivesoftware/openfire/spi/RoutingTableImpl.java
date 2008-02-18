@@ -88,6 +88,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private IQRouter iqRouter;
     private MessageRouter messageRouter;
     private PresenceRouter presenceRouter;
+    private PresenceUpdateHandler presenceUpdateHandler;
 
     public RoutingTableImpl() {
         super("Routing table");
@@ -200,7 +201,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     clientRoute = anonymousUsersCache.get(jid.toString());
                 }
                 if (clientRoute != null) {
-                    if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer)) {
+                    if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
+                            !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
                         // Packet should only be sent to available sessions and the route is not available
                         routed = false;
                     }
@@ -363,8 +365,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     private boolean routeToBareJID(JID recipientJID, Message packet) {
         List<ClientSession> sessions = new ArrayList<ClientSession>();
-        // Get existing AVAILABLE sessions of this user
-        for (JID address : getRoutes(recipientJID)) {
+        // Get existing AVAILABLE sessions of this user or AVAILABLE to the sender of the packet
+        for (JID address : getRoutes(recipientJID, packet.getFrom())) {
             ClientSession session = getClientRoute(address);
             if (session != null) {
                 sessions.add(session);
@@ -570,8 +572,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return componentsCache.containsKey(jid.getDomain());
     }
 
-    public List<JID> getRoutes(JID route) {
-        // TODO Refactor API to be able to get c2s sessions available only/all
+    public List<JID> getRoutes(JID route, JID requester) {
         List<JID> jids = new ArrayList<JID>();
         if (serverName.equals(route.getDomain())) {
             // Address belongs to local user
@@ -581,7 +582,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 if (clientRoute == null) {
                     clientRoute = anonymousUsersCache.get(route.toString());
                 }
-                if (clientRoute != null && clientRoute.isAvailable()) {
+                if (clientRoute != null &&
+                        (clientRoute.isAvailable() || presenceUpdateHandler.hasDirectPresence(route, requester))) {
                     jids.add(route);
                 }
             }
@@ -595,7 +597,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         if (clientRoute == null) {
                             clientRoute = anonymousUsersCache.get(jid);
                         }
-                        if (clientRoute != null && clientRoute.isAvailable()) {
+                        if (clientRoute != null && (clientRoute.isAvailable() ||
+                                presenceUpdateHandler.hasDirectPresence(new JID(jid), requester))) {
                             jids.add(new JID(jid));
                         }
                     }
@@ -696,6 +699,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         iqRouter = server.getIQRouter();
         messageRouter = server.getMessageRouter();
         presenceRouter = server.getPresenceRouter();
+        presenceUpdateHandler = server.getPresenceUpdateHandler();
         // Listen to cluster events
         ClusterManager.addListener(this);
     }

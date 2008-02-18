@@ -452,8 +452,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
-    public boolean hasDirectPresence(Session session, JID recipientJID) {
-        Collection<DirectedPresence> directedPresences = directedPresencesCache.get(session.getAddress().toString());
+    public boolean hasDirectPresence(JID ownerJID, JID recipientJID) {
+        if (recipientJID == null) {
+            return false;
+        }
+        Collection<DirectedPresence> directedPresences = directedPresencesCache.get(ownerJID.toString());
         if (directedPresences != null) {
             String recipient = recipientJID.toBareJID();
             for (DirectedPresence directedPresence : directedPresences) {

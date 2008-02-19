@@ -17,8 +17,6 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.XMPPPacketReader;
@@ -27,7 +25,6 @@ import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
@@ -434,8 +431,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             List<String> bindInterfaces = getServerInterfaces();
 
             String path = IM_URL_PREFIX + "configureComponent/" + serverInfo.getXMPPDomain() +
-                    "/" + WSUtils.marshallList(bindInterfaces) + "/" +
-                    String.valueOf(ExternalComponentManager.getServicePort());
+                    "/" + WSUtils.marshallList(bindInterfaces) +
+                    "/" + String.valueOf(ExternalComponentManager.getServicePort());
 
             executeRequest(GET, path);
 
@@ -498,16 +495,20 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private void updateClearspaceSharedSecret(String newSecret) {
 
         try {
-            String path = IM_URL_PREFIX + "updateSharedSecret";
+            String path = IM_URL_PREFIX + "updateSharedSecret/" + newSecret;
 
+            executeRequest(GET, path);
+
+            //TODO use the post method
+            /*
             // Creates the XML with the data
             Document groupDoc =  DocumentHelper.createDocument();
             Element rootE = groupDoc.addElement("updateSharedSecret");
             rootE.addElement("newSecret").setText(newSecret
             );
 
-
             executeRequest(POST, path, groupDoc.asXML());
+            */
         } catch (UnauthorizedException ue) {
             // TODO what should happen here? should continue?
         } catch (Exception e) {

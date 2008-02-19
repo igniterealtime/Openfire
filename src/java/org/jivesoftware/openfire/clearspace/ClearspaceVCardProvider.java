@@ -43,6 +43,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
 
     private ClearspaceManager manager;
     private Boolean avatarReadOnly;
+    private Boolean readOnly;
 
     public ClearspaceVCardProvider() {
         this.manager = ClearspaceManager.getInstance();

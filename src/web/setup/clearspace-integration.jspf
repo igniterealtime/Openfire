@@ -48,6 +48,10 @@
                         "org.jivesoftware.openfire.clearspace.ClearspaceGroupProvider");
                 JiveGlobals.setXMLProperty("provider.vcard.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceVCardProvider");
+                JiveGlobals.setXMLProperty("provider.lockout.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceLockOutProvider");
+                JiveGlobals.setXMLProperty("provider.securityAudit.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceSecurityAuditProvider");
 
                 // Redirect to next step.
                 response.sendRedirect(nextPage);

@@ -57,6 +57,8 @@
         item.setSubStatus(RosterItem.SubType.getTypeFromInt(sub));
         // Delete the roster item
         roster.updateRosterItem(item);
+        // Log the event
+        webManager.logEvent("deleted roster item from "+username, "roster item:\njid = "+jid);
         // Done, so redirect
         response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&editsuccess=true");
         return;

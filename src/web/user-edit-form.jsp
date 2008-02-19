@@ -17,6 +17,7 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     boolean save = ParamUtils.getBooleanParameter(request,"save");
@@ -39,6 +40,9 @@
         user.setEmail(email);
         user.setName(name);
 
+        // Log the event
+        webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email);
+
         // Changes good, so redirect
         response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));
         return;
@@ -58,7 +62,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.edit.form.update" />
         </td></tr>

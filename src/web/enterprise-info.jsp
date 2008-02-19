@@ -163,7 +163,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 0px;
+    border-width: 1px 0 1px 0;
     padding: 5px;
 }
 
@@ -174,7 +174,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 0px;
+    border-width: 1px 0 1px 0;
     padding: 5px;
 }
 
@@ -185,7 +185,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 1px 1px 0px;
+    border-width: 1px 1px 1px 0;
     padding: 5px;
 }
 
@@ -196,7 +196,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 1px;
+    border-width: 1px 0 1px 1px;
     padding: 5px;
 
 }
@@ -208,7 +208,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 1px 1px 0px;
+    border-width: 1px 1px 1px 0;
     padding: 5px;
 }
 
@@ -217,7 +217,7 @@
     font-size: 9pt;
     border-color: #e3e3e3;
     border-style: solid;
-    border-width: 0px 0px 1px 0px;
+    border-width: 0 0 1px 0;
     padding: 5px;
 }
 </style>

@@ -10,7 +10,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.openfire.Connection,
-                 org.jivesoftware.openfire.PrivateStorage,
                  org.jivesoftware.openfire.session.LocalClientSession,
                  org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
@@ -34,9 +33,6 @@
     boolean clientEnabled = ParamUtils.getBooleanParameter(request, "clientEnabled");
     boolean serverEnabled = ParamUtils.getBooleanParameter(request, "serverEnabled");
 
-    // Get an audit manager:
-    PrivateStorage privateStorage = webManager.getPrivateStore();
-
     if (update) {
         // Update c2s compression policy
         LocalClientSession.setCompressionPolicy(
@@ -44,11 +40,13 @@
         // Update s2s compression policy
         JiveGlobals.setProperty("xmpp.server.compression.policy", serverEnabled ?
                 Connection.CompressionPolicy.optional.toString() : Connection.CompressionPolicy.disabled.toString());
+        // Log the event
+        webManager.logEvent("set compression policy", "c2s compression = "+clientEnabled+"\ns2s compression = "+serverEnabled);
 %>
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="compression.settings.update" />
         </td></tr>

@@ -14,6 +14,8 @@
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%!
     HttpBindManager serverManager = HttpBindManager.getInstance();
@@ -49,6 +51,8 @@
     Map<String, String> errorMap = new HashMap<String, String>();
     if (request.getParameter("update") != null) {
         errorMap = handleUpdate(request);
+        // Log the event
+        webManager.logEvent("updated HTTP bind settings", null);
     }
 
     boolean isHttpBindEnabled = serverManager.isHttpBindEnabled();

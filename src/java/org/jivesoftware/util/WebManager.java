@@ -12,6 +12,7 @@
 package org.jivesoftware.util;
 
 import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
@@ -78,6 +79,10 @@ public class WebManager extends WebBean {
         return LockOutManager.getInstance();
     }
 
+    public SecurityAuditManager getSecurityAuditManager() {
+        return SecurityAuditManager.getInstance();
+    }
+
     public RosterManager getRosterManager() {
         return getXMPPServer().getRosterManager();
     }
@@ -100,6 +105,16 @@ public class WebManager extends WebBean {
 
     public XMPPServerInfo getServerInfo() {
         return getXMPPServer().getServerInfo();
+    }
+
+    /**
+     * Logs a security event as the currently logged in user.  (convenience routine for SecurityAuditManager)
+     *
+     * @param summary Summary of event.
+     * @param details Details of event, can be null if no details available.
+     */
+    public void logEvent(String summary, String details) {
+        SecurityAuditManager.getInstance().logEvent(getUser().getUsername(), summary, details);
     }
 
     /**

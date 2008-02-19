@@ -18,6 +18,8 @@
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%
 
@@ -75,6 +77,9 @@
         }
 
         mediaProxyService.setEnabled(enabled);
+
+        // Log the event
+        webManager.logEvent("edited media proxy settings", "minport = "+minPort+"\nmaxport = "+maxPort+"\nechoport = "+echoPort+"\nenabled = "+enabled+"\nlifetime = "+lifetime+"\nkeepalivedelay = "+keepAliveDelay);
 
         success = true;
     }

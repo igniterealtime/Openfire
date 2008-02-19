@@ -43,6 +43,8 @@
         if (role != null) {
             try {
                 room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), "");
+                // Log the event
+                webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
                 // Done, so redirect
                 response.sendRedirect("muc-room-occupants.jsp?roomName="+URLEncoder.encode(room.getName(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletesuccess=true");
                 return;

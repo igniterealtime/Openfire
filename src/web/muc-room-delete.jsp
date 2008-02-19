@@ -41,6 +41,8 @@
         if (room !=  null) {
             // If the room still exists then destroy it
             room.destroyRoom(alternateJID, reason);
+            // Log the event
+            webManager.logEvent("destroyed MUC room "+roomName, "reason = "+reason+"\nalt jid = "+alternateJID);
         }
         // Done, so redirect
         response.sendRedirect("muc-room-summary.jsp?deletesuccess=true");

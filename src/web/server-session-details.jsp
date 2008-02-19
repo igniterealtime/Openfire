@@ -74,13 +74,13 @@
         </td>
         <td>
         <% if (!inSessions.isEmpty() && outSession == null) { %>
-            <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.incoming" />">
+            <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
             <fmt:message key="server.session.connection.incoming" />
         <% } else if (inSessions.isEmpty() && outSession != null) { %>
-            <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.outgoing" />">
+            <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
             <fmt:message key="server.session.connection.outgoing" />
         <% } else { %>
-            <img src="images/both_32x16.gif" width="32" height="16" border="0" title="<fmt:message key="server.session.connection.both" />">
+            <img src="images/both_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
             <fmt:message key="server.session.connection.both" />
         <% } %>
         </td>
@@ -121,10 +121,10 @@
     <tr>
         <%  if (inSession.isSecure()) { %>
             <td width="1%">
-                <img src="images/lock.gif" width="16" height="16" border="0">
+                <img src="images/lock.gif" width="16" height="16" border="0" alt="">
             </td>
          <% } else { %>
-            <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+            <td width="1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
          <% } %>
         <%
             Date creationDate = inSession.getCreationDate();
@@ -167,10 +167,10 @@
     <tr>
         <%  if (outSession.isSecure()) { %>
         <td width="1%">
-            <img src="images/lock.gif" width="16" height="16" border="0">
+            <img src="images/lock.gif" width="16" height="16" border="0" alt="">
         </td>
          <% } else { %>
-        <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+        <td width="1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
          <% } %>
         <%
             Date creationDate = outSession.getCreationDate();

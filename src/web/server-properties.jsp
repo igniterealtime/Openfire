@@ -17,6 +17,9 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
+
 <%!
     /**
      * Make sure the String can wrap at 80 chars.
@@ -31,12 +34,12 @@
         int count = 0;
         StringBuffer buf = new StringBuffer();
         char [] strChars = str.toCharArray();
-        for (int i=0; i<strChars.length; i++) {
-            if (Character.isWhitespace(strChars[i])) {
+        for (char strChar : strChars) {
+            if (Character.isWhitespace(strChar)) {
                 count = 0;
             }
             count++;
-            buf.append(strChars[i]);
+            buf.append(strChar);
             if (count >= 60) {
                 buf.append(" ");
                 count = 0;
@@ -62,6 +65,8 @@
     if (delete) {
         if (propName != null) {
             JiveGlobals.deleteProperty(propName);
+            // Log the event
+            webManager.logEvent("deleted server property "+propName, null);
             response.sendRedirect("server-properties.jsp?deletesuccess=true");
             return;
         }
@@ -80,16 +85,16 @@
         }
         if (errors.size() == 0) {
             JiveGlobals.setProperty(propName, propValue);
+            // Log the event
+            webManager.logEvent("set server property "+propName, propName+" = "+propValue);
             response.sendRedirect("server-properties.jsp?success=true");
             return;
         }
     }
 
-    List properties = JiveGlobals.getPropertyNames();
-    Collections.sort(properties, new Comparator() {
-        public int compare(Object o1, Object o2) {
-            String s1 = (String)o1;
-            String s2 = (String)o2;
+    List<String> properties = JiveGlobals.getPropertyNames();
+    Collections.sort(properties, new Comparator<String>() {
+        public int compare(String s1, String s2) {
             return s1.toLowerCase().compareTo(s2.toLowerCase());
         }
     });
@@ -118,7 +123,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="server.properties.error" />
         </td></tr>
@@ -131,7 +136,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="server.properties.saved" />
         </td></tr>
@@ -144,7 +149,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="server.properties.deleted" />
         </td></tr>
@@ -159,7 +164,7 @@
     <div class="jive-info">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/info-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/info-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="server.properties.edit_property" />
         </td></tr>
@@ -174,7 +179,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="server.properties.error_deleting" />
         </td></tr>
@@ -240,40 +245,41 @@ function dodelete(propName) {
 
     <%  } %>
 
-    <%  for (int i=0; i<properties.size(); i++) {
-            String n = (String)properties.get(i);
-            String v = JiveGlobals.getProperty(n);
-            v = StringUtils.replace(StringUtils.escapeHTMLTags(v), "\n", "<br>");
+    <% for (String n : properties) {
+        String v = JiveGlobals.getProperty(n);
+        v = StringUtils.replace(StringUtils.escapeHTMLTags(v), "\n", "<br>");
     %>
-        <tr class="<%= (n.equals(propName) ? "hilite" : "") %>">
+    <tr class="<%= (n.equals(propName) ? "hilite" : "") %>">
 
-            <td>
-                <div class="hidebox" style="width:200px;">
+        <td>
+            <div class="hidebox" style="width:200px;">
                 <span title="<%= StringUtils.escapeHTMLTags(n) %>">
                 <%= StringUtils.escapeHTMLTags(n) %>
                 </span>
-                </div>
-            </td>
-            <td>
-                <div class="hidebox" style="width:300px;">
-                    <%  if (n.indexOf("passwd") > -1 || n.indexOf("password") > -1 || n.indexOf("cookieKey") > -1) { %>
-                        <span style="color:#999;"><i>hidden</i></span>
-                    <%  } else { %>
-                        <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
-                    <%  } %>
-                </div>
-            </td>
-            <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(n,"'","''") %>');"
-                ><img src="images/edit-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_edit" />" border="0"></a
+            </div>
+        </td>
+        <td>
+            <div class="hidebox" style="width:300px;">
+                <% if (n.indexOf("passwd") > -1 || n.indexOf("password") > -1 || n.indexOf("cookieKey") > -1) { %>
+                <span style="color:#999;"><i>hidden</i></span>
+                <% } else { %>
+                <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
+                <% } %>
+            </div>
+        </td>
+        <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(n,"'","''") %>');"
+                ><img src="images/edit-16x16.gif" width="16" height="16"
+                      alt="<fmt:message key="server.properties.alt_edit" />" border="0"></a
                 >
-            </td>
-            <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(n,"'","''") %>');"
-                ><img src="images/delete-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_delete" />" border="0"></a
+        </td>
+        <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(n,"'","''") %>');"
+                ><img src="images/delete-16x16.gif" width="16" height="16"
+                      alt="<fmt:message key="server.properties.alt_delete" />" border="0"></a
                 >
-            </td>
-        </tr>
+        </td>
+    </tr>
 
-    <%  } %>
+    <% } %>
 
 </tbody>
 </table>

@@ -10,6 +10,8 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%--
   Created by IntelliJ IDEA.
@@ -55,6 +57,8 @@
                         new ByteArrayInputStream(certificate.getBytes()), true, true);
                 // Save keystore
                 SSLConfig.saveStores();
+                // Log the event
+                webManager.logEvent("imported SSL certificate", "alias = "+alias);
                 response.sendRedirect("ssl-certificates.jsp?importsuccess=true");
                 return;
             }

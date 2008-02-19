@@ -163,6 +163,18 @@ CREATE TABLE jiveSASLAuthorized (
   CONSTRAINT jiveSASLAuthoirzed_pk PRIMARY KEY (username, principal)
 );
 
+CREATE TABLE jiveSecurityAuditLog (
+  msgID                 INTEGER         NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
+  entryStamp            BIGINT          NOT NULL,
+  summary               NVARCHAR(255)   NOT NULL,
+  node                  NVARCHAR(255)   NOT NULL,
+  details               NTEXT,
+  CONSTRAINT jiveSecAuditLog_pk PRIMARY KEY (msgID)
+);
+CREATE INDEX jiveSecAuditLog_tstamp_idx ON jiveSecurityAuditLog (entryStamp);
+CREATE INDEX jiveSecAuditLog_uname_idx ON jiveSecurityAuditLog (username);
+
 /* MUC Tables */
 
 CREATE TABLE mucRoom (
@@ -344,7 +356,7 @@ INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 15);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 16);
 
 /* Entry for admin user */
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)

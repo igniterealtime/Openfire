@@ -47,7 +47,7 @@
         return;
     }
 
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     // Handle an add
     if (add) {
         // do validation
@@ -78,6 +78,8 @@
                     // Send the IQ packet that will modify the room's configuration
                     room.getIQAdminHandler().handleIQ(iq, room.getRole());
                 }
+                // Log the event
+                webManager.logEvent("set MUC affilation to "+affiliation+" for "+userJID+" in "+roomName, null);
                 // done, return
                 response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomName="+URLEncoder.encode(roomName, "UTF-8"));
                 return;
@@ -131,7 +133,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if (errors.containsKey("ConflictException")) { %>
 
@@ -156,7 +158,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if (addsuccess) { %>
 
@@ -231,7 +233,7 @@
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=owner"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
-                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
         <%  } } %>
@@ -264,7 +266,7 @@
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=admin"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
-                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
         <%  } } %>
@@ -300,7 +302,7 @@
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=member"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
-                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
         <%  } } %>
@@ -333,7 +335,7 @@
                     <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=outcast"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
-                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
         <%  } } %>

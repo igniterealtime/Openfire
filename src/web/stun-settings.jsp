@@ -142,7 +142,7 @@
         <tbody>
             <tr>
                 <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16"
-                                           border="0"></td>
+                                           border="0" alt=""></td>
                 <td class="jive-icon-label">
                     <fmt:message key="stun.settings.error"/>
                 </td>
@@ -159,7 +159,7 @@
         <tbody>
             <tr>
                 <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16"
-                                           border="0"></td>
+                                           border="0" alt=""></td>
                 <td class="jive-icon-label">
                     <fmt:message key="stun.external.error"/>
                 </td>

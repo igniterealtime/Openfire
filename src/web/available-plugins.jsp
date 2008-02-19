@@ -21,15 +21,12 @@
 <%@ page import="java.util.List" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Date"%>
-<%@ page import="java.text.SimpleDateFormat"%>
-<%@ page import="org.jivesoftware.util.WebManager"%><%@ page import="org.jivesoftware.util.LocaleUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%
-    WebManager webManager = new WebManager();
-%>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%
     boolean downloadRequested = request.getParameter("download") != null;
@@ -49,6 +46,8 @@
     if (downloadRequested) {
         // Download and install new plugin
         updateManager.downloadPlugin(url);
+        // Log the event
+        webManager.logEvent("downloaded new plugin from "+url, null);
     }
 
 %>
@@ -77,18 +76,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 0px;
-    padding: 5px;
-}
-
-.table-header-align-right {
-    text-align: right;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    border-color: #ccc;
-    border-style: solid;
-    border-width: 1px 0px 1px 0px;
+    border-width: 1px 0 1px 0;
     padding: 5px;
 }
 
@@ -99,7 +87,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 1px 1px 0px;
+    border-width: 1px 1px 1px 0;
     padding: 5px;
 }
 
@@ -110,7 +98,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 1px;
+    border-width: 1px 0 1px 1px;
     padding: 5px;
 
 }
@@ -122,7 +110,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 1px 1px 0px;
+    border-width: 1px 1px 1px 0;
     padding: 5px;
 }
 
@@ -131,7 +119,7 @@
     font-size: 9pt;
     border-color: #e3e3e3;
     border-style: solid;
-    border-width: 0px 0px 1px 0px;
+    border-width: 0 0 1px 0;
     padding: 5px;
 }
 
@@ -341,11 +329,11 @@
 </tr>
 <tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
     <td width="1%" class="line-bottom-border">
-        <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
+        <img src="<%= plugin.getIcon()%>" width="16" height="16" alt=""/>
     </td>
     <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
     <td class="line-bottom-border" align="center">
-        <img src="images/success-16x16.gif" height="16" width="16"/>
+        <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
     </td>
 </tr>
 <%
@@ -421,11 +409,11 @@
 </tr>
 <tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
      <td width="1%" class="line-bottom-border">
-        <img src="<%= plugin.getIcon()%>" width="16" height="16"/>
+        <img src="<%= plugin.getIcon()%>" width="16" height="16" alt=""/>
     </td>
     <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
     <td class="line-bottom-border" align="center">
-        <img src="images/success-16x16.gif" height="16" width="16"/>
+        <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
     </td>
 </tr>
 <%

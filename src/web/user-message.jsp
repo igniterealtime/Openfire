@@ -12,13 +12,11 @@
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.ClientSession,
-                 org.jivesoftware.openfire.session.Session,
                  org.jivesoftware.openfire.user.User,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
                  java.util.Collection,
-                 java.util.HashMap,
-                 java.util.Iterator"
+                 java.util.HashMap"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Map" %>
@@ -33,7 +31,6 @@
     boolean tabs = ParamUtils.getBooleanParameter(request,"tabs",true);
     String jid = ParamUtils.getParameter(request,"jid");
     String[] jids = ParamUtils.getParameters(request,"jid");
-    String sessionID = ParamUtils.getParameter(request,"sessionID");
     String message = ParamUtils.getParameter(request,"message");
 %>
 
@@ -63,7 +60,7 @@
     SessionManager sessionManager = webManager.getSessionManager();
 
     // Handle the request to send a message:
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (send) {
         // Validate the message and jid
         if (jid == null && !sendToAll && user != null) {
@@ -82,14 +79,19 @@
                 if (sendToAll) {
                     // loop through all sessions based on the user assoc with the JID, send
                     // message to all
-                    for (int i=0; i<jids.length; i++) {
-                        JID address = new JID(jids[i]);
-                        Session s = sessionManager.getSession(address);
+                    for (String jid1 : jids) {
+                        JID address = new JID(jid1);
+                        // TODO: Do we really need this?
+                        sessionManager.getSession(address);
                         sessionManager.sendServerMessage(address, null, message);
+                        // Log the event
+                        webManager.logEvent("send server message", "jid = all active\nmessage = "+message);
                     }
                 }
                 else {
                     sessionManager.sendServerMessage(new JID(jid),null,message);
+                    // Log the event
+                    webManager.logEvent("send server message", "jid = "+jid+"\nmessage = "+message);
                 }
             }
             if (username != null){
@@ -130,7 +132,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.message.send" />
         </td></tr>
@@ -206,13 +208,13 @@ function updateSelect(el) {
 
 						<select size="2" name="jid" multiple>
 
-						<%   Iterator<ClientSession> iter = sessions.iterator();
-							 while (iter.hasNext()) {
-								sess = iter.next();
-						%>
-							<option value="<%= sess.getAddress().toString() %>"><%= sess.getAddress().toString() %></option>
+						<%
+                            for (ClientSession clisess : sessions) {
+                        %>
+                            <option value="<%= clisess.getAddress().toString() %>"><%= clisess.getAddress().toString() %>
+                            </option>
 
-						<%  } %>
+                            <% } %>
 
 						</select>
 

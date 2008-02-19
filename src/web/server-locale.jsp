@@ -21,29 +21,36 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
+
 <%  // Get parameters //
     String localeCode = ParamUtils.getParameter(request,"localeCode");
     String timeZoneID = ParamUtils.getParameter(request,"timeZoneID");
     boolean save = request.getParameter("save") != null;
 
-    Map errors = new HashMap();
+    // TODO: We're not displaying this error ever.
+    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         // Set the timezeone
         try {
             TimeZone tz = TimeZone.getTimeZone(timeZoneID);
             JiveGlobals.setTimeZone(tz);
+            // Log the event
+            webManager.logEvent("updated time zone to "+tz, null);
         }
         catch (Exception e) {
             Log.error(e);
         }
-        Locale newLocale = null;
         if (localeCode != null) {
-            newLocale = LocaleUtils.localeCodeToLocale(localeCode.trim());
+            Locale newLocale = LocaleUtils.localeCodeToLocale(localeCode.trim());
             if (newLocale == null) {
                 errors.put("localeCode","");
             }
             else {
                 JiveGlobals.setLocale(newLocale);
+                // Log the event
+                webManager.logEvent("updated locale to "+newLocale, null);
                 response.sendRedirect("server-locale.jsp?success=true");
                 return;
             }
@@ -85,9 +92,11 @@
 
         <%  boolean usingPreset = false;
             Locale[] locales = Locale.getAvailableLocales();
-            for (int i=0; i<locales.length; i++) {
-                usingPreset = locales[i].equals(locale);
-                if (usingPreset) { break; }
+            for (Locale locale1 : locales) {
+                usingPreset = locale1.equals(locale);
+                if (usingPreset) {
+                    break;
+                }
             }
         %>
 
@@ -173,7 +182,7 @@
                      id="loc09" />
                 </td>
                 <td>
-                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" /></a>
+                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" alt="" /></a>
                 </td>
                 <td>
                     <label for="loc09">Simplified Chinese (zh_CN)</label>
@@ -187,14 +196,14 @@
         <p><b><fmt:message key="timezone.choose" />:</b></p>
 
         <select size="1" name="timeZoneID">
-        <%  for (int i=0; i<timeZones.length; i++) {
-                String selected = "";
-                if (timeZone.getID().equals(timeZones[i][0].trim())) {
-                    selected = " selected";
-                }
+        <% for (String[] timeZone1 : timeZones) {
+            String selected = "";
+            if (timeZone.getID().equals(timeZone1[0].trim())) {
+                selected = " selected";
+            }
         %>
-            <option value="<%= timeZones[i][0] %>"<%= selected %>><%= timeZones[i][1] %>
-        <%  } %>
+            <option value="<%= timeZone1[0] %>"<%= selected %>><%= timeZone1[1] %>
+                <%  } %>
         </select>
 	</div>
 <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">

@@ -9,7 +9,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.admin.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
                  java.util.*,
                  java.net.URLEncoder"
@@ -39,10 +38,8 @@
 
     // Get the rooms in the server
     List<MUCRoom> rooms = webManager.getMultiUserChatServer().getChatRooms();
-    Collections.sort(rooms, new Comparator() {
-        public int compare(Object o1, Object o2) {
-            MUCRoom room1 = (MUCRoom)o1;
-            MUCRoom room2 = (MUCRoom)o2;
+    Collections.sort(rooms, new Comparator<MUCRoom>() {
+        public int compare(MUCRoom room1, MUCRoom room2) {
             return room1.getName().toLowerCase().compareTo(room2.getName().toLowerCase());
         }
     });
@@ -63,7 +60,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="muc.room.summary.destroyed" />
         </td></tr>
@@ -166,12 +163,12 @@
         <td width="1%" align="center">
             <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
+             ><img src="images/edit-16x16.gif" width="17" height="17" border="0" alt=""></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="muc-room-delete.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>
     </tr>
 

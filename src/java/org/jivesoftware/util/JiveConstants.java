@@ -20,6 +20,7 @@ public class JiveConstants {
     public static final int ROSTER = 18;
     public static final int OFFLINE = 19;
     public static final int MUC_ROOM = 23;
+    public static final int SECURITY_AUDIT = 25;
 
     public static final long SECOND = 1000;
     public static final long MINUTE = 60 * SECOND;

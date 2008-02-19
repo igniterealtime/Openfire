@@ -45,6 +45,8 @@
         }
         if (errors.size() == 0) {
             webManager.getMultiUserChatServer().setServiceName(muc);
+            // Log the event
+            webManager.logEvent("set MUC service name to "+muc, null);
             response.sendRedirect("muc-server-props-edit-form.jsp?success=true&mucname="+muc);
             return;
         }

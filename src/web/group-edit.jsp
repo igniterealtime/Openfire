@@ -71,30 +71,35 @@
             errors.put("groupDisplayName", "");
         }
         if (errors.isEmpty()) {
-
-                if (enableRosterGroups) {
-                    if (showGroup == null || !shareAdditional) {
-                        showGroup = "onlyGroup";
-                    }
-                    if ("spefgroups".equals(showGroup)) {
-                        showGroup = "onlyGroup";
-                    }
-                    else {
-                        groupNames = new String[] {};
-                    }
-                    group.getProperties().put("sharedRoster.showInRoster", showGroup);
-                    if (groupDisplayName != null) {
-                        group.getProperties().put("sharedRoster.displayName", groupDisplayName);
-                    }
-                    group.getProperties().put("sharedRoster.groupList", toList(groupNames, "UTF-8"));
+            if (enableRosterGroups) {
+                if (showGroup == null || !shareAdditional) {
+                    showGroup = "onlyGroup";
+                }
+                if ("spefgroups".equals(showGroup)) {
+                    showGroup = "onlyGroup";
                 }
                 else {
-                    group.getProperties().put("sharedRoster.showInRoster", "nobody");
-                    group.getProperties().put("sharedRoster.displayName", "");
-                    group.getProperties().put("sharedRoster.groupList", "");
+                    groupNames = new String[] {};
                 }
+                group.getProperties().put("sharedRoster.showInRoster", showGroup);
+                if (groupDisplayName != null) {
+                    group.getProperties().put("sharedRoster.displayName", groupDisplayName);
+                }
+                group.getProperties().put("sharedRoster.groupList", toList(groupNames, "UTF-8"));
 
-             // Get admin list and compare it the admin posted list.
+                // Log the event
+                webManager.logEvent("enabled roster groups for "+groupName, "showinroster = "+showGroup+"\ndisplayname = "+groupDisplayName+"\ngrouplist = "+toList(groupNames, "UTF-8"));
+            }
+            else {
+                group.getProperties().put("sharedRoster.showInRoster", "nobody");
+                group.getProperties().put("sharedRoster.displayName", "");
+                group.getProperties().put("sharedRoster.groupList", "");
+
+                // Log the event
+                webManager.logEvent("disabled roster groups for "+groupName, null);
+            }
+
+            // Get admin list and compare it the admin posted list.
             response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
             return;
         }
@@ -126,6 +131,9 @@
         for (JID member : removeList) {
             group.getMembers().add(member);
         }
+        // Log the event
+        // TODO: Should log more here later
+        webManager.logEvent("updated group membership for "+groupName, null);
         // Get admin list and compare it the admin posted list.
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
         return;
@@ -135,7 +143,7 @@
         username = username.trim();
         username = username.toLowerCase();
 
-        if(username.indexOf('@') != -1){
+        if (username.indexOf('@') != -1) {
             try {
                 UserManager.getInstance().getUser(JID.escapeNode(username));
                 // That means that this user has an email address as their node.
@@ -159,6 +167,8 @@
             else {
                 // Admin entered a JID. Add the JID directly to the list of group members
                 added = group.getMembers().add(new JID(username));
+                // Log the event
+                webManager.logEvent("added group member to "+groupName, "username = "+username);
             }
 
             if (added) {
@@ -447,7 +457,7 @@
         <form action="group-edit.jsp" method="post" name="f">
         <input type="hidden" name="group" value="<%= groupName %>">
         <input type="hidden" name="add" value="Add"/>
-        <table cellpadding="3" cellspacing="1" border="0" style="margin: 0px 0px 8px 0px;">
+        <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
             <tr>
                 <td nowrap width="1%">
                     <fmt:message key="group.edit.add_user" />
@@ -603,13 +613,13 @@
         }
         StringBuffer buf = new StringBuffer();
         String sep = "";
-        for (int i=0; i<array.length; i++) {
+        for (String anArray : array) {
             String item;
             try {
-                item = URLDecoder.decode(array[i], enc);
+                item = URLDecoder.decode(anArray, enc);
             }
             catch (UnsupportedEncodingException e) {
-                item = array[i];
+                item = anArray;
             }
             buf.append(sep).append(item);
             sep = ",";
@@ -621,8 +631,8 @@
         if (array == null || array.length == 0 || item == null) {
             return false;
         }
-        for (int i=0; i<array.length; i++) {
-            if (item.equals(array[i])) {
+        for (String anArray : array) {
+            if (item.equals(anArray)) {
                 return true;
             }
         }

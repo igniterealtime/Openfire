@@ -65,6 +65,8 @@
         try {
             Session sess = sessionManager.getSession(address);
             sess.close();
+            // Log the event
+            webManager.logEvent("closed session for address "+address, null);
             // wait one second
             Thread.sleep(1000L);
         }
@@ -134,11 +136,12 @@
             -- <fmt:message key="session.summary.sessions_per_page" />:
             <select size="1" name="range" onchange="this.form.submit();">
 
-                <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+                <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
-                    <option value="<%= RANGE_PRESETS[i] %>"<%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+                <option value="<%= aRANGE_PRESETS %>"<%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
+                </option>
 
-                <%  } %>
+                <% } %>
 
             </select>
         </td>
@@ -185,7 +188,7 @@
         </th><th>
         <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
         <img src="images/sort_descending.gif" border="0" width="16" height="16" alt=""></a>
-        </th></tr></table></div>
+        </th></tr></table>
         <%
                 }
                 else {
@@ -196,7 +199,7 @@
         </th><th>
         <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
         <img src="images/sort_ascending.gif" width="16" height="16" border="0" alt=""></a>
-        </th></tr></table></div>
+        </th></tr></table>
         <%
                 }
             }

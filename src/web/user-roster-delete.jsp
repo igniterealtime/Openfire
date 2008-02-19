@@ -40,6 +40,8 @@
     if (delete) {
         // Delete the roster item
         roster.deleteRosterItem(new JID(jid), false);
+        // Log the event
+        webManager.logEvent("deleted roster item from "+username, "roster item:\njid = "+jid);
         // Done, so redirect
         response.sendRedirect("user-roster.jsp?username="+URLEncoder.encode(username, "UTF-8")+"&deletesuccess=true");
         return;

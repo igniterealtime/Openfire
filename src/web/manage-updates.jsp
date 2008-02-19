@@ -20,6 +20,8 @@
          errorPage="error.jsp"
         %>
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+<%  webManager.init(request, response, session, application, out ); %>
 
 <html>
 <head>
@@ -30,7 +32,6 @@
 
 <%  // Get parameters
     boolean update = request.getParameter("update") != null;
-    boolean notificationUpdate = request.getParameter("notificationUpdate") != null;
     boolean serviceEnabled = ParamUtils.getBooleanParameter(request, "serviceEnabled");
     boolean notificationsEnabled = ParamUtils.getBooleanParameter(request, "notificationsEnabled");
     boolean proxyEnabled = ParamUtils.getBooleanParameter(request,"proxyEnabled");
@@ -63,6 +64,8 @@
             updateManager.setNotificationEnabled(notificationsEnabled);
             updateManager.setProxyHost(proxyHost);
             updateManager.setProxyPort(proxyPort);
+            // Log the event
+            webManager.logEvent("edited managed updates settings", "enabeld = "+serviceEnabled+"\nnotificationsenabled = "+notificationsEnabled+"\nproxyhost = "+proxyHost+"\nproxypost = "+proxyPort);
             updateSucess = true;
         }
     }
@@ -89,7 +92,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
 
                 <% if (errors.get("proxyHost") != null) { %>

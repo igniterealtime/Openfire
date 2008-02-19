@@ -10,7 +10,6 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.openfire.*,
                  org.jivesoftware.openfire.muc.HistoryStrategy,
                  org.jivesoftware.openfire.muc.MultiUserChatServer"
     errorPage="error.jsp"
@@ -66,6 +65,8 @@
                 historyStrat.setType(HistoryStrategy.Type.number);
                 historyStrat.setMaxNumber(numMessages);
             }
+            // Log the event
+            webManager.logEvent("edited chatroom history settings", "type = "+policy+"\nmax messages = "+numMessages);
             // All done, redirect
             %>
     <div class="jive-success">

@@ -13,6 +13,9 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
+
 <%
     // get parameters
     String host = ParamUtils.getParameter(request,"host");
@@ -22,7 +25,6 @@
     boolean ssl = ParamUtils.getBooleanParameter(request,"ssl");
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
-    boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean debug = ParamUtils.getBooleanParameter(request, "debug");
 
     // Handle a test request
@@ -33,7 +35,7 @@
 
     EmailService service = EmailService.getInstance();
     // Save the email settings if requested
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         if (host != null) {
             service.setHost(host);
@@ -73,6 +75,8 @@
         service.setSSLEnabled(ssl);
 
         if (errors.size() == 0) {
+            // Log the event
+            webManager.logEvent("updated email service settings", "host = "+host+"\nport = "+port+"\nusername = "+username);
             // Set property to specify email is configured
             JiveGlobals.setProperty("mail.configured", "true");
             response.sendRedirect("system-email.jsp?success=true");

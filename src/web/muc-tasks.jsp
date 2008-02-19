@@ -39,6 +39,8 @@
         if (!kickEnabled) {
             // Disable kicking users by setting a value of -1
             mucServer.setUserIdleTime(-1);
+            // Log the event
+            webManager.logEvent("disabled muc idle kick timeout", null);
             response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
             return;
         }
@@ -62,6 +64,8 @@
 
         if (errors.size() == 0) {
             mucServer.setUserIdleTime(idle);
+            // Log the event
+            webManager.logEvent("edited muc idle kick timeout", "timeout = "+idle);
             response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
             return;
         }
@@ -97,6 +101,8 @@
         if (errors.size() == 0) {
             mucServer.setLogConversationsTimeout(frequency);
             mucServer.setLogConversationBatchSize(batchSize);
+            // Log the event
+            webManager.logEvent("edited muc conversation log settings", "timeout = "+frequency+"\nbatchSize = "+batchSize);
             response.sendRedirect("muc-tasks.jsp?logSettingSuccess=true");
             return;
         }
@@ -120,7 +126,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if (kickSettingSuccess) { %>
 
@@ -141,7 +147,7 @@
 <% if (errors.size() != 0) {  %>
 
    <table class="jive-error-message" cellpadding="3" cellspacing="0" border="0" width="350"> <tr valign="top">
-    <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+    <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
     <td width="99%" class="jive-error-text">
 
 		<% if (errors.get("idletime") != null) { %>

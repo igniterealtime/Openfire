@@ -116,6 +116,8 @@
                 JiveGlobals.setXMLProperty("adminConsole.securePort", String.valueOf(embeddedSecurePort));
                 needRestart = true;
             }
+            // Log the event
+            webManager.logEvent("edit server properties", "serverName = "+serverName+"\nport = "+port+"\nsslPort = "+sslPort+"\ncomponentPort = "+componentPort+"\nserverPort = "+serverPort+"\nembeddedPort = "+embeddedPort+"\nembeddedSecurePort = "+embeddedSecurePort);
             if (needRestart) {
                 response.sendRedirect("server-props.jsp?success=true&restart=true");
             } else {

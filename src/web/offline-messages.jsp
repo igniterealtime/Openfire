@@ -100,6 +100,9 @@
             }
 
             manager.setQuota((int)(quota*1024));
+
+            // Log the event
+            webManager.logEvent("edited offline message settings", "quote = "+quota+"\ntype = "+manager.getType());
 %>
 <c:set var="success" value="true" />
 <%
@@ -146,7 +149,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="offline.messages.update" />
         </td></tr>
@@ -160,7 +163,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if (errors.containsKey("general")) { %>
             <%= errors.get("general") %>

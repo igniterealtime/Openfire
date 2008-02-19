@@ -298,7 +298,7 @@
 
             <div class="jive-table">
             <table cellpadding="0" cellspacing="0" border="0">
-            <tr class="jive-current"><td><img src="images/blank.gif" width="12" height="12" border="0"></td></tr>
+            <tr class="jive-current"><td><img src="images/blank.gif" width="12" height="12" border="0" alt=""></td></tr>
             </table>
             </div>
 

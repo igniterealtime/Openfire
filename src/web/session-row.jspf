@@ -10,6 +10,8 @@
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
 
+ <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
  <%--
    - This page is meant to be included in other pages. It assumes 2 variables:
    -     * 'sess', a org.jivesoftware.xmpp.Session object
@@ -32,7 +34,7 @@
     <td width="1%" nowrap><%= count %></td>
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
-            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"
+            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key='session.row.cliked' />"
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
@@ -61,10 +63,10 @@
     <%  if (sess.isSecure()) { %>
         <td width="1%">
             <img src="images/lock.gif" width="16" height="16" border="0"
-            title="<fmt:message key="session.row.cliked_ssl" />">
+            title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
         </td>
      <% } else { %>
-        <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+        <td width="1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
      <% } %>
 
     <%  Presence.Show _show = sess.getPresence().getShow();
@@ -72,14 +74,14 @@
         if (!sess.getPresence().isAvailable()) {
      %>
         <td width="1%"
-            ><img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />"
+            ><img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key='user.properties.offline' />" alt="<fmt:message key='user.properties.offline' />"
             ></td>
         <td width="46%">
                 <fmt:message key="user.properties.offline" />
         </td>
       <%  } else if (_show == Presence.Show.away) { %>
         <td width="1%"
-            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />"
+            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.away' />" alt="<fmt:message key='session.details.away' />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -96,7 +98,7 @@
     <%  } else if (_show == Presence.Show.chat) { %>
 
         <td width="1%"
-            ><img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />"
+            ><img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.chat_available' />" alt="<fmt:message key='session.details.chat_available' />"
             ></td>
         <td width="46%">
             <fmt:message key="session.details.chat_available" />
@@ -105,7 +107,7 @@
     <%  } else if (_show == Presence.Show.dnd) { %>
 
         <td width="1%"
-            ><img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />"
+            ><img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.not_disturb' />" alt="<fmt:message key='session.details.not_disturb' />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -122,7 +124,7 @@
     <%  } else if (_show == null) { %>
 
         <td width="1%"
-            ><img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.online" />"
+            ><img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.online' />" alt="<fmt:message key='session.details.online' />"
             ></td>
         <td width="46%">
             <fmt:message key="session.details.online" />
@@ -131,7 +133,7 @@
     <%  } else if (_show == Presence.Show.xa) { %>
 
         <td width="1%"
-            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />"
+            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.extended' />" alt="<fmt:message key='session.details.extended' />"
             ></td>
         <td width="46%">
             <%  if (_stat != null) { %>
@@ -165,6 +167,6 @@
         <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true"
          title="<fmt:message key="session.row.cliked_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
-         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+         ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
     </td>
 </tr>

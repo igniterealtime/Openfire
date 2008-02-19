@@ -28,7 +28,7 @@
     MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
 
     // Handle a save
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (add) {
         // do validation
         if (userJID == null || userJID.indexOf('@') == -1) {
@@ -36,6 +36,8 @@
         }
         if (errors.size() == 0) {
             mucServer.addSysadmin(userJID);
+            // Log the event
+            webManager.logEvent("added muc sysadmin "+userJID, null);
             response.sendRedirect("muc-sysadmins.jsp?addsuccess=true");
             return;
         }
@@ -44,6 +46,8 @@
     if (delete) {
         // Remove the user from the list of system administrators
         mucServer.removeSysadmin(userJID);
+        // Log the event
+        webManager.logEvent("removed muc sysadmin "+userJID, null);
         // done, return
         response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true");
         return;
@@ -67,7 +71,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="groupchat.admins.user_removed" />
         </td></tr>
@@ -80,7 +84,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="groupchat.admins.user_added" />
         </td></tr>
@@ -93,7 +97,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="groupchat.admins.error_adding" />
         </td></tr>
@@ -113,7 +117,7 @@
 		<label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
 		<input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
 		 id="userJIDtf">
-		<input type="submit"s value="<fmt:message key="groupchat.admins.add" />">
+		<input type="submit" value="<fmt:message key="groupchat.admins.add" />">
 		<br><br>
 
 		<div class="jive-table" style="width:400px;">
@@ -145,7 +149,7 @@
 							<a href="muc-sysadmins.jsp?userJID=<%= user %>&delete=true"
 							 title="<fmt:message key="groupchat.admins.dialog.title" />"
 							 onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
-							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
 						</td>
 					</tr>
 

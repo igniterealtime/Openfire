@@ -19,6 +19,8 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 <%  try { %>
 
 <% // Get parameters:
@@ -105,6 +107,8 @@
             }
         }
         success = true;
+        // Log the event
+        webManager.logEvent("updated SSL configuration", "xmpp.server.dialback.enabled = "+JiveGlobals.getProperty("xmpp.server.dialback.enabled")+"\nxmpp.server.tls.enabled = "+JiveGlobals.getProperty("xmpp.server.tls.enabled"));
     }
 
     // Set page vars

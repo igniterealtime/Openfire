@@ -39,6 +39,8 @@
                 transferProxy.setProxyPort(port);
             }
             transferProxy.enableFileTransferProxy(isProxyEnabled);
+            // Log the event
+            webManager.logEvent("edited file transfer proxy settings", "port = "+port+"\nenabled = "+isProxyEnabled);
         }
     }
 

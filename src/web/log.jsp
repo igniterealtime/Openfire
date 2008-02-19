@@ -25,7 +25,7 @@
 <%!
     static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd kk:mm:ss");
 
-    private static final String parseDate(String input) {
+    private static String parseDate(String input) {
         if (input == null || "".equals(input)) {
             return input;
         }
@@ -50,7 +50,7 @@
         }
     }
 
-    private static final String hilite(String input) {
+    private static String hilite(String input) {
         if (input == null || "".equals(input)) {
             return input;
         }
@@ -92,7 +92,7 @@
     File logFile = new File(logDir, filename);
 
     BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
-    String line = null;
+    String line;
     int totalNumLines = 0;
     while ((line=in.readLine()) != null) {
         totalNumLines++;
@@ -142,7 +142,7 @@
         border : 1px #ccc solid;
     }
     .log TH {
-        font-family : verdana, arial;
+        font-family : verdana, arial, sans-serif;
         font-weight : bold;
         font-size : 8pt;
     }
@@ -157,7 +157,7 @@
         border-right : 1px #ccc solid;
     }
     .log TD {
-        font-family : courier new,monospaced;
+        font-family : courier new,monospace;
         font-size : 9pt;
         background-color : #ffe;
     }
@@ -202,13 +202,15 @@
         <%  } %>
     </td>
     <td width="99%" class="line">
-        <%  for (int j=0; j<lines.length; j++) {
-                if (lines[j] != null) {
+        <% for (String line1 : lines) {
+            if (line1 != null) {
         %>
-            <nobr><%= lines[j] %></nobr><br>
+        <nobr><%= line1 %>
+        </nobr>
+        <br>
 
-        <%      }
-            }
+        <% }
+        }
         %>
     </td>
 </tr>

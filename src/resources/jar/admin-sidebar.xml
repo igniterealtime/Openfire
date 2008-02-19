@@ -52,6 +52,11 @@
             <item id="system-email" name="${sidebar.server-email}"
                   url="system-email.jsp"
                   description="${sidebar.server-email.descr}"/>
+
+            <!-- Security Audit Viewer -->
+            <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
+                  url="security-audit-viewer.jsp"
+                  description="${sidebar.security-audit-viewer.descr}"/>
         </sidebar>
 
         <!-- Server Settings -->

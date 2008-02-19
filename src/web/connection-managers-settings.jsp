@@ -26,6 +26,9 @@
 <%@ page import="java.util.List"%>
 <%@ page import="java.util.Map" %>
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<%  webManager.init(request, response, session, application, out); %>
+
 <html>
 <head>
     <title>
@@ -39,10 +42,8 @@
     boolean managerEnabled = ParamUtils.getBooleanParameter(request,"managerEnabled");
     int port = ParamUtils.getIntParameter(request,"port", 0);
     String defaultSecret = ParamUtils.getParameter(request,"defaultSecret");
-    String secret = ParamUtils.getParameter(request,"secret");
     boolean updateSucess = false;
 
-    String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
 
@@ -62,6 +63,8 @@
         if (errors.isEmpty()) {
             if (!managerEnabled) {
                 connectionManager.enableConnectionManagerListener(false);
+                // Log the event
+                webManager.logEvent("disabled connection manager settings", null);
             }
             else {
                 connectionManager.enableConnectionManagerListener(true);
@@ -88,6 +91,8 @@
                         ConnectionMultiplexerManager.setDefaultSecret(defaultSecret);
                     }
                 }
+                // Log the event
+                webManager.logEvent("enabled connection manager settings", "port = "+port);
             }
             updateSucess = true;
         }
@@ -98,7 +103,6 @@
         managerEnabled = connectionManager.isConnectionManagerListenerEnabled();
         port = connectionManager.getConnectionManagerListenerPort();
         defaultSecret = ConnectionMultiplexerManager.getDefaultSecret();
-        secret = "";
     }
     else {
         if (port == 0) {
@@ -106,9 +110,6 @@
         }
         if (defaultSecret == null) {
             defaultSecret = ConnectionMultiplexerManager.getDefaultSecret();
-        }
-        if (secret == null) {
-            secret = "";
         }
     }
 %>
@@ -126,7 +127,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
 
             <% if (errors.get("port") != null) { %>
@@ -146,7 +147,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="connection-manager.settings.confirm.updated" />
         </td></tr>

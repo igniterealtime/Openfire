@@ -33,7 +33,7 @@
     MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
 
     // Handle a save
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         if (openPerms) {
             // Remove all users who have the ability to create rooms
@@ -46,11 +46,15 @@
                 mucServer.removeUserAllowedToCreate(user);
             }
             mucServer.setRoomCreationRestricted(false);
+            // Log the event
+            webManager.logEvent("set MUC room creation to restricted", null);
             response.sendRedirect("muc-create-permission.jsp?success=true");
             return;
         }
         else {
             mucServer.setRoomCreationRestricted(true);
+            // Log the event
+            webManager.logEvent("set MUC room creation to not restricted", null);
             response.sendRedirect("muc-create-permission.jsp?success=true");
             return;
         }
@@ -64,6 +68,8 @@
         }
         if (errors.size() == 0) {
             mucServer.addUserAllowedToCreate(userJID);
+            // Log the event
+            webManager.logEvent("added MUC room creation permission to "+userJID, null);
             response.sendRedirect("muc-create-permission.jsp?addsuccess=true");
             return;
         }
@@ -72,6 +78,8 @@
     if (delete) {
         // Remove the user from the allowed list
         mucServer.removeUserAllowedToCreate(userJID);
+        // Log the event
+        webManager.logEvent("removed MUC room creation permission from "+userJID, null);
         // done, return
         response.sendRedirect("muc-create-permission.jsp?deletesuccess=true");
         return;
@@ -95,7 +103,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="muc.create.permission.error" />
         </td></tr>
@@ -108,7 +116,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <%  if (success) { %>
 
@@ -211,7 +219,7 @@
 							<a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
 							 title="<fmt:message key="muc.create.permission.click_title" />"
 							 onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
-							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
 						</td>
 					</tr>
 

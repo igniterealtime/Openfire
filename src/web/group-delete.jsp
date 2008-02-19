@@ -39,6 +39,8 @@
     if (delete) {
         // Delete the group
         webManager.getGroupManager().deleteGroup(group);
+        // Log the event
+        webManager.logEvent("deleted group "+group, null);
         // Done, so redirect
         response.sendRedirect("group-summary.jsp?deletesuccess=true");
         return;

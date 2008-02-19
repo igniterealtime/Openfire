@@ -10,9 +10,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.openfire.*,
-                 org.jivesoftware.admin.*"
+                 org.jivesoftware.openfire.*"
     errorPage="error.jsp"
 %>
 
@@ -36,14 +34,15 @@
     // Get an audit manager:
     PrivateStorage privateStorage = webManager.getPrivateStore();
 
-    Map errors = new HashMap();
     if (update) {
-      privateStorage.setEnabled(privateEnabled);
+        privateStorage.setEnabled(privateEnabled);
+        // Log the event
+        webManager.logEvent((privateEnabled ? "enabled" : "disabled")+" private data storage", null);
     %>
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="private.data.settings.update" />
         </td></tr>
@@ -55,9 +54,7 @@
     }
 
     // Set page vars
-    if (errors.size() == 0) {
-        privateEnabled = privateStorage.isEnabled();
-    }
+    privateEnabled = privateStorage.isEnabled();
 %>
 
 <p>

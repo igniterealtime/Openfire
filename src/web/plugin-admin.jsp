@@ -6,7 +6,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.WebManager,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.container.Plugin,
                  org.jivesoftware.openfire.container.PluginManager,
@@ -30,9 +29,9 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
-<%
-    WebManager webManager = new WebManager();
-%>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
+
 <%
     String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
     String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
@@ -60,6 +59,8 @@
     if (downloadRequested) {
         // Download and install new version of plugin
         updateManager.downloadPlugin(url);
+        // Log the event
+        webManager.logEvent("downloaded plugin from "+url, null);
     }
 
     if (deletePlugin != null) {
@@ -71,6 +72,8 @@
         }
         pluginJar.delete();
         pluginManager.unloadPlugin(pluginDir.getName());
+        // Log the event
+        webManager.logEvent("deleted plugin "+deletePlugin, null);
         response.sendRedirect("plugin-admin.jsp?deletesuccess=true");
         return;
     }
@@ -80,6 +83,8 @@
             File pluginDir = pluginManager.getPluginDirectory(plugin);
             if (reloadPlugin.equals(pluginDir.getName())) {
                 pluginManager.unloadPlugin(reloadPlugin);
+                // Log the event
+                webManager.logEvent("reloaded plugin "+reloadPlugin, null);
                 response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
                 return;
             }
@@ -110,6 +115,8 @@
                             Log.error("Plugin manager failed to install plugin: " + fileName);
                         }
                         is.close();
+                        // Log the event
+                        webManager.logEvent("uploaded plugin "+fileName, null);
                     }
                     else {
                         Log.error("Unable to open file stream for uploaded file: " + fileName);
@@ -219,29 +226,15 @@
 <style type="text/css">
 
 
-.textfield {
-    font-size: 11px;
-    font-family: verdana;
-    padding: 3px 2px;
-    background: #efefef;
-}
-
 .text {
     font-size: 11px;
-    font-family: verdana;
+    font-family: verdana, arial, helvetica, sans-serif;
 }
 
 .small-label {
     font-size: 11px;
     font-weight: bold;
-    font-family: verdana;
-}
-
-.small-label-link {
-    font-size: 11px;
-    font-weight: bold;
-    font-family: verdana;
-    text-decoration: underline;
+    font-family: verdana, arial, helvetica, sans-serif;
 }
 
 .light-gray-border {
@@ -252,12 +245,6 @@
 	-moz-border-radius: 3px;
 }
 
-.light-gray-border-bottom {
-    border-color: #dcdcdc;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-}
-
 .table-header {
     text-align: left;
     font-family: verdana, arial, helvetica, sans-serif;
@@ -265,7 +252,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 0px;
+    border-width: 1px 0 1px 0;
     padding: 5px;
 }
 
@@ -276,7 +263,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 0px 1px 1px;
+    border-width: 1px 0 1px 1px;
     padding: 5px;
 
 }
@@ -288,7 +275,7 @@
     font-weight: bold;
     border-color: #ccc;
     border-style: solid;
-    border-width: 1px 1px 1px 0px;
+    border-width: 1px 1px 1px 0;
     padding: 5px;
 }
 
@@ -297,24 +284,13 @@
     font-size: 8pt;
 }
 
-.update-top {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 9pt;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 1px 0px 0px 0px;
-    padding: 5px;
-}
-
 .update {
     font-family: verdana, arial, helvetica, sans-serif;
     font-size: 8pt;
     background: #E7FBDE;
     border-color: #73CB73;
     border-style: solid;
-    border-width: 0px 1px 1px 1px;
+    border-width: 0 1px 1px 1px;
     padding: 5px;
 }
 
@@ -326,19 +302,7 @@
     background: #E7FBDE;
     border-color: #73CB73;
     border-style: solid;
-    border-width: 0px 0px 1px 0px;
-    padding: 5px;
-}
-
-.update-top-left {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 1px 0px 0px 1px;
+    border-width: 0 0 1px 0;
     padding: 5px;
 }
 
@@ -350,7 +314,7 @@
     background: #E7FBDE;
     border-color: #73CB73;
     border-style: solid;
-    border-width: 0px 0px 1px 1px;
+    border-width: 0 0 1px 1px;
     padding: 5px;
 }
 
@@ -362,33 +326,9 @@
     background: #E7FBDE;
     border-color: #73CB73;
     border-style: solid;
-    border-width: 0px 1px 1px 0px;
+    border-width: 0 1px 1px 0;
     padding: 5px;
 }
-
-.update-right {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #E7FBDE;
-    border-color: #73CB73;
-    border-style: solid;
-    border-width: 1px 1px 0px 0px;
-    padding: 5px;
-}
-
-.line-bottom-border {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 9pt;
-    border-color: #e3e3e3;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-    padding: 5px;
-}
-
-
 </style>
 
 
@@ -402,7 +342,7 @@
     function downloadComplete(update) {
         document.getElementById(update.hashCode + "-row").style.display = 'none';
         document.getElementById(update.hashCode + "-update").style.display = '';
-        document.getElementById(update.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0"/>';
+        document.getElementById(update.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0" alt=""/>';
         document.getElementById(update.hashCode + "-text").innerHTML = '<fmt:message key="plugin.admin.update.complete" />';
     }
 </script>

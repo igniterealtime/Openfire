@@ -63,6 +63,9 @@
                 newGroup.getProperties().put("sharedRoster.displayName", "");
                 newGroup.getProperties().put("sharedRoster.groupList", "");
 
+                // Log the event
+                webManager.logEvent("created new group "+name, "description = "+description);
+
                 // Successful, so redirect
                 response.sendRedirect("group-edit.jsp?creategroupsuccess=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
                 return;
@@ -90,6 +93,9 @@
                 if (description != null) {
                     group.setDescription(description);
                 }
+
+                // Log the event
+                webManager.logEvent("edited group "+groupName, "description = "+description);
 
                 // Successful, so redirect
                 response.sendRedirect("group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode(group.getName(), "UTF-8"));

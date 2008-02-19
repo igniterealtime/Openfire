@@ -28,7 +28,7 @@
     }
 
     // Handle a search execute:
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (search) {
         User user = null;
         try {

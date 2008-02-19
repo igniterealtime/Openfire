@@ -75,6 +75,8 @@
         if (errors.size() == 0) {
             try {
                 User newUser = webManager.getUserManager().createUser(username, password, name, email);
+                // Log the event
+                webManager.logEvent("created new user "+username, "name = "+name+", email = "+email);
 
                 // Successful, so redirect
                 if (another) {
@@ -122,7 +124,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
 
             <% if (errors.get("general") != null) { %>
@@ -154,7 +156,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.create.created_success" />
         </td></tr>

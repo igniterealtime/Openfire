@@ -38,7 +38,7 @@
     MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
     HistoryStrategy historyStrat = mucServer.getHistoryStrategy();
 
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (update) {
         if (policy != ALL && policy != NONE && policy != NUMBER) {
             errors.put("general", "Please choose a valid chat history policy.");
@@ -62,6 +62,8 @@
                 historyStrat.setType(HistoryStrategy.Type.number);
                 historyStrat.setMaxNumber(numMessages);
             }
+            // Log the event
+            webManager.logEvent("set MUC history settings", "type = "+policy+"\nmax messages = "+numMessages);
             // All done, redirect
             response.sendRedirect("muc-history-settings.jsp?success=true");
             return;
@@ -100,7 +102,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="groupchat.history.settings.saved_successfully" />
         </td></tr>

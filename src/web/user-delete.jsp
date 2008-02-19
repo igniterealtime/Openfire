@@ -8,23 +8,16 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.PresenceManager,
-                 org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.openfire.group.GroupManager,
+<%@ page import="org.jivesoftware.openfire.group.GroupManager,
                  org.jivesoftware.openfire.session.ClientSession,
                  org.jivesoftware.openfire.user.User"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.util.Collection" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -56,6 +49,8 @@
         webManager.getRosterManager().deleteRoster(userAddress);
         // Delete the user from all the Groups
         GroupManager.getInstance().deleteUser(user);
+        // Log the event
+        webManager.logEvent("deleted user "+username, "full jid was "+userAddress);
         // Close the user's connection
         final StreamError error = new StreamError(StreamError.Condition.not_authorized);
         for (ClientSession sess : webManager.getSessionManager().getSessions(user.getUsername()) )
@@ -97,7 +92,7 @@
 <fmt:message key="user.delete.info1" />
 </p>
 
-<c:if test="${admin.user.username == param.username}">
+<c:if test="${webManager.user.username == param.username}">
     <p class="jive-warning-text">
     <fmt:message key="user.delete.warning" /> <b><fmt:message key="user.delete.warning2" /></b> <fmt:message key="user.delete.warning3" />
     </p>

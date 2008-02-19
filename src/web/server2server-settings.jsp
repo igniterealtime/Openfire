@@ -59,10 +59,14 @@
         if (errors.isEmpty()) {
             if (!s2sEnabled) {
                 connectionManager.enableServerListener(false);
+                // Log the event
+                webManager.logEvent("disabled s2s", null);
             }
             else {
                 connectionManager.enableServerListener(true);
                 connectionManager.setServerListenerPort(port);
+                // Log the event
+                webManager.logEvent("enabled s2s", "port = "+port);
             }
             updateSucess = true;
         }
@@ -73,6 +77,8 @@
        if (!closeEnabled) {
            // Disable kicking users by setting a value of -1
            sessionManager.setServerSessionIdleTime(-1);
+           // Log the event
+           webManager.logEvent("disabled s2s idle kick", null);
            response.sendRedirect("server2server-settings.jsp?closeSettingsSuccess=true");
            return;
        }
@@ -96,6 +102,8 @@
 
        if (errors.size() == 0) {
            sessionManager.setServerSessionIdleTime(idle);
+           // Log the event
+           webManager.logEvent("updated s2s idle kick timeout", "timeout = "+idle);
            response.sendRedirect("server2server-settings.jsp?closeSettingsSuccess=true");
            return;
        }
@@ -103,11 +111,15 @@
 
     if (permissionUpdate) {
         RemoteServerManager.setPermissionPolicy(permissionFilter);
+        // Log the event
+        webManager.logEvent("updated s2s permission policy", "filter = "+permissionFilter);
         updateSucess = true;
     }
 
     if (configToDelete != null && configToDelete.trim().length() != 0) {
         RemoteServerManager.deleteConfiguration(configToDelete);
+        // Log the event
+        webManager.logEvent("deleted s2s configuration", "config to delete = "+configToDelete);
         deleteSuccess = true;
     }
 
@@ -134,6 +146,8 @@
             configuration.setRemotePort(intRemotePort);
             configuration.setPermission(RemoteServerConfiguration.Permission.allowed);
             RemoteServerManager.allowAccess(configuration);
+            // Log the event
+            webManager.logEvent("added s2s access for "+domain, "domain = "+domain+"\nport = "+intRemotePort);
             allowSuccess = true;
         }
     }
@@ -146,6 +160,8 @@
         // If no errors, continue:
         if (errors.isEmpty()) {
             RemoteServerManager.blockAccess(domain);
+            // Log the event
+            webManager.logEvent("blocked s2s access for "+domain, "domain = "+domain);
             blockSuccess = true;
         }
     }
@@ -194,7 +210,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
 
             <% if (errors.get("idletime") != null) { %>
@@ -215,7 +231,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <% if (updateSucess) { %>
             <fmt:message key="server2server.settings.confirm.updated" />
@@ -386,7 +402,7 @@
 				<td align="center" style="border-right:1px #ccc solid;">
 					<a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('server2server-settings.jsp?deleteConf=<%= configuration.getDomain() %>'); } "
 					 title="<fmt:message key="global.click_delete" />"
-					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
 				</td>
 			</tr>
 		   <% }
@@ -451,7 +467,7 @@
 				<td align="center" style="border-right:1px #ccc solid;">
 					<a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('server2server-settings.jsp?deleteConf=<%= configuration.getDomain() %>'); } "
 					 title="<fmt:message key="global.click_delete" />"
-					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
 				</td>
 			</tr>
 		   <% }

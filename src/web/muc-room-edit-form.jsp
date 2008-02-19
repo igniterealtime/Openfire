@@ -252,12 +252,16 @@
             }
 
             // Changes good, so redirect
-            String params = "";
+            String params;
             if (create) {
                 params = "addsuccess=true&roomName=" + URLEncoder.encode(roomName, "UTF-8");
+                // Log the event
+                webManager.logEvent("created new MUC room "+roomName, "subject = "+roomSubject+"\nroomdesc = "+description+"\nroomname = "+naturalName+"\nmaxusers = "+maxUsers);
             }
             else {
                 params = "success=true&roomName=" + URLEncoder.encode(roomName, "UTF-8");
+                // Log the event
+                webManager.logEvent("updated MUC room "+roomName, "subject = "+roomSubject+"\nroomdesc = "+description+"\nroomname = "+naturalName+"\nmaxusers = "+maxUsers);
             }
             response.sendRedirect("muc-room-edit-form.jsp?" + params);
             return;

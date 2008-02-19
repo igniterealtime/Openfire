@@ -100,8 +100,8 @@
 
     // Clear one or multiple caches if requested.
     if (doClearCache) {
-        for (int i = 0; i < cacheIDs.length; i++) {
-            caches[cacheIDs[i]].clear();
+        for (int cacheID : cacheIDs) {
+            caches[cacheID].clear();
         }
     }
 
@@ -116,7 +116,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="system.cache.cleared" />
         </td></tr>

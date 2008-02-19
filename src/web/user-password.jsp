@@ -10,7 +10,6 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.openfire.user.*,
-                 org.jivesoftware.admin.AdminPageBean,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
@@ -18,6 +17,7 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
+<% admin.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
@@ -41,6 +41,8 @@
         // Validate the passwords:
         if (password != null && passwordConfirm != null && password.equals(passwordConfirm)) {
             user.setPassword(password);
+            // Log the event
+            admin.logEvent("set password for user "+username, null);
             // Done, so redirect
             response.sendRedirect("user-password.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));
             return;
@@ -71,7 +73,7 @@
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.password.error_set_pwd" />
         </td></tr>
@@ -84,7 +86,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.password.update" />
         </td></tr>
@@ -118,7 +120,7 @@
             <td class="c1">
                 <fmt:message key="user.password.new_pwd" />:
             </td>
-            <td clas="c2">
+            <td class="c2">
                 <input type="password" name="password" value="" size="20" maxlength="50">
             </td>
         </tr>
@@ -141,7 +143,7 @@
 <input type="submit" value="<fmt:message key="global.cancel" />" name="cancel">
 </form>
 
-<script lang="JavaScript" type="text/javascript">
+<script language="JavaScript" type="text/javascript">
 document.passform.password.focus();
 </script>
 

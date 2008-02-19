@@ -16,11 +16,11 @@
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="java.io.IOException" %>
-<%@ page import="java.io.FileInputStream" %>
-<%@ page import="java.io.FileOutputStream" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%--
   Created by IntelliJ IDEA.
@@ -62,6 +62,8 @@
             }
             // Save new certificates into the key store
             SSLConfig.saveStores();
+            // Log the event
+            webManager.logEvent("generated SSL self-signed certs", null);
             response.sendRedirect("ssl-certificates.jsp?generatesuccess=true");
             return;
         }
@@ -75,6 +77,8 @@
             try {
                 CertificateManager.deleteCertificate(keyStore, alias);
                 SSLConfig.saveStores();
+                // Log the event
+                webManager.logEvent("deleted SSL cert with alias "+alias, null);
                 response.sendRedirect("ssl-certificates.jsp?deletesuccess=true");
                 return;
             }
@@ -91,6 +95,8 @@
                 CertificateManager.installReply(SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore(),
                         SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(reply.getBytes()), true, true);
                 SSLConfig.saveStores();
+                // Log the event
+                webManager.logEvent("imported SSL certificate with alias "+alias, null);
                 response.sendRedirect("ssl-certificates.jsp?importsuccess=true");
                 return;
             }

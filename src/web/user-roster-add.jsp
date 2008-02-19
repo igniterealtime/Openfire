@@ -60,6 +60,9 @@
                 // Load the roster item from the user's roster.
                 roster.createRosterItem(new JID(jid), nickname, groupList, true, true);
 
+                // Log the event
+                webManager.logEvent("added roster item for "+username, "roster item:\njid = "+jid+"\nnickname = "+nickname+"\ngroupList = "+groupList);
+
                 // Successful, so redirect
                 if (another) {
                     response.sendRedirect("user-roster-add.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));

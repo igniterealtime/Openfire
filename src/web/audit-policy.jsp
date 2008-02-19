@@ -40,9 +40,6 @@
     boolean auditMessages = ParamUtils.getBooleanParameter(request,"auditMessages");
     boolean auditPresence = ParamUtils.getBooleanParameter(request,"auditPresence");
     boolean auditIQ = ParamUtils.getBooleanParameter(request,"auditIQ");
-    boolean auditXPath = ParamUtils.getBooleanParameter(request,"auditXPath");
-    String newXpathQuery = ParamUtils.getParameter(request,"newXpathQuery");
-    String[] xpathQuery = ParamUtils.getParameters(request,"xpathQuery");
     String maxTotalSize = ParamUtils.getParameter(request,"maxTotalSize");
     String maxFileSize = ParamUtils.getParameter(request,"maxFileSize");
     String maxDays = ParamUtils.getParameter(request,"maxDays");
@@ -130,6 +127,9 @@
                 }
                 auditManager.setIgnoreList(newIgnoreList);
             }
+            // Log the event
+            // TODO: Should probably log more here
+            webManager.logEvent("updated stanza audit policy", null);
         // All done, redirect
         %>
 
@@ -154,7 +154,6 @@
         auditMessages = auditManager.isAuditMessage();
         auditPresence = auditManager.isAuditPresence();
         auditIQ = auditManager.isAuditIQ();
-        auditXPath = auditManager.isAuditXPath();
         maxTotalSize = Integer.toString(auditManager.getMaxTotalSize());
         maxFileSize = Integer.toString(auditManager.getMaxFileSize());
         maxDays = Integer.toString(auditManager.getMaxDays());

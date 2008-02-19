@@ -10,6 +10,8 @@
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
 
 <%--
   Created by IntelliJ IDEA.
@@ -93,6 +95,8 @@
                 }
                 // Save keystore
                 SSLConfig.saveStores();
+                // Log the event
+                webManager.logEvent("generated SSL signing request", null);
                 response.sendRedirect("ssl-certificates.jsp?issuerUpdated=true");
                 return;
             }

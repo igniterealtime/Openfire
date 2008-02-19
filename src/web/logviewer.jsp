@@ -41,8 +41,7 @@
 
     private static HashMap parseCookie(Cookie cookie) {
         if (cookie == null || cookie.getValue() == null) {
-            HashMap empty = new HashMap();
-            return empty;
+            return new HashMap();
         }
         StringTokenizer tokenizer = new StringTokenizer(cookie.getValue(),"&");
         HashMap<String, String> valueMap = new HashMap<String, String>();
@@ -80,24 +79,25 @@
         // Get the cookie associated with the log files
         HashMap cookie = parseCookie(CookieUtils.getCookie(request,"jiveforums.admin.logviewer"));
         String[] logs = {"error", "info", "warn", "debug"};
-        HashMap newCookie = new HashMap();
-        HashMap updates = new HashMap();
-        for (int i=0; i<logs.length; i++) {
+        HashMap<String,String> newCookie = new HashMap<String,String>();
+        HashMap<String,String> updates = new HashMap<String,String>();
+        for (String log : logs) {
             // Check for the value in the cookie:
-            String key = logs[i] + ".size";
+            String key = log + ".size";
             long savedSize = 0L;
             if (cookie.containsKey(key)) {
                 try {
-                    savedSize = Long.parseLong((String)cookie.get(key));
+                    savedSize = Long.parseLong((String) cookie.get(key));
                 }
-                catch (NumberFormatException nfe) {}
+                catch (NumberFormatException nfe) {
+                }
             }
             // Update the size in the Map:
-            File logFile = new File(logDir, logs[i] + ".log");
+            File logFile = new File(logDir, log + ".log");
             long currentSize = logFile.length();
-            newCookie.put(key, ""+currentSize);
+            newCookie.put(key, "" + currentSize);
             if (currentSize != savedSize) {
-                updates.put(logs[i], "true");
+                updates.put(log, "true");
             }
         }
         saveCookie(response, newCookie);
@@ -123,6 +123,8 @@
     // Enable/disable debugging
     if (request.getParameter("wasDebugEnabled") != null && wasDebugEnabled != debugEnabled) {
         Log.setDebugEnabled(debugEnabled);
+        // Log the event
+        admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
         response.sendRedirect("logviewer.jsp?log=debug");
         return;
     }
@@ -208,12 +210,12 @@
 
 <style type="text/css">
 SELECT, INPUT {
-    font-family : verdana, arial;
+    font-family : verdana, arial, sans-serif;
     font-size : 8pt;
 }
 .date {
     color : #00f;
-    border-width : 0px 0px 1px 0px;
+    border-width : 0 0 1px 0;
     border-style : dotted;
     border-color : #00f;
 }
@@ -224,7 +226,7 @@ SELECT, INPUT {
     padding-right : 1em;
 }
 .log-info {
-    border-width : 0px 1px 1px 1px;
+    border-width : 0 1px 1px 1px;
     border-color : #ccc;
     border-style : solid;
 }
@@ -313,10 +315,10 @@ IFRAME {
                 <td nowrap>
                     <select name="lines" size="1"
                      onchange="this.form.submit();">
-                        <%  for (int j=0; j<LINES.length; j++) {
-                                String selected = (LINES[j].equals(numLinesParam))?" selected":"";
+                        <% for (String aLINES : LINES) {
+                            String selected = (aLINES.equals(numLinesParam)) ? " selected" : "";
                         %>
-                            <option value="<%= LINES[j] %>"<%= selected %>><%= LINES[j] %>
+                        <option value="<%= aLINES %>"<%= selected %>><%= aLINES %>
 
                         <%  } %>
                             <option value="All"<%= (("All".equals(numLinesParam))?" selected":"") %>
@@ -369,10 +371,10 @@ IFRAME {
                 <td nowrap><fmt:message key="global.refresh" />:</td>
                 <td nowrap>
                     <select size="1" name="refresh" onchange="this.form.submit();">
-                    <%  for (int j=0; j<REFRESHES.length; j++) {
-                            String selected = REFRESHES[j].equals(refreshParam)?" selected":"";
+                    <% for (String aREFRESHES : REFRESHES) {
+                        String selected = aREFRESHES.equals(refreshParam) ? " selected" : "";
                     %>
-                        <option value="<%= REFRESHES[j] %>"<%= selected %>><%= REFRESHES[j] %>
+                        <option value="<%= aREFRESHES %>"<%= selected %>><%= aREFRESHES %>
 
                     <%  } %>
                     </select>

@@ -63,6 +63,8 @@
         }
         // Lock out the user
         webManager.getLockOutManager().disableAccount(username, startTime, endTime);
+        // Log the event
+        webManager.logEvent("locked out user "+username, "start time = "+startTime+", end time = "+endTime);
         // Close the user's connection if the lockout is immedate
         if (webManager.getLockOutManager().isAccountDisabled(username)) {
             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
@@ -87,6 +89,8 @@
     if (unlock) {
         // Unlock the user's account
         webManager.getLockOutManager().enableAccount(username);
+        // Log the event
+        webManager.logEvent("unlocked user "+username, null);
         // Done, so redirect
         response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&unlocksuccess=1");
         return;
@@ -139,7 +143,7 @@
 <fmt:message key="user.lockout.info1" />
 </p>
 
-<c:if test="${admin.user.username == param.username}">
+<c:if test="${webManager.user.username == param.username}">
     <p class="jive-warning-text">
     <fmt:message key="user.lockout.warning" /> <b><fmt:message key="user.lockout.warning2" /></b> <fmt:message key="user.lockout.warning3" />
     </p>

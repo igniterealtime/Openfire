@@ -58,6 +58,8 @@
             if (sess != null) {
                 sess.close();
             }
+            // Log the event
+            admin.logEvent("closed component session for "+jid, null);
             // wait one second
             Thread.sleep(1000L);
         }
@@ -100,12 +102,13 @@
  - <fmt:message key="component.session.summary.sessions_per_page" />:
 <select size="1" onchange="location.href='component-session-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
-    <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
+    <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
-        <option value="<%= RANGE_PRESETS[i] %>"
-         <%= (RANGE_PRESETS[i] == range ? "selected" : "") %>><%= RANGE_PRESETS[i] %></option>
+    <option value="<%= aRANGE_PRESETS %>"
+            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
+    </option>
 
-    <%  } %>
+    <% } %>
 
 </select>
 </p>

@@ -23,6 +23,8 @@
     url.append("login.jsp?url=").append(redirectPage);
     url.append("&username=").append(admin.getAuthToken().getUsername());
 
+    // Log the event
+    admin.logEvent("restarted the http server", null);
     XMPPServer.getInstance().restartHTTPServer();
 %>
 

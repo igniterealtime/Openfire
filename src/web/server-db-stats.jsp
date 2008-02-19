@@ -19,6 +19,9 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
+<% webManager.init(request, response, session, application, out ); %>
+
 <%! // Global methods, vars
 
     // Default refresh values
@@ -45,9 +48,13 @@
     // Enable/disable stats
     if ("true".equals(enableStats)) {
         DbConnectionManager.setProfilingEnabled(true);
+        // Log the event
+        webManager.logEvent("enabled db profiling", null);
     }
     else if ("false".equals(enableStats)) {
         DbConnectionManager.setProfilingEnabled(false);
+        // Log the event
+        webManager.logEvent("disabled db profiling", null);
     }
 
     boolean showQueryStats = DbConnectionManager.isProfilingEnabled();
@@ -112,11 +119,12 @@
                 <select size="1" name="refresh" onchange="this.form.submit();">
                 <option value="none"><fmt:message key="server.db_stats.none" />
 
-                <%  for (int j=0; j<REFRESHES.length; j++) {
-                        String selected = ((REFRESHES[j] == refresh) ? " selected" : "");
+                <%  for(int aREFRESHES: REFRESHES){
+                        String selected = ((aREFRESHES == refresh) ? " selected" : "");
                 %>
-                    <option value="<%= REFRESHES[j] %>"<%= selected %>
-                     ><%= REFRESHES[j] %> <fmt:message key="server.db_stats.seconds" />
+                    <option value="<%= aREFRESHES %>"<%= selected %>
+                     ><%= aREFRESHES
+                            %> <fmt:message key="server.db_stats.seconds" />
 
                 <%  } %>
                 </select>

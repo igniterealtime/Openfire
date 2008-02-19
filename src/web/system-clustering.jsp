@@ -30,6 +30,9 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.Base64" %>
 
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
+
 <html>
 <head>
 <title><fmt:message key="system.clustering.title"/></title>
@@ -50,11 +53,15 @@
     if (update) {
         if (!clusteringEnabled) {
             ClusterManager.setClusteringEnabled(false);
+            // Log the event
+            webManager.logEvent("disabled clustering", null);
             updateSucess = true;
         }
         else {
             if (ClusterManager.isClusteringAvailable()) {
                 ClusterManager.setClusteringEnabled(true);
+                // Log the event
+                webManager.logEvent("enabled clustering", null);
                 updateSucess = ClusterManager.isClusteringStarted();
             }
             else {
@@ -114,7 +121,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <% if (ClusterManager.isClusteringStarted()) { %>
             <fmt:message key="system.clustering.enabled" />
@@ -134,7 +141,7 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"/></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
                 <fmt:message key="system.clustering.failed-start" />
             </td>

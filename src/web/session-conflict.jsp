@@ -39,7 +39,7 @@
     }
 
     // Update the session kick policy if requested
-    Map errors = new HashMap();
+    Map<String,String> errors = new HashMap<String,String>();
     if (update) {
         // Validate params
         if (kickPolicy != 0 && kickPolicy != 1 && kickPolicy != SessionManager.NEVER_KICK) {
@@ -60,7 +60,7 @@
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="session.conflict.update" />
         </td></tr>

@@ -104,7 +104,7 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
     public String getAuditURL() {
         String url = ClearspaceManager.getInstance().getConnectionURI();
         if (url != null) {
-            url += "/view-audit-log.jsp";
+            url += "/admin/view-audit-log.jsp";
             return url;
         }
         else {

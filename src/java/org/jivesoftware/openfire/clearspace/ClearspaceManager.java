@@ -159,6 +159,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         this.properties = properties;
 
         this.uri = properties.get("clearspace.uri");
+        if (!this.uri.endsWith("/")) {
+            this.uri = this.uri + "/";
+        }
         sharedSecret = properties.get("clearspace.sharedSecret");
 
         if (Log.isDebugEnabled()) {
@@ -310,8 +313,11 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @param uri the Clearspace service URI.
      */
     public void setConnectionURI(String uri) {
+        if (!uri.endsWith("/")) {
+            uri = uri + "/";
+        }
         this.uri = uri;
-         properties.put("clearspace.uri", uri);
+        properties.put("clearspace.uri", uri);
         if (isEnabled()) {
             startClearspaceConfig();
         }

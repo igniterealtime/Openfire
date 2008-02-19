@@ -11,19 +11,41 @@
 
 package org.jivesoftware.openfire.clearspace;
 
+import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.methods.*;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
+import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.component.ExternalComponentManagerListener;
 import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.ModificationNotAllowedException;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.*;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.JID;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.net.*;
+import java.util.*;
+
 
 /**
  * Centralized administration of Clearspace connections. The {@link #getInstance()} method
@@ -37,11 +59,82 @@ import java.util.Set;
  * @author Daniel Henninger
  */
 public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener {
+    private ConfigClearspaceTask configClearspaceTask;
+
+    /**
+      * Different kind of HTTP request types
+      */
+     public enum HttpType {
+
+         /**
+          * Represents an HTTP Get request. And it's equivalent to a SQL SELECTE.
+          */
+         GET,
+
+         /**
+          * Represents an HTTP Post request. And it's equivalent to a SQL UPDATE.
+          */
+         POST,
+
+         /**
+          * Represents an HTTP Delete request. And it's equivalent to a SQL DELETE.
+          */
+         DELETE,
+
+         /**
+          * Represents an HTTP Put requests.And it's equivalent to a SQL CREATE.
+          */
+         PUT
+     }
+
+    /**
+     * This is the username of the user that Openfires uses to connect
+     * to Clearspace. It is fixed a well known by Openfire and Clearspace.
+     */
+    private static final String OPENFIRE_USERNAME = "openfire_SHRJKZCNU53";
+
+    private static final String WEBSERVICES_PATH = "rpc/rest/";
+
+    protected static final String IM_URL_PREFIX = "imService/";
+
+    private static ThreadLocal<XMPPPacketReader> localParser = null;
+    private static XmlPullParserFactory factory = null;
+
+    static {
+        try {
+            factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
+            factory.setNamespaceAware(true);
+        }
+        catch (XmlPullParserException e) {
+            Log.error("Error creating a parser factory", e);
+        }
+        // Create xmpp parser to keep in each thread
+        localParser = new ThreadLocal<XMPPPacketReader>() {
+            protected XMPPPacketReader initialValue() {
+                XMPPPacketReader parser = new XMPPPacketReader();
+                factory.setNamespaceAware(true);
+                parser.setXPPFactory(factory);
+                return parser;
+            }
+        };
+    }
+
+    private static final Map<String, String> exceptionMap;
+
+    static {
+        exceptionMap = new HashMap<String, String>();
+        exceptionMap.put("com.jivesoftware.base.UserNotFoundException", "org.jivesoftware.openfire.user.UserNotFoundException");
+        exceptionMap.put("com.jivesoftware.base.UserAlreadyExistsException", "org.jivesoftware.openfire.user.UserAlreadyExistsException");
+        exceptionMap.put("com.jivesoftware.base.GroupNotFoundException", "org.jivesoftware.openfire.group.GroupNotFoundException");
+        exceptionMap.put("com.jivesoftware.base.GroupAlreadyExistsException", "org.jivesoftware.openfire.group.GroupAlreadyExistsException");
+    }
 
     private static ClearspaceManager instance = new ClearspaceManager();
 
     private Map<String, String> properties;
     private String uri;
+    private String host;
+    private int port;
     private String sharedSecret;
 
     /**
@@ -146,6 +239,16 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         this.uri = JiveGlobals.getXMLProperty("clearspace.uri");
         sharedSecret = JiveGlobals.getXMLProperty("clearspace.sharedSecret");
 
+        if (uri != null && !"".equals(uri.trim())) {
+            try {
+                URL url = new URL(uri);
+                host = url.getHost();
+                port = url.getPort();
+            } catch (MalformedURLException e) {
+                // this won't happen
+            }
+        }
+
         if (Log.isDebugEnabled()) {
             StringBuilder buf = new StringBuilder();
             buf.append("Created new ClearspaceManager() instance, fields:\n");
@@ -159,31 +262,35 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     /**
      * Check a username/password pair for valid authentication.
      *
-     * TODO: This is a temporary stub until the real interface is worked out.
-     *
      * @param username Username to authenticate against.
      * @param password Password to use for authentication.
      * @return True or false of the authentication succeeded.
      */
     public Boolean checkAuthentication(String username, String password) {
-        if (username.equals("daniel")) {
-            return false;
-        }
-        return true;
+        try {
+            String path = ClearspaceAuthProvider.URL_PREFIX + "authenticate/" + username + "/" + password;
+            executeRequest(GET, path);
+            return true;
+        } catch (Exception e) {}
+
+        return false;
     }
 
     /**
      * Tests the web services connection with Clearspace given the manager's current configuration.
      *
-     * TODO: This is a temporary stub until the real interface is worked out.
-     *
      * @return True if connection test was successful.
      */
     public Boolean testConnection() {
-        if (uri.equals("http://localhost:80/fail")) {
-            return false;
-        }
-        return true;
+        // Test invoking a simple method
+        try {
+            String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/count";
+            Element element = executeRequest(GET, path);
+            int count = Integer.valueOf(getReturn(element));
+            return true;
+        } catch (Exception e) {}
+
+        return false;
     }
 
     /**
@@ -206,7 +313,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         this.uri = uri;
          properties.put("clearspace.uri", uri);
         if (isEnabled()) {
-            // TODO Reconfigure webservice connection with new setting
+            startClearspaceConfig();
         }
     }
 
@@ -274,8 +381,133 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
             // Listen for changes to external component settings
             ExternalComponentManager.addListener(this);
-            // TODO Send current xmpp domain, network interfaces, external component port and external component secret to CS 
+
+            // Starts the clearspace configuration task
+            startClearspaceConfig();
         }
+    }
+
+    /**
+     *
+     */
+    private void startClearspaceConfig() {
+        // Start the task if it is not currently running
+        if (configClearspaceTask == null) {
+            configClearspaceTask = new ConfigClearspaceTask();
+            TaskEngine.getInstance().schedule(configClearspaceTask, 0, JiveConstants.MINUTE);
+
+        }/*
+        try {
+            configClearspace();
+        } catch (UnauthorizedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }  */
+    }
+
+    private synchronized void configClearspace() throws UnauthorizedException {
+        try {
+
+
+            XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
+
+            // TODO use the post method
+            // Creates the XML with the data
+            /**
+            Document groupDoc =  DocumentHelper.createDocument();
+            Element rootE = groupDoc.addElement("connect");
+            Element domainE = rootE.addElement("domain");
+            domainE.setText(serverInfo.getXMPPDomain());
+            Element hostsE = rootE.addElement("hosts");
+            List<String> bindInterfaces = getServerInterfaces();
+            hostsE.setText("127.0.0.1");
+            Element portE = rootE.addElement("port");
+            portE.setText(String.valueOf(ExternalComponentManager.getServicePort()));
+
+            executeRequest(POST, path, rootE.asXML());
+            */
+            List<String> bindInterfaces = getServerInterfaces();
+
+            String path = IM_URL_PREFIX + "configureComponent/" + serverInfo.getXMPPDomain() +
+                    "/" + WSUtils.marshallList(bindInterfaces) + "/" +
+                    String.valueOf(ExternalComponentManager.getServicePort());
+
+            executeRequest(GET, path);
+
+            //Done, Clearspace was configured correctly, clear the task
+            TaskEngine.getInstance().cancelScheduledTask(configClearspaceTask);
+            configClearspaceTask = null;
+
+        } catch (UnauthorizedException ue) {
+            throw ue;
+        } catch (Exception e) {
+            // It is not supported exception, wrap it into an UnsupportedOperationException
+            throw new UnsupportedOperationException("Unexpected error", e);
+        }
+    }
+
+    private List<String> getServerInterfaces() {
+
+        List<String> bindInterfaces = new ArrayList<String>();
+
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        String bindInterface = null;
+        if (interfaceName != null) {
+            if (interfaceName.trim().length() > 0) {
+                bindInterface = interfaceName;
+            }
+        }
+
+        int adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
+        int adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
+
+        if (bindInterface == null) {
+            Enumeration<NetworkInterface> nets = null;
+            try {
+                nets = NetworkInterface.getNetworkInterfaces();
+            } catch (SocketException e) {
+                // We failed to discover a valid IP address where the admin console is running
+                return null;
+            }
+            for (NetworkInterface netInterface : Collections.list(nets)) {
+                Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
+                for (InetAddress address : Collections.list(addresses)) {
+                    if ("127.0.0.1".equals(address.getHostAddress())) {
+                        continue;
+                    }
+                    Socket socket = new Socket();
+                    InetSocketAddress remoteAddress = new InetSocketAddress(address, adminPort > 0 ? adminPort : adminSecurePort);
+                    try {
+                        socket.connect(remoteAddress);
+                        bindInterfaces.add(address.getHostAddress());
+                        break;
+                    } catch (IOException e) {
+                        // Ignore this address. Let's hope there is more addresses to validate
+                    }
+                }
+            }
+        }
+        return bindInterfaces;
+    }
+
+    private void updateClearspaceSharedSecret(String newSecret) {
+
+        try {
+            String path = IM_URL_PREFIX + "updateSharedSecret";
+
+            // Creates the XML with the data
+            Document groupDoc =  DocumentHelper.createDocument();
+            Element rootE = groupDoc.addElement("updateSharedSecret");
+            rootE.addElement("newSecret").setText(newSecret
+            );
+
+
+            executeRequest(POST, path, groupDoc.asXML());
+        } catch (UnauthorizedException ue) {
+            // TODO what should happen here? should continue?
+        } catch (Exception e) {
+            // TODO what should happen here? should continue?
+        }
+
     }
 
     public void serviceEnabled(boolean enabled) throws ModificationNotAllowedException {
@@ -286,7 +518,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     public void portChanged(int newPort) throws ModificationNotAllowedException {
-        //TODO Send the new port to Clearspace
+        startClearspaceConfig();
     }
 
     public void defaultSecretChanged(String newSecret) throws ModificationNotAllowedException {
@@ -301,8 +533,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     public void componentAllowed(String subdomain, ExternalComponentConfiguration configuration)
             throws ModificationNotAllowedException {
         if (subdomain.startsWith("clearspace")) {
-            // TODO Send new password to Clearspace
-            //configuration.getSecret();
+            updateClearspaceSharedSecret(configuration.getSecret());
         }
     }
 
@@ -314,7 +545,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     public void componentSecretUpdated(String subdomain, String newSecret) throws ModificationNotAllowedException {
         if (subdomain.startsWith("clearspace")) {
-            // TODO Send new password to Clearspace
+            updateClearspaceSharedSecret(newSecret);
         }
     }
 
@@ -322,6 +553,207 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         // Do not let admins delete configuration of Clearspace component
         if (subdomain.startsWith("clearspace")) {
             throw new ModificationNotAllowedException("Use 'Profile Settings' to change password.");
+        }
+    }
+
+    /**
+     * Makes a rest request of either type GET or DELETE at the specified urlSuffix.
+     *
+     * urlSuffix should be of the form /userService/users
+     *
+     * @param type Must be GET or DELETE
+     * @param urlSuffix The url suffix of the rest request
+     * @return The response as a xml doc.
+     * @throws Exception Thrown if there are issues parsing the request.
+     */
+    public Element executeRequest(HttpType type, String urlSuffix) throws Exception {
+        assert (type == HttpType.GET || type == HttpType.DELETE);
+        return executeRequest(type, urlSuffix, null);
+    }
+
+    public Element executeRequest(HttpType type, String urlSuffix, String xmlParams)
+            throws Exception
+    {
+        System.out.println(xmlParams);
+        String wsUrl = getConnectionURI() + WEBSERVICES_PATH + urlSuffix;
+
+        String secret = getSharedSecret();
+
+        HttpClient client = new HttpClient();
+        HttpMethod method;
+
+        // Configures the authentication
+        client.getParams().setAuthenticationPreemptive(true);
+        Credentials credentials = new UsernamePasswordCredentials(OPENFIRE_USERNAME, secret);
+        AuthScope scope = new AuthScope(host, port, AuthScope.ANY_REALM);
+        client.getState().setCredentials(scope, credentials);
+
+        // Creates the method
+        switch (type) {
+            case GET:
+                method = new GetMethod(wsUrl);
+                break;
+            case POST:
+                PostMethod pm = new PostMethod(wsUrl);
+                StringRequestEntity requestEntity = new StringRequestEntity(xmlParams);
+                pm.setRequestEntity(requestEntity);
+                method = pm;
+                break;
+            case PUT:
+                PutMethod pm1 = new PutMethod(wsUrl);
+                StringRequestEntity requestEntity1 = new StringRequestEntity(xmlParams);
+                pm1.setRequestEntity(requestEntity1);
+                method = pm1;
+                break;
+            case DELETE:
+                method = new DeleteMethod(wsUrl);
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+
+        method.setRequestHeader("Accept", "text/xml");
+        method.setDoAuthentication(true);
+
+        try {
+            // Excecutes the resquest
+            client.executeMethod(method);
+
+            // Parses the result
+            String body = method.getResponseBodyAsString();
+            System.out.println(body);
+            Element response = localParser.get().parseDocument(body).getRootElement();
+
+            // Check for exceptions
+            checkFault(response);
+
+            // Since there is no exception, returns the response
+            return response;
+        } finally {
+            method.releaseConnection();
+        }
+    }
+
+    private void checkFault(Element response) throws Exception {
+        Node node = response.selectSingleNode("ns1:faultstring");
+        if (node != null) {
+            String exceptionText = node.getText();
+
+            // Text accepted samples:
+            // 'java.lang.Exception: Exception message'
+            // 'java.lang.Exception'
+
+            // Get the exception class and message if any
+            int index = exceptionText.indexOf(":");
+            String className = null;
+            String message = null;
+            // If there is no massege, save the class only
+            if (index == -1) {
+                className = exceptionText;
+                message = null;
+            } else {
+                // Else save both
+                className = exceptionText.substring(0, index);
+                message = exceptionText.substring(index + 2);
+            }
+
+            // Map the exception to a Openfire one, if possible
+            if (exceptionMap.containsKey(className)) {
+                className = exceptionMap.get(className);
+            }
+
+            //Tries to create an instance with the message
+            Exception exception = null;
+            try {
+                Class exceptionClass = Class.forName(className);
+                if (message == null) {
+                    exception = (Exception) exceptionClass.newInstance();
+                } else {
+                    Constructor constructor = exceptionClass.getConstructor(String.class);
+                    exception = (Exception) constructor.newInstance(message);
+                }
+            } catch (Exception e) {
+                // failed to create an specific exception, creating a standar one.
+                exception = new Exception(exceptionText);
+            }
+
+            throw exception;
+        }
+
+    }
+
+    /**
+     * Returns the Clearspace user id the user.
+     * @param username
+     * @return
+     * @throws org.jivesoftware.openfire.user.UserNotFoundException
+     */
+    protected long getUserID(String username) throws UserNotFoundException {
+        // todo implement cache
+        if(username.contains("@")) {
+            if (!XMPPServer.getInstance().isLocal(new JID(username))) {
+                throw new UserNotFoundException("Cannot load user of remote server: " + username);
+            }
+            username = username.substring(0,username.lastIndexOf("@"));
+        }
+        return getUserID(XMPPServer.getInstance().createJID(username, null));
+    }
+
+    /**
+     * Returns the Clearspace user id the user.
+     * @param user
+     * @return
+     * @throws org.jivesoftware.openfire.user.UserNotFoundException
+     */
+    protected long getUserID(JID user) throws UserNotFoundException {
+        // todo implement cache
+        //todo tema de si es local o no
+        XMPPServer server = XMPPServer.getInstance();
+        String username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
+        try {
+            String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/" + username;
+            Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
+
+            return Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
+        } catch (UserNotFoundException unfe) {
+            // It is a supported exception, throw it again
+            throw unfe;
+        } catch (Exception e) {
+            // It is not asupperted exception, wrap it into a UserNotFoundException
+            throw new UserNotFoundException("Unexpected error", e);
+        }
+    }
+
+    /**
+     * Returns the Clearspace group id of the group.
+     * @param groupname
+     * @return
+     * @throws org.jivesoftware.openfire.group.GroupNotFoundException
+     */
+    protected long getGroupID(String groupname) throws GroupNotFoundException {
+        // todo implement cache
+        try {
+            String path = ClearspaceGroupProvider.URL_PREFIX + "groups/" + groupname;
+            Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
+
+            return Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
+        } catch (GroupNotFoundException gnfe) {
+            // It is a supported exception, throw it again
+            throw gnfe;
+        } catch (Exception e) {
+            // It is not asupperted exception, wrap it into a GroupNotFoundException
+            throw new GroupNotFoundException("Unexpected error", e);
+        }
+    }
+
+    private class ConfigClearspaceTask extends TimerTask {
+
+        public void run() {
+            try {
+                configClearspace();
+            } catch (UnauthorizedException e) {
+                //TODO mark that there is an authorization problem
+            }
         }
     }
 }

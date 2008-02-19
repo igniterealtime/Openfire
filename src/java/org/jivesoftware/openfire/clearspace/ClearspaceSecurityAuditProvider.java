@@ -12,6 +12,11 @@ package org.jivesoftware.openfire.clearspace;
 import org.jivesoftware.openfire.security.SecurityAuditProvider;
 import org.jivesoftware.openfire.security.SecurityAuditEvent;
 import org.jivesoftware.openfire.security.EventNotFoundException;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
+import org.jivesoftware.util.Log;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 
 import java.util.List;
 import java.util.Date;
@@ -25,11 +30,16 @@ import java.util.Date;
  */
 public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
 
+    protected static final String AUDIT_URL_PREFIX = "auditService/";
+
+    private ClearspaceManager manager;
+
     /**
      * Generate a ClearspaceSecurityAuditProvider instance.
      */
     public ClearspaceSecurityAuditProvider() {
-
+        // Gets the manager
+        manager = ClearspaceManager.getInstance();
     }
 
     /**
@@ -38,7 +48,23 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#logEvent(String, String, String)
      */
     public void logEvent(String username, String summary, String details) {
-        // TODO: Will need to log event.
+        try {
+            // Request to log event
+            String path = AUDIT_URL_PREFIX + "auditMethodCall";
+
+            // Creates the XML with the data
+            Document auditDoc =  DocumentHelper.createDocument();
+            Element rootE = auditDoc.addElement("auditMethodCall");
+            rootE.addElement("username").addText(username);
+            rootE.addElement("description").addText(summary);
+            rootE.addElement("details").addText(details);
+
+            manager.executeRequest(POST, path, auditDoc.asXML());
+        }
+        catch (Exception e) {
+            // Error while setting properties?
+            Log.error("Unable to send audit log via REST service to Clearspace:", e);
+        }
     }
 
     /**
@@ -76,8 +102,14 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getAuditURL()
      */
     public String getAuditURL() {
-        // TODO: Retrieve proper URL and set.
-        return null;
+        String url = ClearspaceManager.getInstance().getConnectionURI();
+        if (url != null) {
+            url += "/view-audit-log.jsp";
+            return url;
+        }
+        else {
+            return null;
+        }
     }
 
 }

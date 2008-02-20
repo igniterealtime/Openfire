@@ -22,6 +22,8 @@ import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 
+import java.util.List;
+
 /**
  * The ClearspaceLockOutProvider uses the UserService web service inside of Clearspace
  * to retrieve user properties from Clearspace.  One of these properties refers to whether
@@ -64,12 +66,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#setDisabledStatus(org.jivesoftware.openfire.lockout.LockOutFlag)
      */
     public void setDisabledStatus(LockOutFlag flag) {
-        try {
-            setUserData(setEnabledStatus(getUserByUsername(flag.getUsername()), false));
-        }
-        catch (UserNotFoundException e) {
-            Log.error("Unable to set disabled status for Clearspace user: "+flag.getUsername());
-        }
+        setEnabledStatus(flag.getUsername(), false);
     }
 
     /**
@@ -77,12 +74,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#unsetDisabledStatus(String)
      */
     public void unsetDisabledStatus(String username) {
-        try {
-            setUserData(setEnabledStatus(getUserByUsername(username), true));
-        }
-        catch (UserNotFoundException e) {
-            Log.error("Unable to set enabled status for Clearspace user: "+username);
-        }
+        setEnabledStatus(username, true);
     }
 
     /**
@@ -110,22 +102,52 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
     }
 
     /**
-     * Modifies the XML returned about a user to indicate whether they are enabled or disabled.
+     * Looks up and modifies a user's CS properties to indicate whether they are enabled or disabled.
      * It is important for this to incorporate the existing user data and only tweak the field
      * that we want to change.
      *
-     * @param responseNode The node returned from user data request.
+     * @param username Username of user to set status of.
      * @param enabled Whether the account should be enabled or disabled.
-     * @return A modified user data node with appropriate settings for whether they are disabled or enabled.
      */
-    private Node setEnabledStatus(Node responseNode, Boolean enabled) {
-        Node userNode = responseNode.selectSingleNode("return");
+    private void setEnabledStatus(String username, Boolean enabled) {
+        try {
+            Element user = getUserByUsername(username);
+            Element modifiedUser = modifyUser(user.element("return"), "enabled", enabled ? "true" : "false");
 
-        // Sets the enabled status
-        userNode.selectSingleNode("enabled").setText(enabled ? "true" : "false");
+            String path = USER_URL_PREFIX + "users";
+            manager.executeRequest(PUT, path, modifiedUser.asXML());
+        }
+        catch (UserNotFoundException e) {
+            Log.error("User with name " + username + " not found.", e);
+        }
+        catch (Exception e) {
+            // It is not supported exception, wrap it into an UnsupportedOperationException
+            throw new UnsupportedOperationException("Unexpected error", e);
+        }
+    }
 
-        // Returns the modified node.
-        return userNode;
+    /**
+     * Modifies user properties XML by replacing a particular attribute setting to something new.
+     *
+     * @param user User data XML.
+     * @param attributeName Name of attribute to replace.
+     * @param newValue New value for attribute.
+     * @return Modified element.
+     */
+    private Element modifyUser(Element user, String attributeName, String newValue) {
+        Document groupDoc =  DocumentHelper.createDocument();
+        Element rootE = groupDoc.addElement("updateUser");
+        Element newUser = rootE.addElement("user");
+        List userAttributes = user.elements();
+        for (Object userAttributeObj : userAttributes) {
+            Element userAttribute = (Element)userAttributeObj;
+            if (userAttribute.getName().equals(attributeName)) {
+                newUser.addElement(userAttribute.getName()).setText(newValue);
+            } else {
+                newUser.addElement(userAttribute.getName()).setText(userAttribute.getText());
+            }
+        }
+        return rootE;
     }
 
     /**
@@ -137,20 +159,27 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * @throws NotLockedOutException if the user is not currently locked out.
      */
     private LockOutFlag checkUserDisabled(Node responseNode) throws NotLockedOutException {
-        Node userNode = responseNode.selectSingleNode("return");
+        try {
+            Node userNode = responseNode.selectSingleNode("return");
 
-        // Gets the username
-        String username = userNode.selectSingleNode("username").getText();
+            // Gets the username
+            String username = userNode.selectSingleNode("username").getText();
 
-        // Gets the enabled field
-        boolean isEnabled = Boolean.valueOf(userNode.selectSingleNode("enabled").getText());
-        if (isEnabled) {
-            // We're good, indicate that they're not locked out.
-            throw new NotLockedOutException();
+            // Gets the enabled field
+            boolean isEnabled = Boolean.valueOf(userNode.selectSingleNode("enabled").getText());
+            if (isEnabled) {
+                // We're good, indicate that they're not locked out.
+                throw new NotLockedOutException();
+            }
+            else {
+                // Creates the lock out flag
+                return new LockOutFlag(username, null, null);
+            }
         }
-        else {
-            // Creates the lock out flag
-            return new LockOutFlag(username, null, null);
+        catch (Exception e) {
+            // Hrm.  This is not good.  We have to opt on the side of positive.
+            Log.error("Error while looking up user's disabled status from Clearspace: ", e);
+            throw new NotLockedOutException();
         }
     }
 
@@ -170,31 +199,8 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
         }
         catch (Exception e) {
             // It is not supported exception, wrap it into an UserNotFoundException
-            throw new UserNotFoundException("Error loading the user", e);
+            throw new UserNotFoundException("Error loading the user from Clearspace: ", e);
         }
     }
 
-    /**
-     * Sets user properties data for a Clearspace user.
-     *
-     * @param node XML data to send to Clearspace REST service.
-     */
-    private void setUserData(Node node) {
-        try {
-            // Requests the user
-            String path = USER_URL_PREFIX + "users";
-
-            // Creates the XML with the data
-            Document userDoc =  DocumentHelper.createDocument();
-            Element rootE = userDoc.addElement("updateUser");
-            rootE.add(node);
-
-            manager.executeRequest(PUT, path, userDoc.asXML());
-        }
-        catch (Exception e) {
-            // Error while setting properties?
-            Log.error("Unable to set user data via REST service in Clearspace:", e);
-        }
-    }
-    
 }

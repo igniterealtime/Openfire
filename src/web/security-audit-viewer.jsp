@@ -188,7 +188,7 @@
     <fmt:message key="security.audit.viewer.view_url"/>
     <br />
     <br />
-    <strong><fmt:message key="security.audit.viewer.view_url.url" /></strong>: <%= SecurityAuditManager.getSecurityAuditProvider().getAuditURL() %>
+    <strong><fmt:message key="security.audit.viewer.view_url.url" /></strong>: <a target="_new" href="<%= SecurityAuditManager.getSecurityAuditProvider().getAuditURL() %>"><%= SecurityAuditManager.getSecurityAuditProvider().getAuditURL() %></a>
     <% } %>
 </div>
     <% } %>

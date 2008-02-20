@@ -33,6 +33,8 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
             "SELECT msgID,username,entryStamp,summary,node,details FROM jiveSecurityAuditLog";
     private static final String GET_EVENT =
             "SELECT msgID,username,entryStamp,summary,node,details FROM jiveSecurityAuditLog WHERE msgID=?";
+    private static final String GET_EVENT_COUNT =
+            "SELECT COUNT(msgID) FROM jiveSecurityAuditLog";
 
     /**
      * Constructs a new DefaultSecurityAuditProvider
@@ -180,6 +182,32 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
         }
 
         return event;
+    }
+
+    /**
+     * The default provider counts the number of entries in the jiveSecurityAuditLog table.
+     * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEventCount()
+     */
+    public Integer getEventCount() {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Integer cnt = 0;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GET_EVENT_COUNT);
+            rs = pstmt.executeQuery();
+            cnt = rs.getInt(1);
+        }
+        catch (Exception e) {
+            // Hrm.  That should not occur.
+            Log.error("Error while looking up number of security audit events: ", e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+
+        return cnt;
     }
 
     /**

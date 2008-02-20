@@ -97,6 +97,16 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
     /**
      * The ClearspaceSecurityAuditProvider does not retrieve audit entries from Clearspace.  Instead
      * it refers the admin to a URL where they can read the logs.
+     * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEventCount() 
+     */
+    public Integer getEventCount() {
+        // This is not used.
+        return null;
+    }
+
+    /**
+     * The ClearspaceSecurityAuditProvider does not retrieve audit entries from Clearspace.  Instead
+     * it refers the admin to a URL where they can read the logs.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#isWriteOnly()
      */
     public boolean isWriteOnly() {

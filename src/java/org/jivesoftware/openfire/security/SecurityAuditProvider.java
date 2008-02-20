@@ -58,6 +58,13 @@ public interface SecurityAuditProvider {
     public SecurityAuditEvent getEvent(Integer msgID) throws EventNotFoundException;
 
     /**
+     * Retrieves number of events recorded.
+     *
+     * @return Number of events that have been recorded.
+     */
+    public Integer getEventCount();
+
+    /**
      * Returns true if the provider logs can be read by Openfire for display from Openfire's
      * own admin interface.  If false, the administrative interface will place a stub in place
      * to indicate that audit logs can not be read from this interface.  The provider can

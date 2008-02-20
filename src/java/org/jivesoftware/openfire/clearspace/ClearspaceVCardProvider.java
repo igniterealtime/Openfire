@@ -334,7 +334,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
             loadReadOnly();
         }
         return readOnly == null ? false : readOnly;*/
-        return false;
+        return true;
     }
 
     private void loadReadOnly() {
@@ -356,8 +356,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
     private Element translate(Element profile, User user, Element avatar) {
 
         Document vCardDoc =  DocumentHelper.createDocument();
-        Element vCard = vCardDoc.addElement("VCard");
-        vCard.addAttribute("xmlns", "vcard-temp");
+        Element vCard = vCardDoc.addElement("vCard", "vcard-temp");
 
         addUserInformation(user, vCard);
         addProfileInformation(profile, vCard);

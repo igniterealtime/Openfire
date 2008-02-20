@@ -13,6 +13,10 @@ package org.jivesoftware.database;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.logicalcobwebs.proxool.admin.SnapshotIF;
+import org.logicalcobwebs.proxool.ProxoolFacade;
+import org.logicalcobwebs.proxool.ConnectionPoolDefinitionIF;
+import org.logicalcobwebs.proxool.ProxoolException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -375,6 +379,14 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     public String toString() {
-        return "Default Connection Provider";
+        try {
+            ConnectionPoolDefinitionIF poolDef = ProxoolFacade.getConnectionPoolDefinition("openfire");
+            SnapshotIF poolStats = ProxoolFacade.getSnapshot("openfire", true);
+            return poolDef.getMinimumConnectionCount()+","+poolDef.getMinimumConnectionCount()+","
+                    +poolStats.getAvailableConnectionCount()+","+poolStats.getActiveConnectionCount();
+        }
+        catch (ProxoolException e) {
+            return "Default Connection Provider";
+        }
     }
 }

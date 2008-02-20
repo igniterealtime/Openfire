@@ -106,7 +106,6 @@
     if (settings != null && password != null) {
         ClearspaceManager manager = new ClearspaceManager(settings);
         try {
-            // TODO: We need to check if the user really exists somehow, handle this later.
             // See if the user authenticates.
             if (manager.checkAuthentication(username, password)) {
                 // User was able to authenticate with provided password

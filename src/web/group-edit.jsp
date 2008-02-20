@@ -25,6 +25,7 @@
 <%@ page import="java.net.URLDecoder"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.*"%>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -87,16 +88,20 @@
                 }
                 group.getProperties().put("sharedRoster.groupList", toList(groupNames, "UTF-8"));
 
-                // Log the event
-                webManager.logEvent("enabled roster groups for "+groupName, "showinroster = "+showGroup+"\ndisplayname = "+groupDisplayName+"\ngrouplist = "+toList(groupNames, "UTF-8"));
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+                    // Log the event
+                    webManager.logEvent("enabled roster groups for "+groupName, "showinroster = "+showGroup+"\ndisplayname = "+groupDisplayName+"\ngrouplist = "+toList(groupNames, "UTF-8"));
+                }
             }
             else {
                 group.getProperties().put("sharedRoster.showInRoster", "nobody");
                 group.getProperties().put("sharedRoster.displayName", "");
                 group.getProperties().put("sharedRoster.groupList", "");
 
-                // Log the event
-                webManager.logEvent("disabled roster groups for "+groupName, null);
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+                    // Log the event
+                    webManager.logEvent("disabled roster groups for "+groupName, null);
+                }
             }
 
             // Get admin list and compare it the admin posted list.
@@ -131,9 +136,11 @@
         for (JID member : removeList) {
             group.getMembers().add(member);
         }
-        // Log the event
-        // TODO: Should log more here later
-        webManager.logEvent("updated group membership for "+groupName, null);
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+            // Log the event
+            // TODO: Should log more here later
+            webManager.logEvent("updated group membership for "+groupName, null);
+        }
         // Get admin list and compare it the admin posted list.
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
         return;
@@ -167,8 +174,10 @@
             else {
                 // Admin entered a JID. Add the JID directly to the list of group members
                 added = group.getMembers().add(new JID(username));
-                // Log the event
-                webManager.logEvent("added group member to "+groupName, "username = "+username);
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+                    // Log the event
+                    webManager.logEvent("added group member to "+groupName, "username = "+username);
+                }
             }
 
             if (added) {

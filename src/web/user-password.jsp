@@ -13,6 +13,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -41,8 +42,10 @@
         // Validate the passwords:
         if (password != null && passwordConfirm != null && password.equals(passwordConfirm)) {
             user.setPassword(password);
-            // Log the event
-            admin.logEvent("set password for user "+username, null);
+            if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+                // Log the event
+                admin.logEvent("set password for user "+username, null);
+            }
             // Done, so redirect
             response.sendRedirect("user-password.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));
             return;

@@ -186,7 +186,6 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider writes logs into a local Openfire database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#isWriteOnly()
      */
-
     public boolean isWriteOnly() {
         return false;
     }
@@ -197,6 +196,22 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      */
     public String getAuditURL() {
         return null;
+    }
+
+    /**
+     * The default provider logs user events.
+     * @see org.jivesoftware.openfire.security.SecurityAuditProvider#blockUserEvents()
+     */
+    public boolean blockUserEvents() {
+        return false;
+    }
+
+    /**
+     * The default provider logs group events.
+     * @see org.jivesoftware.openfire.security.SecurityAuditProvider#blockGroupEvents()
+     */
+    public boolean blockGroupEvents() {
+        return false;
     }
 
 }

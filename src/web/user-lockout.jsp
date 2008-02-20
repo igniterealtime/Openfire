@@ -19,6 +19,7 @@
 <%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
 <%@ page import="org.jivesoftware.openfire.lockout.LockOutFlag" %>
 <%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -63,8 +64,10 @@
         }
         // Lock out the user
         webManager.getLockOutManager().disableAccount(username, startTime, endTime);
-        // Log the event
-        webManager.logEvent("locked out user "+username, "start time = "+startTime+", end time = "+endTime);
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+            // Log the event
+            webManager.logEvent("locked out user "+username, "start time = "+startTime+", end time = "+endTime);
+        }
         // Close the user's connection if the lockout is immedate
         if (webManager.getLockOutManager().isAccountDisabled(username)) {
             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
@@ -89,8 +92,10 @@
     if (unlock) {
         // Unlock the user's account
         webManager.getLockOutManager().enableAccount(username);
-        // Log the event
-        webManager.logEvent("unlocked user "+username, null);
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+            // Log the event
+            webManager.logEvent("unlocked user "+username, null);
+        }
         // Done, so redirect
         response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&unlocksuccess=1");
         return;

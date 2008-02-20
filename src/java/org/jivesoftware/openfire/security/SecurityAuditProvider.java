@@ -82,4 +82,22 @@ public interface SecurityAuditProvider {
      */
     public String getAuditURL();
 
+    /**
+     * Returns true if the provider should not send user change (create, edit, delete, etc) related
+     * security events on through.  This is typically used if the service the provider is working
+     * with audits it's own user events and does not need Openfire to duplicate the event.
+     *
+     * @return True if we should block user related security audit events from being handled.
+     */
+    public boolean blockUserEvents();
+
+    /**
+     * Returns true if the provider should not send group change (create, edit, delete, etc) related
+     * security events on through.  This is typically used if the service the provider is working
+     * with audits it's own group events and does not need Openfire to duplicate the event.
+     *
+     * @return True if we should block group related security audit events from being handled.
+     */
+    public boolean blockGroupEvents();
+
 }

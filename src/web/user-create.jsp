@@ -17,6 +17,7 @@
 %>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.HashMap"%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -75,8 +76,10 @@
         if (errors.size() == 0) {
             try {
                 User newUser = webManager.getUserManager().createUser(username, password, name, email);
-                // Log the event
-                webManager.logEvent("created new user "+username, "name = "+name+", email = "+email);
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+                    // Log the event
+                    webManager.logEvent("created new user "+username, "name = "+name+", email = "+email);
+                }
 
                 // Successful, so redirect
                 if (another) {

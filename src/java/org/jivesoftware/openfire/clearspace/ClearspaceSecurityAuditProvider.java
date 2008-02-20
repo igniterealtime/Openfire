@@ -50,14 +50,21 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
     public void logEvent(String username, String summary, String details) {
         try {
             // Request to log event
-            String path = AUDIT_URL_PREFIX + "auditMethodCall";
+            String path = AUDIT_URL_PREFIX + "audit";
 
             // Creates the XML with the data
             Document auditDoc =  DocumentHelper.createDocument();
-            Element rootE = auditDoc.addElement("auditMethodCall");
-            rootE.addElement("username").addText(username);
-            rootE.addElement("description").addText(summary);
-            rootE.addElement("details").addText(details);
+            Element rootE = auditDoc.addElement("auditEvent");
+            Element userE = rootE.addElement("username");
+            userE.addText(username);
+            Element descE = rootE.addElement("description");
+            if (summary != null) {
+                descE.addText(summary);
+            }
+            Element detlE = rootE.addElement("details");
+            if (details != null) {
+                detlE.addText(details);
+            }
 
             manager.executeRequest(POST, path, auditDoc.asXML());
         }
@@ -104,12 +111,28 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
     public String getAuditURL() {
         String url = ClearspaceManager.getInstance().getConnectionURI();
         if (url != null) {
-            url += "/admin/view-audit-log.jspa";
+            url += "admin/view-audit-log.jspa";
             return url;
         }
         else {
             return null;
         }
+    }
+
+    /**
+     * Clearspace handles logging it's own user events.
+     * @see org.jivesoftware.openfire.security.SecurityAuditProvider#blockUserEvents()
+     */
+    public boolean blockUserEvents() {
+        return true;
+    }
+
+    /**
+     * Clearspace handles logging it's own group events.
+     * @see org.jivesoftware.openfire.security.SecurityAuditProvider#blockGroupEvents()
+     */
+    public boolean blockGroupEvents() {
+        return true;
     }
 
 }

@@ -13,6 +13,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -40,8 +41,10 @@
         user.setEmail(email);
         user.setName(name);
 
-        // Log the event
-        webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email);
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+            // Log the event
+            webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email);
+        }
 
         // Changes good, so redirect
         response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));

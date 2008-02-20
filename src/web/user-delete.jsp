@@ -18,6 +18,7 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -49,8 +50,10 @@
         webManager.getRosterManager().deleteRoster(userAddress);
         // Delete the user from all the Groups
         GroupManager.getInstance().deleteUser(user);
-        // Log the event
-        webManager.logEvent("deleted user "+username, "full jid was "+userAddress);
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+            // Log the event
+            webManager.logEvent("deleted user "+username, "full jid was "+userAddress);
+        }
         // Close the user's connection
         final StreamError error = new StreamError(StreamError.Condition.not_authorized);
         for (ClientSession sess : webManager.getSessionManager().getSessions(user.getUsername()) )

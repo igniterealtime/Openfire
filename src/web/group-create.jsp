@@ -17,6 +17,7 @@
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -63,8 +64,10 @@
                 newGroup.getProperties().put("sharedRoster.displayName", "");
                 newGroup.getProperties().put("sharedRoster.groupList", "");
 
-                // Log the event
-                webManager.logEvent("created new group "+name, "description = "+description);
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+                    // Log the event
+                    webManager.logEvent("created new group "+name, "description = "+description);
+                }
 
                 // Successful, so redirect
                 response.sendRedirect("group-edit.jsp?creategroupsuccess=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
@@ -94,8 +97,10 @@
                     group.setDescription(description);
                 }
 
-                // Log the event
-                webManager.logEvent("edited group "+groupName, "description = "+description);
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+                    // Log the event
+                    webManager.logEvent("edited group "+groupName, "description = "+description);
+                }
 
                 // Successful, so redirect
                 response.sendRedirect("group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode(group.getName(), "UTF-8"));

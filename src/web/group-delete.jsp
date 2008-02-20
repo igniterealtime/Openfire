@@ -14,6 +14,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -39,8 +40,10 @@
     if (delete) {
         // Delete the group
         webManager.getGroupManager().deleteGroup(group);
-        // Log the event
-        webManager.logEvent("deleted group "+group, null);
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+            // Log the event
+            webManager.logEvent("deleted group "+group, null);
+        }
         // Done, so redirect
         response.sendRedirect("group-summary.jsp?deletesuccess=true");
         return;

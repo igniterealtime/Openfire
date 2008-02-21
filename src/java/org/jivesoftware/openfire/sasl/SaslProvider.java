@@ -25,10 +25,7 @@ public class SaslProvider extends Provider {
      * Constructs a the JiveSoftware SASL provider.
      */
     public SaslProvider() {
-        super("JiveSoftware", 1.0, "JiveSoftware SASL provider v1.0, implementing server mechanisms for: PLAIN, CLEARSPACE");
-        // Add SaslServer supporting the PLAIN SASL mechanism
+        super("JiveSoftware", 1.0, "JiveSoftware SASL provider v1.0, implementing server mechanisms for: PLAIN");
         put("SaslServerFactory.PLAIN", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
-        // Add SaslServer supporting the Clearspace SASL mechanism
-        put("SaslServerFactory.CLEARSPACE", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
     }
 }

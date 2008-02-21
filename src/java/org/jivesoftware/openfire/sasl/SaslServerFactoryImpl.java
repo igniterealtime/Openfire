@@ -17,28 +17,26 @@ import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslException;
 import com.sun.security.sasl.util.PolicyUtils;
-import org.jivesoftware.openfire.clearspace.ClearspaceSaslServer;
 
 /**
- * Server Factory for supported mechanisms.
+ * Server Factory for PLAIN.
  *
  * @author Jay Kline
  */
 
 public class SaslServerFactoryImpl implements SaslServerFactory {
 
-    private static final String myMechs[] = { "PLAIN", "CLEARSPACE" };
-    private static final int mechPolicies[] = { PolicyUtils.NOANONYMOUS, PolicyUtils.NOANONYMOUS };
+    private static final String myMechs[] = { "PLAIN" };
+    private static final int mechPolicies[] = { PolicyUtils.NOANONYMOUS };
     private static final int PLAIN = 0;
-    private static final int CLEARSPACE = 1;
 
     public SaslServerFactoryImpl() {
     }
 
     /**
-     * Creates a <code>SaslServer</code> implementing a supported mechanism using the parameters supplied.
+     * Creates a <code>SaslServer</code> implementing the PLAIN mechanism using the parameters supplied.
      *
-     * @param mechanism The non-null IANA-registered named of a SASL mechanism.
+     * @param mechanism The non-null IANA-registered named of a SASL mechanism. Must be "PLAIN" for this object.
      * @param protocol The non-null string name of the protocol for which the authentication is being performed (e.g., "ldap").
      * @param serverName The non-null fully qualified host name of the server to authenticate to.
      * @param props The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism. 
@@ -53,12 +51,6 @@ public class SaslServerFactoryImpl implements SaslServerFactory {
                 throw new SaslException("CallbackHandler with support for Password, Name, and AuthorizeCallback required");
             }
             return new SaslServerPlainImpl(protocol, serverName, props, cbh);
-        }
-        else if (mechanism.equals(myMechs[CLEARSPACE]) && PolicyUtils.checkPolicy(mechPolicies[CLEARSPACE], props)) {
-            if (cbh == null) {
-                throw new SaslException("CallbackHandler with support for AuthorizeCallback required");
-            }
-            return new ClearspaceSaslServer();
         }
         return null;
     }

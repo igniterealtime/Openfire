@@ -13,6 +13,7 @@ import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 
 /**
  * @author Daniel Henninger
@@ -25,6 +26,9 @@ public class ClearspaceAuthProvider implements AuthProvider {
     public ClearspaceAuthProvider() {
         // gets the manager
         manager = ClearspaceManager.getInstance();
+
+        // Add SASL mechanism for use with Clearspace's group chat integration
+        SASLAuthentication.addSupportedMechanism("CLEARSPACE");
     }
 
     public boolean isPlainSupported() {

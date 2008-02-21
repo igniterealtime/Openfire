@@ -124,6 +124,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         exceptionMap.put("com.jivesoftware.base.UserAlreadyExistsException", "org.jivesoftware.openfire.user.UserAlreadyExistsException");
         exceptionMap.put("com.jivesoftware.base.GroupNotFoundException", "org.jivesoftware.openfire.group.GroupNotFoundException");
         exceptionMap.put("com.jivesoftware.base.GroupAlreadyExistsException", "org.jivesoftware.openfire.group.GroupAlreadyExistsException");
+        exceptionMap.put("org.acegisecurity.BadCredentialsException", "org.jivesoftware.openfire.auth.UnauthorizedException");
     }
 
     private static ClearspaceManager instance = new ClearspaceManager();
@@ -581,7 +582,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     public Element executeRequest(HttpType type, String urlSuffix, String xmlParams)
             throws Exception
     {
-        System.out.println(xmlParams);
+        Log.debug("Outgoing REST call ["+type+"] to "+urlSuffix+": "+xmlParams);
         String wsUrl = getConnectionURI() + WEBSERVICES_PATH + urlSuffix;
 
         String secret = getSharedSecret();
@@ -628,7 +629,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             // Parses the result
             String body = method.getResponseBodyAsString();
-            System.out.println(body);
+            Log.debug("Outgoing REST call results: "+body);
             Element response = localParser.get().parseDocument(body).getRootElement();
 
             // Check for exceptions

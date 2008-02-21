@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardProvider;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.Log;
 
 import java.util.List;
 import java.util.StringTokenizer;
@@ -90,7 +91,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
     }
 
     private Element saveVCard(String username, Element vCardElement) {
-        System.out.println(vCardElement.asXML());
+        Log.debug("Saving VCARD: "+vCardElement.asXML());
 
         Document profilesDoc =  DocumentHelper.createDocument();
         Element rootE = profilesDoc.addElement("setProfile");

@@ -1,11 +1,12 @@
 package org.jivesoftware.openfire.clearspace;
 
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslException;
-import java.util.StringTokenizer;
-
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import org.dom4j.Element;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import org.jivesoftware.util.Log;
+
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import java.util.StringTokenizer;
 
 /**
  * Implements the CLEARSPACE server-side SASL mechanism.
@@ -73,7 +74,7 @@ public class ClearspaceSaslServer implements SaslServer {
                 completed = true;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.error("Failed communicating with Clearspace" , e);
         }
 
         return null;

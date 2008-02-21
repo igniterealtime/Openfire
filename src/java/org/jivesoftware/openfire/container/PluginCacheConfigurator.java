@@ -15,6 +15,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.jivesoftware.util.Log;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -68,7 +69,7 @@ public class PluginCacheConfigurator {
             }
         }
         catch (DocumentException e) {
-            e.printStackTrace();
+            Log.error(e);
         }
     }
 

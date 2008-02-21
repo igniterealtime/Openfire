@@ -409,7 +409,7 @@ public class STUNService extends BasicModule {
                         }
                     }
                     catch (UnknownHostException e) {
-                        e.printStackTrace();
+                        Log.error(e);
                     }
                 }
 

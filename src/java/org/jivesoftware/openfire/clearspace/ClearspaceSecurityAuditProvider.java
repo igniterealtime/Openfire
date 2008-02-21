@@ -59,11 +59,17 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
             userE.addText(username);
             Element descE = rootE.addElement("description");
             if (summary != null) {
-                descE.addText(summary);
+                descE.addText("[Openfire] "+summary);
+            }
+            else {
+                descE.addText("[Openfire] No summary provided.");
             }
             Element detlE = rootE.addElement("details");
             if (details != null) {
                 detlE.addText(details);
+            }
+            else {
+                detlE.addText("No details provided.");
             }
 
             manager.executeRequest(POST, path, auditDoc.asXML());

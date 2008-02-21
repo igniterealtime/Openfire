@@ -382,7 +382,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         try {
             ConnectionPoolDefinitionIF poolDef = ProxoolFacade.getConnectionPoolDefinition("openfire");
             SnapshotIF poolStats = ProxoolFacade.getSnapshot("openfire", true);
-            return poolDef.getMinimumConnectionCount()+","+poolDef.getMinimumConnectionCount()+","
+            return poolDef.getMinimumConnectionCount()+","+poolDef.getMaximumConnectionCount()+","
                     +poolStats.getAvailableConnectionCount()+","+poolStats.getActiveConnectionCount();
         }
         catch (ProxoolException e) {

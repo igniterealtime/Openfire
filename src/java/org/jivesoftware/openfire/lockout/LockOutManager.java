@@ -126,6 +126,9 @@ public class LockOutManager {
      * @throws NotLockedOutException if user account specified is not currently locked out (disabled).
      */
     public LockOutFlag getDisabledStatus(String username) throws NotLockedOutException {
+        if (username == null) {
+            throw new UnsupportedOperationException("Null username not allowed!");
+        }
         LockOutFlag flag = lockOutCache.get(username);
         // If ID wan't found in cache, load it up and put it there.
         if (flag == null) {

@@ -129,6 +129,9 @@ public class LockOutManager {
         if (username == null) {
             throw new UnsupportedOperationException("Null username not allowed!");
         }
+        if (!provider.shouldNotBeCached()) {
+            return provider.getDisabledStatus(username);
+        }
         LockOutFlag flag = lockOutCache.get(username);
         // If ID wan't found in cache, load it up and put it there.
         if (flag == null) {
@@ -187,8 +190,10 @@ public class LockOutManager {
         }
         LockOutFlag flag = new LockOutFlag(username, startTime, endTime);
         provider.setDisabledStatus(flag);
-        // Add lockout data to cache.
-        lockOutCache.put(username, flag);
+        if (!provider.shouldNotBeCached()) {
+            // Add lockout data to cache.
+            lockOutCache.put(username, flag);
+        }
         // Fire event.
         LockOutEventDispatcher.accountLocked(flag);
     }
@@ -206,8 +211,10 @@ public class LockOutManager {
             throw new UnsupportedOperationException();
         }
         provider.unsetDisabledStatus(username);
-        // Remove lockout data from cache.
-        lockOutCache.remove(username);
+        if (!provider.shouldNotBeCached()) {
+            // Remove lockout data from cache.
+            lockOutCache.remove(username);
+        }
         // Fire event.
         LockOutEventDispatcher.accountUnlocked(username);
     }

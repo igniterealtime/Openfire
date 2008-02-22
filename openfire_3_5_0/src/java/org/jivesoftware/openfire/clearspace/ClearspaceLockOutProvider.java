@@ -176,6 +176,9 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
                 return new LockOutFlag(username, null, null);
             }
         }
+        catch (NotLockedOutException e) {
+            throw e;
+        }
         catch (Exception e) {
             // Hrm.  This is not good.  We have to opt on the side of positive.
             Log.error("Error while looking up user's disabled status from Clearspace: ", e);

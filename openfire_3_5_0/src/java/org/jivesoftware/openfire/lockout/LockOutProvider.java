@@ -70,4 +70,13 @@ public interface LockOutProvider {
      */
     public boolean isTimeoutSupported();
 
+    /**
+     * Returns true if the lock out flags should not be cached, meaning every status lookup will
+     * go straight to the source.  This is typically set if the status can change on the provider
+     * target without Openfire knowing about it.
+     *
+     * @return true if disabled status should not be cached.
+     */
+    public boolean shouldNotBeCached();
+
 }

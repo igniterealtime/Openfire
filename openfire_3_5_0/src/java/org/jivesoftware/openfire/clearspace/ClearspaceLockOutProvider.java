@@ -102,6 +102,14 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
     }
 
     /**
+     * Clearspace needs to always be queried for disabled status.
+     * @see org.jivesoftware.openfire.lockout.LockOutProvider#shouldNotBeCached()
+     */
+    public boolean shouldNotBeCached() {
+        return true;
+    }
+
+    /**
      * Looks up and modifies a user's CS properties to indicate whether they are enabled or disabled.
      * It is important for this to incorporate the existing user data and only tweak the field
      * that we want to change.

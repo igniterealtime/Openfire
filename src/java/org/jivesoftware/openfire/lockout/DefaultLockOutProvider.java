@@ -166,4 +166,12 @@ public class DefaultLockOutProvider implements LockOutProvider {
         return true;
     }
 
+    /**
+     * Default provider should be cached.
+     * @see org.jivesoftware.openfire.lockout.LockOutProvider#shouldNotBeCached()
+     */
+    public boolean shouldNotBeCached() {
+        return false;
+    }
+
 }

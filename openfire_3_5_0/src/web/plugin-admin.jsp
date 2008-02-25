@@ -225,6 +225,12 @@
 
 <style type="text/css">
 
+.textfield {
+    font-size: 11px;
+    font-family: verdana;
+    padding: 3px 2px;
+    background: #efefef;
+}
 
 .text {
     font-size: 11px;
@@ -237,12 +243,25 @@
     font-family: verdana, arial, helvetica, sans-serif;
 }
 
+.small-label-link {
+    font-size: 11px;
+    font-weight: bold;
+    font-family: verdana;
+    text-decoration: underline;
+}
+
 .light-gray-border {
     border-color: #ccc;
     border-style: solid;
     border-width: 1px 1px 1px 1px;
     padding: 5px;
 	-moz-border-radius: 3px;
+}
+
+.light-gray-border-bottom {
+    border-color: #dcdcdc;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
 }
 
 .table-header {
@@ -327,6 +346,39 @@
     border-color: #73CB73;
     border-style: solid;
     border-width: 0 1px 1px 0;
+    padding: 5px;
+}
+
+.update-top {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 9pt;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 1px 0px 0px 0px;
+    padding: 5px;
+}
+
+.update-right {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 8pt;
+    font-weight: bold;
+    background: #E7FBDE;
+    border-color: #73CB73;
+    border-style: solid;
+    border-width: 1px 1px 0px 0px;
+    padding: 5px;
+}
+
+.line-bottom-border {
+    text-align: left;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 9pt;
+    border-color: #e3e3e3;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
     padding: 5px;
 }
 </style>

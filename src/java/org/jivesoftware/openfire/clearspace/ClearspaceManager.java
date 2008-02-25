@@ -19,12 +19,15 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Document;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
@@ -422,26 +425,21 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
 
-            // TODO: Eventually we would like to get POST support working properly.
-//            String path = IM_URL_PREFIX + "configureComponent/";
-//
-//            // Creates the XML with the data
-//            Document groupDoc =  DocumentHelper.createDocument();
-//            Element rootE = groupDoc.addElement("configureComponent");
-//            Element domainE = rootE.addElement("domain");
-//            domainE.setText(serverInfo.getXMPPDomain());
-//            Element hostsE = rootE.addElement("hosts");
-//            hostsE.setText(WSUtils.marshallList(bindInterfaces));
-//            Element portE = rootE.addElement("port");
-//            portE.setText(String.valueOf(ExternalComponentManager.getServicePort()));
-//
-//            executeRequest(POST, path, rootE.asXML());
+            String path = IM_URL_PREFIX + "configureComponent/";
 
-            String path = IM_URL_PREFIX + "configureComponent/" + serverInfo.getXMPPDomain() +
-                    "/" + WSUtils.marshallList(bindInterfaces) +
-                    "/" + String.valueOf(ExternalComponentManager.getServicePort());
+            // Creates the XML with the data
+            Document groupDoc =  DocumentHelper.createDocument();
+            Element rootE = groupDoc.addElement("configureComponent");
+            Element domainE = rootE.addElement("domain");
+            domainE.setText(serverInfo.getXMPPDomain());
+            for (String bindInterface : bindInterfaces) {
+                Element hostsE = rootE.addElement("hosts");
+                hostsE.setText(bindInterface);
+            }
+            Element portE = rootE.addElement("port");
+            portE.setText(String.valueOf(ExternalComponentManager.getServicePort()));
 
-            executeRequest(GET, path);
+            executeRequest(POST, path, rootE.asXML());
 
             //Done, Clearspace was configured correctly, clear the task
             TaskEngine.getInstance().cancelScheduledTask(configClearspaceTask);
@@ -504,19 +502,14 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private void updateClearspaceSharedSecret(String newSecret) {
 
         try {
-            // Keeping this around for the moment just in case.
-            String path = IM_URL_PREFIX + "updateSharedSecret/" + newSecret;
-            executeRequest(GET, path);
+            String path = IM_URL_PREFIX + "updateSharedSecret/";
 
-            // TODO: We should switch to POST once we figure out why it's not behaving.
-//            String path = IM_URL_PREFIX + "updateSharedSecret/";
-//
-//            // Creates the XML with the data
-//            Document groupDoc =  DocumentHelper.createDocument();
-//            Element rootE = groupDoc.addElement("updateSharedSecret");
-//            rootE.addElement("newSecret").setText(newSecret);
-//
-//            executeRequest(POST, path, groupDoc.asXML());
+            // Creates the XML with the data
+            Document groupDoc =  DocumentHelper.createDocument();
+            Element rootE = groupDoc.addElement("updateSharedSecret");
+            rootE.addElement("newSecret").setText(newSecret);
+
+            executeRequest(POST, path, groupDoc.asXML());
         } catch (UnauthorizedException ue) {
             // TODO: what should happen here? should continue?
         } catch (Exception e) {

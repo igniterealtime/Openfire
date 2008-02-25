@@ -38,8 +38,8 @@ public interface UserProvider {
      *
      * @param username the username.
      * @param password the plain-text password.
-     * @param name the user's name, which can be <tt>null</tt>.
-     * @param email the user's email address, which can be <tt>null</tt>.
+     * @param name the user's name, which can be <tt>null</tt>, unless isNameRequired is set to true.
+     * @param email the user's email address, which can be <tt>null</tt>, unless isEmailRequired is set to true.
      * @return a new User.
      * @throws UserAlreadyExistsException if the username is already in use.
      */
@@ -208,4 +208,19 @@ public interface UserProvider {
      * @return true if the user provider is read-only.
      */
     public boolean isReadOnly();
+
+    /**
+     * Returns true if this UserProvider requires a name to be set on User objects.
+     *
+     * @return true if an name is required with this provider.
+     */
+    public boolean isNameRequired();
+
+    /**
+     * Returns true if this UserProvider requires an email address to be set on User objects.
+     *
+     * @return true if an email address is required with this provider.
+     */
+    public boolean isEmailRequired();
+
 }

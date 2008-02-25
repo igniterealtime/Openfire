@@ -82,7 +82,6 @@ public class ClearspaceUserProvider implements UserProvider {
             passwordE.addText(password);
 
             // adds the the email
-            //todo in CS the email is mandatory
             Element emailE = userE.addElement("email");
             emailE.addText(email);
 
@@ -330,6 +329,14 @@ public class ClearspaceUserProvider implements UserProvider {
         }
         // If it is null returns the most restrictive anwser.
         return (readOnly == null ? false : readOnly);
+    }
+
+    public boolean isNameRequired() {
+        return false;
+    }
+
+    public boolean isEmailRequired() {
+        return true;
     }
 
     private void loadReadOnly() {

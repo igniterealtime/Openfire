@@ -34,6 +34,8 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.stringprep.Stringprep;
+import org.jivesoftware.stringprep.StringprepException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -123,11 +125,17 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             field = new XFormFieldImpl("name");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel("Full name");
+            if (UserManager.getUserProvider().isNameRequired()) {
+                field.setRequired(true);
+            }
             registrationForm.addField(field);
 
             field = new XFormFieldImpl("email");
             field.setType(FormField.TYPE_TEXT_SINGLE);
             field.setLabel("Email");
+            if (UserManager.getUserProvider().isEmailRequired()) {
+                field.setRequired(true);
+            }
             registrationForm.addField(field);
 
             field = new XFormFieldImpl("password");
@@ -298,6 +306,11 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     if (email == null || "".equals(email)) {
                         email = " ";
                     }
+                    // So that we can set a more informative error message back, lets test this for
+                    // stringprep validity now.
+                    if (username != null) {
+                        Stringprep.nodeprep(username);
+                    }
 
                     if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                         // Flag that indicates if the user is *only* changing his password
@@ -384,11 +397,17 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.bad_request);
             }
-            catch (IllegalArgumentException e) {
+            catch (StringprepException e) {
                 // The specified username is not correct according to the stringprep specs
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.jid_malformed);
+            }
+            catch (IllegalArgumentException e) {
+                // At least one of the fields passed in is not valid
+                reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.not_acceptable);
             }
             catch (UnsupportedOperationException e) {
                 // The User provider is read-only so this operation is not allowed

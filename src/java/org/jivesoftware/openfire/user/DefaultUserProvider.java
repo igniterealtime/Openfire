@@ -499,4 +499,12 @@ public class DefaultUserProvider implements UserProvider {
     public boolean isReadOnly() {
         return false;
     }
+
+    public boolean isNameRequired() {
+        return false;
+    }
+
+    public boolean isEmailRequired() {
+        return false;
+    }
 }

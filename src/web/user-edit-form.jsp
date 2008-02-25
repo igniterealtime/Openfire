@@ -14,6 +14,9 @@
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.HashMap" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -26,6 +29,7 @@
     String username = ParamUtils.getParameter(request,"username");
     String name = ParamUtils.getParameter(request,"name");
     String email = ParamUtils.getParameter(request,"email");
+    Map<String, String> errors = new HashMap<String, String>();
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
@@ -38,6 +42,19 @@
 
     // Handle a save
     if (save) {
+        // If provider requires email, validate
+        if (UserManager.getUserProvider().isEmailRequired()) {
+            if (StringUtils.isValidEmailAddress(email)) {
+                errors.put("email","");
+            }
+        }
+        // If provider requires name, validate
+        if (UserManager.getUserProvider().isNameRequired()) {
+            if (name == null || name.equals("")) {
+                errors.put("name","");
+            }
+        }
+
         user.setEmail(email);
         user.setName(name);
 
@@ -59,8 +76,28 @@
         <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
     </head>
     <body>
+<%  if (!errors.isEmpty()) { %>
 
-<%  if (success) { %>
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
+            <td class="jive-icon-label">
+
+            <% if (errors.get("name") != null) { %>
+                <fmt:message key="user.create.invalid_name" />
+            <% } else if (errors.get("email") != null) { %>
+                <fmt:message key="user.create.invalid_email" />
+            <% } %>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+    <br>
+
+<%  } else if (success) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -99,7 +136,7 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.create.name" />:
+                <fmt:message key="user.create.name" />: <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %>
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="name"
@@ -108,7 +145,7 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.create.email" />:
+                <fmt:message key="user.create.email" />: <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %>
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="email"
@@ -118,6 +155,7 @@
     </tbody>
     </table>
     </div>
+
 </fieldset>
 
 <br><br>
@@ -126,6 +164,12 @@
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
+
+<br/>
+
+<span class="jive-description">
+* <fmt:message key="user.create.requied" />
+</span>
 
     </body>
 </html>

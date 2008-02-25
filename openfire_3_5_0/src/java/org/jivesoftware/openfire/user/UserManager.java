@@ -116,13 +116,15 @@ public class UserManager implements IQResultListener {
 
     /**
      * Creates a new User. Required values are username and password. The email address
-     * can optionally be <tt>null</tt>.
+     * and name can optionally be <tt>null</tt>, unless the UserProvider deems that
+     * either of them are required.
      *
      * @param username the new and unique username for the account.
      * @param password the password for the account (plain text).
-     * @param name the name of the user.
+     * @param name the name of the user, which can be <tt>null</tt> unless the UserProvider
+     *      deems that it's required.
      * @param email the email address to associate with the new account, which can
-     *      be <tt>null</tt>.
+     *      be <tt>null</tt>, unless the UserProvider deems that it's required.
      * @return a new User.
      * @throws UserAlreadyExistsException if the username already exists in the system.
      * @throws UnsupportedOperationException if the provider does not support the
@@ -140,6 +142,12 @@ public class UserManager implements IQResultListener {
         }
         catch (StringprepException se) {
             throw new IllegalArgumentException("Invalid username: " + username,  se);
+        }
+        if (provider.isNameRequired() && (name == null || name.equals(""))) {
+            throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name");
+        }
+        if (provider.isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
+            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address");
         }
         User user = provider.createUser(username, password, name, email);
         userCache.put(username, user);

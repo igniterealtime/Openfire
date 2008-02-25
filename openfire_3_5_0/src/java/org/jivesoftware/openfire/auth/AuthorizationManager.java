@@ -155,6 +155,10 @@ public class AuthorizationManager {
                         if (UserManager.getUserProvider().isReadOnly()) {
                             return false;
                         }
+                        if (UserManager.getUserProvider().isNameRequired() || UserManager.getUserProvider().isEmailRequired()) {
+                            // If these are required, there's no way we can arbitrarily auto-create this account.
+                            return false;
+                        }
                         try {
                             UserManager.getUserProvider().createUser(username, StringUtils.randomString(8), null, null);
                             if (Log.isDebugEnabled()) {

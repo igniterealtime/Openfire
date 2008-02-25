@@ -71,6 +71,18 @@
         if (password != null && passwordConfirm != null && !password.equals(passwordConfirm)) {
             errors.put("passwordMatch","");
         }
+        // If provider requires email, validate
+        if (UserManager.getUserProvider().isEmailRequired()) {
+            if (StringUtils.isValidEmailAddress(email)) {
+                errors.put("email","");
+            }
+        }
+        // If provider requires name, validate
+        if (UserManager.getUserProvider().isNameRequired()) {
+            if (name == null || name.equals("")) {
+                errors.put("name","");
+            }
+        }
 
         // do a create if there were no errors
         if (errors.size() == 0) {
@@ -185,9 +197,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td width="1%" nowrap>
-				<label for="nametf"><fmt:message key="user.create.name" />:</label>
-			</td>
+			<td width="1%" nowrap><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
 			<td width="99%">
 				<input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
 				 id="nametf">
@@ -195,7 +205,7 @@
 		</tr>
 		<tr>
 			<td width="1%" nowrap>
-				<label for="emailtf"><fmt:message key="user.create.email" />:</label></td>
+				<label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
 			<td width="99%">
 				<input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
 				 id="emailtf">

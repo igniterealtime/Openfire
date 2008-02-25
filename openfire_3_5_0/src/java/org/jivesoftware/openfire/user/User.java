@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.resultsetmanager.Result;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -106,7 +107,9 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     /**
-     * Constructs a new user. All arguments can be <tt>null</tt> except the username.
+     * Constructs a new user. Normally, all arguments can be <tt>null</tt> except the username.
+     * However, a UserProvider -may- require a name or email address.  In those cases, the
+     * isNameRequired or isEmailRequired UserProvider tests indicate whether <tt>null</tt> is allowed.
      * Typically, User objects should not be constructed by end-users of the API.
      * Instead, user objects should be retrieved using {@link UserManager#getUser(String)}.
      *
@@ -123,7 +126,13 @@ public class User implements Cacheable, Externalizable, Result {
             throw new NullPointerException("Username cannot be null");
         }
         this.username = username;
+        if (UserManager.getUserProvider().isNameRequired() && (name == null || name.equals(""))) {
+            throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name");
+        }
         this.name = name;
+        if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
+            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address");
+        }
         this.email = email;
         this.creationDate = creationDate;
         this.modificationDate = modificationDate;
@@ -174,6 +183,10 @@ public class User implements Cacheable, Externalizable, Result {
             throw new UnsupportedOperationException("User provider is read-only.");
         }
 
+        if ((name == null || name.equals("")) && UserManager.getUserProvider().isNameRequired()) {
+            throw new IllegalArgumentException("User provider requires name.");
+        }
+
         try {
             String originalName = this.name;
             UserManager.getUserProvider().setName(username, name);
@@ -203,6 +216,10 @@ public class User implements Cacheable, Externalizable, Result {
     public void setEmail(String email) {
         if (UserManager.getUserProvider().isReadOnly()) {
             throw new UnsupportedOperationException("User provider is read-only.");
+        }
+
+        if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
+            throw new IllegalArgumentException("User provider requires email address.");
         }
 
         try {

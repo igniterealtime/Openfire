@@ -402,4 +402,12 @@ public class JDBCUserProvider implements UserProvider {
 	public boolean isReadOnly() {
 		return true;
 	}
+
+    public boolean isNameRequired() {
+        return false;
+    }
+
+    public boolean isEmailRequired() {
+        return false;
+    }
 }

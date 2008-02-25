@@ -711,6 +711,14 @@ public class LdapUserProvider implements UserProvider {
         return true;
     }
 
+    public boolean isNameRequired() {
+        return false;
+    }
+
+    public boolean isEmailRequired() {
+        return false;
+    }
+
     /**
      * Parses dates/time stamps stored in LDAP. Some possible values:
      *

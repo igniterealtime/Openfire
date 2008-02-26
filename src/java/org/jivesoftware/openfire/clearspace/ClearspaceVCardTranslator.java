@@ -206,7 +206,7 @@ class ClearspaceVCardTranslator {
 
         String fullName = vCardValues.get(VCardField.FN);
 
-        boolean emptyName = fullName != null && !"".equals(fullName.trim());
+        boolean emptyName = fullName == null || "".equals(fullName.trim());
 
         // if the new value is not empty then update. The name can't be deleted by an empty string
         if (!emptyName) {
@@ -216,7 +216,7 @@ class ClearspaceVCardTranslator {
 
         String email = vCardValues.get(VCardField.EMAIL_PREF_USERID);
 
-        boolean emptyEmail = email != null && !"".equals(email.trim());
+        boolean emptyEmail = email == null || "".equals(email.trim());
         // if the new value is not empty then update. The email can't be deleted by an empty string
         if (!emptyEmail) {
             WSUtils.modifyElementText(userElement, "email", email);
@@ -366,74 +366,98 @@ class ClearspaceVCardTranslator {
 
         if (vCardValues.containsKey(VCardField.TITLE)) {
             String newValue = vCardValues.get(VCardField.TITLE);
-            addProfile(profiles, ClearspaceField.TITLE, newValue);
+            if (addProfile(profiles, ClearspaceField.TITLE, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         if (vCardValues.containsKey(VCardField.ORG_ORGUNIT)) {
             String newValue = vCardValues.get(VCardField.ORG_ORGUNIT);
-            addProfile(profiles, ClearspaceField.DEPARTMENT, newValue);
+            if (addProfile(profiles, ClearspaceField.DEPARTMENT, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         if (vCardValues.containsKey(VCardField.ADR_WORK)) {
             String newValue = vCardValues.get(VCardField.ADR_WORK);
-            addProfile(profiles, ClearspaceField.ADDRESS, newValue);
+            if (addProfile(profiles, ClearspaceField.ADDRESS, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         if (vCardValues.containsKey(VCardField.ADR_HOME)) {
             String newValue = vCardValues.get(VCardField.ADR_HOME);
-            addProfile(profiles, ClearspaceField.HOME_ADDRESS, newValue);
+            if (addProfile(profiles, ClearspaceField.HOME_ADDRESS, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         if (vCardValues.containsKey(VCardField.TZ)) {
             String newValue = vCardValues.get(VCardField.TZ);
-            addProfile(profiles, ClearspaceField.TIME_ZONE, newValue);
+            if (addProfile(profiles, ClearspaceField.TIME_ZONE, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         if (vCardValues.containsKey(VCardField.URL)) {
             String newValue = vCardValues.get(VCardField.URL);
-            addProfile(profiles, ClearspaceField.URL, newValue);
+            if (addProfile(profiles, ClearspaceField.URL, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         if (vCardValues.containsKey(VCardField.EMAIL_USERID)) {
             String newValue = vCardValues.get(VCardField.EMAIL_USERID);
             newValue = addFieldType(newValue, "work");
-            addProfile(profiles, ClearspaceField.ALT_EMAIL, newValue);
+            if (addProfile(profiles, ClearspaceField.ALT_EMAIL, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         // Adds just one phone number, the first one. Clearspace doesn't support more than one.
         if (vCardValues.containsKey(VCardField.PHONE_WORK)) {
             String newValue = vCardValues.get(VCardField.PHONE_WORK);
             newValue = addFieldType(newValue, "work");
-            addProfile(profiles, ClearspaceField.PHONE, newValue);
+            if (addProfile(profiles, ClearspaceField.PHONE, newValue)) {
+                action = Action.MODIFY;
+            }
 
         } else if (vCardValues.containsKey(VCardField.PHONE_HOME)) {
             String newValue = vCardValues.get(VCardField.PHONE_HOME);
             newValue = addFieldType(newValue, "home");
-            addProfile(profiles, ClearspaceField.PHONE, newValue);
+            if (addProfile(profiles, ClearspaceField.PHONE, newValue)) {
+                action = Action.MODIFY;
+            }
 
         } else if (vCardValues.containsKey(VCardField.FAX_WORK)) {
             String newValue = vCardValues.get(VCardField.FAX_WORK);
             newValue = addFieldType(newValue, "fax");
-            addProfile(profiles, ClearspaceField.PHONE, newValue);
+            if (addProfile(profiles, ClearspaceField.PHONE, newValue)) {
+                action = Action.MODIFY;
+            }
 
         } else if (vCardValues.containsKey(VCardField.MOBILE_WORK)) {
             String newValue = vCardValues.get(VCardField.MOBILE_WORK);
             newValue = addFieldType(newValue, "mobile");
-            addProfile(profiles, ClearspaceField.PHONE, newValue);
+            if (addProfile(profiles, ClearspaceField.PHONE, newValue)) {
+                action = Action.MODIFY;
+            }
 
         } else if (vCardValues.containsKey(VCardField.PAGER_WORK)) {
             String newValue = vCardValues.get(VCardField.PAGER_WORK);
             newValue = addFieldType(newValue, "pager");
-            addProfile(profiles, ClearspaceField.PHONE, newValue);
+            if (addProfile(profiles, ClearspaceField.PHONE, newValue)) {
+                action = Action.MODIFY;
+            }
         }
 
         return action;
     }
 
-    private void addProfile(Element profiles, ClearspaceField field, String newValue) {
+    private boolean addProfile(Element profiles, ClearspaceField field, String newValue) {
         // Don't add empty vales
         if (newValue == null || "".equals(newValue.trim())) {
-            return;
+            return false;
         }
 
         Element profile = profiles.addElement("profiles");
@@ -443,6 +467,7 @@ class ClearspaceVCardTranslator {
         } else {
             profile.addElement("value").setText(newValue);
         }
+        return true;
     }
 
     private boolean modifyProfileValue(Map<VCardField, String> vCardValues, Element profiles, Element value, VCardField vCardField) {

@@ -1,11 +1,13 @@
 package org.jivesoftware.openfire.clearspace;
 
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslException;
-import java.util.StringTokenizer;
-
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import org.dom4j.Element;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import java.util.StringTokenizer;
 
 /**
  * Implements the CLEARSPACE server-side SASL mechanism.
@@ -55,9 +57,10 @@ public class ClearspaceSaslServer implements SaslServer {
      */
     public byte[] evaluateResponse(byte[] response) throws SaslException {
         ClearspaceManager csManager = ClearspaceManager.getInstance();
+        String responseStr = new String(response);
 
-        // Parse data and obtain jid & auth token
-        StringTokenizer tokens = new StringTokenizer(new String(response), "\u0000");
+        // Parse data and obtain jid & random string
+        StringTokenizer tokens = new StringTokenizer(responseStr, "\u0000");
         if (tokens.countTokens() != 2) {
             // Info was not provided correctly
             completed = false;
@@ -65,15 +68,15 @@ public class ClearspaceSaslServer implements SaslServer {
         }
 
         jid = tokens.nextToken();
-        String authToken = tokens.nextToken();
 
         try {
-            Element resultElement = csManager.executeRequest(GET, "groupChatAuthService/isAuthTokenValid/" + authToken);
+            responseStr = StringUtils.encodeBase64(responseStr);
+            Element resultElement = csManager.executeRequest(GET, "groupChatAuthService/isAuthTokenValid/" + responseStr);
             if ("true".equals(WSUtils.getReturn(resultElement))) {
                 completed = true;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.error("Failed communicating with Clearspace" , e);
         }
 
         return null;

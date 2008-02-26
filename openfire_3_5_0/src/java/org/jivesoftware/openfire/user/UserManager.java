@@ -144,10 +144,12 @@ public class UserManager implements IQResultListener {
             throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
         if (provider.isNameRequired() && (name == null || name.equals(""))) {
-            throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name");
+            throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name. User: "
+                                                + username + " Name: " + name);
         }
         if (provider.isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
-            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address");
+            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address. User: "
+                                                + username + " Email: " + email);
         }
         User user = provider.createUser(username, password, name, email);
         userCache.put(username, user);

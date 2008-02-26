@@ -521,6 +521,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
+        serverName = server.getServerInfo().getXMPPDomain();
         router = server.getPacketRouter();
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
@@ -813,7 +814,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public void start() {
         super.start();
-        serverName = server.getServerInfo().getXMPPDomain();
         createListeners();
         startListeners();
         SocketSendingTracker.getInstance().start();

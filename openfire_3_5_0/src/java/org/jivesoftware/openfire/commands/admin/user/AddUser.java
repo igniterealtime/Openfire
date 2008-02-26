@@ -13,6 +13,7 @@ import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.StringUtils;
 import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -82,6 +83,13 @@ public class AddUser extends AdHocCommand {
         String surName = get(data, "surname", 0);
         String name = (givenName == null ? "" : givenName) + (surName == null ? "" : surName);
         name = (name.equals("") ? null : name);
+
+        // If provider requires email, validate
+        if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
+            note.addAttribute("type", "error");
+            note.setText("No email was specified.");
+            return;
+        }
 
         try {
             UserManager.getInstance().createUser(account.getNode(), password, name, email);

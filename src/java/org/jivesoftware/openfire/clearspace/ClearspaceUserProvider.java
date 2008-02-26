@@ -96,7 +96,7 @@ public class ClearspaceUserProvider implements UserProvider {
         } catch (UserAlreadyExistsException uaee) {
             throw uaee;
         } catch (Exception e) {
-            throw new UnsupportedOperationException("Error creatin the user", e);
+            throw new UnsupportedOperationException("Error creating the user", e);
         }
     }
 

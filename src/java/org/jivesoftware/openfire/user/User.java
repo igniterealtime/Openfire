@@ -131,7 +131,8 @@ public class User implements Cacheable, Externalizable, Result {
         }
         this.name = name;
         if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
-            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address");
+            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address. User: "
+                                                + username + " Email: " + email);
         }
         this.email = email;
         this.creationDate = creationDate;

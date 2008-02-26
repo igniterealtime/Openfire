@@ -31,6 +31,7 @@ public class WSUtils {
 
     /**
      * Returns the text of the first an element with name 'return'.
+     *
      * @param element the element to search for a return element.
      * @return the text of the return element.
      */
@@ -40,6 +41,7 @@ public class WSUtils {
 
     /**
      * Returns the text of the first an element with name 'name'.
+     *
      * @param node the element to search for a "name" element.
      * @param name the name of the element to search
      * @return the text of the corresponding element
@@ -54,8 +56,9 @@ public class WSUtils {
 
     /**
      * Modifies the text of the elmement with name 'name'.
-     * @param node the element to search
-     * @param name the name to search
+     *
+     * @param node     the element to search
+     * @param name     the name to search
      * @param newValue the new value of the text
      */
     protected static void modifyElementText(Node node, String name, String newValue) {
@@ -63,14 +66,24 @@ public class WSUtils {
         n.setText(newValue);
     }
 
+    protected static void modifyElementText(Element element, String[] path, String newValue) {
+        Element e = element;
+        for (String s : path) {
+            e = e.element(s);
+        }
+        e.setText(newValue);
+    }
+
+
     /**
      * Parse REST responses of the type String[], that are XML of the form:
-     *
+     * <p/>
      * <something>
-     *  <return>text1</return>
-     *  <return>text2</return>
-     *  <return>text3</return>
+     * <return>text1</return>
+     * <return>text2</return>
+     * <return>text3</return>
      * </something>
+     *
      * @param element
      * @return
      */
@@ -90,12 +103,13 @@ public class WSUtils {
             result += s + ",";
         }
 
-        return result.substring(0, result.length() -1);
+        return result.substring(0, result.length() - 1);
     }
 
     /**
      * Parses a date of the form 1969-12-31T21:00:00-03:00, or 2008-02-13T18:54:29.147-03:00.
      * If the string is null or there is a problem parsing the date, returns null.
+     *
      * @param date the string to parse
      * @return the corresponding date, or null if t
      */
@@ -106,13 +120,12 @@ public class WSUtils {
         // REST writes dates time zone with ':', somthing like -3:00
         // to parse it they should be removed
         int index = date.lastIndexOf(":");
-        date = date.substring(0, index) + date.substring(index +1);
+        date = date.substring(0, index) + date.substring(index + 1);
         Date d = null;
         try {
             if (date.length() == 24) {
                 d = dateFormatNoMil.parse(date);
-            }
-            else {
+            } else {
                 d = dateFormatMil.parse(date);
             }
         } catch (ParseException e) {
@@ -123,6 +136,7 @@ public class WSUtils {
 
     /**
      * Formats a date into yyyy-MM-dd'T'HH:mm:ss.SSSZ, for example 2008-02-13T18:54:29.147-03:00
+     *
      * @param date the date to format
      * @return a string representation of the date
      */

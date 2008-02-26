@@ -17,10 +17,10 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Document;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
@@ -49,11 +49,11 @@ import java.util.*;
 
 /**
  * Centralized administration of Clearspace connections. The {@link #getInstance()} method
- * should be used to get an instace. The following properties configure this manager:
- *
+ * should be used to get an instance. The following properties configure this manager:
+ * <p/>
  * <ul>
- *      <li>clearspace.uri</li>
- *      <li>clearspace.sharedSecret</li>
+ * <li>clearspace.uri</li>
+ * <li>clearspace.sharedSecret</li>
  * </ul>
  *
  * @author Daniel Henninger
@@ -62,30 +62,30 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private ConfigClearspaceTask configClearspaceTask;
 
     /**
-      * Different kind of HTTP request types
-      */
-     public enum HttpType {
+     * Different kind of HTTP request types
+     */
+    public enum HttpType {
 
-         /**
-          * Represents an HTTP Get request. And it's equivalent to a SQL SELECTE.
-          */
-         GET,
+        /**
+         * Represents an HTTP Get request. And it's equivalent to a SQL SELECTE.
+         */
+        GET,
 
-         /**
-          * Represents an HTTP Post request. And it's equivalent to a SQL UPDATE.
-          */
-         POST,
+        /**
+         * Represents an HTTP Post request. And it's equivalent to a SQL UPDATE.
+         */
+        POST,
 
-         /**
-          * Represents an HTTP Delete request. And it's equivalent to a SQL DELETE.
-          */
-         DELETE,
+        /**
+         * Represents an HTTP Delete request. And it's equivalent to a SQL DELETE.
+         */
+        DELETE,
 
-         /**
-          * Represents an HTTP Put requests.And it's equivalent to a SQL CREATE.
-          */
-         PUT
-     }
+        /**
+         * Represents an HTTP Put requests.And it's equivalent to a SQL CREATE.
+         */
+        PUT
+    }
 
     /**
      * This is the username of the user that Openfires uses to connect
@@ -137,6 +137,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private String host;
     private int port;
     private String sharedSecret;
+    private Map<String, Long> userIDCache;
+    private Map<String, Long> groupIDCache;
 
     /**
      * Provides singleton access to an instance of the ClearspaceManager class.
@@ -153,7 +155,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * for testing purposes.
      *
      * @param properties the Map that contains properties used by the Clearspace manager, such as
-     *      Clearspace host and shared secret.
+     *                   Clearspace host and shared secret.
      */
     public ClearspaceManager(Map<String, String> properties) {
         super("Clearspace integration module for testing only");
@@ -164,6 +166,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             this.uri = this.uri + "/";
         }
         sharedSecret = properties.get("clearspace.sharedSecret");
+
+        userIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
+        groupIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
 
         if (Log.isDebugEnabled()) {
             StringBuilder buf = new StringBuilder();
@@ -179,7 +184,6 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * Constructs a new ClearspaceManager instance. Typically, {@link #getInstance()} should be
      * called instead of this method. ClearspaceManager instances should only be created directly
      * for testing purposes.
-     *
      */
     public ClearspaceManager() {
         super("Clearspace integration module");
@@ -189,7 +193,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         this.properties = new Map<String, String>() {
 
             public String get(Object key) {
-                return JiveGlobals.getXMLProperty((String)key);
+                return JiveGlobals.getXMLProperty((String) key);
             }
 
             public String put(String key, String value) {
@@ -199,7 +203,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
 
             public String remove(Object key) {
-                JiveGlobals.deleteXMLProperty((String)key);
+                JiveGlobals.deleteXMLProperty((String) key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
@@ -242,6 +246,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
         this.uri = JiveGlobals.getXMLProperty("clearspace.uri");
         sharedSecret = JiveGlobals.getXMLProperty("clearspace.sharedSecret");
+
+        userIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
+        groupIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
 
         if (uri != null && !"".equals(uri.trim())) {
             try {
@@ -405,7 +412,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         // Start the task if it is not currently running
         if (configClearspaceTask == null) {
             configClearspaceTask = new ConfigClearspaceTask();
-            TaskEngine.getInstance().schedule(configClearspaceTask, 0, JiveConstants.MINUTE);
+            TaskEngine.getInstance().schedule(configClearspaceTask, 1, JiveConstants.MINUTE);
 
         }/*
         try {
@@ -428,7 +435,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             String path = IM_URL_PREFIX + "configureComponent/";
 
             // Creates the XML with the data
-            Document groupDoc =  DocumentHelper.createDocument();
+            Document groupDoc = DocumentHelper.createDocument();
             Element rootE = groupDoc.addElement("configureComponent");
             Element domainE = rootE.addElement("domain");
             domainE.setText(serverInfo.getXMPPDomain());
@@ -505,15 +512,15 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             String path = IM_URL_PREFIX + "updateSharedSecret/";
 
             // Creates the XML with the data
-            Document groupDoc =  DocumentHelper.createDocument();
+            Document groupDoc = DocumentHelper.createDocument();
             Element rootE = groupDoc.addElement("updateSharedSecret");
             rootE.addElement("newSecret").setText(newSecret);
 
             executeRequest(POST, path, groupDoc.asXML());
         } catch (UnauthorizedException ue) {
-            // TODO: what should happen here? should continue?
+            Log.error("Error updating the password of Clearspace", ue);
         } catch (Exception e) {
-            // TODO: what should happen here? should continue?
+            Log.error("Error updating the password of Clearspace", e);
         }
 
     }
@@ -566,10 +573,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     /**
      * Makes a rest request of either type GET or DELETE at the specified urlSuffix.
-     *
+     * <p/>
      * urlSuffix should be of the form /userService/users
      *
-     * @param type Must be GET or DELETE
+     * @param type      Must be GET or DELETE
      * @param urlSuffix The url suffix of the rest request
      * @return The response as a xml doc.
      * @throws Exception Thrown if there are issues parsing the request.
@@ -580,9 +587,11 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     public Element executeRequest(HttpType type, String urlSuffix, String xmlParams)
-            throws Exception
-    {
-        Log.debug("Outgoing REST call ["+type+"] to "+urlSuffix+": "+xmlParams);
+            throws Exception {
+        if (Log.isDebugEnabled()) {
+            Log.debug("Outgoing REST call [" + type + "] to " + urlSuffix + ": " + xmlParams);
+        }
+
         String wsUrl = getConnectionURI() + WEBSERVICES_PATH + urlSuffix;
 
         String secret = getSharedSecret();
@@ -624,12 +633,14 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         method.setDoAuthentication(true);
 
         try {
-            // Excecutes the resquest
+            // Executes the request
             client.executeMethod(method);
 
             // Parses the result
             String body = method.getResponseBodyAsString();
-            Log.debug("Outgoing REST call results: "+body);
+            if (Log.isDebugEnabled()) {
+                Log.debug("Outgoing REST call results: " + body);
+            }
             Element response = localParser.get().parseDocument(body).getRootElement();
 
             // Check for exceptions
@@ -655,7 +666,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             int index = exceptionText.indexOf(":");
             String className;
             String message;
-            // If there is no massege, save the class only
+            // If there is no message, save the class only
             if (index == -1) {
                 className = exceptionText;
                 message = null;
@@ -681,7 +692,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                     exception = (Exception) constructor.newInstance(message);
                 }
             } catch (Exception e) {
-                // failed to create an specific exception, creating a standar one.
+                // failed to create an specific exception, creating a standard one.
                 exception = new Exception(exceptionText);
             }
 
@@ -692,63 +703,90 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     /**
      * Returns the Clearspace user id the user by username.
+     *
      * @param username Username to retrieve ID of.
      * @return The ID number of the user in Clearspace.
-     * @throws org.jivesoftware.openfire.user.UserNotFoundException If the user was not found.
+     * @throws org.jivesoftware.openfire.user.UserNotFoundException
+     *          If the user was not found.
      */
     protected long getUserID(String username) throws UserNotFoundException {
-        // todo implement cache
-        if(username.contains("@")) {
+        // Gets the part before of @ of the username param
+        if (username.contains("@")) {
+            // User's id are only for local users
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
                 throw new UserNotFoundException("Cannot load user of remote server: " + username);
             }
-            username = username.substring(0,username.lastIndexOf("@"));
+            username = username.substring(0, username.lastIndexOf("@"));
         }
-        return getUserID(XMPPServer.getInstance().createJID(username, null));
-    }
 
-    /**
-     * Returns the Clearspace user id the user by JID.
-     * @param user JID of user to retrieve ID of.
-     * @return The ID number of the user in Clearspace.
-     * @throws org.jivesoftware.openfire.user.UserNotFoundException If the user was not found.
-     */
-    protected long getUserID(JID user) throws UserNotFoundException {
-        // TODO: implement cache, after we are listening for user events from Clearspace.
-        XMPPServer server = XMPPServer.getInstance();
-        String username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
+        // Checks if it is in the cache
+        if (userIDCache.containsKey(username)) {
+            return userIDCache.get(username);
+        }
+
+        // Gets the user's ID from Clearspace
         try {
             String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/" + username;
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 
-            return Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
+            Long id = Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
+
+            userIDCache.put(username, id);
+
+            return id;
         } catch (UserNotFoundException unfe) {
             // It is a supported exception, throw it again
             throw unfe;
         } catch (Exception e) {
-            // It is not asupperted exception, wrap it into a UserNotFoundException
+            // It is not a supported exception, wrap it into a UserNotFoundException
             throw new UserNotFoundException("Unexpected error", e);
         }
     }
 
     /**
+     * Returns the Clearspace user id the user by JID.
+     *
+     * @param user JID of user to retrieve ID of.
+     * @return The ID number of the user in Clearspace.
+     * @throws org.jivesoftware.openfire.user.UserNotFoundException
+     *          If the user was not found.
+     */
+    protected long getUserID(JID user) throws UserNotFoundException {
+        // User's id are only for local users
+        XMPPServer server = XMPPServer.getInstance();
+        if (!server.isLocal(user)) {
+            throw new UserNotFoundException("Cannot load user of remote server: " + user.toString());
+        }
+        String username = JID.unescapeNode(user.getNode());
+        return getUserID(username);
+    }
+
+    /**
      * Returns the Clearspace group id of the group.
+     *
      * @param groupname Name of the group to retrieve ID of.
      * @return The ID number of the group in Clearspace.
-     * @throws org.jivesoftware.openfire.group.GroupNotFoundException If the group was not found.
+     * @throws org.jivesoftware.openfire.group.GroupNotFoundException
+     *          If the group was not found.
      */
     protected long getGroupID(String groupname) throws GroupNotFoundException {
-        // TODO: implement cache, after we are listening for group events from Clearspace.
+        if (groupIDCache.containsKey(groupname)) {
+            return groupIDCache.get(groupname);
+        }
         try {
             String path = ClearspaceGroupProvider.URL_PREFIX + "groups/" + groupname;
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 
-            return Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
+            Long id = Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
+            // Saves it into the cache
+            groupIDCache.put(groupname, id);
+
+            return id;
         } catch (GroupNotFoundException gnfe) {
             // It is a supported exception, throw it again
             throw gnfe;
         } catch (Exception e) {
-            // It is not asupperted exception, wrap it into a GroupNotFoundException
+            // It is not a supported exception, wrap it into a GroupNotFoundException
             throw new GroupNotFoundException("Unexpected error", e);
         }
     }
@@ -759,7 +797,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             try {
                 configClearspace();
             } catch (UnauthorizedException e) {
-                // TODO: mark that there is an authorization problem
+                Log.error("Unoauthorization problem trying to configure Clearspace", e);
+                // TODO: Mark that there is an authorization problem
             }
         }
     }

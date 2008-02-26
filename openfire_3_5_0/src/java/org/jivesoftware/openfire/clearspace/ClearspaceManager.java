@@ -28,7 +28,6 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
-import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.component.ExternalComponentManagerListener;
@@ -161,23 +160,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         super("Clearspace integration module for testing only");
         this.properties = properties;
 
-        this.uri = properties.get("clearspace.uri");
-        if (!this.uri.endsWith("/")) {
-            this.uri = this.uri + "/";
-        }
-        sharedSecret = properties.get("clearspace.sharedSecret");
-
-        userIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
-        groupIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
-
-        if (Log.isDebugEnabled()) {
-            StringBuilder buf = new StringBuilder();
-            buf.append("Created new ClearspaceManager() instance, fields:\n");
-            buf.append("\t URI: ").append(uri).append("\n");
-            buf.append("\t sharedSecret: ").append(sharedSecret).append("\n");
-
-            Log.debug("ClearspaceManager: " + buf.toString());
-        }
+        init();
     }
 
     /**
@@ -244,21 +227,24 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
         };
 
-        this.uri = JiveGlobals.getXMLProperty("clearspace.uri");
-        sharedSecret = JiveGlobals.getXMLProperty("clearspace.sharedSecret");
+        init();
+    }
 
+    private void init() {
+        this.uri = properties.get("clearspace.uri");
+        if (uri != null) {
+            if (!this.uri.endsWith("/")) {
+                this.uri = this.uri + "/";
+            }
+            // Updates the host/port attributes based on the uri
+            updateHostPort();
+        }
+        sharedSecret = properties.get("clearspace.sharedSecret");
+
+        // Creates the cache maps
         userIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
         groupIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
 
-        if (uri != null && !"".equals(uri.trim())) {
-            try {
-                URL url = new URL(uri);
-                host = url.getHost();
-                port = url.getPort();
-            } catch (MalformedURLException e) {
-                // this won't happen
-            }
-        }
 
         if (Log.isDebugEnabled()) {
             StringBuilder buf = new StringBuilder();
@@ -267,6 +253,21 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             buf.append("\t sharedSecret: ").append(sharedSecret).append("\n");
 
             Log.debug("ClearspaceManager: " + buf.toString());
+        }
+    }
+
+    /**
+     * Updates the host port attributes based on the URI.
+     */
+    private void updateHostPort() {
+        if (uri != null && !"".equals(uri.trim())) {
+            try {
+                URL url = new URL(uri);
+                host = url.getHost();
+                port = url.getPort();
+            } catch (MalformedURLException e) {
+                // this won't happen
+            }
         }
     }
 
@@ -297,12 +298,13 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     public Boolean testConnection() {
         // Test invoking a simple method
         try {
-            String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/count";
-            Element element = executeRequest(GET, path);
-            getReturn(element);
+            // If there is a problem with the URL or the user/password this service throws an exception
+            String path = IM_URL_PREFIX + "testCredentials";
+            executeRequest(GET, path);
+
             return true;
         } catch (Exception e) {
-            // Nothing to do.
+            // It is not ok, return false.
         }
 
         return false;
@@ -330,6 +332,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
         this.uri = uri;
         properties.put("clearspace.uri", uri);
+
+        //Updates the host/port attributes
+        updateHostPort();
+
         if (isEnabled()) {
             startClearspaceConfig();
         }
@@ -641,6 +647,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             if (Log.isDebugEnabled()) {
                 Log.debug("Outgoing REST call results: " + body);
             }
+
+            // Checks the http status
+            if (method.getStatusCode() != 200) {
+                throw new ConnectException("Error connecting to Clearspace, http status code: " + method.getStatusCode());
+            }
+
             Element response = localParser.get().parseDocument(body).getRootElement();
 
             // Check for exceptions

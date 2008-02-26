@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             String path = URL_PREFIX + "groups";
 
             // Creates the XML with the data
-            Document groupDoc =  DocumentHelper.createDocument();
+            Document groupDoc = DocumentHelper.createDocument();
             Element rootE = groupDoc.addElement("createGroup");
             Element nameE = rootE.addElement("name");
             nameE.addText(name);
@@ -83,6 +84,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             manager.executeRequest(DELETE, path);
 
         } catch (GroupNotFoundException gnfe) {
+            Log.error(gnfe);
             // it is ok, the group doesn't exist "anymore"
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
@@ -103,7 +105,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             manager.executeRequest(PUT, path);
 
         } catch (GroupNotFoundException gnfe) {
-            //TODO Should throw a GroupNotFoundException
+            Log.error(gnfe);
             // no further action required
         } catch (Exception e) {
             // It is not supported exception, wrap it into a UnsupportedOperationException
@@ -121,7 +123,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             manager.executeRequest(PUT, path);
 
         } catch (GroupNotFoundException gnfe) {
-            //TODO Should throw a GroupNotFoundException
+            Log.error(gnfe);
             // no further action required
         } catch (Exception e) {
             // It is not supported exception, wrap it into a UnsupportedOperationException
@@ -133,8 +135,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
         try {
             String path = URL_PREFIX + "groupCount";
             Element element = manager.executeRequest(GET, path);
-            int count = Integer.valueOf(getReturn(element));
-            return count;
+            return Integer.valueOf(getReturn(element));
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -173,7 +174,6 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
             return parseStringArray(element);
         } catch (UserNotFoundException e) {
-            //TODO Should throw a UserNotFoundException
             throw new UnsupportedOperationException("User not found", e);
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
@@ -188,13 +188,12 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
             String path = URL_PREFIX;
 
-            Document groupDoc =  DocumentHelper.createDocument();
-            Element rootE = null;
+            Document groupDoc = DocumentHelper.createDocument();
+            Element rootE;
             if (administrator) {
                 rootE = groupDoc.addElement("addAdministratorToGroup");
                 path += "groupAdmins";
-            }
-            else {
+            } else {
                 rootE = groupDoc.addElement("addMemberToGroup");
                 path += "groupMembers";
             }
@@ -207,10 +206,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
 
         } catch (GroupNotFoundException e) {
-            //TODO Should throw a GroupNotFoundException
             throw new UnsupportedOperationException("Group not found", e);
         } catch (UserNotFoundException e) {
-            //TODO Should throw a UserNotFoundException
             throw new UnsupportedOperationException("User not found", e);
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
@@ -225,8 +222,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
     public void deleteMember(String groupName, JID user) throws UnsupportedOperationException {
 
-        long userID = -1;
-        long groupID = -1;
+        long userID;
+        long groupID;
         try {
             userID = manager.getUserID(user);
             groupID = manager.getGroupID(groupName);
@@ -330,9 +327,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
     private Element getGroupByName(String name) throws GroupNotFoundException {
         try {
             String path = URL_PREFIX + "groups/" + name;
-            Element element = manager.executeRequest(GET, path);
 
-            return element;
+            return manager.executeRequest(GET, path);
         } catch (GroupNotFoundException gnfe) {
             // It is a supported exception, throw it again
             throw gnfe;

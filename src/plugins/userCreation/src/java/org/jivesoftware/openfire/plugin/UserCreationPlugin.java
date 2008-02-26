@@ -208,7 +208,7 @@ public class UserCreationPlugin implements Plugin {
         for (int i = from; i < from + total; i++) {
             try {
                 String username = userPrefix + i;
-                userManager.createUser(username, username, username, null);
+                userManager.createUser(username, username, username, username + "@" + username);
                 created++;
             } catch (UserAlreadyExistsException e) {
                 // Ignore

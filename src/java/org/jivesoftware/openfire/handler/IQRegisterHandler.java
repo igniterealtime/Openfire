@@ -408,6 +408,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.not_acceptable);
+                Log.warn(e);
             }
             catch (UnsupportedOperationException e) {
                 // The User provider is read-only so this operation is not allowed

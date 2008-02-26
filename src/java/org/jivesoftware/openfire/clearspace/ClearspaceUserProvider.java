@@ -48,7 +48,7 @@ public class ClearspaceUserProvider implements UserProvider {
             username = username.substring(0, username.lastIndexOf("@"));
         }
 
-            // Translate the response
+        // Translate the response
         return translate(getUserByUsername(username));
     }
 
@@ -63,7 +63,7 @@ public class ClearspaceUserProvider implements UserProvider {
             String path = USER_URL_PREFIX + "users/";
 
             // Creates the XML with the data
-            Document groupDoc =  DocumentHelper.createDocument();
+            Document groupDoc = DocumentHelper.createDocument();
             Element rootE = groupDoc.addElement("createUserWithUser");
             Element userE = rootE.addElement("user");
 
@@ -89,7 +89,7 @@ public class ClearspaceUserProvider implements UserProvider {
             Element enabledE = userE.addElement("enabled");
             enabledE.addText("true");
 
-            
+
             Element user = manager.executeRequest(POST, path, groupDoc.asXML());
 
             return translate(user);
@@ -112,7 +112,7 @@ public class ClearspaceUserProvider implements UserProvider {
             manager.executeRequest(DELETE, path);
 
         } catch (UserNotFoundException gnfe) {
-            // it is ok, the user doesn't exist "anymore"
+            // it is OK, the user doesn't exist "anymore"
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -153,11 +153,10 @@ public class ClearspaceUserProvider implements UserProvider {
         Collection<String> usernames = new ArrayList<String>();
 
         // Filters the user
-        //TODO they aren't in alphabetical order.
         for (int i = startIndex; (i < startIndex + numResults) && (i < usernamesAll.length); i++) {
-              usernames.add(usernamesAll[i]);
+            usernames.add(usernamesAll[i]);
         }
-        
+
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
@@ -167,82 +166,97 @@ public class ClearspaceUserProvider implements UserProvider {
             throw new UnsupportedOperationException();
         }
 
-        try {
-            Element user = getUserByUsername(username);
-            Element modifiedUser = modifyUser(user.element("return"), "name", name);
+        // Creates the params
+        Element userUpdateParams = getUserUpdateParams(username);
 
-            String path = USER_URL_PREFIX + "users";
-            manager.executeRequest(PUT, path, modifiedUser.asXML());
+        // Modifies the attribute of the user
+        String[] path = new String[]{"user", "name"};
+        WSUtils.modifyElementText(userUpdateParams, path, name);
 
-        } catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User with name " + username + " not found.");
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
+        // Updates the user
+        updateUser(userUpdateParams);
     }
 
     public void setEmail(String username, String email) throws UserNotFoundException {
-        try {
-            Element user = getUserByUsername(username);
-            Element modifiedUser = modifyUser(user.element("return"), "email", email);
-
-            String path = USER_URL_PREFIX + "users";
-            manager.executeRequest(PUT, path, modifiedUser.asXML());
-
-        } catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User with name " + username + " not found.");
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
         }
+
+        // Creates the params
+        Element userUpdateParams = getUserUpdateParams(username);
+
+        // Modifies the attribute of the user
+        String[] path = new String[]{"user", "email"};
+        WSUtils.modifyElementText(userUpdateParams, path, email);
+
+        // Updates the user
+        updateUser(userUpdateParams);
     }
 
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
-        try {
-            Element user = getUserByUsername(username);
-            Element modifiedUser = modifyUser(user.element("return"), "creationDate", WSUtils.formatDate(creationDate));
-
-            String path = USER_URL_PREFIX + "users";
-            manager.executeRequest(PUT, path, modifiedUser.asXML());
-
-        } catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User with name " + username + " not found.");
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
         }
+
+        // Creates the params
+        Element userUpdateParams = getUserUpdateParams(username);
+
+        // Modifies the attribute of the user
+        String[] path = new String[]{"user", "creationDate"};
+        String newValue = WSUtils.formatDate(creationDate);
+        WSUtils.modifyElementText(userUpdateParams, path, newValue);
+
+        // Updates the user
+        updateUser(userUpdateParams);
     }
 
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
-        try {
-            Element user = getUserByUsername(username);
-            Element modifiedUser = modifyUser(user.element("return"), "modificationDate", WSUtils.formatDate(modificationDate));
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
 
+        // Creates the params
+        Element userUpdateParams = getUserUpdateParams(username);
+
+        // Modifies the attribute of the user
+        String[] path = new String[]{"user", "modificationDate"};
+        String newValue = WSUtils.formatDate(modificationDate);
+        WSUtils.modifyElementText(userUpdateParams, path, newValue);
+
+        // Updates the user
+        updateUser(userUpdateParams);
+    }
+
+    protected Element getUserUpdateParams(String username) throws UserNotFoundException {
+        // Creates the user update params element
+        Element userUpdateParams = DocumentHelper.createDocument().addElement("updateUser");
+        Element newUser = userUpdateParams.addElement("user");
+
+        // Gets the current user information
+        Element currentUser = getUserByUsername(username).element("return");
+
+
+        List<Element> userAttributes = currentUser.elements();
+        for (Element userAttribute : userAttributes) {
+            newUser.addElement(userAttribute.getName()).setText(userAttribute.getText());
+        }
+        return userUpdateParams;
+    }
+
+    protected void updateUser(Element userUpdateParams) throws UserNotFoundException {
+        try {
             String path = USER_URL_PREFIX + "users";
-            manager.executeRequest(PUT, path, modifiedUser.asXML());
+            manager.executeRequest(PUT, path, userUpdateParams.asXML());
 
         } catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User with name " + username + " not found.");
+            throw new UserNotFoundException("User not found.");
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
         }
-    }
-
-    private Element modifyUser(Element user, String attributeName, String newValue) {
-        Document groupDoc =  DocumentHelper.createDocument();
-        Element rootE = groupDoc.addElement("updateUser");
-        Element newUser = rootE.addElement("user");
-        List<Element> userAttributes = user.elements();
-        for (Element userAttribute : userAttributes) {
-            if (userAttribute.getName().equals(attributeName)) {
-                newUser.addElement(userAttribute.getName()).setText(newValue);
-            } else {
-                newUser.addElement(userAttribute.getName()).setText(userAttribute.getText());
-            }
-        }
-        return rootE;
     }
 
     public Set<String> getSearchFields() throws UnsupportedOperationException {
@@ -251,7 +265,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
     public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
         // Creates the XML with the data
-        Document groupDoc =  DocumentHelper.createDocument();
+        Document groupDoc = DocumentHelper.createDocument();
         Element rootE = groupDoc.addElement("searchProfile");
         Element queryE = rootE.addElement("WSProfileSearchQuery");
         Element keywords = queryE.addElement("keywords");
@@ -269,8 +283,7 @@ public class ClearspaceUserProvider implements UserProvider {
             List<String> usernames = new ArrayList<String>();
 
             String path = SEARCH_URL_PREFIX + "searchProfile";
-            //TODO they aren't in alphabetical order.
-            //TODO get only the username field
+            //TODO create a service on CS to get only the username field
             Element element = manager.executeRequest(GET, path);
 
             List<Node> userNodes = (List<Node>) element.selectNodes("return");
@@ -288,7 +301,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
         // Creates the XML with the data
-        Document groupDoc =  DocumentHelper.createDocument();
+        Document groupDoc = DocumentHelper.createDocument();
         Element rootE = groupDoc.addElement("searchBounded");
         Element queryE = rootE.addElement("WSProfileSearchQuery");
         Element keywords = queryE.addElement("keywords");
@@ -306,10 +319,8 @@ public class ClearspaceUserProvider implements UserProvider {
             List<String> usernames = new ArrayList<String>();
 
             String path = SEARCH_URL_PREFIX + "searchProfile/" + startIndex + "/" + numResults;
-            //TODO they aren't in alphabetical order.
-            //TODO get only the username field
             Element element = manager.executeRequest(GET, path);
-
+            //TODO create a service on CS to get only the username field
             List<Node> userNodes = (List<Node>) element.selectNodes("return");
             for (Node userNode : userNodes) {
                 String username = userNode.selectSingleNode("username").getText();
@@ -327,7 +338,7 @@ public class ClearspaceUserProvider implements UserProvider {
         if (readOnly == null) {
             loadReadOnly();
         }
-        // If it is null returns the most restrictive anwser.
+        // If it is null returns the most restrictive answer.
         return (readOnly == null ? false : readOnly);
     }
 
@@ -346,7 +357,7 @@ public class ClearspaceUserProvider implements UserProvider {
             Element element = manager.executeRequest(GET, path);
             readOnly = Boolean.valueOf(getReturn(element));
         } catch (Exception e) {
-            // if there is a problem, keep it null, maybe in the next call succes.
+            // if there is a problem, keep it null, maybe in the next call success.
         }
     }
 
@@ -359,7 +370,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
         Node userNode = responseNode.selectSingleNode("return");
         Node tmpNode;
-        
+
         // Gets the username
         username = userNode.selectSingleNode("username").getText();
 
@@ -394,9 +405,7 @@ public class ClearspaceUserProvider implements UserProvider {
         }
 
         // Creates the user
-        User user = new User(username, name, email, creationDate, modificationDate);
-        //TODO add other attributes, like user properties
-        return user;
+        return new User(username, name, email, creationDate, modificationDate);
     }
 
     private Element getUserByUsername(String username) throws UserNotFoundException {
@@ -416,6 +425,4 @@ public class ClearspaceUserProvider implements UserProvider {
             throw new UserNotFoundException("Error loading the user", e);
         }
     }
-
-
 }

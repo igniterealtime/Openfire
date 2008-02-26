@@ -12,524 +12,504 @@ package org.jivesoftware.openfire.clearspace;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.Node;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.*;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
+import static org.jivesoftware.openfire.clearspace.ClearspaceVCardTranslator.Action.DELETE;
+import static org.jivesoftware.openfire.clearspace.ClearspaceVCardTranslator.Action.NO_ACTION;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardProvider;
 import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
 
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
- * @author Daniel Henninger
+ * The ClearspaceLockOutProvider uses the UserService web service inside of Clearspace
+ * to retrieve, edit and delete user information from Clearspace.  With this information the provider
+ * builds user's VCard.
+ *
+ * @author Gabriel Guardincerri
  */
 public class ClearspaceVCardProvider implements VCardProvider {
 
-    private static final int CS_FIELD_ID_TITLE = 1;
-    private static final int CS_FIELD_ID_DEPARTMENT = 2;
-    private static final int CS_FIELD_ID_TIME_ZONE = 9;
-    private static final int CS_FIELD_ID_WORK_ADDRESS = 11;
-    private static final int CS_FIELD_ID_HOME_ADDRESS = 3;
-    private static final int CS_FIELD_ID_ALTERNATE_EMAIL = 10;
-    private static final int CS_FIELD_ID_URL = 5;
 
     protected static final String PROFILE_URL_PREFIX = "profileService/";
+    protected static final String PROFILE_FIELDS_URL_PREFIX = "profileFieldService/";
     protected static final String AVATAR_URL_PREFIX = "avatarService/";
 
     private ClearspaceManager manager;
     private Boolean avatarReadOnly;
-    private Boolean readOnly;
+    private boolean fieldsIDLoaded;
 
     public ClearspaceVCardProvider() {
         this.manager = ClearspaceManager.getInstance();
-        loadReadOnly();
+
+        // Tries to load the avatar read only information
+        loadAvatarReadOnly();
+
+        // Tries to load the default profile fields
+        loadDefaultProfileFields();
     }
 
+    /**
+     * Loads the VCard with information from CS. It uses information from the user, the user profile and the avatar.
+     * With this 3 sources of informations it builds the VCard.
+     *
+     * @param username username of user to load VCard of
+     * @return the user's VCard
+     */
     public Element loadVCard(String username) {
+        // if the fields id are not loaded
+        if (!fieldsIDLoaded) {
+            // try to load them
+            loadDefaultProfileFields();
+            // if still not loaded then the operation could no be perform
+            if (!fieldsIDLoaded) {
+                // It is not supported exception, wrap it into an UnsupportedOperationException
+                throw new UnsupportedOperationException("Error loading the profiles IDs");
+            }
+        }
+
         try {
 
             // Gets the user
             User user = UserManager.getInstance().getUser(username);
 
-            // TODO should use the the user insted of requesting again
             long userID = manager.getUserID(username);
 
-            // Requests the user profile
-            String path = PROFILE_URL_PREFIX + "profiles/" + userID;
-            Element profile = manager.executeRequest(GET, path);
+            // Gets the profiles information
+            Element profiles = getProfiles(userID);
 
+            // Gets the avatar information
             Element avatar = getAvatar(userID);
 
             // Translate the response
-            return translate(profile, user, avatar);
+            return ClearspaceVCardTranslator.getInstance().translateClearspaceInfo(profiles, user, avatar);
 
+        } catch (UnsupportedOperationException e) {
+            throw e;
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Error loading the user", e);
+            throw new UnsupportedOperationException("Error loading the vCard", e);
         }
     }
 
-    private Element getAvatar(long userID) throws Exception {
-        // Requests the user active avatar
-        String path = AVATAR_URL_PREFIX + "activeAvatar/" + userID;
-        Element avatar = manager.executeRequest(GET, path);
-        return avatar;
-    }
-
+    /**
+     * Creates the user's VCard. CS always has some information of users. So creating it is actually updating.
+     * Throws an UnsupportedOperationException if Clearspace can't save some changes. Returns the VCard after the change.
+     *
+     * @param username     the username
+     * @param vCardElement the vCard to save.
+     * @return vCard as it is after the provider has a chance to adjust it.
+     * @throws AlreadyExistsException        it's never throw by this implementation
+     * @throws UnsupportedOperationException if the provider does not support the
+     *                                       operation.
+     */
     public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException {
         return saveVCard(username, vCardElement);
     }
 
+    /**
+     * Updates the user vcard in Clearspace. Throws an UnsupportedOperationException if Clearspace can't
+     * save some changes. Returns the VCard after the change.
+     *
+     * @param username     the username.
+     * @param vCardElement the vCard to save.
+     * @return vCard as it is after the provider has a chance to adjust it.
+     * @throws NotFoundException             if the vCard to update does not exist.
+     * @throws UnsupportedOperationException if the provider does not support the
+     *                                       operation.
+     */
     public Element updateVCard(String username, Element vCardElement) throws NotFoundException {
         return saveVCard(username, vCardElement);
     }
 
-    private Element saveVCard(String username, Element vCardElement) {
-        Log.debug("Saving VCARD: "+vCardElement.asXML());
+    /**
+     * Always return false since Clearspace always support some changes.
+     *
+     * @return true
+     */
+    public boolean isReadOnly() {
+        // Return always false, since some changes are always allowed
+        return false;
+    }
 
-        Document profilesDoc =  DocumentHelper.createDocument();
-        Element rootE = profilesDoc.addElement("setProfile");
+    /**
+     * Returns true the user can modify the Avatar of Clearspace.
+     *
+     * @return if the Avatar of Clearspace can be modified.
+     */
+    private boolean isAvatarReadOnly() {
+        if (avatarReadOnly == null) {
+            loadAvatarReadOnly();
+        }
+        return avatarReadOnly;
+    }
+
+    /**
+     * Saves the vCard of the user. First check if the change can be made,
+     * if not throws an UnsupportedOperationException.
+     * The VCard information is divided into 3 parts. First the preferred
+     * email and the user full name are stored into Clearspace user information.
+     * Second the avatar is stored into Clearspace avatar information. If the avatar was
+     * new or it was modified, a new avatar is created in Clearspace. If the avatar was
+     * deleted, in Clearspace the user won't have an active avatar.
+     *
+     * @param username     the username of the user to update the avatar info to
+     * @param vCardElement the vCard with the new information
+     * @return the VCard with the updated information
+     * @throws UnsupportedOperationException if the provider does not support some changes.
+     */
+    private Element saveVCard(String username, Element vCardElement) {
+        if (Log.isDebugEnabled()) {
+            Log.debug("Saving VCARD: " + vCardElement.asXML());
+        }
+
+        if (!fieldsIDLoaded) {
+            loadDefaultProfileFields();
+            if (!fieldsIDLoaded) {
+                // It is not supported exception, wrap it into an UnsupportedOperationException
+                throw new UnsupportedOperationException("Error loading the profiles IDs");
+            }
+        }
 
         try {
+
             long userID = manager.getUserID(username);
+            ClearspaceUserProvider userProvider = (ClearspaceUserProvider) UserManager.getUserProvider();
 
-            // Add the userID param
-            rootE.addElement("userID").setText(String.valueOf(userID));
+            // Gets the user params that can be used to update it
+            Element userUpdateParams = userProvider.getUserUpdateParams(username);
+            // Gets the element that contains the user information
+            Element userElement = userUpdateParams.element("user");
 
-            // Add all the profiles elements
-            Element profiles = rootE.addElement("profiles");
+            // Gets the profiles params that can be used to update them
+            Element profilesUpdateParams = getProfilesUpdateParams(userID);
+            //Element profilesElement = profilesUpdateParams.element("profiles");
 
-            // Add the Title
-            addNotEmptyProfile(vCardElement, "TITLE", CS_FIELD_ID_TITLE, profiles);
+            // Get the avatar params that can be used to create it. It doesn't have an avatar sub element.
+            Element avatarCreateParams = getAvatarCreateParams(userID);
 
-            // Add the Department
-            Element tmpElement = vCardElement.element("ORG");
-            if (tmpElement != null) {
-                addNotEmptyProfile(tmpElement, "ORGUNIT", CS_FIELD_ID_DEPARTMENT, profiles);
+            // Modifies the profile, user and avatar elements according to the VCard information.
+            ClearspaceVCardTranslator.Action[] actions;
+            actions = ClearspaceVCardTranslator.getInstance().translateVCard(vCardElement, profilesUpdateParams, userElement, avatarCreateParams);
+
+            // Throws an exception if the changes implies to modify something that is read only
+            if ((actions[1] != NO_ACTION && userProvider.isReadOnly()) || (actions[2] != NO_ACTION && isAvatarReadOnly())) {
+                throw new UnsupportedOperationException("ClearspaceVCardProvider: Invalid vcard changes.");
             }
 
-            // Add the home and work address
-            List<Element> addressElements = (List<Element>) vCardElement.elements("ADR");
-            if (addressElements != null) {
-                for (Element address : addressElements) {
-                    if (address.element("WORK") != null) {
-                        addProfile(CS_FIELD_ID_WORK_ADDRESS, marshallAddress(address), profiles);
-                    } else if (address.element("HOME") != null) {
-                        addProfile(CS_FIELD_ID_HOME_ADDRESS, marshallAddress(address), profiles);
-                    }
+            // Updates the profiles
+            if (actions[0] != NO_ACTION) {
+                updateProfiles(profilesUpdateParams);
+            }
+
+            // Updates the user
+            if (actions[1] != NO_ACTION) {
+                userProvider.updateUser(userUpdateParams);
+            }
+
+            // Updates the avatar
+            if (actions[2] != NO_ACTION) {
+                // Set no active avatar to delete
+                if (actions[2] == DELETE) {
+                    setActiveAvatar(userID, -1);
+                } else {
+                    // else it was created or updated, on both cases it needs to be created and assigned as the active avatar.
+                    long avatarID = createAvatar(avatarCreateParams);
+                    setActiveAvatar(userID, avatarID);
                 }
             }
-
-            // Add the URL
-            addNotEmptyProfile(vCardElement, "URL", CS_FIELD_ID_URL, profiles);
-
-            // Add the prefered and alternative email address
-            List<Element> emailsElement = (List<Element>) vCardElement.elements("EMAIL");
-            if (emailsElement != null) {
-                for (Element email : emailsElement) {
-                    if (email.element("PREF") == null) {
-                        addNotEmptyProfile(email, "USERID", CS_FIELD_ID_ALTERNATE_EMAIL, profiles);
-                    } else {
-                        String emailAddress = email.elementTextTrim("USERID");
-                        if (emailAddress != null && !"".equals(emailAddress)) {
-                            // The prefered email is stored in the user
-                            UserManager.getUserProvider().setEmail(username, emailAddress);
-                        }
-                    }
-                }
-            }
-
-            // Add the Full name to the user
-            String fullName = vCardElement.elementTextTrim("FN");
-            if (fullName != null && !"".equals(fullName)) {
-                UserManager.getUserProvider().setName(username, fullName);
-            }
-
-
-            try {
-
-                String path = PROFILE_URL_PREFIX + "profiles";
-
-                Element group = manager.executeRequest(POST, path, rootE.asXML());
-            } catch (Exception e) {
-                // It is not supported exception, wrap it into an UnsupportedOperationException
-                throw new UnsupportedOperationException("Unexpected error", e);
-            }
-
-
-            try {
-
-                // TODO save some avatars in a cache to avoid getting them all the time
-                // Gets the user's current avatar
-                Element currAvatar = getAvatar(userID);
-                String[] currAvatarData = getAvatarContentTypeAndImage(currAvatar);
-
-                Element photoElement = vCardElement.element("PHOTO");
-                if (photoElement != null) {
-                    String contentType = photoElement.elementTextTrim("TYPE");
-                    String data = photoElement.elementTextTrim("BINVAL");
-
-                    if (contentType == null && currAvatarData[0] != null) {
-                        // new avatar
-                        long avatarID = createAvatar(contentType, data, userID, username);
-                        setActiveAvatar(userID, avatarID);
-                    } else if (contentType != null && currAvatarData[0] == null) {
-                        // delete
-                        setActiveAvatar(userID, -1);
-                    } else if ((contentType != null && !contentType.equals(currAvatarData[0])) ||
-                            (data != null && !data.equals(currAvatarData[1]))) {
-                        // modify
-                        long avatarID = createAvatar(contentType, data, userID, username);
-                        setActiveAvatar(userID, avatarID);
-                    }
-                }
-
-            } catch (Exception e) {
-                // It is not supported exception, wrap it into an UnsupportedOperationException
-                throw new UnsupportedOperationException("Error loading the user", e);
-            }
-
-
-        } catch (UserNotFoundException e) {
-            throw new UnsupportedOperationException("User not found", e);
+        } catch (UnsupportedOperationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Error saving the VCard", e);
         }
 
         return loadVCard(username);
     }
 
-    private void setActiveAvatar(long userID, long avatarID) throws UserNotFoundException {
-        try {
-            Document profilesDoc =  DocumentHelper.createDocument();
-            Element rootE = profilesDoc.addElement("setActiveAvatar");
-            rootE.addElement("userID").setText(String.valueOf(userID));
-            rootE.addElement("avatarID").setText(String.valueOf(avatarID));
-
-            // Requests the user active avatar
-            String path = AVATAR_URL_PREFIX + "activeAvatar/" + userID;
-            
-            manager.executeRequest(POST, path, rootE.asXML());
-
-        } catch (UserNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Error creating the avatar", e);
-        }
-    }
-
-    private long createAvatar(String contentType, String data, long userID, String username) throws UserNotFoundException {
-        try {
-            Document profilesDoc =  DocumentHelper.createDocument();
-            Element rootE = profilesDoc.addElement("createAvatar");
-            rootE.addElement("ownerID").setText(String.valueOf(userID));
-            rootE.addElement("name").setText(String.valueOf(username));
-            rootE.addElement("contentType").setText(String.valueOf(contentType));
-            rootE.addElement("data").setText(String.valueOf(data));
-
-            // Requests the user active avatar
-            String path = AVATAR_URL_PREFIX + "createAvatar/" + userID;
-
-            Element avatar = manager.executeRequest(POST, path, rootE.asXML());
-
-            long id = Long.valueOf(avatar.element("return").element("WSAvatar").elementTextTrim("id"));
-            return id;
-        } catch (UserNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Error creating the avatar", e);
-        }
-    }
-
-    private void addNotEmptyProfile(Element elements, String elementName, int fieldID, Element profiles) {
-        String value = elements.elementTextTrim(elementName);
-        if (value != null && !"".equals(value)) {
-            addProfile(fieldID, value, profiles);
-        }
-    }
-                         
-    private void addProfile(int fieldID, String value, Element profiles) {
-        Element profile = profiles.addElement("WSUserProfile");
-        profile.addElement("fieldID").setText(String.valueOf(fieldID));
-        profile.addElement("value").setText(value);
-    }
-    
-    private String marshallAddress(Node address) {
-
-        StringBuilder sb = new StringBuilder();
-
-        addField(address, "STREET", "street1", sb);
-
-        addField(address, "EXTADD", "street2", sb);
-
-        addField(address, "LOCALITY", "city", sb);
-
-        addField(address, "REGION", "state", sb);
-
-        addField(address, "CTRY", "country", sb);
-
-        addField(address, "PCODE", "zip", sb);
-
-        Node tmpNode = address.selectSingleNode("HOME");
-        if (tmpNode != null) {
-            sb.append("type:HOME");
-        }
-
-        tmpNode = address.selectSingleNode("WORK");
-        if (tmpNode != null) {
-            sb.append("type:WORK");
-        }
-
-        return sb.toString();
-    }
-
-    private void addField(Node node, String nodeName, String fieldName, StringBuilder sb) {
-        Node tmpNode = node.selectSingleNode(nodeName);
-        if (tmpNode != null) {
-            sb.append(fieldName).append(":").append(tmpNode.getText());
-        }
-    }
-
-
+    /**
+     * Deletes the profiles and avatar information of the user.
+     *
+     * @param username the username.
+     */
     public void deleteVCard(String username) {
-        if (isReadOnly()) {
+        ClearspaceUserProvider userProvider = (ClearspaceUserProvider) UserManager.getUserProvider();
+        if (userProvider.isReadOnly() || isAvatarReadOnly()) {
             // Reject the operation since the provider is read-only
             throw new UnsupportedOperationException();
         }
 
-        long userID = -1;
+        long userID;
         try {
             userID = manager.getUserID(username);
         } catch (UserNotFoundException gnfe) {
-            // it is ok, the user doesn't exist "anymore"
+            // it is OK, the user doesn't exist "anymore"
             return;
         }
 
-        if (!isAvatarReadOnly()) {
-            try {
-                String path = AVATAR_URL_PREFIX + "avatar/" + userID;
-                manager.executeRequest(DELETE, path);
-            } catch (Exception e) {
-                // It is not supported exception, wrap it into an UnsupportedOperationException
-                throw new UnsupportedOperationException("Unexpected error", e);
-            }
-        }
+        deleteAvatar(userID);
 
+        deleteProfiles(userID);
+    }
+
+    /**
+     * Deletes the profiles of the user.
+     *
+     * @param userID the user id.
+     */
+    private void deleteProfiles(long userID) {
         try {
             String path = PROFILE_URL_PREFIX + "profiles/" + userID;
-            manager.executeRequest(DELETE, path);
+            manager.executeRequest(ClearspaceManager.HttpType.DELETE, path);
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
         }
     }
 
-    public boolean isReadOnly() {/*
-        if (readOnly == null) {
-            loadReadOnly();
+    /**
+     * Deletes the avatar of the user.
+     *
+     * @param userID the user id.
+     */
+    private void deleteAvatar(long userID) {
+        try {
+            String path = AVATAR_URL_PREFIX + "avatar/" + userID;
+            manager.executeRequest(ClearspaceManager.HttpType.DELETE, path);
+        } catch (Exception e) {
+            // It is not supported exception, wrap it into an UnsupportedOperationException
+            throw new UnsupportedOperationException("Unexpected error", e);
         }
-        return readOnly == null ? false : readOnly;*/
-        return true;
     }
 
-    private void loadReadOnly() {
-        boolean userReadOnly = UserManager.getUserProvider().isReadOnly();
+    /**
+     * Makes the request to the webservice of Clearspace to update the profiles information.
+     *
+     * @param profilesUpdateParams the profiles params to use with the request.
+     */
+    private void updateProfiles(Element profilesUpdateParams) {
+        // Try to save the profile changes
+        try {
+            String path = PROFILE_URL_PREFIX + "profiles";
+            manager.executeRequest(POST, path, profilesUpdateParams.asXML());
+        } catch (Exception e) {
+            // It is not supported exception, wrap it into an UnsupportedOperationException
+            throw new UnsupportedOperationException("Unexpected error", e);
+        }
+    }
 
+    /**
+     * Set the active avatar of the user.
+     *
+     * @param userID   the userID
+     * @param avatarID the avatarID
+     */
+    private void setActiveAvatar(long userID, long avatarID) {
+        try {
+            Document profilesDoc = DocumentHelper.createDocument();
+            Element rootE = profilesDoc.addElement("setActiveAvatar");
+            rootE.addElement("userID").setText(String.valueOf(userID));
+            rootE.addElement("avatarID").setText(String.valueOf(avatarID));
+
+            // Requests the user active avatar
+            String path = AVATAR_URL_PREFIX + "activeAvatar/" + userID;
+
+            manager.executeRequest(POST, path, rootE.asXML());
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Error setting the user's " + userID + " active avatar " + avatarID, e);
+        }
+    }
+
+    /**
+     * Creates the avatar.
+     *
+     * @param avatarCreateParams the avatar information
+     * @return the new avatarID
+     */
+    private long createAvatar(Element avatarCreateParams) {
+        try {
+
+            // Requests the user active avatar
+            String path = AVATAR_URL_PREFIX + "createAvatar";
+            Element avatar = manager.executeRequest(POST, path, avatarCreateParams.asXML());
+
+            return Long.valueOf(avatar.element("return").element("WSAvatar").elementTextTrim("id"));
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Error creating the avatar", e);
+        }
+    }
+
+    /**
+     * Returns the profiles of the user.
+     *
+     * @param userID the user id.
+     * @return the profiles.
+     */
+    private Element getProfiles(long userID) {
+        try {
+            // Requests the user profile
+            String path = PROFILE_URL_PREFIX + "profiles/" + userID;
+            return manager.executeRequest(GET, path);
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Error getting the profiles of user: " + userID, e);
+        }
+    }
+
+    /**
+     * Return the avatar of the user.
+     *
+     * @param userID the user id.
+     * @return the avatar.
+     */
+    private Element getAvatar(long userID) {
+        try {
+            // Requests the user active avatar
+            String path = AVATAR_URL_PREFIX + "activeAvatar/" + userID;
+            return manager.executeRequest(GET, path);
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Error getting the avatar of user: " + userID, e);
+        }
+    }
+
+    /**
+     * Tries to load the avatar read only info.
+     */
+    private void loadAvatarReadOnly() {
         try {
             // See if the is read only
             String path = AVATAR_URL_PREFIX + "userAvatarsEnabled";
             Element element = manager.executeRequest(GET, path);
             avatarReadOnly = !Boolean.valueOf(getReturn(element));
         } catch (Exception e) {
-            // if there is a problem, keep it null, maybe in the next call succes.
-            return;
+            // if there is a problem, keep it null, maybe next call success.
+            Log.warn("Error loading the avatar read only information", e);
+        }
+    }
+
+    /**
+     * Tries to load the default profiles fields info.
+     */
+    private void loadDefaultProfileFields() {
+        try {
+            String path = PROFILE_FIELDS_URL_PREFIX + "fields";
+            Element defaultFields = manager.executeRequest(GET, path);
+
+            ClearspaceVCardTranslator.getInstance().initClearspaceFieldsId(defaultFields);
+            fieldsIDLoaded = true;
+        } catch (Exception e) {
+            // if there is a problem, keep it null, maybe next call success.
+            Log.warn("Error loading the default profiles fields", e);
         }
 
-        readOnly = userReadOnly || avatarReadOnly; 
     }
 
-    private Element translate(Element profile, User user, Element avatar) {
+    /**
+     * Returns an element that can be used as a parameter to create an avatar.
+     * This element has the user's avatar information.
+     *
+     * @param userID the id of user.
+     * @return the element with that can be used to create an Avatar.
+     * @throws UserNotFoundException if the userID is invalid.
+     * @throws Exception             if there is problem doing the request.
+     */
+    private Element getAvatarCreateParams(long userID) throws Exception {
 
-        Document vCardDoc =  DocumentHelper.createDocument();
-        Element vCard = vCardDoc.addElement("vCard", "vcard-temp");
+        // Creates response element
+        Element avatarCreateParams = DocumentHelper.createDocument().addElement("createAvatar");
 
-        addUserInformation(user, vCard);
-        addProfileInformation(profile, vCard);
-        addAvatarInformation(avatar, vCard);
+        // Gets current avatar
+        Element avatarResponse = getAvatar(userID);
 
-        return vCard;
-    }
+        // Translates from the response to create params
+        Element avatar = avatarResponse.element("return");
+        if (avatar != null) {
+            // Sets the owner
+            avatarCreateParams.addElement("ownerID").setText(avatar.elementText("owner"));
 
-    private void addProfileInformation(Element profile, Element vCard) {
-        // Translate the profile XML
-
-        List<Node> fields = (List<Node>) profile.selectNodes("return");
-
-        /* Profile response sample
-        <ns1:getProfileResponse xmlns:ns1="http://jivesoftware.com/clearspace/webservices">
-            <return>
-                <fieldID>2</fieldID>
-                <value>RTC</value>
-            </return>
-            <return>
-                <fieldID>9</fieldID>
-                <value>-300</value>
-            </return>
-            <return>
-                <fieldID>11</fieldID>
-                <value>street1:San Martin,street2:1650,city:Cap Fed,state:Buenos Aires,country:Argentina,zip:1602,type:HOME</value>
-            </return>
-            <return>
-                <fieldID>1</fieldID>
-                <value>Mr.</value>
-            </return>
-            <return>
-                <fieldID>3</fieldID>
-                <value>street1:Alder 2345,city:Portland,state:Oregon,country:USA,zip:32423,type:WORK</value>
-            </return>
-            <return>
-                <fieldID>10</fieldID>
-                <values>gguardin@gmail.com|work</values>
-            </return>
-            <return>
-                <fieldID>5</fieldID>
-                <values>http://www.gguardin.com.ar</values>
-            </return>
-        </ns1:getProfileResponse>
-        */
-
-        for (Node field : fields) {
-            int fieldID = Integer.valueOf(field.selectSingleNode("fieldID").getText());
-            // The value name of the value field could be value or values
-            Node fieldNode = field.selectSingleNode("value");
-            if (fieldNode == null) {
-                fieldNode = field.selectSingleNode("values");
+            // Sets the attachment values
+            Element attachment = avatar.element("attachment");
+            if (attachment != null) {
+                avatarCreateParams.addElement("name").setText(attachment.elementText("name"));
+                avatarCreateParams.addElement("contentType").setText(attachment.elementText("contentType"));
+                avatarCreateParams.addElement("data").setText(attachment.elementText("data"));
             }
-            // if it is an empty field, continue with the next field
-            if (fieldNode == null) {
+        }
+
+        return avatarCreateParams;
+    }
+
+    /**
+     * Returns an element that can be used as a parameter to modify the user profiles.
+     * This element has the user's avatar information.
+     *
+     * @param userID the id of user.
+     * @return the element with that can be used to create an Avatar.
+     * @throws UserNotFoundException if the userID is invalid.
+     * @throws Exception             if there is problem doing the request.
+     */
+    private Element getProfilesUpdateParams(long userID) throws Exception {
+        Element params = DocumentHelper.createDocument().addElement("setProfile");
+
+        // Add the userID param
+        params.addElement("userID").setText(String.valueOf(userID));
+
+        // Gets current profiles to merge the information
+        Element currentProfile = getProfiles(userID);
+
+        // Adds the current profiles to the new profile
+        addProfiles(currentProfile, params);
+
+        return params;
+    }
+
+    /**
+     * Adds the profiles elements from one profile to the other one.
+     *
+     * @param currentProfile the profile with the information.
+     * @param newProfiles    the profile to copy the information to.
+     */
+    private void addProfiles(Element currentProfile, Element newProfiles) {
+
+        // Gets current fields
+        List<Element> fields = (List<Element>) currentProfile.elements("return");
+
+        // Iterate over current fields
+        for (Element field : fields) {
+
+            // Get the fieldID and values
+            String fieldID = field.elementText("fieldID");
+            // The value name of the value field could be value or values
+            Element value = field.element("value");
+            boolean multiValues = false;
+            if (value == null) {
+                value = field.element("values");
+                if (value != null) {
+                    multiValues = true;
+                }
+            }
+
+            // Don't add empty field. Field id 0 means no field.
+            if ("0".equals(fieldID)) {
                 continue;
             }
 
-            // get the field value
-            String fieldValue = fieldNode.getText();
-
-            switch (fieldID) {
-                case CS_FIELD_ID_TITLE:
-                    vCard.addElement("TITLE").setText(fieldValue);
-                    break;
-                case CS_FIELD_ID_DEPARTMENT:
-                    vCard.addElement("ORG").addElement("ORGUNIT").setText(fieldValue);
-                    break;
-                case CS_FIELD_ID_TIME_ZONE:
-                    //TODO check if the time zone is ISO
-                    vCard.addElement("TZ").setText(fieldValue);
-                    break;
-                case CS_FIELD_ID_WORK_ADDRESS:
-                    Element workAdr = vCard.addElement("ADR");
-                    workAdr.addElement("WORK");
-                    addAddress(fieldValue, workAdr);
-                    break;
-                case CS_FIELD_ID_HOME_ADDRESS:
-                    Element homeAdr = vCard.addElement("ADR");
-                    homeAdr.addElement("HOME");
-                    addAddress(fieldValue, homeAdr);
-                    break;
-                case CS_FIELD_ID_URL:
-                    vCard.addElement("URL").setText(fieldValue);
-                    break;
-                case CS_FIELD_ID_ALTERNATE_EMAIL:
-                    vCard.addElement("EMAIL").addElement("USERID").setText(fieldValue);
-                    break;
-            }
-        }
-    }
-
-    private void addUserInformation(User user, Element vCard) {
-        // The name could be null (if in Clearspace the name is not visible in Openfire it is null)
-        if (user.getName() != null && !"".equals(user.getName().trim())) {
-            vCard.addElement("FN").setText(user.getName());
-        }
-
-        // Email is mandatory, but may be invisible
-        if (user.getEmail() != null && !"".equals(user.getName().trim())) {
-            Element email = vCard.addElement("EMAIL");
-            email.addElement("PREF");
-            email.addElement("USERID").setText(user.getEmail());
-            // TODO emails == jabber id? jabber id is ok?
-            vCard.addElement("JABBERID").setText(user.getEmail());
-        }
-
-    }
-
-    private void addAvatarInformation(Element avatarResponse, Element vCard) {
-        String[] avatarData = getAvatarContentTypeAndImage(avatarResponse);
-
-        if (avatarData[0] != null && avatarData[1] != null) {
-            // Add the avatar to the vCard
-            Element photo = vCard.addElement("PHOTO");
-            photo.addElement("TYPE").setText(avatarData[0]);
-            photo.addElement("BINVAL").setText(avatarData[1]);
-        }
-    }
-
-    private String[] getAvatarContentTypeAndImage(Element avatarResponse) {
-        String[] result = new String[2];
-
-        Element avatar = avatarResponse.element("return");
-        if (avatar != null) {
-            Element attachment = avatar.element("attachment");
-            if (attachment != null) {
-                result[0] = attachment.element("contentType").getText();
-                result[1] = attachment.element("data").getText();
-            }
-        }
-        return result;
-    }
-
-    private void addAddress(String address, Element addressE) {
-        StringTokenizer strTokenize = new StringTokenizer(address, ",");
-        while(strTokenize.hasMoreTokens()) {
-            String token = strTokenize.nextToken();
-            int index = token.indexOf(":");
-            String field = token.substring(0, index);
-            String value = token.substring(index + 1);
-
-            if ("street1".equals(field)) {
-                addressE.addElement("STREET").setText(value);
-
-            } else if ("street2".equals(field)) {
-                addressE.addElement("EXTADD").setText(value);
-
-            } else if ("city".equals(field)) {
-                addressE.addElement("LOCALITY").setText(value);
-
-            } else if ("state".equals(field)) {
-                addressE.addElement("REGION").setText(value);
-
-            } else if ("country".equals(field)) {
-                addressE.addElement("CTRY").setText(value);
-
-            } else if ("zip".equals(field)) {
-                addressE.addElement("PCODE").setText(value);
-
-            } else if ("type".equals(field)) {
-                if ("HOME".equals(value)) {
-                    addressE.addElement("HOME");
-                } else if ("WORK".equals(value)) {
-                    addressE.addElement("WORK");
+            // Adds the profile to the new profiles element
+            Element newProfile = newProfiles.addElement("profiles");
+            newProfile.addElement("fieldID").setText(fieldID);
+            // adds the value if it is not empty
+            if (value != null) {
+                if (multiValues) {
+                    newProfile.addElement("values").setText(value.getText());
+                } else {
+                    newProfile.addElement("value").setText(value.getText());
                 }
             }
         }
-        
-    }
-
-    public boolean isAvatarReadOnly() {
-        return avatarReadOnly;
     }
 }

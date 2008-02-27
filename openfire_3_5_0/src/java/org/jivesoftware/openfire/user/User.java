@@ -47,15 +47,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class User implements Cacheable, Externalizable, Result {
 
     private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM jiveUserProp WHERE username=?";
+            "SELECT name, propValue FROM jiveUserProp WHERE username=?";
     private static final String LOAD_PROPERTY =
-        "SELECT propValue FROM jiveUserProp WHERE username=? AND name=?";
+            "SELECT propValue FROM jiveUserProp WHERE username=? AND name=?";
     private static final String DELETE_PROPERTY =
-        "DELETE FROM jiveUserProp WHERE username=? AND name=?";
+            "DELETE FROM jiveUserProp WHERE username=? AND name=?";
     private static final String UPDATE_PROPERTY =
-        "UPDATE jiveUserProp SET propValue=? WHERE name=? AND username=?";
+            "UPDATE jiveUserProp SET propValue=? WHERE name=? AND username=?";
     private static final String INSERT_PROPERTY =
-        "INSERT INTO jiveUserProp (username, name, propValue) VALUES (?, ?, ?)";
+            "INSERT INTO jiveUserProp (username, name, propValue) VALUES (?, ?, ?)";
+
+    // The name of the name visible property
+    private static final String NAME_VISIBLE_PROPERTY = "name.visible";
+    // The name of the email visible property
+    private static final String EMAIL_VISIBLE_PROPERTY = "email.visible";
 
     private String username;
     private String name;
@@ -63,13 +68,13 @@ public class User implements Cacheable, Externalizable, Result {
     private Date creationDate;
     private Date modificationDate;
 
-    private Map<String,String> properties = null;
+    private Map<String, String> properties = null;
 
     /**
      * Returns the value of the specified property for the given username. This method is
      * an optimization to avoid loading a user to get a specific property.
      *
-     * @param username the username of the user to get a specific property value.
+     * @param username     the username of the user to get a specific property value.
      * @param propertyName the name of the property to return its value.
      * @return the value of the specified property for the given username.
      */
@@ -92,10 +97,18 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) pstmt.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) con.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         return propertyValue;
     }
@@ -113,15 +126,14 @@ public class User implements Cacheable, Externalizable, Result {
      * Typically, User objects should not be constructed by end-users of the API.
      * Instead, user objects should be retrieved using {@link UserManager#getUser(String)}.
      *
-     * @param username the username.
-     * @param name the name.
-     * @param email the email address.
-     * @param creationDate the date the user was created.
+     * @param username         the username.
+     * @param name             the name.
+     * @param email            the email address.
+     * @param creationDate     the date the user was created.
      * @param modificationDate the date the user was last modified.
      */
     public User(String username, String name, String email, Date creationDate,
-            Date modificationDate)
-    {
+                Date modificationDate) {
         if (username == null) {
             throw new NullPointerException("Username cannot be null");
         }
@@ -132,7 +144,7 @@ public class User implements Cacheable, Externalizable, Result {
         this.name = name;
         if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
             throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address. User: "
-                                                + username + " Email: " + email);
+                    + username + " Email: " + email);
         }
         this.email = email;
         this.creationDate = creationDate;
@@ -162,7 +174,7 @@ public class User implements Cacheable, Externalizable, Result {
             AuthFactory.getAuthProvider().setPassword(username, password);
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "passwordModified");
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
@@ -194,7 +206,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.name = name;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -203,6 +215,24 @@ public class User implements Cacheable, Externalizable, Result {
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
         }
+    }
+
+    /**
+     * Returns true if name is visible to everyone or not.
+     *
+     * @return true if name is visible to everyone, false if not.
+     */
+    public boolean isNameVisible() {
+        return !getProperties().containsKey(NAME_VISIBLE_PROPERTY) || Boolean.valueOf(getProperties().get(NAME_VISIBLE_PROPERTY));
+    }
+
+    /**
+     * Sets if name is visible to everyone or not.
+     *
+     * @param visible true if name is visible, false if not.
+     */
+    public void setNameVisible(boolean visible) {
+        getProperties().put(NAME_VISIBLE_PROPERTY, String.valueOf(visible));
     }
 
     /**
@@ -224,11 +254,11 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         try {
-            String originalEmail= this.email;
+            String originalEmail = this.email;
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "emailModified");
             params.put("originalValue", originalEmail);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -237,6 +267,24 @@ public class User implements Cacheable, Externalizable, Result {
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
         }
+    }
+
+    /**
+     * Returns true if email is visible to everyone or not.
+     *
+     * @return true if email is visible to everyone, false if not.
+     */
+    public boolean isEmailVisible() {
+        return !getProperties().containsKey(EMAIL_VISIBLE_PROPERTY) || Boolean.valueOf(getProperties().get(EMAIL_VISIBLE_PROPERTY));
+    }
+
+    /**
+     * Sets if the email is visible to everyone or not.
+     *
+     * @param visible true if the email is visible, false if not.
+     */
+    public void setEmailVisible(boolean visible) {
+        getProperties().put(EMAIL_VISIBLE_PROPERTY, String.valueOf(visible));
     }
 
     public Date getCreationDate() {
@@ -254,7 +302,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.creationDate = creationDate;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "creationDateModified");
             params.put("originalValue", originalCreationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -280,7 +328,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.modificationDate = modificationDate;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalModificationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -298,7 +346,7 @@ public class User implements Cacheable, Externalizable, Result {
      *
      * @return the extended properties.
      */
-    public Map<String,String> getProperties() {
+    public Map<String, String> getProperties() {
         synchronized (this) {
             if (properties == null) {
                 properties = new ConcurrentHashMap<String, String>();
@@ -352,9 +400,8 @@ public class User implements Cacheable, Externalizable, Result {
             return true;
         }
         if (object != null && object instanceof User) {
-            return username.equals(((User)object).getUsername());
-        }
-        else {
+            return username.equals(((User) object).getUsername());
+        } else {
             return false;
         }
     }
@@ -365,22 +412,21 @@ public class User implements Cacheable, Externalizable, Result {
     private class PropertiesMap extends AbstractMap {
 
         public Object put(Object key, Object value) {
-            Map<String,Object> eventParams = new HashMap<String,Object>();
+            Map<String, Object> eventParams = new HashMap<String, Object>();
             Object answer;
             String keyString = (String) key;
             synchronized (keyString.intern()) {
                 if (properties.containsKey(keyString)) {
                     String originalValue = properties.get(keyString);
-                    answer = properties.put(keyString, (String)value);
-                    updateProperty(keyString, (String)value);
+                    answer = properties.put(keyString, (String) value);
+                    updateProperty(keyString, (String) value);
                     // Configure event.
                     eventParams.put("type", "propertyModified");
                     eventParams.put("propertyKey", key);
                     eventParams.put("originalValue", originalValue);
-                }
-                else {
-                    answer = properties.put(keyString, (String)value);
-                    insertProperty(keyString, (String)value);
+                } else {
+                    answer = properties.put(keyString, (String) value);
+                    insertProperty(keyString, (String) value);
                     // Configure event.
                     eventParams.put("type", "propertyAdded");
                     eventParams.put("propertyKey", key);
@@ -417,7 +463,7 @@ public class User implements Cacheable, Externalizable, Result {
                 }
 
                 public Object next() {
-                    current = (Map.Entry)iter.next();
+                    current = (Map.Entry) iter.next();
                     return current;
                 }
 
@@ -425,15 +471,15 @@ public class User implements Cacheable, Externalizable, Result {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
-                    String key = (String)current.getKey();
+                    String key = (String) current.getKey();
                     deleteProperty(key);
                     iter.remove();
                     // Fire event.
-                    Map<String,Object> params = new HashMap<String,Object>();
+                    Map<String, Object> params = new HashMap<String, Object>();
                     params.put("type", "propertyDeleted");
                     params.put("propertyKey", key);
                     UserEventDispatcher.dispatchEvent(User.this,
-                        UserEventDispatcher.EventType.user_modified, params);
+                            UserEventDispatcher.EventType.user_modified, params);
                 }
             };
         }
@@ -456,10 +502,18 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) pstmt.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) con.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
     }
 
@@ -478,10 +532,18 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) pstmt.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) con.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
     }
 
@@ -500,10 +562,18 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) pstmt.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) con.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
     }
 
@@ -521,10 +591,18 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            try {
+                if (pstmt != null) pstmt.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
+            try {
+                if (con != null) con.close();
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
     }
 
@@ -548,13 +626,12 @@ public class User implements Cacheable, Externalizable, Result {
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
         modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
     }
-    
+
     /*
-     * (non-Javadoc)
-     * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
-     */
-	public String getUID()
-	{
-		return username;
-	}    
+    * (non-Javadoc)
+    * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
+    */
+    public String getUID() {
+        return username;
+    }
 }

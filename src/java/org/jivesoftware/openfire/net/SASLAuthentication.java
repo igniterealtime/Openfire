@@ -552,7 +552,7 @@ public class SASLAuthentication {
 
     private static void authenticationSuccessful(LocalSession session, String username,
             byte[] successData) {
-        if (LockOutManager.getInstance().isAccountDisabled(username)) {
+        if (username != null && LockOutManager.getInstance().isAccountDisabled(username)) {
             // Interception!  This person is locked out, fail instead!
             LockOutManager.getInstance().recordFailedLogin(username);
             authenticationFailed(session);

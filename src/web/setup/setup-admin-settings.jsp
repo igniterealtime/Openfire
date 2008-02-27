@@ -157,7 +157,7 @@
             if (errors.isEmpty()) {
                 String currentList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
                 final List users = new ArrayList(StringUtils.stringToCollection(currentList));
-                users.add(admin);
+                users.add(admin.toLowerCase());
 
                 String userList = StringUtils.collectionToString(users);
                 JiveGlobals.setXMLProperty("admin.authorizedUsernames", userList);

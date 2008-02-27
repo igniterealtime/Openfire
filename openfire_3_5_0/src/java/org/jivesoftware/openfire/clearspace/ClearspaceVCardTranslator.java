@@ -27,7 +27,7 @@ class ClearspaceVCardTranslator {
 
     // Represents the type of action that was performed.
     enum Action {
-        MODIFY, CREATE, UPDATE, DELETE, NO_ACTION
+        MODIFY, CREATE, UPDATE, DELETE, NO_ACTION;
     }
 
     /**
@@ -122,7 +122,7 @@ class ClearspaceVCardTranslator {
      */
     enum VCardField {
         TITLE, ORG_ORGUNIT, ADR_WORK, ADR_HOME, EMAIL_USERID, EMAIL_PREF_USERID, FN,
-        PHOTO_TYPE, PHOTO_BINVAL, URL, TZ, PHONE_HOME, PHONE_WORK, FAX_WORK, MOBILE_WORK, PAGER_WORK
+        PHOTO_TYPE, PHOTO_BINVAL, URL, TZ, PHONE_HOME, PHONE_WORK, FAX_WORK, MOBILE_WORK, PAGER_WORK;
     }
 
     private static ClearspaceVCardTranslator instance = new ClearspaceVCardTranslator();

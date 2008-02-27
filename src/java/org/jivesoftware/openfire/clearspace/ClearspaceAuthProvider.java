@@ -51,7 +51,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
     }
 
     /**
-     * Authenticates the user using the webservicies of Clearspace.
+     * Authenticates the user using permissionService/authenticate servicie of Clearspace.
      * Throws an UnauthorizedException if the user or password are incorrect.
      *
      * @param username the username.

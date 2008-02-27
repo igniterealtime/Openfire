@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.DefaultCache;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
@@ -242,8 +243,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         sharedSecret = properties.get("clearspace.sharedSecret");
 
         // Creates the cache maps
-        userIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
-        groupIDCache = Collections.synchronizedMap(new HashMap<String, Long>());
+        userIDCache = new DefaultCache<String, Long>("clearspace.userid", 1000, JiveConstants.DAY);
+        groupIDCache = new DefaultCache<String, Long>("clearspace.groupid", 1000, JiveConstants.DAY);
 
 
         if (Log.isDebugEnabled()) {
@@ -420,12 +421,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             configClearspaceTask = new ConfigClearspaceTask();
             TaskEngine.getInstance().schedule(configClearspaceTask, 1, JiveConstants.MINUTE);
 
-        }/*
-        try {
-            configClearspace();
-        } catch (UnauthorizedException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }  */
+        }
     }
 
     private synchronized void configClearspace() throws UnauthorizedException {

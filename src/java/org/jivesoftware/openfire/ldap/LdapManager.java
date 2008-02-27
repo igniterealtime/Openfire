@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.ldap;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -28,6 +29,7 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.text.MessageFormat;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -146,6 +148,7 @@ public class LdapManager {
     private String searchFilter = null;
     private boolean subTreeSearch;
     private boolean encloseUserDN;
+    private boolean encloseGroupDN;
 
     private String groupNameField;
     private String groupMemberField;
@@ -154,6 +157,7 @@ public class LdapManager {
     private String groupSearchFilter = null;
 
     private Pattern userDNPattern;
+    private Pattern groupDNPattern;
 
     private Map<String, String> properties;
 
@@ -282,8 +286,15 @@ public class LdapManager {
         if (encloseUserStr != null) {
             encloseUserDN = Boolean.valueOf(encloseUserStr);    
         }
+        encloseGroupDN = true;
+        String encloseGroupStr = properties.get("ldap.encloseGroupDN");
+        if (encloseGroupStr != null) {
+            encloseGroupDN = Boolean.valueOf(encloseGroupStr);
+        }
         // Set the pattern to use to wrap userDNs values "
         userDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
+        // Set the pattern to use to wrap groupDNs values "
+        groupDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
         this.initialContextFactory = properties.get("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
@@ -684,6 +695,156 @@ public class LdapManager {
     }
 
     /**
+     * Finds a groups's dn using it's group name. Normally, this search will
+     * be performed using the field "cn", but this can be changed by setting
+     * the <tt>groupNameField</tt> property.<p>
+     *
+     * Searches are performed over all subtrees relative to the <tt>baseDN</tt>.
+     * If the search fails in the <tt>baseDN</tt> then another search will be
+     * performed in the <tt>alternateBaseDN</tt>. For example, if the <tt>baseDN</tt>
+     * is "o=jivesoftware, o=com" and we do a search for "managers", then we might
+     * find a groupDN of "uid=managers,ou=Groups". This kind of searching is a good
+     * thing since it doesn't make the assumption that all user records are stored
+     * in a flat structure. However, it does add the requirement that "cn" field
+     * (or the other field specified) must be unique over the entire subtree from
+     * the <tt>baseDN</tt>. For example, it's entirely possible to create two dn's
+     * in your LDAP directory with the same cn: "cn=managers,ou=Financial" and
+     * "cn=managers,ou=Engineers". In such a case, it's not possible to
+     * uniquely identify a group, so this method will throw an error.<p>
+     *
+     * The dn that's returned is relative to the default <tt>baseDN</tt>.
+     *
+     * @param groupname the groupname to lookup the dn for.
+     * @return the dn associated with <tt>groupname</tt>.
+     * @throws Exception if the search for the dn fails.
+     */
+    public String findGroupDN(String groupname) throws Exception {
+        try {
+            return findGroupDN(groupname, baseDN);
+        }
+        catch (Exception e) {
+            if (alternateBaseDN != null) {
+                return findGroupDN(groupname, alternateBaseDN);
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Finds a groups's dn using it's group name. Normally, this search will
+     * be performed using the field "cn", but this can be changed by setting
+     * the <tt>groupNameField</tt> property.<p>
+     *
+     * Searches are performed over all subtrees relative to the <tt>baseDN</tt>.
+     * If the search fails in the <tt>baseDN</tt> then another search will be
+     * performed in the <tt>alternateBaseDN</tt>. For example, if the <tt>baseDN</tt>
+     * is "o=jivesoftware, o=com" and we do a search for "managers", then we might
+     * find a groupDN of "uid=managers,ou=Groups". This kind of searching is a good
+     * thing since it doesn't make the assumption that all user records are stored
+     * in a flat structure. However, it does add the requirement that "cn" field
+     * (or the other field specified) must be unique over the entire subtree from
+     * the <tt>baseDN</tt>. For example, it's entirely possible to create two dn's
+     * in your LDAP directory with the same cn: "cn=managers,ou=Financial" and
+     * "cn=managers,ou=Engineers". In such a case, it's not possible to
+     * uniquely identify a group, so this method will throw an error.<p>
+     *
+     * The dn that's returned is relative to the default <tt>baseDN</tt>.
+     *
+     * @param groupname the groupname to lookup the dn for.
+     * @param baseDN the base DN to use for this search.
+     * @return the dn associated with <tt>groupname</tt>.
+     * @throws Exception if the search for the dn fails.
+     * @see #findGroupDN(String) to search using the default baseDN and alternateBaseDN.
+     */
+    public String findGroupDN(String groupname, String baseDN) throws Exception {
+        boolean debug = Log.isDebugEnabled();
+        if (debug) {
+            Log.debug("LdapManager: Trying to find a groups's DN based on it's groupname. " + groupNameField + ": " + groupname
+                    + ", Base DN: " + baseDN + "...");
+        }
+        DirContext ctx = null;
+        try {
+            ctx = getContext(baseDN);
+            if (debug) {
+                Log.debug("LdapManager: Starting LDAP search...");
+            }
+            // Search for the dn based on the groupname.
+            SearchControls constraints = new SearchControls();
+            // If sub-tree searching is enabled (default is true) then search the entire tree.
+            if (subTreeSearch) {
+                constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            // Otherwise, only search a single level.
+            else {
+                constraints.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            constraints.setReturningAttributes(new String[] { groupNameField });
+
+            String filter = MessageFormat.format(getGroupSearchFilter(), groupname);
+            NamingEnumeration answer = ctx.search("", filter, constraints);
+
+            if (debug) {
+                Log.debug("LdapManager: ... search finished");
+            }
+
+            if (answer == null || !answer.hasMoreElements()) {
+                if (debug) {
+                    Log.debug("LdapManager: Group DN based on groupname '" + groupname + "' not found.");
+                }
+                throw new GroupNotFoundException("Groupname " + groupname + " not found");
+            }
+            String groupDN = ((SearchResult)answer.next()).getName();
+            // Make sure there are no more search results. If there are, then
+            // the groupname isn't unique on the LDAP server (a perfectly possible
+            // scenario since only fully qualified dn's need to be unqiue).
+            // There really isn't a way to handle this, so throw an exception.
+            // The baseDN must be set correctly so that this doesn't happen.
+            if (answer.hasMoreElements()) {
+                if (debug) {
+                    Log.debug("LdapManager: Search for groupDN based on groupname '" + groupname + "' found multiple " +
+                            "responses, throwing exception.");
+                }
+                throw new GroupNotFoundException("LDAP groupname lookup for " + groupname +
+                        " matched multiple entries.");
+            }
+            // Close the enumeration.
+            answer.close();
+            // All other methods assume that groupDN is not a full LDAP string.
+            // However if a referal was followed this is not the case.  The
+            // following code converts a referral back to a "partial" LDAP string.
+            if (groupDN.startsWith("ldap://")) {
+                groupDN = groupDN.replace("," + baseDN, "");
+                groupDN = groupDN.substring(groupDN.lastIndexOf("/") + 1);
+                groupDN = java.net.URLDecoder.decode(groupDN, "UTF-8");
+            }
+            if (encloseGroupDN) {
+                // Enclose groupDN values between "
+                // eg. cn=Domain\, Users,ou=Administrators --> cn="Domain\, Users",ou="Administrators"
+                Matcher matcher = groupDNPattern.matcher(groupDN);
+                groupDN = matcher.replaceAll("$1\"$2\",");
+                if (groupDN.endsWith(",")) {
+                    groupDN = groupDN.substring(0, groupDN.length() - 1);
+                }
+            }
+            return groupDN;
+        }
+        catch (Exception e) {
+            if (debug) {
+                Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
+            }
+            throw e;
+        }
+        finally {
+            try { ctx.close(); }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+    }
+
+    /**
      * Returns a properly encoded URL for use as the PROVIDER_URL.
      * If the encoding fails then the URL will contain the raw base dn.
      *
@@ -981,6 +1142,32 @@ public class LdapManager {
             try {
                 if (alternateBaseDN != null) {
                     findUserDN(username, alternateBaseDN);
+                    return alternateBaseDN;
+                }
+            }
+            catch (Exception ex) {
+                Log.debug(ex);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the BaseDN for the given groupname.
+     *
+     * @param groupname groupname to return its base DN.
+     * @return the BaseDN for the given groupname. If no baseDN is found,
+     *         this method will return <tt>null</tt>.
+     */
+    public String getGroupsBaseDN(String groupname) {
+        try {
+            findGroupDN(groupname, baseDN);
+            return baseDN;
+        }
+        catch (Exception e) {
+            try {
+                if (alternateBaseDN != null) {
+                    findGroupDN(groupname, alternateBaseDN);
                     return alternateBaseDN;
                 }
             }

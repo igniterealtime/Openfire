@@ -20,9 +20,7 @@ import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.*;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.SortControl;
+import javax.naming.ldap.*;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -144,10 +142,21 @@ public class LdapUserProvider implements UserProvider {
             return userCount;
         }
         int count = 0;
-        DirContext ctx = null;
-        DirContext ctx2 = null;
+        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        LdapContext ctx = null;
+        LdapContext ctx2 = null;
         try {
             ctx = manager.getContext(baseDN);
+
+            // Set up request controls, if appropriate.
+            List<Control> tmpRequestControls = new ArrayList<Control>();
+            if (pageSize > -1) {
+                // Server side paging.
+                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            }
+            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+            ctx.setRequestControls(requestControls);
+
             // Search for the dn based on the username.
             SearchControls searchControls = new SearchControls();
             // See if recursive searching is enabled. Otherwise, only search one level.
@@ -160,18 +169,62 @@ public class LdapUserProvider implements UserProvider {
             searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
             NamingEnumeration answer = ctx.search("", filter, searchControls);
-            while (answer.hasMoreElements()) {
-                count++;
-                answer.nextElement();
-            }
-            // Add count of users found in alternate DN
-            if (alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                answer = ctx2.search("", filter, searchControls);
+            byte[] cookie = null;
+
+            // Run through all pages of results (one page is also possible  ;)  )
+            do {
+                // Examine results on this page
                 while (answer.hasMoreElements()) {
                     count++;
                     answer.nextElement();
                 }
+                // Examine the paged results control response
+                Control[] controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (Control control : controls) {
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl) control;
+                            cookie = prrc.getCookie();
+
+                            // Re-activate paged results
+                            ctx.setRequestControls(new Control[]{
+                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                            break;
+                        }
+                    }
+                }
+            } while (cookie != null);
+
+            // Add count of users found in alternate DN
+            if (alternateBaseDN != null) {
+                ctx2 = manager.getContext(alternateBaseDN);
+                answer = ctx2.search("", filter, searchControls);
+                cookie = null;
+                // Run through all pages of results (one page is also possible  ;)  )
+                do {
+                    // Examine results on this page
+                    while (answer.hasMoreElements()) {
+                        count++;
+                        answer.nextElement();
+                    }
+                    // Examine the paged results control response
+                    Control[] controls = ctx.getResponseControls();
+                    if (controls != null) {
+                        for (Control control : controls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc =
+                                        (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+
+                                // Re-activate paged results
+                                ctx.setRequestControls(new Control[]{
+                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                                break;
+                            }
+                        }
+                    }
+                } while (cookie != null);
             }
             // Close the enumeration.
             answer.close();
@@ -202,23 +255,27 @@ public class LdapUserProvider implements UserProvider {
         return count;
     }
 
-    public Collection<User> getUsers() {
-        Collection<String> usernames = getUsernames();
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
-    }
-
     public Collection<String> getUsernames() {
         Set<String> usernames = new HashSet<String>();
         LdapContext ctx = null;
         LdapContext ctx2 = null;
+        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
         try {
             ctx = manager.getContext(baseDN);
 
-            // Sort on username field.
-            Control[] searchControl = new Control[]{
-                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
-            };
-            ctx.setRequestControls(searchControl);
+            // Set up request controls, if appropriate.
+            List<Control> tmpRequestControls = new ArrayList<Control>();
+            if (!clientSideSort) {
+                // Server side sort on username field.
+                tmpRequestControls.add(new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL));
+            }
+            if (pageSize > -1) {
+                // Server side paging.
+                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            }
+            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+            ctx.setRequestControls(requestControls);
 
             // Search for the dn based on the username.
             SearchControls searchControls = new SearchControls();
@@ -232,25 +289,69 @@ public class LdapUserProvider implements UserProvider {
             searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
             NamingEnumeration answer = ctx.search("", filter, searchControls);
-            while (answer.hasMoreElements()) {
-                // Get the next userID.
-                String username = (String)((SearchResult)answer.next()).getAttributes().get(
-                        manager.getUsernameField()).get();
-                // Escape username and add to results.
-                usernames.add(JID.escapeNode(username));
-            }
-            // Add usernames found in alternate DN
-            if (alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(searchControl);
-                answer = ctx2.search("", filter, searchControls);
+            byte[] cookie = null;
+
+            // Run through all pages of results (one page is also possible  ;)  )
+            do {
+                // Examine all of the results on this page
                 while (answer.hasMoreElements()) {
                     // Get the next userID.
-                    String username = (String) ((SearchResult) answer.next()).getAttributes().get(
+                    String username = (String)((SearchResult)answer.next()).getAttributes().get(
                             manager.getUsernameField()).get();
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
                 }
+                // Examine the paged results control response
+                Control[] controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (Control control : controls) {
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl) control;
+                            cookie = prrc.getCookie();
+
+                            // Re-activate paged results
+                            ctx.setRequestControls(new Control[]{
+                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                            break;
+                        }
+                    }
+                }
+            } while (cookie != null);
+            // Add usernames found in alternate DN
+            if (alternateBaseDN != null) {
+                ctx2 = manager.getContext(alternateBaseDN);
+                ctx2.setRequestControls(requestControls);
+                answer = ctx2.search("", filter, searchControls);
+                cookie = null;
+
+                // Run through all pages of results (one page is also possible  ;)  )
+                do {
+                    // Examine all of the results on this page
+                    while (answer.hasMoreElements()) {
+                        // Get the next userID.
+                        String username = (String) ((SearchResult) answer.next()).getAttributes().get(
+                                manager.getUsernameField()).get();
+                        // Escape username and add to results.
+                        usernames.add(JID.escapeNode(username));
+                    }
+                    // Examine the paged results control response
+                    Control[] controls = ctx.getResponseControls();
+                    if (controls != null) {
+                        for (Control control : controls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc =
+                                        (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+
+                                // Re-activate paged results
+                                ctx.setRequestControls(new Control[]{
+                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                                break;
+                            }
+                        }
+                    }
+                } while (cookie != null);
             }
 
             // Close the enumeration.
@@ -279,25 +380,38 @@ public class LdapUserProvider implements UserProvider {
                 // Ignore.
             }
         }
-	// If client-side sorting is enabled, do it.
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
+	    // If client-side sorting is enabled, do it.
+        if (clientSideSort) {
             Collections.sort(new ArrayList<String>(usernames));
         }
         return usernames;
     }
+    
+    public Collection<User> getUsers() {
+        return getUsers(-1, -1);
+    }
 
     public Collection<User> getUsers(int startIndex, int numResults) {
         List<String> usernames = new ArrayList<String>();
+        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         try {
             ctx = manager.getContext(baseDN);
 
-            // Sort on username field.
-            Control[] searchControl = new Control[]{
-                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
-            };
-            ctx.setRequestControls(searchControl);
+            // Set up request controls, if appropriate.
+            List<Control> tmpRequestControls = new ArrayList<Control>();
+            if (!clientSideSort) {
+                // Server side sort on username field.
+                tmpRequestControls.add(new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL));
+            }
+            if (pageSize > -1) {
+                // Server side paging.
+                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            }
+            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+            ctx.setRequestControls(requestControls);
 
             // Search for the dn based on the username.
             SearchControls searchControls = new SearchControls();
@@ -311,7 +425,7 @@ public class LdapUserProvider implements UserProvider {
             searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
             // Limit results to those we'll need to process unless client-side sorting
             // is turned on.
-            if (!(Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting")))) {
+            if (!clientSideSort) {
                 searchControls.setCountLimit(startIndex+numResults);
             }
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
@@ -320,11 +434,31 @@ public class LdapUserProvider implements UserProvider {
             NamingEnumeration answer2 = null;
             if (alternateBaseDN != null) {
                 ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(searchControl);
+                ctx2.setRequestControls(requestControls);
                 answer2 = ctx2.search("", filter, searchControls);
             }
-            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
+            // If server side sort, we'll skip the initial ones we don't want, and stop when we've hit
+            // the amount we do want.
+            int skip = -1;
+            int lastRes = -1;
+            if (!clientSideSort) {
+                skip = startIndex;
+                lastRes = startIndex + numResults;
+
+            }
+            byte[] cookie = null;
+            int count = 0;
+            // Run through all pages of results (one page is also possible  ;)  )
+            do {
+                // Examine all results on this page
                 while (answer.hasMoreElements()) {
+                    count++;
+                    if (skip > -1 && count < skip) {
+                        continue;
+                    }
+                    if (lastRes > -1 && count > lastRes) {
+                        break;
+                    }
                     // Get the next userID.
                     String username = (String)((SearchResult)answer.next()).getAttributes().get(
                             manager.getUsernameField()).get();
@@ -336,8 +470,36 @@ public class LdapUserProvider implements UserProvider {
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
                 }
-                if (alternateBaseDN != null) {
+                // Examine the paged results control response
+                Control[] controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (Control control : controls) {
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl) control;
+                            cookie = prrc.getCookie();
+
+                            // Re-activate paged results
+                            ctx.setRequestControls(new Control[]{
+                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                            break;
+                        }
+                    }
+                }
+            } while (cookie != null);
+            if (count <= lastRes && alternateBaseDN != null) {
+                cookie = null;
+                // Run through all pages of results (one page is also possible  ;)  )
+                do {
+                    // Examine all results on this page
                     while (answer2.hasMoreElements()) {
+                        count++;
+                        if (skip > -1 && count < skip) {
+                            continue;
+                        }
+                        if (lastRes > -1 && count > lastRes) {
+                            break;
+                        }
                         // Get the next userID.
                         String username = (String) ((SearchResult) answer2.next()).getAttributes().get(
                                 manager.getUsernameField()).get();
@@ -349,50 +511,29 @@ public class LdapUserProvider implements UserProvider {
                         // Escape username and add to results.
                         usernames.add(JID.escapeNode(username));
                     }
-                }
+                    // Examine the paged results control response
+                    Control[] controls = ctx.getResponseControls();
+                    if (controls != null) {
+                        for (Control control : controls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc =
+                                        (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+
+                                // Re-activate paged results
+                                ctx.setRequestControls(new Control[]{
+                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                                break;
+                            }
+                        }
+                    }
+                } while (cookie != null);
+            }
+            if (clientSideSort) {
+                // If we're doing client side sorting, we pulled everything in and now we sort and trim.
                 Collections.sort(new ArrayList<String>(usernames));
                 int endIndex = Math.min(startIndex + numResults, usernames.size()-1);
                 usernames = usernames.subList(startIndex, endIndex);
-            }
-            // Otherwise, only read in certain results.
-            else {
-                for (int i=0; i < startIndex; i++) {
-                    if (answer.hasMoreElements()) {
-                        answer.next();
-                    } else if (alternateBaseDN != null && answer2.hasMoreElements()) {
-                        answer2.next();
-                    } else {
-                        return Collections.emptyList();
-                    }
-                }
-                // Now read in desired number of results (or stop if we run out of results).
-                for (int i = 0; i < numResults; i++) {
-                    if (answer.hasMoreElements()) {
-                        // Get the next userID.
-                        String username = (String)((SearchResult)answer.next()).getAttributes().get(
-                                manager.getUsernameField()).get();
-                        // Remove usernameSuffix if set
-                        String suffix = manager.getUsernameSuffix();
-                        if(suffix.length() > 0 && username.endsWith(suffix)) {
-                            username = username.substring(0,username.length()-suffix.length());
-                        }
-                        // Escape username and add to results.
-                        usernames.add(JID.escapeNode(username));
-                    } else if (alternateBaseDN != null && answer2.hasMoreElements()) {
-                        // Get the next userID.
-                        String username = (String) ((SearchResult) answer2.next()).getAttributes().get(
-                                manager.getUsernameField()).get();
-                        // Remove usernameSuffix if set
-                        String suffix = manager.getUsernameSuffix();
-                        if(suffix.length() > 0 && username.endsWith(suffix)) {
-                            username = username.substring(0,username.length()-suffix.length());
-                        }
-                        // Escape username and add to results.
-                        usernames.add(JID.escapeNode(username));
-                    } else {
-                        break;
-                    }
-                }
             }
             // Close the enumeration.
             answer.close();
@@ -468,6 +609,12 @@ public class LdapUserProvider implements UserProvider {
     public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException
     {
+        return findUsers(fields, query, -1, -1);
+    }
+
+    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
+            int numResults) throws UnsupportedOperationException
+    {
         if (fields.isEmpty() || query == null || "".equals(query)) {
             return Collections.emptyList();
         }
@@ -479,16 +626,26 @@ public class LdapUserProvider implements UserProvider {
         if (!query.endsWith("*")) {
             query = query + "*";
         }
+        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
         List<String> usernames = new ArrayList<String>();
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         try {
             ctx = manager.getContext(baseDN);
-            // Sort on username field.
-            Control[] searchControl = new Control[]{
-                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
-            };
-            ctx.setRequestControls(searchControl);
+
+            // Set up request controls, if appropriate.
+            List<Control> tmpRequestControls = new ArrayList<Control>();
+            if (!clientSideSort) {
+                // Server side sort on username field.
+                tmpRequestControls.add(new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL));
+            }
+            if (pageSize > -1) {
+                // Server side paging.
+                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            }
+            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+            ctx.setRequestControls(requestControls);
 
             // Search for the dn based on the username.
             SearchControls searchControls = new SearchControls();
@@ -519,165 +676,102 @@ public class LdapUserProvider implements UserProvider {
             }
             filter.append(")");
             NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
-            while (answer.hasMoreElements()) {
-                // Get the next userID.
-                String username = (String)((SearchResult)answer.next()).getAttributes().get(
-                        manager.getUsernameField()).get();
-                // Escape username and add to results.
-                usernames.add(JID.escapeNode(username));
+            // If server side sort, we'll skip the initial ones we don't want, and stop when we've hit
+            // the amount we do want.
+            int skip = -1;
+            int lastRes = -1;
+            if (!clientSideSort) {
+                skip = startIndex;
+                lastRes = startIndex + numResults;
+
             }
-            if (alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(searchControl);
-                answer = ctx2.search("", filter.toString(), searchControls);
+            byte[] cookie = null;
+            int count = 0;
+            // Run through all pages of results (one page is also possible  ;)  )
+            do {
+                // Examine all results on this page
                 while (answer.hasMoreElements()) {
+                    count++;
+                    if (skip > -1 && count < skip) {
+                        continue;
+                    }
+                    if (lastRes > -1 && count > lastRes) {
+                        break;
+                    }
+
                     // Get the next userID.
                     String username = (String)((SearchResult)answer.next()).getAttributes().get(
                             manager.getUsernameField()).get();
-                    // Remove usernameSuffix if set
-                    String suffix = manager.getUsernameSuffix();
-                    if(suffix.length() > 0 && username.endsWith(suffix)) {
-                        username = username.substring(0,username.length()-suffix.length());
-                    }
                     // Escape username and add to results.
                     usernames.add(JID.escapeNode(username));
                 }
-            }
-            // Close the enumeration.
-            answer.close();
-            // If client-side sorting is enabled, sort.
-            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
-                Collections.sort(usernames);
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        finally {
-            try {
-                if (ctx != null) {
-                    ctx.setRequestControls(null);
-                    ctx.close();
-                }
-            }
-            catch (Exception ignored) {
-                // Ignore.
-            }
-            try {
-                if (ctx2 != null) {
-                    ctx2.setRequestControls(null);
-                    ctx2.close();
-                }
-            }
-            catch (Exception ignored) {
-                // Ignore.
-            }
-        }
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
-    }
+                // Examine the paged results control response
+                Control[] controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (Control control : controls) {
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl) control;
+                            cookie = prrc.getCookie();
 
-    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
-            int numResults) throws UnsupportedOperationException
-    {
-        if (fields.isEmpty()) {
-            return Collections.emptyList();
-        }
-        if (!searchFields.keySet().containsAll(fields)) {
-            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
-        }
-        List<String> usernames = new ArrayList<String>();
-        LdapContext ctx = null;
-        LdapContext ctx2 = null;
-        try {
-            ctx = manager.getContext(baseDN);
-            // Sort on username field.
-            Control[] searchControl = new Control[]{
-                new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
-            };
-            ctx.setRequestControls(searchControl);
-
-            // Search for the dn based on the username.
-            SearchControls searchControls = new SearchControls();
-            // See if recursive searching is enabled. Otherwise, only search one level.
-            if (manager.isSubTreeSearch()) {
-                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            }
-            else {
-                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            }
-            searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
-            String searchFilter = MessageFormat.format(manager.getSearchFilter(),"*");
-            StringBuilder filter = new StringBuilder();
-            //Add the global search filter so only those users the directory administrator wants to include
-            //are returned from the directory
-            filter.append("(&(");
-            filter.append(searchFilter);
-            filter.append(")");
-            if (fields.size() > 1) {
-                filter.append("(|");
-            }
-            for (String field:fields) {
-                String attribute = searchFields.get(field);
-                filter.append("(").append(attribute).append("=").append(query).append(")");
-            }
-            if (fields.size() > 1) {
-                filter.append(")");
-            }
-            filter.append(")");
-            // TODO: used paged results if supported by LDAP server.
-            NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
-            NamingEnumeration answer2 = null;
-            if(alternateBaseDN != null) {
+                            // Re-activate paged results
+                            ctx.setRequestControls(new Control[]{
+                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                            break;
+                        }
+                    }
+                }
+            } while (cookie != null);
+            if (count <= lastRes && alternateBaseDN != null) {
                 ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(searchControl);
-                answer2 = ctx2.search("", filter.toString(), searchControls);
-            }
-            for (int i=0; i < startIndex; i++) {
-                if (answer.hasMoreElements()) {
-                    answer.next();
-                }
-                else if (alternateBaseDN != null && answer2.hasMoreElements()) {
-                    answer2.next();
-                }
-                else {
-                    return Collections.emptyList();
-                }
-            }
-            // Now read in desired number of results (or stop if we run out of results).
-            for (int i = 0; i < numResults; i++) {
-                if (answer.hasMoreElements()) {
-                    // Get the next userID.
-                    String username = (String)((SearchResult)answer.next()).getAttributes().get(
-                            manager.getUsernameField()).get();
-                    // Remove usernameSuffix if set
-                    String suffix = manager.getUsernameSuffix();
-                    if(suffix.length() > 0 && username.endsWith(suffix)) {
-                        username = username.substring(0,username.length()-suffix.length());
+                ctx2.setRequestControls(requestControls);
+                answer = ctx2.search("", filter.toString(), searchControls);
+                cookie = null;
+                // Run through all pages of results (one page is also possible  ;)  )
+                do {
+                    // Examine all results on this page
+                    while (answer.hasMoreElements()) {
+                        count++;
+                        if (skip > -1 && count < skip) {
+                            continue;
+                        }
+                        if (lastRes > -1 && count > lastRes) {
+                            break;
+                        }
+
+                        // Get the next userID.
+                        String username = (String)((SearchResult)answer.next()).getAttributes().get(
+                                manager.getUsernameField()).get();
+                        // Remove usernameSuffix if set
+                        String suffix = manager.getUsernameSuffix();
+                        if(suffix.length() > 0 && username.endsWith(suffix)) {
+                            username = username.substring(0,username.length()-suffix.length());
+                        }
+                        // Escape username and add to results.
+                        usernames.add(JID.escapeNode(username));
                     }
-                    // Escape username and add to results.
-                    usernames.add(JID.escapeNode(username));
-                }
-                else if (alternateBaseDN != null && answer2.hasMoreElements()) {
-                    // Get the next userID.
-                    String username = (String)((SearchResult)answer2.next()).getAttributes().get(
-                            manager.getUsernameField()).get();
-                    // Remove usernameSuffix if set
-                    String suffix = manager.getUsernameSuffix();
-                    if(suffix.length() > 0 && username.endsWith(suffix)) {
-                        username = username.substring(0,username.length()-suffix.length());
+                    // Examine the paged results control response
+                    Control[] controls = ctx.getResponseControls();
+                    if (controls != null) {
+                        for (Control control : controls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc =
+                                        (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+
+                                // Re-activate paged results
+                                ctx.setRequestControls(new Control[]{
+                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                                break;
+                            }
+                        }
                     }
-                    // Escape username and add to results.
-                    usernames.add(JID.escapeNode(username));
-                }
-                else {
-                    break;
-                }
+                } while (cookie != null);
             }
             // Close the enumeration.
             answer.close();
-
             // If client-side sorting is enabled, sort.
-            if (Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.clientSideSorting"))) {
+            if (clientSideSort) {
                 Collections.sort(usernames);
             }
         }

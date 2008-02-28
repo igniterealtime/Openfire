@@ -16,9 +16,14 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 
 /**
- * @author Daniel Henninger
+ * The ClearspaceAuthProvider uses the PermissionService web service inside of Clearspace
+ * to retrieve authenticate users. It current version of Clearspace only supports plain authentication.
+ *
+ * @author Gabriel Guardincerri
  */
 public class ClearspaceAuthProvider implements AuthProvider {
+
+    // Service url prefix
     protected static final String URL_PREFIX = "permissionService/";
 
     private ClearspaceManager manager;
@@ -31,14 +36,32 @@ public class ClearspaceAuthProvider implements AuthProvider {
         SASLAuthentication.addSupportedMechanism("CLEARSPACE");
     }
 
+    /**
+     * Clearspace currently supports only plain authentication.
+     *
+     * @return true
+     */
     public boolean isPlainSupported() {
         return true;
     }
 
+    /**
+     * Clearspace currently doesn't support digest authentication.
+     *
+     * @return false
+     */
     public boolean isDigestSupported() {
         return false;
     }
 
+    /**
+     * Authenticates the user using permissionService/authenticate servicie of Clearspace.
+     * Throws an UnauthorizedException if the user or password are incorrect.
+     *
+     * @param username the username.
+     * @param password the password.
+     * @throws UnauthorizedException if the username of password are incorrect.
+     */
     public void authenticate(String username, String password) throws UnauthorizedException {
         try {
             String path = URL_PREFIX + "authenticate/" + username + "/" + password;
@@ -51,18 +74,42 @@ public class ClearspaceAuthProvider implements AuthProvider {
         }
     }
 
+    /**
+     * This method is not supported.
+     *
+     * @param username the username
+     * @param token    the token
+     * @param digest   the digest
+     * @throws UnauthorizedException         never throws it
+     * @throws UnsupportedOperationException always throws it
+     */
     public void authenticate(String username, String token, String digest) throws UnauthorizedException {
         throw new UnsupportedOperationException("Digest not supported");
     }
 
+    /**
+     * This method is not supported.
+     *
+     * @throws UnsupportedOperationException always throws it
+     */
     public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
         throw new UnsupportedOperationException("Password retrieval not supported");
     }
 
+    /**
+     * This method is not supported.
+     *
+     * @throws UnsupportedOperationException always throws it
+     */
     public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
         throw new UnsupportedOperationException("Change Password not supported");
     }
 
+    /**
+     * This method is not supported.
+     *
+     * @throws UnsupportedOperationException always throws it
+     */
     public boolean supportsPasswordRetrieval() {
         return false;
     }

@@ -713,11 +713,11 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             items.add(fieldUsername);
 
             XFormFieldImpl fieldName = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.name", "search"));
-            fieldName.addValue(removeNull(user.getName()));
+            fieldName.addValue((user.isNameVisible() ? removeNull(user.getName()) : ""));
             items.add(fieldName);
 
             XFormFieldImpl fieldEmail = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.email", "search"));
-            fieldEmail.addValue(removeNull(user.getEmail()));
+            fieldEmail.addValue((user.isEmailVisible() ? removeNull(user.getEmail()) : ""));
             items.add(fieldEmail);
 
             searchResults.addItemFields(items);
@@ -759,13 +759,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                 if ("Name".equals(field)) {
                     Element element = item.addElement(reverseFieldLookup
                             .get(field));
-                    element.addText(removeNull(user.getName()));
+                    element.addText(user.isNameVisible() ? removeNull(user.getName()) : "");
                 }
 
                 if ("Email".equals(field)) {
                     Element element = item.addElement(reverseFieldLookup
                             .get(field));
-                    element.addText(removeNull(user.getEmail()));
+                    element.addText(user.isEmailVisible() ? removeNull(user.getEmail()) : "");
                 }
             }
         }
@@ -1006,12 +1006,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
                     }
                 }
                 else if (field.equals("Name")) {
-                    if (query.equalsIgnoreCase(user.getName())) {
-                        foundUsers.add(user);
+                    if (user.isNameVisible()) {
+                        if (query.equalsIgnoreCase(user.getName())) {
+                            foundUsers.add(user);
+                        }
                     }
-                }
-                else if (field.equals("Email")) {
-                    if (user.getEmail() != null) {
+                } else if (field.equals("Email")) {
+                    if (user.isEmailVisible() && user.getEmail() != null) {
                         if (query.equalsIgnoreCase(user.getEmail())) {
                             foundUsers.add(user);
                         }

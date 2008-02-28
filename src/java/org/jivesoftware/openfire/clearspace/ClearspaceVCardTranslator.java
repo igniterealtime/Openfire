@@ -139,10 +139,10 @@ class ClearspaceVCardTranslator {
     /**
      * Init the fields of clearspace based on they name.
      *
-     * @param fieldsId
+     * @param fields the fields information
      */
-    protected void initClearspaceFieldsId(Element fieldsId) {
-        List<Element> fieldsList = fieldsId.elements("return");
+    protected void initClearspaceFieldsId(Element fields) {
+        List<Element> fieldsList = fields.elements("return");
         for (Element field : fieldsList) {
             String fieldName = field.elementText("name");
             long fieldID = Long.valueOf(field.elementText("ID"));
@@ -155,6 +155,16 @@ class ClearspaceVCardTranslator {
 
     }
 
+    /**
+     * Translates a VCard of Openfire into profiles, user information and a avatar of Clearspace.
+     * Returns what can of action has been made over the the profilesElement, userElement and avatarElement/
+     *
+     * @param vCardElement    the VCard information
+     * @param profilesElement the profile to add/modify/delete the information
+     * @param userElement     the user to add/modify/delete the information
+     * @param avatarElement   the avatar to add/modify/delete the information
+     * @return a list of actions performed over the profilesElement, userElement and avatarElement
+     */
     protected Action[] translateVCard(Element vCardElement, Element profilesElement, Element userElement, Element avatarElement) {
         Action[] actions = new Action[3];
 
@@ -171,6 +181,13 @@ class ClearspaceVCardTranslator {
         return actions;
     }
 
+    /**
+     * Updates the avatar values based on the vCard values
+     *
+     * @param avatarElement the avatar element to update
+     * @param vCardValues   the vCard values with the information
+     * @return the action performed
+     */
     private Action updateAvatarValues(Element avatarElement, Map<VCardField, String> vCardValues) {
         Action action = Action.NO_ACTION;
 
@@ -201,6 +218,13 @@ class ClearspaceVCardTranslator {
         return action;
     }
 
+    /**
+     * Updates the user values based on the vCard values
+     *
+     * @param userElement the user element to update
+     * @param vCardValues the vCard values
+     * @return the action performed
+     */
     private Action updateUserValues(Element userElement, Map<VCardField, String> vCardValues) {
         Action action = Action.NO_ACTION;
 
@@ -228,9 +252,9 @@ class ClearspaceVCardTranslator {
     /**
      * Updates the values of the profiles with the values of the vCard
      *
-     * @param profiles
-     * @param vCardValues
-     * @return
+     * @param profiles    the profiles element to update
+     * @param vCardValues the vCard values
+     * @return the action performed
      */
     private Action updateProfilesValues(Element profiles, Map<VCardField, String> vCardValues) {
         Action action = Action.NO_ACTION;
@@ -259,32 +283,32 @@ class ClearspaceVCardTranslator {
             String oldValue;
             switch (field) {
                 case TITLE:
-                    if (modifyProfileValue(vCardValues, profiles, value, VCardField.TITLE)) {
+                    if (modifyProfileValue(vCardValues, value, VCardField.TITLE)) {
                         action = Action.MODIFY;
                     }
                     break;
                 case DEPARTMENT:
-                    if (modifyProfileValue(vCardValues, profiles, value, VCardField.ORG_ORGUNIT)) {
+                    if (modifyProfileValue(vCardValues, value, VCardField.ORG_ORGUNIT)) {
                         action = Action.MODIFY;
                     }
                     break;
                 case ADDRESS:
-                    if (modifyProfileValue(vCardValues, profiles, value, VCardField.ADR_WORK)) {
+                    if (modifyProfileValue(vCardValues, value, VCardField.ADR_WORK)) {
                         action = Action.MODIFY;
                     }
                     break;
                 case HOME_ADDRESS:
-                    if (modifyProfileValue(vCardValues, profiles, value, VCardField.ADR_HOME)) {
+                    if (modifyProfileValue(vCardValues, value, VCardField.ADR_HOME)) {
                         action = Action.MODIFY;
                     }
                     break;
                 case TIME_ZONE:
-                    if (modifyProfileValue(vCardValues, profiles, value, VCardField.TZ)) {
+                    if (modifyProfileValue(vCardValues, value, VCardField.TZ)) {
                         action = Action.MODIFY;
                     }
                     break;
                 case URL:
-                    if (modifyProfileValue(vCardValues, profiles, value, VCardField.URL)) {
+                    if (modifyProfileValue(vCardValues, value, VCardField.URL)) {
                         action = Action.MODIFY;
                     }
                     break;
@@ -454,6 +478,14 @@ class ClearspaceVCardTranslator {
         return action;
     }
 
+    /**
+     * Adds a profiles element to the profiles if it is not empty
+     *
+     * @param profiles the profiles to add a profile to
+     * @param field    the field type to add
+     * @param newValue the value to add
+     * @return true if the field was added
+     */
     private boolean addProfile(Element profiles, ClearspaceField field, String newValue) {
         // Don't add empty vales
         if (newValue == null || "".equals(newValue.trim())) {
@@ -470,7 +502,15 @@ class ClearspaceVCardTranslator {
         return true;
     }
 
-    private boolean modifyProfileValue(Map<VCardField, String> vCardValues, Element profiles, Element value, VCardField vCardField) {
+    /**
+     * Modifies the value of a profile if it is different from the original one.
+     *
+     * @param vCardValues the vCard values with the new values
+     * @param value       the current value of the profile
+     * @param vCardField  the vCard field
+     * @return true if the field was modified
+     */
+    private boolean modifyProfileValue(Map<VCardField, String> vCardValues, Element value, VCardField vCardField) {
         boolean modified = false;
         String newValue = vCardValues.get(vCardField);
 
@@ -486,6 +526,13 @@ class ClearspaceVCardTranslator {
         return modified;
     }
 
+    /**
+     * Adds the field type to the field value. Returns null if the value is empty.
+     *
+     * @param value the value
+     * @param type  the type
+     * @return the field value with the type
+     */
     private String addFieldType(String value, String type) {
         if (value == null || "".equals(value.trim())) {
             return null;
@@ -493,6 +540,13 @@ class ClearspaceVCardTranslator {
         return value + "|" + type;
     }
 
+    /**
+     * Returns the field type of a field. Return null if the field doesn't
+     * contains a type
+     *
+     * @param field the field with the type
+     * @return the field type
+     */
     private String getFieldType(String field) {
         int i = field.indexOf("|");
         if (i == -1) {
@@ -502,6 +556,13 @@ class ClearspaceVCardTranslator {
         }
     }
 
+    /**
+     * Returns the field value of a field. Return the field if the field doesn't
+     * contains a type.
+     *
+     * @param field the field
+     * @return the field value
+     */
     private String getFieldValue(String field) {
         int i = field.indexOf("|");
         if (i == -1) {
@@ -513,10 +574,10 @@ class ClearspaceVCardTranslator {
 
     /**
      * Collects the vCard values and store them into a map.
-     * They are stored with this constants:
+     * They are stored with the VCardField enum.
      *
-     * @param vCardElement
-     * @return
+     * @param vCardElement the vCard with the information
+     * @return a map of the value of the vCard.
      */
     private Map<VCardField, String> collectVCardValues(Element vCardElement) {
 
@@ -602,10 +663,10 @@ class ClearspaceVCardTranslator {
     /**
      * Translates the information from Clearspace into a VCard.
      *
-     * @param profile
-     * @param user
-     * @param avatar
-     * @return
+     * @param profile the profile
+     * @param user    the user
+     * @param avatar  the avatar
+     * @return the vCard with the information
      */
     protected Element translateClearspaceInfo(Element profile, User user, Element avatar) {
 
@@ -619,7 +680,12 @@ class ClearspaceVCardTranslator {
         return vCard;
     }
 
-
+    /**
+     * Translates the profile information to the vCard
+     *
+     * @param profiles the profile information
+     * @param vCard    the vCard to add the information to
+     */
     private void translateProfileInformation(Element profiles, Element vCard) {
         // Translate the profile XML
 
@@ -747,15 +813,21 @@ class ClearspaceVCardTranslator {
         }
     }
 
+    /**
+     * Translates the user information to the vCard
+     *
+     * @param user  the user information
+     * @param vCard the vCard to add the information to
+     */
     private void translateUserInformation(User user, Element vCard) {
-        // The name could be null (if in Clearspace the name is not visible in Openfire it is null)
-        if (user.getName() != null && !"".equals(user.getName().trim())) {
+        // Only set the name to the VCard if it is visible
+        if (user.isNameVisible()) {
             vCard.addElement("FN").setText(user.getName());
             vCard.addElement("N").addElement("FAMILY").setText(user.getName());
         }
 
-        // Email is mandatory, but may be invisible
-        if (user.getEmail() != null && !"".equals(user.getName().trim())) {
+        // Only set the eamail to the VCard if it is visible
+        if (user.isEmailVisible()) {
             Element email = vCard.addElement("EMAIL");
             email.addElement("PREF");
             email.addElement("USERID").setText(user.getEmail());
@@ -765,6 +837,12 @@ class ClearspaceVCardTranslator {
         vCard.addElement("JABBERID").setText(jid);
     }
 
+    /**
+     * Translates the avatar information to the vCard.
+     *
+     * @param avatarResponse the avatar information
+     * @param vCard          the vCard to add the information to
+     */
     private void translateAvatarInformation(Element avatarResponse, Element vCard) {
         Element avatar = avatarResponse.element("return");
         if (avatar != null) {
@@ -781,6 +859,12 @@ class ClearspaceVCardTranslator {
         }
     }
 
+    /**
+     * Translates the address string of Clearspace to the vCard format.
+     *
+     * @param address  the address string of Clearspae
+     * @param addressE the address element to add the address to
+     */
     private void translateAddress(String address, Element addressE) {
         StringTokenizer strTokenize = new StringTokenizer(address, ",");
         while (strTokenize.hasMoreTokens()) {
@@ -819,6 +903,12 @@ class ClearspaceVCardTranslator {
     }
 
 
+    /**
+     * Translates the address form the vCard format to the Clearspace string.
+     *
+     * @param addressElement the address in the vCard format
+     * @return the address int the Clearspace format
+     */
     private String translateAddress(Element addressElement) {
 
         StringBuilder sb = new StringBuilder();
@@ -850,8 +940,16 @@ class ClearspaceVCardTranslator {
         return sb.toString();
     }
 
-    private void translateAddressField(Element addressElement, String elementName, String fieldName, StringBuilder sb) {
-        String field = addressElement.elementTextTrim(elementName);
+    /**
+     * Translates the address field from the vCard format to the Clearspace format.
+     *
+     * @param addressElement the vCard address
+     * @param vCardFieldName the vCard field name
+     * @param fieldName      the Clearspace field name
+     * @param sb             the string builder to append the field string to
+     */
+    private void translateAddressField(Element addressElement, String vCardFieldName, String fieldName, StringBuilder sb) {
+        String field = addressElement.elementTextTrim(vCardFieldName);
         if (field != null && !"".equals(field)) {
             sb.append(fieldName).append(":").append(field).append(",");
         }

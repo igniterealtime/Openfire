@@ -57,6 +57,11 @@ public class User implements Cacheable, Externalizable, Result {
     private static final String INSERT_PROPERTY =
         "INSERT INTO jiveUserProp (username, name, propValue) VALUES (?, ?, ?)";
 
+    // The name of the name visible property
+    private static final String NAME_VISIBLE_PROPERTY = "name.visible";
+    // The name of the email visible property
+    private static final String EMAIL_VISIBLE_PROPERTY = "email.visible";
+
     private String username;
     private String name;
     private String email;
@@ -206,6 +211,24 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     /**
+     * Returns true if name is visible to everyone or not.
+     *
+     * @return true if name is visible to everyone, false if not.
+     */
+    public boolean isNameVisible() {
+        return !getProperties().containsKey(NAME_VISIBLE_PROPERTY) || Boolean.valueOf(getProperties().get(NAME_VISIBLE_PROPERTY));
+    }
+
+    /**
+     * Sets if name is visible to everyone or not.
+     *
+     * @param visible true if name is visible, false if not.
+     */
+    public void setNameVisible(boolean visible) {
+        getProperties().put(NAME_VISIBLE_PROPERTY, String.valueOf(visible));
+    }
+
+    /**
      * Returns the email address of the user or <tt>null</tt> if none is defined.
      *
      * @return the email address of the user or nullif none is defined.
@@ -237,6 +260,24 @@ public class User implements Cacheable, Externalizable, Result {
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
         }
+    }
+
+    /**
+     * Returns true if email is visible to everyone or not.
+     *
+     * @return true if email is visible to everyone, false if not.
+     */
+    public boolean isEmailVisible() {
+        return !getProperties().containsKey(EMAIL_VISIBLE_PROPERTY) || Boolean.valueOf(getProperties().get(EMAIL_VISIBLE_PROPERTY));
+    }
+
+    /**
+     * Sets if the email is visible to everyone or not.
+     *
+     * @param visible true if the email is visible, false if not.
+     */
+    public void setEmailVisible(boolean visible) {
+        getProperties().put(EMAIL_VISIBLE_PROPERTY, String.valueOf(visible));
     }
 
     public Date getCreationDate() {

@@ -22,11 +22,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * entities (i.e. users) the {@link User} name is used. For remote entities the following logic
  * is used:
  * <ol>
- *  <li>Check if a {@link UserNameProvider} is registered for the entity's domain. If a provider
- *      was found then use it to get the entity's name</li>
- *  <li>If no provider was found then retrieve the vCard of the entity and return the name as
- *      defined in the vCard. <i>This is not implemented yet.</i></li>
- *  <li>If no vCard was found then return the string representation of the entity's JID.</li>
+ * <li>Check if a {@link UserNameProvider} is registered for the entity's domain. If a provider
+ * was found then use it to get the entity's name</li>
+ * <li>If no provider was found then retrieve the vCard of the entity and return the name as
+ * defined in the vCard. <i>This is not implemented yet.</i></li>
+ * <li>If no vCard was found then return the string representation of the entity's JID.</li>
  * </ol>
  *
  * @author Gaston Dombiak
@@ -72,7 +72,7 @@ public class UserNameManager {
      * @param entity the JID of the entity to get its name.
      * @return the name of the XMPP entity.
      * @throws UserNotFoundException if the jid belongs to the local server but no user was
-     *         found for that jid.
+     *                               found for that jid.
      */
     public static String getUserName(JID entity) throws UserNotFoundException {
         return getUserName(entity, entity.toString());
@@ -85,19 +85,18 @@ public class UserNameManager {
      * the vCard of the entity might be requested and if none was found then a string
      * representation of the entity's JID will be returned.
      *
-     * @param entity the JID of the entity to get its name.
+     * @param entity      the JID of the entity to get its name.
      * @param defaultName default name to return when no name was found.
      * @return the name of the XMPP entity.
      * @throws UserNotFoundException if the jid belongs to the local server but no user was
-     *         found for that jid.
+     *                               found for that jid.
      */
     public static String getUserName(JID entity, String defaultName) throws UserNotFoundException {
         if (server.isLocal(entity)) {
             // Contact is a local entity so search for his user name
             User localUser = UserManager.getInstance().getUser(entity.getNode());
-            return "".equals(localUser.getName()) ? entity.getNode() : localUser.getName();
-        }
-        else {
+            return !localUser.isNameVisible() || "".equals(localUser.getName()) ? entity.getNode() : localUser.getName();
+        } else {
             UserNameProvider provider = providersByDomain.get(entity.getDomain());
             if (provider != null) {
                 return provider.getUserName(entity);

@@ -47,12 +47,6 @@ public class ClearspaceVCardProvider implements VCardProvider {
 
     public ClearspaceVCardProvider() {
         this.manager = ClearspaceManager.getInstance();
-
-        // Tries to load the avatar read only information
-        loadAvatarReadOnly();
-
-        // Tries to load the default profile fields
-        loadDefaultProfileFields();
     }
 
     /**
@@ -65,12 +59,16 @@ public class ClearspaceVCardProvider implements VCardProvider {
     public Element loadVCard(String username) {
         // if the fields id are not loaded
         if (!fieldsIDLoaded) {
-            // try to load them
-            loadDefaultProfileFields();
-            // if still not loaded then the operation could no be perform
-            if (!fieldsIDLoaded) {
-                // It is not supported exception, wrap it into an UnsupportedOperationException
-                throw new UnsupportedOperationException("Error loading the profiles IDs");
+            synchronized (this) {
+                if (!fieldsIDLoaded) {
+                    // try to load them
+                    loadDefaultProfileFields();
+                    // if still not loaded then the operation could no be perform
+                    if (!fieldsIDLoaded) {
+                        // It is not supported exception, wrap it into an UnsupportedOperationException
+                        throw new UnsupportedOperationException("Error loading the profiles IDs");
+                    }
+                }
             }
         }
 
@@ -145,9 +143,13 @@ public class ClearspaceVCardProvider implements VCardProvider {
      */
     private boolean isAvatarReadOnly() {
         if (avatarReadOnly == null) {
-            loadAvatarReadOnly();
+            synchronized (this) {
+                if (avatarReadOnly == null) {
+                    loadAvatarReadOnly();
+                }
+            }
         }
-        return avatarReadOnly;
+        return avatarReadOnly == null ? false : avatarReadOnly;
     }
 
     /**
@@ -170,10 +172,16 @@ public class ClearspaceVCardProvider implements VCardProvider {
         }
 
         if (!fieldsIDLoaded) {
-            loadDefaultProfileFields();
-            if (!fieldsIDLoaded) {
-                // It is not supported exception, wrap it into an UnsupportedOperationException
-                throw new UnsupportedOperationException("Error loading the profiles IDs");
+            synchronized (this) {
+                if (!fieldsIDLoaded) {
+                    // try to load them
+                    loadDefaultProfileFields();
+                    // if still not loaded then the operation could no be perform
+                    if (!fieldsIDLoaded) {
+                        // It is not supported exception, wrap it into an UnsupportedOperationException
+                        throw new UnsupportedOperationException("Error loading the profiles IDs");
+                    }
+                }
             }
         }
 

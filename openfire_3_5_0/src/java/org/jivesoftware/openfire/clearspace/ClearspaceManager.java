@@ -11,16 +11,10 @@
 
 package org.jivesoftware.openfire.clearspace;
 
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.Node;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
@@ -119,9 +113,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         };
     }
 
+
+    // This map is used to transale exceptions from CS to OF
     private static final Map<String, String> exceptionMap;
 
     static {
+        // Add a new exception map from CS to OF and it will be automatically translated.
         exceptionMap = new HashMap<String, String>();
         exceptionMap.put("com.jivesoftware.base.UserNotFoundException", "org.jivesoftware.openfire.user.UserNotFoundException");
         exceptionMap.put("com.jivesoftware.base.UserAlreadyExistsException", "org.jivesoftware.openfire.user.UserAlreadyExistsException");
@@ -415,23 +412,33 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     /**
      *
      */
-    private void startClearspaceConfig() {
-        // Start the task if it is not currently running
-        if (configClearspaceTask == null) {
-            configClearspaceTask = new ConfigClearspaceTask();
-            TaskEngine.getInstance().schedule(configClearspaceTask, 1, JiveConstants.MINUTE);
-
+    private synchronized void startClearspaceConfig() {
+        // If the task is running, stop it
+        if (configClearspaceTask != null) {
+            configClearspaceTask.cancel();
+            Log.debug("Stopping previous configuration Clearspace task.");
         }
+
+        // Create and schedule a confi task every minute
+        configClearspaceTask = new ConfigClearspaceTask();
+        // Wait some time to start the task until Openfire has binding address 
+        TaskEngine.getInstance().schedule(configClearspaceTask, JiveConstants.SECOND * 10, JiveConstants.MINUTE);
+        Log.debug("Starting configuration Clearspace task in 10 seconds.");
     }
 
     private synchronized void configClearspace() throws UnauthorizedException {
-        try {
-            List<String> bindInterfaces = getServerInterfaces();
-            if (bindInterfaces.size() == 0) {
-                // We aren't up and running enough to tell Clearspace what interfaces to bind to.
-                return;
-            }
 
+        Log.debug("Starting Clearspace configuration.");
+
+        List<String> bindInterfaces = getServerInterfaces();
+        if (bindInterfaces.size() == 0) {
+            // We aren't up and running enough to tell Clearspace what interfaces to bind to.
+            Log.debug("No bind interfaces found to config Clearspace");
+            throw new IllegalStateException("There are no binding interfaces.");
+        }
+
+        try {
+            
             XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
 
             String path = IM_URL_PREFIX + "configureComponent/";
@@ -448,9 +455,13 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Element portE = rootE.addElement("port");
             portE.setText(String.valueOf(ExternalComponentManager.getServicePort()));
 
+            Log.debug("Trying to configure Clearspace with: Domain: " + serverInfo.getXMPPDomain() + ", hosts: " +
+                    bindInterfaces.toString() + ", port: " + port);
+            
             executeRequest(POST, path, rootE.asXML());
 
             //Done, Clearspace was configured correctly, clear the task
+            Log.debug("Clearspace was configured, stopping the task.");
             TaskEngine.getInstance().cancelScheduledTask(configClearspaceTask);
             configClearspaceTask = null;
 
@@ -581,15 +592,16 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @param type      Must be GET or DELETE
      * @param urlSuffix The url suffix of the rest request
      * @return The response as a xml doc.
-     * @throws Exception Thrown if there are issues parsing the request.
+     * @throws ConnectException Thrown if there are issues perfoming the request.
+     * @throws Exception Thrown if the response from Clearspace contains an exception.
      */
-    public Element executeRequest(HttpType type, String urlSuffix) throws Exception {
+    public Element executeRequest(HttpType type, String urlSuffix) throws ConnectException, Exception {
         assert (type == HttpType.GET || type == HttpType.DELETE);
         return executeRequest(type, urlSuffix, null);
     }
 
     public Element executeRequest(HttpType type, String urlSuffix, String xmlParams)
-            throws Exception {
+            throws ConnectException, Exception {
         if (Log.isDebugEnabled()) {
             Log.debug("Outgoing REST call [" + type + "] to " + urlSuffix + ": " + xmlParams);
         }
@@ -656,6 +668,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             // Since there is no exception, returns the response
             return response;
+        } catch (DocumentException e) {
+            throw new ConnectException("Error parsing the response of Clearspace.", e);
+        } catch (HttpException e) {
+            throw new ConnectException("Error peforming http request to Clearspace", e);
+        } catch (IOException e) {
+            throw new ConnectException("Error peforming http request to Clearspace.", e);
         } finally {
             method.releaseConnection();
         }
@@ -803,10 +821,13 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
         public void run() {
             try {
+                Log.debug("Trying to configure Clearspace.");
                 configClearspace();
             } catch (UnauthorizedException e) {
-                Log.error("Unoauthorization problem trying to configure Clearspace", e);
+                Log.error("Unoauthorization problem trying to configure Clearspace, trying again in 1 minute", e);
                 // TODO: Mark that there is an authorization problem
+            } catch (Exception e) {
+                Log.error("Unkown problem trying to configure Clearspace, trying again in 1 minute", e);
             }
         }
     }

@@ -57,6 +57,7 @@ import java.text.MessageFormat;
  *      <li>ldap.debugEnabled</li>
  *      <li>ldap.sslEnabled</li>
  *      <li>ldap.autoFollowReferrals</li>
+ *      <li>ldap.autoFollowAliasReferrals</li>
  *      <li>ldap.initialContextFactory --  if this value is not specified,
  *          "com.sun.jndi.ldap.LdapCtxFactory" will be used.</li>
  *      <li>ldap.connectionPoolEnabled -- true if an LDAP connection pool should be used.
@@ -144,6 +145,7 @@ public class LdapManager {
     private boolean sslEnabled = false;
     private String initialContextFactory;
     private boolean followReferrals = false;
+    private boolean followAliasReferrals = true;
     private boolean connectionPoolEnabled = true;
     private String searchFilter = null;
     private boolean subTreeSearch;
@@ -281,6 +283,11 @@ public class LdapManager {
         if (followReferralsStr != null) {
             followReferrals = Boolean.valueOf(followReferralsStr);
         }
+        followAliasReferrals = true;
+        String followAliasReferralsStr = properties.get("ldap.autoFollowAliasReferrals");
+        if (followAliasReferralsStr != null) {
+            followAliasReferrals = Boolean.valueOf(followAliasReferralsStr);
+        }
         encloseUserDN = true;
         String encloseUserStr = properties.get("ldap.encloseUserDN");
         if (encloseUserStr != null) {
@@ -330,6 +337,7 @@ public class LdapManager {
         buf.append("\t initialContextFactory: ").append(initialContextFactory).append("\n");
         buf.append("\t connectionPoolEnabled: ").append(connectionPoolEnabled).append("\n");
         buf.append("\t autoFollowReferrals: ").append(followReferrals).append("\n");
+        buf.append("\t autoFollowAliasReferrals: ").append(followAliasReferrals).append("\n");
         buf.append("\t groupNameField: ").append(groupNameField).append("\n");
         buf.append("\t groupMemberField: ").append(groupMemberField).append("\n");
         buf.append("\t groupDescriptionField: ").append(groupDescriptionField).append("\n");
@@ -413,6 +421,9 @@ public class LdapManager {
         if (followReferrals) {
             env.put(Context.REFERRAL, "follow");
         }
+        if (!followAliasReferrals) {
+            env.put("java.naming.ldap.derefAliases", "never");
+        }
 
         if (debug) {
             Log.debug("LdapManager: Created hashtable with context values, attempting to create context...");
@@ -467,6 +478,9 @@ public class LdapManager {
             if (followReferrals) {
                 env.put(Context.REFERRAL, "follow");
             }
+            if (!followAliasReferrals) {
+                env.put("java.naming.ldap.derefAliases", "never");
+            }
 
             if (debug) {
                 Log.debug("LdapManager: Created context values, attempting to create context...");
@@ -510,6 +524,9 @@ public class LdapManager {
                     }
                     if (followReferrals) {
                         env.put(Context.REFERRAL, "follow");
+                    }
+                    if (!followAliasReferrals) {
+                        env.put("java.naming.ldap.derefAliases", "never");
                     }
                     if (debug) {
                         Log.debug("LdapManager: Created context values, attempting to create context...");
@@ -983,6 +1000,8 @@ public class LdapManager {
     /**
      * Returns the suffix appended to the username when LDAP lookups are performed.
      * By default this is "".
+     *
+     * @return the suffix appened to usernames when LDAP lookups are performed.
      */
     public String getUsernameSuffix() {
         return usernameSuffix;
@@ -1312,6 +1331,25 @@ public class LdapManager {
     public void setFollowReferralsEnabled(boolean followReferrals) {
         this.followReferrals = followReferrals;
         properties.put("ldap.autoFollowReferrals", String.valueOf(followReferrals));
+    }
+
+    /**
+     * Returns true if LDAP alias referrals will automatically be followed when found.
+     *
+     * @return true if LDAP alias referrals are automatically followed.
+     */
+    public boolean isFollowAliasReferralsEnabled() {
+        return followAliasReferrals;
+    }
+
+    /**
+     * Sets whether LDAP alias referrals should be automatically followed.
+     *
+     * @param followAliasReferrals true if LDAP alias referrals should be automatically followed.
+     */
+    public void setFollowAliasReferralsEnabled(boolean followAliasReferrals) {
+        this.followAliasReferrals = followAliasReferrals;
+        properties.put("ldap.autoFollowAliasReferrals", String.valueOf(followAliasReferrals));
     }
 
     /**

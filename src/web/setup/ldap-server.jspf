@@ -15,6 +15,7 @@
     boolean sslEnabled = false;
     boolean debugEnabled = false;
     boolean referralsEnabled = false;
+    boolean aliasReferralsEnabled = true;
 
     // Get parameters
     boolean save = request.getParameter("save") != null;
@@ -43,6 +44,7 @@
         sslEnabled = ParamUtils.getBooleanParameter(request, "ssl", sslEnabled);
         debugEnabled = ParamUtils.getBooleanParameter(request, "debug", debugEnabled);
         referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", referralsEnabled);
+        aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", aliasReferralsEnabled);
 
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
@@ -58,6 +60,7 @@
             settings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
             settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
             settings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
+            settings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
             // Always disable connection pooling so that connections aren't left hanging open.
             settings.put("ldap.connectionPoolEnabled", "false");
             session.setAttribute("ldapSettings", settings);
@@ -78,6 +81,7 @@
                 manager.setSslEnabled(sslEnabled);
                 manager.setDebugEnabled(debugEnabled);
                 manager.setFollowReferralsEnabled(referralsEnabled);
+                manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
 
                 // Redirect to next step.
                 response.sendRedirect(nextPage);
@@ -102,6 +106,7 @@
         sslEnabled = manager.isSslEnabled();
         debugEnabled = manager.isDebugEnabled();
         referralsEnabled = manager.isFollowReferralsEnabled();
+        aliasReferralsEnabled = manager.isFollowAliasReferralsEnabled();
     }
 %>
 <html>
@@ -293,7 +298,21 @@
 						<input type="radio" name="referrals" value="false" <% if (!referralsEnabled) { %>checked <% } %>>
 					</td>
 				</tr>
-				</tbody>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.ldap.server.alias_dereference" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.ldap.server.alias_dereference_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="aliasreferrals" value="true" <% if (aliasReferralsEnabled) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="aliasreferrals" value="false" <% if (!aliasReferralsEnabled) { %>checked <% } %>>
+                    </td>
+                </tr>
+                </tbody>
 				</table>
 			</div>
 		</div>

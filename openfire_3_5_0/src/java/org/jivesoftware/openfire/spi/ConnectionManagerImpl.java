@@ -1,9 +1,9 @@
 /**
  * $RCSfile: ConnectionManagerImpl.java,v $
- * $Revision: 3159 $
- * $Date: 2005-12-04 22:56:40 -0300 (Sun, 04 Dec 2005) $
+ * $Revision: $
+ * $Date: $
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -324,6 +324,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             socketAcceptor.getDefaultConfig().setThreadModel(threadModel);
             // Add the XMPP codec filter
             socketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
+            // Kill sessions whose outgoing queues keep growing and fail to send traffic
+            socketAcceptor.getFilterChain().addAfter("xmpp", "outCap", new StalledSessionsFilter());
         }
     }
 
@@ -408,6 +410,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 // Add the XMPP codec filter
                 sslSocketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
                 sslSocketAcceptor.getFilterChain().addFirst("threadModel", executorFilter);
+                // Kill sessions whose outgoing queues keep growing and fail to send traffic
+                sslSocketAcceptor.getFilterChain().addAfter("xmpp", "outCap", new StalledSessionsFilter());
 
                 // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
                 SSLContext sslContext = SSLContext.getInstance(algorithm);

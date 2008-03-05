@@ -402,6 +402,7 @@ public class LocalMUCUser implements MUCUser {
                     }
                     catch (Exception e) {
                         sendErrorPacket(packet, PacketError.Condition.internal_server_error);
+                        Log.error(e);
                     }
                 }
             }

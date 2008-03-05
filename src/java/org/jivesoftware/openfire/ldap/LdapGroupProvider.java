@@ -17,7 +17,6 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
 import org.xmpp.packet.JID;
@@ -40,8 +39,6 @@ import java.util.regex.Pattern;
 public class LdapGroupProvider implements GroupProvider {
 
     private LdapManager manager;
-    private String baseDN;
-    private String alternateBaseDN;
     private UserManager userManager;
     private String[] standardAttributes;
     private int groupCount = -1;
@@ -52,8 +49,6 @@ public class LdapGroupProvider implements GroupProvider {
      */
     public LdapGroupProvider() {
         manager = LdapManager.getInstance();
-        baseDN = manager.getBaseDN();
-        alternateBaseDN = manager.getAlternateBaseDN();
         userManager = UserManager.getInstance();
         standardAttributes = new String[3];
         standardAttributes[0] = manager.getGroupNameField();
@@ -140,115 +135,16 @@ public class LdapGroupProvider implements GroupProvider {
         if (groupCount != -1 && System.currentTimeMillis() < expiresStamp) {
             return groupCount;
         }
-
-        int count = 0;
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
-        LdapContext ctx = null;
-        LdapContext ctx2 = null;
-        try {
-            ctx = manager.getContext(baseDN);
-
-            // Set up request controls, if appropriate.
-            List<Control> tmpRequestControls = new ArrayList<Control>();
-            if (pageSize > -1) {
-                // Server side paging.
-                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
-            }
-            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
-            ctx.setRequestControls(requestControls);
-
-            SearchControls searchControls = new SearchControls();
-            // See if recursive searching is enabled. Otherwise, only search one level.
-            if (manager.isSubTreeSearch()) {
-                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            }
-            else {
-                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            }
-            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
-            String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, searchControls);
-            byte[] cookie = null;
-
-            // Run through all pages of results (one page is also possible  ;)  )
-            do {
-                // Examine results on this page
-                while (answer.hasMoreElements()) {
-                    answer.next();
-                    count++;
-                }
-                // Examine the paged results control response
-                Control[] controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (Control control : controls) {
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                    (PagedResultsResponseControl) control;
-                            cookie = prrc.getCookie();
-
-                            // Re-activate paged results
-                            ctx.setRequestControls(new Control[]{
-                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                            break;
-                        }
-                    }
-                }
-            } while (cookie != null);
-
-            // Add count of groups found in alternate DN
-            if (alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                answer = ctx2.search("", filter, searchControls);
-                cookie = null;
-                // Run through all pages of results (one page is also possible  ;)  )
-                do {
-                    // Examine results on this page
-                    while (answer.hasMoreElements()) {
-                        count++;
-                        answer.nextElement();
-                    }
-                    // Examine the paged results control response
-                    Control[] controls = ctx.getResponseControls();
-                    if (controls != null) {
-                        for (Control control : controls) {
-                            if (control instanceof PagedResultsResponseControl) {
-                                PagedResultsResponseControl prrc =
-                                        (PagedResultsResponseControl) control;
-                                cookie = prrc.getCookie();
-
-                                // Re-activate paged results
-                                ctx.setRequestControls(new Control[]{
-                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                                break;
-                            }
-                        }
-                    }
-                } while (cookie != null);
-            }
-            // Close the enumeration.
-            answer.close();
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        finally {
-            try {
-                if (ctx != null) {
-                    ctx.setRequestControls(null);
-                    ctx.close();
-                }
-                if (ctx2 != null) {
-                    ctx2.setRequestControls(null);
-                    ctx2.close();
-                }
-            }
-            catch (Exception ignored) {
-                // Ignore.
-            }
-        }
-        this.groupCount = count;
+        List<String> groups = manager.retrieveList(
+                manager.getGroupNameField(),
+                MessageFormat.format(manager.getGroupSearchFilter(), "*"),
+                -1,
+                -1,
+                null
+        );
+        this.groupCount = groups.size();
         this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
-        return count;
+        return this.groupCount;
     }
 
     public Collection<String> getGroupNames() {
@@ -256,155 +152,13 @@ public class LdapGroupProvider implements GroupProvider {
     }
 
     public Collection<String> getGroupNames(int startIndex, int numResults) {
-        List<String> groupNames = new ArrayList<String>();
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
-        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
-        LdapContext ctx = null;
-        LdapContext ctx2 = null;
-        try {
-            ctx = manager.getContext(baseDN);
-
-            // Set up request controls, if appropriate.
-            List<Control> tmpRequestControls = new ArrayList<Control>();
-            if (!clientSideSort) {
-                // Server side sort on username field.
-                tmpRequestControls.add(new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL));
-            }
-            if (pageSize > -1) {
-                // Server side paging.
-                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
-            }
-            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
-            ctx.setRequestControls(requestControls);
-
-            SearchControls searchControls = new SearchControls();
-            // See if recursive searching is enabled. Otherwise, only search one level.
-            if (manager.isSubTreeSearch()) {
-                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            }
-            else {
-                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            }
-            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
-            String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, searchControls);
-            // If server side sort, we'll skip the initial ones we don't want, and stop when we've hit
-            // the amount we do want.
-            int skip = -1;
-            int lastRes = -1;
-            if (!clientSideSort) {
-                skip = startIndex;
-                lastRes = startIndex + numResults;
-
-            }
-            byte[] cookie = null;
-            int count = 0;
-            // Run through all pages of results (one page is also possible  ;)  )
-            do {
-                // Examine all of the results on this page
-                while (answer.hasMoreElements()) {
-                    count++;
-                    if (skip > -1 && count < skip) {
-                        continue;
-                    }
-                    if (lastRes > -1 && count > lastRes) {
-                        break;
-                    }
-
-                    // Get the next group.
-                    String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
-                            manager.getGroupNameField()).get();
-                    // Escape group name and add to results.
-                    groupNames.add(JID.escapeNode(groupName));
-                }
-                // Examine the paged results control response
-                Control[] controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (Control control : controls) {
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                    (PagedResultsResponseControl) control;
-                            cookie = prrc.getCookie();
-
-                            // Re-activate paged results
-                            ctx.setRequestControls(new Control[]{
-                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                            break;
-                        }
-                    }
-                }
-            } while (cookie != null);
-
-            // Add groups found in alternate DN
-            if (count <= lastRes && alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(requestControls);
-                answer = ctx2.search("", filter, searchControls);
-                cookie = null;
-
-                // Run through all pages of results (one page is also possible  ;)  )
-                do {
-                    // Examine all of the results on this page
-                    while (answer.hasMoreElements()) {
-                        count++;
-                        if (skip > -1 && count < skip) {
-                            continue;
-                        }
-                        if (lastRes > -1 && count > lastRes) {
-                            break;
-                        }
-
-                        // Get the next group.
-                        String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
-                                manager.getGroupNameField()).get();
-                        // Escape group name and add to results.
-                        groupNames.add(JID.escapeNode(groupName));
-                    }
-                    // Examine the paged results control response
-                    Control[] controls = ctx.getResponseControls();
-                    if (controls != null) {
-                        for (Control control : controls) {
-                            if (control instanceof PagedResultsResponseControl) {
-                                PagedResultsResponseControl prrc =
-                                        (PagedResultsResponseControl) control;
-                                cookie = prrc.getCookie();
-
-                                // Re-activate paged results
-                                ctx.setRequestControls(new Control[]{
-                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                                break;
-                            }
-                        }
-                    }
-                } while (cookie != null);
-            }
-
-            // Close the enumeration.
-            answer.close();
-            // If client-side sorting is enabled, sort.
-            if (clientSideSort) {
-                Collections.sort(groupNames);
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        finally {
-            try {
-                if (ctx != null) {
-                    ctx.setRequestControls(null);
-                    ctx.close();
-                }
-                if (ctx2 != null) {
-                    ctx2.setRequestControls(null);
-                    ctx2.close();
-                }
-            }
-            catch (Exception ignored) {
-                // Ignore.
-            }
-        }
-        return groupNames;
+        return manager.retrieveList(
+                manager.getGroupNameField(),
+                MessageFormat.format(manager.getGroupSearchFilter(), "*"),
+                startIndex,
+                numResults,
+                null
+        );
     }
 
     public Collection<String> getGroupNames(JID user) {
@@ -432,136 +186,22 @@ public class LdapGroupProvider implements GroupProvider {
         if (username == null || "".equals(username)) {
             return Collections.emptyList();
         }
+        StringBuilder filter = new StringBuilder();
+        filter.append("(&");
+        filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
+        filter.append("(").append(manager.getGroupMemberField()).append("=").append(username);
+        filter.append("))");
+        if (Log.isDebugEnabled()) {
+            Log.debug("Trying to find group names for user: " + user + " using query: " + filter.toString());
+        }
         // Perform the LDAP query
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
-        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
-        List<String> groupNames = new ArrayList<String>();
-        LdapContext ctx = null;
-        LdapContext ctx2 = null;
-        try {
-            ctx = manager.getContext(baseDN);
-
-            // Set up request controls, if appropriate.
-            List<Control> tmpRequestControls = new ArrayList<Control>();
-            if (!clientSideSort) {
-                // Server side sort on username field.
-                tmpRequestControls.add(new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL));
-            }
-            if (pageSize > -1) {
-                // Server side paging.
-                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
-            }
-            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
-            ctx.setRequestControls(requestControls);
-
-            // Search for the dn based on the group name.
-            SearchControls searchControls = new SearchControls();
-            // See if recursive searching is enabled. Otherwise, only search one level.
-            if (manager.isSubTreeSearch()) {
-                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            }
-            else {
-                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            }
-            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
-
-            StringBuilder filter = new StringBuilder();
-            filter.append("(&");
-            filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
-            filter.append("(").append(manager.getGroupMemberField()).append("=").append(username);
-            filter.append("))");
-            if (Log.isDebugEnabled()) {
-                Log.debug("Trying to find group names for user: " + user + " using query: " + filter.toString());
-            }
-            NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
-            byte[] cookie = null;
-            // Run through all pages of results (one page is also possible  ;)  )
-            do {
-                // Examine all results on this page
-                while (answer.hasMoreElements()) {
-                    // Get the next group.
-                    String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
-                            manager.getGroupNameField()).get();
-                    // Escape group name and add to results.
-                    groupNames.add(JID.escapeNode(groupName));
-                }
-                // Examine the paged results control response
-                Control[] controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (Control control : controls) {
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                    (PagedResultsResponseControl) control;
-                            cookie = prrc.getCookie();
-
-                            // Re-activate paged results
-                            ctx.setRequestControls(new Control[]{
-                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                            break;
-                        }
-                    }
-                }
-            } while (cookie != null);
-            if (alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(requestControls);
-                answer = ctx2.search("", filter.toString(), searchControls);
-                cookie = null;
-                // Run through all pages of results (one page is also possible  ;)  )
-                do {
-                    // Examine all results on this page
-                    while (answer.hasMoreElements()) {
-                        // Get the next group.
-                        String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
-                                manager.getGroupNameField()).get();
-                        // Escape group name and add to results.
-                        groupNames.add(JID.escapeNode(groupName));
-                    }
-                    // Examine the paged results control response
-                    Control[] controls = ctx.getResponseControls();
-                    if (controls != null) {
-                        for (Control control : controls) {
-                            if (control instanceof PagedResultsResponseControl) {
-                                PagedResultsResponseControl prrc =
-                                        (PagedResultsResponseControl) control;
-                                cookie = prrc.getCookie();
-
-                                // Re-activate paged results
-                                ctx.setRequestControls(new Control[]{
-                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                                break;
-                            }
-                        }
-                    }
-                } while (cookie != null);
-            }
-            // Close the enumeration.
-            answer.close();
-            // If client-side sorting is enabled, sort.
-            if (clientSideSort) {
-                Collections.sort(groupNames);
-            }
-        }
-        catch (Exception e) {
-            Log.error("Error getting groups for user: " + user, e);
-            return Collections.emptyList();
-        }
-        finally {
-            try {
-                if (ctx != null) {
-                    ctx.setRequestControls(null);
-                    ctx.close();
-                }
-                if (ctx2 != null) {
-                    ctx2.setRequestControls(null);
-                    ctx2.close();
-                }
-            }
-            catch (Exception ignored) {
-                // Ignore.
-            }
-        }
-        return groupNames;
+        return manager.retrieveList(
+                manager.getGroupNameField(),
+                filter.toString(),
+                -1,
+                -1,
+                null
+        );
     }
 
     /**
@@ -624,278 +264,20 @@ public class LdapGroupProvider implements GroupProvider {
         if (!query.endsWith("*")) {
             query = query + "*";
         }
-        List<String> groupNames = new ArrayList<String>();
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
-        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
-        LdapContext ctx = null;
-        LdapContext ctx2 = null;
-        try {
-            ctx = manager.getContext(baseDN);
-
-            // Set up request controls, if appropriate.
-            List<Control> tmpRequestControls = new ArrayList<Control>();
-            if (!clientSideSort) {
-                // Server side sort on username field.
-                tmpRequestControls.add(new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL));
-            }
-            if (pageSize > -1) {
-                // Server side paging.
-                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
-            }
-            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
-            ctx.setRequestControls(requestControls);
-
-            // Search for the dn based on the group name.
-            SearchControls searchControls = new SearchControls();
-            // See if recursive searching is enabled. Otherwise, only search one level.
-            if (manager.isSubTreeSearch()) {
-                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            }
-            else {
-                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            }
-            searchControls.setReturningAttributes(new String[] { manager.getGroupNameField() });
-            StringBuilder filter = new StringBuilder();
-            filter.append("(").append(manager.getGroupNameField()).append("=").append(query).append(")");
-            NamingEnumeration answer = ctx.search("", filter.toString(), searchControls);
-            // If server side sort, we'll skip the initial ones we don't want, and stop when we've hit
-            // the amount we do want.
-            int skip = -1;
-            int lastRes = -1;
-            if (!clientSideSort) {
-                skip = startIndex;
-                lastRes = startIndex + numResults;
-
-            }
-            byte[] cookie = null;
-            int count = 0;
-            // Run through all pages of results (one page is also possible  ;)  )
-            do {
-                // Examine all results on this page
-                while (answer.hasMoreElements()) {
-                    count++;
-                    if (skip > -1 && count < skip) {
-                        continue;
-                    }
-                    if (lastRes > -1 && count > lastRes) {
-                        break;
-                    }
-
-                    // Get the next group.
-                    String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
-                            manager.getGroupNameField()).get();
-                    // Escape group name and add to results.
-                    groupNames.add(JID.escapeNode(groupName));
-                }
-                // Examine the paged results control response
-                Control[] controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (Control control : controls) {
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                    (PagedResultsResponseControl) control;
-                            cookie = prrc.getCookie();
-
-                            // Re-activate paged results
-                            ctx.setRequestControls(new Control[]{
-                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                            break;
-                        }
-                    }
-                }
-            } while (cookie != null);
-            if (count <= lastRes && alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(requestControls);
-                answer = ctx2.search("", filter.toString(), searchControls);
-                cookie = null;
-                // Run through all pages of results (one page is also possible  ;)  )
-                do {
-                    // Examine all results on this page
-                    while (answer.hasMoreElements()) {
-                        count++;
-                        if (skip > -1 && count < skip) {
-                            continue;
-                        }
-                        if (lastRes > -1 && count > lastRes) {
-                            break;
-                        }
-                        
-                        // Get the next group.
-                        String groupName = (String)((SearchResult)answer.next()).getAttributes().get(
-                                manager.getGroupNameField()).get();
-                        // Escape group name and add to results.
-                        groupNames.add(JID.escapeNode(groupName));
-                    }
-                    // Examine the paged results control response
-                    Control[] controls = ctx.getResponseControls();
-                    if (controls != null) {
-                        for (Control control : controls) {
-                            if (control instanceof PagedResultsResponseControl) {
-                                PagedResultsResponseControl prrc =
-                                        (PagedResultsResponseControl) control;
-                                cookie = prrc.getCookie();
-
-                                // Re-activate paged results
-                                ctx.setRequestControls(new Control[]{
-                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                                break;
-                            }
-                        }
-                    }
-                } while (cookie != null);
-            }
-            // Close the enumeration.
-            answer.close();
-            // If client-side sorting is enabled, sort.
-            if (clientSideSort) {
-                Collections.sort(groupNames);
-            }
-        }
-        catch (Exception e) {
-            Log.error(e);
-        }
-        finally {
-            try {
-                if (ctx != null) {
-                    ctx.setRequestControls(null);
-                    ctx.close();
-                }
-                if (ctx2 != null) {
-                    ctx2.setRequestControls(null);
-                    ctx2.close();
-                }
-            }
-            catch (Exception ignored) {
-                // Ignore.
-            }
-        }
-        return groupNames;
+        StringBuilder filter = new StringBuilder();
+        filter.append("(").append(manager.getGroupNameField()).append("=").append(query).append(")");
+        // Perform the LDAP query
+        return manager.retrieveList(
+                manager.getGroupNameField(),
+                filter.toString(),
+                startIndex,
+                numResults,
+                null
+        );
     }
 
     public boolean isSearchSupported() {
         return true;
-    }
-
-    /**
-     * An auxilary method used to populate LDAP groups based on a provided LDAP search result.
-     *
-     * @param answer LDAP search result.
-     * @return a collection of groups.
-     * @throws javax.naming.NamingException if there was an exception with the LDAP query.
-     */
-    private Collection<Group> populateGroups(Enumeration<SearchResult> answer) throws NamingException {
-        if (manager.isDebugEnabled()) {
-            Log.debug("LdapGroupProvider: Starting to populate groups with users.");
-        }
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
-        LdapContext ctx = null;
-        LdapContext ctx2 = null;
-        try {
-            TreeMap<String, Group> groups = new TreeMap<String, Group>();
-
-            ctx = manager.getContext(baseDN);
-
-            // Set up request controls, if appropriate.
-            List<Control> tmpRequestControls = new ArrayList<Control>();
-            if (pageSize > -1) {
-                // Server side paging.
-                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
-            }
-            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
-            ctx.setRequestControls(requestControls);
-            byte[] cookie = null;
-
-            // Run through all pages of results (one page is also possible  ;)  )
-            do {
-                // Examine all results on this page
-                while (answer.hasMoreElements()) {
-                    String name = "";
-                    try {
-                        Group group = processGroup(ctx, answer.nextElement().getAttributes());
-                        name = group.getName();
-                        groups.put(name, group);
-                    }
-                    catch (Exception e) {
-                        Log.error("LdapGroupProvider: Error while populating group, " + name + ".", e);
-                    }
-                }
-                // Examine the paged results control response
-                Control[] controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (Control control : controls) {
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                    (PagedResultsResponseControl) control;
-                            cookie = prrc.getCookie();
-
-                            // Re-activate paged results
-                            ctx.setRequestControls(new Control[]{
-                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                            break;
-                        }
-                    }
-                }
-            } while (cookie != null);
-            if (alternateBaseDN != null) {
-                ctx2 = manager.getContext(alternateBaseDN);
-                ctx2.setRequestControls(requestControls);
-                cookie = null;
-                // Run through all pages of results (one page is also possible  ;)  )
-                do {
-                    // Examine all results on this page
-                    while (answer.hasMoreElements()) {
-                        String name = "";
-                        try {
-                            Group group = processGroup(ctx, answer.nextElement().getAttributes());
-                            name = group.getName();
-                            groups.put(name, group);
-                        }
-                        catch (Exception e) {
-                            Log.error("LdapGroupProvider: Error while populating group, " + name + ".", e);
-                        }
-                    }
-                    // Examine the paged results control response
-                    Control[] controls = ctx.getResponseControls();
-                    if (controls != null) {
-                        for (Control control : controls) {
-                            if (control instanceof PagedResultsResponseControl) {
-                                PagedResultsResponseControl prrc =
-                                        (PagedResultsResponseControl) control;
-                                cookie = prrc.getCookie();
-
-                                // Re-activate paged results
-                                ctx.setRequestControls(new Control[]{
-                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                                break;
-                            }
-                        }
-                    }
-                } while (cookie != null);
-            }
-            if (manager.isDebugEnabled()) {
-                Log.debug("LdapGroupProvider: Finished populating group(s) with users.");
-            }
-
-            return groups.values();
-        }
-        catch (Exception e) {
-            Log.error("Exception while attempting to populate groups and members: ", e);
-            return new ArrayList<Group>();
-        }
-        finally {
-            try {
-                if (ctx != null) {
-                    ctx.close();
-                }
-                if (ctx2 != null) {
-                    ctx2.close();
-                }
-            }
-            catch (Exception e) {
-                // Ignore.
-            }
-        }
     }
 
     private Group processGroup(LdapContext ctx, Attributes a) throws NamingException {
@@ -969,6 +351,7 @@ public class LdapGroupProvider implements GroupProvider {
                         }
                     }
                     catch (Exception e) {
+                        // TODO: A NPE is occuring here
                         Log.error(e);
                     }
                 }

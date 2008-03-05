@@ -23,8 +23,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import javax.naming.ldap.InitialLdapContext;
-import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.*;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1466,4 +1465,185 @@ public class LdapManager {
         this.groupSearchFilter = groupSearchFilter;
         properties.put("ldap.groupSearchFilter", groupSearchFilter);
     }
+
+    /**
+     * Generic routine for retrieving a list of results from the LDAP server.  It's meant to be very
+     * flexible so that just about any query for a list of results can make use of it without having
+     * to reimplement their own calls to LDAP.  This routine also accounts for sorting settings,
+     * paging settings, any other global settings, and alternate DNs.
+     *
+     * The passed in filter string needs to be pre-prepared!  In other words, nothing will be changed
+     * in the string before it is used as a string.
+     *
+     * @param attribute LDAP attribute to be pulled from each result and placed in the return results.
+     *     Typically pulled from this manager.
+     * @param searchFilter Filter to use to perform the search.  Typically pulled from this manager.
+     * @param startIndex Number/index of first result to include in results.  (-1 for no limit)
+     * @param numResults Number of results to include.  (-1 for no limit)
+     * @param suffixToTrim An arbitrary string to trim from the end of every attribute returned.  null to disable.
+     * @return A simple list of strings (that should be sorted) of the results.
+     */
+    public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim) {
+        List<String> results = new ArrayList<String>();
+        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
+        LdapContext ctx = null;
+        LdapContext ctx2 = null;
+        try {
+            ctx = getContext(baseDN);
+
+            // Set up request controls, if appropriate.
+            List<Control> tmpRequestControls = new ArrayList<Control>();
+            if (!clientSideSort) {
+                // Server side sort on username field.
+                tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
+            }
+            if (pageSize > -1) {
+                // Server side paging.
+                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            }
+            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+            ctx.setRequestControls(requestControls);
+
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { attribute });
+            // If server side sort, we'll skip the initial ones we don't want, and stop when we've hit
+            // the amount we do want.
+            int skip = -1;
+            int lastRes = -1;
+            if (!clientSideSort) {
+                skip = startIndex;
+                lastRes = startIndex + numResults;
+
+            }
+            byte[] cookie = null;
+            int count = 0;
+            // Run through all pages of results (one page is also possible  ;)  )
+            do {
+                NamingEnumeration answer = ctx.search("", searchFilter, searchControls);
+
+                // Examine all of the results on this page
+                while (answer.hasMoreElements()) {
+                    count++;
+                    if (skip > -1 && count < skip) {
+                        continue;
+                    }
+                    if (lastRes > -1 && count > lastRes) {
+                        break;
+                    }
+
+                    // Get the next result.
+                    String result = (String)((SearchResult)answer.next()).getAttributes().get(
+                            attribute).get();
+                    // Remove suffixToTrim if set
+                    if (suffixToTrim != null && suffixToTrim.length() > 0 && result.endsWith(suffixToTrim)) {
+                        result = result.substring(0,result.length()-suffixToTrim.length());
+                    }
+                    // Add this to the result.
+                    results.add(result);
+                }
+                // Examine the paged results control response
+                Control[] controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (Control control : controls) {
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl) control;
+                            cookie = prrc.getCookie();
+
+                            // Re-activate paged results
+                            ctx.setRequestControls(new Control[]{
+                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                            break;
+                        }
+                    }
+                }
+                // Close the enumeration.
+                answer.close();
+            } while (cookie != null);
+
+            // Add groups found in alternate DN
+            if (count <= lastRes && alternateBaseDN != null) {
+                ctx2 = getContext(alternateBaseDN);
+                ctx2.setRequestControls(requestControls);
+                NamingEnumeration answer = ctx2.search("", searchFilter, searchControls);
+                cookie = null;
+
+                // Run through all pages of results (one page is also possible  ;)  )
+                do {
+                    // Examine all of the results on this page
+                    while (answer.hasMoreElements()) {
+                        count++;
+                        if (skip > -1 && count < skip) {
+                            continue;
+                        }
+                        if (lastRes > -1 && count > lastRes) {
+                            break;
+                        }
+
+                        // Get the next result.
+                        String result = (String)((SearchResult)answer.next()).getAttributes().get(
+                                attribute).get();
+                        // Remove suffixToTrim if set
+                        if (suffixToTrim != null && suffixToTrim.length() > 0 && result.endsWith(suffixToTrim)) {
+                            result = result.substring(0,result.length()-suffixToTrim.length());
+                        }
+                        // Add this to the result.
+                        results.add(result);
+                    }
+                    // Examine the paged results control response
+                    Control[] controls = ctx.getResponseControls();
+                    if (controls != null) {
+                        for (Control control : controls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc =
+                                        (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+
+                                // Re-activate paged results
+                                ctx.setRequestControls(new Control[]{
+                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+                                break;
+                            }
+                        }
+                    }
+                    // Close the enumeration.
+                    answer.close();
+                } while (cookie != null);
+            }
+
+            // If client-side sorting is enabled, sort.
+            if (clientSideSort) {
+                Collections.sort(results);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+                if (ctx2 != null) {
+                    ctx2.setRequestControls(null);
+                    ctx2.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+        return results;
+    }
+
+    // TODO: Create a count version of this so we don't pull all of the information into a huge array for no reason
 }

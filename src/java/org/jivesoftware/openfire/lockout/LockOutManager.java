@@ -35,8 +35,8 @@ import java.util.Date;
 public class LockOutManager {
 
     // Wrap this guy up so we can mock out the LockOutManager class.
-    private static final class LockOutManagerContainer {
-        private static final LockOutManager instance = new LockOutManager();
+    private static class LockOutManagerContainer {
+        private static LockOutManager instance = new LockOutManager();
     }
 
     /**
@@ -48,7 +48,7 @@ public class LockOutManager {
      * @return the current LockOutProvider.
      */
     public static LockOutProvider getLockOutProvider() {
-        return provider;
+        return LockOutManagerContainer.instance.provider;
     }
 
     /**
@@ -62,7 +62,7 @@ public class LockOutManager {
 
     /* Cache of locked out accounts */
     private Cache<String,LockOutFlag> lockOutCache;
-    private static LockOutProvider provider = null;
+    private LockOutProvider provider;
 
     /**
      * Constructs a LockOutManager, setting up it's cache, propery listener, and setting up the provider.
@@ -101,7 +101,7 @@ public class LockOutManager {
      * Initializes the server's lock out provider, based on configuration and defaults to
      * DefaultLockOutProvider if the specified provider is not valid or not specified.
      */
-    private static void initProvider() {
+    private void initProvider() {
         String className = JiveGlobals.getXMLProperty("provider.lockout.className",
                 "org.jivesoftware.openfire.lockout.DefaultLockOutProvider");
         // Check if we need to reset the provider class

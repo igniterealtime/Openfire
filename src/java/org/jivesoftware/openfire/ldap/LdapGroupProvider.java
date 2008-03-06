@@ -135,14 +135,10 @@ public class LdapGroupProvider implements GroupProvider {
         if (groupCount != -1 && System.currentTimeMillis() < expiresStamp) {
             return groupCount;
         }
-        List<String> groups = manager.retrieveList(
+        this.groupCount = manager.retrieveListCount(
                 manager.getGroupNameField(),
-                MessageFormat.format(manager.getGroupSearchFilter(), "*"),
-                -1,
-                -1,
-                null
+                MessageFormat.format(manager.getGroupSearchFilter(), "*")
         );
-        this.groupCount = groups.size();
         this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
         return this.groupCount;
     }

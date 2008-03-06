@@ -135,14 +135,10 @@ public class LdapUserProvider implements UserProvider {
         if (userCount != -1 && System.currentTimeMillis() < expiresStamp) {
             return userCount;
         }
-        List<String> users = manager.retrieveList(
+        this.userCount = manager.retrieveListCount(
                 manager.getUsernameField(),
-                MessageFormat.format(manager.getSearchFilter(), "*"),
-                -1,
-                -1,
-                null
+                MessageFormat.format(manager.getSearchFilter(), "*")
         );
-        this.userCount = users.size();
         this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
         return this.userCount;
     }

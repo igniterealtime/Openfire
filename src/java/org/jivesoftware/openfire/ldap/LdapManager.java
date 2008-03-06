@@ -1493,17 +1493,17 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> tmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<Control>();
             if (!clientSideSort) {
                 // Server side sort on username field.
-                tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
+                baseTmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
             }
             if (pageSize > 0) {
                 // Server side paging.
-                tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+                baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
             }
-            Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
-            ctx.setRequestControls(requestControls);
+            Control[] baseRequestControls = baseTmpRequestControls.toArray(new Control[baseTmpRequestControls.size()]);
+            ctx.setRequestControls(baseRequestControls);
 
             SearchControls searchControls = new SearchControls();
             // See if recursive searching is enabled. Otherwise, only search one level.
@@ -1522,19 +1522,22 @@ public class LdapManager {
                 skip = startIndex;
                 lastRes = startIndex + numResults;
             }
-            byte[] cookie = null;
+            byte[] cookie;
             int count = 0;
             // Run through all pages of results (one page is also possible  ;)  )
             do {
+                cookie = null;
                 NamingEnumeration answer = ctx.search("", searchFilter, searchControls);
 
                 // Examine all of the results on this page
                 while (answer.hasMoreElements()) {
                     count++;
-                    if (skip > -1 && count < skip) {
+                    if (skip > 0 && count <= skip) {
+                        answer.next();
                         continue;
                     }
-                    if (lastRes > -1 && count > lastRes) {
+                    if (lastRes != -1 && count > lastRes) {
+                        answer.next();
                         break;
                     }
 
@@ -1560,26 +1563,38 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                ctx.setRequestControls(new Control[]{
-                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-            } while (cookie != null);
+                List<Control> tmpRequestControls = new ArrayList<Control>();
+                if (!clientSideSort) {
+                    // Server side sort on username field.
+                    tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
+                }
+                if (pageSize > 0) {
+                    // Server side paging.
+                    tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                }
+                Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                ctx.setRequestControls(requestControls);
+            } while (cookie != null && (lastRes == -1 || count <= lastRes));
 
             // Add groups found in alternate DN
-            if (count <= lastRes && alternateBaseDN != null) {
+            if (alternateBaseDN != null && (lastRes == -1 || count <= lastRes)) {
                 ctx2 = getContext(alternateBaseDN);
-                ctx2.setRequestControls(requestControls);
-                NamingEnumeration answer = ctx2.search("", searchFilter, searchControls);
-                cookie = null;
+                ctx2.setRequestControls(baseRequestControls);
 
                 // Run through all pages of results (one page is also possible  ;)  )
                 do {
+                    cookie = null;
+                    NamingEnumeration answer = ctx2.search("", searchFilter, searchControls);
+
                     // Examine all of the results on this page
                     while (answer.hasMoreElements()) {
                         count++;
-                        if (skip > -1 && count < skip) {
+                        if (skip > 0 && count <= skip) {
+                            answer.next();
                             continue;
                         }
-                        if (lastRes > -1 && count > lastRes) {
+                        if (lastRes != -1 && count > lastRes) {
+                            answer.next();
                             break;
                         }
 
@@ -1593,28 +1608,45 @@ public class LdapManager {
                         results.add(result);
                     }
                     // Examine the paged results control response
-                    Control[] controls = ctx.getResponseControls();
+                    Control[] controls = ctx2.getResponseControls();
                     if (controls != null) {
                         for (Control control : controls) {
                             if (control instanceof PagedResultsResponseControl) {
                                 PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                                 cookie = prrc.getCookie();
-
-                                // Re-activate paged results
-                                ctx2.setRequestControls(new Control[]{
-                                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                                break;
                             }
                         }
                     }
                     // Close the enumeration.
                     answer.close();
-                } while (cookie != null);
+                    // Re-activate paged results; affects nothing if no paging support
+                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    if (!clientSideSort) {
+                        // Server side sort on username field.
+                        tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
+                    }
+                    if (pageSize > 0) {
+                        // Server side paging.
+                        tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                    }
+                    Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                    ctx2.setRequestControls(requestControls);
+                } while (cookie != null && (lastRes == -1 || count <= lastRes));
             }
 
-            // If client-side sorting is enabled, sort.
+            // If client-side sorting is enabled, sort and trim.
             if (clientSideSort) {
                 Collections.sort(results);
+                if (startIndex != -1 || numResults != -1) {
+                    if (startIndex == -1) {
+                        startIndex = 0;
+                    }
+                    if (numResults == -1) {
+                        numResults = results.size();
+                    }
+                    int endIndex = Math.min(startIndex + numResults, results.size()-1);
+                    results = results.subList(startIndex, endIndex);
+                }
             }
         }
         catch (Exception e) {
@@ -1638,5 +1670,134 @@ public class LdapManager {
         return results;
     }
 
-    // TODO: Create a count version of this so we don't pull all of the information into a huge array for no reason
+    /**
+     * Generic routine for retrieving the number of available results from the LDAP server that
+     * match the passed search filter.  This routine also accounts for paging settings and
+     * alternate DNs.
+     *
+     * The passed in filter string needs to be pre-prepared!  In other words, nothing will be changed
+     * in the string before it is used as a string.
+     *
+     * @param attribute LDAP attribute to be pulled from each result and used in the query.
+     *     Typically pulled from this manager.
+     * @param searchFilter Filter to use to perform the search.  Typically pulled from this manager.
+     * @return The number of entries that match the filter.
+     */
+    public Integer retrieveListCount(String attribute, String searchFilter) {
+        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        LdapContext ctx = null;
+        LdapContext ctx2 = null;
+        Integer count = 0;
+        try {
+            ctx = getContext(baseDN);
+
+            // Set up request controls, if appropriate.
+            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            if (pageSize > 0) {
+                // Server side paging.
+                baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            }
+            Control[] baseRequestControls = baseTmpRequestControls.toArray(new Control[baseTmpRequestControls.size()]);
+            ctx.setRequestControls(baseRequestControls);
+
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(new String[] { attribute });
+            byte[] cookie;
+            // Run through all pages of results (one page is also possible  ;)  )
+            do {
+                cookie = null;
+                NamingEnumeration answer = ctx.search("", searchFilter, searchControls);
+
+                // Examine all of the results on this page
+                while (answer.hasMoreElements()) {
+                    answer.next();
+                    count++;
+                }
+                // Examine the paged results control response
+                Control[] controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (Control control : controls) {
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
+                            cookie = prrc.getCookie();
+                        }
+                    }
+                }
+                // Close the enumeration.
+                answer.close();
+                // Re-activate paged results; affects nothing if no paging support
+                List<Control> tmpRequestControls = new ArrayList<Control>();
+                if (pageSize > 0) {
+                    // Server side paging.
+                    tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                }
+                Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                ctx.setRequestControls(requestControls);
+            } while (cookie != null);
+
+            // Add groups found in alternate DN
+            if (alternateBaseDN != null) {
+                ctx2 = getContext(alternateBaseDN);
+                ctx2.setRequestControls(baseRequestControls);
+
+                // Run through all pages of results (one page is also possible  ;)  )
+                do {
+                    cookie = null;
+                    NamingEnumeration answer = ctx2.search("", searchFilter, searchControls);
+
+                    // Examine all of the results on this page
+                    while (answer.hasMoreElements()) {
+                        answer.next();
+                        count++;
+                    }
+                    // Examine the paged results control response
+                    Control[] controls = ctx2.getResponseControls();
+                    if (controls != null) {
+                        for (Control control : controls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+                            }
+                        }
+                    }
+                    // Close the enumeration.
+                    answer.close();
+                    // Re-activate paged results; affects nothing if no paging support
+                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    if (pageSize > 0) {
+                        // Server side paging.
+                        tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                    }
+                    Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                    ctx2.setRequestControls(requestControls);
+                } while (cookie != null);
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.setRequestControls(null);
+                    ctx.close();
+                }
+                if (ctx2 != null) {
+                    ctx2.setRequestControls(null);
+                    ctx2.close();
+                }
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+        return count;
+    }
 }

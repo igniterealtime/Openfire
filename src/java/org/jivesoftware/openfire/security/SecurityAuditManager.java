@@ -34,8 +34,8 @@ import java.util.Date;
 public class SecurityAuditManager {
 
     // Wrap this guy up so we can mock out the SecurityAuditManager class.
-    private static final class SecurityAuditManagerContainer {
-        private static final SecurityAuditManager instance = new SecurityAuditManager();
+    private static class SecurityAuditManagerContainer {
+        private static SecurityAuditManager instance = new SecurityAuditManager();
     }
 
     /**
@@ -47,7 +47,7 @@ public class SecurityAuditManager {
      * @return the current SecurityAuditProvider.
      */
     public static SecurityAuditProvider getSecurityAuditProvider() {
-        return provider;
+        return SecurityAuditManagerContainer.instance.provider;
     }
 
     /**
@@ -59,7 +59,7 @@ public class SecurityAuditManager {
         return SecurityAuditManagerContainer.instance;
     }
 
-    private static SecurityAuditProvider provider = null;
+    private SecurityAuditProvider provider;
 
     /**
      * Constructs a SecurityAuditManager, setting up the provider, and a listener.
@@ -95,7 +95,7 @@ public class SecurityAuditManager {
      * Initializes the server's security audit provider, based on configuration and defaults to
      * DefaultSecurityAuditProvider if the specified provider is not valid or not specified.
      */
-    private static void initProvider() {
+    private void initProvider() {
         String className = JiveGlobals.getXMLProperty("provider.securityAudit.className",
                 "org.jivesoftware.openfire.security.DefaultSecurityAuditProvider");
         // Check if we need to reset the provider class

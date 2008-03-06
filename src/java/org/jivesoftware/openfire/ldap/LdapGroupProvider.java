@@ -279,7 +279,7 @@ public class LdapGroupProvider implements GroupProvider {
     private Group processGroup(LdapContext ctx, Attributes a) throws NamingException {
         XMPPServer server = XMPPServer.getInstance();
         String serverName = server.getServerInfo().getXMPPDomain();
-        // Build 3 groups.
+        // Build `3 groups.
         // group 1: uid=
         // group 2: rest of the text until first comma
         // group 3: rest of the text
@@ -338,9 +338,10 @@ public class LdapGroupProvider implements GroupProvider {
                             NamingEnumeration usrAnswer = ctx.search("",
                                     userDNPart, searchControls);
                             if (usrAnswer != null && usrAnswer.hasMoreElements()) {
-                                username = (String) ((SearchResult) usrAnswer.next())
-                                        .getAttributes().get(
-                                        manager.getUsernameField()).get();
+                                Attribute usernameAttr = ((SearchResult)usrAnswer.next()).getAttributes().get(manager.getUsernameField());
+                                if (usernameAttr != null) {
+                                    username = (String)usernameAttr.get();
+                                }
                             }
                             // Close the enumeration.
                             usrAnswer.close();

@@ -1521,7 +1521,6 @@ public class LdapManager {
             if (!clientSideSort) {
                 skip = startIndex;
                 lastRes = startIndex + numResults;
-
             }
             byte[] cookie = null;
             int count = 0;
@@ -1540,8 +1539,7 @@ public class LdapManager {
                     }
 
                     // Get the next result.
-                    String result = (String)((SearchResult)answer.next()).getAttributes().get(
-                            attribute).get();
+                    String result = (String)((SearchResult)answer.next()).getAttributes().get(attribute).get();
                     // Remove suffixToTrim if set
                     if (suffixToTrim != null && suffixToTrim.length() > 0 && result.endsWith(suffixToTrim)) {
                         result = result.substring(0,result.length()-suffixToTrim.length());
@@ -1554,14 +1552,16 @@ public class LdapManager {
                 if (controls != null) {
                     for (Control control : controls) {
                         if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                    (PagedResultsResponseControl) control;
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                             cookie = prrc.getCookie();
+
+                            int total = prrc.getResultSize();
+                            Log.debug("LdapManager: End of page found, count is "+count+", total results are "+total+", and cookie is "+cookie);
 
                             // Re-activate paged results
                             ctx.setRequestControls(new Control[]{
                                 new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-                            break;
+//                            break;
                         }
                     }
                 }
@@ -1589,8 +1589,7 @@ public class LdapManager {
                         }
 
                         // Get the next result.
-                        String result = (String)((SearchResult)answer.next()).getAttributes().get(
-                                attribute).get();
+                        String result = (String)((SearchResult)answer.next()).getAttributes().get(attribute).get();
                         // Remove suffixToTrim if set
                         if (suffixToTrim != null && suffixToTrim.length() > 0 && result.endsWith(suffixToTrim)) {
                             result = result.substring(0,result.length()-suffixToTrim.length());
@@ -1603,12 +1602,11 @@ public class LdapManager {
                     if (controls != null) {
                         for (Control control : controls) {
                             if (control instanceof PagedResultsResponseControl) {
-                                PagedResultsResponseControl prrc =
-                                        (PagedResultsResponseControl) control;
+                                PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                                 cookie = prrc.getCookie();
 
                                 // Re-activate paged results
-                                ctx.setRequestControls(new Control[]{
+                                ctx2.setRequestControls(new Control[]{
                                     new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
                                 break;
                             }

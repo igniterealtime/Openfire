@@ -1498,7 +1498,7 @@ public class LdapManager {
                 // Server side sort on username field.
                 tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
             }
-            if (pageSize > -1) {
+            if (pageSize > 0) {
                 // Server side paging.
                 tmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
             }
@@ -1554,19 +1554,14 @@ public class LdapManager {
                         if (control instanceof PagedResultsResponseControl) {
                             PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                             cookie = prrc.getCookie();
-
-                            int total = prrc.getResultSize();
-                            Log.debug("LdapManager: End of page found, count is "+count+", total results are "+total+", and cookie is "+cookie);
-
-                            // Re-activate paged results
-                            ctx.setRequestControls(new Control[]{
-                                new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-//                            break;
                         }
                     }
                 }
                 // Close the enumeration.
                 answer.close();
+                // Re-activate paged results; affects nothing if no paging support
+                ctx.setRequestControls(new Control[]{
+                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
             } while (cookie != null);
 
             // Add groups found in alternate DN

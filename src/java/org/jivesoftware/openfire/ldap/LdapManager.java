@@ -1519,8 +1519,12 @@ public class LdapManager {
             int skip = -1;
             int lastRes = -1;
             if (!clientSideSort) {
-                skip = startIndex;
-                lastRes = startIndex + numResults;
+                if (startIndex != -1) {
+                    skip = startIndex;
+                }
+                if (numResults != -1) {
+                    lastRes = startIndex + numResults;
+                }
             }
             byte[] cookie;
             int count = 0;

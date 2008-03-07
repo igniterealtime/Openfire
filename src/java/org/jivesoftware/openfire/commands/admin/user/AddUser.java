@@ -8,19 +8,20 @@
  */
 package org.jivesoftware.openfire.commands.admin.user;
 
+import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.StringUtils;
-import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -168,6 +169,7 @@ public class AddUser extends AdHocCommand {
     }
 
     public boolean hasPermission(JID requester) {
-        return super.hasPermission(requester) && !UserManager.getUserProvider().isReadOnly();
+        return (super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester))
+                && !UserManager.getUserProvider().isReadOnly();
     }
 }

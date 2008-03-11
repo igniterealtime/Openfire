@@ -70,7 +70,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
             throw ue;
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+            throw new UnauthorizedException("Unexpected error", e);
         }
     }
 

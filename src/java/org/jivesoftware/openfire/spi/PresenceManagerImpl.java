@@ -429,7 +429,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
     }
 
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID) {
-        if (userManager.isRegisteredUser(userJID.getNode())) {
+        if (userJID.getDomain().equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain()) && userManager.isRegisteredUser(userJID.getNode())) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
                 // Do not send an unavailable presence if the user sent a direct available presence
                 if (presenceUpdateHandler.hasDirectPresence(session.getAddress(), recipientJID)) {

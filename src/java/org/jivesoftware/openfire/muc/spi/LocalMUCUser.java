@@ -345,8 +345,7 @@ public class LocalMUCUser implements MUCUser {
         else {
             MUCRole role = roles.get(group);
             if (role == null) {
-                // TODO: send error message to user (can't send packets to group you haven't
-                // joined)
+                sendErrorPacket(packet, PacketError.Condition.not_authorized);
             }
             else if (IQ.Type.result == packet.getType()) {
                 // Only process IQ result packet if it's a private packet sent to another

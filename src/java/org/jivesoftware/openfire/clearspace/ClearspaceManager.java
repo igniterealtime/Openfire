@@ -417,7 +417,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         if (configClearspaceTask != null) {
             configClearspaceTask.cancel();
             Log.debug("Stopping previous configuration Clearspace task.");
-        }
+        }                                      
 
         // Create and schedule a confi task every minute
         configClearspaceTask = new ConfigClearspaceTask();
@@ -515,7 +515,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                 // We failed to discover a valid IP address where the admin console is running
                 return null;
             }
+        } else {
+            bindInterfaces.add(bindInterface);
         }
+        
         return bindInterfaces;
     }
 
@@ -824,10 +827,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                 Log.debug("Trying to configure Clearspace.");
                 configClearspace();
             } catch (UnauthorizedException e) {
-                Log.error("Unoauthorization problem trying to configure Clearspace, trying again in 1 minute", e);
+                Log.warn("Unauthorization problem trying to configure Clearspace, trying again in 1 minute", e);
                 // TODO: Mark that there is an authorization problem
             } catch (Exception e) {
-                Log.error("Unkown problem trying to configure Clearspace, trying again in 1 minute", e);
+                Log.warn("Unknown problem trying to configure Clearspace, trying again in 1 minute", e);
             }
         }
     }

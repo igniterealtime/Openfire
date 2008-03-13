@@ -511,6 +511,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // we could still send directed presences to entities that when connected to a cluster
         // they will be replicated. An example would be MUC rooms.
         for (Map.Entry<String, Collection<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                Log.warn("PresenceUpdateHandler - Skipping empty directed presences when joining cluster for sender: " +
+                        entry.getKey());
+                continue;
+            }
             directedPresencesCache.put(entry.getKey(), entry.getValue());
         }
     }
@@ -523,6 +528,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Populate directedPresencesCache with local content
             for (Map.Entry<String, Collection<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
+                if (entry.getValue().isEmpty()) {
+                    Log.warn(
+                            "PresenceUpdateHandler - Skipping empty directed presences when leaving cluster for sender: " +
+                                    entry.getKey());
+                    continue;
+                }
                 directedPresencesCache.put(entry.getKey(), entry.getValue());
             }
         }

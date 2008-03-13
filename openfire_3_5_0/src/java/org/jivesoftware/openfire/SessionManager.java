@@ -30,7 +30,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -394,7 +393,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         // Keep track of the nodeID hosting the incoming server session
         incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
         // Update list of sockets/sessions coming from the same remote hostname
-        Lock lock = LockManager.getLock(hostname);
+        Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
             List<String> streamIDs = hostnameSessionsCache.get(hostname);
@@ -408,7 +407,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             lock.unlock();
         }
         // Add to clustered cache
-        lock = LockManager.getLock(streamID);
+        lock = CacheFactory.getLock(streamID, validatedDomainsCache);
         try {
             lock.lock();
             Set<String> validatedDomains = validatedDomainsCache.get(streamID);
@@ -438,7 +437,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         incomingServerSessionsCache.remove(streamID);
 
         // Remove from list of sockets/sessions coming from the remote hostname
-        Lock lock = LockManager.getLock(hostname);
+        Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
             List<String> streamIDs = hostnameSessionsCache.get(hostname);
@@ -456,7 +455,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             lock.unlock();
         }
         // Remove from clustered cache
-        lock = LockManager.getLock(streamID);
+        lock = CacheFactory.getLock(streamID, validatedDomainsCache);
         try {
             lock.lock();
             Set<String> validatedDomains = validatedDomainsCache.get(streamID);
@@ -488,7 +487,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return domains, subdomains and virtual hosts that where validated.
      */
     public Collection<String> getValidatedDomains(String streamID) {
-        Lock lock = LockManager.getLock(streamID);
+        Lock lock = CacheFactory.getLock(streamID, validatedDomainsCache);
         try {
             lock.lock();
             Set<String> validatedDomains = validatedDomainsCache.get(streamID);
@@ -763,7 +762,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     public List<IncomingServerSession> getIncomingServerSessions(String hostname) {
         List<String> streamIDs;
         // Get list of sockets/sessions coming from the remote hostname
-        Lock lock = LockManager.getLock(hostname);
+        Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
             streamIDs = hostnameSessionsCache.get(hostname);
@@ -1437,7 +1436,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
             for (String hostname : session.getValidatedDomains()) {
                 // Update list of sockets/sessions coming from the same remote hostname
-                Lock lock = LockManager.getLock(hostname);
+                Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
                 try {
                     lock.lock();
                     List<String> streamIDs = hostnameSessionsCache.get(hostname);
@@ -1451,7 +1450,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
                     lock.unlock();
                 }
                 // Add to clustered cache
-                lock = LockManager.getLock(streamID);
+                lock = CacheFactory.getLock(streamID, validatedDomainsCache);
                 try {
                     lock.lock();
                     Set<String> validatedDomains = validatedDomainsCache.get(streamID);

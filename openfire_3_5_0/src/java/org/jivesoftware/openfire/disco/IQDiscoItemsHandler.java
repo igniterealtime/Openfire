@@ -32,7 +32,6 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -324,7 +323,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param name the discovered name of the component.
      */
     public void addComponentItem(String jid, String node, String name) {
-        Lock lock = LockManager.getLock(jid + "item");
+        Lock lock = CacheFactory.getLock(jid + "item", serverItems);
         try {
             lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
@@ -356,7 +355,11 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param jid the jid of the component being removed.
      */
     public void removeComponentItem(String jid) {
-        Lock lock = LockManager.getLock(jid + "item");
+        if (serverItems == null) {
+            // Safety check
+            return;
+        }
+        Lock lock = CacheFactory.getLock(jid + "item", serverItems);
         try {
             lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
@@ -422,7 +425,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             NodeID leftNode = NodeID.getInstance(nodeID);
             for (Map.Entry<String, ClusteredServerItem> entry : serverItems.entrySet()) {
                 String jid = entry.getKey();
-                Lock lock = LockManager.getLock(jid + "item");
+                Lock lock = CacheFactory.getLock(jid + "item", serverItems);
                 try {
                     lock.lock();
                     ClusteredServerItem item = entry.getValue();
@@ -450,7 +453,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         for (Map.Entry<String, Element> entry : localServerItems.entrySet()) {
             String jid = entry.getKey();
             Element element = entry.getValue();
-            Lock lock = LockManager.getLock(jid + "item");
+            Lock lock = CacheFactory.getLock(jid + "item", serverItems);
             try {
                 lock.lock();
                 ClusteredServerItem item = serverItems.get(jid);

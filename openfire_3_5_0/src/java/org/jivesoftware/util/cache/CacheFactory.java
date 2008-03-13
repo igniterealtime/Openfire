@@ -22,6 +22,7 @@ import org.jivesoftware.util.Log;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Creates Cache objects. The returned caches will either be local or clustered
@@ -337,12 +338,22 @@ public class CacheFactory {
         }
     }
 
-    public static void lockKey(Object key, long timeout) {
-        cacheFactoryStrategy.lockKey(key, timeout);
-    }
-
-    public static void unlockKey(Object key) {
-        cacheFactoryStrategy.unlockKey(key);
+    /**
+     * Returns an existing {@link java.util.concurrent.locks.Lock} on the specified key or creates a new one
+     * if none was found. This operation is thread safe. Successive calls with the same key may or may not
+     * return the same {@link java.util.concurrent.locks.Lock}. However, different threads asking for the
+     * same Lock at the same time will get the same Lock object.<p>
+     *
+     * The supplied cache may or may not be used depending whether the server is running on cluster mode
+     * or not. When not running as part of a cluster then the lock will be unrelated to the cache and will
+     * only be visible in this JVM.
+     *
+     * @param key the object that defines the visibility or scope of the lock.
+     * @param cache the cache used for holding the lock.
+     * @return an existing lock on the specified key or creates a new one if none was found.
+     */
+    public static Lock getLock(Object key, Cache cache) {
+        return cacheFactoryStrategy.getLock(key, cache);
     }
 
     @SuppressWarnings("unchecked")

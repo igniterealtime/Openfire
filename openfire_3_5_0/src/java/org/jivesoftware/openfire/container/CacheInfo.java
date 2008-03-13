@@ -83,14 +83,30 @@ public class CacheInfo {
 
     public static enum Type {
         /**
-         * An optimistic scheme defines a cache which fully replicates all of its data to all cluster nodes that
-         * are running the service. This cache is good for frequent reads and not frequent writes. However, this
-         * cache will not scale fine if it has lot of content that will end up consuming all the JVM memory. For
-         * this case a {@link #distributed} is a better option.
+         * Data is fully replicated to every member in the cluster. Offers the fastest read performance. Clustered,
+         * fault-tolerant cache with linear performance scalability for reads, but poor scalability for writes
+         * (as writes must be processed by every member in the cluster). Because data is replicated to all machines,
+         * adding servers does not increase aggregate cache capacity.
+         */
+        replicated("replicated"),
+        /**
+         * OptimisticCache is a clustered cache implementation similar to the ReplicatedCache implementation, but
+         * without any concurrency control. This implementation has the highest possible throughput. It also allows
+         * to use an alternative underlying store for the cached data (for example, a MRU/MFU-based cache). However,
+         * if two cluster members are independently pruning or purging the underlying local stores, it is possible
+         * that a cluster member may have a different store content than that held by another cluster member.
+         * This cache is good for frequent reads and not frequent writes. However, this cache will not scale fine
+         * if it has lot of content that will end up consuming all the JVM memory. For this case a
+         * {@link #distributed} is a better option.
          */
         optimistic("optimistic"),
         /**
          * An distributed-scheme defines caches where the storage for entries is partitioned across cluster nodes.
+         * A hybrid cache; fronts a fault-tolerant, scalable partitioned cache with a local cache. Near cache
+         * invalidates front cache entries, using configurable invalidation strategy, and provides excellent
+         * performance and synchronization. Near cache backed by a partitioned cache offers zero-millisecond local
+         * access for repeat data access, while enabling concurrency and ensuring coherency and fail-over,
+         * effectively combining the best attributes of replicated and partitioned caches.
          */
         distributed("near-distributed");
 

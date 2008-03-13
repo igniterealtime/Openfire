@@ -28,7 +28,6 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -260,7 +259,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void addServerFeature(String namespace) {
         if (localServerFeatures.add(namespace)) {
-            Lock lock = LockManager.getLock(namespace);
+            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
             try {
                 lock.lock();
                 Set<NodeID> nodeIDs = serverFeatures.get(namespace);
@@ -284,7 +283,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void removeServerFeature(String namespace) {
         if (localServerFeatures.remove(namespace)) {
-            Lock lock = LockManager.getLock(namespace);
+            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
             try {
                 lock.lock();
                 Set<NodeID> nodeIDs = serverFeatures.get(namespace);
@@ -353,7 +352,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             // Remove server features added by node that is gone
             for (Map.Entry<String, Set<NodeID>> entry : serverFeatures.entrySet()) {
                 String namespace = entry.getKey();
-                Lock lock = LockManager.getLock(namespace);
+                Lock lock = CacheFactory.getLock(namespace, serverFeatures);
                 try {
                     lock.lock();
                     Set<NodeID> nodeIDs = entry.getValue();
@@ -379,7 +378,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     private void restoreCacheContent() {
         for (String feature : localServerFeatures) {
-            Lock lock = LockManager.getLock(feature);
+            Lock lock = CacheFactory.getLock(feature, serverFeatures);
             try {
                 lock.lock();
                 Set<NodeID> nodeIDs = serverFeatures.get(feature);

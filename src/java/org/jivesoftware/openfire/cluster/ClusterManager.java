@@ -16,8 +16,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.lock.LocalLockFactory;
-import org.jivesoftware.util.lock.LockManager;
 
 import java.util.Collection;
 import java.util.Queue;
@@ -236,8 +234,8 @@ public class ClusterManager {
     /**
      * Starts the cluster service if clustering is enabled. The process of starting clustering
      * will recreate caches as distributed caches.<p>
-     * <p/>
-     * Before starting a cluster the {@link LockManager#setLockFactory(org.jivesoftware.util.lock.LockFactory)},
+     *
+     * Before starting a cluster the
      * {@link XMPPServer#setRemoteSessionLocator(org.jivesoftware.openfire.session.RemoteSessionLocator)} and
      * {@link org.jivesoftware.openfire.RoutingTable#setRemotePacketRouter(org.jivesoftware.openfire.RemotePacketRouter)}
      * need to be properly configured.
@@ -267,8 +265,6 @@ public class ClusterManager {
      * If clustering is not enabled, this method will do nothing.
      */
     public static synchronized void shutdown() {
-        // Reset the LockFactory to the default one
-        LockManager.setLockFactory(new LocalLockFactory());
         // Reset packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
         if (isClusteringStarted()) {

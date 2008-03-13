@@ -15,9 +15,11 @@ import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.lock.LockManager;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.*;
 
 import java.util.HashMap;
@@ -56,6 +58,11 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     private Map<String, PacketsProcessor> packetsProcessors = new HashMap<String, PacketsProcessor>();
 
     /**
+     * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
+     * Key: server domain, Value: nodeID
+     */
+    private Cache<String, byte[]> serversCache;
+    /**
      * Flag that indicates if the process that consumed the queued packets should stop.
      */
     private boolean shutdown = false;
@@ -67,6 +74,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     }
 
     private void init() {
+        serversCache = CacheFactory.createCache(RoutingTableImpl.S2S_CACHE_NAME);
         routingTable = XMPPServer.getInstance().getRoutingTable();
         // Create a pool of threads that will process queued packets.
         int maxThreads = JiveGlobals.getIntProperty("xmpp.server.outgoing.max.threads", 20);
@@ -164,7 +172,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         }
     }
 
-    private static class PacketsProcessor implements Runnable {
+    private class PacketsProcessor implements Runnable {
 
         private OutgoingSessionPromise promise;
         private String domain;
@@ -199,7 +207,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
-            Lock lock = LockManager.getLock(domain + "oss");
+            Lock lock = CacheFactory.getLock(domain + "oss", serversCache);
             try {
                 lock.lock();
                 created = LocalOutgoingServerSession

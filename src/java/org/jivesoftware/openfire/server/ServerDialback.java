@@ -29,7 +29,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -689,7 +688,7 @@ public class ServerDialback {
      */
     private static String getSecretkey() {
         String key = "secretKey";
-        Lock lock = LockManager.getLock(key);
+        Lock lock = CacheFactory.getLock(key, secretKeyCache);
         try {
             lock.lock();
             String secret = secretKeyCache.get(key);

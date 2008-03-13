@@ -11,6 +11,7 @@ import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Implementation of CacheFactory that relies on the specific clustering solution.
@@ -158,21 +159,14 @@ public interface CacheFactoryStrategy {
     void updateCacheStats(Map<String, Cache> caches);
 
     /**
-     * Locks the specified key in the locking map. The map should be clusterable
-     * thus locking a key is visible to the cluster. When not in cluster mode
-     * the lock is only visible to this JVM.
+     * Returns an existing lock on the specified key or creates a new one if none was found. This
+     * operation is thread safe. The supplied cache may or may not be used depending whether
+     * the server is running on cluster mode or not. When not running as part of a cluster then
+     * the lock will be unrelated to the cache and will only be visible in this JVM.
      *
-     * @param key the key to lock.
-     * @param timeout number of milliseconds to wait to obtain the lock. -1 means wait forever.
+     * @param key the object that defines the visibility or scope of the lock.
+     * @param cache the cache used for holding the lock.
+     * @return an existing lock on the specified key or creates a new one if none was found.
      */
-    void lockKey(Object key, long timeout);
-
-    /**
-     * Unlocks the specified key in the locking map. The map should be clusterable
-     * thus locking a key is visible to the cluster. When not in cluster mode
-     * the lock is only visible to this JVM.
-     *
-     * @param key the key to unlock.
-     */
-    void unlockKey(Object key);
+    Lock getLock(Object key, Cache cache);
 }

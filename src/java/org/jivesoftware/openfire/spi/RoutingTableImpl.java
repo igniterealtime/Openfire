@@ -25,7 +25,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -109,7 +108,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
         String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
-        Lock lock = LockManager.getLock(address + "rt");
+        Lock lock = CacheFactory.getLock(address + "rt", componentsCache);
         try {
             lock.lock();
             Set<NodeID> nodes = componentsCache.get(address);
@@ -131,7 +130,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
-                Lock lock = LockManager.getLock(route.toBareJID());
+                Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
                 try {
                     lock.lock();
                     usersSessions.put(route.toBareJID(), Arrays.asList(route.toString()));
@@ -145,7 +144,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
-                Lock lock = LockManager.getLock(route.toBareJID());
+                Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
                 try {
                     lock.lock();
                     Collection<String> jids = usersSessions.get(route.toBareJID());
@@ -627,7 +626,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             anonymous = true;
         }
         if (clientRoute != null && route.getResource() != null) {
-            Lock lock = LockManager.getLock(route.toBareJID());
+            Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
             try {
                 lock.lock();
                 if (anonymous) {
@@ -664,7 +663,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeComponentRoute(JID route) {
         String address = route.getDomain();
         boolean removed = false;
-        Lock lock = LockManager.getLock(address + "rt");
+        Lock lock = CacheFactory.getLock(address + "rt", componentsCache);
         try {
             lock.lock();
             Set<NodeID> nodes = componentsCache.get(address);

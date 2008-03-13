@@ -34,7 +34,6 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.lock.LockManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -503,7 +502,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Lock lock = LockManager.getLock(username + "pr");
+        Lock lock = CacheFactory.getLock(username + "pr", offlinePresenceCache);
         try {
             lock.lock();
             if (!offlinePresenceCache.containsKey(username) || !lastActivityCache.containsKey(username)) {

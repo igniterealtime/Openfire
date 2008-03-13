@@ -639,8 +639,10 @@ public class LocalMUCRoom implements MUCRoom {
 
         // Update the date when the last occupant left the room
         setEmptyDate(null);
-        // Fire event that occupant joined the room
-        server.fireOccupantJoined(getRole().getRoleAddress(), event.getUserAddress(), joinRole.getNickname());
+        if (event.isOriginator()) {
+            // Fire event that occupant joined the room
+            server.fireOccupantJoined(getRole().getRoleAddress(), event.getUserAddress(), joinRole.getNickname());
+        }
         // Check if we need to send presences of the new occupant to occupants hosted by this JVM
         if (event.isSendPresence()) {
             for (MUCRole occupant : occupants.values()) {
@@ -695,7 +697,7 @@ public class LocalMUCRoom implements MUCRoom {
         lock.writeLock().lock();
         try {
             // Removes the role from the room
-            removeOccupantRole(leaveRole);
+            removeOccupantRole(leaveRole, event.isOriginator());
 
             // TODO Implement this: If the room owner becomes unavailable for any reason before
             // submitting the form (e.g., a lost connection), the service will receive a presence
@@ -710,9 +712,9 @@ public class LocalMUCRoom implements MUCRoom {
                 endTime = System.currentTimeMillis();
                 if (event.isOriginator()) {
                     server.removeChatRoom(name);
+                    // Fire event that the room has been destroyed
+                    server.fireRoomDestroyed(getRole().getRoleAddress());
                 }
-                // Fire event that the room has been destroyed
-                server.fireRoomDestroyed(getRole().getRoleAddress());
             }
             if (occupants.isEmpty()) {
                 // Update the date when the last occupant left the room
@@ -729,8 +731,9 @@ public class LocalMUCRoom implements MUCRoom {
      * also be removed from the user's roles.
      *
      * @param leaveRole the role to remove.
+     * @param originator true if this JVM is the one that originated the event.
      */
-    private void removeOccupantRole(MUCRole leaveRole) {
+    private void removeOccupantRole(MUCRole leaveRole, boolean originator) {
         occupants.remove(leaveRole.getNickname().toLowerCase());
 
         JID userAddress = leaveRole.getUserAddress();
@@ -745,8 +748,10 @@ public class LocalMUCRoom implements MUCRoom {
             }
         }
         occupantsByFullJID.remove(userAddress);
-        // Fire event that occupant left the room
-        server.fireOccupantLeft(getRole().getRoleAddress(), userAddress);
+        if (originator) {
+            // Fire event that occupant left the room
+            server.fireOccupantLeft(getRole().getRoleAddress(), userAddress);
+        }
     }
 
     public void destroyRoom(DestroyRoomRequest destroyRequest) {
@@ -770,7 +775,7 @@ public class LocalMUCRoom implements MUCRoom {
                     else {
                         hasRemoteOccupants = true;
                     }
-                    removeOccupantRole(leaveRole);
+                    removeOccupantRole(leaveRole, destroyRequest.isOriginator());
                 }
             }
             endTime = System.currentTimeMillis();
@@ -820,9 +825,9 @@ public class LocalMUCRoom implements MUCRoom {
         if (destroyRequest.isOriginator()) {
             // Remove the room from the DB if the room was persistent
             MUCPersistenceManager.deleteFromDB(this);
+            // Fire event that the room has been destroyed
+            server.fireRoomDestroyed(getRole().getRoleAddress());
         }
-        // Fire event that the room has been destroyed
-        server.fireRoomDestroyed(getRole().getRoleAddress());
     }
 
     public void destroyRoom(String alternateJID, String reason) {
@@ -1547,9 +1552,11 @@ public class LocalMUCRoom implements MUCRoom {
             // Update the role with the new info
             occupantRole.setPresence(changeNickname.getPresence());
             occupantRole.changeNickname(changeNickname.getNewNick());
-            // Fire event that user changed his nickname
-            server.fireNicknameChanged(getRole().getRoleAddress(), occupantRole.getUserAddress(),
-                    changeNickname.getOldNick(), changeNickname.getNewNick());
+            if (changeNickname.isOriginator()) {
+                // Fire event that user changed his nickname
+                server.fireNicknameChanged(getRole().getRoleAddress(), occupantRole.getUserAddress(),
+                        changeNickname.getOldNick(), changeNickname.getNewNick());
+            }
             // Associate the existing MUCRole with the new nickname
             occupants.put(changeNickname.getNewNick().toLowerCase(), occupantRole);
             // Remove the old nickname

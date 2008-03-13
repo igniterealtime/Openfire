@@ -355,8 +355,6 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @param sharedSecret the password configured in Clearspace to authenticate Openfire.
      */
     public void setSharedSecret(String sharedSecret) {
-        this.sharedSecret = sharedSecret;
-        properties.put("clearspace.sharedSecret", sharedSecret);
         // Set new password for external component
         ExternalComponentConfiguration configuration = new ExternalComponentConfiguration("clearspace",
                 ExternalComponentConfiguration.Permission.allowed, sharedSecret);
@@ -366,6 +364,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         catch (ModificationNotAllowedException e) {
             Log.warn("Failed to configure password for Clearspace", e);
         }
+
+        // After updating the component information we can update the field, but not before.
+        // If it is done before, OF won't be able to execute the updateSharedsecret webservice
+        // since it would try with the new password.
+        this.sharedSecret = sharedSecret;
+        properties.put("clearspace.sharedSecret", sharedSecret);
     }
 
     /**

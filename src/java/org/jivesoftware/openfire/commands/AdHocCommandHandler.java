@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.commands.admin.user.AddUser;
 import org.jivesoftware.openfire.commands.admin.user.AuthenticateUser;
 import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.openfire.commands.admin.user.UserProperties;
+import org.jivesoftware.openfire.commands.clearspace.ChangeSharedSecret;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -200,6 +201,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new PacketsNotification());
         addCommand(new GetServerStats());
         addCommand(new HttpBindStatus());
+        addCommand(new ChangeSharedSecret());
     }
 
     private void startCommand(AdHocCommand command) {

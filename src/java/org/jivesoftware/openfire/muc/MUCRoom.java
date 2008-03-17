@@ -51,6 +51,13 @@ public interface MUCRoom extends Externalizable, Result {
     String getName();
 
     /**
+     * Get the full JID of this room.
+     *
+     * @return the JID for this room.
+     */
+    JID getJID();
+
+    /**
      * Obtain a unique numerical id for this room. Useful for storing rooms in databases. If the 
      * room is persistent or is logging the conversation then the returned ID won't be -1.
      *
@@ -67,6 +74,20 @@ public interface MUCRoom extends Externalizable, Result {
      * the DB.
      */
     void setID(long roomID);
+
+    /**
+     * Get the multi user chat service the room is attached to.
+     *
+     * @return the MultiUserChatService instance that the room is attached to.
+     */
+    MultiUserChatService getMUCService();
+
+    /**
+     * Sets the multi user chat service the room is attached to.
+     *
+     * @param service The MultiUserChatService that the room is attached to.
+     */
+    void setMUCService(MultiUserChatService service);
 
     /**
      * Returns the date when the room was created.
@@ -238,6 +259,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Create a new presence in this room for the given role.
      *
+     * @param type Type of presence to create.
      * @return The new presence
      * @throws UnauthorizedException If the user doesn't have permission to leave the room
      */

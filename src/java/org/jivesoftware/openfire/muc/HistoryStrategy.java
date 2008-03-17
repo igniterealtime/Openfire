@@ -12,7 +12,7 @@
 package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.Message;
@@ -63,6 +63,10 @@ public class HistoryStrategy {
      * (do not include trailing dot).
      */
     private String contextPrefix = null;
+    /**
+     * The subdomain of the service the properties are set on.
+     */
+    private String contextSubdomain = null;
 
     /**
      * Create a history strategy with the given parent strategy (for defaults) or null if no 
@@ -102,11 +106,11 @@ public class HistoryStrategy {
         }
         this.maxNumber = max;
         if (contextPrefix != null){
-            JiveGlobals.setProperty(contextPrefix + ".maxNumber", Integer.toString(maxNumber));
+            MUCPersistenceManager.setProperty(contextSubdomain, contextPrefix + ".maxNumber", Integer.toString(maxNumber));
         }
         if (parent == null) {
             // Update the history strategy of the MUC service
-            CacheFactory.doClusterTask(new UpdateHistoryStrategy(this));
+            CacheFactory.doClusterTask(new UpdateHistoryStrategy(contextSubdomain, this));
         }
     }
 
@@ -124,11 +128,11 @@ public class HistoryStrategy {
             type = newType;
         }
         if (contextPrefix != null){
-            JiveGlobals.setProperty(contextPrefix + ".type", type.toString());
+            MUCPersistenceManager.setProperty(contextSubdomain, contextPrefix + ".type", type.toString());
         }
         if (parent == null) {
             // Update the history strategy of the MUC service
-            CacheFactory.doClusterTask(new UpdateHistoryStrategy(this));
+            CacheFactory.doClusterTask(new UpdateHistoryStrategy(contextSubdomain, this));
         }
     }
 
@@ -235,7 +239,7 @@ public class HistoryStrategy {
      */
     public enum Type {
         defaulType, none, all, number
-    };
+    }
 
     /**
      * Obtain the strategy type from string name. See the Type enumeration name
@@ -263,12 +267,13 @@ public class HistoryStrategy {
      * Sets the prefix to use for retrieving and saving settings (and also
      * triggers an immediate loading of properties).
      *
+     * @param subdomain the subdomain of the muc service to pull properties for.
      * @param prefix the prefix to use (without trailing dot) on property names.
      */
-    public void setContext(String prefix) {
+    public void setContext(String subdomain, String prefix) {
         this.contextPrefix = prefix;
-        setTypeFromString(JiveGlobals.getProperty(prefix + ".type"));
-        String maxNumberString = JiveGlobals.getProperty(prefix + ".maxNumber");
+        setTypeFromString(MUCPersistenceManager.getProperty(subdomain, prefix + ".type"));
+        String maxNumberString = MUCPersistenceManager.getProperty(subdomain, prefix + ".maxNumber");
         if (maxNumberString != null && maxNumberString.trim().length() > 0){
             try {
                 this.maxNumber = Integer.parseInt(maxNumberString);

@@ -14,6 +14,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -31,13 +32,35 @@
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("muc-room-summary", 15));
+    String mucname = ParamUtils.getParameter(request,"mucname");
+
+    MultiUserChatService mucService = null;
+    if (webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
+        mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
+    }
+    else {
+        for (MultiUserChatService muc : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
+            if (muc.isServicePrivate()) {
+                // Private and hidden, skip it.
+                continue;
+            }
+            mucService = muc;
+            break;
+        }
+    }
+
+    if (mucService == null) {
+        // No services exist, so redirect to where one can configure the services
+        response.sendRedirect("muc-service-summary.jsp");
+        return;
+    }
 
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("muc-room-summary", range);
     }
 
     // Get the rooms in the server
-    List<MUCRoom> rooms = webManager.getMultiUserChatServer().getChatRooms();
+    List<MUCRoom> rooms = mucService.getChatRooms();
     Collections.sort(rooms, new Comparator<MUCRoom>() {
         public int compare(MUCRoom room1, MUCRoom room2) {
             return room1.getName().toLowerCase().compareTo(room2.getName().toLowerCase());
@@ -78,6 +101,21 @@
 
 <%  } %>
 <fmt:message key="muc.room.summary.sorted_id" />
+
+<% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
+-- <fmt:message key="muc.room.summary.service" />:
+    <select name="mucname" onchange="location.href='muc-room-summary.jsp?mucname=' + this.options[this.selectedIndex].value;">
+<% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
+    if (service.isServicePrivate()) {
+        // Private and hidden, skip it.
+        continue;
+    }
+%>
+    <option value="<%= service.getServiceName() %>"<%= mucService.getServiceName().equals(service.getServiceName()) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
+<% } %>
+    </select>
+<% } %>
+
 </p>
 
 <%  if (numPages > 1) { %>
@@ -89,7 +127,7 @@
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
-        <a href="muc-room-summary.jsp?start=<%= (i*range) %>"
+        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : mucname %>&start=<%= (i*range) %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
          ><%= (i+1) %></a><%= sep %>
 
@@ -137,12 +175,12 @@
         </td>
         <td width="45%" valign="middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
-                 <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
+                 <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
 	                 <%=  room.getName() %>
 	             </a>
             <% }
                else { %>
-	            <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
+	            <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
                 <%= room.getNaturalLanguageName() %> (<%=  room.getName() %>)
 	            </a>
             <% } %>
@@ -158,15 +196,15 @@
                 <% } %>
         </td>
         <td width="1%" align="center">
-            <%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %>
+            <nobr><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></nobr>
         </td>
         <td width="1%" align="center">
-            <a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"
+            <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" width="17" height="17" border="0" alt=""></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="muc-room-delete.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"
+            <a href="muc-room-delete.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>
@@ -188,7 +226,7 @@
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
-        <a href="muc-room-summary.jsp?start=<%= (i*range) %>"
+        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : mucname %>&start=<%= (i*range) %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
          ><%= (i+1) %></a><%= sep %>
 

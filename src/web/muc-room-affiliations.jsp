@@ -29,9 +29,10 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
-    String roomName = ParamUtils.getParameter(request,"roomName");
+    JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String affiliation = ParamUtils.getParameter(request,"affiliation");
     String userJID = ParamUtils.getParameter(request,"userJID");
+    String roomName = roomJID.getNode();
 
     boolean add = request.getParameter("add") != null;
     boolean addsuccess = request.getParameter("addsuccess") != null;
@@ -39,7 +40,7 @@
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
 
     // Load the room object
-    MUCRoom room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+    MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
 
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
@@ -81,7 +82,7 @@
                 // Log the event
                 webManager.logEvent("set MUC affilation to "+affiliation+" for "+userJID+" in "+roomName, null);
                 // done, return
-                response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomName="+URLEncoder.encode(roomName, "UTF-8"));
+                response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
                 return;
             }
             catch (ConflictException e) {
@@ -104,7 +105,7 @@
         // Send the IQ packet that will modify the room's configuration
         room.getIQOwnerHandler().handleIQ(iq, room.getRole());
         // done, return
-        response.sendRedirect("muc-room-affiliations.jsp?deletesuccess=true&roomName="+URLEncoder.encode(roomName, "UTF-8"));
+        response.sendRedirect("muc-room-affiliations.jsp?deletesuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;
         }
         catch (ConflictException e) {
@@ -124,7 +125,7 @@
 
 <p>
 <fmt:message key="muc.room.affiliations.info" />
-<b><a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"><%= room.getName() %></a></b>.
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getName() %></a></b>.
 <fmt:message key="muc.room.affiliations.info_detail" />
 </p>
 
@@ -230,7 +231,7 @@
                     <%= userDisplay %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=owner"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=owner"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -263,7 +264,7 @@
                     <%= userDisplay %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=admin"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=admin"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -299,7 +300,7 @@
                     <%= userDisplay %><%=  nickname %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=member"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=member"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -332,7 +333,7 @@
                     <%= userDisplay %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=outcast"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=outcast"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

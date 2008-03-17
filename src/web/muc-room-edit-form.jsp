@@ -25,6 +25,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
+<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -36,7 +37,7 @@
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean addsuccess = ParamUtils.getBooleanParameter(request,"addsuccess");
-    String roomName = ParamUtils.getParameter(request,"roomName");
+    JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String naturalName = ParamUtils.getParameter(request,"roomconfig_roomname");
     String description = ParamUtils.getParameter(request,"roomconfig_roomdesc");
     String maxUsers = ParamUtils.getParameter(request, "roomconfig_maxusers");
@@ -58,6 +59,14 @@
     String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
     String roomSubject = ParamUtils.getParameter(request, "room_topic");
 
+    String roomName = roomJID.getNode();
+
+    if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() < 1) {
+        // No services exist, so redirect to where one can configure the services
+        response.sendRedirect("muc-service-summary.jsp");
+        return;
+    }
+
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
         response.sendRedirect("muc-room-summary.jsp");
@@ -67,7 +76,7 @@
     // Load the room object
     MUCRoom room = null;
     if (!create) {
-        room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+        room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
 
         if (room == null) {
             // The requested room name does not exist so return to the list of the existing rooms
@@ -112,7 +121,7 @@
 
             if (errors.size() == 0) {
                 // Check that the requested room ID is available
-                room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+                room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
                 if (room != null) {
                     errors.put("room_already_exists", "room_already_exists");
                 }
@@ -120,7 +129,7 @@
                     // Try to create a new room
                     JID address = new JID(webManager.getUser().getUsername(), webManager.getServerInfo().getXMPPDomain(), null);
                     try {
-                        room = webManager.getMultiUserChatServer().getChatRoom(roomName, address);
+                        room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName, address);
                         // Check if the room was created concurrently by another user
                         if (!room.getOwners().contains(address.toBareJID())) {
                             errors.put("room_already_exists", "room_already_exists");
@@ -254,12 +263,12 @@
             // Changes good, so redirect
             String params;
             if (create) {
-                params = "addsuccess=true&roomName=" + URLEncoder.encode(roomName, "UTF-8");
+                params = "addsuccess=true&roomJID=" + URLEncoder.encode(roomJID.toBareJID(), "UTF-8");
                 // Log the event
                 webManager.logEvent("created new MUC room "+roomName, "subject = "+roomSubject+"\nroomdesc = "+description+"\nroomname = "+naturalName+"\nmaxusers = "+maxUsers);
             }
             else {
-                params = "success=true&roomName=" + URLEncoder.encode(roomName, "UTF-8");
+                params = "success=true&roomJID=" + URLEncoder.encode(roomJID.toBareJID(), "UTF-8");
                 // Log the event
                 webManager.logEvent("updated MUC room "+roomName, "subject = "+roomSubject+"\nroomdesc = "+description+"\nroomname = "+naturalName+"\nmaxusers = "+maxUsers);
             }
@@ -317,7 +326,7 @@
 <% } else { %>
 <meta name="subPageID" content="muc-room-edit-form"/>
 <% } %>
-<meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
+<meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&create="+create %>"/>
 <meta name="helpPage" content="view_group_chat_room_summary.html"/>
 </head>
 <body>
@@ -399,7 +408,7 @@
             <% if (room.getOccupantsCount() == 0) { %>
             <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
             <% } else { %>
-            <td><a href="muc-room-occupants.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8")%>"><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></a></td>
+            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8")%>"><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></a></td>
             <% } %>
             <td><%= dateFormatter.format(room.getCreationDate()) %></td>
             <td><%= dateFormatter.format(room.getModificationDate()) %></td>
@@ -414,7 +423,7 @@
 <%  } %>
 <form action="muc-room-edit-form.jsp">
 <% if (!create) { %>
-    <input type="hidden" name="roomName" value="<%= roomName %>">
+    <input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
 <% } %>
 <input type="hidden" name="save" value="true">
 <input type="hidden" name="create" value="<%= create %>">
@@ -427,7 +436,26 @@
                 <% if (create) { %>
                 <tr>
                     <td><fmt:message key="muc.room.edit.form.room_id" />:</td>
-                    <td><input type="text" name="roomName" value="<%= roomName %>"> @<%= webManager.getMultiUserChatServer().getServiceDomain()%>
+                    <td><input type="text" name="roomName" value="<%= roomName %>">
+                        <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
+                        @<select name="mucname">
+                        <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) { %>
+                        <option value="<%= service.getServiceName() %>"><%= service.getServiceDomain() %></option>
+                        <% } %>
+                        </select>
+                        <% } else { %>
+                        @<%
+                            // We only have one service, none-the-less, we have to run through the list to get the first
+                            for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
+                                if (service.isServicePrivate()) {
+                                    // Private and hidden, skip it.
+                                    continue;
+                                }
+                                out.print(service.getServiceDomain());
+                                break;
+                            }
+                        %>
+                        <% } %>
                     </td>
                 </tr>
                 <% } %>

@@ -30,8 +30,7 @@ import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.handler.*;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.net.MulticastDNSService;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
@@ -527,7 +526,6 @@ public class XMPPServer {
         loadModule(IQOfflineMessagesHandler.class.getName());
         loadModule(IQPEPHandler.class.getName());
         loadModule(IQPEPOwnerHandler.class.getName());
-        loadModule(MultiUserChatServerImpl.class.getName());
         loadModule(MulticastDNSService.class.getName());
         loadModule(IQSharedGroupHandler.class.getName());
         loadModule(AdHocCommandHandler.class.getName());
@@ -542,6 +540,7 @@ public class XMPPServer {
         loadModule(UpdateManager.class.getName());
         loadModule(FlashCrossDomainHandler.class.getName());
         loadModule(InternalComponentManager.class.getName());
+        loadModule(MultiUserChatManager.class.getName());
         loadModule(ClearspaceManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
@@ -1350,14 +1349,14 @@ public class XMPPServer {
     }
 
     /**
-     * Returns the <code>MultiUserChatServer</code> registered with this server. The
-     * <code>MultiUserChatServer</code> was registered with the server as a module while starting up
+     * Returns the <code>MultiUserChatManager</code> registered with this server. The
+     * <code>MultiUserChatManager</code> was registered with the server as a module while starting up
      * the server.
      *
-     * @return the <code>MultiUserChatServer</code> registered with this server.
+     * @return the <code>MultiUserChatManager</code> registered with this server.
      */
-    public MultiUserChatServer getMultiUserChatServer() {
-        return (MultiUserChatServer) modules.get(MultiUserChatServerImpl.class);
+    public MultiUserChatManager getMultiUserChatManager() {
+        return (MultiUserChatManager) modules.get(MultiUserChatManager.class);
     }
 
     /**

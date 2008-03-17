@@ -304,31 +304,50 @@
 
         <!-- Group Chat Settings -->
         <sidebar id="sidebar-groupchat-settings" name="${sidebar.sidebar-groupchat-settings}">
+            <!-- Group Chat Service Summary -->
+            <item id="muc-service-summary" name="${sidebar.muc-service-summary}"
+                  url="muc-service-summary.jsp"
+                  description="${sidebar.muc-service-summary.descr}">
 
-            <!-- Service Properties -->
-            <item id="muc-server-props" name="${sidebar.muc-server-props}"
-                  url="muc-server-props-edit-form.jsp"
-                  description="${sidebar.muc-server-props.descr}"/>
+                <!-- Service Options -->
+                <sidebar id="sidebar-muc-service-options" name="${sidebar.sidebar-muc-service-options}">
 
-            <!-- History Settings -->
-            <item id="muc-history" name="${sidebar.muc-history}"
-                  url="muc-history-settings.jsp"
-                  description="${sidebar.muc-history.descr}"/>
+                    <!-- Service Properties -->
+                    <item id="muc-service-edit-form" name="${sidebar.muc-server-props}"
+                          url="muc-service-edit-form.jsp"
+                          description="${sidebar.muc-server-props.descr}"/>
 
-            <!-- Administrators -->
-            <item id="muc-sysadmin" name="${sidebar.muc-sysadmin}"
-                  url="muc-sysadmins.jsp"
-                  description="${sidebar.muc-sysadmin.descr}"/>
+                    <!-- Service History Settings -->
+                    <item id="muc-history" name="${sidebar.muc-history}"
+                          url="muc-history-settings.jsp"
+                          description="${sidebar.muc-history.descr}"/>
 
-            <!-- Room Creation Permissions -->
-            <item id="muc-perms" name="${sidebar.muc-perms}"
-                  url="muc-create-permission.jsp"
-                  description="${sidebar.muc-perms.descr}"/>
+                    <!-- Service Administrators -->
+                    <item id="muc-sysadmin" name="${sidebar.muc-sysadmin}"
+                          url="muc-sysadmins.jsp"
+                          description="${sidebar.muc-sysadmin.descr}"/>
 
-            <!-- Other Settings -->
-            <item id="muc-tasks" name="${sidebar.muc-tasks}"
-                  url="muc-tasks.jsp"
-                  description="${sidebar.muc-tasks.descr}"/>
+                    <!-- Service Room Creation Permissions -->
+                    <item id="muc-perms" name="${sidebar.muc-perms}"
+                          url="muc-create-permission.jsp"
+                          description="${sidebar.muc-perms.descr}"/>
+
+                    <!-- Service Other Settings -->
+                    <item id="muc-tasks" name="${sidebar.muc-tasks}"
+                          url="muc-tasks.jsp"
+                          description="${sidebar.muc-tasks.descr}"/>
+
+                    <!-- Delete Service -->
+                    <item id="muc-service-delete" name="${sidebar.muc-service-delete}"
+                          url="muc-service-delete.jsp"
+                          description="${sidebar.muc-service-delete.descr}"/>
+                </sidebar>
+            </item>
+
+            <!-- Create New MUC Service -->
+            <item id="muc-service-create" name="${sidebar.muc-service-create}"
+                  url="muc-service-create.jsp"
+                  description="${sidebar.muc-service-create.descr}"/>
         </sidebar>
     </tab>
 

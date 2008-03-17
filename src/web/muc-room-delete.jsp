@@ -13,6 +13,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -22,9 +23,10 @@
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
-    String roomName = ParamUtils.getParameter(request,"roomName");
+    JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String alternateJID = ParamUtils.getParameter(request,"alternateJID");
     String reason = ParamUtils.getParameter(request,"reason");
+    String roomName = roomJID.getNode();
 
     // Handle a cancel
     if (cancel) {
@@ -33,7 +35,7 @@
     }
 
     // Load the room object
-    MUCRoom room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+    MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
 
     // Handle a room delete:
     if (delete) {
@@ -54,14 +56,14 @@
     <head>
         <title><fmt:message key="muc.room.delete.title"/></title>
         <meta name="subPageID" content="muc-room-delete"/>
-        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>"/>
         <meta name="helpPage" content="delete_a_group_chat_room.html"/>
     </head>
     <body>
 
 <p>
 <fmt:message key="muc.room.delete.info" />
-<b><a href="muc-room-edit-form.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>"><%= room.getName() %></a></b>
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getName() %></a></b>
 <fmt:message key="muc.room.delete.detail" />
 </p>
 

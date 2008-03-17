@@ -11,7 +11,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.openfire.muc.HistoryStrategy,
-                 org.jivesoftware.openfire.muc.MultiUserChatServer"
+                 org.jivesoftware.openfire.muc.MultiUserChatService"
     errorPage="error.jsp"
 %>
 
@@ -24,7 +24,7 @@
 <html>
     <head>
         <title><fmt:message key="chatroom.history.settings.title"/></title>
-        <meta name="pageID" content="server-chatroom-history"/>
+        <meta name="subPageID" content="server-chatroom-history"/>
         <meta name="helpPage" content="edit_group_chat_history_settings.html"/>
     </head>
     <body>
@@ -35,13 +35,16 @@
     static final int NUMBER = 3;
 %>
 
-<%  // Get parameters:
+<%
+    // TODO: This file is never used currently.
+    // Get parameters:
     boolean update = request.getParameter("update") != null;
     int policy = ParamUtils.getIntParameter(request,"policy",-1);
     int numMessages = ParamUtils.getIntParameter(request,"numMessages",0);
+    String mucname = ParamUtils.getParameter(request, "mucname");
 
     // Get an audit manager:
-    MultiUserChatServer muc = webManager.getMultiUserChatServer();
+    MultiUserChatService muc = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
     HistoryStrategy historyStrat = muc.getHistoryStrategy();
 
     Map<String, String> errors = new HashMap<String, String>();

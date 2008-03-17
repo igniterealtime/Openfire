@@ -29,13 +29,13 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class BroascastPresenceRequest extends MUCRoomTask {
+public class BroadcastPresenceRequest extends MUCRoomTask {
     private Presence presence;
 
-    public BroascastPresenceRequest() {
+    public BroadcastPresenceRequest() {
     }
 
-    public BroascastPresenceRequest(LocalMUCRoom room, Presence message) {
+    public BroadcastPresenceRequest(LocalMUCRoom room, Presence message) {
         super(room);
         this.presence = message;
     }

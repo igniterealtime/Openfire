@@ -10,8 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.openfire.muc.MultiUserChatServer"
+                 org.jivesoftware.openfire.muc.MultiUserChatService"
+         errorPage="error.jsp"
 %>
+<%@ page import="java.net.URLEncoder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
@@ -23,9 +25,16 @@
     String userJID = ParamUtils.getParameter(request,"userJID");
     boolean add = request.getParameter("add") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
+    String mucname = ParamUtils.getParameter(request,"mucname");
 
-	// Get muc server
-    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
+    if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
+        // The requested service name does not exist so return to the list of the existing rooms
+        response.sendRedirect("muc-service-summary.jsp");
+        return;
+    }
+
+    // Get muc server
+    MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     // Handle a save
     Map<String,String> errors = new HashMap<String,String>();
@@ -35,9 +44,9 @@
             errors.put("userJID","userJID");
         }
         if (errors.size() == 0) {
-            mucServer.addSysadmin(userJID);
+            mucService.addSysadmin(userJID);
             // Log the event
-            webManager.logEvent("added muc sysadmin "+userJID, null);
+            webManager.logEvent("added muc sysadmin "+userJID+" for service "+mucname, null);
             response.sendRedirect("muc-sysadmins.jsp?addsuccess=true");
             return;
         }
@@ -45,9 +54,9 @@
 
     if (delete) {
         // Remove the user from the list of system administrators
-        mucServer.removeSysadmin(userJID);
+        mucService.removeSysadmin(userJID);
         // Log the event
-        webManager.logEvent("removed muc sysadmin "+userJID, null);
+        webManager.logEvent("removed muc sysadmin "+userJID+" for service "+mucname, null);
         // done, return
         response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true");
         return;
@@ -57,13 +66,15 @@
 <html>
 <head>
 <title><fmt:message key="groupchat.admins.title"/></title>
-<meta name="pageID" content="muc-sysadmin"/>
+<meta name="subPageID" content="muc-sysadmin"/>
+<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
 <meta name="helpPage" content="edit_group_chat_service_administrators.html"/>
 </head>
 <body>
 
 <p>
 <fmt:message key="groupchat.admins.introduction" />
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
 </p>
 
 <%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
@@ -129,7 +140,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<%  if (mucServer.getSysadmins().size() == 0) { %>
+				<%  if (mucService.getSysadmins().size() == 0) { %>
 
 					<tr>
 						<td colspan="2">
@@ -139,7 +150,7 @@
 
 				<%  } %>
 
-				<%  for (String user : mucServer.getSysadmins()) { %>
+				<%  for (String user : mucService.getSysadmins()) { %>
 
 					<tr>
 						<td width="99%">

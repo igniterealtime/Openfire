@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocalMUCUser implements MUCUser {
 
     /** The chat server this user belongs to. */
-    private MultiUserChatServer server;
+    private MultiUserChatService server;
 
     /** Real system XMPPAddress for the user. */
     private JID realjid;
@@ -59,14 +59,14 @@ public class LocalMUCUser implements MUCUser {
     /**
      * Create a new chat user.
      * 
-     * @param chatserver the server the user belongs to.
+     * @param chatservice the service the user belongs to.
      * @param packetRouter the router for sending packets from this user.
      * @param jid the real address of the user
      */
-    LocalMUCUser(MultiUserChatServerImpl chatserver, PacketRouter packetRouter, JID jid) {
+    LocalMUCUser(MultiUserChatService chatservice, PacketRouter packetRouter, JID jid) {
         this.realjid = jid;
         this.router = packetRouter;
-        this.server = chatserver;
+        this.server = chatservice;
     }
 
     /**
@@ -274,6 +274,7 @@ public class LocalMUCUser implements MUCUser {
                                     // Try to keep the list of extensions sent together with the
                                     // message invitation. These extensions will be sent to the
                                     // invitees.
+                                    @SuppressWarnings("unchecked")
                                     List<Element> extensions = new ArrayList<Element>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);

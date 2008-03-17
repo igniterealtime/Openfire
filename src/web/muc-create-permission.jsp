@@ -10,9 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.openfire.muc.MultiUserChatServer"
+                 org.jivesoftware.openfire.muc.MultiUserChatService"
     errorPage="error.jsp"
 %>
+<%@ page import="java.net.URLEncoder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -28,9 +29,16 @@
     boolean deletesuccess = request.getParameter("deletesuccess") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
     boolean openPerms = ParamUtils.getBooleanParameter(request,"openPerms");
+    String mucname = ParamUtils.getParameter(request,"mucname");
 
-	// Get muc server
-    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
+    if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
+        // The requested service name does not exist so return to the list of the existing rooms
+        response.sendRedirect("muc-service-summary.jsp");
+        return;
+    }
+
+    // Get muc server
+    MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     // Handle a save
     Map<String,String> errors = new HashMap<String,String>();
@@ -38,23 +46,23 @@
         if (openPerms) {
             // Remove all users who have the ability to create rooms
             List<String> removeables = new ArrayList<String>();
-            for (Object obj : mucServer.getUsersAllowedToCreate()) {
+            for (Object obj : mucService.getUsersAllowedToCreate()) {
                 String user = (String)obj;
                 removeables.add(user);
             }
             for (String user : removeables) {
-                mucServer.removeUserAllowedToCreate(user);
+                mucService.removeUserAllowedToCreate(user);
             }
-            mucServer.setRoomCreationRestricted(false);
+            mucService.setRoomCreationRestricted(false);
             // Log the event
-            webManager.logEvent("set MUC room creation to restricted", null);
+            webManager.logEvent("set MUC room creation to restricted for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?success=true");
             return;
         }
         else {
-            mucServer.setRoomCreationRestricted(true);
+            mucService.setRoomCreationRestricted(true);
             // Log the event
-            webManager.logEvent("set MUC room creation to not restricted", null);
+            webManager.logEvent("set MUC room creation to not restricted for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?success=true");
             return;
         }
@@ -67,9 +75,9 @@
             errors.put("userJID","userJID");
         }
         if (errors.size() == 0) {
-            mucServer.addUserAllowedToCreate(userJID);
+            mucService.addUserAllowedToCreate(userJID);
             // Log the event
-            webManager.logEvent("added MUC room creation permission to "+userJID, null);
+            webManager.logEvent("added MUC room creation permission to "+userJID+" for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?addsuccess=true");
             return;
         }
@@ -77,9 +85,9 @@
 
     if (delete) {
         // Remove the user from the allowed list
-        mucServer.removeUserAllowedToCreate(userJID);
+        mucService.removeUserAllowedToCreate(userJID);
         // Log the event
-        webManager.logEvent("removed MUC room creation permission from "+userJID, null);
+        webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
         // done, return
         response.sendRedirect("muc-create-permission.jsp?deletesuccess=true");
         return;
@@ -89,13 +97,15 @@
 <html>
 <head>
 <title><fmt:message key="muc.create.permission.title"/></title>
-<meta name="pageID" content="muc-perms"/>
+<meta name="subPageID" content="muc-perms"/>
+<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
 <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
 </head>
 <body>
 
 <p>
 <fmt:message key="muc.create.permission.info" />
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -149,7 +159,7 @@
             <tr>
                 <td width="1%">
                     <input type="radio" name="openPerms" value="true" id="rb01"
-                     <%= ((!mucServer.isRoomCreationRestricted()) ? "checked" : "") %>>
+                     <%= ((!mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
                     <label for="rb01"><fmt:message key="muc.create.permission.anyone_created" /></label>
@@ -159,7 +169,7 @@
                 <td width="1%">
                     <input type="radio" name="openPerms" value="false" id="rb02"
                      onfocus="this.form.userJID.focus();"
-                     <%= ((mucServer.isRoomCreationRestricted()) ? "checked" : "") %>>
+                     <%= ((mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td width="99%">
                     <label for="rb02"><fmt:message key="muc.create.permission.specific_created" /></label>
@@ -175,7 +185,7 @@
 <br>
 
 
-<%  if (mucServer.isRoomCreationRestricted()) { %>
+<%  if (mucService.isRoomCreationRestricted()) { %>
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
 	<div class="jive-contentBoxHeader">
@@ -198,7 +208,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<%  if (mucServer.getUsersAllowedToCreate().size() == 0) { %>
+				<%  if (mucService.getUsersAllowedToCreate().size() == 0) { %>
 
 					<tr>
 						<td colspan="2">
@@ -208,7 +218,7 @@
 
 				<%  } %>
 
-				<%  for (Object obj : mucServer.getUsersAllowedToCreate()) {
+				<%  for (Object obj : mucService.getUsersAllowedToCreate()) {
 						String user = (String)obj;
 				%>
 					<tr>

@@ -28,14 +28,14 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class BroascastMessageRequest extends MUCRoomTask {
+public class BroadcastMessageRequest extends MUCRoomTask {
     private int occupants;
     private Message message;
 
-    public BroascastMessageRequest() {
+    public BroadcastMessageRequest() {
     }
 
-    public BroascastMessageRequest(LocalMUCRoom room, Message message, int occupants) {
+    public BroadcastMessageRequest(LocalMUCRoom room, Message message, int occupants) {
         super(room);
         this.message = message;
         this.occupants = occupants;

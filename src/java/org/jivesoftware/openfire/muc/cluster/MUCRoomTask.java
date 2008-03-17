@@ -13,8 +13,10 @@ package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.jivesoftware.util.NotFoundException;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -53,14 +55,22 @@ public abstract class MUCRoomTask implements ClusterTask {
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeBoolean(out, originator);
         ExternalizableUtil.getInstance().writeSafeUTF(out, room.getName());
+        ExternalizableUtil.getInstance().writeSafeUTF(out, room.getMUCService().getServiceName());
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         originator = ExternalizableUtil.getInstance().readBoolean(in);
         String roomName = ExternalizableUtil.getInstance().readSafeUTF(in);
-        room = (LocalMUCRoom) XMPPServer.getInstance().getMultiUserChatServer().getChatRoom(roomName);
-        if (room == null) {
-            throw new IllegalArgumentException("Room not found: " + roomName);
+        String subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
+        try {
+            MultiUserChatService mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
+            room = (LocalMUCRoom) mucService.getChatRoom(roomName);
+            if (room == null) {
+                throw new IllegalArgumentException("Room not found: " + roomName);
+            }
+        }
+        catch (NotFoundException e) {
+            throw new IllegalArgumentException("MUC service not found for subdomain: "+subdomain);
         }
     }
 }

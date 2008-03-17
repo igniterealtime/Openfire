@@ -11,10 +11,9 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.ClusterTask;
-import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,13 +27,13 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class RoomRemovedEvent implements ClusterTask {
-    private String roomName;
+    private LocalMUCRoom room;
 
     public RoomRemovedEvent() {
     }
 
-    public RoomRemovedEvent(String roomName) {
-        this.roomName = roomName;
+    public RoomRemovedEvent(LocalMUCRoom room) {
+        this.room = room;
     }
 
     public Object getResult() {
@@ -42,15 +41,16 @@ public class RoomRemovedEvent implements ClusterTask {
     }
 
     public void run() {
-        MultiUserChatServerImpl mucServer = (MultiUserChatServerImpl) XMPPServer.getInstance().getMultiUserChatServer();
-        mucServer.chatRoomRemoved(roomName);
+        MultiUserChatService mucService = room.getMUCService();
+        mucService.chatRoomRemoved(room);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableUtil.getInstance().writeSafeUTF(out, roomName);
+        room.writeExternal(out);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        roomName = ExternalizableUtil.getInstance().readSafeUTF(in);
+        room = new LocalMUCRoom();
+        room.readExternal(in);
     }
 }

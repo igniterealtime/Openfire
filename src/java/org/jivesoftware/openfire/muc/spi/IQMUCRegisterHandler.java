@@ -21,7 +21,7 @@ import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -43,10 +43,10 @@ import java.util.List;
 class IQMUCRegisterHandler {
 
     private static Element probeResult;
-    private MultiUserChatServer mucServer;
+    private MultiUserChatService mucService;
 
-    public IQMUCRegisterHandler(MultiUserChatServer mucServer) {
-        this.mucServer = mucServer;
+    public IQMUCRegisterHandler(MultiUserChatService mucService) {
+        this.mucService = mucService;
         initialize();
     }
 
@@ -109,7 +109,7 @@ class IQMUCRegisterHandler {
         MUCRoom room = null;
         String name = packet.getTo().getNode();
         if (name != null) {
-            room = mucServer.getChatRoom(name);
+            room = mucService.getChatRoom(name);
         }
         if (room == null) {
             // The room doesn't exist so answer a NOT_FOUND error

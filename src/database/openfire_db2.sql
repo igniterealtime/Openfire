@@ -178,7 +178,23 @@ CREATE INDEX jiveSecAuditLog_uname_idx ON jiveSecurityAuditLog (username);
 
 -- MUC tables
 
+CREATE TABLE mucService (
+  serviceID           INTEGER       NOT NULL,
+  subdomain           VARCHAR(255)  NOT NULL,
+  description         VARCHAR(255),
+  CONSTRAINT mucService_pk PRIMARY KEY (subdomain)
+);
+CREATE INDEX mucService_serviceid_idx ON mucService(serviceID);
+
+CREATE TABLE mucServiceProp (
+  serviceID           INTEGER       NOT NULL,
+  name                VARCHAR(100)  NOT NULL,
+  propValue           VARCHAR(2000) NOT NULL,
+  CONSTRAINT mucServiceProp_pk PRIMARY KEY (serviceID, name)
+);
+
 CREATE TABLE mucRoom (
+  serviceID           INTEGER       NOT NULL,
   roomID              INTEGER       NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
   modificationDate    CHAR(15)      NOT NULL,
@@ -201,9 +217,10 @@ CREATE TABLE mucRoom (
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
   canRegister         INTEGER       NOT NULL,
-  CONSTRAINT mucRoom_pk PRIMARY KEY (name)
+  CONSTRAINT mucRoom_pk PRIMARY KEY (serviceID, name)
 );
 CREATE INDEX mucRm_roomid_idx ON mucRoom (roomID);
+CREATE INDEX mucRm_serviceid_idx ON mucRoom (serviceID);
 
 
 CREATE TABLE mucRoomProp (
@@ -365,9 +382,13 @@ CREATE TABLE pubsubDefaultConf (
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
+INSERT INTO jiveID (idType, id) VALUES (26, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 16);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 17);
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
+
+-- Entry for default conference service
+INSERT INTO mucService (serviceID, subdomain) VALUES (1, "conference");

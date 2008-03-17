@@ -138,15 +138,14 @@ public class IQOwnerHandler {
     private void handleItemsElement(List itemsList, MUCRole senderRole, IQ reply)
             throws ForbiddenException, ConflictException {
         Element item;
-        String affiliation = null;
         boolean hasJID = ((Element)itemsList.get(0)).attributeValue("jid") != null;
         boolean hasNick = ((Element)itemsList.get(0)).attributeValue("nick") != null;
         // Check if the client is requesting or changing the list of owners/admin
         if (!hasJID && !hasNick) {
             // The client is requesting the list of owners or admins
-            for (Iterator items = itemsList.iterator(); items.hasNext();) {
-                item = (Element)items.next();
-                affiliation = item.attributeValue("affiliation");
+            for (Object anItem : itemsList) {
+                item = (Element) anItem;
+                String affiliation = item.attributeValue("affiliation");
                 // Create the result that will hold an item for each owner or admin
                 Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#owner");
 
@@ -169,8 +168,7 @@ public class IQOwnerHandler {
                             // Do nothing
                         }
                     }
-                }
-                else if ("admin".equals(affiliation)) {
+                } else if ("admin".equals(affiliation)) {
                     // The client is requesting the list of admins
                     Element adminMetaData;
                     MUCRole role;
@@ -189,8 +187,7 @@ public class IQOwnerHandler {
                             // Do nothing
                         }
                     }
-                }
-                else {
+                } else {
                     reply.setError(PacketError.Condition.bad_request);
                 }
             }
@@ -198,17 +195,16 @@ public class IQOwnerHandler {
         else {
             // The client is modifying the list of owners or admins
             Map<String,String> jids = new HashMap<String,String>();
-            String bareJID = null;
             String nick;
             // Collect the new affiliations for the specified jids
-            for (Iterator items = itemsList.iterator(); items.hasNext();) {
+            for (Object anItem : itemsList) {
                 try {
-                    item = (Element)items.next();
-                    affiliation = item.attributeValue("affiliation");
+                    item = (Element) anItem;
+                    String affiliation = item.attributeValue("affiliation");
+                    String bareJID;
                     if (hasJID) {
                         bareJID = new JID(item.attributeValue("jid")).toBareJID();
-                    }
-                    else {
+                    } else {
                         // Get the bare JID based on the requested nick
                         nick = item.attributeValue("nick");
                         bareJID = room.getOccupant(nick).getUserAddress().toBareJID();
@@ -236,19 +232,15 @@ public class IQOwnerHandler {
                 room.lock.readLock().unlock();
                 room.lock.writeLock().lock();
                 try {
-                    String targetAffiliation = null;
-                    for (Iterator<String> it = jids.keySet().iterator(); it.hasNext();) {
-                        bareJID = it.next();
-                        targetAffiliation = jids.get(bareJID);
+                    for (String bareJID : jids.keySet()) {
+                        String targetAffiliation = jids.get(bareJID);
                         if ("owner".equals(targetAffiliation)) {
                             // Add the new user as an owner of the room
                             presences.addAll(room.addOwner(bareJID, senderRole));
-                        }
-                        else if ("admin".equals(targetAffiliation)) {
+                        } else if ("admin".equals(targetAffiliation)) {
                             // Add the new user as an admin of the room
                             presences.addAll(room.addAdmin(bareJID, senderRole));
-                        }
-                        else if ("member".equals(targetAffiliation)) {
+                        } else if ("member".equals(targetAffiliation)) {
                             // Add the new user as a member of the room
                             boolean hadAffiliation = room.getAffiliation(bareJID) != MUCRole.Affiliation.none;
                             presences.addAll(room.addMember(bareJID, null, senderRole));
@@ -257,8 +249,7 @@ public class IQOwnerHandler {
                             if (!hadAffiliation && room.isMembersOnly()) {
                                 room.sendInvitation(new JID(bareJID), null, senderRole, null);
                             }
-                        }
-                        else if ("none".equals(targetAffiliation)) {
+                        } else if ("none".equals(targetAffiliation)) {
                             // Set that this jid has a NONE affiliation
                             presences.addAll(room.addNone(bareJID, senderRole));
                         }
@@ -366,7 +357,7 @@ public class IQOwnerHandler {
         }
 
         // Keep a registry of the updated presences
-        List presences = new ArrayList(admins.size() + owners.size());
+        List<Presence> presences = new ArrayList<Presence>(admins.size() + owners.size());
 
         room.lock.writeLock().lock();
         try {
@@ -386,7 +377,7 @@ public class IQOwnerHandler {
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setCanOccupantsChangeSubject(("1".equals(booleanValue) ? true : false));
+                room.setCanOccupantsChangeSubject(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("muc#roomconfig_maxusers");
@@ -409,14 +400,14 @@ public class IQOwnerHandler {
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setPublicRoom(("1".equals(booleanValue) ? true : false));
+                room.setPublicRoom(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("muc#roomconfig_persistentroom");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                boolean isPersistent = ("1".equals(booleanValue) ? true : false);
+                boolean isPersistent = ("1".equals(booleanValue));
                 // Delete the room from the DB if it's no longer persistent
                 if (room.isPersistent() && !isPersistent) {
                     MUCPersistenceManager.deleteFromDB(room);
@@ -428,22 +419,21 @@ public class IQOwnerHandler {
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setModerated(("1".equals(booleanValue) ? true : false));
+                room.setModerated(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("muc#roomconfig_membersonly");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                presences.addAll(room.setMembersOnly(("1".equals(booleanValue) ?
-                        true : false)));
+                presences.addAll(room.setMembersOnly(("1".equals(booleanValue))));
             }
 
             field = completedForm.getField("muc#roomconfig_allowinvites");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setCanOccupantsInvite(("1".equals(booleanValue) ? true : false));
+                room.setCanOccupantsInvite(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("muc#roomconfig_passwordprotectedroom");
@@ -469,35 +459,35 @@ public class IQOwnerHandler {
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue) ? true : false));
+                room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue)));
             }
 
             field = completedForm.getField("muc#roomconfig_enablelogging");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setLogEnabled(("1".equals(booleanValue) ? true : false));
+                room.setLogEnabled(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("x-muc#roomconfig_reservednick");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setLoginRestrictedToNickname(("1".equals(booleanValue) ? true : false));
+                room.setLoginRestrictedToNickname(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("x-muc#roomconfig_canchangenick");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setChangeNickname(("1".equals(booleanValue) ? true : false));
+                room.setChangeNickname(("1".equals(booleanValue)));
             }
 
             field = completedForm.getField("x-muc#roomconfig_registration");
             if (field != null) {
                 values = field.getValues();
                 booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setRegistrationEnabled(("1".equals(booleanValue) ? true : false));
+                room.setRegistrationEnabled(("1".equals(booleanValue)));
             }
 
             // Update the modification date to reflect the last time when the room's configuration
@@ -546,8 +536,8 @@ public class IQOwnerHandler {
         }
 
         // Send the updated presences to the room occupants
-        for (Iterator it = presences.iterator(); it.hasNext();) {
-            room.send((Presence)it.next());
+        for (Object presence : presences) {
+            room.send((Presence) presence);
         }
     }
 
@@ -653,7 +643,7 @@ public class IQOwnerHandler {
 
         configurationForm = new XDataFormImpl(DataForm.TYPE_FORM);
         configurationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.conf.title"));
-        List params = new ArrayList();
+        List<String> params = new ArrayList<String>();
         params.add(room.getName());
         configurationForm.addInstruction(LocaleUtils.getLocalizedString("muc.form.conf.instruction", params));
 

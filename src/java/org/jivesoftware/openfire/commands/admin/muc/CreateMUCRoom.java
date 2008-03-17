@@ -11,9 +11,10 @@ package org.jivesoftware.openfire.commands.admin.muc;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.util.NotFoundException;
 import org.dom4j.Element;
 import org.xmpp.packet.JID;
 import org.xmpp.forms.DataForm;
@@ -44,12 +45,6 @@ public class CreateMUCRoom extends AdHocCommand {
 
     public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
-        MultiUserChatServer server = XMPPServer.getInstance().getMultiUserChatServer();
-        if (!server.isServiceEnabled()) {
-            note.addAttribute("type", "error");
-            note.setText("Multi user chat is disabled on server.");
-            return;
-        }
         Collection<JID> admins = XMPPServer.getInstance().getAdmins();
         if (admins.size() <= 0) {
             note.addAttribute("type", "error");
@@ -58,6 +53,29 @@ public class CreateMUCRoom extends AdHocCommand {
         }
         Map<String, List<String>> data = sessionData.getData();
 
+        // Let's find the requested MUC service to create the room in
+        String servicehostname = get(data, "servicename", 0);
+        if (servicehostname == null) {
+            note.addAttribute("type", "error");
+            note.setText("Service name must be specified.");
+            return;
+        }
+        // Remove the server's domain name from the passed hostname
+        String servicename = servicehostname.replace("."+XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "");
+        MultiUserChatService mucService;
+        try {
+            mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(servicename);
+            if (!mucService.isServiceEnabled()) {
+                note.addAttribute("type", "error");
+                note.setText("Multi user chat is disabled for specified service.");
+                return;
+            }
+        }
+        catch (NotFoundException e) {
+            note.addAttribute("type", "error");
+            note.setText("Invalid service name specified.");
+            return;
+        }
         // Let's create the jid and check that they are a local user
         String roomname = get(data, "roomname", 0);
         if (roomname == null) {
@@ -68,7 +86,7 @@ public class CreateMUCRoom extends AdHocCommand {
         JID admin = admins.iterator().next();
         MUCRoom room;
         try {
-            room = server.getChatRoom(roomname, admin);
+            room = mucService.getChatRoom(roomname, admin);
         }
         catch (NotAllowedException e) {
             note.addAttribute("type", "error");
@@ -102,6 +120,12 @@ public class CreateMUCRoom extends AdHocCommand {
         field.setType(FormField.Type.text_single);
         field.setLabel("The name of the room");
         field.setVariable("roomname");
+        field.setRequired(true);
+
+        field = form.addField();
+        field.setType(FormField.Type.text_single);
+        field.setLabel("The service (hostname) to create the room on");
+        field.setVariable("servicename");
         field.setRequired(true);
 
         field = form.addField();

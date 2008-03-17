@@ -15,7 +15,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 /**
- * Interface to listen for MUC events. Use the {@link MultiUserChatServer#addListener(MUCEventListener)}
+ * Interface to listen for MUC events. Use the {@link MUCEventDispatcher#addListener(MUCEventListener)}
  * method to register for events.
  *
  * @author Gaston Dombiak

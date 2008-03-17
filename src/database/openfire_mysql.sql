@@ -163,7 +163,23 @@ CREATE TABLE jiveSecurityAuditLog (
 
 # MUC Tables
 
+CREATE TABLE mucService (
+  serviceID           BIGINT        NOT NULL,
+  subdomain           VARCHAR(255)  NOT NULL,
+  description         VARCHAR(255),
+  PRIMARY KEY (subdomain),
+  INDEX mucService_serviceid_idx (serviceID)
+);
+
+CREATE TABLE mucServiceProp (
+  serviceID           BIGINT        NOT NULL,
+  name                VARCHAR(100)  NOT NULL,
+  propValue           TEXT          NOT NULL,
+  PRIMARY KEY (serviceID, name)
+);
+
 CREATE TABLE mucRoom (
+  serviceID           BIGINT        NOT NULL,
   roomID              BIGINT        NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
   modificationDate    CHAR(15)      NOT NULL,
@@ -186,8 +202,9 @@ CREATE TABLE mucRoom (
   useReservedNick     TINYINT       NOT NULL,
   canChangeNick       TINYINT       NOT NULL,
   canRegister         TINYINT       NOT NULL,
-  PRIMARY KEY (name),
-  INDEX mucRoom_roomid_idx (roomID)
+  PRIMARY KEY (serviceID,name),
+  INDEX mucRoom_roomid_idx (roomID),
+  INDEX mucRoom_serviceid_idx (serviceID)
 );
 
 CREATE TABLE mucRoomProp (
@@ -340,9 +357,13 @@ CREATE TABLE pubsubDefaultConf (
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
+INSERT INTO jiveID (idType, id) VALUES (26, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 16);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 17);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
+
+# Entry for default conference service
+INSERT INTO mucService (serviceID, subdomain) VALUES (1, "conference");

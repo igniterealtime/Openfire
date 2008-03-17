@@ -11,9 +11,8 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.ClusterTask;
 
 import java.io.IOException;
@@ -42,8 +41,8 @@ public class RoomAvailableEvent implements ClusterTask {
     }
 
     public void run() {
-        MultiUserChatServerImpl mucServer = (MultiUserChatServerImpl) XMPPServer.getInstance().getMultiUserChatServer();
-        mucServer.chatRoomAdded(room);
+        MultiUserChatService mucService = room.getMUCService();
+        mucService.chatRoomAdded(room);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

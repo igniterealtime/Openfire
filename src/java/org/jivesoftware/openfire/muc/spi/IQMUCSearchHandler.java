@@ -17,10 +17,9 @@ import org.jivesoftware.openfire.forms.FormField;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.resultsetmanager.ResultSet;
 import org.jivesoftware.openfire.resultsetmanager.ResultSetImpl;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
@@ -39,17 +38,17 @@ public class IQMUCSearchHandler
 	/**
 	 * The MUC-server to extend with jabber:iq:search functionality.
 	 */
-	private final MultiUserChatServer mucServer;
+	private final MultiUserChatService mucService;
 
 	/**
 	 * Creates a new instance of the search provider.
 	 * 
-	 * @param mucServer
+	 * @param mucService
 	 *            The server for which to return search results.
 	 */
-	public IQMUCSearchHandler(MultiUserChatServer mucServer)
+	public IQMUCSearchHandler(MultiUserChatService mucService)
 	{
-		this.mucServer = mucServer;
+		this.mucService = mucService;
 	}
 
 	/**
@@ -142,7 +141,8 @@ public class IQMUCSearchHandler
 		boolean includePasswordProtectedRooms = true;
 
 		final Set<String> names = new HashSet<String>();
-		final Iterator<FormField> formFields = df.getFields();
+        @SuppressWarnings("unchecked")
+        final Iterator<FormField> formFields = df.getFields();
 		while (formFields.hasNext())
 		{
 
@@ -213,7 +213,7 @@ public class IQMUCSearchHandler
 
 		// search for chatrooms matching the request params.
 		final List<MUCRoom> mucs = new ArrayList<MUCRoom>();
-		for (MUCRoom room : mucServer.getChatRooms())
+		for (MUCRoom room : mucService.getChatRooms())
 		{
 			boolean find = false;
 
@@ -307,7 +307,6 @@ public class IQMUCSearchHandler
 			mucrsm = new ArrayList<MUCRoom>(searchResults);
 		}
 
-		ArrayList<XFormFieldImpl> fields = null;
 		final Element res = DocumentHelper.createElement(QName.get("query",
 			"jabber:iq:search"));
 
@@ -315,7 +314,7 @@ public class IQMUCSearchHandler
 		boolean atLeastoneResult = false;
 		for (MUCRoom room : mucrsm)
 		{
-			fields = new ArrayList<XFormFieldImpl>();
+			ArrayList<XFormFieldImpl> fields = new ArrayList<XFormFieldImpl>();
 			XFormFieldImpl innerfield = new XFormFieldImpl("name");
 			innerfield.setType(FormField.TYPE_TEXT_SINGLE);
 			innerfield.addValue(room.getNaturalLanguageName());
@@ -397,6 +396,7 @@ public class IQMUCSearchHandler
 	 * 
 	 * @param mucs
 	 *            The unordered list that will be sorted.
+     * @return The sorted list of MUC rooms.
 	 */
 	private static List<MUCRoom> sortByUserAmount(List<MUCRoom> mucs)
 	{
@@ -413,7 +413,7 @@ public class IQMUCSearchHandler
 
 	/**
 	 * Checks if the room may be included in search results. This is almost
-	 * identical to {@link MultiUserChatServerImpl#canDiscoverRoom(MUCRoom room)},
+	 * identical to {@link MultiUserChatServiceImpl#canDiscoverRoom(MUCRoom room)},
 	 * but that method is private and cannot be re-used here.
 	 * 
 	 * @param room
@@ -424,7 +424,7 @@ public class IQMUCSearchHandler
 	private static boolean canBeIncludedInResult(MUCRoom room)
 	{
 		// Check if locked rooms may be discovered
-		final boolean discoverLocked = JiveGlobals.getBooleanProperty("xmpp.muc.discover.locked", true);
+		final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty(room.getMUCService().getServiceName(), "discover.locked", true);
 
 		if (!discoverLocked && room.isLocked())
 		{

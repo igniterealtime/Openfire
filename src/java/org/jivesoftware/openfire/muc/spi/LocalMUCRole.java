@@ -19,7 +19,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -58,7 +58,7 @@ public class LocalMUCRole implements MUCRole {
     /**
      * The chatserver that hosts this role.
      */
-    private MultiUserChatServer server;
+    private MultiUserChatService server;
 
     /**
      * The role.
@@ -109,7 +109,7 @@ public class LocalMUCRole implements MUCRole {
      * @param presence the presence sent by the user to join the room.
      * @param packetRouter the packet router for sending messages from this role.
      */
-    public LocalMUCRole(MultiUserChatServer chatserver, LocalMUCRoom chatroom, String nickname,
+    public LocalMUCRole(MultiUserChatService chatserver, LocalMUCRoom chatroom, String nickname,
             MUCRole.Role role, MUCRole.Affiliation affiliation, LocalMUCUser chatuser, Presence presence,
             PacketRouter packetRouter)
     {

@@ -10,9 +10,10 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
-                 org.jivesoftware.openfire.muc.MultiUserChatServer"
+                 org.jivesoftware.openfire.muc.MultiUserChatService"
     errorPage="error.jsp"
 %>
+<%@ page import="java.net.URLEncoder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -29,18 +30,25 @@
     boolean logSettings = request.getParameter("logSettings") != null;
     boolean kickSettingSuccess = request.getParameter("kickSettingSuccess") != null;
     boolean logSettingSuccess = request.getParameter("logSettingSuccess") != null;
+    String mucname = ParamUtils.getParameter(request,"mucname");
 
-	// Get muc server
-    MultiUserChatServer mucServer = webManager.getMultiUserChatServer();
+    if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
+        // The requested service name does not exist so return to the list of the existing rooms
+        response.sendRedirect("muc-service-summary.jsp");
+        return;
+    }
+
+    // Get muc server
+    MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     Map<String, String> errors = new HashMap<String, String>();
     // Handle an update of the kicking task settings
     if (kickSettings) {
         if (!kickEnabled) {
             // Disable kicking users by setting a value of -1
-            mucServer.setUserIdleTime(-1);
+            mucService.setUserIdleTime(-1);
             // Log the event
-            webManager.logEvent("disabled muc idle kick timeout", null);
+            webManager.logEvent("disabled muc idle kick timeout for service "+mucname, null);
             response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
             return;
         }
@@ -63,9 +71,9 @@
         }
 
         if (errors.size() == 0) {
-            mucServer.setUserIdleTime(idle);
+            mucService.setUserIdleTime(idle);
             // Log the event
-            webManager.logEvent("edited muc idle kick timeout", "timeout = "+idle);
+            webManager.logEvent("edited muc idle kick timeout for service "+mucname, "timeout = "+idle);
             response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
             return;
         }
@@ -99,10 +107,10 @@
         }
 
         if (errors.size() == 0) {
-            mucServer.setLogConversationsTimeout(frequency);
-            mucServer.setLogConversationBatchSize(batchSize);
+            mucService.setLogConversationsTimeout(frequency);
+            mucService.setLogConversationBatchSize(batchSize);
             // Log the event
-            webManager.logEvent("edited muc conversation log settings", "timeout = "+frequency+"\nbatchSize = "+batchSize);
+            webManager.logEvent("edited muc conversation log settings for service "+mucname, "timeout = "+frequency+"\nbatchSize = "+batchSize);
             response.sendRedirect("muc-tasks.jsp?logSettingSuccess=true");
             return;
         }
@@ -112,13 +120,15 @@
 <html>
 <head>
 <title><fmt:message key="muc.tasks.title"/></title>
-<meta name="pageID" content="muc-tasks"/>
+<meta name="subPageID" content="muc-tasks"/>
+<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
 <meta name="helpPage" content="edit_idle_user_settings.html"/>
 </head>
 <body>
 
 <p>
 <fmt:message key="muc.tasks.info" />
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
 </p>
 
 <%  if (kickSettingSuccess || logSettingSuccess) { %>
@@ -177,7 +187,7 @@
 			<tr valign="middle">
 				<td width="1%" nowrap>
 					<input type="radio" name="kickEnabled" value="false" id="rb01"
-					 <%= ((mucServer.getUserIdleTime() < 0) ? "checked" : "") %>>
+					 <%= ((mucService.getUserIdleTime() < 0) ? "checked" : "") %>>
 				</td>
 				<td width="99%">
 					<label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
@@ -186,13 +196,13 @@
 			<tr valign="middle">
 				<td width="1%" nowrap>
 					<input type="radio" name="kickEnabled" value="true" id="rb02"
-					 <%= ((mucServer.getUserIdleTime() > -1) ? "checked" : "") %>>
+					 <%= ((mucService.getUserIdleTime() > -1) ? "checked" : "") %>>
 				</td>
 				<td width="99%">
 						<label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
 						 <input type="text" name="idletime" size="5" maxlength="5"
 							 onclick="this.form.kickEnabled[1].checked=true;"
-							 value="<%= mucServer.getUserIdleTime() == -1 ? 30 : mucServer.getUserIdleTime() / 1000 / 60 %>">
+							 value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
 						 <fmt:message key="global.minutes" />.
 				</td>
 			</tr>
@@ -219,7 +229,7 @@
 			</td>
 			<td width="99%">
 				<input type="text" name="logfreq" size="15" maxlength="50"
-				 value="<%= mucServer.getLogConversationsTimeout() / 1000 %>">
+				 value="<%= mucService.getLogConversationsTimeout() / 1000 %>">
 			</td>
 		</tr>
 		<tr valign="middle">
@@ -228,7 +238,7 @@
 			</td>
 			<td width="99%">
 				<input type="text" name="logbatchsize" size="15" maxlength="50"
-				 value="<%= mucServer.getLogConversationBatchSize() %>">
+				 value="<%= mucService.getLogConversationBatchSize() %>">
 			</td>
 		</tr>
 		</table>

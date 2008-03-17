@@ -14,7 +14,7 @@ package org.jivesoftware.openfire.muc.cluster;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.util.cache.ClusterTask;
 
@@ -43,18 +43,20 @@ public class GetNewMemberRoomsRequest implements ClusterTask {
 
     public void run() {
         rooms = new ArrayList<RoomInfo>();
-        // Get rooms that have local occupants and include them in the reply
-        MultiUserChatServer mucServer = XMPPServer.getInstance().getMultiUserChatServer();
-        for (MUCRoom room : mucServer.getChatRooms()) {
-            LocalMUCRoom localRoom = (LocalMUCRoom) room;
-            Collection<MUCRole> localOccupants = new ArrayList<MUCRole>();
-            for (MUCRole occupant : room.getOccupants()) {
-                if (occupant.isLocal()) {
-                    localOccupants.add(occupant);
+        // Get all services that have local occupants and include them in the reply
+        for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
+            // Get rooms that have local occupants and include them in the reply
+            for (MUCRoom room : mucService.getChatRooms()) {
+                LocalMUCRoom localRoom = (LocalMUCRoom) room;
+                Collection<MUCRole> localOccupants = new ArrayList<MUCRole>();
+                for (MUCRole occupant : room.getOccupants()) {
+                    if (occupant.isLocal()) {
+                        localOccupants.add(occupant);
+                    }
                 }
-            }
-            if (!localOccupants.isEmpty()) {
-                rooms.add(new RoomInfo(localRoom, localOccupants));
+                if (!localOccupants.isEmpty()) {
+                    rooms.add(new RoomInfo(localRoom, localOccupants));
+                }
             }
         }
     }

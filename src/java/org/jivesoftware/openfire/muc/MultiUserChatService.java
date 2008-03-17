@@ -14,6 +14,9 @@ package org.jivesoftware.openfire.muc;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.database.JiveID;
+import org.jivesoftware.util.JiveConstants;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +28,8 @@ import java.util.List;
  * 
  * @author Gaston Dombiak
  */
-public interface MultiUserChatServer extends Component {
+@JiveID(JiveConstants.MUC_SERVICE)
+public interface MultiUserChatService extends Component {
 
     /**
      * Returns the fully-qualifed domain name of this chat service.
@@ -42,14 +46,6 @@ public interface MultiUserChatServer extends Component {
      * @return the subdomain of the chat service.
      */
     String getServiceName();
-
-    /**
-     * Set the name of this chat service. The new name won't go into effect until the server is
-     * restarted.
-     * 
-     * @param name The chat service name (host name).
-     */
-    void setServiceName(String name);
 
     /**
      * Returns the collection of JIDs that are system administrators of the MUC service. A sysadmin has
@@ -228,6 +224,22 @@ public interface MultiUserChatServer extends Component {
     boolean hasChatRoom(String roomName);
 
     /**
+     * Notification message indicating that the specified chat room was
+     * removed from some other cluster member.
+     *
+     * @param room the removed room in another cluster node.
+     */
+    public void chatRoomRemoved(LocalMUCRoom room);
+
+    /**
+     * Notification message indicating that a chat room has been created
+     * in another cluster member.
+     *
+     * @param room the created room in another cluster node.
+     */
+    public void chatRoomAdded(LocalMUCRoom room);
+
+    /**
      * Removes the room associated with the given name.
      * 
      * @param roomName The room to remove.
@@ -253,6 +265,45 @@ public interface MultiUserChatServer extends Component {
     public long getTotalChatTime();
 
     /**
+     * Retuns the number of existing rooms in the server (i.e. persistent or not,
+     * in memory or not).
+     *
+     * @return the number of existing rooms in the server.
+     */
+    public int getNumberChatRooms();
+
+    /**
+     * Retuns the total number of occupants in all rooms in the server.
+     *
+     * @param onlyLocal true if only users connected to this JVM will be considered. Otherwise count cluster wise.
+     * @return the number of existing rooms in the server.
+     */
+    public int getNumberConnectedUsers(boolean onlyLocal);
+
+    /**
+     * Retuns the total number of users that have joined in all rooms in the server.
+     *
+     * @return the number of existing rooms in the server.
+     */
+    public int getNumberRoomOccupants();
+
+    /**
+     * Returns the total number of incoming messages since last reset.
+     *
+     * @param resetAfter True if you want the counter to be reset after results returned.
+     * @return the number of incoming messages through the service.
+     */
+    public long getIncomingMessageCount(boolean resetAfter);
+
+    /**
+     * Returns the total number of outgoing messages since last reset.
+     *
+     * @param resetAfter True if you want the counter to be reset after results returned.
+     * @return the number of outgoing messages through the service.
+     */
+    public long getOutgoingMessageCount(boolean resetAfter);
+
+    /**
      * Logs that a given message was sent to a room as part of a conversation. Every message sent
      * to the room that is allowed to be broadcasted and that was sent either from the room itself 
      * or from an occupant will be logged.<p>
@@ -261,7 +312,7 @@ public interface MultiUserChatServer extends Component {
      * the logged messages in memory until the logging process saves them to the database. It's 
      * possible to configure the logging process to run every X milliseconds and also the number 
      * of messages to log on each execution. 
-     * @see org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.openfire.XMPPServer)
+     * @see org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl#initialize(org.jivesoftware.openfire.XMPPServer)
      * 
      * @param room the room that received the message.
      * @param message the message to log as part of the conversation in the room.
@@ -295,16 +346,14 @@ public interface MultiUserChatServer extends Component {
     boolean isServiceEnabled();
 
     /**
-     * Registers a listener to receive events.
+     * Returns true if the MUC service is a private, externally managed, service.  This is typically
+     * set to true when the implementation is not the default one, and is not to be managed by
+     * the standard Openfire interface.  If this is set to true, the service will not show up in
+     * the service list in the admin console.
      *
-     * @param listener the listener.
-     */
-    void addListener(MUCEventListener listener);
-
-    /**
-     * Unregisters a listener to receive events.
+     * TODO: Anything else?  Should it show up in Disco browsing?
      *
-     * @param listener the listener.
+     * @return true if the MUC service is private and externally managed.
      */
-    void removeListener(MUCEventListener listener);
+    boolean isServicePrivate();
 }

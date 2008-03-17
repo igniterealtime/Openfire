@@ -147,7 +147,7 @@ public class HistoryRequest {
             int accumulatedChars = 0;
             int accumulatedStanzas = 0;
             Element delayInformation;
-            LinkedList historyToSend = new LinkedList();
+            LinkedList<Message> historyToSend = new LinkedList<Message>();
             ListIterator iterator = roomHistory.getReverseMessageHistory();
             while (iterator.hasPrevious()) {
                 message = (Message)iterator.previous();
@@ -173,7 +173,7 @@ public class HistoryRequest {
                     delayInformation = message.getChildElement("x", "jabber:x:delay");
                     try {
                         // Get the date when the historic message was sent
-                        Date delayedDate = null;
+                        Date delayedDate;
                         synchronized (delayedFormatter) {
                             delayedDate = delayedFormatter
                                     .parse(delayInformation.attributeValue("stamp"));
@@ -200,9 +200,8 @@ public class HistoryRequest {
                 historyToSend.addFirst(message);
             }
             // Send the smallest amount of traffic to the user
-            Iterator history = historyToSend.iterator();
-            while (history.hasNext()) {
-                joinRole.send((Message) history.next());
+            for (Object aHistoryToSend : historyToSend) {
+                joinRole.send((Message) aHistoryToSend);
             }
         }
     }

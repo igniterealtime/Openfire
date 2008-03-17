@@ -13,17 +13,20 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.NotFoundException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A manager responsible for ensuring room persistence. There are different ways to make a room 
@@ -57,24 +60,29 @@ public class MUCPersistenceManager {
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister " +
-        "FROM mucRoom WHERE emptyDate IS NULL or emptyDate > ?";
+        "FROM mucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_AFFILIATIONS =
-        "SELECT roomID,jid,affiliation FROM mucAffiliation";
+        "SELECT mucAffiliation.roomID,mucAffiliation.jid,mucAffiliation.affiliation " +
+        "FROM mucAffiliation,mucRoom WHERE mucAffiliation.roomID = mucRoom.roomID AND mucRoom.serviceID=?";
     private static final String LOAD_ALL_MEMBERS =
-        "SELECT roomID,jid, nickname FROM mucMember";
+        "SELECT mucMember.roomID,mucMember.jid,mucMember.nickname FROM mucMember,mucRoom " +
+        "WHERE mucMember.roomID = mucRoom.roomID AND mucRoom.serviceID=?";
     private static final String LOAD_ALL_HISTORY =
-        "SELECT roomID, sender, nickname, logTime, subject, body FROM mucConversationLog " +
-        "WHERE logTime>? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
+        "SELECT mucConversationLog.roomID, mucConversationLog.sender, mucConversationLog.nickname, " +
+        "mucConversationLog.logTime, mucConversationLog.subject, mucConversationLog.body FROM " +
+        "mucConversationLog, mucRoom WHERE mucConversationLog.roomID = mucRoom.roomID AND " +
+        "mucRoom.serviceID=? AND mucConversationLog.logTime>? AND (mucConversationLog.nickname IS NOT NULL " +
+        "OR mucConversationLog.subject IS NOT NULL) ORDER BY mucConversationLog.logTime";
     private static final String UPDATE_ROOM =
         "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
         "useReservedNick=?, canChangeNick=?, canRegister=? WHERE roomID=?";
     private static final String ADD_ROOM = 
-        "INSERT INTO mucRoom (roomID, creationDate, modificationDate, name, naturalName, " +
+        "INSERT INTO mucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
         "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
-        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?," +
+        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?,?," +
             "?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE mucRoom SET subject=? WHERE roomID=?";
@@ -100,10 +108,12 @@ public class MUCPersistenceManager {
         "UPDATE mucAffiliation SET affiliation=? WHERE roomID=? AND jid=?";
     private static final String DELETE_AFFILIATION =
         "DELETE FROM mucAffiliation WHERE roomID=? AND jid=?";
-
     private static final String ADD_CONVERSATION_LOG =
         "INSERT INTO mucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
         "VALUES (?,?,?,?,?,?)";
+
+    /* Map of subdomains to their associated properties */
+    private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<String,MUCServiceProperties>();
 
     /**
      * Returns the reserved room nickname for the bare JID in a given room or null if none.
@@ -167,15 +177,15 @@ public class MUCPersistenceManager {
             else {
                 room.setEmptyDate(null);
             }
-            room.setCanOccupantsChangeSubject(rs.getInt(8) == 1 ? true : false);
+            room.setCanOccupantsChangeSubject(rs.getInt(8) == 1);
             room.setMaxUsers(rs.getInt(9));
-            room.setPublicRoom(rs.getInt(10) == 1 ? true : false);
-            room.setModerated(rs.getInt(11) == 1 ? true : false);
-            room.setMembersOnly(rs.getInt(12) == 1 ? true : false);
-            room.setCanOccupantsInvite(rs.getInt(13) == 1 ? true : false);
+            room.setPublicRoom(rs.getInt(10) == 1);
+            room.setModerated(rs.getInt(11) == 1);
+            room.setMembersOnly(rs.getInt(12) == 1);
+            room.setCanOccupantsInvite(rs.getInt(13) == 1);
             room.setPassword(rs.getString(14));
-            room.setCanAnyoneDiscoverJID(rs.getInt(15) == 1 ? true : false);
-            room.setLogEnabled(rs.getInt(16) == 1 ? true : false);
+            room.setCanAnyoneDiscoverJID(rs.getInt(15) == 1);
+            room.setLogEnabled(rs.getInt(16) == 1);
             room.setSubject(rs.getString(17));
             List<String> rolesToBroadcast = new ArrayList<String>();
             String roles = Integer.toBinaryString(rs.getInt(18));
@@ -189,9 +199,9 @@ public class MUCPersistenceManager {
                 rolesToBroadcast.add("visitor");
             }
             room.setRolesToBroadcastPresence(rolesToBroadcast);
-            room.setLoginRestrictedToNickname(rs.getInt(19) == 1 ? true : false);
-            room.setChangeNickname(rs.getInt(20) == 1 ? true : false);
-            room.setRegistrationEnabled(rs.getInt(21) == 1 ? true : false);
+            room.setLoginRestrictedToNickname(rs.getInt(19) == 1);
+            room.setChangeNickname(rs.getInt(20) == 1);
+            room.setRegistrationEnabled(rs.getInt(21) == 1);
             room.setPersistent(true);
             rs.close();
             pstmt.close();
@@ -322,36 +332,40 @@ public class MUCPersistenceManager {
             }
             else {
                 pstmt = con.prepareStatement(ADD_ROOM);
-                pstmt.setLong(1, room.getID());
-                pstmt.setString(2, StringUtils.dateToMillis(room.getCreationDate()));
-                pstmt.setString(3, StringUtils.dateToMillis(room.getModificationDate()));
-                pstmt.setString(4, room.getName());
-                pstmt.setString(5, room.getNaturalLanguageName());
-                pstmt.setString(6, room.getDescription());
-                pstmt.setString(7, StringUtils.dateToMillis(room.getLockedDate()));
+                pstmt.setLong(1, XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName()));
+                pstmt.setLong(2, room.getID());
+                pstmt.setString(3, StringUtils.dateToMillis(room.getCreationDate()));
+                pstmt.setString(4, StringUtils.dateToMillis(room.getModificationDate()));
+                pstmt.setString(5, room.getName());
+                pstmt.setString(6, room.getNaturalLanguageName());
+                pstmt.setString(7, room.getDescription());
+                pstmt.setString(8, StringUtils.dateToMillis(room.getLockedDate()));
                 Date emptyDate = room.getEmptyDate();
                 if (emptyDate == null) {
-                    pstmt.setString(8, null);
+                    pstmt.setString(9, null);
                 }
                 else {
-                    pstmt.setString(8, StringUtils.dateToMillis(emptyDate));
+                    pstmt.setString(9, StringUtils.dateToMillis(emptyDate));
                 }
-                pstmt.setInt(9, (room.canOccupantsChangeSubject() ? 1 : 0));
-                pstmt.setInt(10, room.getMaxUsers());
-                pstmt.setInt(11, (room.isPublicRoom() ? 1 : 0));
-                pstmt.setInt(12, (room.isModerated() ? 1 : 0));
-                pstmt.setInt(13, (room.isMembersOnly() ? 1 : 0));
-                pstmt.setInt(14, (room.canOccupantsInvite() ? 1 : 0));
-                pstmt.setString(15, room.getPassword());
-                pstmt.setInt(16, (room.canAnyoneDiscoverJID() ? 1 : 0));
-                pstmt.setInt(17, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(18, room.getSubject());
-                pstmt.setInt(19, marshallRolesToBroadcast(room));
-                pstmt.setInt(20, (room.isLoginRestrictedToNickname() ? 1 : 0));
-                pstmt.setInt(21, (room.canChangeNickname() ? 1 : 0));
-                pstmt.setInt(22, (room.isRegistrationEnabled() ? 1 : 0));
+                pstmt.setInt(10, (room.canOccupantsChangeSubject() ? 1 : 0));
+                pstmt.setInt(11, room.getMaxUsers());
+                pstmt.setInt(12, (room.isPublicRoom() ? 1 : 0));
+                pstmt.setInt(13, (room.isModerated() ? 1 : 0));
+                pstmt.setInt(14, (room.isMembersOnly() ? 1 : 0));
+                pstmt.setInt(15, (room.canOccupantsInvite() ? 1 : 0));
+                pstmt.setString(16, room.getPassword());
+                pstmt.setInt(17, (room.canAnyoneDiscoverJID() ? 1 : 0));
+                pstmt.setInt(18, (room.isLogEnabled() ? 1 : 0));
+                pstmt.setString(19, room.getSubject());
+                pstmt.setInt(20, marshallRolesToBroadcast(room));
+                pstmt.setInt(21, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(22, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(23, (room.isRegistrationEnabled() ? 1 : 0));
                 pstmt.executeUpdate();
             }
+        }
+        catch (NotFoundException e) {
+            Log.error(e);
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -415,19 +429,20 @@ public class MUCPersistenceManager {
      * @param packetRouter the PacketRouter that loaded rooms will use to send packets.
      * @return a collection with all the persistent rooms.
      */
-    public static Collection<LocalMUCRoom> loadRoomsFromDB(MultiUserChatServer chatserver,
+    public static Collection<LocalMUCRoom> loadRoomsFromDB(MultiUserChatService chatserver,
             Date emptyDate, PacketRouter packetRouter) {
         Connection con = null;
         PreparedStatement pstmt = null;
         Map<Long, LocalMUCRoom> rooms = new HashMap<Long, LocalMUCRoom>();
         try {
+            Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ALL_ROOMS);
-            pstmt.setString(1, StringUtils.dateToMillis(emptyDate));
+            pstmt.setLong(1, serviceID);
+            pstmt.setString(2, StringUtils.dateToMillis(emptyDate));
             ResultSet rs = pstmt.executeQuery();
-            LocalMUCRoom room = null;
             while (rs.next()) {
-                room = new LocalMUCRoom(chatserver, rs.getString(4), packetRouter);
+                LocalMUCRoom room = new LocalMUCRoom(chatserver, rs.getString(4), packetRouter);
                 room.setID(rs.getLong(1));
                 room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
                 room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
@@ -440,15 +455,15 @@ public class MUCPersistenceManager {
                 else {
                     room.setEmptyDate(null);
                 }
-                room.setCanOccupantsChangeSubject(rs.getInt(9) == 1 ? true : false);
+                room.setCanOccupantsChangeSubject(rs.getInt(9) == 1);
                 room.setMaxUsers(rs.getInt(10));
-                room.setPublicRoom(rs.getInt(11) == 1 ? true : false);
-                room.setModerated(rs.getInt(12) == 1 ? true : false);
-                room.setMembersOnly(rs.getInt(13) == 1 ? true : false);
-                room.setCanOccupantsInvite(rs.getInt(14) == 1 ? true : false);
+                room.setPublicRoom(rs.getInt(11) == 1);
+                room.setModerated(rs.getInt(12) == 1);
+                room.setMembersOnly(rs.getInt(13) == 1);
+                room.setCanOccupantsInvite(rs.getInt(14) == 1);
                 room.setPassword(rs.getString(15));
-                room.setCanAnyoneDiscoverJID(rs.getInt(16) == 1 ? true : false);
-                room.setLogEnabled(rs.getInt(17) == 1 ? true : false);
+                room.setCanAnyoneDiscoverJID(rs.getInt(16) == 1);
+                room.setLogEnabled(rs.getInt(17) == 1);
                 room.setSubject(rs.getString(18));
                 List<String> rolesToBroadcast = new ArrayList<String>();
                 String roles = Integer.toBinaryString(rs.getInt(19));
@@ -462,9 +477,9 @@ public class MUCPersistenceManager {
                     rolesToBroadcast.add("visitor");
                 }
                 room.setRolesToBroadcastPresence(rolesToBroadcast);
-                room.setLoginRestrictedToNickname(rs.getInt(20) == 1 ? true : false);
-                room.setChangeNickname(rs.getInt(21) == 1 ? true : false);
-                room.setRegistrationEnabled(rs.getInt(22) == 1 ? true : false);
+                room.setLoginRestrictedToNickname(rs.getInt(20) == 1);
+                room.setChangeNickname(rs.getInt(21) == 1);
+                room.setRegistrationEnabled(rs.getInt(22) == 1);
                 room.setPersistent(true);
                 rooms.put(room.getID(), room);
             }
@@ -474,11 +489,12 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(LOAD_ALL_HISTORY);
             // Recreate the history until two days ago
             long from = System.currentTimeMillis() - (86400000 * 2);
-            pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
+            pstmt.setLong(1, serviceID);
+            pstmt.setString(2, StringUtils.dateToMillis(new Date(from)));
             // Load the rooms conversations from the last two days
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                room = (LocalMUCRoom) rooms.get(rs.getLong(1));
+                LocalMUCRoom room = rooms.get(rs.getLong(1));
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -516,12 +532,13 @@ public class MUCPersistenceManager {
             }
 
             pstmt = con.prepareStatement(LOAD_ALL_AFFILIATIONS);
+            pstmt.setLong(1, serviceID);
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 long roomID = rs.getLong(1);
                 String jid = rs.getString(2);
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
-                room = (LocalMUCRoom) rooms.get(roomID);
+                LocalMUCRoom room = rooms.get(roomID);
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -550,9 +567,10 @@ public class MUCPersistenceManager {
             pstmt.close();
 
             pstmt = con.prepareStatement(LOAD_ALL_MEMBERS);
+            pstmt.setLong(1, serviceID);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                room = (LocalMUCRoom) rooms.get(rs.getLong(1));
+                LocalMUCRoom room = rooms.get(rs.getLong(1));
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
@@ -565,6 +583,9 @@ public class MUCPersistenceManager {
                 }
             }
             rs.close();
+        }
+        catch (NotFoundException e) {
+            Log.error(e);
         }
         catch (SQLException sqle) {
             Log.error(sqle);
@@ -959,4 +980,249 @@ public class MUCPersistenceManager {
         buffer.append((room.canBroadcastPresence("visitor") ? "1" : "0"));
         return Integer.parseInt(buffer.toString(), 2);
     }
+
+    /**
+     * Returns a Jive property.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param name the name of the property to return.
+     * @return the property value specified by name.
+     */
+    public static String getProperty(String subdomain, String name) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+            propertyMaps.put(subdomain, properties);
+        }
+        return properties.get(name);
+    }
+
+    /**
+     * Returns a Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist.
+     * @return the property value specified by name.
+     */
+    public static String getProperty(String subdomain, String name, String defaultValue) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+            propertyMaps.put(subdomain, properties);
+        }
+        String value = properties.get(name);
+        if (value != null) {
+            return value;
+        }
+        else {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Returns an integer value Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static int getIntProperty(String subdomain, String name, int defaultValue) {
+        String value = getProperty(subdomain, name);
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Returns a long value Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static long getLongProperty(String subdomain, String name, long defaultValue) {
+        String value = getProperty(subdomain, name);
+        if (value != null) {
+            try {
+                return Long.parseLong(value);
+            }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Returns a boolean value Jive property.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param name the name of the property to return.
+     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
+     *      Otherwise <tt>false</tt> is returned.
+     */
+    public static boolean getBooleanProperty(String subdomain, String name) {
+        return Boolean.valueOf(getProperty(subdomain, name));
+    }
+
+    /**
+     * Returns a boolean value Jive property. If the property doesn't exist, the <tt>defaultValue</tt>
+     * will be returned.
+     *
+     * If the specified property can't be found, or if the value is not a number, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist.
+     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
+     *      Otherwise <tt>false</tt> is returned.
+     */
+    public static boolean getBooleanProperty(String subdomain, String name, boolean defaultValue) {
+        String value = getProperty(subdomain, name);
+        if (value != null) {
+            return Boolean.valueOf(value);
+        }
+        else {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Return all immediate children property names of a parent Jive property as a list of strings,
+     * or an empty list if there are no children. For example, given
+     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
+     * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
+     * <tt>C</tt> (<tt>C.D</tt> would not be returned using this method).<p>
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param parent the root "node" of the properties to retrieve
+     * @return a List of all immediate children property names (Strings).
+     */
+    public static List<String> getPropertyNames(String subdomain, String parent) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+            propertyMaps.put(subdomain, properties);
+        }
+        return new ArrayList<String>(properties.getChildrenNames(parent));
+    }
+
+    /**
+     * Return all immediate children property values of a parent Jive property as a list of strings,
+     * or an empty list if there are no children. For example, given
+     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
+     * the immediate child properties of <tt>X.Y</tt> are <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and
+     * <tt>X.Y.C</tt> (the value of <tt>X.Y.C.D</tt> would not be returned using this method).<p>
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @param parent the name of the parent property to return the children for.
+     * @return all child property values for the given parent.
+     */
+    public static List<String> getProperties(String subdomain, String parent) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+            propertyMaps.put(subdomain, properties);
+        }
+
+        Collection<String> propertyNames = properties.getChildrenNames(parent);
+        List<String> values = new ArrayList<String>();
+        for (String propertyName : propertyNames) {
+            String value = getProperty(subdomain, propertyName);
+            if (value != null) {
+                values.add(value);
+            }
+        }
+
+        return values;
+    }
+
+    /**
+     * Returns all MUC service property names.
+     *
+     * @param subdomain the subdomain of the service to retrieve a property from
+     * @return a List of all property names (Strings).
+     */
+    public static List<String> getPropertyNames(String subdomain) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+            propertyMaps.put(subdomain, properties);
+        }
+        return new ArrayList<String>(properties.getPropertyNames());
+    }
+
+    /**
+     * Sets a Jive property. If the property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param subdomain the subdomain of the service to set a property for
+     * @param name the name of the property being set.
+     * @param value the value of the property being set.
+     */
+    public static void setProperty(String subdomain, String name, String value) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+        }
+        properties.put(name, value);
+        propertyMaps.put(subdomain, properties);
+    }
+
+   /**
+     * Sets multiple Jive properties at once. If a property doesn't already exists, a new
+     * one will be created.
+     *
+    * @param subdomain the subdomain of the service to set properties for
+     * @param propertyMap a map of properties, keyed on property name.
+     */
+    public static void setProperties(String subdomain, Map<String, String> propertyMap) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+        }
+        properties.putAll(propertyMap);
+        propertyMaps.put(subdomain, properties);
+    }
+
+    /**
+     * Deletes a Jive property. If the property doesn't exist, the method
+     * does nothing. All children of the property will be deleted as well.
+     *
+     * @param subdomain the subdomain of the service to delete a property from
+     * @param name the name of the property to delete.
+     */
+    public static void deleteProperty(String subdomain, String name) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+        }
+        properties.remove(name);
+        propertyMaps.put(subdomain, properties);
+    }
+
+    /**
+     * Resets (reloads) the properties for a specified subdomain.
+     *
+     * @param subdomain the subdomain of the service to reload properties for.
+     */
+    public static void refreshProperties(String subdomain) {
+        propertyMaps.replace(subdomain, new MUCServiceProperties(subdomain));
+    }
+    
 }

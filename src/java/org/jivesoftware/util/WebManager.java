@@ -16,7 +16,8 @@ import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
@@ -99,8 +100,8 @@ public class WebManager extends WebBean {
         return getXMPPServer().getSessionManager();
     }
 
-    public MultiUserChatServer getMultiUserChatServer() {
-        return getXMPPServer().getMultiUserChatServer();
+    public MultiUserChatManager getMultiUserChatManager() {
+        return getXMPPServer().getMultiUserChatManager();
     }
 
     public XMPPServerInfo getServerInfo() {

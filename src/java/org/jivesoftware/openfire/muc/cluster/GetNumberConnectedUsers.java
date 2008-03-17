@@ -12,7 +12,7 @@
 package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.ClusterTask;
 
 import java.io.IOException;
@@ -33,8 +33,10 @@ public class GetNumberConnectedUsers implements ClusterTask{
     }
 
     public void run() {
-        MultiUserChatServerImpl mucServer = (MultiUserChatServerImpl) XMPPServer.getInstance().getMultiUserChatServer();
-        count = mucServer.getNumberConnectedUsers(true);
+        count = 0;
+        for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
+            count += mucService.getNumberConnectedUsers(true);
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

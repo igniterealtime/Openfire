@@ -17,7 +17,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
@@ -38,7 +38,7 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class RemoteMUCRole implements MUCRole, Externalizable {
-    private MultiUserChatServer server;
+    private MultiUserChatService server;
     private Presence presence;
     private Role role;
     private Affiliation affiliation;
@@ -55,7 +55,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     public RemoteMUCRole() {
     }
 
-    public RemoteMUCRole(MultiUserChatServer server, OccupantAddedEvent event) {
+    public RemoteMUCRole(MultiUserChatService server, OccupantAddedEvent event) {
         this.server = server;
         presence = event.getPresence();
         role = event.getRole();

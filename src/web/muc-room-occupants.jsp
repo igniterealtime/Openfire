@@ -18,6 +18,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -25,12 +26,13 @@
 <% webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters
-    String roomName = ParamUtils.getParameter(request,"roomName");
+    JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String nickName = ParamUtils.getParameter(request,"nickName");
     String kick = ParamUtils.getParameter(request,"kick");
+    String roomName = roomJID.getNode();
 
     // Load the room object
-    MUCRoom room = webManager.getMultiUserChatServer().getChatRoom(roomName);
+    MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
         response.sendRedirect("muc-room-summary.jsp");
@@ -46,12 +48,12 @@
                 // Log the event
                 webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
                 // Done, so redirect
-                response.sendRedirect("muc-room-occupants.jsp?roomName="+URLEncoder.encode(room.getName(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletesuccess=true");
+                response.sendRedirect("muc-room-occupants.jsp?roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletesuccess=true");
                 return;
             }
             catch (NotAllowedException e) {
                 // Done, so redirect
-                response.sendRedirect("muc-room-occupants.jsp?roomName="+URLEncoder.encode(room.getName(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletefailed=true");
+                response.sendRedirect("muc-room-occupants.jsp?roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8")+"&nickName="+URLEncoder.encode(role.getNickname(), "UTF-8")+"&deletefailed=true");
                 return;
             }
         }
@@ -151,7 +153,7 @@
             <td><%= role.getNickname() %></td>
             <td><%= role.getRole() %></td>
             <td><%= role.getAffiliation() %></td>
-            <td><a href="muc-room-occupants.jsp?roomName=<%= URLEncoder.encode(room.getName(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
+            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
         </tr>
         <% } %>
     </tbody>

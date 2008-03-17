@@ -84,11 +84,12 @@ public class WSUtils {
      * <return>text3</return>
      * </something>
      *
-     * @param element
-     * @return
+     * @param element Element from REST response to be parsed.
+     * @return An array of strings from the REST response.
      */
     protected static List<String> parseStringArray(Element element) {
         List<String> list = new ArrayList<String>();
+        @SuppressWarnings("unchecked")
         List<Node> nodes = (List<Node>) element.selectNodes("return");
         for (Node node : nodes) {
             list.add(node.getText());

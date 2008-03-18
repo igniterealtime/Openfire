@@ -8,22 +8,22 @@
  */
 package org.jivesoftware.openfire.commands.admin.muc;
 
+import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.util.NotFoundException;
-import org.dom4j.Element;
-import org.xmpp.packet.JID;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.packet.JID;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
-import java.util.Arrays;
 
 /**
  * Allows via AdHoc commands the creation of a Multi-User Chat room.
@@ -160,13 +160,4 @@ public class CreateMUCRoom extends AdHocCommand {
         return AdHocCommand.Action.complete;
     }
 
-    private String get(Map<String, List<String>> data, String key, int value) {
-        List<String> list = data.get(key);
-        if (list == null) {
-            return null;
-        }
-        else {
-            return list.get(value);
-        }
-    }
 }

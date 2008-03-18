@@ -150,16 +150,6 @@ public class AddUser extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    private String get(Map<String, List<String>> data, String key, int value) {
-        List<String> list = data.get(key);
-        if (list == null) {
-            return null;
-        }
-        else {
-            return list.get(value);
-        }
-    }
-
     protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }

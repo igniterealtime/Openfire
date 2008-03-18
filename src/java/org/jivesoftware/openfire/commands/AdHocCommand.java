@@ -15,6 +15,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.packet.JID;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * An ad-hoc command is a stateless object responsbile for executing the provided service. Each
@@ -214,6 +215,16 @@ public abstract class AdHocCommand {
         // action in his command
         data.setExecuteAction(executeAction);
     }
+
+    protected String get(Map<String, List<String>> data, String key, int value) {
+        List<String> list = data.get(key);
+        if (list == null) {
+            return null;
+        } else {
+            return list.get(value);
+        }
+    }
+
 
     public enum Status {
 

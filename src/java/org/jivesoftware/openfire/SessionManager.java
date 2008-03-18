@@ -591,7 +591,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * the session unavailable means that the session is not eligible for receiving messages from
      * other clients.
      *
-     * @param session the session that receieved an unavailable presence.
+     * @param session the session that received an unavailable presence.
      */
     public void sessionUnavailable(LocalClientSession session) {
         if (session.getAddress() != null && routingTable != null &&

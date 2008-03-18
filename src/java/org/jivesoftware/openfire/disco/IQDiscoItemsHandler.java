@@ -323,7 +323,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param name the discovered name of the component.
      */
     public void addComponentItem(String jid, String node, String name) {
-        Lock lock = CacheFactory.getLock(jid + "item", serverItems);
+        Lock lock = CacheFactory.getLock(jid, serverItems);
         try {
             lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
@@ -359,7 +359,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             // Safety check
             return;
         }
-        Lock lock = CacheFactory.getLock(jid + "item", serverItems);
+        Lock lock = CacheFactory.getLock(jid, serverItems);
         try {
             lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
@@ -425,7 +425,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             NodeID leftNode = NodeID.getInstance(nodeID);
             for (Map.Entry<String, ClusteredServerItem> entry : serverItems.entrySet()) {
                 String jid = entry.getKey();
-                Lock lock = CacheFactory.getLock(jid + "item", serverItems);
+                Lock lock = CacheFactory.getLock(jid, serverItems);
                 try {
                     lock.lock();
                     ClusteredServerItem item = entry.getValue();
@@ -453,7 +453,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         for (Map.Entry<String, Element> entry : localServerItems.entrySet()) {
             String jid = entry.getKey();
             Element element = entry.getValue();
-            Lock lock = CacheFactory.getLock(jid + "item", serverItems);
+            Lock lock = CacheFactory.getLock(jid, serverItems);
             try {
                 lock.lock();
                 ClusteredServerItem item = serverItems.get(jid);

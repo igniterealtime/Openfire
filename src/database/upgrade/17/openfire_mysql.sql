@@ -19,7 +19,7 @@ CREATE TABLE mucServiceProp (
 ALTER TABLE mucRoom ADD COLUMN serviceID BIGINT NOT NULL FIRST;
 ALTER TABLE mucRoom ADD INDEX mucRoom_serviceid_idx (serviceID);
 
-# change mucRoom's primary key to be referenced around serviceID
+# change mucRooms primary key to be referenced around serviceID
 ALTER TABLE mucRoom DROP PRIMARY KEY;
 ALTER TABLE mucRoom ADD PRIMARY KEY (serviceID,name);
 
@@ -30,7 +30,7 @@ INSERT INTO jiveID (idType, id) VALUES (26, 1);
 # update all entries in mucRoom to be set to the default conference service
 UPDATE mucRoom set serviceID = 1;
 
-# update conference name/desc if there's a custom one set
+# update conference name/desc if theres a custom one set
 UPDATE mucService SET mucService.subdomain = ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = "xmpp.muc.service" )
   WHERE EXISTS ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = "xmpp.muc.service" );
 DELETE FROM jiveProperty WHERE name = "xmpp.muc.service";

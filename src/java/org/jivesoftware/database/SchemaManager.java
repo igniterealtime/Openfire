@@ -344,9 +344,16 @@ public class SchemaManager {
                             DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.db2) {
                         command.deleteCharAt(command.length() - 1);
                     }
-                    Statement stmt = con.createStatement();
-                    stmt.execute(command.toString());
-                    stmt.close();
+                    try {
+                        Statement stmt = con.createStatement();
+                        stmt.execute(command.toString());
+                        stmt.close();
+                    }
+                    catch (SQLException e) {
+                        // Lets show what failed
+                        Log.error("SchemaManager: Failed to execute SQL:\n"+command.toString());
+                        throw e;
+                    }
                 }
             }
         }

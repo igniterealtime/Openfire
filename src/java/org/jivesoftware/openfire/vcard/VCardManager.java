@@ -12,18 +12,20 @@
 package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.event.UserEventAdapter;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Manages VCard information for users.
@@ -35,13 +37,9 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     private VCardProvider provider;
     private static VCardManager instance;
 
-    private Cache<String, Element> vcardCache;
     private EventHandler eventHandler;
-    /**
-     * List of listeners that will be notified when vCards are created, updated or deleted.
-     */
-    private List<VCardListener> listeners = new CopyOnWriteArrayList<VCardListener>();
 
+    private Cache<String, Element> vcardCache;
     public static VCardManager getInstance() {
         return instance;
     }
@@ -63,6 +61,25 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         String cacheName = "VCard";
         vcardCache = CacheFactory.createCache(cacheName);
         this.eventHandler = new EventHandler();
+
+
+        // Keeps the cache updated in case the vCard action was not performed by VCardManager
+        VCardEventDispatcher.addListener(new VCardListener() {
+            public void vCardCreated(String username, Element vCard) {
+                // Since the vCard could be created by the provider, add it to the cache.
+                vcardCache.put(username, vCard);
+            }
+
+            public void vCardUpdated(String username, Element vCard) {
+                // Since the vCard could be updated by the provider, update it to the cache.
+                vcardCache.put(username, vCard);
+            }
+
+            public void vCardDeleted(String username, Element vCard) {
+                // Since the vCard could be delated by the provider, remove it to the cache.
+                vcardCache.remove(username);
+            }
+        });
     }
 
     /**
@@ -124,18 +141,19 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             throw new UnsupportedOperationException("VCard provider is read-only.");
         }
         Element oldVCard = getOrLoadVCard(username);
+        Element newvCard = null;
         // See if we need to update the vCard or insert a new one.
         if (oldVCard != null) {
             // Only update the vCard in the database if the vCard has changed.
             if (!oldVCard.equals(vCardElement)) {
                 try {
-                    Element newvCard = provider.updateVCard(username, vCardElement);
+                    newvCard = provider.updateVCard(username, vCardElement);
                     vcardCache.put(username, newvCard);
                     updated = true;
                 }
                 catch (NotFoundException e) {
                     Log.warn("Tried to update a vCard that does not exist", e);
-                    Element newvCard = provider.createVCard(username, vCardElement);
+                    newvCard = provider.createVCard(username, vCardElement);
                     vcardCache.put(username, newvCard);
                     created = true;
                 }
@@ -143,13 +161,13 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         }
         else {
             try {
-                Element newvCard = provider.createVCard(username, vCardElement);
+                newvCard = provider.createVCard(username, vCardElement);
                 vcardCache.put(username, newvCard);
                 created = true;
             }
             catch (AlreadyExistsException e) {
                 Log.warn("Tried to create a vCard when one already exist", e);
-                Element newvCard = provider.updateVCard(username, vCardElement);
+                newvCard = provider.updateVCard(username, vCardElement);
                 vcardCache.put(username, newvCard);
                 updated = true;
             }
@@ -157,10 +175,10 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         // Dispatch vCard events
         if (created) {
             // Alert listeners that a new vCard has been created
-            dispatchVCardCreated(username);
+            VCardEventDispatcher.dispatchVCardCreated(username, newvCard);
         } else if (updated) {
             // Alert listeners that a vCard has been updated
-            dispatchVCardUpdated(username);
+            VCardEventDispatcher.dispatchVCardUpdated(username, newvCard);
         }
     }
 
@@ -181,7 +199,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             // Delete the property from the DB if it was present in memory
             provider.deleteVCard(username);
             // Alert listeners that a vCard has been deleted
-            dispatchVCardDeleted(username);
+            VCardEventDispatcher.dispatchVCardDeleted(username, oldVCard);
         }
     }
 
@@ -207,60 +225,6 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             }
         }
         return vCardElement;
-    }
-
-    /**
-     * Registers a listener to receive events when a vCard is created, updated or deleted.
-     *
-     * @param listener the listener.
-     */
-    public void addListener(VCardListener listener) {
-        if (listener == null) {
-            throw new NullPointerException();
-        }
-        listeners.add(listener);
-    }
-
-    /**
-     * Unregisters a listener to receive events.
-     *
-     * @param listener the listener.
-     */
-    public void removeListener(VCardListener listener) {
-        listeners.remove(listener);
-    }
-
-    /**
-     * Dispatches that a vCard was updated to all listeners.
-     *
-     * @param user the user for which the vCard was set.
-     */
-    private void dispatchVCardUpdated(String user) {
-        for (VCardListener listener : listeners) {
-            listener.vCardUpdated(user);
-        }
-    }
-
-    /**
-     * Dispatches that a vCard was created to all listeners.
-     *
-     * @param user the user for which the vCard was created.
-     */
-    private void dispatchVCardCreated(String user) {
-        for (VCardListener listener : listeners) {
-            listener.vCardCreated(user);
-        }
-    }
-
-    /**
-     * Dispatches that a vCard was deleted to all listeners.
-     *
-     * @param user the user for which the vCard was deleted.
-     */
-    private void dispatchVCardDeleted(String user) {
-        for (VCardListener listener : listeners) {
-            listener.vCardDeleted(user);
-        }
     }
 
     public void initialize(XMPPServer server) {

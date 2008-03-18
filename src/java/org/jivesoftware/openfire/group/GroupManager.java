@@ -14,6 +14,8 @@ package org.jivesoftware.openfire.group;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -80,10 +82,16 @@ public class GroupManager {
 
         GroupEventDispatcher.addListener(new GroupEventListener() {
             public void groupCreated(Group group, Map params) {
+                // Since the group could be created by the provider, add it possible again
+                groupCache.put(group.getName(), group);
+
                 groupMetaCache.clear();
             }
 
             public void groupDeleting(Group group, Map params) {
+                // Since the group could be deleted by the provider, remove it possible again
+                groupCache.remove(group.getName());
+                
                 groupMetaCache.clear();
             }
 
@@ -130,6 +138,21 @@ public class GroupManager {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
                 groupCache.put(group.getName(), group);
+            }
+
+        });
+
+        UserEventDispatcher.addListener(new UserEventListener() {
+            public void userCreated(User user, Map<String, Object> params) {
+                // ignore
+            }
+
+            public void userDeleting(User user, Map<String, Object> params) {
+                deleteUser(user);
+            }
+
+            public void userModified(User user, Map<String, Object> params) {
+                // ignore
             }
         });
 
@@ -230,11 +253,9 @@ public class GroupManager {
      * Deletes a user from all the groups where he/she belongs. The most probable cause
      * for this request is that the user has been deleted from the system.
      *
-     * TODO: remove this method and use events instead.
-     *
      * @param user the deleted user from the system.
      */
-    public void deleteUser(User user) {
+    private void deleteUser(User user) {
         JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
         for (Group group : getGroups(userJID)) {
             if (group.getAdmins().contains(userJID)) {

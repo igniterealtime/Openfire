@@ -8,7 +8,7 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.group.GroupManager,
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager,
                  org.jivesoftware.openfire.session.ClientSession,
                  org.jivesoftware.openfire.user.User"
     errorPage="error.jsp"
@@ -18,7 +18,6 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
-<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -44,14 +43,10 @@
     if (delete) {
         // Delete the user
         webManager.getUserManager().deleteUser(user);
-        // Delete the user's roster
-        JID userAddress = new JID(username, webManager.getServerInfo().getXMPPDomain(), null);
-        // Delete the roster of the user
-        webManager.getRosterManager().deleteRoster(userAddress);
-        // Delete the user from all the Groups
-        GroupManager.getInstance().deleteUser(user);
+
         if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
             // Log the event
+            JID userAddress = new JID(username, webManager.getServerInfo().getXMPPDomain(), null);
             webManager.logEvent("deleted user "+username, "full jid was "+userAddress);
         }
         // Close the user's connection

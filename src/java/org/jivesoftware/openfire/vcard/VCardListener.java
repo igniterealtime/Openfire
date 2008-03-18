@@ -11,9 +11,11 @@
 
 package org.jivesoftware.openfire.vcard;
 
+import org.dom4j.Element;
+
 /**
  * Interface to listen for vCard changes. Use the
- * {@link org.jivesoftware.openfire.vcard.VCardManager#addListener(VCardListener)}
+ * {@link org.jivesoftware.openfire.vcard.VCardEventDispatcher#addListener(VCardListener)}
  * method to register for events.
  *
  * @author Remko Tron&ccedil;on
@@ -22,21 +24,24 @@ public interface VCardListener {
     /**
      * A vCard was created.
      *
-     * @param user the user for which the vCard was created.
+     * @param username the username for which the vCard was created.
+     * @param vCard the vcard created.
      */
-    public void vCardCreated(String user);
+    public void vCardCreated(String username, Element vCard);
 
     /**
      * A vCard was updated.
      *
-     * @param user the user for which the vCard was updated.
+     * @param username the user for which the vCard was updated.
+     * @param vCard the vcard updated.
      */
-    public void vCardUpdated(String user);
+    public void vCardUpdated(String username, Element vCard);
 
     /**
      * A vCard was deleted.
      *
-     * @param user the user for which the vCard was deleted.
+     * @param username the user for which the vCard was deleted.
+     * @param vCard the vcard deleted.
      */
-    public void vCardDeleted(String user);
+    public void vCardDeleted(String username, Element vCard);
 }

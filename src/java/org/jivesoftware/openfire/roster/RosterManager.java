@@ -565,6 +565,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
             }
         }
+
+        deleteRoster(userJID);
     }
 
     public void userModified(User user, Map params) {

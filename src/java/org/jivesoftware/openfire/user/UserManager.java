@@ -98,11 +98,13 @@ public class UserManager implements IQResultListener {
 
         UserEventListener userListener = new UserEventListener() {
             public void userCreated(User user, Map<String, Object> params) {
-                // Do nothing
+                // Since the user could be created by the provider, add it possible again
+                userCache.put(user.getUsername(), user);
             }
 
             public void userDeleting(User user, Map<String, Object> params) {
-                // Do nothing
+                // Since the user could be deleted by the provider, remove it possible again
+                userCache.remove(user.getUsername());
             }
 
             public void userModified(User user, Map<String, Object> params) {

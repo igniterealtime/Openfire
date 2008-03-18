@@ -1,7 +1,3 @@
-# change mucRoom's primary key to be referenced around serviceID
-ALTER TABLE mucRoom DROP PRIMARY KEY;
-ALTER TABLE mucRoom ADD PRIMARY KEY (serviceID,name);
-
 # create table mucService
 CREATE TABLE mucService (
   serviceID           BIGINT        NOT NULL,
@@ -22,6 +18,10 @@ CREATE TABLE mucServiceProp (
 # add new indexed column to mucRoom
 ALTER TABLE mucRoom ADD COLUMN serviceID BIGINT NOT NULL FIRST;
 ALTER TABLE mucRoom ADD INDEX mucRoom_serviceid_idx (serviceID);
+
+# change mucRoom's primary key to be referenced around serviceID
+ALTER TABLE mucRoom DROP PRIMARY KEY;
+ALTER TABLE mucRoom ADD PRIMARY KEY (serviceID,name);
 
 # add default entry for conference service and associated jiveID value
 INSERT INTO mucService (serviceID, subdomain) VALUES (1, "conference");

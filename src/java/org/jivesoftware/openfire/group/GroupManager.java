@@ -255,7 +255,7 @@ public class GroupManager {
      *
      * @param user the deleted user from the system.
      */
-    private void deleteUser(User user) {
+    public void deleteUser(User user) {
         JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
         for (Group group : getGroups(userJID)) {
             if (group.getAdmins().contains(userJID)) {

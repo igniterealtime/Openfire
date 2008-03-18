@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -352,73 +353,79 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             }
             if (keepTrack) {
                 String sender = update.getFrom().toString();
-                Collection<DirectedPresence> directedPresences = directedPresencesCache.get(sender);
-                if (Presence.Type.unavailable.equals(update.getType())) {
-                    if (directedPresences != null) {
-                        // It's a directed unavailable presence
-                        if (routingTable.hasClientRoute(handlerJID)) {
-                            // Client sessions will receive only presences to the same JID (the
-                            // address of the session) so remove the handler from the map
-                            for (DirectedPresence directedPresence : directedPresences) {
-                                if (directedPresence.getHandler().equals(handlerJID)) {
-                                    directedPresences.remove(directedPresence);
-                                    break;
-                                }
-                            }
-                        }
-                        else {
-                            // A service may receive presences for many JIDs so in this case we
-                            // just need to remove the jid that has received a directed
-                            // unavailable presence
-                            for (DirectedPresence directedPresence : directedPresences) {
-                                if (directedPresence.getHandler().equals(handlerJID)) {
-                                    directedPresence.removeReceiver(jid);
-                                    if (directedPresence.isEmpty()) {
+                Lock lock = CacheFactory.getLock(sender, directedPresencesCache);
+                try {
+                    lock.lock();
+                    Collection<DirectedPresence> directedPresences = directedPresencesCache.get(sender);
+                    if (Presence.Type.unavailable.equals(update.getType())) {
+                        if (directedPresences != null) {
+                            // It's a directed unavailable presence
+                            if (routingTable.hasClientRoute(handlerJID)) {
+                                // Client sessions will receive only presences to the same JID (the
+                                // address of the session) so remove the handler from the map
+                                for (DirectedPresence directedPresence : directedPresences) {
+                                    if (directedPresence.getHandler().equals(handlerJID)) {
                                         directedPresences.remove(directedPresence);
+                                        break;
                                     }
-                                    break;
                                 }
                             }
-                        }
-                        if (directedPresences.isEmpty()) {
-                            // Remove the user from the registry since the list of directed
-                            // presences is empty
-                            directedPresencesCache.remove(sender);
-                            localDirectedPresences.remove(sender);
-                        }
-                        else {
-                            directedPresencesCache.put(sender, directedPresences);
-                            localDirectedPresences.put(sender, directedPresences);
-                        }
-                    }
-                }
-                else {
-                    if (directedPresences == null) {
-                        // We are using a set to avoid duplicate jids in case the user
-                        // sends several directed presences to the same handler. The Map also
-                        // ensures that if the user sends several presences to the same handler
-                        // we will have only one entry in the Map
-                        directedPresences = new ConcurrentLinkedQueue<DirectedPresence>();
-                    }
-                    // Add the handler to the list of handler that processed the directed
-                    // presence sent by the user. This handler will be used to send
-                    // the unavailable presence when the user goes offline
-                    DirectedPresence affectedDirectedPresence = null;
-                    for (DirectedPresence directedPresence : directedPresences) {
-                        if (directedPresence.getHandler().equals(handlerJID)) {
-                            affectedDirectedPresence = directedPresence;
-                            break;
+                            else {
+                                // A service may receive presences for many JIDs so in this case we
+                                // just need to remove the jid that has received a directed
+                                // unavailable presence
+                                for (DirectedPresence directedPresence : directedPresences) {
+                                    if (directedPresence.getHandler().equals(handlerJID)) {
+                                        directedPresence.removeReceiver(jid);
+                                        if (directedPresence.isEmpty()) {
+                                            directedPresences.remove(directedPresence);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            if (directedPresences.isEmpty()) {
+                                // Remove the user from the registry since the list of directed
+                                // presences is empty
+                                directedPresencesCache.remove(sender);
+                                localDirectedPresences.remove(sender);
+                            }
+                            else {
+                                directedPresencesCache.put(sender, directedPresences);
+                                localDirectedPresences.put(sender, directedPresences);
+                            }
                         }
                     }
+                    else {
+                        if (directedPresences == null) {
+                            // We are using a set to avoid duplicate jids in case the user
+                            // sends several directed presences to the same handler. The Map also
+                            // ensures that if the user sends several presences to the same handler
+                            // we will have only one entry in the Map
+                            directedPresences = new ConcurrentLinkedQueue<DirectedPresence>();
+                        }
+                        // Add the handler to the list of handler that processed the directed
+                        // presence sent by the user. This handler will be used to send
+                        // the unavailable presence when the user goes offline
+                        DirectedPresence affectedDirectedPresence = null;
+                        for (DirectedPresence directedPresence : directedPresences) {
+                            if (directedPresence.getHandler().equals(handlerJID)) {
+                                affectedDirectedPresence = directedPresence;
+                                break;
+                            }
+                        }
 
-                    if (affectedDirectedPresence == null) {
-                        affectedDirectedPresence = new DirectedPresence(handlerJID);
-                        directedPresences.add(affectedDirectedPresence);
-                    }
-                    affectedDirectedPresence.addReceiver(jid);
+                        if (affectedDirectedPresence == null) {
+                            affectedDirectedPresence = new DirectedPresence(handlerJID);
+                            directedPresences.add(affectedDirectedPresence);
+                        }
+                        affectedDirectedPresence.addReceiver(jid);
 
-                    directedPresencesCache.put(sender, directedPresences);
-                    localDirectedPresences.put(sender, directedPresences);
+                        directedPresencesCache.put(sender, directedPresences);
+                        localDirectedPresences.put(sender, directedPresences);
+                    }
+                } finally {
+                    lock.unlock();
                 }
             }
         }
@@ -437,7 +444,16 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
         if (localServer.isLocal(from)) {
             // Remove the registry of directed presences of this user
-            Collection<DirectedPresence> directedPresences = directedPresencesCache.remove(from.toString());
+        	Collection<DirectedPresence> directedPresences = null;
+        	
+        	Lock lock = CacheFactory.getLock(from.toString(), directedPresencesCache);
+        	try {
+        		lock.lock();
+        		directedPresences = directedPresencesCache.remove(from.toString());
+        	} finally {
+        		lock.unlock();
+        	}
+            
             if (directedPresences != null) {
                 // Iterate over all the entities that the user sent a directed presence
                 for (DirectedPresence directedPresence : directedPresences) {
@@ -516,7 +532,19 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         entry.getKey());
                 continue;
             }
-            directedPresencesCache.put(entry.getKey(), entry.getValue());
+
+        	// TODO perhaps we should not lock for every entry. Instead, lock it
+			// once (using a LOCK_ALL global key), and handle iterations in
+			// one go. We should first make sure that this doesn't lead to
+			// deadlocks though! The tryLock() mechanism could be used to first
+            // try one approach, but fall back on the other approach.
+            Lock lock = CacheFactory.getLock(entry.getKey(), directedPresencesCache);
+        	try {
+        		lock.lock();
+        		directedPresencesCache.put(entry.getKey(), entry.getValue());
+        	} finally {
+        		lock.unlock();
+        	}
         }
     }
 
@@ -533,8 +561,21 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                             "PresenceUpdateHandler - Skipping empty directed presences when leaving cluster for sender: " +
                                     entry.getKey());
                     continue;
-                }
-                directedPresencesCache.put(entry.getKey(), entry.getValue());
+                }    
+
+                
+            	// TODO perhaps we should not lock for every entry. Instead, lock it
+    			// once (using a LOCK_ALL global key), and handle iterations in
+    			// one go. We should first make sure that this doesn't lead to
+    			// deadlocks though! The tryLock() mechanism could be used to first
+                // try one approach, but fall back on the other approach.
+                Lock lock = CacheFactory.getLock(entry.getKey(), directedPresencesCache);
+            	try {
+            		lock.lock();
+            		directedPresencesCache.put(entry.getKey(), entry.getValue());
+            	} finally {
+            		lock.unlock();
+            	}
             }
         }
     }

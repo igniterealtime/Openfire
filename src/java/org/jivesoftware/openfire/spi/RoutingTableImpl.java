@@ -108,7 +108,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
         String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
-        Lock lock = CacheFactory.getLock(address + "rt", componentsCache);
+        Lock lock = CacheFactory.getLock(address, componentsCache);
         try {
             lock.lock();
             Set<NodeID> nodes = componentsCache.get(address);
@@ -663,7 +663,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeComponentRoute(JID route) {
         String address = route.getDomain();
         boolean removed = false;
-        Lock lock = CacheFactory.getLock(address + "rt", componentsCache);
+        Lock lock = CacheFactory.getLock(address, componentsCache);
         try {
             lock.lock();
             Set<NodeID> nodes = componentsCache.get(address);

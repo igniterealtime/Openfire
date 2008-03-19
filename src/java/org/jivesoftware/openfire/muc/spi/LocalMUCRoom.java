@@ -2195,12 +2195,8 @@ public class LocalMUCRoom implements MUCRoom {
         }
         savedToDB = ExternalizableUtil.getInstance().readBoolean(in);
         String subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
-        try {
-            mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
-        }
-        catch (NotFoundException e) {
-            throw new IllegalArgumentException("MUC service not found for subdomain: " + subdomain);
-        }
+        mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
+        if (mucService == null) throw new IllegalArgumentException("MUC service not found for subdomain: " + subdomain);
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
 
         PacketRouter packetRouter = XMPPServer.getInstance().getPacketRouter();

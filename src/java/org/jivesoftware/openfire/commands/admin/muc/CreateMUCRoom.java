@@ -15,7 +15,6 @@ import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.util.NotFoundException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -63,17 +62,15 @@ public class CreateMUCRoom extends AdHocCommand {
         // Remove the server's domain name from the passed hostname
         String servicename = servicehostname.replace("."+XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "");
         MultiUserChatService mucService;
-        try {
-            mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(servicename);
-            if (!mucService.isServiceEnabled()) {
-                note.addAttribute("type", "error");
-                note.setText("Multi user chat is disabled for specified service.");
-                return;
-            }
-        }
-        catch (NotFoundException e) {
+        mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(servicename);
+        if (mucService == null) {
             note.addAttribute("type", "error");
             note.setText("Invalid service name specified.");
+            return;
+        }
+        if (!mucService.isServiceEnabled()) {
+            note.addAttribute("type", "error");
+            note.setText("Multi user chat is disabled for specified service.");
             return;
         }
         // Let's create the jid and check that they are a local user

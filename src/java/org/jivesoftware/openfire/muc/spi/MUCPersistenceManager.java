@@ -19,7 +19,6 @@ import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.NotFoundException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -364,9 +363,6 @@ public class MUCPersistenceManager {
                 pstmt.executeUpdate();
             }
         }
-        catch (NotFoundException e) {
-            Log.error(e);
-        }
         catch (SQLException sqle) {
             Log.error(sqle);
         }
@@ -583,9 +579,6 @@ public class MUCPersistenceManager {
                 }
             }
             rs.close();
-        }
-        catch (NotFoundException e) {
-            Log.error(e);
         }
         catch (SQLException sqle) {
             Log.error(sqle);

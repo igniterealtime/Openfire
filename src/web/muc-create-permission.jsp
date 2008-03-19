@@ -56,14 +56,14 @@
             mucService.setRoomCreationRestricted(false);
             // Log the event
             webManager.logEvent("set MUC room creation to restricted for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?success=true");
+            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
         else {
             mucService.setRoomCreationRestricted(true);
             // Log the event
             webManager.logEvent("set MUC room creation to not restricted for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?success=true");
+            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -78,7 +78,7 @@
             mucService.addUserAllowedToCreate(userJID);
             // Log the event
             webManager.logEvent("added MUC room creation permission to "+userJID+" for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?addsuccess=true");
+            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -89,7 +89,7 @@
         // Log the event
         webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
         // done, return
-        response.sendRedirect("muc-create-permission.jsp?deletesuccess=true");
+        response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
         return;
     }
 %>
@@ -150,7 +150,8 @@
 
 <!-- BEGIN 'Permission Policy' -->
 <form action="muc-create-permission.jsp?save" method="post">
-	<div class="jive-contentBoxHeader">
+    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.policy" />
 	</div>
 	<div class="jive-contentBox">
@@ -188,7 +189,8 @@
 <%  if (mucService.isRoomCreationRestricted()) { %>
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
-	<div class="jive-contentBoxHeader">
+    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.allowed_users" />
 	</div>
 	<div class="jive-contentBox">
@@ -226,7 +228,7 @@
 							<%= user %>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true"
+							<a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="muc.create.permission.click_title" />"
 							 onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

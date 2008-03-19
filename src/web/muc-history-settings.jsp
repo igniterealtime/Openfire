@@ -74,7 +74,7 @@
             // Log the event
             webManager.logEvent("set MUC history settings for service "+mucname, "type = "+policy+"\nmax messages = "+numMessages);
             // All done, redirect
-            response.sendRedirect("muc-history-settings.jsp?success=true");
+            response.sendRedirect("muc-history-settings.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -125,7 +125,8 @@
 
 <!-- BEGIN 'History Settings' -->
 <form action="muc-history-settings.jsp" method="post">
-	<div class="jive-contentBoxHeader">
+    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.history.settings.legend" />
 	</div>
 	<div class="jive-contentBox">

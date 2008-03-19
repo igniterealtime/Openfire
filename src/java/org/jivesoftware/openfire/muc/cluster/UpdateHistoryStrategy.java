@@ -16,7 +16,6 @@ import org.jivesoftware.openfire.muc.HistoryStrategy;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.jivesoftware.util.NotFoundException;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -48,15 +47,11 @@ public class UpdateHistoryStrategy implements ClusterTask {
     }
 
     public void run() {
-        try {
-            MultiUserChatServiceImpl mucServer = (MultiUserChatServiceImpl) XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
-            HistoryStrategy strategy = mucServer.getHistoryStrategy();
-            strategy.setType(HistoryStrategy.Type.values()[type]);
-            strategy.setMaxNumber(maxNumber);
-        }
-        catch (NotFoundException e) {
-            throw new IllegalArgumentException("MUC service not found for subdomain: "+serviceName);
-        }
+        MultiUserChatServiceImpl mucServer = (MultiUserChatServiceImpl) XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+        if (mucServer == null) throw new IllegalArgumentException("MUC service not found for subdomain: "+serviceName);
+        HistoryStrategy strategy = mucServer.getHistoryStrategy();
+        strategy.setType(HistoryStrategy.Type.values()[type]);
+        strategy.setMaxNumber(maxNumber);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

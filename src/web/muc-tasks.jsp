@@ -49,7 +49,7 @@
             mucService.setUserIdleTime(-1);
             // Log the event
             webManager.logEvent("disabled muc idle kick timeout for service "+mucname, null);
-            response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
+            response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
         // do validation
@@ -74,7 +74,7 @@
             mucService.setUserIdleTime(idle);
             // Log the event
             webManager.logEvent("edited muc idle kick timeout for service "+mucname, "timeout = "+idle);
-            response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true");
+            response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -111,7 +111,7 @@
             mucService.setLogConversationBatchSize(batchSize);
             // Log the event
             webManager.logEvent("edited muc conversation log settings for service "+mucname, "timeout = "+frequency+"\nbatchSize = "+batchSize);
-            response.sendRedirect("muc-tasks.jsp?logSettingSuccess=true");
+            response.sendRedirect("muc-tasks.jsp?logSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -178,7 +178,8 @@
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?kickSettings" method="post">
-	<div class="jive-contentBoxHeader">
+    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.user_setting" />
 	</div>
 	<div class="jive-contentBox">
@@ -218,7 +219,8 @@
 
 <!-- BEGIN 'Conversation Logging' -->
 <form action="muc-tasks.jsp?logSettings" method="post">
-	<div class="jive-contentBoxHeader">
+    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.conversation.logging" />
 	</div>
 	<div class="jive-contentBox">

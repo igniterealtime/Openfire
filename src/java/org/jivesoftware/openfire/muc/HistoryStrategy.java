@@ -271,6 +271,7 @@ public class HistoryStrategy {
      * @param prefix the prefix to use (without trailing dot) on property names.
      */
     public void setContext(String subdomain, String prefix) {
+        this.contextSubdomain = subdomain;
         this.contextPrefix = prefix;
         setTypeFromString(MUCPersistenceManager.getProperty(subdomain, prefix + ".type"));
         String maxNumberString = MUCPersistenceManager.getProperty(subdomain, prefix + ".maxNumber");

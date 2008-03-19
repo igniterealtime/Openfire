@@ -35,7 +35,7 @@
     MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
-        response.sendRedirect("muc-room-summary.jsp");
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;
     }
 
@@ -67,7 +67,7 @@
 <head>
 <title><fmt:message key="muc.room.occupants.title"/></title>
 <meta name="subPageID" content="muc-room-edit-form"/>
-<meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create=false" %>"/>
+<meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&create=false" %>"/>
 </head>
 <body>
 

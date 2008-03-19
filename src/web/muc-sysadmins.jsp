@@ -47,7 +47,7 @@
             mucService.addSysadmin(userJID);
             // Log the event
             webManager.logEvent("added muc sysadmin "+userJID+" for service "+mucname, null);
-            response.sendRedirect("muc-sysadmins.jsp?addsuccess=true");
+            response.sendRedirect("muc-sysadmins.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -58,7 +58,7 @@
         // Log the event
         webManager.logEvent("removed muc sysadmin "+userJID+" for service "+mucname, null);
         // done, return
-        response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true");
+        response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
         return;
     }
 %>
@@ -121,7 +121,8 @@
 
 <!-- BEGIN 'Administrators' -->
 <form action="muc-sysadmins.jsp?add" method="post">
-	<div class="jive-contentBoxHeader">
+    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.admins.legend" />
 	</div>
 	<div class="jive-contentBox">
@@ -157,7 +158,7 @@
 							<%= user %>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-sysadmins.jsp?userJID=<%= user %>&delete=true"
+							<a href="muc-sysadmins.jsp?userJID=<%= user %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="groupchat.admins.dialog.title" />"
 							 onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

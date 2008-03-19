@@ -30,7 +30,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("muc-room-summary.jsp");
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;
     }
 
@@ -47,7 +47,7 @@
             webManager.logEvent("destroyed MUC room "+roomName, "reason = "+reason+"\nalt jid = "+alternateJID);
         }
         // Done, so redirect
-        response.sendRedirect("muc-room-summary.jsp?deletesuccess=true");
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&deletesuccess=true");
         return;
     }
 %>
@@ -63,12 +63,12 @@
 
 <p>
 <fmt:message key="muc.room.delete.info" />
-<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getName() %></a></b>
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getJID().toBareJID() %></a></b>
 <fmt:message key="muc.room.delete.detail" />
 </p>
 
 <form action="muc-room-delete.jsp">
-<input type="hidden" name="roomName" value="<%= roomName %>">
+<input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
 
 <fieldset>
     <legend><fmt:message key="muc.room.delete.destructon_title" /></legend>
@@ -80,7 +80,7 @@
                 <fmt:message key="muc.room.delete.room_id" />
             </td>
             <td>
-                <%= room.getName() %>
+                <%= room.getJID().toBareJID() %>
             </td>
         </tr>
         <tr>

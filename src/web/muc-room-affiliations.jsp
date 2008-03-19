@@ -44,7 +44,7 @@
 
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
-        response.sendRedirect("muc-room-summary.jsp");
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;
     }
 
@@ -118,14 +118,14 @@
     <head>
         <title><fmt:message key="muc.room.affiliations.title"/></title>
         <meta name="subPageID" content="muc-room-affiliations"/>
-        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>"/>
         <meta name="helpPage" content="edit_group_chat_room_user_permissions.html"/>
     </head>
     <body>
 
 <p>
 <fmt:message key="muc.room.affiliations.info" />
-<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getName() %></a></b>.
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getJID().toBareJID() %></a></b>.
 <fmt:message key="muc.room.affiliations.info_detail" />
 </p>
 
@@ -178,7 +178,7 @@
 <%  } %>
 
 <form action="muc-room-affiliations.jsp?add" method="post">
-<input type="hidden" name="roomName" value="<%= roomName %>">
+<input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
 
 <fieldset>
     <legend><fmt:message key="muc.room.affiliations.permission" /></legend>

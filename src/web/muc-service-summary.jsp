@@ -13,8 +13,8 @@
                  org.jivesoftware.util.ParamUtils"
 %><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.util.Collection" %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -163,7 +163,7 @@
 <tbody>
 
 <%  // Print the list of users
-    Collection<MultiUserChatService> services = webManager.getMultiUserChatManager().getMultiUserChatServices();
+    List<MultiUserChatService> services = webManager.getMultiUserChatManager().getMultiUserChatServices();
     if (services.isEmpty()) {
 %>
     <tr>
@@ -193,7 +193,7 @@
             <%= service.getDescription() %> &nbsp;
         </td>
         <td width="5%">
-            <%= service.getNumberChatRooms() %>
+            <a href="muc-room-summary.jsp?mucname==<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>
         </td>
         <td width="5%">
             <%= service.getNumberConnectedUsers(false) %>

@@ -37,7 +37,18 @@
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean addsuccess = ParamUtils.getBooleanParameter(request,"addsuccess");
-    JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
+    String roomName = ParamUtils.getParameter(request,"roomName");
+    String mucName = ParamUtils.getParameter(request,"mucName");
+    String roomJIDStr = ParamUtils.getParameter(request,"roomJID");
+    JID roomJID = null;
+    if (roomName != null && mucName != null) {
+        roomJID = new JID(roomName, mucName, null);
+    }
+    else if (roomJIDStr != null) {
+        roomJID = new JID(roomJIDStr);
+        roomName = roomJID.getNode();
+        mucName = roomJID.getDomain();
+    }
     String naturalName = ParamUtils.getParameter(request,"roomconfig_roomname");
     String description = ParamUtils.getParameter(request,"roomconfig_roomdesc");
     String maxUsers = ParamUtils.getParameter(request, "roomconfig_maxusers");
@@ -59,8 +70,6 @@
     String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
     String roomSubject = ParamUtils.getParameter(request, "room_topic");
 
-    String roomName = roomJID.getNode();
-
     if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() < 1) {
         // No services exist, so redirect to where one can configure the services
         response.sendRedirect("muc-service-summary.jsp");
@@ -69,7 +78,7 @@
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
-        response.sendRedirect("muc-room-summary.jsp");
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;
     }
 
@@ -80,7 +89,7 @@
 
         if (room == null) {
             // The requested room name does not exist so return to the list of the existing rooms
-            response.sendRedirect("muc-room-summary.jsp");
+            response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
             return;
         }
     }
@@ -326,7 +335,7 @@
 <% } else { %>
 <meta name="subPageID" content="muc-room-edit-form"/>
 <% } %>
-<meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&create="+create %>"/>
+<meta name="extraParams" content="<%= "roomJID="+(roomJID != null ? URLEncoder.encode(roomJID.toBareJID(), "UTF-8") : "")+"&create="+create %>"/>
 <meta name="helpPage" content="view_group_chat_room_summary.html"/>
 </head>
 <body>
@@ -438,9 +447,10 @@
                     <td><fmt:message key="muc.room.edit.form.room_id" />:</td>
                     <td><input type="text" name="roomName" value="<%= roomName %>">
                         <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
-                        @<select name="mucname">
+                        @<select name="mucName">
                         <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) { %>
-                        <option value="<%= service.getServiceName() %>"><%= service.getServiceDomain() %></option>
+                        <%      if (service.isServicePrivate()) continue; %>
+                        <option value="<%= service.getServiceName() %>"<%= service.getServiceDomain().equals(mucName) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
                         <% } %>
                         </select>
                         <% } else { %>
@@ -451,13 +461,18 @@
                                     // Private and hidden, skip it.
                                     continue;
                                 }
-                                out.print(service.getServiceDomain());
+                                out.print("<input type='hidden' name='mucName' value='"+service.getServiceDomain()+"'/>"+service.getServiceDomain());
                                 break;
                             }
                         %>
                         <% } %>
                     </td>
                 </tr>
+                <% } else { %>
+                <tr>
+                   <td><fmt:message key="muc.room.edit.form.service" />:</td>
+                   <td><%= roomJID.getDomain() %></td>
+               </tr>
                 <% } %>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.room_name" />:</td>

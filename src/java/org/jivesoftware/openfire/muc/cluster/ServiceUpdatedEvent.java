@@ -17,7 +17,6 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.Log;
 
 import java.io.IOException;
@@ -46,8 +45,8 @@ public class ServiceUpdatedEvent implements ClusterTask {
     }
 
     public void run() {
-        try {
-            MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
+        MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
+        if (service != null) {
             if (service instanceof MultiUserChatServiceImpl) {
                 MUCPersistenceManager.refreshProperties(subdomain);
                 ((MultiUserChatServiceImpl)service).initializeSettings();
@@ -56,7 +55,7 @@ public class ServiceUpdatedEvent implements ClusterTask {
                 // Ok.  We don't handle non default implementations for this.  Why are we seeing it?
             }
         }
-        catch (NotFoundException e) {
+        else {
             // Hrm.  We got an update for something that we don't have.
             Log.warn("ServiceUpdatedEvent: Received update for service we are not running: "+subdomain);
         }

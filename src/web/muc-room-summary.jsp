@@ -15,27 +15,26 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<html>
-    <head>
-        <title><fmt:message key="muc.room.summary.title"/></title>
-        <meta name="pageID" content="muc-room-summary"/>
-        <meta name="helpPage" content="edit_group_chat_room_settings.html"/>
-    </head>
-    <body>
-
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("muc-room-summary", 15));
     String mucname = ParamUtils.getParameter(request,"mucname");
+    String roomJIDStr = ParamUtils.getParameter(request,"roomJID");
+    JID roomJID = null;
+    if (roomJIDStr != null) roomJID = new JID(roomJIDStr);
 
     MultiUserChatService mucService = null;
-    if (webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
+    if (roomJID != null) {
+        mucService = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID);
+    }
+    else if (mucname != null && webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
         mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
     }
     else {
@@ -73,9 +72,18 @@
     int curPage = (start/range) + 1;
     int maxRoomIndex = (start+range <= roomsCount ? start+range : roomsCount);
 %>
+<html>
+    <head>
+        <title><fmt:message key="muc.room.summary.title"/></title>
+        <meta name="pageID" content="muc-room-summary"/>
+        <meta name="helpPage" content="edit_group_chat_room_settings.html"/>
+    </head>
+    <body>
 
 <p>
 <fmt:message key="muc.room.summary.info" />
+<a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucService.getServiceName(), "UTF-8")%>"><%= mucService.getServiceDomain() %></a>
+<fmt:message key="muc.room.summary.info2" />
 </p>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>

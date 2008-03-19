@@ -13,7 +13,6 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.openfire.XMPPServer;
 
 import java.sql.Connection;
@@ -31,7 +30,7 @@ import java.util.*;
 public class MUCServiceProperties implements Map<String, String> {
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM mucServiceProp WHERE serviceID=?";
-    private static final String INSERT_PROPERTY = "INSERT INTO mucServiceProp(name, propValue) VALUES(?,?,?)";
+    private static final String INSERT_PROPERTY = "INSERT INTO mucServiceProp(serviceID, name, propValue) VALUES(?,?,?)";
     private static final String UPDATE_PROPERTY = "UPDATE mucServiceProp SET propValue=? WHERE serviceID=? AND name=?";
     private static final String DELETE_PROPERTY = "DELETE FROM mucServiceProp WHERE serviceID=? AND name=?";
 
@@ -48,13 +47,13 @@ public class MUCServiceProperties implements Map<String, String> {
             properties.clear();
         }
 
-        try {
-            serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(subdomain);
-        }
-        catch (NotFoundException e) {
+        serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(subdomain);
+        if (serviceID == null) {
             Log.debug("MUCServiceProperties: Unable to find service ID for subdomain "+subdomain);
         }
-        loadProperties();
+        else {
+            loadProperties();
+        }
     }
 
     public int size() {

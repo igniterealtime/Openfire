@@ -28,9 +28,7 @@ import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.component.ComponentException;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.sql.*;
 
 /**
@@ -177,13 +175,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @throws AlreadyExistsException if the service already exists.
      */
     public void createMultiUserChatService(String subdomain, String description) throws AlreadyExistsException {
-        try {
-            getMultiUserChatServiceID(subdomain);
-            throw new AlreadyExistsException();
-        }
-        catch (NotFoundException e) {
-            // Good  =)
-        }
+        if (getMultiUserChatServiceID(subdomain) != null) throw new AlreadyExistsException();
         insertService(subdomain, description);
         MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description);
         registerMultiUserChatService(muc);
@@ -201,6 +193,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      */
     public void updateMultiUserChatService(Long serviceID, String subdomain, String description) throws NotFoundException {
         MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
+        if (muc == null) throw new NotFoundException();
         // A NotFoundException is thrown if the specified service was not found.
         String oldsubdomain = muc.getServiceName();
         if (!mucServices.containsKey(oldsubdomain)) {
@@ -238,6 +231,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      */
     public void updateMultiUserChatService(String cursubdomain, String newsubdomain, String description) throws NotFoundException {
         Long serviceID = getMultiUserChatServiceID(cursubdomain);
+        if (serviceID == null) throw new NotFoundException();
         updateMultiUserChatService(serviceID, newsubdomain, description);
     }
 
@@ -245,45 +239,42 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * Deletes a configured MultiUserChatService by subdomain, and shuts it down.
      *
      * @param subdomain The subdomain of the service to be deleted.
+     * @throws NotFoundException if the service was not found.
      */
-    public void removeMultiUserChatService(String subdomain) {
-        try {
-            Long serviceID = getMultiUserChatServiceID(subdomain);
-            removeMultiUserChatService(serviceID);
-        }
-        catch (NotFoundException e) {
+    public void removeMultiUserChatService(String subdomain) throws NotFoundException {
+        Long serviceID = getMultiUserChatServiceID(subdomain);
+        if (serviceID == null) {
             Log.error("MultiUserChatManager: Unable to find service to remove for "+subdomain);
+            throw new NotFoundException();
         }
+        removeMultiUserChatService(serviceID);
     }
 
     /**
      * Deletes a configured MultiUserChatService by ID, and shuts it down.
      *
      * @param serviceID The ID opf the service to be deleted.
+     * @throws NotFoundException if the service was not found.
      */
-    public void removeMultiUserChatService(Long serviceID) {
-        try {
-            MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
-            unregisterMultiUserChatService(muc.getServiceName());
-            deleteService(serviceID);
-        }
-        catch (NotFoundException e) {
+    public void removeMultiUserChatService(Long serviceID) throws NotFoundException {
+        MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
+        if (muc == null) {
             Log.error("MultiUserChatManager: Unable to find service to remove for service ID "+serviceID);
+            throw new NotFoundException();
         }
+        unregisterMultiUserChatService(muc.getServiceName());
+        deleteService(serviceID);
     }
 
     /**
      * Retrieves a MultiUserChatService instance specified by it's service ID.
      *
      * @param serviceID ID of the conference service you wish to query.
-     * @return The MultiUserChatService instance associated with the id.
-     * @throws NotFoundException if no matching service was found.
+     * @return The MultiUserChatService instance associated with the id, or null if none found.
      */
-    public MultiUserChatService getMultiUserChatService(Long serviceID) throws NotFoundException {
+    public MultiUserChatService getMultiUserChatService(Long serviceID) {
         String subdomain = getMultiUserChatSubdomain(serviceID);
-        if (!mucServices.containsKey(subdomain)) {
-            throw new NotFoundException();
-        }
+        if (subdomain == null) return null;
         return mucServices.get(subdomain);
     }
 
@@ -294,13 +285,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * and the server is example.org, you would specify conference here.
      *
      * @param subdomain Subdomain of the conference service you wish to query.
-     * @return The MultiUserChatService instance associated with the subdomain.
-     * @throws NotFoundException if no matching service was found.
+     * @return The MultiUserChatService instance associated with the subdomain, or null if none found.
      */
-    public MultiUserChatService getMultiUserChatService(String subdomain) throws NotFoundException {
-        if (!mucServices.containsKey(subdomain)) {
-            throw new NotFoundException();
-        }
+    public MultiUserChatService getMultiUserChatService(String subdomain) {
         return mucServices.get(subdomain);
     }
 
@@ -312,21 +299,23 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * the subdomain version of the call.
      *
      * @param jid JID that contains a reference to the conference service.
-     * @return The MultiUserChatService instance associated with the JID.
-     * @throws NotFoundException if no matching service was found.
+     * @return The MultiUserChatService instance associated with the JID, or null if none found.
      */
-    public MultiUserChatService getMultiUserChatService(JID jid) throws NotFoundException {
+    public MultiUserChatService getMultiUserChatService(JID jid) {
         String subdomain = jid.getDomain().replace("."+ XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "");
         return getMultiUserChatService(subdomain);
     }
 
     /**
-     * Retrieves all of the MultiUserChatServices managed and configured for this server.
+     * Retrieves all of the MultiUserChatServices managed and configured for this server, sorted by
+     * subdomain.
      *
-     * @return A collection of MultiUserChatServices configured for this server.
+     * @return A list of MultiUserChatServices configured for this server.
      */
-    public Collection<MultiUserChatService> getMultiUserChatServices() {
-        return mucServices.values();
+    public List<MultiUserChatService> getMultiUserChatServices() {
+        List<MultiUserChatService> services = new ArrayList<MultiUserChatService>(mucServices.values());
+        Collections.sort(services, new ServiceComparator());
+        return services;
     }
 
     /**
@@ -353,13 +342,12 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * Retrieves ID of MUC service by subdomain.
      *
      * @param subdomain Subdomain of service to get ID of.
-     * @return ID number of MUC service.
-     * @throws NotFoundException if service was not found.
+     * @return ID number of MUC service, or null if none found.
      */
-    public Long getMultiUserChatServiceID(String subdomain) throws NotFoundException {
+    public Long getMultiUserChatServiceID(String subdomain) {
         Long id = loadServiceID(subdomain);
         if (id == -1) {
-            throw new NotFoundException();
+            return null;
         }
         return id;
     }
@@ -368,15 +356,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * Retrieves the subdomain of a specified service ID.
      *
      * @param serviceID ID of service to get subdomain of.
-     * @return Subdomain of MUC service.
-     * @throws NotFoundException if service was not found.
+     * @return Subdomain of MUC service, or null if none found.
      */
-    public String getMultiUserChatSubdomain(Long serviceID) throws NotFoundException {
-        String subdomain = loadServiceSubdomain(serviceID);
-        if (subdomain == null) {
-            throw new NotFoundException();
-        }
-        return subdomain;
+    public String getMultiUserChatSubdomain(Long serviceID) {
+        return loadServiceSubdomain(serviceID);
     }
 
     /**
@@ -751,10 +734,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             if (result != null) {
                 for (ServiceInfo serviceInfo : result) {
                     MultiUserChatService service;
-                    try {
-                        service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceInfo.getSubdomain());
-                    }
-                    catch (NotFoundException e) {
+                    service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceInfo.getSubdomain());
+                    if (service == null) {
                         // This is a service we don't know about yet, create it locally and register it;
                         service = new MultiUserChatServiceImpl(serviceInfo.getSubdomain(), serviceInfo.getDescription());
                         XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
@@ -832,4 +813,11 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         // Let everyone know we've had an update.
         CacheFactory.doSynchronousClusterTask(new ServiceUpdatedEvent(service), false);
     }
+
+    private static class ServiceComparator implements Comparator<MultiUserChatService> {
+        public int compare(MultiUserChatService o1, MultiUserChatService o2) {
+            return o1.getServiceName().compareTo(o2.getServiceName());
+        }
+    }
+
 }

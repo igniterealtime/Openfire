@@ -77,14 +77,14 @@ CREATE TABLE jivePresence (
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
   username              VARCHAR(64)     NOT NULL,
-  jid                   TEXT            NOT NULL,
+  jid                   VARCHAR(1024)   NOT NULL,
   sub                   TINYINT         NOT NULL,
   ask                   TINYINT         NOT NULL,
   recv                  TINYINT         NOT NULL,
   nick                  VARCHAR(255),
   PRIMARY KEY (rosterID),
   INDEX jiveRoster_unameid_idx (username),
-  INDEX jiveRoster_jid_idx (jid(1024))
+  INDEX jiveRoster_jid_idx (jid)
 );
 
 CREATE TABLE jiveRosterGroups (

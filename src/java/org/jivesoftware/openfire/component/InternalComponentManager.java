@@ -256,10 +256,6 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         } catch (InterruptedException e) {
             // Ignore
         }
-        if (reply == null) {
-            reply = IQ.createResultIQ(packet);
-            reply.setError(PacketError.Condition.item_not_found);
-        }
         return reply;
     }
 

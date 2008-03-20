@@ -55,9 +55,6 @@ public interface ComponentManager {
      * The "from" value of the packet must not be null. An <tt>IllegalArgumentException</tt>
      * will be thrown when the "from" value is null.<p>
      *
-     * If no answer is received from the server before the specified timeout then an IQ
-     * of type error will be returned.
-     *
      * Components are trusted by the server and may use any value in from address. Usually
      * the from address uses the component's address as the domain but this is not required.
      *
@@ -65,7 +62,7 @@ public interface ComponentManager {
      * @param packet the IQ packet to send.
      * @param timeout the number of milliseconds to wait before returning an IQ error.
      * @return the answer sent by the server. The answer could be an IQ of type result or
-     *         error.
+     *         error or null if nothing was received.
      */
     public IQ query(Component component, IQ packet, int timeout) throws ComponentException;
 

@@ -715,6 +715,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
+    public SocketAcceptor getComponentAcceptor() {
+        return componentAcceptor;
+    }
+
     public int getComponentListenerPort() {
         return JiveGlobals.getIntProperty("xmpp.component.socket.port", DEFAULT_COMPONENT_PORT);
     }

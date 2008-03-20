@@ -81,7 +81,7 @@ public class DbConnectionManager {
                             setConnectionProvider((ConnectionProvider)conClass.newInstance());
                         }
                         catch (Exception e) {
-                            Log.error("Warning: failed to create the " +
+                            Log.warn("Failed to create the " +
                                     "connection provider specified by connection" +
                                     "Provider.className. Using the default pool.", e);
                             setConnectionProvider(new DefaultConnectionProvider());
@@ -115,7 +115,7 @@ public class DbConnectionManager {
         } while (retryCnt <= retryMax);
 
         if (con == null) {
-            Log.error("WARNING: ConnectionManager.getConnection() " +
+            Log.warn("ConnectionManager.getConnection() " +
                     "failed to obtain a connection.");
         }
 

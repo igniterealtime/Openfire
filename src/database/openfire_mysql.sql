@@ -366,4 +366,4 @@ INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modifi
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
 
 # Entry for default conference service
-INSERT INTO mucService (serviceID, subdomain) VALUES (1, "conference");
+INSERT INTO mucService (serviceID, subdomain) VALUES (1, 'conference');

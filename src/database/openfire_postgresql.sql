@@ -168,7 +168,7 @@ CREATE TABLE jiveSASLAuthorized (
 CREATE TABLE jiveSecurityAuditLog (
   msgID                 INTEGER         NOT NULL,
   username              VARCHAR(64)     NOT NULL,
-  entryStamp            INTEGER         NOT NULL,
+  entryStamp            BIGINT          NOT NULL,
   summary               VARCHAR(255)    NOT NULL,
   node                  VARCHAR(255)    NOT NULL,
   details               TEXT,

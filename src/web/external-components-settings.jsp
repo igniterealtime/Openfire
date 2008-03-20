@@ -167,8 +167,8 @@
     }
 
     // Set page vars
+    componentEnabled = ExternalComponentManager.isServiceEnabled();
     if (errors.size() == 0) {
-        componentEnabled = ExternalComponentManager.isServiceEnabled();
         port = ExternalComponentManager.getServicePort();
         defaultSecret = ExternalComponentManager.getDefaultSecret();
         permissionFilter = ExternalComponentManager.getPermissionPolicy().toString();

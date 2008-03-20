@@ -93,12 +93,32 @@ public class DbConnectionManager {
                 }
             }
         }
-        Connection con = connectionProvider.getConnection();
+
+        // TODO: May want to make these settings configurable
+        Integer retryCnt = 0;
+        Integer retryMax = 10;
+        Integer retryWait = 250; // milliseconds
+        Connection con;
+        do {
+            retryCnt++;
+            con = connectionProvider.getConnection();
+            if (con != null) {
+                // Got one, lets hand it off.
+                break;
+            }
+            try {
+                Thread.sleep(retryWait);
+            }
+            catch (Exception e) {
+                // Ignored
+            }
+        } while (retryCnt <= retryMax);
 
         if (con == null) {
             Log.error("WARNING: ConnectionManager.getConnection() " +
                     "failed to obtain a connection.");
         }
+
         // See if profiling is enabled. If yes, wrap the connection with a
         // profiled connection.
         if (profilingEnabled) {

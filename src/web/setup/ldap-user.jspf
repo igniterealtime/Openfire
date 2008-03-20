@@ -29,6 +29,7 @@
     String defaultSearchFilter;
     // First check if the http session holds data from a previous post of this page
     if (session.getAttribute("ldapUserSettings") != null && session.getAttribute("ldapVCardBean") != null) {
+        @SuppressWarnings("unchecked")
         Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
         defaultUsernameField = userSettings.get("ldap.usernameField");
         defaultSearchFields = userSettings.get("ldap.searchFields");
@@ -94,6 +95,7 @@
             vcardBean.setAvatarStoredInDB(false);
         }
         // Store the vcard db setting for later saving.
+        @SuppressWarnings("unchecked")
         Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
         if (xmppSettings != null) {
             xmppSettings.put("ldap.override.avatar", vcardBean.getAvatarStoredInDB().toString());
@@ -160,7 +162,7 @@
             sb.append("&userIndex=").append(request.getParameter("userIndex"));
         }
     %>
-        <a href="<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"/>
+        <a href="<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
@@ -200,7 +202,7 @@
     <%  } %>
 
     <form action="<%= currentPage%>" method="post">
-		<input type="hidden" name="serverType" value="<%=serverType%>">
+		<input type="hidden" name="serverType" value="<%=serverType%>"/>
         <!-- BEGIN jive-contentBox_bluebox -->
 		<div class="jive-contentBox_bluebox">
 

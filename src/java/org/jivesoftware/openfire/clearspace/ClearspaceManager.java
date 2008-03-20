@@ -34,6 +34,7 @@ import org.jivesoftware.util.cache.DefaultCache;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.component.Component;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -90,6 +91,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private static final String WEBSERVICES_PATH = "rpc/rest/";
 
     protected static final String IM_URL_PREFIX = "imService/";
+
+    public  static final String MUC_SUBDOMAIN = "clearspace-conference";
+    private static final String MUC_DESCRIPTION = "Clearspace Conference Services";
 
     private static ThreadLocal<XMPPPacketReader> localParser = null;
     private static XmlPullParserFactory factory = null;
@@ -407,10 +411,20 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
             // Listen for changes to external component settings
             ExternalComponentManager.addListener(this);
+            // Set up custom clearspace MUC service
+            ClearspaceMultiUserChatService mucService = new ClearspaceMultiUserChatService(MUC_SUBDOMAIN, MUC_DESCRIPTION);
+            XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(mucService);
 
             // Starts the clearspace configuration task
             startClearspaceConfig();
         }
+    }
+
+    public void stop() {
+        super.stop();
+
+        // Unregister/shut down custom MUC service
+        XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(MUC_SUBDOMAIN);
     }
 
     /**
@@ -421,7 +435,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         if (configClearspaceTask != null) {
             configClearspaceTask.cancel();
             Log.debug("Stopping previous configuration Clearspace task.");
-        }                                      
+        }
 
         // Create and schedule a confi task every minute
         configClearspaceTask = new ConfigClearspaceTask();
@@ -822,6 +836,16 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             // It is not a supported exception, wrap it into a GroupNotFoundException
             throw new GroupNotFoundException("Unexpected error", e);
         }
+    }
+
+    /**
+     * Returns the Clearspace External XMPP Component.
+     *
+     * @return the Clearspace External XMPP Component.
+     */
+    protected Component getComponent() {
+        // TODO: Implement
+        return null;
     }
 
     private class ConfigClearspaceTask extends TimerTask {

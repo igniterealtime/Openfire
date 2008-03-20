@@ -199,6 +199,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private boolean serviceEnabled = true;
 
     /**
+     * Delegate responds to events for the MUC service.
+     */
+    protected MUCEventDelegate mucEventDelegate;
+
+    /**
      * Create a new group chat server.
      *
      * @param subdomain Subdomain portion of the conference services (for example, conference for conference.example.org)
@@ -447,19 +452,28 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     loaded = true;
                 }
                 catch (IllegalArgumentException e) {
-                    // The room does not exist so check for creation permissions
-                    // Room creation is always allowed for sysadmin
-                    if (isRoomCreationRestricted() &&
-                            !sysadmins.contains(userjid.toBareJID())) {
-                        // The room creation is only allowed for certain JIDs
-                        if (!allowedToCreate.contains(userjid.toBareJID())) {
-                            // The user is not in the list of allowed JIDs to create a room so raise
-                            // an exception
-                            throw new NotAllowedException();
+                    // Check if room needs to be recreated in case it failed to be created previously
+                    // (or was deleted somehow and is expected to exist by a delegate).
+                    if (mucEventDelegate != null && mucEventDelegate.loadConfig(room)) {
+                        loaded = true;
+                        if (room.isPersistent()) {
+                            MUCPersistenceManager.saveToDB(room);
                         }
                     }
-                    room.addFirstOwner(userjid.toBareJID());
-                    created = true;
+                    else {
+                        // The room does not exist so check for creation permissions
+                        // Room creation is always allowed for sysadmin
+                        if (isRoomCreationRestricted() && !sysadmins.contains(userjid.toBareJID())) {
+                            // The room creation is only allowed for certain JIDs
+                            if (!allowedToCreate.contains(userjid.toBareJID())) {
+                                // The user is not in the list of allowed JIDs to create a room so raise
+                                // an exception
+                                throw new NotAllowedException();
+                            }
+                        }
+                        room.addFirstOwner(userjid.toBareJID());
+                        created = true;
+                    }
                 }
                 rooms.put(roomName, room);
             }

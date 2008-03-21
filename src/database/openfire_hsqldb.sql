@@ -178,6 +178,7 @@ CREATE TABLE mucService (
   serviceID           BIGINT        NOT NULL,
   subdomain           VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
+  autoLoad            INTEGER       NOT NULL,
   CONSTRAINT mucService_pk PRIMARY KEY (subdomain)
 );
 CREATE INDEX mucService_serviceid_idx ON mucService(serviceID);
@@ -370,7 +371,7 @@ INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 INSERT INTO jiveID (idType, id) VALUES (26, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 17);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 18);
 
 // Entry for admin user
 INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)

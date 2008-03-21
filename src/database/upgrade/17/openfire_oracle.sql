@@ -16,7 +16,7 @@ CREATE TABLE mucServiceProp (
 );
 
 -- add new indexed column to mucRoom
-ALTER TABLE mucRoom ADD COLUMN serviceID INT NOT NULL;
+ALTER TABLE mucRoom ADD serviceID INT NOT NULL;
 CREATE INDEX mucRm_serviceid_idx ON mucRoom (serviceID);
 
 -- change mucRoom primary key to be referenced around serviceID

@@ -38,8 +38,8 @@ import java.sql.*;
  */
 public class MultiUserChatManager extends BasicModule implements ClusterEventListener, MUCServicePropertyEventListener {
 
-    private static final String LOAD_SERVICES = "SELECT subdomain,description FROM mucService";
-    private static final String CREATE_SERVICE = "INSERT INTO mucService(serviceID,subdomain,description) VALUES(?,?,?)";
+    private static final String LOAD_SERVICES = "SELECT subdomain,description FROM mucService WHERE autoLoad=1";
+    private static final String CREATE_SERVICE = "INSERT INTO mucService(serviceID,subdomain,description,autoLoad) VALUES(?,?,?,?)";
     private static final String UPDATE_SERVICE = "UPDATE mucService SET subdomain=?,description=? WHERE serviceID=?";
     private static final String DELETE_SERVICE = "DELETE FROM mucService WHERE serviceID=?";
     private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM mucService WHERE subdomain=?";
@@ -118,6 +118,16 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      */
     public void registerMultiUserChatService(MultiUserChatService service) {
         Log.debug("MultiUserChatManager: Registering MUC service "+service.getServiceName());
+        if (!(service instanceof MultiUserChatServiceImpl)) {
+            // This is not a standard implementation.  We need to store a mapping of it to a
+            // service ID for future reference, but the service itself won't need to know about
+            // it.  First we will check if we already know about it.
+            Long serviceID = getMultiUserChatServiceID(service.getServiceName());
+            if (serviceID == null) {
+                // Nope, lets register it.
+                insertService(service.getServiceName(), null, false);
+            }
+        }
         mucServices.put(service.getServiceName(), service);
         try {
             ComponentManagerFactory.getComponentManager().addComponent(service.getServiceName(), service);
@@ -176,7 +186,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      */
     public void createMultiUserChatService(String subdomain, String description) throws AlreadyExistsException {
         if (getMultiUserChatServiceID(subdomain) != null) throw new AlreadyExistsException();
-        insertService(subdomain, description);
+        insertService(subdomain, description, true);
         MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description);
         registerMultiUserChatService(muc);
     }
@@ -460,11 +470,14 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     }
 
     /**
-     * Inserts a new MUC service into the database.
+     * Inserts a new MUC service into the database.  If autoLoad is true, then this service is a
+     * MultiUserChatServiceImpl (ie, a default conference implementation).  If it's not, it's some
+     * other implementation that we are expecting to load itself when the time is right.
      * @param subdomain Subdomain of new service.
      * @param description Description of MUC service.  Can be null for default description.
+     * @param autoLoad True if the service should be automatically loaded as a MultiUserChatServiceImpl.
      */
-    private void insertService(String subdomain, String description) {
+    private void insertService(String subdomain, String description, Boolean autoLoad) {
         Connection con = null;
         PreparedStatement pstmt = null;
         Long serviceID = SequenceManager.nextID(JiveConstants.MUC_SERVICE);
@@ -479,6 +492,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             else {
                 pstmt.setNull(3, Types.VARCHAR);
             }
+            pstmt.setInt(4, (autoLoad ? 1 : 0));
             pstmt.executeUpdate();
         }
         catch (SQLException e) {

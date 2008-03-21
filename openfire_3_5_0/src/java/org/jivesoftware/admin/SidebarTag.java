@@ -233,7 +233,7 @@ public class SidebarTag extends BodyTagSupport {
                                 boolean hadNext = siblings.hasNext();
                                 if (hadNext) {
                                     // Print out beginning UL
-                                    buf.append("<ul class=\"subitems\">\n");
+                                    buf.append("<li class=\"\"><ul class=\"subitems\">\n");
                                     // Print the header LI
                                     String subheader = subcurrent.getParent().attributeValue("name");
                                     pluginName = subcurrent.getParent().attributeValue("plugin");
@@ -270,7 +270,7 @@ public class SidebarTag extends BodyTagSupport {
                                 }
                                 if (hadNext) {
                                     // Print out ending UL
-                                    buf.append("<br></ul>\n");
+                                    buf.append("</ul></li>\n");
                                 }
                             }
                         }

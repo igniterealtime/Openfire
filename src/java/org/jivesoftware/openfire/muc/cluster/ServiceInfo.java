@@ -35,6 +35,7 @@ import java.util.List;
 public class ServiceInfo implements Externalizable {
     private String subdomain;
     private String description;
+    private Boolean isHidden;
     private List<RoomInfo> rooms = new ArrayList<RoomInfo>();
 
     /**
@@ -46,6 +47,7 @@ public class ServiceInfo implements Externalizable {
     public ServiceInfo(MultiUserChatService service) {
         this.subdomain = service.getServiceName();
         this.description = service.getDescription();
+        this.isHidden = service.isHidden();
         rooms = new ArrayList<RoomInfo>();
         // Get rooms that have occupants and include them in the reply
         for (MUCRoom room : service.getChatRooms()) {
@@ -64,6 +66,10 @@ public class ServiceInfo implements Externalizable {
         return description;
     }
 
+    public Boolean isHidden() {
+        return isHidden;
+    }
+
     public List<RoomInfo> getRooms() {
         return rooms;
     }
@@ -71,12 +77,14 @@ public class ServiceInfo implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
         ExternalizableUtil.getInstance().writeSafeUTF(out, description);
+        ExternalizableUtil.getInstance().writeBoolean(out, isHidden);
         ExternalizableUtil.getInstance().writeExternalizableCollection(out, rooms);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
         description = ExternalizableUtil.getInstance().readSafeUTF(in);
+        isHidden = ExternalizableUtil.getInstance().readBoolean(in);
         ExternalizableUtil.getInstance().readExternalizableCollection(in, rooms, getClass().getClassLoader());
     }
 }

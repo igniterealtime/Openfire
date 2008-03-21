@@ -199,6 +199,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private boolean serviceEnabled = true;
 
     /**
+     * Flag that indicates if MUC service is hidden from services views.
+     */
+    private boolean isHidden = true;
+
+    /**
      * Delegate responds to events for the MUC service.
      */
     protected MUCEventDelegate mucEventDelegate;
@@ -208,8 +213,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @param subdomain Subdomain portion of the conference services (for example, conference for conference.example.org)
      * @param description Short description of service for disco and such.
+     * @param isHidden True if this service should be hidden from services views.
      */
-    public MultiUserChatServiceImpl(String subdomain, String description) {
+    public MultiUserChatServiceImpl(String subdomain, String description, Boolean isHidden) {
         this.chatServiceName = subdomain;
         if (description != null && description.trim().length() > 0) {
             this.chatDescription = description;
@@ -217,6 +223,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         else {
             this.chatDescription = LocaleUtils.getLocalizedString("muc.service-name");
         }
+        this.isHidden = isHidden;
         historyStrategy = new HistoryStrategy(null);
         initialize(XMPPServer.getInstance());
     }
@@ -1298,8 +1305,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return buf.toString();
     }
     
-    public boolean isServicePrivate() {
-        return false;
+    public boolean isHidden() {
+        return isHidden;
     }
 
 }

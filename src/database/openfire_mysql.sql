@@ -167,7 +167,7 @@ CREATE TABLE mucService (
   serviceID           BIGINT        NOT NULL,
   subdomain           VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
-  autoLoad            TINYINT       NOT NULL,
+  isHidden            TINYINT       NOT NULL,
   PRIMARY KEY (subdomain),
   INDEX mucService_serviceid_idx (serviceID)
 );
@@ -367,4 +367,4 @@ INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modifi
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
 
 # Entry for default conference service
-INSERT INTO mucService (serviceID, subdomain) VALUES (1, 'conference');
+INSERT INTO mucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);

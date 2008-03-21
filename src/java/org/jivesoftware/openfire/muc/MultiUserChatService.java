@@ -346,14 +346,12 @@ public interface MultiUserChatService extends Component {
     boolean isServiceEnabled();
 
     /**
-     * Returns true if the MUC service is a private, externally managed, service.  This is typically
+     * Returns true if the MUC service is a hidden, externally managed, service.  This is typically
      * set to true when the implementation is not the default one, and is not to be managed by
      * the standard Openfire interface.  If this is set to true, the service will not show up in
      * the service list in the admin console.
      *
-     * TODO: Anything else?  Should it show up in Disco browsing?
-     *
-     * @return true if the MUC service is private and externally managed.
+     * @return true if the MUC service is hidden and externally managed.
      */
-    boolean isServicePrivate();
+    boolean isHidden();
 }

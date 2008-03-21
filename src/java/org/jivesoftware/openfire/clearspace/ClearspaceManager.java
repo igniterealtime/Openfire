@@ -18,6 +18,7 @@ import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
@@ -412,8 +413,18 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             // Listen for changes to external component settings
             ExternalComponentManager.addListener(this);
             // Set up custom clearspace MUC service
-            ClearspaceMultiUserChatService mucService = new ClearspaceMultiUserChatService(MUC_SUBDOMAIN, MUC_DESCRIPTION);
-            XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(mucService);
+            // Create service if it doesn't exist, load if it does.
+            MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(MUC_SUBDOMAIN);
+            if (muc == null) {
+                try {
+                    muc = XMPPServer.getInstance().getMultiUserChatManager().createMultiUserChatService(MUC_SUBDOMAIN, MUC_DESCRIPTION, true);
+                }
+                catch (AlreadyExistsException e) {
+                    Log.error("ClearspaceManager: Found no "+MUC_SUBDOMAIN+" service, but got already exists when creation attempted?  Service probably not started!");
+                }
+            }
+            // TODO: Set up special delegate for Clearspace MUC service
+            // TODO: Set up additional identity/features for disco for Clearspace MUC service
 
             // Starts the clearspace configuration task
             startClearspaceConfig();

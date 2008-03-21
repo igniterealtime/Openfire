@@ -1,8 +1,8 @@
-# add autoLoad column to mucService
-ALTER TABLE mucService ADD COLUMN autoLoad TINYINT NOT NULL;
+# add isHidden column to mucService
+ALTER TABLE mucService ADD COLUMN isHidden TINYINT NOT NULL;
 
-# set all current services to autoLoad = true
-UPDATE mucService set autoLoad = 1;
+# set all current services to isHidden = false
+UPDATE mucService set isHidden = 0;
 
 
 UPDATE jiveVersion set version=18 where name = 'openfire';

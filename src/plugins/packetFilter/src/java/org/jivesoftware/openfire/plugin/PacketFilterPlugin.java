@@ -20,9 +20,7 @@ public class PacketFilterPlugin implements Plugin, PacketInterceptor {
     private static PluginManager pluginManager;
 
     public PacketFilterPlugin() {
-        XMPPServer server = XMPPServer.getInstance();
         interceptorManager = InterceptorManager.getInstance();
-
     }
 
     //Packet Filter
@@ -58,6 +56,10 @@ public class PacketFilterPlugin implements Plugin, PacketInterceptor {
     }
     public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
 
+        if (processed) {
+            return;
+        }
+        
         Rule rule = pf.findMatch(packet);
 
         if (rule != null) {

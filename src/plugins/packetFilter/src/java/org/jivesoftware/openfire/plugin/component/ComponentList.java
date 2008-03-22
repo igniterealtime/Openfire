@@ -43,7 +43,6 @@ public class ComponentList implements IQResultListener {
         return componentMap.get(jid);
     }
 
-
     public void receivedAnswer(IQ packet) {
         if (IQ.Type.result == packet.getType()) {
 
@@ -61,7 +60,6 @@ public class ComponentList implements IQResultListener {
     public void answerTimeout(String packetId) {
        Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }
-
 
     public Collection<String> getComponentDomains() {
         return routingTable.getComponentsDomains();

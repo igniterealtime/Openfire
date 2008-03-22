@@ -88,13 +88,13 @@ public interface Rule {
 
     public void setDisplayName(String displayName);
 
-    public String getSourceType();
+    public SourceDestType getSourceType();
 
-    public void setSourceType(String sourceType);
+    public void setSourceType(SourceDestType sourceType);
 
-    public String getDestType();
+    public SourceDestType getDestType();
 
-    public void setDestType(String destType);
+    public void setDestType(SourceDestType destType);
     
 
     public Packet doAction(Packet packet) throws PacketRejectedException;

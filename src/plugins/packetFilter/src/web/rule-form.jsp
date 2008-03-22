@@ -65,7 +65,7 @@
             rule.setPacketType(Rule.PacketType.valueOf(packetType));
             if (source.equals(Rule.SourceDestType.Any.toString())) {
                 rule.setSource(source);
-                rule.setSourceType(Rule.SourceDestType.Any.toString());
+                rule.setSourceType(Rule.SourceDestType.Any);
             } else if (source.equals(Rule.SourceDestType.Other.toString())) {
                 sourceJID = ParamUtils.getParameter(request, "sourceOtherJID");
                 if (sourceJID == null || !(sourceJID.length() > 0)) {
@@ -73,25 +73,25 @@
                     errors.put("sourceOther", "");
                 }
                 rule.setSource(sourceJID);
-                rule.setSourceType(Rule.SourceDestType.Other.toString());
+                rule.setSourceType(Rule.SourceDestType.Other);
             } else if (source.equals(Rule.SourceDestType.User.toString())) {
                 sourceJID = ParamUtils.getParameter(request, "sourceUserJID");
                 rule.setSource(sourceJID);
-                rule.setSourceType(Rule.SourceDestType.User.toString());
+                rule.setSourceType(Rule.SourceDestType.User);
             } else if (source.equals(Rule.SourceDestType.Group.toString())) {
                 sourceJID = ParamUtils.getParameter(request, "sourceGroupJID");
                 rule.setSource(sourceJID);
-                rule.setSourceType(Rule.SourceDestType.Group.toString());
+                rule.setSourceType(Rule.SourceDestType.Group);
             } else if (source.equals(Rule.SourceDestType.Component.toString())) {
                 sourceJID = ParamUtils.getParameter(request, "sourceComponentJID");
                 rule.setSource(sourceJID);
-                rule.setSourceType(Rule.SourceDestType.Component.toString());
+                rule.setSourceType(Rule.SourceDestType.Component);
             }
 
 
             if (destination.equals(Rule.SourceDestType.Any.toString())) {
                 rule.setDestination(destination);
-                rule.setDestType(Rule.SourceDestType.Any.toString());
+                rule.setDestType(Rule.SourceDestType.Any);
             } else if (destination.equals(Rule.SourceDestType.Other.toString())) {
                 destJID = ParamUtils.getParameter(request, "destOtherJID");
                 if (destJID == null || !(destJID.length() > 0)) {
@@ -99,27 +99,40 @@
                     errors.put("destOther", "");
                 }
                 rule.setDestination(destJID);
-                rule.setDestType(Rule.SourceDestType.Other.toString());
+                rule.setDestType(Rule.SourceDestType.Other);
             } else if (destination.equals(Rule.SourceDestType.User.toString())) {
                 destJID = ParamUtils.getParameter(request, "destUserJID");
                 rule.setDestination(destJID);
-                rule.setDestType(Rule.SourceDestType.User.toString());
+                rule.setDestType(Rule.SourceDestType.User);
             } else if (destination.equals(Rule.SourceDestType.Group.toString())) {
                 destJID = ParamUtils.getParameter(request, "destGroupJID");
                 rule.setDestination(destJID);
-                rule.setDestType(Rule.SourceDestType.Group.toString());
+                rule.setDestType(Rule.SourceDestType.Group);
             } else if (destination.equals(Rule.SourceDestType.Component.toString())) {
                 destJID = ParamUtils.getParameter(request, "destComponentJID");
                 rule.setDestination(destJID);
-                rule.setDestType(Rule.SourceDestType.Component.toString());
+                rule.setDestType(Rule.SourceDestType.Component);
             }
 
 
             rule.doLog(new Boolean(log).booleanValue());
             rule.isDisabled(new Boolean(disable).booleanValue());
             if (errors.size() == 0) {
-                rule.setSource(rule.getSource().toLowerCase());
+                 if (rule.getSourceType() == Rule.SourceDestType.User ||
+                     rule.getDestType() == Rule.SourceDestType.Other ) {
+                    rule.setSource(rule.getSource().toLowerCase());
+               }
+               else {
+                  rule.setSource(rule.getSource());
+               }
+
+               if (rule.getDestType() == Rule.SourceDestType.User ||
+                   rule.getDestType() == Rule.SourceDestType.Other) {
                 rule.setDestination(rule.getDestination().toLowerCase());
+               }
+               else {
+                  rule.setDestination(rule.getDestination());
+               }
                 rm.addRule(rule);
                 response.sendRedirect("pf-main.jsp");
             }

@@ -81,8 +81,7 @@ public class DbRuleManager {
                                 rule = new Pass();
                             else if (ruleType.equals(Drop.class.getName()))
                                 rule = new Drop();
-                            else if (ruleType.equals(Redirect.class.getName()))
-                                rule = new Redirect();
+ 
 
                             rule.setRuleId(rs.getString(2));
                             rule.setPacketType(Rule.PacketType.valueOf(rs.getString(3)));
@@ -92,9 +91,9 @@ public class DbRuleManager {
                             rule.doLog(rs.getBoolean(7));
                             rule.setDescription(rs.getString(8));
                             rule.setOrder(rs.getInt(9));
-                            rule.setSourceType(rs.getString(10));
-                            rule.setDestType(rs.getString(11));
-
+                            rule.setSourceType(Rule.SourceDestType.valueOf(rs.getString(10)));
+                            rule.setDestType(Rule.SourceDestType.valueOf(rs.getString(11)));
+                            
                             rules.add(rule);
 
                         }
@@ -163,13 +162,15 @@ public class DbRuleManager {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(GET_LAST_ORDERID);
             rs = pstmt.executeQuery();
-            rs.next();
-            count = rs.getInt(1);
+            if (rs.next()) {
 
+                count = rs.getInt(1);
+            }
+            else {
+                count = 0;
+            }
         } catch (SQLException sqle) {
             Log.error(sqle);
-//If error dataset is probably empty
-            return 0;
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -220,13 +221,7 @@ public class DbRuleManager {
             }
             rule.setOrder(order);
             pstmt.setString(2, rule.getPackeType().toString());
-            if (rule.getDestination().contains(" ")) {
-                rule.setDestination(rule.getDestination().replace(" ", ""));
-            }
             pstmt.setString(3, rule.getDestination());
-            if (rule.getSource().contains(" ")) {
-                rule.setSource(rule.getSource().replace(" ", ""));
-            }
             pstmt.setString(4, rule.getSource());
             pstmt.setString(5, rule.getClass().getName());
             if (rule.isDisabled()) {
@@ -242,8 +237,8 @@ public class DbRuleManager {
                 pstmt.setByte(7, new Byte("0"));
             }
             pstmt.setString(8, rule.getDescription());
-            pstmt.setString(9, rule.getSourceType());
-            pstmt.setString(10, rule.getDestType());
+            pstmt.setString(9, rule.getSourceType().toString());
+            pstmt.setString(10, rule.getDestType().toString());
             pstmt.execute();
 
             rules.clear();
@@ -337,8 +332,8 @@ public class DbRuleManager {
                 rule.isDisabled(rs.getBoolean(7));
                 rule.doLog(rs.getBoolean(8));
                 rule.setDescription(rs.getString(9));
-                rule.setSourceType(rs.getString(10));
-                rule.setDestType(rs.getString(11));
+                rule.setSourceType(Rule.SourceDestType.valueOf(rs.getString(10)));
+                rule.setDestType(Rule.SourceDestType.valueOf(rs.getString(11)));
 
             }
 
@@ -393,8 +388,8 @@ public class DbRuleManager {
             pstmt.setString(7, rule.getDescription());
             pstmt.setInt(8, order);
 
-            pstmt.setString(9, rule.getSourceType());
-            pstmt.setString(10, rule.getDestType());
+            pstmt.setString(9, rule.getSourceType().toString());
+            pstmt.setString(10, rule.getDestType().toString());
             pstmt.setInt(11, new Integer(rule.getRuleId()));
             pstmt.executeUpdate();
 

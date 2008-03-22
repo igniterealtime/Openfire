@@ -17,23 +17,23 @@ public abstract class AbstractRule implements Rule {
     private String description;
     private String ruleId;
     private String displayName;
-    private String sourceType;
-    private String destType;
+    private SourceDestType sourceType;
+    private SourceDestType destType;
 
 
-    public String getDestType() {
+    public SourceDestType getDestType() {
         return destType;
     }
 
-    public void setDestType(String destType) {
+    public void setDestType(SourceDestType destType) {
         this.destType = destType;
     }
 
-    public String getSourceType() {
+    public SourceDestType getSourceType() {
         return sourceType;
     }
 
-    public void setSourceType(String sourceType) {
+    public void setSourceType(SourceDestType sourceType) {
         this.sourceType = sourceType;
     }
 

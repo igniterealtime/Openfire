@@ -34,13 +34,15 @@ import java.io.ObjectOutput;
 public class ServiceAddedEvent implements ClusterTask {
     private String subdomain;
     private String description;
+    private Boolean isHidden;
 
     public ServiceAddedEvent() {
     }
 
-    public ServiceAddedEvent(String subdomain, String description) {
+    public ServiceAddedEvent(String subdomain, String description, Boolean isHidden) {
         this.subdomain = subdomain;
         this.description = description;
+        this.isHidden = isHidden;
     }
 
     public Object getResult() {
@@ -52,7 +54,7 @@ public class ServiceAddedEvent implements ClusterTask {
         // is provided by an internal component that registered at startup.  This scenario, however,
         // should really never occur.
         if (!XMPPServer.getInstance().getMultiUserChatManager().isServiceRegistered(subdomain)) {
-            MultiUserChatService service = new MultiUserChatServiceImpl(subdomain, description);
+            MultiUserChatService service = new MultiUserChatServiceImpl(subdomain, description, isHidden);
             XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
         }
     }

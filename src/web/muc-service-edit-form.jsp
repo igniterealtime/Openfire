@@ -65,7 +65,7 @@
                 return;
             }
             else {
-                webManager.getMultiUserChatManager().createMultiUserChatService(mucname, mucdesc);
+                webManager.getMultiUserChatManager().createMultiUserChatService(mucname, mucdesc, false);
                 // Log the event
                 webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
                 response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);

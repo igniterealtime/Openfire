@@ -176,7 +176,7 @@
     }
     int i = start;
     for (MultiUserChatService service : services) {
-        if (service.isServicePrivate()) {
+        if (service.isHidden()) {
             // Private and hidden, skip it.
             continue;
         }

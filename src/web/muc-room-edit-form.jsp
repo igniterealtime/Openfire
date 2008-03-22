@@ -449,7 +449,7 @@
                         <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
                         @<select name="mucName">
                         <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) { %>
-                        <%      if (service.isServicePrivate()) continue; %>
+                        <%      if (service.isHidden()) continue; %>
                         <option value="<%= service.getServiceName() %>"<%= service.getServiceDomain().equals(mucName) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
                         <% } %>
                         </select>
@@ -457,7 +457,7 @@
                         @<%
                             // We only have one service, none-the-less, we have to run through the list to get the first
                             for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
-                                if (service.isServicePrivate()) {
+                                if (service.isHidden()) {
                                     // Private and hidden, skip it.
                                     continue;
                                 }

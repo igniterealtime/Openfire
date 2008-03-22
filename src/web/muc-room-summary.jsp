@@ -39,7 +39,7 @@
     }
     else {
         for (MultiUserChatService muc : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
-            if (muc.isServicePrivate()) {
+            if (muc.isHidden()) {
                 // Private and hidden, skip it.
                 continue;
             }
@@ -114,7 +114,7 @@
 -- <fmt:message key="muc.room.summary.service" />:
     <select name="mucname" onchange="location.href='muc-room-summary.jsp?mucname=' + this.options[this.selectedIndex].value;">
 <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
-    if (service.isServicePrivate()) {
+    if (service.isHidden()) {
         // Private and hidden, skip it.
         continue;
     }

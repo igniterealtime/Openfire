@@ -1169,7 +1169,7 @@ public class PluginManager {
                 }
             }
         }
-        boolean deleted = dir.delete();
+        boolean deleted = !dir.exists() || dir.delete();
         if (deleted) {
             // Remove the JAR/WAR file that created the plugin folder
             pluginFiles.remove(dir.getName());

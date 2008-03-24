@@ -423,8 +423,14 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                     Log.error("ClearspaceManager: Found no "+MUC_SUBDOMAIN+" service, but got already exists when creation attempted?  Service probably not started!");
                 }
             }
-            // TODO: Set up special delegate for Clearspace MUC service
-            // TODO: Set up additional identity/features for disco for Clearspace MUC service
+            if (muc != null) {
+                // Set up special delegate for Clearspace MUC service
+                muc.setMUCDelegate(new ClearspaceMUCEventDelegate());
+                // Set up additional features for Clearspace MUC service
+                muc.addExtraFeature("clearspace:service");
+                // Sets identity of conference service to Clearspace MUC service
+                muc.setDiscoIdentityType("clearspace");
+            }
 
             // Starts the clearspace configuration task
             startClearspaceConfig();

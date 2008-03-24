@@ -209,6 +209,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     protected MUCEventDelegate mucEventDelegate;
 
     /**
+     * Additional features to be added to the disco response for the service.
+     */
+    private List<String> extraDiscoFeatures = new ArrayList<String>();
+
+    /**
+     * Custom setting for "type" of conference service.
+     */
+    private String discoIdentityType = "text";
+
+    /**
      * Create a new group chat server.
      *
      * @param subdomain Subdomain portion of the conference services (for example, conference for conference.example.org)
@@ -1093,7 +1103,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             Element identity = DocumentHelper.createElement("identity");
             identity.addAttribute("category", "conference");
             identity.addAttribute("name", getDescription());
-            identity.addAttribute("type", "text");
+            identity.addAttribute("type", discoIdentityType);
 
             identities.add(identity);
 
@@ -1102,7 +1112,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             searchId.addAttribute("category", "directory");
             searchId.addAttribute("name", "Public Chatroom Search");
             searchId.addAttribute("type", "chatroom");
-            identities.add(searchId);            
+            identities.add(searchId);
         }
         else if (name != null && node == null) {
             // Answer the identity of a given room
@@ -1143,6 +1153,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             features.add("http://jabber.org/protocol/disco#items");
             features.add("jabber:iq:search");
             features.add(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
+            if (!extraDiscoFeatures.isEmpty()) features.addAll(extraDiscoFeatures);
         }
         else if (name != null && node == null) {
             // Answer the features of a given room
@@ -1227,6 +1238,38 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         return null;
+    }
+
+    /**
+     * Adds an extra Disco feature to the list of features returned for the conference service.
+     * @param feature Feature to add.
+     */
+    public void addExtraFeature(String feature) {
+        extraDiscoFeatures.add(feature);
+    }
+
+    /**
+     * Removes an extra Disco feature from the list of features returned for the conference service.
+     * @param feature Feature to remove.
+     */
+    public void removeExtraFeature(String feature) {
+        extraDiscoFeatures.remove(feature);
+    }
+
+    /**
+     * Sets the type of the conference service, typically "text".
+     * @param type The type of the conference service, "text" is the default.
+     */
+    public void setDiscoIdentityType(String type) {
+        discoIdentityType = type;
+    }
+
+    /**
+     * Sets the MUC event delegate handler for this service.
+     * @param delegate Handler for MUC events.
+     */
+    public void setMUCDelegate(MUCEventDelegate delegate) {
+        mucEventDelegate = delegate;
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {

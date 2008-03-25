@@ -404,8 +404,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                 muc.setMUCDelegate(new ClearspaceMUCEventDelegate());
                 // Set up additional features for Clearspace MUC service
                 muc.addExtraFeature("clearspace:service");
-                // Sets identity of conference service to Clearspace MUC service
-                muc.setDiscoIdentityType("clearspace");
+                // Set up additional identity of conference service to Clearspace MUC service
+                muc.addExtraIdentity("conference", "Clearspace Chat Service", "text");
             }
 
             // Starts the clearspace configuration task
@@ -432,7 +432,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
         // Create and schedule a confi task every minute
         configClearspaceTask = new ConfigClearspaceTask();
-        // Wait some time to start the task until Openfire has binding address 
+        // Wait some time to start the task until Openfire has binding address
         TaskEngine.getInstance().schedule(configClearspaceTask, JiveConstants.SECOND * 10, JiveConstants.MINUTE);
         Log.debug("Starting configuration Clearspace task in 10 seconds.");
     }
@@ -449,7 +449,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
 
         try {
-            
+
             XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
 
             String path = IM_URL_PREFIX + "configureComponent/";
@@ -468,7 +468,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             Log.debug("Trying to configure Clearspace with: Domain: " + serverInfo.getXMPPDomain() + ", hosts: " +
                     bindInterfaces.toString() + ", port: " + port);
-            
+
             executeRequest(POST, path, rootE.asXML());
 
             //Done, Clearspace was configured correctly, clear the task
@@ -529,7 +529,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         } else {
             bindInterfaces.add(bindInterface);
         }
-        
+
         return bindInterfaces;
     }
 
@@ -839,7 +839,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * The returned packet will be handled by the server and routed to the entity that sent
      * the original IQ packet. Since this method block and listen to the replied IQ packet
      * then the entity that sent the original IQ packet should ignore any reply related to
-     * the originating IQ packet. 
+     * the originating IQ packet.
      *
      * @param packet IQ packet to send.
      * @param timeout milliseconds to wait before timing out.

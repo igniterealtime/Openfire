@@ -453,6 +453,12 @@ public class LocalMUCRoom implements MUCRoom {
             UserAlreadyExistsException, RoomLockedException, ForbiddenException,
             RegistrationRequiredException, ConflictException, ServiceUnavailableException,
             NotAcceptableException {
+        if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
+            if (!((MultiUserChatServiceImpl)mucService).getMUCDelegate().joiningRoom(this.getName(), user.getAddress())) {
+                // Delegate said no, reject join.
+                throw new UnauthorizedException();
+            }
+        }
         LocalMUCRole joinRole = null;
         lock.writeLock().lock();
         try {

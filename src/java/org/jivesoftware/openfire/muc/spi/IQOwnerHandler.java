@@ -91,6 +91,13 @@ public class IQOwnerHandler {
         else {
             Element destroyElement = element.element("destroy");
             if (destroyElement != null) {
+                if (((MultiUserChatServiceImpl)room.getMUCService()).getMUCDelegate() != null) {
+                    if (!((MultiUserChatServiceImpl)room.getMUCService()).getMUCDelegate().destroyingRoom(room.getName(), role.getUserAddress())) {
+                        // Delegate said no, reject destroy request.
+                        throw new ForbiddenException();
+                    }
+                }
+
                 room.destroyRoom(destroyElement.attributeValue("jid"), destroyElement
                         .elementTextTrim("reason"));
             }

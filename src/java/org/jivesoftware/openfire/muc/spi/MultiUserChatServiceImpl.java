@@ -214,9 +214,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private List<String> extraDiscoFeatures = new ArrayList<String>();
 
     /**
-     * Custom setting for "type" of conference service.
+     * Additional identities to be added to the disco response for the service.
      */
-    private String discoIdentityType = "text";
+    private List<Element> extraDiscoIdentities = new ArrayList<Element>();
 
     /**
      * Create a new group chat server.
@@ -1103,8 +1103,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             Element identity = DocumentHelper.createElement("identity");
             identity.addAttribute("category", "conference");
             identity.addAttribute("name", getDescription());
-            identity.addAttribute("type", discoIdentityType);
-
+            identity.addAttribute("type", "text");
             identities.add(identity);
 
             // TODO: Should internationalize Public Chatroom Search, and make it configurable.
@@ -1113,6 +1112,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             searchId.addAttribute("name", "Public Chatroom Search");
             searchId.addAttribute("type", "chatroom");
             identities.add(searchId);
+
+            if (!extraDiscoIdentities.isEmpty()) {
+                identities.addAll(extraDiscoIdentities);
+            }
         }
         else if (name != null && node == null) {
             // Answer the identity of a given room
@@ -1257,11 +1260,30 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Sets the type of the conference service, typically "text".
-     * @param type The type of the conference service, "text" is the default.
+     * Adds an extra Disco identity to the list of identities returned for the conference service.
+     * @param category Category for identity.  e.g. conference
+     * @param name Descriptive name for identity.  e.g. Public Chatrooms
+     * @param type Type for identity.  e.g. text 
      */
-    public void setDiscoIdentityType(String type) {
-        discoIdentityType = type;
+    public void addExtraIdentity(String category, String name, String type) {
+        Element identity = DocumentHelper.createElement("identity");
+        identity.addAttribute("category", category);
+        identity.addAttribute("name", name);
+        identity.addAttribute("type", type);
+        extraDiscoIdentities.add(identity);
+    }
+
+    /**
+     * Removes an extra Disco identity from the list of identities returned for the conference service.
+     * @param name Name of identity to remove.
+     */
+    public void removeExtraIdentity(String name) {
+        for (Element elem : extraDiscoIdentities) {
+            if (name.equals(elem.attribute("name").getStringValue())) {
+                extraDiscoFeatures.remove(elem);
+                break;
+            }
+        }
     }
 
     /**
@@ -1270,6 +1292,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     public void setMUCDelegate(MUCEventDelegate delegate) {
         mucEventDelegate = delegate;
+    }
+
+    /**
+     * Gets the MUC event delegate handler for this service.
+     * @return Handler for MUC events (delegate)
+     */
+    public MUCEventDelegate getMUCDelegate() {
+        return mucEventDelegate;
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {

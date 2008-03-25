@@ -114,7 +114,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     /**
      * Keep the domains of Clearspace components
      */
-    private List<String> clearspaces = new ArrayList<String>();
+    private final List<String> clearspaces = new ArrayList<String>();
 
     /**
      * Provides singleton access to an instance of the ClearspaceManager class.
@@ -854,9 +854,13 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         if (clearspaces.isEmpty()) {
             return null;
         }
-        // Set the target address to the IQ packet
-        // TODO Use round robin to distribute load
-        packet.setTo(clearspaces.get(0));
+        // Set the target address to the IQ packet. Roate list so we distribute load
+        String component;
+        synchronized (clearspaces) {
+            component = clearspaces.get(0);
+            Collections.rotate(clearspaces, 1);
+        }
+        packet.setTo(component);
         final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
         final IQRouter router = XMPPServer.getInstance().getIQRouter();
         router.addIQResultListener(packet.getID(), new IQResultListener() {

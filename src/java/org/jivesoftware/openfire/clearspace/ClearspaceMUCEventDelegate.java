@@ -1,15 +1,13 @@
 package org.jivesoftware.openfire.clearspace;
 
-import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.xmpp.packet.JID;
+import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.xmpp.packet.IQ;
-import org.xmpp.component.ComponentException;
-import org.xmpp.component.Component;
+import org.xmpp.packet.JID;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * TODO: Comment me
@@ -33,19 +31,16 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
     public Map<String, String> getRoomConfig(String roomName) {
         Map<String, String> roomConfig = new HashMap<String, String>();
 
-        // TODO: Ensure the getComponent method gets implemented.
-        Component csComponent = ClearspaceManager.getInstance().getComponent();
-
         // TODO: Get the config by connecting to CS through the component
         InternalComponentManager internalComponentManager = InternalComponentManager.getInstance();
         // TODO: Create query packet asking for the room config and in CS create a handler for that packet
         IQ query = null;
-        IQ result;
-        try {
-            result = internalComponentManager.query(csComponent, query, 15000);
-        } catch (ComponentException e) {
-            //
+        IQ result = ClearspaceManager.getInstance().query(query, 15000);
+        if (result == null) {
+            // TODO No answer was received from Clearspace so return null
+            return null;
         }
+        // TODO Check that the IQ is of type RESULT (and not ERROR) otherwise return null
 
         // TODO: Setup roomConfig based on the result packet containing config values
         JID roomJid = new JID(roomName);

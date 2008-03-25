@@ -18,11 +18,15 @@ import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,6 +117,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             }
             Log.debug("InternalComponentManager: Registering component for domain: " + subdomain);
             JID componentJID = new JID(subdomain + "." + serverDomain);
+            boolean notifyListeners = false;
             if (routable != null) {
                 routable.addComponent(component);
             }
@@ -120,8 +125,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                 routable = new RoutableComponents(componentJID, component);
                 routables.put(subdomain, routable);
 
+                if (!routingTable.hasComponentRoute(componentJID)) {
+                    notifyListeners = true;
+                }
                 // Add the route to the new service provided by the component
-                XMPPServer.getInstance().getRoutingTable().addComponentRoute(componentJID, routable);
+                routingTable.addComponentRoute(componentJID, routable);
             }
 
             // Initialize the new component
@@ -129,9 +137,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                 component.initialize(componentJID, this);
                 component.start();
 
-                // Notify listeners that a new component has been registered
-                for (ComponentEventListener listener : listeners) {
-                    listener.componentRegistered(component, componentJID);
+                if (notifyListeners) {
+                    // Notify listeners that a new component has been registered
+                    notifyComponentRegistered(componentJID);
+                    // Alert other nodes of new registered domain event
+                    CacheFactory.doClusterTask(new NotifyComponentRegistered(componentJID));
                 }
 
                 // Check for potential interested users.
@@ -162,6 +172,12 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
+    void notifyComponentRegistered(JID componentJID) {
+        for (ComponentEventListener listener : listeners) {
+            listener.componentRegistered(componentJID);
+        }
+    }
+
     /**
      * Removes a component. The {@link Component#shutdown} method will be called on the
      * component. Note that if the component was an external component that was connected
@@ -186,6 +202,9 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * @param component specific component to remove.
      */
     public void removeComponent(String subdomain, Component component) {
+        if (component == null) {
+            return;
+        }
         synchronized (routables) {
             Log.debug("InternalComponentManager: Unregistering component for domain: " + subdomain);
             RoutableComponents routable = routables.get(subdomain);
@@ -193,31 +212,25 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             if (routable.numberOfComponents() == 0) {
                 routables.remove(subdomain);
 
-                // Remove any info stored with the component being removed
-                componentInfo.remove(subdomain);
-
                 JID componentJID = new JID(subdomain + "." + serverDomain);
 
                 // Remove the route for the service provided by the component
-                RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-                if (routingTable != null) {
-                    routingTable.removeComponentRoute(componentJID);
-                }
-
-                // Remove the disco item from the server for the component that is being removed
-                IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
-                if (iqDiscoItemsHandler != null) {
-                    iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
-                }
+                routingTable.removeComponentRoute(componentJID);
 
                 // Ask the component to shutdown
-                if (component != null) {
-                    component.shutdown();
-                }
+                component.shutdown();
 
-                // Notify listeners that an existing component has been unregistered
-                for (ComponentEventListener listener : listeners) {
-                    listener.componentUnregistered(component, componentJID);
+                if (!routingTable.hasComponentRoute(componentJID)) {
+                    // Remove the disco item from the server for the component that is being removed
+                    IQDiscoItemsHandler iqDiscoItemsHandler = XMPPServer.getInstance().getIQDiscoItemsHandler();
+                    if (iqDiscoItemsHandler != null) {
+                        iqDiscoItemsHandler.removeComponentItem(componentJID.toBareJID());
+                    }
+                    removeComponentInfo(componentJID);
+                    // Notify listeners that an existing component has been unregistered
+                    notifyComponentUnregistered(componentJID);
+                    // Alert other nodes of component removed event
+                    CacheFactory.doClusterTask(new NotifyComponentUnregistered(componentJID));
                 }
                 Log.debug("InternalComponentManager: Component unregistered for domain: " + subdomain);
             }
@@ -225,6 +238,17 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                 Log.debug("InternalComponentManager: Other components still tied to domain: " + subdomain);
             }
         }
+    }
+
+    void notifyComponentUnregistered(JID componentJID) {
+        for (ComponentEventListener listener : listeners) {
+            listener.componentUnregistered(componentJID);
+        }
+    }
+
+    void removeComponentInfo(JID componentJID) {
+        // Remove any info stored with the component being removed
+        componentInfo.remove(componentJID.getDomain());
     }
 
     public void sendPacket(Component component, Packet packet) {
@@ -274,17 +298,13 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     public void addListener(ComponentEventListener listener) {
         listeners.add(listener);
         // Notify the new listener about existing components
-        for (Map.Entry<String, RoutableComponents> entry : routables.entrySet()) {
-            String subdomain = entry.getKey();
-            RoutableComponents routable = entry.getValue();
-            for (Component component : routable.getComponents()) {
-                JID componentJID = new JID(subdomain + "." + serverDomain);
-                listener.componentRegistered(component, componentJID);
-                // Check if there is disco#info stored for the component
-                IQ disco = componentInfo.get(subdomain);
-                if (disco != null) {
-                    listener.componentInfoReceived(component, disco);
-                }
+        for (String domain : routingTable.getComponentsDomains()) {
+            JID componentJID = new JID(domain);
+            listener.componentRegistered(componentJID);
+            // Check if there is disco#info stored for the component
+            IQ disco = componentInfo.get(domain);
+            if (disco != null) {
+                listener.componentInfoReceived(disco);
             }
         }
     }
@@ -514,16 +534,25 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                                     " - " + packet.toXML(), e);
                         }
                         // Store the IQ disco#info returned by the component
-                        String subdomain = packet.getFrom().getDomain().replace("." + serverDomain, "");
-                        componentInfo.put(subdomain, iq);
+                        addComponentInfo(iq);
                         // Notify listeners that a component answered the disco#info request
-                        for (ComponentEventListener listener : listeners) {
-                            listener.componentInfoReceived(component, iq);
-                        }
+                        notifyComponentInfo(iq);
+                        // Alert other cluster nodes
+                        CacheFactory.doClusterTask(new NotifyComponentInfo(iq));
                     }
                 }
             }
         }
+    }
+
+    void notifyComponentInfo(IQ iq) {
+        for (ComponentEventListener listener : listeners) {
+            listener.componentInfoReceived(iq);
+        }
+    }
+
+    void addComponentInfo(IQ iq) {
+        componentInfo.put(iq.getFrom().getDomain(), iq);
     }
 
     /**

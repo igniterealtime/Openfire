@@ -11,14 +11,24 @@
 
 package org.jivesoftware.openfire.component;
 
-import org.xmpp.component.Component;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 /**
  * Interface to listen for component events. Use the
  * {@link InternalComponentManager#addListener(ComponentEventListener)}
- * method to register for events.
+ * method to register for events.<p>
+ *
+ * The registered event will be triggered only once no matter how many
+ * times a component is physically connected to the server or to how
+ * many cluster nodes is connected. Likewise, the unregistered event
+ * will be triggered only when the last connection of the component
+ * is no longer available.<p>
+ *
+ * When running inside of a cluster each cluster node will get these
+ * event notifications. For instance, if you have a cluster of two nodes
+ * and a component connects to a node then both nodes will get the
+ * event notification. 
  *
  * @author Gaston Dombiak
  */
@@ -31,18 +41,17 @@ public interface ComponentEventListener {
      * of the server since the component has not answered the disco#info request sent
      * by the server.
      *
-     * @param component the newly added component.
      * @param componentJID address where the component can be located (e.g. search.myserver.com)
      */
-    public void componentRegistered(Component component, JID componentJID);
+    public void componentRegistered(JID componentJID);
 
     /**
-     * A component was removed.
+     * A component was removed. This means that no other cluster node has this component
+     * and this was the last connection of the component.
      *
-     * @param component the removed component.
      * @param componentJID address where the component was located (e.g. search.myserver.com)
      */
-    public void componentUnregistered(Component component, JID componentJID);
+    public void componentUnregistered(JID componentJID);
 
     /**
      * The server has received a disco#info response from the component. Once a component
@@ -50,8 +59,7 @@ public interface ComponentEventListener {
      * component to discover if service discover is supported by the component. This event
      * is triggered when the server received the response of the component.
      *
-     * @param component the component that answered the disco#info request.
      * @param iq the IQ packet with the disco#info sent by the component.
      */
-    public void componentInfoReceived(Component component, IQ iq);
+    public void componentInfoReceived(IQ iq);
 }

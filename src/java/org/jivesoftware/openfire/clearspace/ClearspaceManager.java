@@ -16,31 +16,33 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.IQResultListener;
+import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
-import org.jivesoftware.openfire.component.ExternalComponentConfiguration;
-import org.jivesoftware.openfire.component.ExternalComponentManager;
-import org.jivesoftware.openfire.component.ExternalComponentManagerListener;
+import org.jivesoftware.openfire.component.*;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.DefaultCache;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-import org.xmpp.component.Component;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -54,50 +56,25 @@ import java.util.*;
  *
  * @author Daniel Henninger
  */
-public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener {
-    private ConfigClearspaceTask configClearspaceTask;
-
-    /**
-     * Different kind of HTTP request types
-     */
-    public enum HttpType {
-
-        /**
-         * Represents an HTTP Get request. And it's equivalent to a SQL SELECTE.
-         */
-        GET,
-
-        /**
-         * Represents an HTTP Post request. And it's equivalent to a SQL UPDATE.
-         */
-        POST,
-
-        /**
-         * Represents an HTTP Delete request. And it's equivalent to a SQL DELETE.
-         */
-        DELETE,
-
-        /**
-         * Represents an HTTP Put requests.And it's equivalent to a SQL CREATE.
-         */
-        PUT
-    }
-
+public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener, ComponentEventListener {
     /**
      * This is the username of the user that Openfires uses to connect
      * to Clearspace. It is fixed a well known by Openfire and Clearspace.
      */
     private static final String OPENFIRE_USERNAME = "openfire_SHRJKZCNU53";
-
     private static final String WEBSERVICES_PATH = "rpc/rest/";
-
     protected static final String IM_URL_PREFIX = "imService/";
-
     public  static final String MUC_SUBDOMAIN = "clearspace-conference";
     private static final String MUC_DESCRIPTION = "Clearspace Conference Services";
 
     private static ThreadLocal<XMPPPacketReader> localParser = null;
     private static XmlPullParserFactory factory = null;
+    /**
+     * This map is used to transale exceptions from CS to OF
+     */
+    private static final Map<String, String> exceptionMap;
+
+    private static ClearspaceManager instance = new ClearspaceManager();
 
     static {
         try {
@@ -116,13 +93,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                 return parser;
             }
         };
-    }
 
-
-    // This map is used to transale exceptions from CS to OF
-    private static final Map<String, String> exceptionMap;
-
-    static {
         // Add a new exception map from CS to OF and it will be automatically translated.
         exceptionMap = new HashMap<String, String>();
         exceptionMap.put("com.jivesoftware.base.UserNotFoundException", "org.jivesoftware.openfire.user.UserNotFoundException");
@@ -132,8 +103,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         exceptionMap.put("org.acegisecurity.BadCredentialsException", "org.jivesoftware.openfire.auth.UnauthorizedException");
     }
 
-    private static ClearspaceManager instance = new ClearspaceManager();
-
+    private ConfigClearspaceTask configClearspaceTask;
     private Map<String, String> properties;
     private String uri;
     private String host;
@@ -141,6 +111,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private String sharedSecret;
     private Map<String, Long> userIDCache;
     private Map<String, Long> groupIDCache;
+    /**
+     * Keep the domains of Clearspace components
+     */
+    private List<String> clearspaces = new ArrayList<String>();
 
     /**
      * Provides singleton access to an instance of the ClearspaceManager class.
@@ -412,6 +386,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
             // Listen for changes to external component settings
             ExternalComponentManager.addListener(this);
+            // List for registration of new components
+            InternalComponentManager.getInstance().addListener(this);
             // Set up custom clearspace MUC service
             // Create service if it doesn't exist, load if it does.
             MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(MUC_SUBDOMAIN);
@@ -856,13 +832,76 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     /**
-     * Returns the Clearspace External XMPP Component.
+     * Sends an IQ packet to the Clearspace external component and returns the IQ packet
+     * returned by CS or <tt>null</tt> if no answer was received before the specified
+     * timeout.<p>
      *
-     * @return the Clearspace External XMPP Component.
+     * The returned packet will be handled by the server and routed to the entity that sent
+     * the original IQ packet. Since this method block and listen to the replied IQ packet
+     * then the entity that sent the original IQ packet should ignore any reply related to
+     * the originating IQ packet. 
+     *
+     * @param packet IQ packet to send.
+     * @param timeout milliseconds to wait before timing out.
+     * @return IQ packet returned by Clearspace responsing the packet we sent.
      */
-    protected Component getComponent() {
-        // TODO: Implement
-        return null;
+    public IQ query(final IQ packet, int timeout) {
+        // Complain if FROM is empty
+        if (packet.getFrom() == null) {
+            throw new IllegalStateException("IQ packets with no FROM cannot be sent to Clearspace");
+        }
+        // If CS is not connected then return null
+        if (clearspaces.isEmpty()) {
+            return null;
+        }
+        // Set the target address to the IQ packet
+        // TODO Use round robin to distribute load
+        packet.setTo(clearspaces.get(0));
+        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
+        final IQRouter router = XMPPServer.getInstance().getIQRouter();
+        router.addIQResultListener(packet.getID(), new IQResultListener() {
+            public void receivedAnswer(IQ packet) {
+                answer.offer(packet);
+            }
+
+            public void answerTimeout(String packetId) {
+                Log.warn("No answer from Clearspace was received for IQ stanza: " + packet);
+            }
+        });
+        XMPPServer.getInstance().getIQRouter().route(packet);
+        IQ reply = null;
+        try {
+            reply = answer.poll(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+        return reply;
+    }
+
+    public void componentRegistered(JID componentJID) {
+        // Do nothing
+    }
+
+    public void componentUnregistered(JID componentJID) {
+        // Remove stored information about this component
+        clearspaces.remove(componentJID.getDomain());
+    }
+
+    public void componentInfoReceived(IQ iq) {
+        // Check if it's a Clearspace component
+        boolean isClearspace = false;
+        Element childElement = iq.getChildElement();
+        for (Iterator it = childElement.elementIterator("identity"); it.hasNext();) {
+            Element identity = (Element)it.next();
+            if ("component".equals(identity.attributeValue("category")) &&
+                    "clearspace".equals(identity.attributeValue("type"))) {
+                isClearspace = true;
+            }
+        }
+        // If component is Clearspace then keep track of the component
+        if (isClearspace) {
+            clearspaces.add(iq.getFrom().getDomain());
+        }
     }
 
     private class ConfigClearspaceTask extends TimerTask {
@@ -878,5 +917,31 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                 Log.warn("Unknown problem trying to configure Clearspace, trying again in 1 minute", e);
             }
         }
+    }
+
+    /**
+     * Different kind of HTTP request types
+     */
+    public enum HttpType {
+
+        /**
+         * Represents an HTTP Get request. And it's equivalent to a SQL SELECTE.
+         */
+        GET,
+
+        /**
+         * Represents an HTTP Post request. And it's equivalent to a SQL UPDATE.
+         */
+        POST,
+
+        /**
+         * Represents an HTTP Delete request. And it's equivalent to a SQL DELETE.
+         */
+        DELETE,
+
+        /**
+         * Represents an HTTP Put requests.And it's equivalent to a SQL CREATE.
+         */
+        PUT
     }
 }

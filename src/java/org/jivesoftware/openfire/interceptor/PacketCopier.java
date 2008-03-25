@@ -20,7 +20,6 @@ import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.xmpp.component.Component;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -133,15 +132,15 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         }
     }
 
-    public void componentInfoReceived(Component component, IQ iq) {
+    public void componentInfoReceived(IQ iq) {
         //Ignore
     }
 
-    public void componentRegistered(Component component, JID componentJID) {
+    public void componentRegistered(JID componentJID) {
         //Ignore
     }
 
-    public void componentUnregistered(Component component, JID componentJID) {
+    public void componentUnregistered(JID componentJID) {
         //Remove component from the list of subscribers (if subscribed)
         removeSubscriber(componentJID);
     }

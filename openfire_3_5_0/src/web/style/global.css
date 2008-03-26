@@ -389,6 +389,7 @@ iframe {
     overflow:hidden;
     padding:0;
     width:200px;
+    background-color: #f9f9f9;
 }
 #jive-sidebar {
     background:transparent url(../images/jive-tertnav-top.gif) no-repeat scroll right top;
@@ -400,7 +401,6 @@ iframe {
     -moz-border-radius-bottomright:5px;
     -moz-border-radius-topleft:0;
     -moz-border-radius-topright:0;
-    background-color:#F9F9F9;
     border-bottom:1px solid #E6E6E6;
     border-right:1px solid #E6E6E6;
     list-style-type:none;

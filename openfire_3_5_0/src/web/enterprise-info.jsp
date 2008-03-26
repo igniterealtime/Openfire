@@ -225,7 +225,7 @@
 
 <span class="jive-enterprise-info">
 
-    <img src="images/enterprise.png" alt="Openfire Enterprise" hspace="10" vspace="10" width="200" height="197" border="0" align="right" />
+    <img src="images/enterprise.png" alt="Openfire Enterprise" hspace="10" vspace="10" width="252" height="291" border="0" align="right" />
 
     <h3>What is it?</h3>
 

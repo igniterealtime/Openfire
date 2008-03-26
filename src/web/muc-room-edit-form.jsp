@@ -329,10 +329,11 @@
 
 <html>
 <head>
-<title><fmt:message key="muc.room.edit.form.title"/></title>
 <% if (create) { %>
+<title><fmt:message key="muc.room.edit.form.create.title"/></title>
 <meta name="pageID" content="muc-room-create"/>
 <% } else { %>
+<title><fmt:message key="muc.room.edit.form.edit.title"/></title>
 <meta name="subPageID" content="muc-room-edit-form"/>
 <% } %>
 <meta name="extraParams" content="<%= "roomJID="+(roomJID != null ? URLEncoder.encode(roomJID.toBareJID(), "UTF-8") : "")+"&create="+create %>"/>

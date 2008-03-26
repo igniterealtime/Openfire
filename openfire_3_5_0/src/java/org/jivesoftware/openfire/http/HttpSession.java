@@ -610,6 +610,10 @@ public class HttpSession extends LocalClientSession {
     }
 
     private synchronized void deliver(String text) {
+        if (text == null) {
+            // Do nothing if someone asked to send nothing :)
+            return;
+        }
         deliver(new Deliverable(text));
     }
 
@@ -698,6 +702,10 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void failDelivery(Collection<Packet> packets) {
+        if (packets == null) {
+            // Do nothing if someone asked to deliver nothing :)
+            return;
+        }
         for (Packet packet : packets) {
             try {
                 backupDeliverer.deliver(packet);

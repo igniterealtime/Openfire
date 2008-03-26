@@ -112,7 +112,11 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
      * @return true if the user is allowed to destroy the room.
      */
     public boolean destroyingRoom(String roomName, JID userjid) {
-        // We never allow destroying a room as a user, so return false always.
+        if (userjid.getNode() == null && ClearspaceManager.getInstance().isClearspaceDomain(userjid.getDomain())) {
+            // This is a Clearspace domain, and therefore is permitted to destroy what it wants.
+            return true;
+        }
+        // We never allow destroying a room as a user, so return false.
         return false;
     }
 }

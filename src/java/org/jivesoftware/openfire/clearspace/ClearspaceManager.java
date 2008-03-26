@@ -832,6 +832,15 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     /**
+     * Returns true if a given JID represents a known Clearspace component domain.
+     * @param domain Domain to check.
+     * @return True if the specified domain is a Clearspace domain.
+     */
+    public boolean isClearspaceDomain(String domain) {
+        return clearspaces.contains(domain); 
+    }
+
+    /**
      * Sends an IQ packet to the Clearspace external component and returns the IQ packet
      * returned by CS or <tt>null</tt> if no answer was received before the specified
      * timeout.<p>

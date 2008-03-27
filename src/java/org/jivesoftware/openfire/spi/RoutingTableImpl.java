@@ -69,7 +69,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     private Cache<String, ClientRoute> usersCache;
     /**
-     * Cache (unlimited, never expire) that holds sessions of anoymous user that have authenticated with the server.
+     * Cache (unlimited, never expire) that holds sessions of anonymous user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
      */
     private Cache<String, ClientRoute> anonymousUsersCache;
@@ -102,7 +102,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addServerRoute(JID route, LocalOutgoingServerSession destination) {
         String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
-        serversCache.put(address, server.getNodeID().toByteArray());
+        Lock lock = CacheFactory.getLock(address, serversCache);
+        try {
+            lock.lock();
+            serversCache.put(address, server.getNodeID().toByteArray());
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
@@ -127,7 +134,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         boolean available = destination.getPresence().isAvailable();
         localRoutingTable.addRoute(route.toString(), destination);
         if (destination.getAuthToken().isAnonymous()) {
-            added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
+            Lock lockAn = CacheFactory.getLock(route.toString(), anonymousUsersCache);
+            try {
+                lockAn.lock();
+                added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) ==
+                        null;
+            }
+            finally {
+                lockAn.unlock();
+            }
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
                 Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
@@ -141,7 +156,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         else {
-            added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
+            Lock lockU = CacheFactory.getLock(route.toString(), usersCache);
+            try {
+                lockU.lock();
+                added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
+            }
+            finally {
+                lockU.unlock();
+            }
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
                 Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
@@ -620,10 +642,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeClientRoute(JID route) {
         boolean anonymous = false;
         String address = route.toString();
-        ClientRoute clientRoute = usersCache.remove(address);
+        ClientRoute clientRoute = null;
+        Lock lockU = CacheFactory.getLock(address, usersCache);
+        try {
+            lockU.lock();
+            clientRoute = usersCache.remove(address);
+        }
+        finally {
+            lockU.unlock();
+        }
         if (clientRoute == null) {
-            clientRoute = anonymousUsersCache.remove(address);
-            anonymous = true;
+            Lock lockA = CacheFactory.getLock(address, anonymousUsersCache);
+            try {
+                lockA.lock();
+                clientRoute = anonymousUsersCache.remove(address);
+                anonymous = true;
+            }
+            finally {
+                lockA.unlock();
+            }
         }
         if (clientRoute != null && route.getResource() != null) {
             Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
@@ -655,7 +692,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     public boolean removeServerRoute(JID route) {
         String address = route.getDomain();
-        boolean removed = serversCache.remove(address) != null;
+        boolean removed = false;
+        Lock lock = CacheFactory.getLock(address, serversCache);
+        try {
+            lock.lock();
+            removed = serversCache.remove(address) != null;
+        }
+        finally {
+            lock.unlock();
+        }
         localRoutingTable.removeRoute(address);
         return removed;
     }

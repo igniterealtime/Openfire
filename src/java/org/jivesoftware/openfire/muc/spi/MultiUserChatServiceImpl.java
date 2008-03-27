@@ -13,7 +13,9 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.forms.DataForm;
@@ -21,12 +23,18 @@ import org.jivesoftware.openfire.forms.FormField;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.*;
-import org.jivesoftware.openfire.muc.cluster.*;
+import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
+import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
+import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
+import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.openfire.resultsetmanager.ResultSet;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.xmpp.component.ComponentManager;
 import org.xmpp.component.Component;
+import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -357,7 +365,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
                 // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
                 if (user_idle == -1) {
-                    return;
+                    continue;
                 }
                 if (user.getLastPacketTime() < deadline) {
                     // Kick the user from all the rooms that he/she had previuosly joined

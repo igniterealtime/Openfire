@@ -833,11 +833,11 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     /**
      * Returns true if a given JID represents a known Clearspace component domain.
-     * @param domain Domain to check.
-     * @return True if the specified domain is a Clearspace domain.
+     * @param address Address to check.
+     * @return True if the specified address is a Clearspace component.
      */
-    public boolean isClearspaceDomain(String domain) {
-        return clearspaces.contains(domain); 
+    public boolean isClearspace(JID address) {
+        return address.getNode() == null && clearspaces.contains(address.getDomain());
     }
 
     /**

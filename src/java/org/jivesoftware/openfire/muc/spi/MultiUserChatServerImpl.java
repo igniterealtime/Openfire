@@ -338,7 +338,7 @@ public class MultiUserChatServerImpl extends BasicModule implements MultiUserCha
                 }
                 // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
                 if (user_idle == -1) {
-                    return;
+                    continue;
                 }
                 if (user.getLastPacketTime() < deadline) {
                     // Kick the user from all the rooms that he/she had previuosly joined

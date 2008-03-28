@@ -35,21 +35,28 @@ import java.util.Map;
 public class DebuggerPlugin implements Plugin, PropertyEventListener {
     private RawPrintFilter defaultPortFilter;
     private RawPrintFilter oldPortFilter;
+    private RawPrintFilter componentPortFilter;
 
     private InterpretedXMLPrinter interpretedPrinter;
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         // Add filter to filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        defaultPortFilter = new RawPrintFilter();
+        defaultPortFilter = new RawPrintFilter("C2S");
         SocketAcceptor socketAcceptor = connManager.getSocketAcceptor();
         if (socketAcceptor != null) {
             socketAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", defaultPortFilter);
         }
-        oldPortFilter = new RawPrintFilter();
+        oldPortFilter = new RawPrintFilter("SSL");
         SocketAcceptor sslAcceptor = connManager.getSSLSocketAcceptor();
         if (sslAcceptor != null) {
             sslAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", oldPortFilter);
+        }
+
+        componentPortFilter = new RawPrintFilter("ExComp");
+        SocketAcceptor componentAcceptor = connManager.getComponentAcceptor();
+        if (componentAcceptor != null) {
+            componentAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", componentPortFilter);
         }
 
         interpretedPrinter = new InterpretedXMLPrinter();
@@ -74,6 +81,10 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
                 connManager.getSSLSocketAcceptor().getFilterChain().contains("rawDebugger")) {
             connManager.getSSLSocketAcceptor().getFilterChain().remove("rawDebugger");
         }
+        if (connManager.getComponentAcceptor() != null &&
+                connManager.getComponentAcceptor().getFilterChain().contains("rawDebugger")) {
+            connManager.getComponentAcceptor().getFilterChain().remove("rawDebugger");
+        }
         // Remove the filters from existing sessions
         if (defaultPortFilter != null) {
             defaultPortFilter.shutdown();
@@ -81,12 +92,16 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         if (oldPortFilter != null) {
             oldPortFilter.shutdown();
         }
+        if (componentPortFilter != null) {
+            componentPortFilter.shutdown();
+        }
 
         // Remove the packet interceptor that prints interpreted XML
         InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);
 
         defaultPortFilter = null;
         oldPortFilter = null;
+        componentPortFilter = null;
         interpretedPrinter = null;
     }
 

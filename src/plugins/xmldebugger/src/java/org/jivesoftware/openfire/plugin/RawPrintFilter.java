@@ -23,61 +23,66 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * MINA filter that prints to the stdout received XML stanzas before they are actually parsed and
  * also prints XML stanzas as sent to the XMPP entities. Moreover, it also prints information when
- * a session is closed. 
+ * a session is closed.
  *
  * @author Gaston Dombiak
  */
 public class RawPrintFilter extends IoFilterAdapter {
-        private Collection<IoSession> sessions = new ConcurrentLinkedQueue<IoSession>();
+    private String prefix;
+    private Collection<IoSession> sessions = new ConcurrentLinkedQueue<IoSession>();
 
-        public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
-            // Decode the bytebuffer and print it to the stdout
-            if (message instanceof ByteBuffer) {
-                ByteBuffer byteBuffer = (ByteBuffer) message;
-                // Keep current position in the buffer
-                int currentPos = byteBuffer.position();
-                // Decode buffer
-                Charset encoder = Charset.forName("UTF-8");
-                CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
-                // Print buffer content
-                System.out.println("RECV (" + session.hashCode() + "): " + charBuffer);
-                // Reset to old position in the buffer
-                byteBuffer.position(currentPos);
-            }
-            // Pass the message to the next filter
-            super.messageReceived(nextFilter, session, message);
-        }
-
-        public void messageSent(NextFilter nextFilter, IoSession session, Object message) throws Exception {
-            System.out.println("SENT (" + session.hashCode() + "): " +
-                    Charset.forName("UTF-8").decode(((ByteBuffer) message).buf()));
-
-            // Pass the message to the next filter
-            super.messageSent(nextFilter, session, message);
-        }
-
-
-        public void shutdown() {
-            // Remove this filter from sessions that are using it
-            for (IoSession session : sessions) {
-                session.getFilterChain().remove("rawDebugger");
-            }
-            sessions = null;
-        }
-
-        public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
-            // Keep track of sessions using this filter
-            sessions.add(session);
-
-            super.sessionCreated(nextFilter, session);
-        }
-
-        public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
-            // Update list of sessions using this filter
-            sessions.remove(session);
-            // Print that a session was closed
-            System.out.println("CLOSED (" + session.hashCode() + ") ");
-
-            super.sessionClosed(nextFilter, session);
-        }
+    public RawPrintFilter(String prefix) {
+        this.prefix = prefix;
     }
+
+    public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+        // Decode the bytebuffer and print it to the stdout
+        if (message instanceof ByteBuffer) {
+            ByteBuffer byteBuffer = (ByteBuffer) message;
+            // Keep current position in the buffer
+            int currentPos = byteBuffer.position();
+            // Decode buffer
+            Charset encoder = Charset.forName("UTF-8");
+            CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
+            // Print buffer content
+            System.out.println(prefix + " - RECV (" + session.hashCode() + "): " + charBuffer);
+            // Reset to old position in the buffer
+            byteBuffer.position(currentPos);
+        }
+        // Pass the message to the next filter
+        super.messageReceived(nextFilter, session, message);
+    }
+
+    public void messageSent(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+        System.out.println(prefix + " - SENT (" + session.hashCode() + "): " +
+                Charset.forName("UTF-8").decode(((ByteBuffer) message).buf()));
+
+        // Pass the message to the next filter
+        super.messageSent(nextFilter, session, message);
+    }
+
+
+    public void shutdown() {
+        // Remove this filter from sessions that are using it
+        for (IoSession session : sessions) {
+            session.getFilterChain().remove("rawDebugger");
+        }
+        sessions = null;
+    }
+
+    public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
+        // Keep track of sessions using this filter
+        sessions.add(session);
+
+        super.sessionCreated(nextFilter, session);
+    }
+
+    public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
+        // Update list of sessions using this filter
+        sessions.remove(session);
+        // Print that a session was closed
+        System.out.println("CLOSED (" + session.hashCode() + ") ");
+
+        super.sessionClosed(nextFilter, session);
+    }
+}

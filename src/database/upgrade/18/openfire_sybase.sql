@@ -1,8 +1,5 @@
-/* add isHidden column to mucService */
-ALTER TABLE mucService ADD COLUMN isHidden INT NOT NULL;
-
-/* set all current services to isHidden = false */
-UPDATE mucService set isHidden = 0;
+/* add isHidden column to mucService, with isHidden set to false by default */
+ALTER TABLE mucService ADD COLUMN isHidden INT DEFAULT 0 NOT NULL;
 
 
 UPDATE jiveVersion set version=18 where name = 'openfire';

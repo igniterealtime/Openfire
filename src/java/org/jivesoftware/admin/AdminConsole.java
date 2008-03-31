@@ -13,7 +13,6 @@ package org.jivesoftware.admin;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.container.PluginManager;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
@@ -42,33 +41,6 @@ public class AdminConsole {
     static {
         overrideModels = new LinkedHashMap<String,Element>();
         load();
-
-        // The admin console model has special logic to include an informational
-        // Enterprise tab when the Enterprise plugin is not installed. A property
-        // controls whether to show that tab. Listen for the property value changing
-        // and rebuild the model when that happens.
-        PropertyEventDispatcher.addListener(new PropertyEventListener() {
-
-            public void propertySet(String property, Map params) {
-                if ("enterpriseInfoEnabled".equals(property)) {
-                    rebuildModel();
-                }
-            }
-
-            public void propertyDeleted(String property, Map params) {
-                if ("enterpriseInfoEnabled".equals(property)) {
-                    rebuildModel();
-                }
-            }
-
-            public void xmlPropertySet(String property, Map params) {
-                // Do nothing
-            }
-
-            public void xmlPropertyDeleted(String property, Map params) {
-                // Do nothing    
-            }
-        });
     }
 
     /** Not instantiatable */
@@ -361,27 +333,6 @@ public class AdminConsole {
                     overrideTab(existingTab, tab);
                 }
             }
-        }
-
-        // Special case: show an informational tab about Openfire Enterprise if Enterprise
-        // is not installed and if the user has not chosen to hide tab.
-        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        boolean pluginExists = pluginManager != null && pluginManager.isPluginDownloaded(
-                "enterprise.jar");
-        if (!pluginExists && JiveGlobals.getBooleanProperty("enterpriseInfoEnabled", true)) {
-            Element enterprise = generatedModel.addElement("tab");
-            enterprise.addAttribute("id", "tab-enterprise");
-            enterprise.addAttribute("name", "Enterprise");
-            enterprise.addAttribute("url", "enterprise-info.jsp");
-            enterprise.addAttribute("description", "Click for Enterprise information.");
-            Element sidebar = enterprise.addElement("sidebar");
-            sidebar.addAttribute("id", "sidebar-enterprise-info");
-            sidebar.addAttribute("name", "Openfire Enterprise");
-            Element item = sidebar.addElement("item");
-            item.addAttribute("id", "enterprise-info");
-            item.addAttribute("name", "Try Enterprise");
-            item.addAttribute("url", "enterprise-info.jsp");
-            item.addAttribute("description", "Openfire Enterprise overview inforation");
         }
     }
 

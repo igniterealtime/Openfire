@@ -1,5 +1,5 @@
 -- add isHidden column to mucService
-ALTER TABLE mucService ADD isHidden INTEGER NOT NULL;
+ALTER TABLE mucService ADD isHidden INTEGER;
 
 -- set all current services to isHidden = false
 UPDATE mucService set isHidden = 0;

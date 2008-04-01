@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 /**
  * Manages database schemas for Openfire and Openfire plugins. The manager uses the
- * jiveVersion database table to figure out which database schema is currently installed
+ * ofVersion database table to figure out which database schema is currently installed
  * and then attempts to automatically apply database schema changes as necessary.<p>
  *
  * Running database schemas automatically requires appropriate database permissions.
@@ -37,9 +37,9 @@ import java.util.Arrays;
 public class SchemaManager {
 
     private static final String CHECK_VERSION_OLD =
-            "SELECT minorVersion FROM jiveVersion";
+            "SELECT minorVersion FROM ofVersion";
     private static final String CHECK_VERSION =
-            "SELECT version FROM jiveVersion WHERE name=?";
+            "SELECT version FROM ofVersion WHERE name=?";
 
     /**
      * Current Openfire database schema version.
@@ -62,7 +62,7 @@ public class SchemaManager {
      *      or updated successfully.
      */
     public boolean checkOpenfireSchema(Connection con) {
-        // Change 'wildfire' to 'openfire' in jiveVersion table (update to new name)
+        // Change 'wildfire' to 'openfire' in ofVersion table (update to new name)
         updateToOpenfire(con);
         try {
             return checkSchema(con, "openfire", DATABASE_VERSION,
@@ -295,7 +295,7 @@ public class SchemaManager {
     private void updateToOpenfire(Connection con){
         PreparedStatement pstmt = null;
         try {
-            pstmt = con.prepareStatement("UPDATE jiveVersion SET name='openfire' WHERE name='wildfire'");
+            pstmt = con.prepareStatement("UPDATE ofVersion SET name='openfire' WHERE name='wildfire'");
             pstmt.executeUpdate();
         }
         catch (Exception ex) {

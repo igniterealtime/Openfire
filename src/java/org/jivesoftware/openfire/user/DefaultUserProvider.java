@@ -26,7 +26,7 @@ import java.util.Date;
 
 /**
  * Default implementation of the UserProvider interface, which reads and writes data
- * from the <tt>jiveUser</tt> database table.<p>
+ * from the <tt>ofUser</tt> database table.<p>
  *
  * Passwords can be stored as plain text, or encrypted using Blowfish. The
  * encryption/decryption key is stored as the Openfire property <tt>passwordKey</tt>,
@@ -40,26 +40,26 @@ import java.util.Date;
 public class DefaultUserProvider implements UserProvider {
 
     private static final String LOAD_USER =
-            "SELECT name, email, creationDate, modificationDate FROM jiveUser WHERE username=?";
+            "SELECT name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
     private static final String USER_COUNT =
-            "SELECT count(*) FROM jiveUser";
+            "SELECT count(*) FROM ofUser";
     private static final String ALL_USERS =
-            "SELECT username FROM jiveUser ORDER BY username";
+            "SELECT username FROM ofUser ORDER BY username";
     private static final String INSERT_USER =
-            "INSERT INTO jiveUser (username,plainPassword,encryptedPassword,name,email,creationDate,modificationDate) " +
+            "INSERT INTO ofUser (username,plainPassword,encryptedPassword,name,email,creationDate,modificationDate) " +
             "VALUES (?,?,?,?,?,?,?)";
     private static final String DELETE_USER_PROPS =
-            "DELETE FROM jiveUserProp WHERE username=?";
+            "DELETE FROM ofUserProp WHERE username=?";
     private static final String DELETE_USER =
-            "DELETE FROM jiveUser WHERE username=?";
+            "DELETE FROM ofUser WHERE username=?";
     private static final String UPDATE_NAME =
-            "UPDATE jiveUser SET name=? WHERE username=?";
+            "UPDATE ofUser SET name=? WHERE username=?";
     private static final String UPDATE_EMAIL =
-            "UPDATE jiveUser SET email=? WHERE username=?";
+            "UPDATE ofUser SET email=? WHERE username=?";
     private static final String UPDATE_CREATION_DATE =
-            "UPDATE jiveUser SET creationDate=? WHERE username=?";
+            "UPDATE ofUser SET creationDate=? WHERE username=?";
     private static final String UPDATE_MODIFICATION_DATE =
-            "UPDATE jiveUser SET modificationDate=? WHERE username=?";
+            "UPDATE ofUser SET modificationDate=? WHERE username=?";
 
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
@@ -397,7 +397,7 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT username FROM jiveUser WHERE");
+            sql.append("SELECT username FROM ofUser WHERE");
             boolean first = true;
             if (fields.contains("Username")) {
                 sql.append(" username LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
@@ -459,7 +459,7 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT username FROM jiveUser WHERE");
+            sql.append("SELECT username FROM ofUser WHERE");
             boolean first = true;
             if (fields.contains("Username")) {
                 sql.append(" username LIKE '").append(StringUtils.escapeForSQL(query)).append("'");

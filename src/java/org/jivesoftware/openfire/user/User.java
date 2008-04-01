@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Encapsulates information about a user. New users are created using
  * {@link UserManager#createUser(String, String, String, String)}. All user
- * properties are loaded on demand and are read from the <tt>jiveUserProp</tt>
+ * properties are loaded on demand and are read from the <tt>ofUserProp</tt>
  * database table. The currently-installed {@link UserProvider} is used for
  * setting all other user data and some operations may not be supported
  * depending on the capabilities of the {@link UserProvider}.
@@ -47,15 +47,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class User implements Cacheable, Externalizable, Result {
 
     private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM jiveUserProp WHERE username=?";
+        "SELECT name, propValue FROM ofUserProp WHERE username=?";
     private static final String LOAD_PROPERTY =
-        "SELECT propValue FROM jiveUserProp WHERE username=? AND name=?";
+        "SELECT propValue FROM ofUserProp WHERE username=? AND name=?";
     private static final String DELETE_PROPERTY =
-        "DELETE FROM jiveUserProp WHERE username=? AND name=?";
+        "DELETE FROM ofUserProp WHERE username=? AND name=?";
     private static final String UPDATE_PROPERTY =
-        "UPDATE jiveUserProp SET propValue=? WHERE name=? AND username=?";
+        "UPDATE ofUserProp SET propValue=? WHERE name=? AND username=?";
     private static final String INSERT_PROPERTY =
-        "INSERT INTO jiveUserProp (username, name, propValue) VALUES (?, ?, ?)";
+        "INSERT INTO ofUserProp (username, name, propValue) VALUES (?, ?, ?)";
 
     // The name of the name visible property
     private static final String NAME_VISIBLE_PROPERTY = "name.visible";

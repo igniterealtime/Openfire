@@ -41,74 +41,74 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MUCPersistenceManager {
 
     private static final String GET_RESERVED_NAME =
-        "SELECT nickname FROM mucMember WHERE roomID=? AND jid=?";
+        "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
-        "canChangeNick, canRegister FROM mucRoom WHERE name=?";
+        "canChangeNick, canRegister FROM ofMucRoom WHERE name=?";
     private static final String LOAD_AFFILIATIONS =
-        "SELECT jid, affiliation FROM mucAffiliation WHERE roomID=?";
+        "SELECT jid, affiliation FROM ofMucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
-        "SELECT jid, nickname FROM mucMember WHERE roomID=?";
+        "SELECT jid, nickname FROM ofMucMember WHERE roomID=?";
     private static final String LOAD_HISTORY =
-        "SELECT sender, nickname, logTime, subject, body FROM mucConversationLog " +
+        "SELECT sender, nickname, logTime, subject, body FROM ofMucConversationLog " +
         "WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister " +
-        "FROM mucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
+        "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_AFFILIATIONS =
-        "SELECT mucAffiliation.roomID,mucAffiliation.jid,mucAffiliation.affiliation " +
-        "FROM mucAffiliation,mucRoom WHERE mucAffiliation.roomID = mucRoom.roomID AND mucRoom.serviceID=?";
+        "SELECT ofMucAffiliation.roomID,ofMucAffiliation.jid,ofMucAffiliation.affiliation " +
+        "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
     private static final String LOAD_ALL_MEMBERS =
-        "SELECT mucMember.roomID,mucMember.jid,mucMember.nickname FROM mucMember,mucRoom " +
-        "WHERE mucMember.roomID = mucRoom.roomID AND mucRoom.serviceID=?";
+        "SELECT ofMucMember.roomID,ofMucMember.jid,ofMucMember.nickname FROM ofMucMember,ofMucRoom " +
+        "WHERE ofMucMember.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
     private static final String LOAD_ALL_HISTORY =
-        "SELECT mucConversationLog.roomID, mucConversationLog.sender, mucConversationLog.nickname, " +
-        "mucConversationLog.logTime, mucConversationLog.subject, mucConversationLog.body FROM " +
-        "mucConversationLog, mucRoom WHERE mucConversationLog.roomID = mucRoom.roomID AND " +
-        "mucRoom.serviceID=? AND mucConversationLog.logTime>? AND (mucConversationLog.nickname IS NOT NULL " +
-        "OR mucConversationLog.subject IS NOT NULL) ORDER BY mucConversationLog.logTime";
+        "SELECT ofMucConversationLog.roomID, ofMucConversationLog.sender, ofMucConversationLog.nickname, " +
+        "ofMucConversationLog.logTime, ofMucConversationLog.subject, ofMucConversationLog.body FROM " +
+        "ofMucConversationLog, ofMucRoom WHERE ofMucConversationLog.roomID = ofMucRoom.roomID AND " +
+        "ofMucRoom.serviceID=? AND ofMucConversationLog.logTime>? AND (ofMucConversationLog.nickname IS NOT NULL " +
+        "OR ofMucConversationLog.subject IS NOT NULL) ORDER BY ofMucConversationLog.logTime";
     private static final String UPDATE_ROOM =
-        "UPDATE mucRoom SET modificationDate=?, naturalName=?, description=?, " +
+        "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
         "useReservedNick=?, canChangeNick=?, canRegister=? WHERE roomID=?";
     private static final String ADD_ROOM = 
-        "INSERT INTO mucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
+        "INSERT INTO ofMucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
         "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
         "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?,?," +
             "?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
-        "UPDATE mucRoom SET subject=? WHERE roomID=?";
+        "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
-        "UPDATE mucRoom SET lockedDate=? WHERE roomID=?";
+        "UPDATE ofMucRoom SET lockedDate=? WHERE roomID=?";
     private static final String UPDATE_EMPTYDATE =
-        "UPDATE mucRoom SET emptyDate=? WHERE roomID=?";
+        "UPDATE ofMucRoom SET emptyDate=? WHERE roomID=?";
     private static final String DELETE_ROOM =
-        "DELETE FROM mucRoom WHERE roomID=?";
+        "DELETE FROM ofMucRoom WHERE roomID=?";
     private static final String DELETE_AFFILIATIONS =
-        "DELETE FROM mucAffiliation WHERE roomID=?";
+        "DELETE FROM ofMucAffiliation WHERE roomID=?";
     private static final String DELETE_MEMBERS =
-        "DELETE FROM mucMember WHERE roomID=?";
+        "DELETE FROM ofMucMember WHERE roomID=?";
     private static final String ADD_MEMBER =
-        "INSERT INTO mucMember (roomID,jid,nickname) VALUES (?,?,?)";
+        "INSERT INTO ofMucMember (roomID,jid,nickname) VALUES (?,?,?)";
     private static final String UPDATE_MEMBER =
-        "UPDATE mucMember SET nickname=? WHERE roomID=? AND jid=?";
+        "UPDATE ofMucMember SET nickname=? WHERE roomID=? AND jid=?";
     private static final String DELETE_MEMBER =
-        "DELETE FROM mucMember WHERE roomID=? AND jid=?";
+        "DELETE FROM ofMucMember WHERE roomID=? AND jid=?";
     private static final String ADD_AFFILIATION =
-        "INSERT INTO mucAffiliation (roomID,jid,affiliation) VALUES (?,?,?)";
+        "INSERT INTO ofMucAffiliation (roomID,jid,affiliation) VALUES (?,?,?)";
     private static final String UPDATE_AFFILIATION =
-        "UPDATE mucAffiliation SET affiliation=? WHERE roomID=? AND jid=?";
+        "UPDATE ofMucAffiliation SET affiliation=? WHERE roomID=? AND jid=?";
     private static final String DELETE_AFFILIATION =
-        "DELETE FROM mucAffiliation WHERE roomID=? AND jid=?";
+        "DELETE FROM ofMucAffiliation WHERE roomID=? AND jid=?";
     private static final String ADD_CONVERSATION_LOG =
-        "INSERT INTO mucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
+        "INSERT INTO ofMucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
         "VALUES (?,?,?,?,?,?)";
 
     /* Map of subdomains to their associated properties */

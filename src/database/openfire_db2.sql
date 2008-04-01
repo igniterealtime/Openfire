@@ -1,7 +1,7 @@
 --   $Revision: 1650 $
 --   $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
-CREATE TABLE jiveUser (
+CREATE TABLE ofUser (
   username              VARCHAR(64)     NOT NULL,
   plainPassword         VARCHAR(32),
   encryptedPassword     VARCHAR(255),
@@ -9,56 +9,56 @@ CREATE TABLE jiveUser (
   email                 VARCHAR(100),
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
-  CONSTRAINT jiveUser_pk PRIMARY KEY (username)
+  CONSTRAINT ofUser_pk PRIMARY KEY (username)
 );
-CREATE INDEX jiveUsr_cDate_idx ON jiveUser (creationDate ASC);
+CREATE INDEX ofUser_cDate_idx ON ofUser (creationDate ASC);
 
 
-CREATE TABLE jiveUserProp (
+CREATE TABLE ofUserProp (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveUsrProp_pk PRIMARY KEY (username, name)
+  CONSTRAINT ofUserProp_pk PRIMARY KEY (username, name)
 );
 
 
-CREATE TABLE jiveUserFlag (
+CREATE TABLE ofUserFlag (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   startTime             CHAR(15),
   endTime               CHAR(15),
-  CONSTRAINT jiveUserFlag_pk PRIMARY KEY (username, name)
+  CONSTRAINT ofUserFlag_pk PRIMARY KEY (username, name)
 );
-CREATE INDEX jiveUserFlag_sTime_idx ON jiveUserFlag (startTime ASC);
-CREATE INDEX jiveUserFlag_eTime_idx ON jiveUserFlag (endTime ASC);
+CREATE INDEX ofUserFlag_sTime_idx ON ofUserFlag (startTime ASC);
+CREATE INDEX ofUserFlag_eTime_idx ON ofUserFlag (endTime ASC);
 
 
-CREATE TABLE jivePrivate (
+CREATE TABLE ofPrivate (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   privateData           VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jivePrivate_pk PRIMARY KEY (username, name, namespace)
+  CONSTRAINT ofPrivate_pk PRIMARY KEY (username, name, namespace)
 );
 
 
-CREATE TABLE jiveOffline (
+CREATE TABLE ofOffline (
   username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
   stanza                VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveOffline_pk PRIMARY KEY (username, messageID)
+  CONSTRAINT ofOffline_pk PRIMARY KEY (username, messageID)
 );
 
-CREATE TABLE jivePresence (
+CREATE TABLE ofPresence (
   username              VARCHAR(64)     NOT NULL,
   offlinePresence       VARCHAR(2000),
   offlineDate           CHAR(15)     NOT NULL,
-  CONSTRAINT jivePresence_pk PRIMARY KEY (username)
+  CONSTRAINT ofPresence_pk PRIMARY KEY (username)
 );
 
-CREATE TABLE jiveRoster (
+CREATE TABLE ofRoster (
   rosterID              INTEGER         NOT NULL,
   username              VARCHAR(64)     NOT NULL,
   jid                   VARCHAR(2000)   NOT NULL,
@@ -66,135 +66,135 @@ CREATE TABLE jiveRoster (
   ask                   INTEGER         NOT NULL,
   recv                  INTEGER         NOT NULL,
   nick                  VARCHAR(255),
-  CONSTRAINT jiveRoster_pk PRIMARY KEY (rosterID)
+  CONSTRAINT ofRoster_pk PRIMARY KEY (rosterID)
 );
-CREATE INDEX jiveR_userid_idx ON jiveRoster (username ASC);
-CREATE INDEX jiveR_jid_idx ON jiveRoster (jid ASC);
+CREATE INDEX ofRoster_username_idx ON ofRoster (username ASC);
+CREATE INDEX ofRoster_jid_idx ON ofRoster (jid ASC);
 
 
-CREATE TABLE jiveRosterGroups (
+CREATE TABLE ofRosterGroups (
   rosterID              INTEGER         NOT NULL,
   rank                  INTEGER         NOT NULL,
   groupName             VARCHAR(255)    NOT NULL,
-  CONSTRAINT jiveRoGrps_pk PRIMARY KEY (rosterID, rank)
+  CONSTRAINT ofRosterGroups_pk PRIMARY KEY (rosterID, rank)
 );
-CREATE INDEX jiveRoGrps_rid_idx ON jiveRosterGroups (rosterID ASC);
+CREATE INDEX ofRosterGroups_rosterid_idx ON ofRosterGroups (rosterID ASC);
 
 
-CREATE TABLE jiveVCard (
+CREATE TABLE ofVCard (
   username              VARCHAR(64)     NOT NULL,
   vcard                 VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
+  CONSTRAINT ofVCard_pk PRIMARY KEY (username)
 );
 
 
-CREATE TABLE jiveGroup (
+CREATE TABLE ofGroup (
   groupName             VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
-  CONSTRAINT jiveGroup_pk PRIMARY KEY (groupName)
+  CONSTRAINT ofGroup_pk PRIMARY KEY (groupName)
 );
 
 
-CREATE TABLE jiveGroupProp (
+CREATE TABLE ofGroupProp (
   groupName             VARCHAR(50)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jiveGrpProp_pk PRIMARY KEY (groupName, name)
+  CONSTRAINT ofGroupProp_pk PRIMARY KEY (groupName, name)
 );
 
 
-CREATE TABLE jiveGroupUser (
+CREATE TABLE ofGroupUser (
   groupName             VARCHAR(50)     NOT NULL,
   username              VARCHAR(100)    NOT NULL,
   administrator         INTEGER         NOT NULL,
-  CONSTRAINT jiveGrpUser PRIMARY KEY (groupName, username, administrator)
+  CONSTRAINT ofGroupUser_pk PRIMARY KEY (groupName, username, administrator)
 );
 
 
-CREATE TABLE jiveID (
+CREATE TABLE ofID (
   idType                INTEGER         NOT NULL,
   id                    INTEGER         NOT NULL,
-  CONSTRAINT jiveID_pk PRIMARY KEY (idType)
+  CONSTRAINT ofID_pk PRIMARY KEY (idType)
 );
 
 
-CREATE TABLE jiveProperty (
+CREATE TABLE ofProperty (
   name        VARCHAR(100) NOT NULL,
   propValue   VARCHAR(3000) NOT NULL,
-  CONSTRAINT jiveProperty_pk PRIMARY KEY (name)
+  CONSTRAINT ofProperty_pk PRIMARY KEY (name)
 );
 
 
-CREATE TABLE jiveVersion (
+CREATE TABLE ofVersion (
   name     VARCHAR(50)  NOT NULL,
   version  INTEGER  NOT NULL,
-  CONSTRAINT jiveVersion_pk PRIMARY KEY (name)
+  CONSTRAINT ofVersion_pk PRIMARY KEY (name)
 );
 
 
-CREATE TABLE jiveExtComponentConf (
+CREATE TABLE ofExtComponentConf (
   subdomain             VARCHAR(255)    NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
-  CONSTRAINT jiveExtCmpConf_pk PRIMARY KEY (subdomain)
+  CONSTRAINT ofExtComponentConf_pk PRIMARY KEY (subdomain)
 );
 
 
-CREATE TABLE jiveRemoteServerConf (
+CREATE TABLE ofRemoteServerConf (
   xmppDomain            VARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
-  CONSTRAINT jiveRmSrvConf_pk PRIMARY KEY (xmppDomain)
+  CONSTRAINT ofRemoteServerConf_pk PRIMARY KEY (xmppDomain)
 );
 
 
-CREATE TABLE jivePrivacyList (
+CREATE TABLE ofPrivacyList (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   isDefault             INTEGER         NOT NULL,
   list                  VARCHAR(2000)   NOT NULL,
-  CONSTRAINT jivePrivacyList_pk PRIMARY KEY (username, name)
+  CONSTRAINT ofPrivacyList_pk PRIMARY KEY (username, name)
 );
-CREATE INDEX jList_default_idx ON jivePrivacyList (username, isDefault);
+CREATE INDEX ofPrivacyList_default_idx ON ofPrivacyList (username, isDefault);
 
 
-CREATE TABLE jiveSASLAuthorized (
+CREATE TABLE ofSASLAuthorized (
   username            VARCHAR(64)   NOT NULL,
   principal           VARCHAR(190)  NOT NULL,
-  CONSTRAINT jSASLAuthrizd_pk PRIMARY KEY (username, principal)
+  CONSTRAINT ofSASLAuthorized_pk PRIMARY KEY (username, principal)
 );
 
-CREATE TABLE jiveSecurityAuditLog (
+CREATE TABLE ofSecurityAuditLog (
   msgID                 INTEGER         NOT NULL,
   username              VARCHAR(64)     NOT NULL,
   entryStamp            BIGINT          NOT NULL,
   summary               VARCHAR(255)    NOT NULL,
   node                  VARCHAR(255)    NOT NULL,
   details               CLOB,
-  CONSTRAINT jiveSecAuditLog_pk PRIMARY KEY (msgID)
+  CONSTRAINT ofSecurityAuditLog_pk PRIMARY KEY (msgID)
 );
-CREATE INDEX jiveSecAuditLog_tstamp_idx ON jiveSecurityAuditLog (entryStamp);
-CREATE INDEX jiveSecAuditLog_uname_idx ON jiveSecurityAuditLog (username);
+CREATE INDEX ofSecurityAuditLog_tstamp_idx ON ofSecurityAuditLog (entryStamp);
+CREATE INDEX ofSecurityAuditLog_uname_idx ON ofSecurityAuditLog (username);
 
 -- MUC tables
 
-CREATE TABLE mucService (
+CREATE TABLE ofMucService (
   serviceID           INTEGER       NOT NULL,
   subdomain           VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
   isHidden            INTEGER       NOT NULL,
-  CONSTRAINT mucService_pk PRIMARY KEY (subdomain)
+  CONSTRAINT ofMucService_pk PRIMARY KEY (subdomain)
 );
-CREATE INDEX mucService_serviceid_idx ON mucService(serviceID);
+CREATE INDEX ofMucService_serviceid_idx ON ofMucService(serviceID);
 
-CREATE TABLE mucServiceProp (
+CREATE TABLE ofMucServiceProp (
   serviceID           INTEGER       NOT NULL,
   name                VARCHAR(100)  NOT NULL,
   propValue           VARCHAR(2000) NOT NULL,
-  CONSTRAINT mucServiceProp_pk PRIMARY KEY (serviceID, name)
+  CONSTRAINT ofMucServiceProp_pk PRIMARY KEY (serviceID, name)
 );
 
-CREATE TABLE mucRoom (
+CREATE TABLE ofMucRoom (
   serviceID           INTEGER       NOT NULL,
   roomID              INTEGER       NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
@@ -218,29 +218,29 @@ CREATE TABLE mucRoom (
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
   canRegister         INTEGER       NOT NULL,
-  CONSTRAINT mucRoom_pk PRIMARY KEY (serviceID, name)
+  CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 );
-CREATE INDEX mucRm_roomid_idx ON mucRoom (roomID);
-CREATE INDEX mucRm_serviceid_idx ON mucRoom (serviceID);
+CREATE INDEX ofMucRoom_roomid_idx ON ofMucRoom (roomID);
+CREATE INDEX ofMucRoom_serviceid_idx ON ofMucRoom (serviceID);
 
 
-CREATE TABLE mucRoomProp (
+CREATE TABLE ofMucRoomProp (
   roomID                INTEGER         NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             VARCHAR(2000)   NOT NULL,
-  CONSTRAINT mucRoomProp_pk PRIMARY KEY (roomID, name)
+  CONSTRAINT ofMucRoomProp_pk PRIMARY KEY (roomID, name)
 );
 
 
-CREATE TABLE mucAffiliation (
+CREATE TABLE ofMucAffiliation (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1000) NOT NULL,
   affiliation         INTEGER       NOT NULL,
-  CONSTRAINT mucAffiliation_pk PRIMARY KEY (roomID, jid)
+  CONSTRAINT ofMucAffiliation_pk PRIMARY KEY (roomID, jid)
 );
 
 
-CREATE TABLE mucMember (
+CREATE TABLE ofMucMember (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1000) NOT NULL,
   nickname            VARCHAR(255),
@@ -249,11 +249,11 @@ CREATE TABLE mucMember (
   url                 VARCHAR(100),
   email               VARCHAR(100),
   faqentry            VARCHAR(100),
-  CONSTRAINT mucMember_pk PRIMARY KEY (roomID, jid)
+  CONSTRAINT ofMucMember_pk PRIMARY KEY (roomID, jid)
 );
 
 
-CREATE TABLE mucConversationLog (
+CREATE TABLE ofMucConversationLog (
   roomID              INTEGER       NOT NULL,
   sender              VARCHAR(2000) NOT NULL,
   nickname            VARCHAR(255),
@@ -261,12 +261,12 @@ CREATE TABLE mucConversationLog (
   subject             VARCHAR(255),
   body                CLOB
 );
-CREATE INDEX mucLog_time_idx ON mucConversationLog (logTime);
+CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
 
 
 -- PubSub Tables
 
-CREATE TABLE pubsubNode (
+CREATE TABLE ofPubsubNode (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   leaf                INTEGER       NOT NULL,
@@ -296,48 +296,48 @@ CREATE TABLE pubsubNode (
   replyPolicy         VARCHAR(15),
   associationPolicy   VARCHAR(15),
   maxLeafNodes        INTEGER,
-  CONSTRAINT pubsubNode_pk PRIMARY KEY (serviceID, nodeID)
+  CONSTRAINT ofPubsubNode_pk PRIMARY KEY (serviceID, nodeID)
 );
 
 
-CREATE TABLE pubsubNodeJIDs (
+CREATE TABLE ofPubsubNodeJIDs (
   serviceID           VARCHAR(80)  NOT NULL,
   nodeID              VARCHAR(80)  NOT NULL,
   jid                 VARCHAR(90)  NOT NULL,
   associationType     VARCHAR(20)  NOT NULL,
-  CONSTRAINT pubsubJID_pk PRIMARY KEY (serviceID, nodeID, jid)
+  CONSTRAINT ofPubsubNodeJIDs_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
 
-CREATE TABLE pubsubNodeGroups (
+CREATE TABLE ofPubsubNodeGroups (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   rosterGroup         VARCHAR(100)  NOT NULL
 );
-CREATE INDEX pubsubNGrps_idx ON pubsubNodeGroups (serviceID, nodeID);
+CREATE INDEX ofPubsubNodeGroups_idx ON ofPubsubNodeGroups (serviceID, nodeID);
 
 
-CREATE TABLE pubsubAffiliation (
+CREATE TABLE ofPubsubAffiliation (
   serviceID           VARCHAR(80)  NOT NULL,
   nodeID              VARCHAR(80)  NOT NULL,
   jid                 VARCHAR(90)  NOT NULL,
   affiliation         VARCHAR(10)  NOT NULL,
-  CONSTRAINT pubsubAffil_pk PRIMARY KEY (serviceID, nodeID, jid)
+  CONSTRAINT ofPubsubAffiliation_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
 
-CREATE TABLE pubsubItem (
+CREATE TABLE ofPubsubItem (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(20)   NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
   payload             CLOB,
-  CONSTRAINT pubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
+  CONSTRAINT ofPubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
 
-CREATE TABLE pubsubSubscription (
+CREATE TABLE ofPubsubSubscription (
   serviceID           VARCHAR(80)   NOT NULL,
   nodeID              VARCHAR(80)   NOT NULL,
   id                  VARCHAR(90)   NOT NULL,
@@ -353,11 +353,11 @@ CREATE TABLE pubsubSubscription (
   subscriptionType    VARCHAR(10)   NOT NULL,
   subscriptionDepth   INTEGER       NOT NULL,
   keyword             VARCHAR(200),
-  CONSTRAINT pubsubSubs_pk PRIMARY KEY (serviceID, nodeID, id)
+  CONSTRAINT ofPubsubSubscription_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
 
-CREATE TABLE pubsubDefaultConf (
+CREATE TABLE ofPubsubDefaultConf (
   serviceID           VARCHAR(100)  NOT NULL,
   leaf                INTEGER       NOT NULL,
   deliverPayloads     INTEGER       NOT NULL,
@@ -376,20 +376,20 @@ CREATE TABLE pubsubDefaultConf (
   replyPolicy         VARCHAR(15),
   associationPolicy   VARCHAR(15)   NOT NULL,
   maxLeafNodes        INTEGER       NOT NULL,
-  CONSTRAINT pubsubDefConf_pk PRIMARY KEY (serviceID, leaf)
+  CONSTRAINT ofPubsubDefaultConf_pk PRIMARY KEY (serviceID, leaf)
 );
 
 -- Finally, insert default table values
-INSERT INTO jiveID (idType, id) VALUES (18, 1);
-INSERT INTO jiveID (idType, id) VALUES (19, 1);
-INSERT INTO jiveID (idType, id) VALUES (23, 1);
-INSERT INTO jiveID (idType, id) VALUES (26, 1);
+INSERT INTO ofID (idType, id) VALUES (18, 1);
+INSERT INTO ofID (idType, id) VALUES (19, 1);
+INSERT INTO ofID (idType, id) VALUES (23, 1);
+INSERT INTO ofID (idType, id) VALUES (26, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 18);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 19);
 
 -- Entry for admin user
-INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)
+INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
 
 -- Entry for default conference service
-INSERT INTO mucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
+INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);

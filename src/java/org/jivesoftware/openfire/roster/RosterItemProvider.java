@@ -41,24 +41,24 @@ import java.util.*;
 public class RosterItemProvider {
 
     private static final String CREATE_ROSTER_ITEM =
-            "INSERT INTO jiveRoster (username, rosterID, jid, sub, ask, recv, nick) " +
+            "INSERT INTO ofRoster (username, rosterID, jid, sub, ask, recv, nick) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_ROSTER_ITEM =
-            "UPDATE jiveRoster SET sub=?, ask=?, recv=?, nick=? WHERE rosterID=?";
+            "UPDATE ofRoster SET sub=?, ask=?, recv=?, nick=? WHERE rosterID=?";
     private static final String DELETE_ROSTER_ITEM_GROUPS =
-            "DELETE FROM jiveRosterGroups WHERE rosterID=?";
+            "DELETE FROM ofRosterGroups WHERE rosterID=?";
     private static final String CREATE_ROSTER_ITEM_GROUPS =
-            "INSERT INTO jiveRosterGroups (rosterID, rank, groupName) VALUES (?, ?, ?)";
+            "INSERT INTO ofRosterGroups (rosterID, rank, groupName) VALUES (?, ?, ?)";
     private static final String DELETE_ROSTER_ITEM =
-            "DELETE FROM jiveRoster WHERE rosterID=?";
+            "DELETE FROM ofRoster WHERE rosterID=?";
     private static final String LOAD_USERNAMES =
-            "SELECT DISTINCT username from jiveRoster WHERE jid=?";
+            "SELECT DISTINCT username from ofRoster WHERE jid=?";
     private static final String COUNT_ROSTER_ITEMS =
-            "SELECT COUNT(rosterID) FROM jiveRoster WHERE username=?";
+            "SELECT COUNT(rosterID) FROM ofRoster WHERE username=?";
      private static final String LOAD_ROSTER =
-             "SELECT jid, rosterID, sub, ask, recv, nick FROM jiveRoster WHERE username=?";
+             "SELECT jid, rosterID, sub, ask, recv, nick FROM ofRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
-            "SELECT rosterID,groupName FROM jiveRosterGroups";
+            "SELECT rosterID,groupName FROM ofRosterGroups";
 
 
     private static RosterItemProvider instance = new RosterItemProvider();
@@ -104,7 +104,7 @@ public class RosterItemProvider {
             insertGroups(rosterID, item.getGroups().iterator(), con);
         }
         catch (SQLException e) {
-            Log.warn("Error trying to insert a new row in jiveRoster", e);
+            Log.warn("Error trying to insert a new row in ofRoster", e);
             throw new UserAlreadyExistsException(item.getJid().toBareJID());
         }
         finally {

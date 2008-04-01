@@ -92,7 +92,7 @@ import java.util.*;
  * </pre><p>
  * <p/>
  * An easy way to get the vcard format your client needs, assuming you've been
- * using the database store, is to do a <code>SELECT value FROM jivevcard WHERE
+ * using the database store, is to do a <code>SELECT value FROM ofVCard WHERE
  * username='some_user'</code> in your favorite sql querier and paste the result
  * into the <code>vcard-mapping</code> (don't forget the CDATA).
  *

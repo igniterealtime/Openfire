@@ -1,9 +1,9 @@
 /* $Revision$   */
 /* $Date$       */
 
-INSERT INTO jiveVersion (name, version) VALUES ('sip', 1);
+INSERT INTO ofVersion (name, version) VALUES ('sip', 2);
 
-create table sipUser (
+create table ofSipUser (
 	username NVARCHAR(255) not null,
 	sipUsername NVARCHAR(255),
 	sipAuthuser NVARCHAR(255),
@@ -21,7 +21,7 @@ create table sipUser (
     CONSTRAINT sipUser_pk PRIMARY KEY (username)
 );
 
-create table sipPhoneLog (
+create table ofSipPhoneLog (
 	username NVARCHAR(255),
 	addressFrom NVARCHAR(255),
 	addressTo NVARCHAR(255),

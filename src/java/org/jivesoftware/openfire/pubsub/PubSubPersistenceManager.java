@@ -41,7 +41,7 @@ public class PubSubPersistenceManager {
             "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
             "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
             "bodyXSLT, dataformXSLT, creator, description, language, name, " +
-            "replyPolicy, associationPolicy, maxLeafNodes FROM pubsubNode " +
+            "replyPolicy, associationPolicy, maxLeafNodes FROM ofPubsubNode " +
             "WHERE serviceID=? AND leaf=0 ORDER BY nodeID";
     private static final String LOAD_LEAF_NODES =
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
@@ -49,10 +49,10 @@ public class PubSubPersistenceManager {
             "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
             "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
             "bodyXSLT, dataformXSLT, creator, description, language, name, " +
-            "replyPolicy, associationPolicy, maxLeafNodes FROM pubsubNode " +
+            "replyPolicy, associationPolicy, maxLeafNodes FROM ofPubsubNode " +
             "WHERE serviceID=? AND leaf=1 ORDER BY nodeID";
     private static final String UPDATE_NODE =
-            "UPDATE pubsubNode SET modificationDate=?, parent=?, deliverPayloads=?, " +
+            "UPDATE ofPubsubNode SET modificationDate=?, parent=?, deliverPayloads=?, " +
             "maxPayloadSize=?, persistItems=?, maxItems=?, " +
             "notifyConfigChanges=?, notifyDelete=?, notifyRetract=?, presenceBased=?, " +
             "sendItemSubscribe=?, publisherModel=?, subscriptionEnabled=?, configSubscription=?, " +
@@ -60,7 +60,7 @@ public class PubSubPersistenceManager {
             "language=?, name=?, replyPolicy=?, associationPolicy=?, maxLeafNodes=? " +
             "WHERE serviceID=? AND nodeID=?";
     private static final String ADD_NODE =
-            "INSERT INTO pubsubNode (serviceID, nodeID, leaf, creationDate, modificationDate, " +
+            "INSERT INTO ofPubsubNode (serviceID, nodeID, leaf, creationDate, modificationDate, " +
             "parent, deliverPayloads, maxPayloadSize, persistItems, maxItems, " +
             "notifyConfigChanges, notifyDelete, notifyRetract, presenceBased, " +
             "sendItemSubscribe, publisherModel, subscriptionEnabled, configSubscription, " +
@@ -68,82 +68,82 @@ public class PubSubPersistenceManager {
             "language, name, replyPolicy, associationPolicy, maxLeafNodes) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DELETE_NODE =
-            "DELETE FROM pubsubNode WHERE serviceID=? AND nodeID=?";
+            "DELETE FROM ofPubsubNode WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_NODES_JIDS =
-            "SELECT nodeID, jid, associationType FROM pubsubNodeJIDs WHERE serviceID=?";
+            "SELECT nodeID, jid, associationType FROM ofPubsubNodeJIDs WHERE serviceID=?";
     private static final String ADD_NODE_JIDS =
-            "INSERT INTO pubsubNodeJIDs (serviceID, nodeID, jid, associationType) " +
+            "INSERT INTO ofPubsubNodeJIDs (serviceID, nodeID, jid, associationType) " +
             "VALUES (?,?,?,?)";
     private static final String DELETE_NODE_JIDS =
-            "DELETE FROM pubsubNodeJIDs WHERE serviceID=? AND nodeID=?";
+            "DELETE FROM ofPubsubNodeJIDs WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_NODES_GROUPS =
-            "SELECT nodeID, rosterGroup FROM pubsubNodeGroups WHERE serviceID=?";
+            "SELECT nodeID, rosterGroup FROM ofPubsubNodeGroups WHERE serviceID=?";
     private static final String ADD_NODE_GROUPS =
-            "INSERT INTO pubsubNodeGroups (serviceID, nodeID, rosterGroup) " +
+            "INSERT INTO ofPubsubNodeGroups (serviceID, nodeID, rosterGroup) " +
             "VALUES (?,?,?)";
     private static final String DELETE_NODE_GROUPS =
-            "DELETE FROM pubsubNodeGroups WHERE serviceID=? AND nodeID=?";
+            "DELETE FROM ofPubsubNodeGroups WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_AFFILIATIONS =
-            "SELECT nodeID,jid,affiliation FROM pubsubAffiliation WHERE serviceID=? " +
+            "SELECT nodeID,jid,affiliation FROM ofPubsubAffiliation WHERE serviceID=? " +
             "ORDER BY nodeID";
     private static final String ADD_AFFILIATION =
-            "INSERT INTO pubsubAffiliation (serviceID,nodeID,jid,affiliation) VALUES (?,?,?,?)";
+            "INSERT INTO ofPubsubAffiliation (serviceID,nodeID,jid,affiliation) VALUES (?,?,?,?)";
     private static final String UPDATE_AFFILIATION =
-            "UPDATE pubsubAffiliation SET affiliation=? WHERE serviceID=? AND nodeID=? AND jid=?";
+            "UPDATE ofPubsubAffiliation SET affiliation=? WHERE serviceID=? AND nodeID=? AND jid=?";
     private static final String DELETE_AFFILIATION =
-            "DELETE FROM pubsubAffiliation WHERE serviceID=? AND nodeID=? AND jid=?";
+            "DELETE FROM ofPubsubAffiliation WHERE serviceID=? AND nodeID=? AND jid=?";
     private static final String DELETE_AFFILIATIONS =
-            "DELETE FROM pubsubAffiliation WHERE serviceID=? AND nodeID=?";
+            "DELETE FROM ofPubsubAffiliation WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_SUBSCRIPTIONS =
             "SELECT nodeID, id, jid, owner, state, deliver, digest, digest_frequency, " +
             "expire, includeBody, showValues, subscriptionType, subscriptionDepth, " +
-            "keyword FROM pubsubSubscription WHERE serviceID=? ORDER BY nodeID";
+            "keyword FROM ofPubsubSubscription WHERE serviceID=? ORDER BY nodeID";
     private static final String ADD_SUBSCRIPTION =
-            "INSERT INTO pubsubSubscription (serviceID, nodeID, id, jid, owner, state, " +
+            "INSERT INTO ofPubsubSubscription (serviceID, nodeID, id, jid, owner, state, " +
             "deliver, digest, digest_frequency, expire, includeBody, showValues, " +
             "subscriptionType, subscriptionDepth, keyword) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBSCRIPTION =
-            "UPDATE pubsubSubscription SET owner=?, state=?, deliver=?, digest=?, " +
+            "UPDATE ofPubsubSubscription SET owner=?, state=?, deliver=?, digest=?, " +
             "digest_frequency=?, expire=?, includeBody=?, showValues=?, subscriptionType=?, " +
             "subscriptionDepth=?, keyword=? WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_SUBSCRIPTION =
-            "DELETE FROM pubsubSubscription WHERE serviceID=? AND nodeID=? AND id=?";
+            "DELETE FROM ofPubsubSubscription WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_SUBSCRIPTIONS =
-            "DELETE FROM pubsubSubscription WHERE serviceID=? AND nodeID=?";
+            "DELETE FROM ofPubsubSubscription WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_ALL_ITEMS =
-            "SELECT id,jid,creationDate,payload,nodeID FROM pubsubItem " +
+            "SELECT id,jid,creationDate,payload,nodeID FROM ofPubsubItem " +
             "WHERE serviceID=? ORDER BY creationDate";
     private static final String LOAD_ITEMS =
-            "SELECT id,jid,creationDate,payload FROM pubsubItem " +
+            "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? ORDER BY creationDate";
     private static final String ADD_ITEM =
-            "INSERT INTO pubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
+            "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
             "VALUES (?,?,?,?,?,?)";
     private static final String DELETE_ITEM =
-            "DELETE FROM pubsubItem WHERE serviceID=? AND nodeID=? AND id=?";
+            "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_ITEMS =
-            "DELETE FROM pubsubItem WHERE serviceID=? AND nodeID=?";
+            "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=?";
 
     private static final String LOAD_DEFAULT_CONF =
             "SELECT deliverPayloads, maxPayloadSize, persistItems, maxItems, " +
             "notifyConfigChanges, notifyDelete, notifyRetract, presenceBased, " +
             "sendItemSubscribe, publisherModel, subscriptionEnabled, accessModel, language, " +
             "replyPolicy, associationPolicy, maxLeafNodes " +
-            "FROM pubsubDefaultConf WHERE serviceID=? AND leaf=?";
+            "FROM ofPubsubDefaultConf WHERE serviceID=? AND leaf=?";
     private static final String UPDATE_DEFAULT_CONF =
-            "UPDATE pubsubDefaultConf SET deliverPayloads=?, maxPayloadSize=?, persistItems=?, " +
+            "UPDATE ofPubsubDefaultConf SET deliverPayloads=?, maxPayloadSize=?, persistItems=?, " +
             "maxItems=?, notifyConfigChanges=?, notifyDelete=?, notifyRetract=?, " +
             "presenceBased=?, sendItemSubscribe=?, publisherModel=?, subscriptionEnabled=?, " +
             "accessModel=?, language=? replyPolicy=?, associationPolicy=?, maxLeafNodes=? " +
             "WHERE serviceID=? AND leaf=?";
     private static final String ADD_DEFAULT_CONF =
-            "INSERT INTO pubsubDefaultConf (serviceID, leaf, deliverPayloads, maxPayloadSize, " +
+            "INSERT INTO ofPubsubDefaultConf (serviceID, leaf, deliverPayloads, maxPayloadSize, " +
             "persistItems, maxItems, notifyConfigChanges, notifyDelete, notifyRetract, " +
             "presenceBased, sendItemSubscribe, publisherModel, subscriptionEnabled, " +
             "accessModel, language, replyPolicy, associationPolicy, maxLeafNodes) " +

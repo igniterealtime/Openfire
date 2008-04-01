@@ -45,15 +45,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Group implements Cacheable, Externalizable {
 
     private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM jiveGroupProp WHERE groupName=?";
+        "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
     private static final String DELETE_PROPERTY =
-        "DELETE FROM jiveGroupProp WHERE groupName=? AND name=?";
+        "DELETE FROM ofGroupProp WHERE groupName=? AND name=?";
     private static final String UPDATE_PROPERTY =
-        "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupName=?";
+        "UPDATE ofGroupProp SET propValue=? WHERE name=? AND groupName=?";
     private static final String INSERT_PROPERTY =
-        "INSERT INTO jiveGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
+        "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
     private static final String LOAD_SHARED_GROUPS =
-        "SELECT groupName FROM jiveGroupProp WHERE name='sharedRoster.showInRoster' " +
+        "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
         "AND propValue IS NOT NULL AND propValue <> 'nobody'";
 
     private transient GroupProvider provider;

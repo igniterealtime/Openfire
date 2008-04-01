@@ -28,20 +28,20 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Default implementation of the VCardProvider interface, which reads and writes data
- * from the <tt>jiveVCard</tt> database table.
+ * from the <tt>ofVCard</tt> database table.
  *
  * @author Gaston Dombiak
  */
 public class DefaultVCardProvider implements VCardProvider {
 
     private static final String LOAD_PROPERTIES =
-        "SELECT vcard FROM jiveVCard WHERE username=?";
+        "SELECT vcard FROM ofVCard WHERE username=?";
     private static final String DELETE_PROPERTIES =
-        "DELETE FROM jiveVCard WHERE username=?";
+        "DELETE FROM ofVCard WHERE username=?";
     private static final String UPDATE_PROPERTIES =
-        "UPDATE jiveVCard SET vcard=? WHERE username=?";
+        "UPDATE ofVCard SET vcard=? WHERE username=?";
     private static final String INSERT_PROPERTY =
-        "INSERT INTO jiveVCard (username, vcard) VALUES (?, ?)";
+        "INSERT INTO ofVCard (username, vcard) VALUES (?, ?)";
 
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.

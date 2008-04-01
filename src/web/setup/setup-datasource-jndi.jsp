@@ -50,7 +50,7 @@
             	try {
             		Statement stmt = con.createStatement();
             		// Pick an arbitrary table to see if it's there.
-            		stmt.executeQuery("SELECT * FROM jiveID");
+            		stmt.executeQuery("SELECT * FROM ofID");
             		stmt.close();
             	}
             	catch (SQLException sqle) {

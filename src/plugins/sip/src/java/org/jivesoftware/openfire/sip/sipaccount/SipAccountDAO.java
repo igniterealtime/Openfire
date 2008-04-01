@@ -33,7 +33,7 @@ public class SipAccountDAO {
 	public static SipAccount getAccountByUser(String username) {
 
 		String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, " +
-                "status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM sipUser " +
+                "status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM ofSipUser " +
                 "WHERE username = ? ";
 
 		SipAccount sipAccount = null;
@@ -102,7 +102,7 @@ public class SipAccountDAO {
 
 	public static void insert(SipAccount sipAccount) throws SQLException {
 
-		String sql = "INSERT INTO sipUser (username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials ) "
+		String sql = "INSERT INTO ofSipUser (username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials ) "
 				+ " values  ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 		Connection con = null;
@@ -139,7 +139,7 @@ public class SipAccountDAO {
 
 	public static void update(SipAccount sipAccount) throws SQLException {
 
-		String sql = "UPDATE sipUser SET sipusername = ?, sipauthuser = ?, sipdisplayname = ?, sippassword = ?, sipserver = ?, enabled = ?, status = ?, stunserver = ?, stunport = ?, usestun = ?, voicemail= ?, outboundproxy = ?, promptCredentials = ? "
+		String sql = "UPDATE ofSipUser SET sipusername = ?, sipauthuser = ?, sipdisplayname = ?, sippassword = ?, sipserver = ?, enabled = ?, status = ?, stunserver = ?, stunport = ?, usestun = ?, voicemail= ?, outboundproxy = ?, promptCredentials = ? "
 				+ " WHERE username = ?";
 
 		Connection con = null;
@@ -177,7 +177,7 @@ public class SipAccountDAO {
 
 	public static void remove(SipAccount sipAccount) {
 
-		String sql = "DELETE FROM sipUser WHERE username = ?";
+		String sql = "DELETE FROM ofSipUser WHERE username = ?";
 
 		Connection con = null;
 		PreparedStatement psmt = null;
@@ -200,7 +200,7 @@ public class SipAccountDAO {
 
 	public static Collection<SipAccount> getUsers(int startIndex, int numResults) {
 
-		String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM sipUser "
+		String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM ofSipUser "
 				+ " ORDER BY USERNAME";
 
 		List<SipAccount> sipAccounts = new ArrayList<SipAccount>(numResults);
@@ -243,7 +243,7 @@ public class SipAccountDAO {
     public static int getUserCount() {
         int count = 0;
 
-		String sql = "SELECT count(*) FROM sipUser";
+		String sql = "SELECT count(*) FROM ofSipUser";
 
         Connection con = null;
         PreparedStatement pstmt = null;

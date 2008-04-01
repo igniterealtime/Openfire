@@ -38,12 +38,12 @@ import java.sql.*;
  */
 public class MultiUserChatManager extends BasicModule implements ClusterEventListener, MUCServicePropertyEventListener {
 
-    private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM mucService";
-    private static final String CREATE_SERVICE = "INSERT INTO mucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
-    private static final String UPDATE_SERVICE = "UPDATE mucService SET subdomain=?,description=? WHERE serviceID=?";
-    private static final String DELETE_SERVICE = "DELETE FROM mucService WHERE serviceID=?";
-    private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM mucService WHERE subdomain=?";
-    private static final String LOAD_SUBDOMAIN = "SELECT subdomain FROM mucService WHERE serviceID=?";
+    private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM ofMucService";
+    private static final String CREATE_SERVICE = "INSERT INTO ofMucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
+    private static final String UPDATE_SERVICE = "UPDATE ofMucService SET subdomain=?,description=? WHERE serviceID=?";
+    private static final String DELETE_SERVICE = "DELETE FROM ofMucService WHERE serviceID=?";
+    private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM ofMucService WHERE subdomain=?";
+    private static final String LOAD_SUBDOMAIN = "SELECT subdomain FROM ofMucService WHERE serviceID=?";
 
     /**
      * Statistics keys

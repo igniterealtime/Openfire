@@ -28,10 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JiveProperties implements Map<String, String> {
 
-    private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM jiveProperty";
-    private static final String INSERT_PROPERTY = "INSERT INTO jiveProperty(name, propValue) VALUES(?,?)";
-    private static final String UPDATE_PROPERTY = "UPDATE jiveProperty SET propValue=? WHERE name=?";
-    private static final String DELETE_PROPERTY = "DELETE FROM jiveProperty WHERE name LIKE ?";
+    private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofProperty";
+    private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue) VALUES(?,?)";
+    private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=? WHERE name=?";
+    private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name LIKE ?";
 
     private static class JivePropertyHolder {
         private static final JiveProperties instance = new JiveProperties();

@@ -28,37 +28,37 @@ import java.util.*;
 public class DefaultGroupProvider implements GroupProvider {
 
     private static final String INSERT_GROUP =
-        "INSERT INTO jiveGroup (groupName, description) VALUES (?, ?)";
+        "INSERT INTO ofGroup (groupName, description) VALUES (?, ?)";
     private static final String SAVE_GROUP =
-        "UPDATE jiveGroup SET description=? WHERE groupName=?";
+        "UPDATE ofGroup SET description=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_1 =
-        "UPDATE jiveGroup SET groupName=? WHERE groupName=?";
+        "UPDATE ofGroup SET groupName=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_2 =
-        "UPDATE jiveGroupProp SET groupName=? WHERE groupName=?";
+        "UPDATE oGroupProp SET groupName=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_3 =
-        "UPDATE jiveGroupUser SET groupName=? WHERE groupName=?";
+        "UPDATE ofGroupUser SET groupName=? WHERE groupName=?";
     private static final String DELETE_GROUP_USERS =
-        "DELETE FROM jiveGroupUser WHERE groupName=?";
+        "DELETE FROM ofGroupUser WHERE groupName=?";
     private static final String DELETE_PROPERTIES =
-        "DELETE FROM jiveGroupProp WHERE groupName=?";
+        "DELETE FROM ofGroupProp WHERE groupName=?";
     private static final String DELETE_GROUP =
-        "DELETE FROM jiveGroup WHERE groupName=?";
-    private static final String GROUP_COUNT = "SELECT count(*) FROM jiveGroup";
+        "DELETE FROM ofGroup WHERE groupName=?";
+    private static final String GROUP_COUNT = "SELECT count(*) FROM ofGroup";
      private static final String LOAD_ADMINS =
-        "SELECT username FROM jiveGroupUser WHERE administrator=1 AND groupName=? ORDER BY username";
+        "SELECT username FROM ofGroupUser WHERE administrator=1 AND groupName=? ORDER BY username";
     private static final String LOAD_MEMBERS =
-        "SELECT username FROM jiveGroupUser WHERE administrator=0 AND groupName=? ORDER BY username";
+        "SELECT username FROM ofGroupUser WHERE administrator=0 AND groupName=? ORDER BY username";
     private static final String LOAD_GROUP =
-        "SELECT description FROM jiveGroup WHERE groupName=?";
+        "SELECT description FROM ofGroup WHERE groupName=?";
     private static final String REMOVE_USER =
-        "DELETE FROM jiveGroupUser WHERE groupName=? AND username=?";
+        "DELETE FROM ofGroupUser WHERE groupName=? AND username=?";
     private static final String ADD_USER =
-        "INSERT INTO jiveGroupUser (groupName, username, administrator) VALUES (?, ?, ?)";
+        "INSERT INTO ofGroupUser (groupName, username, administrator) VALUES (?, ?, ?)";
     private static final String UPDATE_USER =
-        "UPDATE jiveGroupUser SET administrator=? WHERE groupName=? AND username=?";
+        "UPDATE ofGroupUser SET administrator=? WHERE groupName=? AND username=?";
     private static final String USER_GROUPS =
-        "SELECT groupName FROM jiveGroupUser WHERE username=?";
-    private static final String ALL_GROUPS = "SELECT groupName FROM jiveGroup ORDER BY groupName";
+        "SELECT groupName FROM ofGroupUser WHERE username=?";
+    private static final String ALL_GROUPS = "SELECT groupName FROM ofGroup ORDER BY groupName";
 
     private XMPPServer server = XMPPServer.getInstance();
 
@@ -468,7 +468,7 @@ public class DefaultGroupProvider implements GroupProvider {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT groupName FROM jiveGroup WHERE groupName LIKE '").append(
+            sql.append("SELECT groupName FROM ofGroup WHERE groupName LIKE '").append(
                     StringUtils.escapeForSQL(query)).append("' ORDER BY groupName");
             rs = stmt.executeQuery(sql.toString());
             while (rs.next()) {
@@ -505,7 +505,7 @@ public class DefaultGroupProvider implements GroupProvider {
             con = DbConnectionManager.getConnection();
             stmt = DbConnectionManager.createScrollableStatement(con);
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT groupName FROM jiveGroup WHERE groupName LIKE '").append(
+            sql.append("SELECT groupName FROM ofGroup WHERE groupName LIKE '").append(
                     StringUtils.escapeForSQL(query)).append("' ORDER BY groupName");
             rs = stmt.executeQuery(sql.toString());
             DbConnectionManager.setFetchSize(rs, startIndex + numResults);

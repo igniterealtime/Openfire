@@ -83,7 +83,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
         RosterEventListener, UserEventListener {
 
-    final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM pubsubNode WHERE serviceID=?";
+    final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM ofPubsubNode WHERE serviceID=?";
 
     /**
      * Map of PEP services. Table, Key: bare JID (String); Value: PEPService

@@ -16,7 +16,7 @@ import java.sql.*;
 import java.util.Date;
 
 /**
- * The DefaultLockOutProvider works with the jiveUserFlag table to maintain a list of disabled/locked out
+ * The DefaultLockOutProvider works with the ofUserFlag table to maintain a list of disabled/locked out
  * accounts., and as the name implies, is the default LockOutProvider implementation.
  *
  * @author Daniel Henninger
@@ -25,11 +25,11 @@ public class DefaultLockOutProvider implements LockOutProvider {
 
     private static final String FLAG_ID = "lockout";
     private static final String DELETE_FLAG =
-            "DELETE FROM jiveUserFlag WHERE username=? AND name='"+FLAG_ID+"'";
+            "DELETE FROM ofUserFlag WHERE username=? AND name='"+FLAG_ID+"'";
     private static final String ADD_FLAG =
-            "INSERT INTO jiveUserFlag VALUES(?,'"+FLAG_ID+"',?,?)";
+            "INSERT INTO ofUserFlag VALUES(?,'"+FLAG_ID+"',?,?)";
     private static final String RETRIEVE_FLAG =
-            "SELECT name,startTime,endTime FROM jiveUserFlag WHERE username=? AND name='"+FLAG_ID+"'";
+            "SELECT name,startTime,endTime FROM ofUserFlag WHERE username=? AND name='"+FLAG_ID+"'";
 
     /**
      * Constructs a new DefaultLockOutProvider
@@ -39,7 +39,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
     }
 
     /**
-     * Default provider retrieves disabled status from jiveUserFlag table.
+     * Default provider retrieves disabled status from ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#getDisabledStatus(String)
      */
     public LockOutFlag getDisabledStatus(String username) throws NotLockedOutException {
@@ -77,7 +77,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
     }
 
     /**
-     * Default provider deletes existing flag, if it exists, and adds new described flag in jiveUserFlag table.
+     * Default provider deletes existing flag, if it exists, and adds new described flag in ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#setDisabledStatus(LockOutFlag)
      */
     public void setDisabledStatus(LockOutFlag flag) {
@@ -122,7 +122,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
     }
 
     /**
-     * Default provider deletes existing flag from jiveUserFlag table.
+     * Default provider deletes existing flag from ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#unsetDisabledStatus(String)
      */
     public void unsetDisabledStatus(String username) {

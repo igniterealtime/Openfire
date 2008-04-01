@@ -29,28 +29,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provider for the privacy lists system. Privacy lists are read and written
- * from the <tt>jivePrivacyList</tt> database table.
+ * from the <tt>ofPrivacyList</tt> database table.
  *
  * @author Gaston Dombiak
  */
 public class PrivacyListProvider {
 
     private static final String PRIVACY_LIST_COUNT =
-            "SELECT count(*) from jivePrivacyList";
+            "SELECT count(*) from ofPrivacyList";
     private static final String LOAD_LIST_NAMES =
-            "SELECT name, isDefault FROM jivePrivacyList WHERE username=?";
+            "SELECT name, isDefault FROM ofPrivacyList WHERE username=?";
     private static final String LOAD_PRIVACY_LIST =
-            "SELECT isDefault, list FROM jivePrivacyList WHERE username=? AND name=?";
+            "SELECT isDefault, list FROM ofPrivacyList WHERE username=? AND name=?";
     private static final String LOAD_DEFAULT_PRIVACY_LIST =
-            "SELECT name, list FROM jivePrivacyList WHERE username=? AND isDefault=1";
+            "SELECT name, list FROM ofPrivacyList WHERE username=? AND isDefault=1";
     private static final String DELETE_PRIVACY_LIST =
-            "DELETE FROM jivePrivacyList WHERE username=? AND name=?";
+            "DELETE FROM ofPrivacyList WHERE username=? AND name=?";
     private static final String DELETE_PRIVACY_LISTS =
-            "DELETE FROM jivePrivacyList WHERE username=?";
+            "DELETE FROM ofPrivacyList WHERE username=?";
     private static final String UPDATE_PRIVACY_LIST =
-            "UPDATE jivePrivacyList SET isDefault=?, list=? WHERE username=? AND name=?";
+            "UPDATE ofPrivacyList SET isDefault=?, list=? WHERE username=? AND name=?";
     private static final String INSERT_PRIVACY_LIST =
-            "INSERT INTO jivePrivacyList (username, name, isDefault, list) VALUES (?, ?, ?, ?)";
+            "INSERT INTO ofPrivacyList (username, name, isDefault, list) VALUES (?, ?, ?, ?)";
 
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.

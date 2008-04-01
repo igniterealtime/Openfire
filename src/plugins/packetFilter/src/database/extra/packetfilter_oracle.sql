@@ -1,4 +1,4 @@
-CREATE TABLE pfRules(
+CREATE TABLE ofPfRules(
    id           INT          NOT NULL,
    ruleorder    INT      ,
    type         varchar2(255)     ,
@@ -10,10 +10,10 @@ CREATE TABLE pfRules(
    description  varchar2(255),
    sourcetype   varchar2(255),
    desttype     varchar2(255),
-  CONSTRAINT pfRules_pk PRIMARY KEY (id)
+  CONSTRAINT ofPfRules_pk PRIMARY KEY (id)
 );
 
-CREATE SEQUENCE pfRules_seq
+CREATE SEQUENCE ofPfRules_seq
 START WITH 1
 INCREMENT BY 1
 MINVALUE 1
@@ -21,6 +21,6 @@ NOCACHE
 NOCYCLE
 NOORDER;
 
-CREATE OR REPLACE TRIGGER pfRules_pkcreate BEFORE INSERT ON pfRules FOR EACH ROW WHEN ( NEW.id IS NULL ) BEGIN SELECT pfRules_seq.NEXTVAL INTO :NEW.id FROM DUAL; END pfRules_pkcreate;
+CREATE OR REPLACE TRIGGER ofPfRules_pkcreate BEFORE INSERT ON ofPfRules FOR EACH ROW WHEN ( NEW.id IS NULL ) BEGIN SELECT ofPfRules_seq.NEXTVAL INTO :NEW.id FROM DUAL; END ofPfRules_pkcreate;
 
-INSERT INTO jiveVersion (name,version) values ('packetfilter',1);
+INSERT INTO ofVersion (name,version) values ('packetfilter',2);

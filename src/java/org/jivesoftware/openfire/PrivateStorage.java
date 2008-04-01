@@ -41,18 +41,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class PrivateStorage extends BasicModule implements UserEventListener {
 
     private static final String LOAD_PRIVATE =
-        "SELECT privateData FROM jivePrivate WHERE username=? AND namespace=?";
+        "SELECT privateData FROM ofPrivate WHERE username=? AND namespace=?";
     private static final String INSERT_PRIVATE =
-        "INSERT INTO jivePrivate (privateData,name,username,namespace) VALUES (?,?,?,?)";
+        "INSERT INTO ofPrivate (privateData,name,username,namespace) VALUES (?,?,?,?)";
     private static final String UPDATE_PRIVATE =
-        "UPDATE jivePrivate SET privateData=?, name=? WHERE username=? AND namespace=?";
+        "UPDATE ofPrivate SET privateData=?, name=? WHERE username=? AND namespace=?";
     private static final String DELETE_PRIVATES =
-        "DELETE FROM jivePrivate WHERE username=?";
+        "DELETE FROM ofPrivate WHERE username=?";
 
     // Currently no delete supported, we can detect an add of an empty element and
     // use that to signal a delete but that optimization doesn't seem necessary.
     // private static final String DELETE_PRIVATE =
-    //     "DELETE FROM jivePrivate WHERE userID=? AND name=? AND namespace=?";
+    //     "DELETE FROM ofPrivate WHERE userID=? AND name=? AND namespace=?";
 
     private boolean enabled = JiveGlobals.getBooleanProperty("xmpp.privateStorageEnabled", true);
 

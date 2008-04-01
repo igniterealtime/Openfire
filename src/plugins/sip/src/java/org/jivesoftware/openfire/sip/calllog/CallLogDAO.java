@@ -43,7 +43,7 @@ public class CallLogDAO {
     public static Collection<CallLog> getCalls(String SQLCondition,
 			int startIndex, int numResults) {
 
-		String sql = "SELECT * FROM sipPhoneLog";
+		String sql = "SELECT * FROM ofSipPhoneLog";
 
 		sql = SQLCondition != null && !SQLCondition.equals("") ? sql
 				+ " WHERE " + SQLCondition : sql;
@@ -134,7 +134,7 @@ public class CallLogDAO {
      */
     public static void insert(CallLog callLog) throws SQLException {
 
-		String sql = "INSERT INTO sipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) "
+		String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) "
 				+ " values  (?, ?, ?, ?, ?, ?)";
 
 		Connection con = null;
@@ -190,7 +190,7 @@ public class CallLogDAO {
     public static int getLogCount(String SQLCondition) {
 		int count = 0;
 
-		String sql = "SELECT count(*) FROM sipPhoneLog";
+		String sql = "SELECT count(*) FROM ofSipPhoneLog";
 
 		sql = SQLCondition != null && !SQLCondition.equals("") ? sql + " WHERE " + SQLCondition
 				: sql;

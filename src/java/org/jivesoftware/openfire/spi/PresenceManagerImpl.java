@@ -54,11 +54,11 @@ import java.util.concurrent.locks.Lock;
 public class PresenceManagerImpl extends BasicModule implements PresenceManager {
 
     private static final String LOAD_OFFLINE_PRESENCE =
-            "SELECT offlinePresence, offlineDate FROM jivePresence WHERE username=?";
+            "SELECT offlinePresence, offlineDate FROM ofPresence WHERE username=?";
     private static final String INSERT_OFFLINE_PRESENCE =
-            "INSERT INTO jivePresence(username, offlinePresence, offlineDate) VALUES(?,?,?)";
+            "INSERT INTO ofPresence(username, offlinePresence, offlineDate) VALUES(?,?,?)";
     private static final String DELETE_OFFLINE_PRESENCE =
-            "DELETE FROM jivePresence WHERE username=?";
+            "DELETE FROM ofPresence WHERE username=?";
 
     private static final String NULL_STRING = "NULL";
     private static final long NULL_LONG = -1L;

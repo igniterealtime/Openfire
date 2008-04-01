@@ -725,7 +725,7 @@ public class XMPPServer {
         java.sql.Connection conn = null;
         try {
             conn = DbConnectionManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM jiveID");
+            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM ofID");
             ResultSet rs = stmt.executeQuery();
             rs.next();
             rs.close();

@@ -1,4 +1,4 @@
-CREATE TABLE pfRules (
+CREATE TABLE ofPfRules (
    id           BIGINT IDENTITY(10,2),
    ruleorder    BIGINT,
    type         varchar(255),
@@ -13,4 +13,4 @@ CREATE TABLE pfRules (
    PRIMARY KEY (id)
 );
 
-INSERT INTO jiveVersion(name,version) values('packetfilter',1);
+INSERT INTO ofVersion(name,version) values('packetfilter',2);

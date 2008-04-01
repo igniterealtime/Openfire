@@ -29,10 +29,10 @@ import java.util.*;
  */
 public class MUCServiceProperties implements Map<String, String> {
 
-    private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM mucServiceProp WHERE serviceID=?";
-    private static final String INSERT_PROPERTY = "INSERT INTO mucServiceProp(serviceID, name, propValue) VALUES(?,?,?)";
-    private static final String UPDATE_PROPERTY = "UPDATE mucServiceProp SET propValue=? WHERE serviceID=? AND name=?";
-    private static final String DELETE_PROPERTY = "DELETE FROM mucServiceProp WHERE serviceID=? AND name=?";
+    private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofMucServiceProp WHERE serviceID=?";
+    private static final String INSERT_PROPERTY = "INSERT INTO ofMucServiceProp(serviceID, name, propValue) VALUES(?,?,?)";
+    private static final String UPDATE_PROPERTY = "UPDATE ofMucServiceProp SET propValue=? WHERE serviceID=? AND name=?";
+    private static final String DELETE_PROPERTY = "DELETE FROM ofMucServiceProp WHERE serviceID=? AND name=?";
 
     private String subdomain;
     private Long serviceID;

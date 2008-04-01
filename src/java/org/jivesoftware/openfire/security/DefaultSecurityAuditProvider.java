@@ -21,20 +21,20 @@ import java.util.ArrayList;
 import java.sql.*;
 
 /**
- * The default security audit provider stores the logs in a jiveSecurityAuditLog table.
+ * The default security audit provider stores the logs in a ofSecurityAuditLog table.
  *
  * @author Daniel Henninger
  */
 public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
 
     private static final String LOG_ENTRY =
-            "INSERT INTO jiveSecurityAuditLog VALUES(?,?,?,?,?,?)";
+            "INSERT INTO ofSecurityAuditLog VALUES(?,?,?,?,?,?)";
     private static final String GET_EVENTS =
-            "SELECT msgID,username,entryStamp,summary,node,details FROM jiveSecurityAuditLog";
+            "SELECT msgID,username,entryStamp,summary,node,details FROM ofSecurityAuditLog";
     private static final String GET_EVENT =
-            "SELECT msgID,username,entryStamp,summary,node,details FROM jiveSecurityAuditLog WHERE msgID=?";
+            "SELECT msgID,username,entryStamp,summary,node,details FROM ofSecurityAuditLog WHERE msgID=?";
     private static final String GET_EVENT_COUNT =
-            "SELECT COUNT(msgID) FROM jiveSecurityAuditLog";
+            "SELECT COUNT(msgID) FROM ofSecurityAuditLog";
 
     /**
      * Constructs a new DefaultSecurityAuditProvider
@@ -44,7 +44,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
     }
 
     /**
-     * The default provider logs events into a jiveSecurityAuditLog table in the database.
+     * The default provider logs events into a ofSecurityAuditLog table in the database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#logEvent(String, String, String)
      */
     public void logEvent(String username, String summary, String details) {
@@ -63,7 +63,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.warn("Error trying to insert a new row in jiveSecurityAuditLog: ", e);
+            Log.warn("Error trying to insert a new row in ofSecurityAuditLog: ", e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -71,7 +71,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
     }
 
     /**
-     * The default provider retrieves events from a jiveSecurityAuditLog table in the database.
+     * The default provider retrieves events from a ofSecurityAuditLog table in the database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEvents(String, Integer, Integer, java.util.Date, java.util.Date)
      */
     public List<SecurityAuditEvent> getEvents(String username, Integer skipEvents, Integer numEvents, Date startTime, Date endTime) {
@@ -150,7 +150,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
     }
 
     /**
-     * The default provider retrieves events from a jiveSecurityAuditLog table in the database.
+     * The default provider retrieves events from a ofSecurityAuditLog table in the database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEvent(Integer)
      */
     public SecurityAuditEvent getEvent(Integer msgID) throws EventNotFoundException {
@@ -185,7 +185,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
     }
 
     /**
-     * The default provider counts the number of entries in the jiveSecurityAuditLog table.
+     * The default provider counts the number of entries in the ofSecurityAuditLog table.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEventCount()
      */
     public Integer getEventCount() {

@@ -113,10 +113,12 @@ file might look like the following:
             be set with a schema key name (often the same name as the plugin). Database
             schema files for each supported database should then be placed in the <tt>database</tt>
             directory of the plugin. For example, given the key "foo", schema files would be called
-            "foo_mysql.sql", "foo_oracle.sql", etc. The scripts should make an entry into the
-            jiveVersion table using the key so that schema version information can be tracked, e.g.:<br><br>
+            "foo_mysql.sql", "foo_oracle.sql", etc.  We recommend that you prefix your tables with
+            "of" (openfire) to avoid conflicts with possible other applications installed in the same
+            database.  The scripts should make an entry into the ofVersion table using the key so that
+            schema version information can be tracked, e.g.:<br><br>
 
-            <tt>INSERT INTO jiveVersion (name, version) VALUES ('foo', 0);</tt><br><br>
+            <tt>INSERT INTO ofVersion (name, version) VALUES ('foo', 0);</tt><br><br>
     </li>
     <li>databaseVersion -- the database schema version (if a database schema is defined). New plugins
             with a database schema should start at version 0. If future versions of the plugin
@@ -124,9 +126,9 @@ file might look like the following:
             in the <tt>database/upgrade</tt> directory for each version number. For example, the directories
             <tt>database/upgrade/1</tt> and <tt>database/upgrade/2</tt> would contain scripts such as
             "foo_mysql.sql" and "foo_oracle.sql" that contain the relevant database changes for each
-            version. Each script should update version information in the jiveVersion table, e.g.:<br><br>
+            version. Each script should update version information in the ofVersion table, e.g.:<br><br>
 
-            <tt>UPDATE jiveVersion set version=1 where name='foo';</tt><br><br>
+            <tt>UPDATE ofVersion set version=1 where name='foo';</tt><br><br>
 
     </li>
     <li>parentPlugin -- the name of the parent plugin (given as "foo" for the "foo.jar" plugin).

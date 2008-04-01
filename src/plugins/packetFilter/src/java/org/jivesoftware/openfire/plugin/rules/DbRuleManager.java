@@ -18,33 +18,33 @@ public class DbRuleManager {
     //SQL Statments
 
     private static final String UPDATE_RULE =
-            "UPDATE pfRules" +
+            "UPDATE ofPfRules" +
                     " SET type=?,tojid=?,fromjid=?,rulef=?,disabled=?,log=?,description=?,ruleorder=?,sourcetype=?,desttype=? WHERE id=?";
 
     private static final String DELETE_RULE =
-            "DELETE FROM pfRules WHERE id=?";
+            "DELETE FROM ofPfRules WHERE id=?";
 
     private static final String INSERT_RULE =
-            "INSERT INTO pfRules(ruleorder,type,tojid,fromjid,rulef,disabled,log,description,sourcetype,desttype) VALUES(?,?,?,?,?,?,?,?,?,?)";
+            "INSERT INTO ofPfRules(ruleorder,type,tojid,fromjid,rulef,disabled,log,description,sourcetype,desttype) VALUES(?,?,?,?,?,?,?,?,?,?)";
 
     private static final String COUNT =
-            "select count(*) from pfRules";
+            "select count(*) from ofPfRules";
 
     private static final String GET_RULES =
-            "SELECT rulef,id,type,tojid,fromjid,disabled,log,description,ruleorder,sourcetype,desttype from pfRules order by ruleorder";
+            "SELECT rulef,id,type,tojid,fromjid,disabled,log,description,ruleorder,sourcetype,desttype from ofPfRules order by ruleorder";
 
     private static final String RULE_OPTIONS =
-            "SELECT optionKey, optionValue, optionRequired, classType from pfRulesOptions where ruleId = ?";
+            "SELECT optionKey, optionValue, optionRequired, classType from ofPfRulesOptions where ruleId = ?";
 
     /*private static final String GET_RULE_BY_ID =
-            "SELECT rule,id,type,tojid,fromjid,disabled,log,description,ruleorder from pfRules where id=?";*/
+            "SELECT rule,id,type,tojid,fromjid,disabled,log,description,ruleorder from ofPfRules where id=?";*/
 
     private static final String GET_RULE_BY_ORDER_ID =
-            "SELECT ruleorder,rulef,id,type,tojid,fromjid,disabled,log,description,sourcetype,desttype from pfRules where ruleorder=? order by ruleorder DESC";
+            "SELECT ruleorder,rulef,id,type,tojid,fromjid,disabled,log,description,sourcetype,desttype from ofPfRules where ruleorder=? order by ruleorder DESC";
 
 
     private static final String GET_LAST_ORDERID =
-            "SELECT ruleorder from pfRules order by ruleorder DESC";
+            "SELECT ruleorder from ofPfRules order by ruleorder DESC";
 
     private static final DbRuleManager DB_RULE_MANAGER = new DbRuleManager();
 

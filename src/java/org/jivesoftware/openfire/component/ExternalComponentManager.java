@@ -40,13 +40,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ExternalComponentManager {
 
     private static final String ADD_CONFIGURATION =
-        "INSERT INTO jiveExtComponentConf (subdomain,secret,permission) VALUES (?,?,?)";
+        "INSERT INTO ofExtComponentConf (subdomain,secret,permission) VALUES (?,?,?)";
     private static final String DELETE_CONFIGURATION =
-        "DELETE FROM jiveExtComponentConf WHERE subdomain=?";
+        "DELETE FROM ofExtComponentConf WHERE subdomain=?";
     private static final String LOAD_CONFIGURATION =
-        "SELECT secret,permission FROM jiveExtComponentConf where subdomain=?";
+        "SELECT secret,permission FROM ofExtComponentConf where subdomain=?";
     private static final String LOAD_CONFIGURATIONS =
-        "SELECT subdomain,secret FROM jiveExtComponentConf where permission=?";
+        "SELECT subdomain,secret FROM ofExtComponentConf where permission=?";
 
     /**
      * List of listeners that will be notified when vCards are created, updated or deleted.

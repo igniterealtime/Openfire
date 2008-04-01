@@ -1,7 +1,7 @@
 # $Revision: 1650 $
 # $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
-CREATE TABLE jiveUser (
+CREATE TABLE ofUser (
   username              VARCHAR(64)     NOT NULL,
   plainPassword         VARCHAR(32),
   encryptedPassword     VARCHAR(255),
@@ -10,47 +10,27 @@ CREATE TABLE jiveUser (
   creationDate          CHAR(15)        NOT NULL,
   modificationDate      CHAR(15)        NOT NULL,
   PRIMARY KEY (username),
-  INDEX jiveUser_cDate_idx (creationDate)
+  INDEX ofUser_cDate_idx (creationDate)
 );
 
-CREATE TABLE jiveUserProp (
+CREATE TABLE ofUserProp (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   PRIMARY KEY (username, name)
 );
 
-CREATE TABLE jiveUserFlag (
+CREATE TABLE ofUserFlag (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   startTime             CHAR(15),
   endTime               CHAR(15),
   PRIMARY KEY (username, name),
-  INDEX jiveUser_sTime_idx (startTime),
-  INDEX jiveUser_eTime_idx (endTime)
+  INDEX ofUserFlag_sTime_idx (startTime),
+  INDEX ofUserFlag_eTime_idx (endTime)
 );
 
-CREATE TABLE jiveGroup (
-  groupName             VARCHAR(50)     NOT NULL,
-  description           VARCHAR(255),
-  PRIMARY KEY (groupName)
-);
-
-CREATE TABLE jiveGroupProp (
-  groupName             VARCHAR(50)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  propValue             TEXT            NOT NULL,
-  PRIMARY KEY (groupName, name)
-);
-
-CREATE TABLE jiveGroupUser (
-  groupName             VARCHAR(50)     NOT NULL,
-  username              VARCHAR(100)    NOT NULL,
-  administrator         TINYINT         NOT NULL,
-  PRIMARY KEY (groupName, username, administrator)
-);
-
-CREATE TABLE jivePrivate (
+CREATE TABLE ofPrivate (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
@@ -58,7 +38,7 @@ CREATE TABLE jivePrivate (
   PRIMARY KEY (username, name, namespace(100))
 );
 
-CREATE TABLE jiveOffline (
+CREATE TABLE ofOffline (
   username              VARCHAR(64)     NOT NULL,
   messageID             BIGINT          NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
@@ -67,14 +47,14 @@ CREATE TABLE jiveOffline (
   PRIMARY KEY (username, messageID)
 );
 
-CREATE TABLE jivePresence (
+CREATE TABLE ofPresence (
   username              VARCHAR(64)     NOT NULL,
   offlinePresence       TEXT,
   offlineDate           CHAR(15)     NOT NULL,
   PRIMARY KEY (username)
 );
 
-CREATE TABLE jiveRoster (
+CREATE TABLE ofRoster (
   rosterID              BIGINT          NOT NULL,
   username              VARCHAR(64)     NOT NULL,
   jid                   VARCHAR(1024)   NOT NULL,
@@ -83,73 +63,93 @@ CREATE TABLE jiveRoster (
   recv                  TINYINT         NOT NULL,
   nick                  VARCHAR(255),
   PRIMARY KEY (rosterID),
-  INDEX jiveRoster_unameid_idx (username),
-  INDEX jiveRoster_jid_idx (jid)
+  INDEX ofRoster_unameid_idx (username),
+  INDEX ofRoster_jid_idx (jid)
 );
 
-CREATE TABLE jiveRosterGroups (
+CREATE TABLE ofRosterGroups (
   rosterID              BIGINT          NOT NULL,
   rank                  TINYINT         NOT NULL,
   groupName             VARCHAR(255)    NOT NULL,
   PRIMARY KEY (rosterID, rank),
-  INDEX jiveRosterGroup_rosterid_idx (rosterID)
+  INDEX ofRosterGroup_rosterid_idx (rosterID)
 );
 
-CREATE TABLE jiveVCard (
+CREATE TABLE ofVCard (
   username              VARCHAR(64)     NOT NULL,
   vcard                 MEDIUMTEXT      NOT NULL,
   PRIMARY KEY (username)
 );
 
-CREATE TABLE jiveID (
+CREATE TABLE ofGroup (
+  groupName             VARCHAR(50)     NOT NULL,
+  description           VARCHAR(255),
+  PRIMARY KEY (groupName)
+);
+
+CREATE TABLE ofGroupProp (
+  groupName             VARCHAR(50)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  propValue             TEXT            NOT NULL,
+  PRIMARY KEY (groupName, name)
+);
+
+CREATE TABLE ofGroupUser (
+  groupName             VARCHAR(50)     NOT NULL,
+  username              VARCHAR(100)    NOT NULL,
+  administrator         TINYINT         NOT NULL,
+  PRIMARY KEY (groupName, username, administrator)
+);
+
+CREATE TABLE ofID (
   idType                INTEGER         NOT NULL,
   id                    BIGINT          NOT NULL,
   PRIMARY KEY (idType)
 );
 
-CREATE TABLE jiveProperty (
+CREATE TABLE ofProperty (
   name        VARCHAR(100)              NOT NULL,
   propValue   TEXT                      NOT NULL,
   PRIMARY KEY (name)
 );
 
 
-CREATE TABLE jiveVersion (
+CREATE TABLE ofVersion (
   name     VARCHAR(50)  NOT NULL,
   version  INTEGER  NOT NULL,
   PRIMARY KEY (name)
 );
 
-CREATE TABLE jiveExtComponentConf (
+CREATE TABLE ofExtComponentConf (
   subdomain             VARCHAR(255)    NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
   PRIMARY KEY (subdomain)
 );
 
-CREATE TABLE jiveRemoteServerConf (
+CREATE TABLE ofRemoteServerConf (
   xmppDomain            VARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
   PRIMARY KEY (xmppDomain)
 );
 
-CREATE TABLE jivePrivacyList (
+CREATE TABLE ofPrivacyList (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   isDefault             TINYINT         NOT NULL,
   list                  TEXT            NOT NULL,
   PRIMARY KEY (username, name),
-  INDEX jivePList_default_idx (username, isDefault)
+  INDEX ofPrivacyList_default_idx (username, isDefault)
 );
 
-CREATE TABLE jiveSASLAuthorized (
+CREATE TABLE ofSASLAuthorized (
   username            VARCHAR(64)   NOT NULL,
   principal           TEXT          NOT NULL,
   PRIMARY KEY (username, principal(200))
 );
 
-CREATE TABLE jiveSecurityAuditLog (
+CREATE TABLE ofSecurityAuditLog (
   msgID                 BIGINT          NOT NULL,
   username              VARCHAR(64)     NOT NULL,
   entryStamp            BIGINT          NOT NULL,
@@ -157,29 +157,29 @@ CREATE TABLE jiveSecurityAuditLog (
   node                  VARCHAR(255)    NOT NULL,
   details               TEXT,
   PRIMARY KEY (msgID),
-  INDEX jiveSecAuditLog_tstamp_idx (entryStamp),
-  INDEX jiveSecAuditLog_uname_idx (username)
+  INDEX ofSecurityAuditLog_tstamp_idx (entryStamp),
+  INDEX ofSecurityAuditLog_uname_idx (username)
 );
 
 # MUC Tables
 
-CREATE TABLE mucService (
+CREATE TABLE ofMucService (
   serviceID           BIGINT        NOT NULL,
   subdomain           VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
   isHidden            TINYINT       NOT NULL,
   PRIMARY KEY (subdomain),
-  INDEX mucService_serviceid_idx (serviceID)
+  INDEX ofMucService_serviceid_idx (serviceID)
 );
 
-CREATE TABLE mucServiceProp (
+CREATE TABLE ofMucServiceProp (
   serviceID           BIGINT        NOT NULL,
   name                VARCHAR(100)  NOT NULL,
   propValue           TEXT          NOT NULL,
   PRIMARY KEY (serviceID, name)
 );
 
-CREATE TABLE mucRoom (
+CREATE TABLE ofMucRoom (
   serviceID           BIGINT        NOT NULL,
   roomID              BIGINT        NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
@@ -204,25 +204,25 @@ CREATE TABLE mucRoom (
   canChangeNick       TINYINT       NOT NULL,
   canRegister         TINYINT       NOT NULL,
   PRIMARY KEY (serviceID,name),
-  INDEX mucRoom_roomid_idx (roomID),
-  INDEX mucRoom_serviceid_idx (serviceID)
+  INDEX ofMucRoom_roomid_idx (roomID),
+  INDEX ofMucRoom_serviceid_idx (serviceID)
 );
 
-CREATE TABLE mucRoomProp (
+CREATE TABLE ofMucRoomProp (
   roomID                BIGINT          NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   PRIMARY KEY (roomID, name)
 );
 
-CREATE TABLE mucAffiliation (
+CREATE TABLE ofMucAffiliation (
   roomID              BIGINT        NOT NULL,
   jid                 TEXT          NOT NULL,
   affiliation         TINYINT       NOT NULL,
   PRIMARY KEY (roomID,jid(70))
 );
 
-CREATE TABLE mucMember (
+CREATE TABLE ofMucMember (
   roomID              BIGINT        NOT NULL,
   jid                 TEXT          NOT NULL,
   nickname            VARCHAR(255)  NULL,
@@ -234,19 +234,19 @@ CREATE TABLE mucMember (
   PRIMARY KEY (roomID,jid(70))
 );
 
-CREATE TABLE mucConversationLog (
+CREATE TABLE ofMucConversationLog (
   roomID              BIGINT        NOT NULL,
   sender              TEXT          NOT NULL,
   nickname            VARCHAR(255)  NULL,
   logTime             CHAR(15)      NOT NULL,
   subject             VARCHAR(255)  NULL,
   body                TEXT          NULL,
-  INDEX mucLog_time_idx (logTime)
+  INDEX ofMucConversationLog_time_idx (logTime)
 );
 
 # PubSub Tables
 
-CREATE TABLE pubsubNode (
+CREATE TABLE ofPubsubNode (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   leaf                TINYINT       NOT NULL,
@@ -279,7 +279,7 @@ CREATE TABLE pubsubNode (
   PRIMARY KEY (serviceID, nodeID)
 );
 
-CREATE TABLE pubsubNodeJIDs (
+CREATE TABLE ofPubsubNodeJIDs (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(255)  NOT NULL,
@@ -287,14 +287,14 @@ CREATE TABLE pubsubNodeJIDs (
   PRIMARY KEY (serviceID, nodeID, jid(70))
 );
 
-CREATE TABLE pubsubNodeGroups (
+CREATE TABLE ofPubsubNodeGroups (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   rosterGroup         VARCHAR(100)   NOT NULL,
-  INDEX pubsubNodeGroups_idx (serviceID, nodeID)
+  INDEX ofPubsubNodeGroups_idx (serviceID, nodeID)
 );
 
-CREATE TABLE pubsubAffiliation (
+CREATE TABLE ofPubsubAffiliation (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(255) NOT NULL,
@@ -302,7 +302,7 @@ CREATE TABLE pubsubAffiliation (
   PRIMARY KEY (serviceID, nodeID, jid(70))
 );
 
-CREATE TABLE pubsubItem (
+CREATE TABLE ofPubsubItem (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
@@ -312,7 +312,7 @@ CREATE TABLE pubsubItem (
   PRIMARY KEY (serviceID, nodeID, id)
 );
 
-CREATE TABLE pubsubSubscription (
+CREATE TABLE ofPubsubSubscription (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
@@ -331,7 +331,7 @@ CREATE TABLE pubsubSubscription (
   PRIMARY KEY (serviceID, nodeID, id)
 );
 
-CREATE TABLE pubsubDefaultConf (
+CREATE TABLE ofPubsubDefaultConf (
   serviceID           VARCHAR(100)  NOT NULL,
   leaf                TINYINT       NOT NULL,
   deliverPayloads     TINYINT       NOT NULL,
@@ -355,16 +355,16 @@ CREATE TABLE pubsubDefaultConf (
 
 # Finally, insert default table values.
 
-INSERT INTO jiveID (idType, id) VALUES (18, 1);
-INSERT INTO jiveID (idType, id) VALUES (19, 1);
-INSERT INTO jiveID (idType, id) VALUES (23, 1);
-INSERT INTO jiveID (idType, id) VALUES (26, 1);
+INSERT INTO ofID (idType, id) VALUES (18, 1);
+INSERT INTO ofID (idType, id) VALUES (19, 1);
+INSERT INTO ofID (idType, id) VALUES (23, 1);
+INSERT INTO ofID (idType, id) VALUES (26, 1);
 
-INSERT INTO jiveVersion (name, version) VALUES ('openfire', 18);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 19);
 
 # Entry for admin user
-INSERT INTO jiveUser (username, plainPassword, name, email, creationDate, modificationDate)
+INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
 
 # Entry for default conference service
-INSERT INTO mucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
+INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);

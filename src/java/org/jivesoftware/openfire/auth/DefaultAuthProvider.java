@@ -20,7 +20,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import java.sql.*;
 
 /**
- * Default AuthProvider implementation. It authenticates against the <tt>jiveUser</tt>
+ * Default AuthProvider implementation. It authenticates against the <tt>ofUser</tt>
  * database table and supports plain text and digest authentication.
  *
  * Because each call to authenticate() makes a database connection, the
@@ -31,9 +31,9 @@ import java.sql.*;
 public class DefaultAuthProvider implements AuthProvider {
 
     private static final String LOAD_PASSWORD =
-            "SELECT plainPassword,encryptedPassword FROM jiveUser WHERE username=?";
+            "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE jiveUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
+            "UPDATE ofUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
 
     /**
      * Constructs a new DefaultAuthProvider.

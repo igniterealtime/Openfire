@@ -46,13 +46,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SequenceManager {
 
     private static final String CREATE_ID =
-            "INSERT INTO jiveID (id, idType) VALUES (1, ?)";
+            "INSERT INTO ofID (id, idType) VALUES (1, ?)";
 
     private static final String LOAD_ID =
-            "SELECT id FROM jiveID WHERE idType=?";
+            "SELECT id FROM ofID WHERE idType=?";
 
     private static final String UPDATE_ID =
-            "UPDATE jiveID SET id=? WHERE idType=? AND id=?";
+            "UPDATE ofID SET id=? WHERE idType=? AND id=?";
 
     // Statically startup a sequence manager for each of the sequence counters.
     private static Map<Integer, SequenceManager> managers = new ConcurrentHashMap<Integer, SequenceManager>();

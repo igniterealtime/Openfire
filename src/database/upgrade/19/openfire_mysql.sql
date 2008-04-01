@@ -31,6 +31,9 @@ RENAME TABLE jiveOffline TO ofOffline;
 # Rename jivePresence to ofPresence
 RENAME TABLE jivePresence TO ofPresence;
 
+# Make sure that the jid column of jiveRoster is a varchar instead of text
+ALTER TABLE jiveRoster CHANGE COLUMN jid jid VARCHAR(1024) NOT NULL;
+
 # Rename jiveRoster to ofRoster
 ALTER TABLE jiveRoster DROP INDEX jiveRoster_unameid_idx;
 ALTER TABLE jiveRoster DROP INDEX jiveRoster_jid_idx;

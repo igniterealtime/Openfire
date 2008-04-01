@@ -37,9 +37,11 @@ import java.util.Arrays;
 public class SchemaManager {
 
     private static final String CHECK_VERSION_OLD =
-            "SELECT minorVersion FROM ofVersion";
+            "SELECT minorVersion FROM jiveVersion";
     private static final String CHECK_VERSION =
             "SELECT version FROM ofVersion WHERE name=?";
+    private static final String CHECK_VERSION_JIVE =
+            "SELECT version FROM jiveVersion WHERE name=?";
 
     /**
      * Current Openfire database schema version.
@@ -158,23 +160,36 @@ public class SchemaManager {
         catch (SQLException sqle) {
             DbConnectionManager.closeResultSet(rs);
             DbConnectionManager.closeStatement(pstmt);
-            // Releases of Openfire before 2.6.0 stored a major and minor version
-            // number so the normal check for version can fail. Check for the
-            // version using the old format in that case.
             if (schemaKey.equals("openfire")) {
                 try {
-                    if (pstmt != null) {
-                        pstmt.close();
-                    }
-                    pstmt = con.prepareStatement(CHECK_VERSION_OLD);
+                    // Releases of Openfire before 3.6.0 stored the version in a jiveVersion table.
+                    pstmt = con.prepareStatement(CHECK_VERSION_JIVE);
+                    pstmt.setString(1, schemaKey);
                     rs = pstmt.executeQuery();
                     if (rs.next()) {
                         currentVersion = rs.getInt(1);
                     }
                 }
-                catch (SQLException sqle2) {
-                    // The database schema must not be installed.
-                    Log.debug("SchemaManager: Error verifying server version", sqle2);
+                catch (SQLException sqlea) {
+                    DbConnectionManager.closeResultSet(rs);
+                    DbConnectionManager.closeStatement(pstmt);
+                    // Releases of Openfire before 2.6.0 stored a major and minor version
+                    // number so the normal check for version can fail. Check for the
+                    // version using the old format in that case.
+                    try {
+                        if (pstmt != null) {
+                            pstmt.close();
+                        }
+                        pstmt = con.prepareStatement(CHECK_VERSION_OLD);
+                        rs = pstmt.executeQuery();
+                        if (rs.next()) {
+                            currentVersion = rs.getInt(1);
+                        }
+                    }
+                    catch (SQLException sqle2) {
+                        // The database schema must not be installed.
+                        Log.debug("SchemaManager: Error verifying server version", sqle2);
+                    }
                 }
             }
         }

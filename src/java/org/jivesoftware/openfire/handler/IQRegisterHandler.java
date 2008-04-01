@@ -376,11 +376,11 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         else {
                             // Create the new account
-                            newUser = userManager.createUser(username, password, null, email);
+                            newUser = userManager.createUser(username, password, name, email);
                         }
                     }
                     // Set and save the extra user info (e.g. full name, etc.)
-                    if (newUser != null && name != null) {
+                    if (newUser != null && name != null && !name.equals(newUser.getName())) {
                         newUser.setName(name);
                     }
 

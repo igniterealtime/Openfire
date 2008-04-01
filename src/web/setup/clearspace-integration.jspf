@@ -14,7 +14,14 @@
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
 
-    ClearspaceManager manager = ClearspaceManager.getInstance();
+    ClearspaceManager manager = null;
+    if (ClearspaceManager.getInstance() != null) {
+        // Use the existing manager. This will be the case after setup was completed
+        manager = ClearspaceManager.getInstance();
+    }
+    else {
+        manager = new ClearspaceManager();
+    }
     Map<String, String> errors = new HashMap<String, String>();
 
     if (save || test) {

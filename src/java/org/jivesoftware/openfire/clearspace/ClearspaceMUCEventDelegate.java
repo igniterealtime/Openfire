@@ -2,27 +2,38 @@ package org.jivesoftware.openfire.clearspace;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
+import org.dom4j.Attribute;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
- * Handles checking with Clearspace regarding whether a user can join a particular chatroom (based
- * on their permissions with the document/whatever the chatroom is associated with), as well as setting
- * up room configurations.
+ * Handles checking with Clearspace regarding whether a user can join a particular MUC room (based
+ * on their permissions with the Clearspace JiveObject (eg. Community/Space) that the room is associated with).
+ *
+ * In addition, this MUCEventDelegate provides a means to obtain room configuration details from Clearspace
+ * in the event that the Clearspace MUC service needs to create a room on-demand (eg. when a user first joins the room).
  *
  * @author Armando Jagucki
  */
 public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
 
     private String csMucDomain;
+    private String csComponentAddress;
+    private final String GET_ROOM_CONFIG_WARNING ="Clearspace sent an unexpected reply to a get-room-config request.";
 
     public ClearspaceMUCEventDelegate() {
-        csMucDomain = ClearspaceManager.MUC_SUBDOMAIN+"@"+XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        csMucDomain = ClearspaceManager.MUC_SUBDOMAIN + "." + xmppDomain;
+        csComponentAddress = ClearspaceManager.CLEARSPACE_COMPONENT + "." + xmppDomain;
     }
 
     /**
@@ -30,25 +41,33 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
      * <p/>
      * Returns true if the user is allowed to join the room.
      *
-     * @param roomName the name of the MUC room.
+     * @param room the room the user is attempting to join.
      * @param userjid  the JID of the user attempting to join the room.
      * @return true if the user is allowed to join the room.
      */
-    public boolean joiningRoom(String roomName, JID userjid) {
+    public boolean joiningRoom(MUCRoom room, JID userjid) {
         // Packet should look like:
         // <iq to="clearspace.example.org" from="clearspace-conference.example.org">
         //    <join-check xmlns="http://jivesoftware.com/clearspace">
         //        <userjid>username@example.org</userjid>
-        //        <roomjid>DOC-1234@clearspace-conference.example.org</roomjid>
+        //        <roomjid>14-1234@clearspace-conference.example.org</roomjid>
         //    </join-check>
         // </iq>
 
+        // Always allow an owner to join the room (especially since they need to join to configure the
+        // room on initial creation).
+        Collection<String> owners = room.getOwners();
+        if (owners != null && owners.contains(userjid.toBareJID())) {
+            return true;
+        }
+
         IQ query = new IQ();
         query.setFrom(csMucDomain);
-        Element cmd = DocumentHelper.createElement("join-check");
-        cmd.addElement("userjid").addText(userjid.toBareJID());
-        cmd.addElement("roomjid").addText(roomName+"@"+csMucDomain);
-        query.setChildElement(cmd);
+        Element cmd = query.setChildElement("join-check", "http://jivesoftware.com/clearspace");
+        Element userjidElement = cmd.addElement("userjid");
+        userjidElement.setText(userjid.toBareJID());
+        Element roomjidElement = cmd.addElement("roomjid");
+        roomjidElement.setText(room.getJID().toBareJID());
 
         IQ result = ClearspaceManager.getInstance().query(query, 15000);
         if (result == null) {
@@ -68,35 +87,49 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
     public Map<String, String> getRoomConfig(String roomName) {
         Map<String, String> roomConfig = new HashMap<String, String>();
 
-        // TODO: Create query packet asking for the room config and in CS create a handler for that packet
-        IQ query = null;
-        IQ result = ClearspaceManager.getInstance().query(query, 15000);
+        IQ iq = new IQ(IQ.Type.get);
+        iq.setFrom(csMucDomain);
+        iq.setID("get_room_config_" + StringUtils.randomString(3));
+        Element child = iq.setChildElement("get-room-config", "http://jivesoftware.com/clearspace");
+        Element roomjidElement = child.addElement("roomjid");
+        JID roomJid = new JID(roomName + "@" + csMucDomain);
+        roomjidElement.setText(roomJid.toBareJID());
+        IQ result = ClearspaceManager.getInstance().query(iq, 15000);
         if (result == null) {
-            // TODO No answer was received from Clearspace so return null
+            // No answer was received from Clearspace, so return null.
+            Log.warn(GET_ROOM_CONFIG_WARNING);
             return null;
         }
-        // TODO Check that the IQ is of type RESULT (and not ERROR) otherwise return null
+        else if (result.getType() != IQ.Type.result) {
+            // The reply was not a valid result containing the room configuration, so return null.
+            Log.warn(GET_ROOM_CONFIG_WARNING);
+            return null;
+        }
 
-        // TODO: Setup roomConfig based on the result packet containing config values
-        JID roomJid = new JID(roomName);
-        roomConfig.put("muc#roomconfig_roomname", roomJid.getNode());
-        roomConfig.put("muc#roomconfig_roomdesc", "");
-        roomConfig.put("muc#roomconfig_changesubject", "1");
-        roomConfig.put("muc#roomconfig_maxusers", "0");
-        roomConfig.put("muc#roomconfig_publicroom", "1");
-        roomConfig.put("muc#roomconfig_moderatedroom", "0");
-        roomConfig.put("muc#roomconfig_membersonly", "0");
-        roomConfig.put("muc#roomconfig_allowinvites", "1");
-        roomConfig.put("muc#roomconfig_roomsecret", "");
-        roomConfig.put("muc#roomconfig_whois", "anyone");
-        roomConfig.put("muc#roomconfig_enablelogging", "0");
-        roomConfig.put("x-muc#roomconfig_reservednick", "0");
-        roomConfig.put("x-muc#roomconfig_canchangenick", "1");
-        roomConfig.put("x-muc#roomconfig_registration", "1");
-        roomConfig.put("muc#roomconfig_persistentroom", "1");
+        // Setup room configuration based on the configuration values in the result packet.
+        Element query = result.getChildElement();
+        if (query == null) {
+            Log.warn(GET_ROOM_CONFIG_WARNING);
+            return null;
+        }
+        Element xElement = query.element("x");
+        if (xElement == null) {
+            Log.warn(GET_ROOM_CONFIG_WARNING);
+            return null;
+        }
+        Iterator fields = xElement.elementIterator("field");
+        while (fields.hasNext()) {
+            Element field = (Element) fields.next();
+            Attribute varAttribute = field.attribute("var");
+            if (varAttribute != null) {
+                Element value = field.element("value");
+                if (value != null) {
+                    roomConfig.put(varAttribute.getValue(), value.getText());
+                }
+            }
+        }
 
-        String ownerJid = roomJid.getNode() + "@"
-                                + "clearspace." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        String ownerJid = roomJid.getNode() + "@" + csComponentAddress;
         roomConfig.put("muc#roomconfig_roomowners", ownerJid);
 
         return roomConfig;
@@ -113,6 +146,6 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
      */
     public boolean destroyingRoom(String roomName, JID userjid) {
         // We never allow destroying a room as a user, but clearspace components are permitted.
-        return ClearspaceManager.getInstance().isClearspace(userjid);
+        return ClearspaceManager.getInstance().isFromClearspace(userjid);
     }
 }

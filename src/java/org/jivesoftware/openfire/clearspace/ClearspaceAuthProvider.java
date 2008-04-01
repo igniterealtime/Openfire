@@ -26,12 +26,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
     // Service url prefix
     protected static final String URL_PREFIX = "permissionService/";
 
-    private ClearspaceManager manager;
-
     public ClearspaceAuthProvider() {
-        // gets the manager
-        manager = ClearspaceManager.getInstance();
-
         // Add SASL mechanism for use with Clearspace's group chat integration
         SASLAuthentication.addSupportedMechanism("CLEARSPACE");
     }
@@ -65,7 +60,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
     public void authenticate(String username, String password) throws UnauthorizedException {
         try {
             String path = URL_PREFIX + "authenticate/" + username + "/" + password;
-            manager.executeRequest(GET, path);
+            ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (UnauthorizedException ue) {
             throw ue;
         } catch (Exception e) {

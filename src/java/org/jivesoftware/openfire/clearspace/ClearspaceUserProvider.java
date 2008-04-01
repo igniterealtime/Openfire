@@ -35,14 +35,10 @@ public class ClearspaceUserProvider implements UserProvider {
     // The ProfileSearchService webservice url prefix
     protected static final String SEARCH_URL_PREFIX = "profileSearchService/";
 
-    private ClearspaceManager manager;
-
     // Used to know it CS is a read only user provider
     private Boolean readOnly;
 
     public ClearspaceUserProvider() {
-        // Gets the manager
-        manager = ClearspaceManager.getInstance();
     }
 
     /**
@@ -117,7 +113,7 @@ public class ClearspaceUserProvider implements UserProvider {
             enabledE.addText("true");
 
 
-            Element user = manager.executeRequest(POST, path, groupDoc.asXML());
+            Element user = ClearspaceManager.getInstance().executeRequest(POST, path, groupDoc.asXML());
 
             return translate(user);
         } catch (UserAlreadyExistsException uaee) {
@@ -139,9 +135,9 @@ public class ClearspaceUserProvider implements UserProvider {
         }
 
         try {
-            long userID = manager.getUserID(username);
+            long userID = ClearspaceManager.getInstance().getUserID(username);
             String path = USER_URL_PREFIX + "users/" + userID;
-            manager.executeRequest(DELETE, path);
+            ClearspaceManager.getInstance().executeRequest(DELETE, path);
 
         } catch (UserNotFoundException gnfe) {
             // it is OK, the user doesn't exist "anymore"
@@ -159,7 +155,7 @@ public class ClearspaceUserProvider implements UserProvider {
     public int getUserCount() {
         try {
             String path = USER_URL_PREFIX + "users/count";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             int count = Integer.valueOf(getReturn(element));
             return count;
         } catch (Exception e) {
@@ -186,7 +182,7 @@ public class ClearspaceUserProvider implements UserProvider {
     public Collection<String> getUsernames() {
         try {
             String path = USER_URL_PREFIX + "userNames";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
         } catch (Exception e) {
@@ -345,7 +341,7 @@ public class ClearspaceUserProvider implements UserProvider {
     protected void updateUser(Element userUpdateParams) throws UserNotFoundException {
         try {
             String path = USER_URL_PREFIX + "users";
-            manager.executeRequest(PUT, path, userUpdateParams.asXML());
+            ClearspaceManager.getInstance().executeRequest(PUT, path, userUpdateParams.asXML());
 
         } catch (UserNotFoundException e) {
             throw new UserNotFoundException("User not found.");
@@ -392,7 +388,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
             //TODO create a service on CS to get only the username field
             String path = SEARCH_URL_PREFIX + "searchProfile";
-            Element element = manager.executeRequest(POST, path, paramsE.asXML());
+            Element element = ClearspaceManager.getInstance().executeRequest(POST, path, paramsE.asXML());
 
             List<Node> userNodes = (List<Node>) element.selectNodes("return");
             for (Node userNode : userNodes) {
@@ -439,7 +435,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
             //TODO create a service on CS to get only the username field
             String path = SEARCH_URL_PREFIX + "searchProfile";
-            Element element = manager.executeRequest(POST, path, paramsE.asXML());
+            Element element = ClearspaceManager.getInstance().executeRequest(POST, path, paramsE.asXML());
 
             List<Node> userNodes = (List<Node>) element.selectNodes("return");
             for (Node userNode : userNodes) {
@@ -496,7 +492,7 @@ public class ClearspaceUserProvider implements UserProvider {
         try {
             // See if the is read only
             String path = USER_URL_PREFIX + "isReadOnly";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             readOnly = Boolean.valueOf(getReturn(element));
         } catch (Exception e) {
             // if there is a problem, keep it null, maybe in the next call success.
@@ -571,7 +567,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
-            Element response = manager.executeRequest(GET, path);
+            Element response = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             // return the response
             return response;

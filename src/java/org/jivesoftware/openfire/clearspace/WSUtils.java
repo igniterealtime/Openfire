@@ -69,7 +69,12 @@ public class WSUtils {
     protected static void modifyElementText(Element element, String[] path, String newValue) {
         Element e = element;
         for (String s : path) {
-            e = e.element(s);
+            Element subElement = e.element(s);
+            if (subElement == null) {
+                // Add the element if associated string was not in path.
+                subElement = e.addElement(s);
+            }
+            e = subElement;
         }
         e.setText(newValue);
     }

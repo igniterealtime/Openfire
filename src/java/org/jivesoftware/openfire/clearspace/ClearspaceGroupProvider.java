@@ -35,12 +35,9 @@ import java.util.List;
 public class ClearspaceGroupProvider implements GroupProvider {
     protected static final String URL_PREFIX = "groupService/";
 
-    private ClearspaceManager manager;
     private Boolean readOnly;
 
     public ClearspaceGroupProvider() {
-        // gets the manager
-        manager = ClearspaceManager.getInstance();
     }
 
     public Group createGroup(String name) throws UnsupportedOperationException, GroupAlreadyExistsException {
@@ -60,7 +57,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             nameE.addText(name);
             rootE.addElement("description");
 
-            Element group = manager.executeRequest(POST, path, groupDoc.asXML());
+            Element group = ClearspaceManager.getInstance().executeRequest(POST, path, groupDoc.asXML());
 
             return translateGroup(group);
 
@@ -79,9 +76,9 @@ public class ClearspaceGroupProvider implements GroupProvider {
         }
 
         try {
-            long groupID = manager.getGroupID(name);
+            long groupID = ClearspaceManager.getInstance().getGroupID(name);
             String path = URL_PREFIX + "groups/" + groupID;
-            manager.executeRequest(DELETE, path);
+            ClearspaceManager.getInstance().executeRequest(DELETE, path);
 
         } catch (GroupNotFoundException gnfe) {
             Log.error(gnfe);
@@ -102,7 +99,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             WSUtils.modifyElementText(group, "name", newName);
 
             String path = URL_PREFIX + "groups";
-            manager.executeRequest(PUT, path);
+            ClearspaceManager.getInstance().executeRequest(PUT, path);
 
         } catch (GroupNotFoundException gnfe) {
             Log.error(gnfe);
@@ -120,7 +117,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             WSUtils.modifyElementText(group, "description", description);
 
             String path = URL_PREFIX + "groups";
-            manager.executeRequest(PUT, path);
+            ClearspaceManager.getInstance().executeRequest(PUT, path);
 
         } catch (GroupNotFoundException gnfe) {
             Log.error(gnfe);
@@ -134,7 +131,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
     public int getGroupCount() {
         try {
             String path = URL_PREFIX + "groupCount";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             return Integer.valueOf(getReturn(element));
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
@@ -145,7 +142,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
     public Collection<String> getGroupNames() {
         try {
             String path = URL_PREFIX + "groupNames";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
         } catch (Exception e) {
@@ -157,7 +154,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
     public Collection<String> getGroupNames(int startIndex, int numResults) {
         try {
             String path = URL_PREFIX + "groupNamesBounded/" + startIndex + "/" + numResults;
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
         } catch (Exception e) {
@@ -168,9 +165,9 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
     public Collection<String> getGroupNames(JID user) {
         try {
-            long userID = manager.getUserID(user);
+            long userID = ClearspaceManager.getInstance().getUserID(user);
             String path = URL_PREFIX + "userGroupNames/" + userID;
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
         } catch (UserNotFoundException e) {
@@ -183,8 +180,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
     public void addMember(String groupName, JID user, boolean administrator) throws UnsupportedOperationException {
         try {
-            long userID = manager.getUserID(user);
-            long groupID = manager.getGroupID(groupName);
+            long userID = ClearspaceManager.getInstance().getUserID(user);
+            long groupID = ClearspaceManager.getInstance().getGroupID(groupName);
 
             String path = URL_PREFIX;
 
@@ -202,7 +199,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             rootE.addElement("groupID");
             nameE.addText(String.valueOf(groupID));
 
-            manager.executeRequest(POST, path, groupDoc.asXML());
+            ClearspaceManager.getInstance().executeRequest(POST, path, groupDoc.asXML());
 
 
         } catch (GroupNotFoundException e) {
@@ -225,8 +222,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
         long userID;
         long groupID;
         try {
-            userID = manager.getUserID(user);
-            groupID = manager.getGroupID(groupName);
+            userID = ClearspaceManager.getInstance().getUserID(user);
+            groupID = ClearspaceManager.getInstance().getGroupID(groupName);
 
         } catch (GroupNotFoundException e) {
             // It's ok, that not existing group doesn't contains that memeber, :)
@@ -243,10 +240,10 @@ public class ClearspaceGroupProvider implements GroupProvider {
         //for user. Therefore one of them could throw an exception.
         try {
             String path = URL_PREFIX + "groupAdmins/" + groupID + "/" + userID;
-            manager.executeRequest(DELETE, path);
+            ClearspaceManager.getInstance().executeRequest(DELETE, path);
 
             path = URL_PREFIX + "groupMembers/" + groupID + "/" + userID;
-            manager.executeRequest(DELETE, path);
+            ClearspaceManager.getInstance().executeRequest(DELETE, path);
         } catch (GroupNotFoundException e) {
             //won't happend, the group exist
         } catch (UserNotFoundException e) {
@@ -270,7 +267,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
         try {
             // See if the is read only
             String path = URL_PREFIX + "isReadOnly";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             readOnly = Boolean.valueOf(getReturn(element));
         } catch (Exception e) {
             // if there is a problem, keep it null, maybe in the next call succes.
@@ -328,7 +325,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
         try {
             String path = URL_PREFIX + "groups/" + name;
 
-            return manager.executeRequest(GET, path);
+            return ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (GroupNotFoundException gnfe) {
             // It is a supported exception, throw it again
             throw gnfe;
@@ -350,7 +347,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
             } else {
                 path = URL_PREFIX + "groupMembers/" + groupID;
             }
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             // Gets the JID from the response
             List<Node> users = (List<Node>) element.selectNodes("return");

@@ -277,9 +277,11 @@ public class IQRouter extends BasicModule {
                 multicastRouter.route(packet);
                 return;
             }
-            else if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
-                // The server got an answer to an IQ packet that was sent from the server
-            	IQResultListener iqResultListener = resultListeners.remove(packet.getID());
+        }
+        if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
+            // The server got an answer to an IQ packet that was sent from the server
+            IQResultListener iqResultListener = resultListeners.remove(packet.getID());
+            if (iqResultListener != null) {
                 resultTimeout.remove(packet.getID());
                 if (iqResultListener != null) {
                     try {

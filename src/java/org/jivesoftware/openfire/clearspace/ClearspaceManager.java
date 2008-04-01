@@ -66,6 +66,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     protected static final String IM_URL_PREFIX = "imService/";
     public  static final String MUC_SUBDOMAIN = "clearspace-conference";
     private static final String MUC_DESCRIPTION = "Clearspace Conference Services";
+    public  static final String CLEARSPACE_COMPONENT = "clearspace";
 
     private static ThreadLocal<XMPPPacketReader> localParser = null;
     private static XmlPullParserFactory factory = null;
@@ -74,7 +75,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      */
     private static final Map<String, String> exceptionMap;
 
-    private static ClearspaceManager instance = new ClearspaceManager();
+    private static ClearspaceManager instance;
 
     static {
         try {
@@ -205,6 +206,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         };
 
         init();
+        instance = this;
     }
 
     private void init() {
@@ -832,23 +834,18 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     /**
-     * Returns true if a given JID represents a known Clearspace component domain.
+     * Returns true if a given JID belongs to a known Clearspace component domain.
      * @param address Address to check.
      * @return True if the specified address is a Clearspace component.
      */
-    public boolean isClearspace(JID address) {
-        return address.getNode() == null && clearspaces.contains(address.getDomain());
+    public boolean isFromClearspace(JID address) {
+        return clearspaces.contains(address.getDomain());
     }
 
     /**
      * Sends an IQ packet to the Clearspace external component and returns the IQ packet
      * returned by CS or <tt>null</tt> if no answer was received before the specified
-     * timeout.<p>
-     *
-     * The returned packet will be handled by the server and routed to the entity that sent
-     * the original IQ packet. Since this method block and listen to the replied IQ packet
-     * then the entity that sent the original IQ packet should ignore any reply related to
-     * the originating IQ packet.
+     * timeout.
      *
      * @param packet IQ packet to send.
      * @param timeout milliseconds to wait before timing out.

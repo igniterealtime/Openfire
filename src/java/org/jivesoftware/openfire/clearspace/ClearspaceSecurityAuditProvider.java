@@ -32,14 +32,10 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
 
     protected static final String AUDIT_URL_PREFIX = "auditService/";
 
-    private ClearspaceManager manager;
-
     /**
      * Generate a ClearspaceSecurityAuditProvider instance.
      */
     public ClearspaceSecurityAuditProvider() {
-        // Gets the manager
-        manager = ClearspaceManager.getInstance();
     }
 
     /**
@@ -72,7 +68,7 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
                 detlE.addText("No details provided.");
             }
 
-            manager.executeRequest(POST, path, auditDoc.asXML());
+            ClearspaceManager.getInstance().executeRequest(POST, path, auditDoc.asXML());
         }
         catch (Exception e) {
             // Error while setting properties?

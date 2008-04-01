@@ -41,12 +41,10 @@ public class ClearspaceVCardProvider implements VCardProvider {
     protected static final String PROFILE_FIELDS_URL_PREFIX = "profileFieldService/";
     protected static final String AVATAR_URL_PREFIX = "avatarService/";
 
-    private ClearspaceManager manager;
     private Boolean avatarReadOnly;
     private boolean fieldsIDLoaded;
 
     public ClearspaceVCardProvider() {
-        this.manager = ClearspaceManager.getInstance();
     }
 
     /**
@@ -77,7 +75,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
             // Gets the user
             User user = UserManager.getInstance().getUser(username);
 
-            long userID = manager.getUserID(username);
+            long userID = ClearspaceManager.getInstance().getUserID(username);
 
             // Gets the profiles information
             Element profiles = getProfiles(userID);
@@ -187,7 +185,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
 
         try {
 
-            long userID = manager.getUserID(username);
+            long userID = ClearspaceManager.getInstance().getUserID(username);
             ClearspaceUserProvider userProvider = (ClearspaceUserProvider) UserManager.getUserProvider();
 
             // Gets the user params that can be used to update it
@@ -255,7 +253,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
 
         long userID;
         try {
-            userID = manager.getUserID(username);
+            userID = ClearspaceManager.getInstance().getUserID(username);
         } catch (UserNotFoundException gnfe) {
             // it is OK, the user doesn't exist "anymore"
             return;
@@ -274,7 +272,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
     private void deleteProfiles(long userID) {
         try {
             String path = PROFILE_URL_PREFIX + "profiles/" + userID;
-            manager.executeRequest(ClearspaceManager.HttpType.DELETE, path);
+            ClearspaceManager.getInstance().executeRequest(ClearspaceManager.HttpType.DELETE, path);
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -289,7 +287,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
     private void deleteAvatar(long userID) {
         try {
             String path = AVATAR_URL_PREFIX + "avatar/" + userID;
-            manager.executeRequest(ClearspaceManager.HttpType.DELETE, path);
+            ClearspaceManager.getInstance().executeRequest(ClearspaceManager.HttpType.DELETE, path);
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -305,7 +303,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
         // Try to save the profile changes
         try {
             String path = PROFILE_URL_PREFIX + "profiles";
-            manager.executeRequest(POST, path, profilesUpdateParams.asXML());
+            ClearspaceManager.getInstance().executeRequest(POST, path, profilesUpdateParams.asXML());
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -328,7 +326,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
             // Requests the user active avatar
             String path = AVATAR_URL_PREFIX + "activeAvatar/" + userID;
 
-            manager.executeRequest(POST, path, rootE.asXML());
+            ClearspaceManager.getInstance().executeRequest(POST, path, rootE.asXML());
         } catch (Exception e) {
             throw new UnsupportedOperationException("Error setting the user's " + userID + " active avatar " + avatarID, e);
         }
@@ -345,7 +343,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
 
             // Requests the user active avatar
             String path = AVATAR_URL_PREFIX + "createAvatar";
-            Element avatar = manager.executeRequest(POST, path, avatarCreateParams.asXML());
+            Element avatar = ClearspaceManager.getInstance().executeRequest(POST, path, avatarCreateParams.asXML());
 
             return Long.valueOf(avatar.element("return").element("WSAvatar").elementTextTrim("id"));
         } catch (Exception e) {
@@ -363,7 +361,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
         try {
             // Requests the user profile
             String path = PROFILE_URL_PREFIX + "profiles/" + userID;
-            return manager.executeRequest(GET, path);
+            return ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (Exception e) {
             throw new UnsupportedOperationException("Error getting the profiles of user: " + userID, e);
         }
@@ -379,7 +377,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
         try {
             // Requests the user active avatar
             String path = AVATAR_URL_PREFIX + "activeAvatar/" + userID;
-            return manager.executeRequest(GET, path);
+            return ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (Exception e) {
             throw new UnsupportedOperationException("Error getting the avatar of user: " + userID, e);
         }
@@ -392,7 +390,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
         try {
             // See if the is read only
             String path = AVATAR_URL_PREFIX + "userAvatarsEnabled";
-            Element element = manager.executeRequest(GET, path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             avatarReadOnly = !Boolean.valueOf(getReturn(element));
         } catch (Exception e) {
             // if there is a problem, keep it null, maybe next call success.
@@ -406,7 +404,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
     private void loadDefaultProfileFields() {
         try {
             String path = PROFILE_FIELDS_URL_PREFIX + "fields";
-            Element defaultFields = manager.executeRequest(GET, path);
+            Element defaultFields = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             ClearspaceVCardTranslator.getInstance().initClearspaceFieldsId(defaultFields);
             fieldsIDLoaded = true;

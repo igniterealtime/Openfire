@@ -36,14 +36,10 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
 
     protected static final String USER_URL_PREFIX = "userService/";
 
-    private ClearspaceManager manager;
-
     /**
      * Generate a ClearspaceLockOutProvider instance.
      */
     public ClearspaceLockOutProvider() {
-        // Gets the manager
-        manager = ClearspaceManager.getInstance();
     }
 
     /**
@@ -123,7 +119,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
             Element modifiedUser = modifyUser(user.element("return"), "enabled", enabled ? "true" : "false");
 
             String path = USER_URL_PREFIX + "users";
-            manager.executeRequest(PUT, path, modifiedUser.asXML());
+            ClearspaceManager.getInstance().executeRequest(PUT, path, modifiedUser.asXML());
         }
         catch (UserNotFoundException e) {
             Log.error("User with name " + username + " not found.", e);
@@ -206,7 +202,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response
-            return manager.executeRequest(GET, path);
+            return ClearspaceManager.getInstance().executeRequest(GET, path);
         }
         catch (Exception e) {
             // It is not supported exception, wrap it into an UserNotFoundException

@@ -64,7 +64,7 @@ public class SchemaManager {
      *      or updated successfully.
      */
     public boolean checkOpenfireSchema(Connection con) {
-        // Change 'wildfire' to 'openfire' in jiveVersion table (update to new name)
+        // Change 'wildfire' to 'openfire' in ofVersion table (update to new name)
         updateToOpenfire(con);
         try {
             return checkSchema(con, "openfire", DATABASE_VERSION,
@@ -314,7 +314,9 @@ public class SchemaManager {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            Log.warn("Error when trying to update to new name", ex);
+//            Log.warn("Error when trying to update to new name", ex);
+            // This is "scary" to see in the logs and causes more confusion than it's worth at this point.
+            // So silently move on.
         }
         finally {
             DbConnectionManager.closeStatement(pstmt);

@@ -310,7 +310,7 @@ public class SchemaManager {
     private void updateToOpenfire(Connection con){
         PreparedStatement pstmt = null;
         try {
-            pstmt = con.prepareStatement("UPDATE ofVersion SET name='openfire' WHERE name='wildfire'");
+            pstmt = con.prepareStatement("UPDATE jiveVersion SET name='openfire' WHERE name='wildfire'");
             pstmt.executeUpdate();
         }
         catch (Exception ex) {

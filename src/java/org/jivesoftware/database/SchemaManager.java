@@ -64,7 +64,7 @@ public class SchemaManager {
      *      or updated successfully.
      */
     public boolean checkOpenfireSchema(Connection con) {
-        // Change 'wildfire' to 'openfire' in ofVersion table (update to new name)
+        // Change 'wildfire' to 'openfire' in jiveVersion table (update to new name)
         updateToOpenfire(con);
         try {
             return checkSchema(con, "openfire", DATABASE_VERSION,

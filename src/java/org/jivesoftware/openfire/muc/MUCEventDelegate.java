@@ -39,9 +39,11 @@ public abstract class MUCEventDelegate {
      *
      * @param room the MUC room.
      * @param inviteeJID the JID of the user the invitation will be sent to.
+     * @param inviterJID the JID of the user that is sending the invitation
+     * @param inviteMessage the (optional) message that is sent explaining the invitation
      * @return true if the user is allowed to join the room.
      */
-    public abstract InvitationResult sendingInvitation(MUCRoom room, JID inviteeJID);
+    public abstract InvitationResult sendingInvitation(MUCRoom room, JID inviteeJID, JID inviterJID, String inviteMessage);
 
     /**
      * Returns a map containing room configuration variables and values.

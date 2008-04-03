@@ -1633,7 +1633,7 @@ public class LocalMUCRoom implements MUCRoom {
             message.setTo(to);
 
             if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
-                switch(((MultiUserChatServiceImpl)mucService).getMUCDelegate().sendingInvitation(this, to)) {
+                switch(((MultiUserChatServiceImpl)mucService).getMUCDelegate().sendingInvitation(this, to, role.getRoleAddress(), reason)) {
                     case HANDLED_BY_DELEGATE:
                         //if the delegate is taking care of it, there's nothing for us to do
                         return;

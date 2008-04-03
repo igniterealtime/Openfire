@@ -37,23 +37,29 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         csComponentAddress = ClearspaceManager.CLEARSPACE_COMPONENT + "." + xmppDomain;
     }
 
-    public InvitationResult sendingInvitation(MUCRoom room, JID userjid)
+    public InvitationResult sendingInvitation(MUCRoom room, JID invitee, JID inviter, String reason)
     {
         // Packet should look like:
         // <iq to="clearspace.example.org" from="clearspace-conference.example.org">
         //    <room-invite xmlns="http://jivesoftware.com/clearspace">
-        //        <user>username@example.org</user>
-        //        <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+        //        <inviter>username@example.org</inviter>
+        //        <room>14-1234@clearspace-conference.example.org</roomjid>
+        //        <reason>Example Message</reason>
+        //        <invitee>anotheruser@example.org</invitee>
         //    </room-invite>
         // </iq>
 
         IQ query = new IQ();
         query.setFrom(csMucDomain);
         Element cmd = query.setChildElement("room-invite", "http://jivesoftware.com/clearspace");
-        Element userjidElement = cmd.addElement("userjid");
-        userjidElement.setText(userjid.toBareJID());
-        Element roomjidElement = cmd.addElement("roomjid");
+        Element inviterjidElement = cmd.addElement("inviter");
+        inviterjidElement.setText(inviter.toBareJID());
+        Element inviteejidElement = cmd.addElement("invitee");
+        inviteejidElement.setText(invitee.toBareJID());
+        Element roomjidElement = cmd.addElement("room");
         roomjidElement.setText(room.getJID().toBareJID());
+        Element messageElement = cmd.addElement("reason");
+        messageElement.setText(reason);
 
         IQ result = ClearspaceManager.getInstance().query(query, 15000);
         if (null != result) {

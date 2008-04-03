@@ -22,6 +22,7 @@
 <%@ page import="java.util.Collections" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.muc.CannotBeInvitedException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -91,6 +92,9 @@
             catch (NotAllowedException e) {
                 errors.put("NotAllowedException","NotAllowedException");
             }
+            catch (CannotBeInvitedException e) {
+                errors.put("CannotBeInvitedException", "CannotBeInvitedExcpetion");
+            }
         }
     }
 
@@ -110,6 +114,9 @@
         }
         catch (ConflictException e) {
             errors.put("ConflictException","ConflictException");
+        }
+        catch (CannotBeInvitedException e) {
+                errors.put("CannotBeInvitedException", "CannotBeInvitedExcpetion");
         }
     }
 %>

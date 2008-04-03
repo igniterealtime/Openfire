@@ -113,6 +113,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private Map<String, Long> userIDCache;
     private Map<String, Long> groupIDCache;
     /**
+     * Records transcripts for group chat rooms in Clearspace.
+     */
+    private ClearspaceMUCTranscriptManager mucTranscriptManager = new ClearspaceMUCTranscriptManager(TaskEngine.getInstance());
+    /**
      * Keep the domains of Clearspace components
      */
     private final List<String> clearspaces = new ArrayList<String>();
@@ -412,11 +416,19 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             // Starts the clearspace configuration task
             startClearspaceConfig();
+
+            // Starts the Clearspace MUC transcript manager
+            // TODO: Uncomment when the transcript manager is implemented completely
+            //mucTranscriptManager.start();
         }
     }
 
     public void stop() {
         super.stop();
+
+        // Stops the Clearspace MUC transcript manager
+        // TODO: Uncomment when the transcript manager is implemented completely
+        //mucTranscriptManager.stop();
 
         // Unregister/shut down custom MUC service
         XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(MUC_SUBDOMAIN);

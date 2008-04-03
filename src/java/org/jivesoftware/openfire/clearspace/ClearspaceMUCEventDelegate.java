@@ -71,23 +71,14 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
     }
 
     /**
-     * This event will be triggered when an entity joins an existing room.
-     * <p/>
-     * Returns true if the user is allowed to join the room.
+     * Returns true if the user is allowed to join the room. If the userjid is an owner of the room,
+     * we will return true immediately.
      *
      * @param room the room the user is attempting to join.
      * @param userjid  the JID of the user attempting to join the room.
      * @return true if the user is allowed to join the room.
      */
     public boolean joiningRoom(MUCRoom room, JID userjid) {
-        // Packet should look like:
-        // <iq to="clearspace.example.org" from="clearspace-conference.example.org">
-        //    <join-check xmlns="http://jivesoftware.com/clearspace">
-        //        <userjid>username@example.org</userjid>
-        //        <roomjid>14-1234@clearspace-conference.example.org</roomjid>
-        //    </join-check>
-        // </iq>
-
         // Always allow an owner to join the room (especially since they need to join to configure the
         // room on initial creation).
         Collection<String> owners = room.getOwners();
@@ -95,6 +86,13 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
             return true;
         }
 
+        // Packet should look like:
+        // <iq to="clearspace.example.org" from="clearspace-conference.example.org">
+        //    <join-check xmlns="http://jivesoftware.com/clearspace">
+        //        <userjid>username@example.org</userjid>
+        //        <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+        //    </join-check>
+        // </iq>
         IQ query = new IQ();
         query.setFrom(csMucDomain);
         Element cmd = query.setChildElement("join-check", "http://jivesoftware.com/clearspace");
@@ -131,24 +129,24 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         IQ result = ClearspaceManager.getInstance().query(iq, 15000);
         if (result == null) {
             // No answer was received from Clearspace, so return null.
-            Log.warn(GET_ROOM_CONFIG_WARNING);
+            Log.warn(GET_ROOM_CONFIG_WARNING + " Room: " + roomJid.toBareJID());
             return null;
         }
         else if (result.getType() != IQ.Type.result) {
             // The reply was not a valid result containing the room configuration, so return null.
-            Log.warn(GET_ROOM_CONFIG_WARNING);
+            Log.warn(GET_ROOM_CONFIG_WARNING + " Room: " + roomJid.toBareJID());
             return null;
         }
 
         // Setup room configuration based on the configuration values in the result packet.
         Element query = result.getChildElement();
         if (query == null) {
-            Log.warn(GET_ROOM_CONFIG_WARNING);
+            Log.warn(GET_ROOM_CONFIG_WARNING + " Room: " + roomJid.toBareJID());
             return null;
         }
         Element xElement = query.element("x");
         if (xElement == null) {
-            Log.warn(GET_ROOM_CONFIG_WARNING);
+            Log.warn(GET_ROOM_CONFIG_WARNING + " Room: " + roomJid.toBareJID());
             return null;
         }
         Iterator fields = xElement.elementIterator("field");

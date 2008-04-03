@@ -933,9 +933,10 @@ public interface MUCRoom extends Externalizable, Result {
      * @param extensions the list of extensions sent with the original message invitation or null 
      *        if none.
      * @throws ForbiddenException If the user is not allowed to send the invitation.
+     * @throws CannotBeInvitedException (Optionally) If the user being invited does not have access to the room
      */
     public void sendInvitation(JID to, String reason, MUCRole role, List<Element> extensions)
-            throws ForbiddenException;
+            throws ForbiddenException, CannotBeInvitedException;
 
     /**
      * Sends the rejection to the inviter. The rejection will be sent as if the room is rejecting 

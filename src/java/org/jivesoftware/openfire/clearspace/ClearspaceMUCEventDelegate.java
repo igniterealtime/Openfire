@@ -7,6 +7,7 @@ import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 import org.dom4j.Element;
 import org.dom4j.Attribute;
 
@@ -34,6 +35,39 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         csMucDomain = ClearspaceManager.MUC_SUBDOMAIN + "." + xmppDomain;
         csComponentAddress = ClearspaceManager.CLEARSPACE_COMPONENT + "." + xmppDomain;
+    }
+
+    public InvitationResult sendingInvitation(MUCRoom room, JID userjid)
+    {
+        // Packet should look like:
+        // <iq to="clearspace.example.org" from="clearspace-conference.example.org">
+        //    <room-invite xmlns="http://jivesoftware.com/clearspace">
+        //        <user>username@example.org</user>
+        //        <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+        //    </room-invite>
+        // </iq>
+
+        IQ query = new IQ();
+        query.setFrom(csMucDomain);
+        Element cmd = query.setChildElement("room-invite", "http://jivesoftware.com/clearspace");
+        Element userjidElement = cmd.addElement("userjid");
+        userjidElement.setText(userjid.toBareJID());
+        Element roomjidElement = cmd.addElement("roomjid");
+        roomjidElement.setText(room.getJID().toBareJID());
+
+        IQ result = ClearspaceManager.getInstance().query(query, 15000);
+        if (null != result) {
+            if (result.getType() != IQ.Type.error) {
+                // No error, that indicates that we were successful and the user is permitted.
+                return InvitationResult.HANDLED_BY_DELEGATE;
+            }
+            else if(result.getError().getType() == PacketError.Type.continue_processing) {
+                return InvitationResult.HANDLED_BY_OPENFIRE;
+            }
+        }
+
+        // No successful return, not allowed.
+        return InvitationResult.REJECTED;
     }
 
     /**

@@ -324,6 +324,9 @@ public class LocalMUCUser implements MUCUser {
                     catch (ConflictException e) {
                         sendErrorPacket(packet, PacketError.Condition.conflict);
                     }
+                    catch (CannotBeInvitedException e) {
+                        sendErrorPacket(packet, PacketError.Condition.not_acceptable);
+                    }
                 }
             }
         }
@@ -399,6 +402,9 @@ public class LocalMUCUser implements MUCUser {
                     }
                     catch (NotAllowedException e) {
                         sendErrorPacket(packet, PacketError.Condition.not_allowed);
+                    }
+                    catch (CannotBeInvitedException e) {
+                        sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                     }
                     catch (Exception e) {
                         sendErrorPacket(packet, PacketError.Condition.internal_server_error);

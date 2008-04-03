@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.CannotBeInvitedException;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
@@ -74,7 +75,7 @@ public class IQOwnerHandler {
      * @throws ForbiddenException if the user does not have enough permissions (ie. is not an owner).
      * @throws ConflictException If the room was going to lose all of its owners.
      */
-    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException {
+    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
         if (MUCRole.Affiliation.owner != role.getAffiliation()) {
             throw new ForbiddenException();
@@ -141,9 +142,10 @@ public class IQOwnerHandler {
      * @param reply      the iq packet that will be sent back as a reply to the client's request.
      * @throws ForbiddenException if the user does not have enough permissions.
      * @throws ConflictException If the room was going to lose all of its owners.
+     * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
     private void handleItemsElement(List itemsList, MUCRole senderRole, IQ reply)
-            throws ForbiddenException, ConflictException {
+            throws ForbiddenException, ConflictException, CannotBeInvitedException {
         Element item;
         boolean hasJID = ((Element)itemsList.get(0)).attributeValue("jid") != null;
         boolean hasNick = ((Element)itemsList.get(0)).attributeValue("nick") != null;

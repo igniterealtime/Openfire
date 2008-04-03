@@ -1622,7 +1622,7 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public void sendInvitation(JID to, String reason, MUCRole senderRole, List<Element> extensions)
-            throws ForbiddenException {
+            throws ForbiddenException, CannotBeInvitedException {
         if (!isMembersOnly() || canOccupantsInvite()
                 || MUCRole.Affiliation.admin == senderRole.getAffiliation()
                 || MUCRole.Affiliation.owner == senderRole.getAffiliation()) {
@@ -1631,6 +1631,21 @@ public class LocalMUCRoom implements MUCRoom {
             Message message = new Message();
             message.setFrom(role.getRoleAddress());
             message.setTo(to);
+
+            if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
+                switch(((MultiUserChatServiceImpl)mucService).getMUCDelegate().sendingInvitation(this, to)) {
+                    case HANDLED_BY_DELEGATE:
+                        //if the delegate is taking care of it, there's nothing for us to do
+                        return;
+                    case HANDLED_BY_OPENFIRE:
+                        //continue as normal if we're asked to handle it
+                        break;
+                    case REJECTED:
+                        //we can't invite that person
+                        throw new CannotBeInvitedException();
+                }
+            }
+
             // Add a list of extensions sent with the original message invitation (if any)
             if (extensions != null) {
                 for(Element element : extensions) {

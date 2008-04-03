@@ -13,10 +13,7 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -66,9 +63,10 @@ public class IQAdminHandler {
      * @throws ConflictException If the desired room nickname is already reserved for the room or
      *                           if the room was going to lose all of its owners.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
+     * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
     public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException,
-            NotAllowedException {
+            NotAllowedException, CannotBeInvitedException {
         IQ reply = IQ.createResultIQ(packet);
         Element element = packet.getChildElement();
 
@@ -104,9 +102,10 @@ public class IQAdminHandler {
      * @throws ConflictException If the desired room nickname is already reserved for the room or
      *                           if the room was going to lose all of its owners.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
+     * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
     private void handleItemsElement(MUCRole senderRole, List itemsList, IQ reply)
-            throws ForbiddenException, ConflictException, NotAllowedException {
+            throws ForbiddenException, ConflictException, NotAllowedException, CannotBeInvitedException {
         Element item;
         String affiliation;
         String roleAttribute;

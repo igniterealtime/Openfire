@@ -1,7 +1,6 @@
 package org.jivesoftware.openfire.muc;
 
 import org.xmpp.packet.JID;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 
 import java.util.Map;
 
@@ -16,6 +15,12 @@ import java.util.Map;
  */
 public abstract class MUCEventDelegate {
 
+    public enum InvitationResult {
+        HANDLED_BY_DELEGATE,
+        HANDLED_BY_OPENFIRE,
+        REJECTED
+    }
+
     /**
      * This event will be triggered when an entity joins an existing room.
      *
@@ -28,11 +33,23 @@ public abstract class MUCEventDelegate {
     public abstract boolean joiningRoom(MUCRoom room, JID userjid);
 
     /**
+     * This event will be triggered when an entity attempts to invite someone to a room.
+     *
+     * Returns a String indicating whether the invitation should be abandoned, handled by the delegate, or handled by openfire.
+     *
+     * @param room the MUC room.
+     * @param inviteeJID the JID of the user the invitation will be sent to.
+     * @return true if the user is allowed to join the room.
+     */
+    public abstract InvitationResult sendingInvitation(MUCRoom room, JID inviteeJID);
+
+    /**
      * Returns a map containing room configuration variables and values.
      *
      * @param roomName the name of the room the configuration map is associated with.
-     * @returna map containing room configuration variables and values, or null if roomName was not valid.
+     * @return a map containing room configuration variables and values, or null if roomName was not valid.
      */
+
     public abstract Map<String, String> getRoomConfig(String roomName);
 
     /**

@@ -12,6 +12,7 @@ package org.jivesoftware.openfire.commands;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.xmpp.packet.JID;
 
 import java.util.List;
@@ -65,13 +66,7 @@ public abstract class AdHocCommand {
      * @return true if the requester is allowed to execute this command.
      */
     public boolean hasPermission(JID requester) {
-        String requesterBareJID = requester.toBareJID();
-        for (JID adminJID : XMPPServer.getInstance().getAdmins()) {
-            if (adminJID.toBareJID().equals(requesterBareJID)) {
-                return true;
-            }
-        }
-        return false;
+        return AdminManager.getInstance().isUserAdmin(requester, false);
     }
 
     /**

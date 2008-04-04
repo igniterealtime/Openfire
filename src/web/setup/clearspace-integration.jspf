@@ -59,6 +59,8 @@
                         "org.jivesoftware.openfire.clearspace.ClearspaceLockOutProvider");
                 JiveGlobals.setXMLProperty("provider.securityAudit.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceSecurityAuditProvider");
+                JiveGlobals.setXMLProperty("provider.admin.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
 
                 // Redirect to next step.
                 response.sendRedirect(nextPage);

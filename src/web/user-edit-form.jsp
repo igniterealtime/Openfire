@@ -17,6 +17,7 @@
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -29,6 +30,7 @@
     String username = ParamUtils.getParameter(request,"username");
     String name = ParamUtils.getParameter(request,"name");
     String email = ParamUtils.getParameter(request,"email");
+    boolean isAdmin = ParamUtils.getBooleanParameter(request,"isadmin");
     Map<String, String> errors = new HashMap<String, String>();
 
     // Handle a cancel
@@ -58,9 +60,19 @@
         user.setEmail(email);
         user.setName(name);
 
+        if (!AdminManager.getAdminProvider().isReadOnly()) {
+            boolean isCurrentAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
+            if (isCurrentAdmin && !isAdmin) {
+                AdminManager.getInstance().removeAdminAccount(user.getUsername());
+            }
+            else if (!isCurrentAdmin && isAdmin) {
+                AdminManager.getInstance().addAdminAccount(user.getUsername());
+            }
+        }
+
         if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
             // Log the event
-            webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email);
+            webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email+", admin = "+isAdmin);
         }
 
         // Changes good, so redirect
@@ -152,6 +164,17 @@
                  value="<%= ((user.getEmail()!=null) ? user.getEmail() : "") %>">
             </td>
         </tr>
+        <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.create.isadmin" />
+            </td>
+            <td>
+                <input type="checkbox" name="isadmin"<%= AdminManager.getInstance().isUserAdmin(user.getUsername(), false) ? " checked='checked'" : "" %>>
+                (<fmt:message key="user.create.admin_info"/>)
+            </td>
+        </tr>
+        <% } %>
     </tbody>
     </table>
     </div>

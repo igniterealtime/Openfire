@@ -111,6 +111,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private int port;
     private String sharedSecret;
     private Map<String, Long> userIDCache;
+    private Map<Long, String> usernameCache;
     private Map<String, Long> groupIDCache;
     /**
      * Records transcripts for group chat rooms in Clearspace.
@@ -227,6 +228,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         // Creates the cache maps
         userIDCache = new DefaultCache<String, Long>("clearspace.userid", 1000, JiveConstants.DAY);
         groupIDCache = new DefaultCache<String, Long>("clearspace.groupid", 1000, JiveConstants.DAY);
+        usernameCache = new DefaultCache<Long, String>("clearspace.username", 1000, JiveConstants.DAY);
 
 
         if (Log.isDebugEnabled()) {
@@ -813,6 +815,39 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
         String username = JID.unescapeNode(user.getNode());
         return getUserID(username);
+    }
+
+    /**
+     * Returns the Clearspace username of the user by id.
+     *
+     * @param id ID to retrieve Username of.
+     * @return The username of the user in Clearspace.
+     * @throws org.jivesoftware.openfire.user.UserNotFoundException
+     *          If the user was not found.
+     */
+    protected String getUsernameByID(Long id) throws UserNotFoundException {
+        // Checks if it is in the cache
+        if (usernameCache.containsKey(id)) {
+            return usernameCache.get(id);
+        }
+
+        // Gets the user's ID from Clearspace
+        try {
+            String path = ClearspaceUserProvider.USER_URL_PREFIX + "usersByID/" + id;
+            Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
+
+            String username = WSUtils.getElementText(element.selectSingleNode("return"), "username"); // TODO: is this right?
+
+            usernameCache.put(id, username);
+
+            return username;
+        } catch (UserNotFoundException unfe) {
+            // It is a supported exception, throw it again
+            throw unfe;
+        } catch (Exception e) {
+            // It is not a supported exception, wrap it into a UserNotFoundException
+            throw new UserNotFoundException("Unexpected error", e);
+        }
     }
 
     /**

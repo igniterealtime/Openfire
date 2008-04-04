@@ -11,6 +11,9 @@
                  org.jivesoftware.openfire.XMPPServer"
 %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.util.List" %>
 
 <%
 	// Redirect if we've already run setup:
@@ -70,10 +73,14 @@
 	</p>
 
 <%
-    String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
-    String authorizedJIDS = JiveGlobals.getXMLProperty("admin.authorizedJIDs");
-
-    boolean useAdmin = authorizedJIDS == null  && authorizedUsernames == null;
+    boolean useAdmin = false;
+    try {
+        List<JID> authorizedJIDS = AdminManager.getInstance().getAdminAccounts();
+        useAdmin = authorizedJIDS == null || authorizedJIDS.isEmpty();
+    }
+    catch (Exception e) {
+        // We were not able to load the list of admins right now, so move on.
+    }
     String parameters = useAdmin ? "?username=admin" : "";
 
     // Figure out the URL that the user can use to login to the admin console.

@@ -21,6 +21,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -191,6 +192,7 @@
         catch (NotLockedOutException e) {
             // Nothing, we're good.
         }
+        Boolean isAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
         <td width="1%">
@@ -223,7 +225,8 @@
             <%  } %>
         </td>
         <td width="23%">
-            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
+            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= JID.unescapeNode(user.getUsername()) %></a>
+            <% if (isAdmin) { %><img src="/images/star-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
             <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
             <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>

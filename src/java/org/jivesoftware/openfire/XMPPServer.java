@@ -45,6 +45,7 @@ import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
@@ -267,42 +268,7 @@ public class XMPPServer {
      * @return a collection with the JIDs of the server's admins.
      */
     public Collection<JID> getAdmins() {
-        Collection<JID> admins = new ArrayList<JID>();
-        // Add the JIDs of the local users that are admins
-        String usernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
-        if (usernames == null) {
-            // Fall back to old method for defining admins (i.e. using adminConsole prefix
-            usernames = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
-        }
-        usernames = (usernames == null || usernames.trim().length() == 0) ? "admin" : usernames;
-        StringTokenizer tokenizer = new StringTokenizer(usernames, ",");
-        while (tokenizer.hasMoreTokens()) {
-            String username = tokenizer.nextToken();
-            try {
-                admins.add(createJID(username.toLowerCase().trim(), null));
-            }
-            catch (IllegalArgumentException e) {
-                // Ignore usernames that when appended @server.com result in an invalid JID
-                Log.warn("Invalid username found in authorizedUsernames at openfire.xml: " +
-                        username, e);
-            }
-        }
-
-        // Add bare JIDs of users that are admins (may include remote users)
-        String jids = JiveGlobals.getXMLProperty("admin.authorizedJIDs");
-        jids = (jids == null || jids.trim().length() == 0) ? "" : jids;
-        tokenizer = new StringTokenizer(jids, ",");
-        while (tokenizer.hasMoreTokens()) {
-            String jid = tokenizer.nextToken().toLowerCase().trim();
-            try {
-                admins.add(new JID(jid));
-            }
-            catch (IllegalArgumentException e) {
-                Log.warn("Invalid JID found in authorizedJIDs at openfire.xml: " + jid, e);
-            }
-        }
-
-        return admins;
+        return AdminManager.getInstance().getAdminAccounts();
     }
 
     /**

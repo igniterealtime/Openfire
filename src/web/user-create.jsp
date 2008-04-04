@@ -18,6 +18,7 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.HashMap"%><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -34,6 +35,7 @@
     String email = ParamUtils.getParameter(request,"email");
     String password = ParamUtils.getParameter(request,"password");
     String passwordConfirm = ParamUtils.getParameter(request,"passwordConfirm");
+    boolean isAdmin = ParamUtils.getBooleanParameter(request,"isadmin");
 
     Map<String, String> errors = new HashMap<String, String>();
     // Handle a cancel
@@ -88,9 +90,20 @@
         if (errors.size() == 0) {
             try {
                 User newUser = webManager.getUserManager().createUser(username, password, name, email);
+
+                if (!AdminManager.getAdminProvider().isReadOnly()) {
+                    boolean isCurrentAdmin = AdminManager.getInstance().isUserAdmin(newUser.getUsername(), false);
+                    if (isCurrentAdmin && !isAdmin) {
+                        AdminManager.getInstance().removeAdminAccount(newUser.getUsername());
+                    }
+                    else if (!isCurrentAdmin && isAdmin) {
+                        AdminManager.getInstance().addAdminAccount(newUser.getUsername());
+                    }
+                }
+
                 if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
                     // Log the event
-                    webManager.logEvent("created new user "+username, "name = "+name+", email = "+email);
+                    webManager.logEvent("created new user "+username, "name = "+name+", email = "+email+", admin = "+isAdmin);
                 }
 
                 // Successful, so redirect
@@ -229,7 +242,18 @@
 				 id="confpasstf">
 			</td>
 		</tr>
-		<tr>
+        <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
+        <tr>
+            <td class="c1">
+                <fmt:message key="user.create.isadmin" />
+            </td>
+            <td>
+                <input type="checkbox" name="isadmin">
+                (<fmt:message key="user.create.admin_info"/>)
+            </td>
+        </tr>
+        <% } %>
+        <tr>
 
 			<td colspan="2" style="padding-top: 10px;">
 				<input type="submit" name="create" value="<fmt:message key="user.create.create" />">

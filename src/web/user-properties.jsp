@@ -21,6 +21,8 @@
 <%@ page import="java.util.Collection"%>
 <%@ page import="org.jivesoftware.openfire.user.UserManager"%><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -212,6 +214,14 @@
                 (<fmt:message key="user.properties.offline" />)
 
             <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="user.create.isadmin" />:
+        </td>
+        <td>
+            <%= AdminManager.getInstance().isUserAdmin(user.getUsername(), true) ? LocaleUtils.getLocalizedString("global.yes") : LocaleUtils.getLocalizedString("global.no") %>
         </td>
     </tr>
     <tr>

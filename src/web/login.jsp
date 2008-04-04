@@ -4,18 +4,17 @@
   -	$Date$
 --%>
 
-<%@ page import="java.util.*,
-                 org.jivesoftware.openfire.auth.AuthToken,
+<%@ page import="org.jivesoftware.openfire.auth.AuthToken,
                  org.jivesoftware.openfire.auth.AuthFactory,
                  org.jivesoftware.openfire.auth.UnauthorizedException,
                  org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.*"%>
-<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -24,16 +23,7 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<%! // List of allowed usernames:
-    static Map<String, String> authorizedUsernames = new HashMap<String, String>();
-    static {
-        for (JID jid : XMPPServer.getInstance().getAdmins()) {
-            // Only allow local users to log into the admin console
-            if (XMPPServer.getInstance().isLocal(jid)) {
-                authorizedUsernames.put(jid.getNode(), jid.getNode());
-            }
-        }
-    }
+<%!
     static String go(String url) {
         if (url == null) {
             return "index.jsp";
@@ -77,15 +67,8 @@
 
     if (ParamUtils.getBooleanParameter(request, "login")) {
         try {
-            if (authorizedUsernames != null && !authorizedUsernames.isEmpty()) {
-                if (!authorizedUsernames.containsKey(username)) {
-                    throw new UnauthorizedException("User '" + username + "' no allowed to login.");
-                }
-            }
-            else {
-                if (!"admin".equals(username)) {
-                    throw new UnauthorizedException("Only user 'admin' may login.");
-                }
+            if (!AdminManager.getInstance().isUserAdmin(username, true)) {
+                throw new UnauthorizedException("User '" + username + "' not allowed to login.");
             }
             if (secret != null && nodeID != null) {
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {

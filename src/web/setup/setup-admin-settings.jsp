@@ -47,12 +47,13 @@
     boolean doTest = request.getParameter("test") != null;
 
     boolean ldap = "true".equals(request.getParameter("ldap"));
-    boolean clearspace = "true".equals(request.getParameter("clearspace"));
 
     boolean addAdmin = request.getParameter("addAdministrator") != null;
     boolean deleteAdmins = request.getParameter("deleteAdmins") != null;
     boolean ldapFinished = request.getParameter("ldapFinished") != null;
-    boolean clearspaceFinished = request.getParameter("clearspaceFinished") != null;
+
+    Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+    String domain = xmppSettings.get("xmpp.domain");
 
     // Handle a skip request
     if (doSkip) {
@@ -110,7 +111,7 @@
         }
     }
 
-    if (ldapFinished || clearspaceFinished) {
+    if (ldapFinished) {
         setSetupFinished(session);
         // All good so redirect
         response.sendRedirect("setup-finished.jsp");
@@ -137,30 +138,13 @@
                     }
                 }
             }
-            if (clearspace) {
-                // Try to verify that the username exists in LDAP
-                Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
-                Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
-                if (settings != null) {
-                    LdapManager manager = new LdapManager(settings);
-                    manager.setUsernameField(userSettings.get("ldap.usernameField"));
-                    manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
-                    try {
-                        manager.findUserDN(JID.unescapeNode(admin));
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        errors.put("administrator", "");
-                    }
-                }
-            }
             if (errors.isEmpty()) {
-                String currentList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+                String currentList = xmppSettings.get("admin.authorizedJIDs");
                 final List users = new ArrayList(StringUtils.stringToCollection(currentList));
-                users.add(admin.toLowerCase());
+                users.add(new JID(admin.toLowerCase(), domain, null).toBareJID());
 
                 String userList = StringUtils.collectionToString(users);
-                JiveGlobals.setXMLProperty("admin.authorizedUsernames", userList);
+                xmppSettings.put("admin.authorizedJIDs", userList);
             }
         } else {
             errors.put("administrator", "");
@@ -169,7 +153,7 @@
 
     if (deleteAdmins) {
         String[] params = request.getParameterValues("remove");
-        String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+        String currentAdminList = xmppSettings.get("admin.authorizedJIDs");
         Collection<String> adminCollection = StringUtils.stringToCollection(currentAdminList);
         List temporaryUserList = new ArrayList<String>(adminCollection);
         final int no = params != null ? params.length : 0;
@@ -179,22 +163,22 @@
 
         String newUserList = StringUtils.collectionToString(temporaryUserList);
         if (temporaryUserList.size() == 0) {
-            JiveGlobals.setXMLProperty("admin.authorizedUsernames", "");
+            xmppSettings.put("admin.authorizedJIDs", "");
         } else {
-            JiveGlobals.setXMLProperty("admin.authorizedUsernames", newUserList);
+            xmppSettings.put("admin.authorizedJIDs", newUserList);
         }
     }
 
     // This handles the case of reverting back to default settings from LDAP/Clearspace. Will
-    // add admin to the authorizedUsername list if the authorizedUsername list contains
+    // add admin to the authorizedJIDs list if the authorizedJIDs list contains
     // entries.
-    if (!ldap && !clearspace && !doTest) {
-        String currentAdminList = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+    if (!ldap && !doTest) {
+        String currentAdminList = xmppSettings.get("admin.authorizedJIDs");
         List<String> adminCollection = new ArrayList<String>(StringUtils.stringToCollection(currentAdminList));
         if ((!adminCollection.isEmpty() && !adminCollection.contains("admin")) ||
-                JiveGlobals.getXMLProperty("admin.authorizedJIDs") != null) {
-            adminCollection.add("admin");
-            JiveGlobals.setXMLProperty("admin.authorizedUsernames",
+                xmppSettings.get("admin.authorizedJIDs") != null) {
+            adminCollection.add(new JID("admin", domain, null).toBareJID());
+            xmppSettings.put("admin.authorizedJIDs",
                     StringUtils.collectionToString(adminCollection));
         }
     }
@@ -211,7 +195,7 @@
 	<fmt:message key="setup.admin.settings.account" />
 	</h1>
 
-<% if(!ldap && !clearspace){ %>
+<% if(!ldap){ %>
     <p>
 	<fmt:message key="setup.admin.settings.info" />
 	</p>
@@ -446,8 +430,8 @@ if (errors.size() > 0) { %>
     </tr>
 </table>
 <%
-    String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
-    boolean hasAuthorizedName = authorizedUsernames != null && authorizedUsernames.length() > 0;
+    String authorizedJIDs = xmppSettings.get("admin.authorizedJIDs");
+    boolean hasAuthorizedName = authorizedJIDs != null && authorizedJIDs.length() > 0;
 %>
     <% if(hasAuthorizedName) { %>
     <!-- List of admins -->
@@ -458,25 +442,26 @@ if (errors.size() > 0) { %>
             <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
         </tr>
 <%
-    for (String authUsername : StringUtils.stringToCollection(authorizedUsernames)) {
+    for (String authJIDstr : StringUtils.stringToCollection(authorizedJIDs)) {
+        JID authJID = new JID(authJIDstr);
 %>
     <tr valign="top">
         <td>
-            <%= authUsername%>
+            <%= authJID.getNode()%>
         </td>
         <td width="1%" align="center">
-            <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authUsername, "UTF-8") %>"
+            <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authJID.getNode(), "UTF-8") %>"
              title="<fmt:message key="global.click_test" />"
              ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
         </td>
         <td>
-            <input type="checkbox" name="remove" value="<%=authUsername%>"/>
+            <input type="checkbox" name="remove" value="<%=authJID.toBareJID()%>"/>
         </td>
     </tr>
 
     <%
         }
-        if (authorizedUsernames != null) {
+        if (authorizedJIDs != null) {
     %>
          <tr valign="top">
         <td>
@@ -514,138 +499,6 @@ if (errors.size() > 0) { %>
             document.getElementById("jive-setup-save").style.display = "";
         </script>
     <% } %>
-<% } else if (clearspace) {
-    if (errors.size() > 0) { %>
-
-        <div class="error">
-        <%  if (errors.get("general") != null) { %>
-
-            <%= errors.get("general") %>
-
-        <%  } else if (errors.get("administrator") != null) { %>
-
-            <fmt:message key="setup.admin.settings.username-error" />
-
-        <%  } else { %>
-
-            <fmt:message key="setup.admin.settings.error" />
-
-        <%  } %>
-        </div>
-
-    <%  }
-        if (doTest) {
-            StringBuffer testLink = new StringBuffer();
-            testLink.append("setup-admin-settings_test.jsp?username=");
-            testLink.append(URLEncoder.encode(username, "UTF-8"));
-            if (password != null) {
-                testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
-            }
-            testLink.append("&clearspace=true");
-    %>
-
-        <a href="<%= testLink %>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-        <script type="text/javascript">
-            function loadMsg() {
-                var lb = new lightbox(document.getElementById('lbmessage'));
-                lb.activate();
-            }
-            setTimeout('loadMsg()', 250);
-        </script>
-
-    <% } %>
-    <p>
-     <fmt:message key="setup.admin.settings.clearspace.info" />
-      </p>
-    <div class="jive-contentBox">
-
-    <form action="setup-admin-settings.jsp" name="acctform" method="post">
-
-        <!-- Admin Table -->
-
-    <table cellpadding="3" cellspacing="2" border="0">
-        <tr valign="top">
-            <td class="jive-label">
-                <fmt:message key="setup.admin.settings.add.administrator" />:
-            </td>
-             <td>
-            <input type="text" name="administrator" size="20" maxlength="50"/>
-            </td>
-            <td>
-                <input type="submit" name="addAdministrator" value="<fmt:message key="global.add" />"/>
-            </td>
-        </tr>
-    </table>
-<%
-        String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
-        boolean hasAuthorizedName = authorizedUsernames != null && authorizedUsernames.length() > 0;
-%>
-        <% if(hasAuthorizedName) { %>
-        <!-- List of admins -->
-        <table class="jive-vcardTable" cellpadding="3" cellspacing="0" border="0">
-            <tr>
-                <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
-                <th width="1%" nowrap><fmt:message key="global.test" /></th>
-                <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
-            </tr>
-    <%
-        for (String authUsername : StringUtils.stringToCollection(authorizedUsernames)) {
-    %>
-        <tr valign="top">
-            <td>
-                <%= authUsername%>
-            </td>
-            <td width="1%" align="center">
-                <a href="setup-admin-settings.jsp?clearspace=true&test=true&username=<%= URLEncoder.encode(authUsername, "UTF-8") %>"
-                 title="<fmt:message key="global.click_test" />"
-                 ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
-            </td>
-            <td>
-                <input type="checkbox" name="remove" value="<%=authUsername%>"/>
-            </td>
-        </tr>
-
-        <%
-            }
-            if (authorizedUsernames != null) {
-        %>
-             <tr valign="top">
-            <td>
-               &nbsp;
-            </td>
-            <td>
-               &nbsp;
-            </td>
-            <td>
-                <input type="submit" name="deleteAdmins" value="Remove"/>
-            </td>
-        </tr>
-
-            <%
-                }
-
-            %>
-    </table>
-        <% } %>
-
-
-    <input type="hidden" name="clearspace" value="true"/>
-
-         <div align="right">
-        <br/>
-      <input type="submit" name="clearspaceFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" border="0" style="display:none;">
-              </div>
-     </form>
-
-    </div>
-
-    <%
-        if(hasAuthorizedName) {%>
-            <script type="text/javascript">
-                document.getElementById("jive-setup-save").style.display = "";
-            </script>
-    <% } %>
-
 <% } %>
 
 </body>

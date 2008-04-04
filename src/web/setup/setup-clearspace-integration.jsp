@@ -11,8 +11,9 @@
     boolean initialSetup = true;
     String currentPage = "setup-clearspace-integration.jsp";
     String testPage = "setup-clearspace-integration_test.jsp";
-    String nextPage = "setup-admin-settings.jsp?clearspace=true";
+    String nextPage = "setup-finished.jsp";
     Map<String, String> meta = new HashMap<String, String>();
     meta.put("currentStep", "3");
+    JiveGlobals.setXMLProperty("setup","true");
 %>
 <%@ include file="clearspace-integration.jspf" %>

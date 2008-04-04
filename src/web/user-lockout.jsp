@@ -8,18 +8,17 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.session.ClientSession"
+<%@ page import="org.jivesoftware.openfire.lockout.LockOutFlag"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Date" %>
-<%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
-<%@ page import="org.jivesoftware.openfire.lockout.LockOutFlag" %>
-<%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
-<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -118,8 +117,9 @@
 <% } %>
 
 <%
-    try {
-        LockOutFlag flag = LockOutManager.getInstance().getDisabledStatus(username);
+    LockOutFlag flag = LockOutManager.getInstance().getDisabledStatus(username);
+    if (flag != null) {
+        // User is locked out
 %>
 
 <p>
@@ -139,7 +139,8 @@
 
 <%
     }
-    catch (NotLockedOutException e) {
+    else {
+        // User is not locked out
 %>
 
 <p>

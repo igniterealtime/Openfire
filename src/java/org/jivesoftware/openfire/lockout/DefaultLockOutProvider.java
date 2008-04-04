@@ -10,6 +10,7 @@
 package org.jivesoftware.openfire.lockout;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 
 import java.sql.*;
@@ -42,7 +43,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider retrieves disabled status from ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#getDisabledStatus(String)
      */
-    public LockOutFlag getDisabledStatus(String username) throws NotLockedOutException {
+    public LockOutFlag getDisabledStatus(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -53,7 +54,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
             pstmt.setString(1, username);
             rs = pstmt.executeQuery();
             if (!rs.next()) {
-                throw new NotLockedOutException();
+                return null;
             }
             Date startTime = null;
             if (rs.getString(2) != null) {
@@ -67,7 +68,8 @@ public class DefaultLockOutProvider implements LockOutProvider {
             ret = new LockOutFlag(username, startTime, endTime);
         }
         catch (Exception e) {
-            throw new NotLockedOutException();
+            Log.error("Error loading lockout information from DB", e);
+            return null;
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

@@ -8,21 +8,20 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.PresenceManager,
+<%@ page import="org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.admin.AdminManager,
                  org.jivesoftware.openfire.group.Group,
                  org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.openfire.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
-<%@ page import="org.xmpp.packet.Presence"%>
-<%@ page import="java.net.URLEncoder"%>
-<%@ page import="java.util.Collection"%>
-<%@ page import="org.jivesoftware.openfire.user.UserManager"%><%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
-<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
-<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.xmpp.packet.JID"%><%@ page import="org.xmpp.packet.Presence"%>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.Collection" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -63,17 +62,14 @@
     PresenceManager presenceManager = webManager.getPresenceManager();
     Boolean lockedOut = false;
     Boolean pendingLockOut = false;
-    try {
-        webManager.getLockOutManager().getDisabledStatus(username);
+    if (webManager.getLockOutManager().getDisabledStatus(username) != null) {
+        // User is locked out. Check if he is locket out now
         if (webManager.getLockOutManager().isAccountDisabled(username)) {
             lockedOut = true;
         }
         else {
             pendingLockOut = true;
         }
-    }
-    catch (NotLockedOutException e) {
-        // Nothing, we're good.
     }
 %>
 

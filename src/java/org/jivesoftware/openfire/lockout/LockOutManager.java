@@ -13,8 +13,8 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 
-import java.util.Map;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * The LockOutManager manages the LockOutProvider configured for this server, caches knowledge of
@@ -122,10 +122,10 @@ public class LockOutManager {
      * period that the specified account is going to be disabled.
      *
      * @param username Username of account to request status of.
-     * @return The LockOutFlag instance describing the accounts disabled status.
-     * @throws NotLockedOutException if user account specified is not currently locked out (disabled).
+     * @return The LockOutFlag instance describing the accounts disabled status or null if user
+     *         account specified is not currently locked out (disabled).
      */
-    public LockOutFlag getDisabledStatus(String username) throws NotLockedOutException {
+    public LockOutFlag getDisabledStatus(String username) {
         if (username == null) {
             throw new UnsupportedOperationException("Null username not allowed!");
         }
@@ -154,23 +154,18 @@ public class LockOutManager {
      * @return True or false if the account is currently locked out.
      */
     public boolean isAccountDisabled(String username) {
-        try {
-            LockOutFlag flag = getDisabledStatus(username);
-            if (flag == null) {
-                return false;
-            }
-            Date curDate = new Date();
-            if (flag.getStartTime() != null && curDate.before(flag.getStartTime())) {
-                return false;
-            }
-            if (flag.getEndTime() != null && curDate.after(flag.getEndTime())) {
-                return false;
-            }
-            return true;
-        }
-        catch (NotLockedOutException e) {
+        LockOutFlag flag = getDisabledStatus(username);
+        if (flag == null) {
             return false;
         }
+        Date curDate = new Date();
+        if (flag.getStartTime() != null && curDate.before(flag.getStartTime())) {
+            return false;
+        }
+        if (flag.getEndTime() != null && curDate.after(flag.getEndTime())) {
+            return false;
+        }
+        return true;
     }
 
     /**

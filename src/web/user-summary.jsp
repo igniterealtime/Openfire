@@ -9,19 +9,18 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.openfire.PresenceManager,
+<%@ page import="org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.admin.AdminManager,
                  org.jivesoftware.openfire.user.User,
-                 org.jivesoftware.openfire.user.UserManager"
-%><%@ page import="org.xmpp.packet.JID"%>
+                 org.jivesoftware.openfire.user.UserManager,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.ParamUtils"
+%><%@ page import="org.jivesoftware.util.StringUtils"%>
+<%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
-<%@ page import="org.jivesoftware.openfire.lockout.NotLockedOutException" %>
-<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -180,17 +179,14 @@
         i++;
         Boolean lockedOut = false;
         Boolean pendingLockOut = false;
-        try {
-            webManager.getLockOutManager().getDisabledStatus(user.getUsername());
+        if (webManager.getLockOutManager().getDisabledStatus(user.getUsername()) != null) {
+            // User is locked out. Check if its locked out now!
             if (webManager.getLockOutManager().isAccountDisabled(user.getUsername())) {
                 lockedOut = true;
             }
             else {
                 pendingLockOut = true;
             }
-        }
-        catch (NotLockedOutException e) {
-            // Nothing, we're good.
         }
         Boolean isAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
 %>

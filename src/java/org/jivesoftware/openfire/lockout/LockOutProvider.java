@@ -20,13 +20,14 @@ public interface LockOutProvider {
 
     /**
      * Returns a LockOutFlag for a given username, which contains information about the time
-     * period that the specified account is going to be disabled.
+     * period that the specified account is going to be disabled or null if user can log in
+     * just fine.
      *
      * @param username Username of account to request status of.
-     * @return The LockOutFlag instance describing the accounts disabled status.
-     * @throws NotLockedOutException if user account specified is not currently locked out (disabled).
+     * @return The LockOutFlag instance describing the accounts disabled status or null if user
+     *         account specified is not currently locked out (disabled).
      */
-    public LockOutFlag getDisabledStatus(String username) throws NotLockedOutException;
+    public LockOutFlag getDisabledStatus(String username);
 
     /**
      * Sets the locked out (disabled) status of an account according to a LockOutFlag.

@@ -9,18 +9,16 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.jivesoftware.openfire.lockout.LockOutProvider;
-import org.jivesoftware.openfire.lockout.LockOutFlag;
-import org.jivesoftware.openfire.lockout.NotLockedOutException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
-import org.jivesoftware.util.Log;
-
-import org.dom4j.Node;
-import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
+import org.jivesoftware.openfire.lockout.LockOutFlag;
+import org.jivesoftware.openfire.lockout.LockOutProvider;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
 
 import java.util.List;
 
@@ -46,13 +44,14 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * The ClearspaceLockOutProvider will retrieve lockout information from Clearspace's user properties.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#getDisabledStatus(String)
      */
-    public LockOutFlag getDisabledStatus(String username) throws NotLockedOutException {
+    public LockOutFlag getDisabledStatus(String username) {
         try {
             // Retrieve the disabled status, translate it into a LockOutFlag, and return it.
             return checkUserDisabled(getUserByUsername(username));
         }
         catch (UserNotFoundException e) {
             // Not a valid user?  We will leave it up to the user provider to handle rejecting this user.
+            Log.warn(e);
             return null;
         }
     }
@@ -155,14 +154,13 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
     }
 
     /**
-     * Examines the XML returned about a user to find out if they are enabled or disabled, throwing
-     * a NotLockedOutException if they are.
+     * Examines the XML returned about a user to find out if they are enabled or disabled. Returns
+     * <tt>null</tt> when user can log in or a LockOutFlag if user cannot log in.
      *
      * @param responseNode Element returned from REST service. (@see #getUserByUsername)
-     * @return Either a LockOutFlag indicating that the user is disabled, or an exception is thrown.
-     * @throws NotLockedOutException if the user is not currently locked out.
+     * @return Either a LockOutFlag indicating that the user is disabled, or null if everything is fine.
      */
-    private LockOutFlag checkUserDisabled(Node responseNode) throws NotLockedOutException {
+    private LockOutFlag checkUserDisabled(Node responseNode) {
         try {
             Node userNode = responseNode.selectSingleNode("return");
 
@@ -173,20 +171,17 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
             boolean isEnabled = Boolean.valueOf(userNode.selectSingleNode("enabled").getText());
             if (isEnabled) {
                 // We're good, indicate that they're not locked out.
-                throw new NotLockedOutException();
+                return null;
             }
             else {
                 // Creates the lock out flag
                 return new LockOutFlag(username, null, null);
             }
         }
-        catch (NotLockedOutException e) {
-            throw e;
-        }
         catch (Exception e) {
             // Hrm.  This is not good.  We have to opt on the side of positive.
             Log.error("Error while looking up user's disabled status from Clearspace: ", e);
-            throw new NotLockedOutException();
+            return null;
         }
     }
 

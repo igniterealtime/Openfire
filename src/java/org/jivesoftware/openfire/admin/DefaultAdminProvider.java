@@ -31,8 +31,7 @@ public class DefaultAdminProvider implements AdminProvider {
         Log.debug("DefaultAdminProvider: Convert XML to provider.");
         convertXMLToProvider();
 
-        // Detect when a new admin provider class is set
-        Log.debug("DefaultAdminProvider: Setting up prop listener.");
+        // Detect when the list of admin users is changed.
         PropertyEventListener propListener = new PropertyEventListener() {
             public void propertySet(String property, Map params) {
                 Log.debug("DefaultAdminProvider: Property was set: "+property);

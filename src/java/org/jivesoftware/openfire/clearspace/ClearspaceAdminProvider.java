@@ -42,33 +42,29 @@ public class ClearspaceAdminProvider implements AdminProvider {
      * @see org.jivesoftware.openfire.admin.AdminProvider#getAdmins()
      */
     public List<JID> getAdmins() {
-        // This is a stub for now while we work out issues in Clearspace's permissions web service
-        // For now, we will return an empty list, indicating that "admin" is ok for admin console login.
-        return new ArrayList<JID>();
+        try {
+            String path = PERMISSION_URL_PREFIX + "userPermissions/"+SYSTEM_ADMIN_PERM+"/true";
+            Log.debug("ClearspaceAdminProvider: permissions query url is: "+path);
+            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
-//        try {
-//            String path = PERMISSION_URL_PREFIX + "userPermissions/"+SYSTEM_ADMIN_PERM+"/true";
-//            Log.debug("ClearspaceAdminProvider: permissions query url is: "+path);
-//            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
-//
-//            List<JID> admins = new ArrayList<JID>();
-//            for (String idStr : parseStringArray(element)) {
-//                Log.debug("Admin provider got ID number "+idStr);
-//                Long id = Long.valueOf(idStr);
-//                try {
-//                    String username = ClearspaceManager.getInstance().getUsernameByID(id);
-//                    Log.debug("Admin provider mapped to username "+username);
-//                    admins.add(XMPPServer.getInstance().createJID(username, null));
-//                }
-//                catch (UserNotFoundException e) {
-//                    // Hrm.  Got a response back that turned out not to exist?  This is "broken".
-//                }
-//            }
-//            return admins;
-//        } catch (Exception e) {
-//            // It is not supported exception, wrap it into an UnsupportedOperationException
-//            throw new UnsupportedOperationException("Unexpected error", e);
-//        }
+            List<JID> admins = new ArrayList<JID>();
+            for (String idStr : parseStringArray(element)) {
+                Log.debug("Admin provider got ID number "+idStr);
+                Long id = Long.valueOf(idStr);
+                try {
+                    String username = ClearspaceManager.getInstance().getUsernameByID(id);
+                    Log.debug("Admin provider mapped to username "+username);
+                    admins.add(XMPPServer.getInstance().createJID(username, null));
+                }
+                catch (UserNotFoundException e) {
+                    // Hrm.  Got a response back that turned out not to exist?  This is "broken".
+                }
+            }
+            return admins;
+        } catch (Exception e) {
+            // It is not supported exception, wrap it into an UnsupportedOperationException
+            throw new UnsupportedOperationException("Unexpected error", e);
+        }
     }
 
     /**
@@ -84,7 +80,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
      * @see org.jivesoftware.openfire.admin.AdminProvider#isReadOnly()
      */
     public boolean isReadOnly() {
-        return false;
+        return true;
     }
 
 }

@@ -19,7 +19,7 @@ public abstract class MUCEventDelegate {
         HANDLED_BY_DELEGATE,
         HANDLED_BY_OPENFIRE,
         REJECTED
-    }
+    };
 
     /**
      * This event will be triggered when an entity joins an existing room.

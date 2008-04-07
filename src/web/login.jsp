@@ -4,17 +4,21 @@
   -	$Date$
 --%>
 
-<%@ page import="org.jivesoftware.openfire.auth.AuthToken,
+<%@ page import="org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.openfire.admin.AdminManager,
                  org.jivesoftware.openfire.auth.AuthFactory,
-                 org.jivesoftware.openfire.auth.UnauthorizedException,
-                 org.jivesoftware.admin.AdminConsole"
+                 org.jivesoftware.openfire.auth.AuthToken"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.util.*"%>
-<%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException"%>
+<%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager"%>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
-<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.util.Base64" %>
+<%@ page import="org.jivesoftware.util.Log" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -35,7 +39,7 @@
 %>
 
 <%-- Check if in setup mode --%>
-<% 
+<%
     if (admin.isSetupMode()) {
         response.sendRedirect("setup/index.jsp");
         return;
@@ -57,6 +61,7 @@
     // SSO between cluster nodes
     String secret = ParamUtils.getParameter(request, "secret");
     String nodeID = ParamUtils.getParameter(request, "nodeID");
+    String nonce = ParamUtils.getParameter(request, "nonce");
 
     // The user auth token:
     AuthToken authToken;
@@ -72,6 +77,15 @@
             }
             if (secret != null && nodeID != null) {
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
+                    authToken = new AuthToken(username);
+                }
+                else if ("clearspace".equals(nodeID) && ClearspaceManager.getInstance().isEnabled()) {
+                    ClearspaceManager csmanager = ClearspaceManager.getInstance();
+                    String sharedSecret = csmanager.getSharedSecret();
+                    if (nonce == null || sharedSecret == null || !csmanager.isValidNonce(nonce) ||
+                            !StringUtils.hash(username + ":" + sharedSecret + ":" + nonce).equals(secret)) {
+                        throw new UnauthorizedException("SSO failed. Invalid secret was provided");
+                    }
                     authToken = new AuthToken(username);
                 }
                 else {

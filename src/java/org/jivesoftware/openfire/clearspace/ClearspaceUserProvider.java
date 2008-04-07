@@ -560,7 +560,7 @@ public class ClearspaceUserProvider implements UserProvider {
      *
      * @param username the username of the user
      * @return the user xml response
-     * @throws UserNotFoundException if the user could not be found
+     * @throws UserNotFoundException The user was not found in the Clearspace database or there was an error.
      */
     private Element getUserByUsername(String username) throws UserNotFoundException {
         try {

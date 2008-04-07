@@ -11,16 +11,22 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.openfire.XMPPServer;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.DocumentFactory;
+import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.clearspace.ClearspaceManager;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 
-import java.util.*;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * A model for admin tab and sidebar info. This class loads in XML definitions of the
@@ -333,6 +339,31 @@ public class AdminConsole {
                     overrideTab(existingTab, tab);
                 }
             }
+        }
+
+        // Special case: show a link to Clearspace admin console if it is integrated with
+        // Openfire.
+        if (ClearspaceManager.isEnabled()) {
+            Element clearspace = generatedModel.addElement("tab");
+            clearspace.addAttribute("id", "tab-clearspace");
+            clearspace.addAttribute("name", LocaleUtils.getLocalizedString("tab.tab-clearspace"));
+            clearspace.addAttribute("url", "clearspace-info.jsp");
+            clearspace.addAttribute("description", LocaleUtils.getLocalizedString("tab.tab-clearspace.descr"));
+            Element sidebar = clearspace.addElement("sidebar");
+            sidebar.addAttribute("id", "sidebar-clearspace-admin");
+            sidebar.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.sidebar-clearspace-admin"));
+
+            Element item = sidebar.addElement("item");
+            item.addAttribute("id", "clearspace-info");
+            item.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-info"));
+            item.addAttribute("url", "clearspace-info.jsp");
+            item.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-info.descr"));
+
+            item = sidebar.addElement("item");
+            item.addAttribute("id", "clearspace-admin");
+            item.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-admin"));
+            item.addAttribute("url", "clearspace-admin.jsp");
+            item.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-admin.descr"));
         }
     }
 

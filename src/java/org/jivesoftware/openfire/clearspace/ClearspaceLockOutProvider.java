@@ -190,7 +190,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      *
      * @param username Username to look up.
      * @return XML Element including information about the user.
-     * @throws UserNotFoundException The user was not found in the Clearspace database.
+     * @throws UserNotFoundException The user was not found in the Clearspace database or there was an error.
      */
     private Element getUserByUsername(String username) throws UserNotFoundException {
         try {
@@ -198,6 +198,9 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response
             return ClearspaceManager.getInstance().executeRequest(GET, path);
+        }
+        catch (UserNotFoundException e) {
+            throw e;
         }
         catch (Exception e) {
             // It is not supported exception, wrap it into an UserNotFoundException

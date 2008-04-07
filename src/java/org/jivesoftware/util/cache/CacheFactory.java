@@ -177,6 +177,7 @@ public class CacheFactory {
         cacheProps.put("cache.entityCapabilitiesPendingHashes.maxLifetime", JiveConstants.DAY * 2);
         cacheProps.put("cache.pluginCacheInfo.size", -1l);
         cacheProps.put("cache.pluginCacheInfo.maxLifetime", -1l);
+        cacheProps.put("cache.clearspace.nonce", JiveConstants.MINUTE * 2);
     }
 
     private CacheFactory() {

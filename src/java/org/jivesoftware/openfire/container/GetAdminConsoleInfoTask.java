@@ -61,9 +61,10 @@ public class GetAdminConsoleInfoTask implements ClusterTask {
                 return;
             }
             for (NetworkInterface netInterface : Collections.list(nets)) {
+                boolean found = false;
                 Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
                 for (InetAddress address : Collections.list(addresses)) {
-                    if ("127.0.0.1".equals(address.getHostAddress())) {
+                    if ("127.0.0.1".equals(address.getHostAddress()) || "0:0:0:0:0:0:0:1".equals(address.getHostAddress())) {
                         continue;
                     }
                     Socket socket = new Socket();
@@ -71,10 +72,14 @@ public class GetAdminConsoleInfoTask implements ClusterTask {
                     try {
                         socket.connect(remoteAddress);
                         bindInterface = address.getHostAddress();
+                        found = true;
                         break;
                     } catch (IOException e) {
                         // Ignore this address. Let's hope there is more addresses to validate
                     }
+                }
+                if (found) {
+                    break;
                 }
             }
         }

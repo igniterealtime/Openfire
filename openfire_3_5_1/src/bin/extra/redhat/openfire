@@ -1,0 +1,196 @@
+#!/bin/sh
+#
+# openfire	Stops and starts the Openfire XMPP service.
+#
+# chkconfig: 2345 99 1
+# description: Openfire is an XMPP server, which is a server that facilitates \
+#              XML based communication, such as chat.
+# config: /opt/openfire/conf/openfire.xml
+# config: /etc/sysconfig/openfire
+# pidfile: /var/run/openfire.pid
+# 
+# This script has currently been tested on Redhat, CentOS, and Fedora  based
+# systems.
+#
+
+#####
+# Begin setup work
+#####
+
+# Initialization
+PATH="/sbin:/bin:/usr/bin:/usr/sbin"
+RETVAL=0
+
+# Check that we are root ... so non-root users stop here.
+[ "`id -u`" = 0 ] || exit 1
+
+# Get config.
+[ -f "/etc/sysconfig/openfire" ] && . /etc/sysconfig/openfire
+
+# If openfire user is not set in sysconfig, set to daemon.
+[ -z "$OPENFIRE_USER" ] && OPENFIRE_USER="daemon"
+
+# If pid file path is not set in sysconfig, set to /var/run/openfire.pid.
+[ -z "$OPENFIRE_PIDFILE" ] && OPENFIRE_PIDFILE="/var/run/openfire.pid"
+
+# -----------------------------------------------------------------
+
+# If a openfire home variable has not been specified, try to determine it.
+if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
+	if [ -d "/usr/share/openfire" ]; then
+		OPENFIRE_HOME="/usr/share/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
+		OPENFIRE_HOME="/usr/local/openfire"
+	elif [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
+	else
+		echo "Could not find Openfire installation under /opt, /usr/share, or /usr/local."
+		echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
+		echo "in /etc/sysconfig/openfire."
+		exit 1
+	fi
+fi
+
+# If log path is not set in sysconfig, set to $OPENFIRE_HOME/logs.
+[ -z "$OPENFIRE_LOGDIR" ] && OPENFIRE_LOGDIR="${OPENFIRE_HOME}/logs"
+
+# Attempt to locate java installation.
+if [ -z "$JAVA_HOME" ]; then
+	if [ -d "${OPENFIRE_HOME}/jre" ]; then
+		JAVA_HOME="${OPENFIRE_HOME}/jre"
+	elif [ -d "/etc/alternatives/jre" ]; then
+		JAVA_HOME="/etc/alternatives/jre"
+	else
+		jdks=`ls -r1d /usr/java/j*`
+		for jdk in $jdks; do
+			if [ -f "${jdk}/bin/java" ]; then
+				JAVA_HOME="$jdk"
+				break
+			fi
+		done
+	fi
+fi
+JAVACMD="${JAVA_HOME}/bin/java"
+
+if [ ! -d "$JAVA_HOME" -o ! -x "$JAVACMD" ]; then
+	echo "Error: JAVA_HOME is not defined correctly."
+	echo "       Can not sure execute $JAVACMD."
+	exit 1
+fi
+
+# Prepare location of openfire libraries
+OPENFIRE_LIB="${OPENFIRE_HOME}/lib"
+
+# Prepare openfire command line
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -DopenfireHome=${OPENFIRE_HOME} -Dopenfire.lib.dir=${OPENFIRE_LIB}"
+
+# Prepare local java class path
+if [ -z "$LOCALCLASSPATH" ]; then
+	LOCALCLASSPATH="${OPENFIRE_LIB}/startup.jar"
+else
+	LOCALCLASSPATH="${OPENFIRE_LIB}/startup.jar:${LOCALCLASSPATH}"
+fi
+
+# Export any necessary variables
+export JAVA_HOME JAVACMD
+
+# Lastly, prepare the full command that we are going to run.
+OPENFIRE_RUN_CMD="${JAVACMD} -server ${OPENFIRE_OPTS} -classpath \"${LOCALCLASSPATH}\" -jar \"${OPENFIRE_LIB}/startup.jar\""
+
+#####
+# End setup work
+#####
+
+
+
+start() {
+	OLD_PWD=`pwd`
+	cd $OPENFIRE_LOGDIR
+
+        # Start daemons.
+        echo -n "Starting openfire: "
+
+	rm -f nohup.out
+	su -s /bin/sh -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &" $OPENFIRE_USER
+	RETVAL=$?
+	PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
+
+	if [ $RETVAL -eq 0 -a ! -z "$PID" -a ! -z "$OPENFIRE_PIDFILE" ]; then
+		echo $PID > $OPENFIRE_PIDFILE
+	fi
+
+	echo
+
+	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfire
+
+	sleep 1 # allows prompt to return
+	cd $OLD_PWD
+}
+
+stop() {
+	# Stop daemons.
+	echo -n "Shutting down openfire: "
+
+	[ -f "$OPENFIRE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
+	RETVAL=$?
+	echo
+
+	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
+	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
+}
+
+restart() {
+	stop
+	sleep 10 # give it a few moments to shut down
+	start
+}
+
+condrestart() {
+	[ -e "/var/lock/subsys/openfire" ] && restart
+	return 0
+}
+
+status() {
+	pid=`cat $OPENFIRE_PIDFILE 2>&1`
+	if [ "$?" = "1" ]; then
+		echo "openfire is not running"
+		RETVAL=0
+	else 
+		ps -p $pid > /dev/null 2>&1
+		if [ "$?" = "0" ]; then 
+			echo "openfire is running"
+			RETVAL=0
+		else 
+			echo "openfire is not running"
+			RETVAL=0
+		fi
+	fi
+}
+
+
+# Handle how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		restart
+		;;
+	condrestart)
+		condrestart
+		;;
+	reload)
+		restart
+		;;
+	status) 
+		status
+		;;
+	*)
+		echo "Usage $0 {start|stop|restart|status|condrestart|reload}"
+		RETVAL=1
+esac
+
+exit $RETVAL

@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# openfired	stops and starts the openfire XMPP service
+#
+# chkconfig: 2345 99 1
+# description: Used to start and stop the openfire XMPP server
+# 
+# Script used to start openfire as daemon
+# The script has currently been tested on Redhat Fedora Core 3,
+# but should theoretically work on most UNIX like systems
+#
+# before running this script make sure $OPENFIRE_HOME/bin/openfire is
+# executable by the user you want to run openfire as
+# (chmod +x $OPENFIRE_HOME/bin/openfire)
+#
+# This script should be copied into /etc/init.d and linked into
+# your default runlevel directory.
+# You can find your default runlevel directory by typing: 
+# grep default /etc/inittab
+#
+# Link to the directory like follows
+# cd /etc/rc<num>.d
+# ln -s ../init.d/openfired $90openfired
+#
+
+# Set this to tell this script where openfire lives
+# If this is not set the script will look for /opt/openfire, then /usr/local/openfire
+#export OPENFIRE_HOME=
+
+# If there is a different user you would like to run this script as,
+# change the following line
+export OPENFIRE_USER=jive
+
+# -----------------------------------------------------------------
+
+# If a openfire home variable has not been specified, try to determine it
+if [ ! $OPENFIRE_HOME ]; then
+	if [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
+		OPENFIRE_HOME="/usr/local/openfire"
+	else
+		echo "Could not find Openfire installation under /opt or /usr/local"
+		echo "Please specify the Openfire installation location in environment variable OPENFIRE_HOME"
+		exit 1
+	fi
+fi
+
+
+execCommand() {
+	OLD_PWD=`pwd`
+	cd $OPENFIRE_HOME/bin
+	CMD="./openfire.sh $1"
+	su -c "$CMD" $OPENFIRE_USER &
+	sleep 1 # allows prompt to return
+	cd $OLD_PWD
+}
+
+
+start() {
+	execCommand "start"
+}
+
+stop() {
+	execCommand "stop"
+}
+
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		sleep 10 # since stop is backgrounded
+		start
+		;;
+	status) 
+		retval=$(pgrep -u $OPENFIRE_USER -f $OPENFIRE_HOME/bin/openfire > /dev/null ; echo $?)
+		if [ "$retval" = "0" ] ; then 
+			echo "openfire is running"
+			exit 0
+		else 
+			echo "openfire is not running"
+			exit 0
+		fi
+		;;
+	*)
+		echo "Usage $0 {start|stop|restart|status}"
+		exit 1
+esac
+
+exit 0

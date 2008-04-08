@@ -62,7 +62,6 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         vcardCache = CacheFactory.createCache(cacheName);
         this.eventHandler = new EventHandler();
 
-
         // Keeps the cache updated in case the vCard action was not performed by VCardManager
         VCardEventDispatcher.addListener(new VCardListener() {
             public void vCardCreated(String username, Element vCard) {
@@ -230,8 +229,11 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     public void initialize(XMPPServer server) {
         instance = this;
 
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.vcard.className");
+
         // Load a VCard provider.
-        String className = JiveGlobals.getXMLProperty("provider.vcard.className",
+        String className = JiveGlobals.getProperty("provider.vcard.className",
                 DefaultVCardProvider.class.getName());
         try {
             Class c = ClassUtils.forName(className);
@@ -249,6 +251,28 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         if (!provider.isReadOnly()) {
             UserEventDispatcher.addListener(eventHandler);
         }
+
+        // Detect when a new vcard provider class is set
+        PropertyEventListener propListener = new PropertyEventListener() {
+            public void propertySet(String property, Map params) {
+                if ("provider.vcard.className".equals(property)) {
+                    initialize(XMPPServer.getInstance());
+                }
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+                //Ignore
+            }
+        };
+        PropertyEventDispatcher.addListener(propListener);
     }
 
     public void stop() {

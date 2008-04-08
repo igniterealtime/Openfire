@@ -17,7 +17,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 /**
- * This is the interface the used to provide default defualt authorization 
+ * This is the interface the used to provide default default authorization
  * ID's when none was selected by the client.
  * This class simply removes the realm (if any) from the principal if and only if
  * the realm matches the server's realm, the server's xmpp domain name, or 
@@ -31,7 +31,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
     public DefaultAuthorizationMapping() {
         approvedRealms = new Vector<String>();
         
-        String realmList = JiveGlobals.getXMLProperty("sasl.approvedRealms");
+        String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
         if(realmList != null) {
             StringTokenizer st = new StringTokenizer(realmList, " ,\t\n\r\f");
             while(st.hasMoreTokens()) {
@@ -55,7 +55,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
                 if(realm.equals(JiveGlobals.getProperty("xmpp.domain"))) {
                     Log.debug("DefaultAuthorizationMapping: realm = xmpp.domain");
                     return username;
-                } else if(realm.equals(JiveGlobals.getXMLProperty("sasl.realm"))) {
+                } else if(realm.equals(JiveGlobals.getProperty("sasl.realm"))) {
                     Log.debug("DefaultAuthorizationMapping: ream = sasl.realm");
                     return username;
                 } else {

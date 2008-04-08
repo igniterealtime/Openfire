@@ -26,19 +26,12 @@ import java.util.Properties;
 
 /**
  * An AuthProvider that authenticates using a POP3 server. It will automatically create
- * local user accounts as needed. To enable this provider, edit the XML config file
- * file and set:
+ * local user accounts as needed. To enable this provider, set system properties as follows:
  *
- * <pre>
- * &lt;provider&gt;
- *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.auth.POP3AuthProvider&lt;/className&gt;
- *     &lt;/auth&gt;
- *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.user.POP3UserProvider&lt;/className&gt;
- *     &lt;/user&gt;
- * &lt;/provider&gt;
- * </pre>
+ * <ul>
+ * <li><tt>provider.auth.className = org.jivesoftware.openfire.auth.POP3AuthProvider</tt></li>
+ * <li><tt>provider.user.className = org.jivesoftware.openfire.user.POP3UserProvider</tt></li>
+ * </ul>
  *
  * The properties to configure the provider are as follows:
  *
@@ -79,24 +72,33 @@ public class POP3AuthProvider implements AuthProvider {
      * Initialiazes the POP3AuthProvider with values from the global config file.
      */
     public POP3AuthProvider() {
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authCache.enabled"))) {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("pop3.authCache.enabled");
+        JiveGlobals.migrateProperty("pop3.ssl");
+        JiveGlobals.migrateProperty("pop3.authRequiresDomain");
+        JiveGlobals.migrateProperty("pop3.host");
+        JiveGlobals.migrateProperty("pop3.debug");
+        JiveGlobals.migrateProperty("pop3.domain");
+        JiveGlobals.migrateProperty("pop3.port");
+
+        if (Boolean.valueOf(JiveGlobals.getProperty("pop3.authCache.enabled"))) {
             String cacheName = "POP3 Authentication";
             authCache = CacheFactory.createCache(cacheName);
         }
 
-        useSSL = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.ssl"));
-        authRequiresDomain = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.authRequiresDomain"));
+        useSSL = Boolean.valueOf(JiveGlobals.getProperty("pop3.ssl"));
+        authRequiresDomain = Boolean.valueOf(JiveGlobals.getProperty("pop3.authRequiresDomain"));
 
-        host = JiveGlobals.getXMLProperty("pop3.host");
+        host = JiveGlobals.getProperty("pop3.host");
         if (host == null || host.length() < 1) {
             throw new IllegalArgumentException("pop3.host is null or empty");
         }
 
-        debugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.debug"));
+        debugEnabled = Boolean.valueOf(JiveGlobals.getProperty("pop3.debug"));
 
-        domain = JiveGlobals.getXMLProperty("pop3.domain");
+        domain = JiveGlobals.getProperty("pop3.domain");
 
-        port = JiveGlobals.getXMLProperty("pop3.port", useSSL ? 995 : 110);
+        port = JiveGlobals.getIntProperty("pop3.port", useSSL ? 995 : 110);
 
         if (Log.isDebugEnabled()) {
             Log.debug("POP3AuthProvider: Created new POP3AuthProvider instance, fields:");

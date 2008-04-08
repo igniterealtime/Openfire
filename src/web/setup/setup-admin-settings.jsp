@@ -52,6 +52,7 @@
     boolean deleteAdmins = request.getParameter("deleteAdmins") != null;
     boolean ldapFinished = request.getParameter("ldapFinished") != null;
 
+    @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
     String domain = xmppSettings.get("xmpp.domain");
 
@@ -182,6 +183,10 @@
                     StringUtils.collectionToString(adminCollection));
         }
     }
+
+    // Save the updated settings
+    session.setAttribute("xmppSettings", xmppSettings);
+
 %>
 <html>
 <head>

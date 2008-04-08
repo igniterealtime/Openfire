@@ -21,9 +21,9 @@
 <%
     // Get parameters
     boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
-            JiveGlobals.getXMLProperty("provider.auth.className"));
+            JiveGlobals.getProperty("provider.auth.className"));
     boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
-            JiveGlobals.getXMLProperty("provider.auth.className"));
+            JiveGlobals.getProperty("provider.auth.className"));
     boolean next = request.getParameter("continue") != null;
     if (next) {
         // Figure out where to send the user.
@@ -31,9 +31,9 @@
 
         if ("default".equals(mode)) {
             // Set to default providers by deleting any existing values.
-            JiveGlobals.deleteXMLProperty("provider.user.className");
-            JiveGlobals.deleteXMLProperty("provider.group.className");
-            JiveGlobals.deleteXMLProperty("provider.auth.className");
+            JiveGlobals.deleteProperty("provider.user.className");
+            JiveGlobals.deleteProperty("provider.group.className");
+            JiveGlobals.deleteProperty("provider.auth.className");
             // Redirect
             response.sendRedirect("setup-admin-settings.jsp");
             return;

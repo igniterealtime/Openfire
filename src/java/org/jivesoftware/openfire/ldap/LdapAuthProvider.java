@@ -35,11 +35,11 @@ import javax.naming.CommunicationException;
  *
  *  <li><tt>ldap.authCache.enabled</tt> -- true to enable the auth cache.</li>
  *  <li><tt>ldap.authCache.size</tt> -- size in bytes of the auth cache. If property is
- *      not set, the default value is 524288 (512 K).
+ *      not set, the default value is 524288 (512 K).</li>
  *  <li><tt>ldap.authCache.maxLifetime</tt> -- maximum amount of time a hashed password
  *      can be cached in milleseconds. If property is not set, the default value is
- *      7200000 (2 hours).
- * </tt>
+ *      7200000 (2 hours).</li>
+ * </ul>
  *
  * @author Matt Tucker
  */
@@ -49,8 +49,11 @@ public class LdapAuthProvider implements AuthProvider {
     private Cache<String, String> authCache = null;
 
     public LdapAuthProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("ldap.authCache.enabled");
+
         manager = LdapManager.getInstance();
-        if (JiveGlobals.getXMLProperty("ldap.authCache.enabled", false)) {
+        if (JiveGlobals.getBooleanProperty("ldap.authCache.enabled", false)) {
             String cacheName = "LDAP Authentication";
             authCache = CacheFactory.createCache(cacheName);
         }

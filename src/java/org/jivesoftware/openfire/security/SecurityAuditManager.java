@@ -20,14 +20,11 @@ import java.util.Date;
  * a proper conduit for making security log entries and looking them up.  Ideally there is no reason
  * for outside classes to interact directly with a provider.
  *
- * The provider can be specified in <tt>openfire.xml</tt> by adding:
- *  ...
- *    <provider>
- *       <securityAudit>
- *          <className>my.security.audit.provider</className>
- *       </securityAudit>
- *    </provider>
- *  ...
+ * The provider can be specified in system properties by adding:
+ *
+ * <ul>
+ * <li><tt>provider.securityAudit.className = my.security.audit.provider</tt></li>
+ * </ul>
  *
  * @author Daniel Henninger
  */
@@ -71,7 +68,9 @@ public class SecurityAuditManager {
         // Detect when a new security audit provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
             public void propertySet(String property, Map params) {
-                //Ignore
+                if ("provider.securityAudit.className".equals(property)) {
+                    initProvider();
+                }
             }
 
             public void propertyDeleted(String property, Map params) {
@@ -79,9 +78,7 @@ public class SecurityAuditManager {
             }
 
             public void xmlPropertySet(String property, Map params) {
-                if ("provider.securityAudit.className".equals(property)) {
-                    initProvider();
-                }
+                //Ignore
             }
 
             public void xmlPropertyDeleted(String property, Map params) {
@@ -96,7 +93,10 @@ public class SecurityAuditManager {
      * DefaultSecurityAuditProvider if the specified provider is not valid or not specified.
      */
     private void initProvider() {
-        String className = JiveGlobals.getXMLProperty("provider.securityAudit.className",
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.securityAudit.className");
+
+        String className = JiveGlobals.getProperty("provider.securityAudit.className",
                 "org.jivesoftware.openfire.security.DefaultSecurityAuditProvider");
         // Check if we need to reset the provider class
         if (provider == null || !className.equals(provider.getClass().getName())) {

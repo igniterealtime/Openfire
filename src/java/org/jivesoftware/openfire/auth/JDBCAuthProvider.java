@@ -27,28 +27,19 @@ import java.sql.*;
  * {@link HybridAuthProvider hybrid} auth provider, so that you can also have
  * XMPP-only users that won't pollute your external data.<p>
  *
- * To enable this provider, set the following in the XML configuration file:
- *
- * <pre>
- * &lt;provider&gt;
- *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.auth.JDBCAuthProvider&lt;/className&gt;
- *     &lt;/auth&gt;
- * &lt;/provider&gt;
- * </pre>
+ * To enable this provider, set the following in the system properties:
+ * <ul>
+ * <li><tt>provider.auth.className = org.jivesoftware.openfire.auth.JDBCAuthProvider</tt></li>
+ * </ul>
  *
  * You'll also need to set your JDBC driver, connection string, and SQL statements:
  *
- * <pre>
- * &lt;jdbcProvider&gt;
- *     &lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
- *     &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;password=secret&lt;/connectionString&gt;
- * &lt;/jdbcProvider&gt;
- *
- * &lt;jdbcAuthProvider&gt;
- *      &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;/passwordSQL&gt;
- *      &lt;passwordType&gt;plain&lt;/passwordType&gt;
- * &lt;/jdbcAuthProvider&gt;</pre>
+ * <ul>
+ * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
+ * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
+ * <li><tt>jdbcAuthProvider.passwordSQL = SELECT password FROM user_account WHERE username=?</tt></li>
+ * <li><tt>jdbcAuthProvider.passwordType = plain</tt></li>
+ * </ul>
  *
  * The passwordType setting tells Openfire how the password is stored. Setting the value
  * is optional (when not set, it defaults to "plain"). The valid values are:<ul>
@@ -70,8 +61,14 @@ public class JDBCAuthProvider implements AuthProvider {
      * Constructs a new JDBC authentication provider.
      */
     public JDBCAuthProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("jdbcProvider.driver");
+        JiveGlobals.migrateProperty("jdbcProvider.connectionString");
+        JiveGlobals.migrateProperty("jdbcAuthProvider.passwordSQL");
+        JiveGlobals.migrateProperty("jdbcAuthProvider.passwordType");
+
         // Load the JDBC driver and connection string.
-        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
+        String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
         try {
             Class.forName(jdbcDriver).newInstance();
         }
@@ -79,14 +76,14 @@ public class JDBCAuthProvider implements AuthProvider {
             Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
             return;
         }
-        connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
+        connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 
         // Load SQL statements.
-        passwordSQL = JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordSQL");
+        passwordSQL = JiveGlobals.getProperty("jdbcAuthProvider.passwordSQL");
         passwordType = PasswordType.plain;
         try {
             passwordType = PasswordType.valueOf(
-                    JiveGlobals.getXMLProperty("jdbcAuthProvider.passwordType", "plain"));
+                    JiveGlobals.getProperty("jdbcAuthProvider.passwordType", "plain"));
         }
         catch (IllegalArgumentException iae) {
             Log.error(iae);
@@ -215,6 +212,7 @@ public class JDBCAuthProvider implements AuthProvider {
      * Returns the value of the password field. It will be in plain text or hashed
      * format, depending on the password type.
      *
+     * @param username user to retrieve the password field for
      * @return the password value.
      * @throws UserNotFoundException if the given user could not be loaded.
      */

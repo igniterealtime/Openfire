@@ -25,7 +25,7 @@ import java.util.Iterator;
 
 /**
  * Bean that stores the vcard mapping. It is also responsible for saving the mapping
- * as an XML property and retrieving it.
+ * as a system property and retrieving it.
  *
  * @author Gaston Dombiak
  */
@@ -497,10 +497,10 @@ public class LdapUserProfile {
         StringBuilder sb = new StringBuilder(vcardXML.length());
         sb.append("<![CDATA[").append(vcardXML).append("]]>");
         // Save mapping as an XML property
-        JiveGlobals.setXMLProperty("ldap.vcard-mapping", sb.toString());
+        JiveGlobals.setProperty("ldap.vcard-mapping", sb.toString());
 
         // Set that the vcard provider is LdapVCardProvider
-        JiveGlobals.setXMLProperty("provider.vcard.className", LdapVCardProvider.class.getName());
+        JiveGlobals.setProperty("provider.vcard.className", LdapVCardProvider.class.getName());
 
         // Save duplicated fields in LdapManager (should be removed in the future)
         LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
@@ -517,7 +517,7 @@ public class LdapUserProfile {
      * @return true if mappings where loaded from saved property.
      */
     public boolean loadFromProperties() {
-        String xmlProperty = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
+        String xmlProperty = JiveGlobals.getProperty("ldap.vcard-mapping");
         if (xmlProperty == null || xmlProperty.trim().length() == 0) {
             return false;
         }

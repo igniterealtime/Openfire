@@ -40,9 +40,12 @@ public class LdapUserProvider implements UserProvider {
     private long expiresStamp = System.currentTimeMillis();
 
     public LdapUserProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("ldap.searchFields");
+
         manager = LdapManager.getInstance();
         searchFields = new LinkedHashMap<String,String>();
-        String fieldList = JiveGlobals.getXMLProperty("ldap.searchFields");
+        String fieldList = JiveGlobals.getProperty("ldap.searchFields");
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());
@@ -207,7 +210,7 @@ public class LdapUserProvider implements UserProvider {
                 Log.error("Error parsing LDAP search fields: " + fieldList, e);
             }
         }
-        JiveGlobals.setXMLProperty("ldap.searchFields", fieldList);
+        JiveGlobals.setProperty("ldap.searchFields", fieldList);
     }
 
     public Collection<User> findUsers(Set<String> fields, String query)

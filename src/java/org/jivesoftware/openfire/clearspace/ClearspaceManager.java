@@ -166,17 +166,17 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         this.properties = new Map<String, String>() {
 
             public String get(Object key) {
-                return JiveGlobals.getXMLProperty((String) key);
+                return JiveGlobals.getProperty((String) key);
             }
 
             public String put(String key, String value) {
-                JiveGlobals.setXMLProperty(key, value);
+                JiveGlobals.setProperty(key, value);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
 
             public String remove(Object key) {
-                JiveGlobals.deleteXMLProperty((String) key);
+                JiveGlobals.deleteProperty((String) key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
@@ -222,6 +222,40 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     private void init() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("clearspace.uri");
+        JiveGlobals.migrateProperty("clearspace.sharedSecret");
+
+        // Make sure that all Clearspace components are set up, unless they were overridden
+        // Note that the auth provider is our way of knowing that we are set up with Clearspace,
+        // so don't bother checking to set it.
+        if (isEnabled()) {
+            if (JiveGlobals.getProperty("provider.user.className") == null) {
+                JiveGlobals.setProperty("provider.user.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceUserProvider");
+            }
+            if (JiveGlobals.getProperty("provider.group.className") == null) {
+                JiveGlobals.setProperty("provider.group.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceGroupProvider");
+            }
+            if (JiveGlobals.getProperty("provider.vcard.className") == null) {
+                JiveGlobals.setProperty("provider.vcard.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceVCardProvider");
+            }
+            if (JiveGlobals.getProperty("provider.lockout.className") == null) {
+                JiveGlobals.setProperty("provider.lockout.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceLockOutProvider");
+            }
+            if (JiveGlobals.getProperty("provider.securityAudit.className") == null) {
+                JiveGlobals.setProperty("provider.securityAudit.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceSecurityAuditProvider");
+            }
+            if (JiveGlobals.getProperty("provider.admin.className") == null) {
+                JiveGlobals.setProperty("provider.admin.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
+            }
+        }
+
         this.uri = properties.get("clearspace.uri");
         if (uri != null) {
             if (!this.uri.endsWith("/")) {

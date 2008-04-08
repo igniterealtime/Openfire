@@ -27,15 +27,9 @@ import java.util.*;
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
  *
- * <pre>
- * &lt;provider&gt;
- *   &lt;vcard&gt;
- *  	&lt;className&gt;org.jivesoftware.openfire.ldap.LdapVCardProvider&lt;/className&gt;
- *    &lt;/vcard&gt;
- * &lt;/provider&gt;
- * </pre><p/>
+ * <tt>provider.vcard.className = org.jivesoftware.openfire.ldap.LdapVCardProvider</tt>
  *
- * and an xml vcard-mapping to openfire.xml.<p/>
+ * and an xml vcard-mapping in the system properties.<p/>
  *
  * The vcard attributes can be configured by adding an <code>attrs="attr1,attr2"</code>
  * attribute to the vcard elements.<p/>
@@ -49,9 +43,8 @@ import java.util.*;
  * XML this provider will send to a client after after stripping <code>attr</code> attributes
  * and populating the placeholders with the data retrieved from LDAP. This system should
  * be flexible enough to handle any client's vCard format. An example mapping follows.<br>
- * <pre>
- *    &lt;ldap&gt;
- *      &lt;vcard-mapping&gt;
+ *
+ * <tt>ldap.vcard-mapping =
  *        &lt;![CDATA[
  *    		&lt;vCard xmlns='vcard-temp'&gt;
  *    			&lt;FN attrs=&quot;displayName&quot;&gt;{0}&lt;/FN&gt;
@@ -87,9 +80,7 @@ import java.util.*;
  *    			&lt;/DESC&gt;
  *    		&lt;/vCard&gt;
  *        ]]&gt;
- *      &lt;/vcard-mapping&gt;
- *    &lt;/ldap&gt;
- * </pre><p>
+ * </tt>
  * <p/>
  * An easy way to get the vcard format your client needs, assuming you've been
  * using the database store, is to do a <code>SELECT value FROM ofVCard WHERE
@@ -113,6 +104,9 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     private DefaultVCardProvider defaultProvider = null;
 
     public LdapVCardProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("ldap.vcard-mapping");
+
         manager = LdapManager.getInstance();
         initTemplate();
         // Listen to property events so that the template is always up to date
@@ -127,7 +121,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * Initializes the VCard template as set by the administrator.
      */
     private void initTemplate() {
-        String property = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
+        String property = JiveGlobals.getProperty("ldap.vcard-mapping");
         Log.debug("LdapVCardProvider: Found vcard mapping: '" + property);
         try {
             // Remove CDATA wrapping element
@@ -416,6 +410,11 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         if ("ldap.override.avatar".equals(property)) {
             dbStorageEnabled = Boolean.parseBoolean((String)params.get("value"));
         }
+        else if ("ldap.vcard-mapping".equals(property)) {
+            initTemplate();
+            // Reset cache of vCards
+            VCardManager.getInstance().reset();
+        }
     }
 
     public void propertyDeleted(String property, Map params) {
@@ -425,11 +424,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     }
 
     public void xmlPropertySet(String property, Map params) {
-        if ("ldap.vcard-mapping".equals(property)) {
-            initTemplate();
-            // Reset cache of vCards
-            VCardManager.getInstance().reset();
-        }
+        //Ignore
     }
 
     public void xmlPropertyDeleted(String property, Map params) {

@@ -28,14 +28,13 @@ import javax.naming.directory.SearchResult;
 /**
  * Provider for authorization mapping using LDAP. If the authenticated
  * principal did not request a username, provide one via LDAP. Specify the
- * lookup field in the <tt>openfire.xml</tt> file. An entry in that file would
+ * lookup field in the system properties. An entry in that file would
  * look like the following:
- * <p/>
- * <pre>
- *   &lt;ldap&gt;
- *     &lt;princField&gt; k5login &lt;/princField&gt;
- *     &lt;princSearchFilter&gt; princField={0}  &lt;/princSearchFilter&gt;
- *   &lt;/ldap&gt;</pre>
+ *
+ * <ul>
+ * <li><tt>ldap.princField = k5login</tt></li>
+ * <li><tt>ldap.princSearchFilter = princField={0}</tt></li>
+ * </ul>
  * <p/>
  * Each ldap object that represents a user is expcted to have exactly one of
  * ldap.usernameField and ldap.princField, and they are both expected to be unique
@@ -59,10 +58,14 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
     private String princSearchFilter;
 
     public LdapAuthorizationMapping() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("ldap.princField");
+        JiveGlobals.migrateProperty("ldap.princSearchFilter");
+
         manager = LdapManager.getInstance();
         usernameField = manager.getUsernameField();
-        princField = JiveGlobals.getXMLProperty("ldap.princField", "k5login");
-        princSearchFilter = JiveGlobals.getXMLProperty("ldap.princSearchFilter");
+        princField = JiveGlobals.getProperty("ldap.princField", "k5login");
+        princSearchFilter = JiveGlobals.getProperty("ldap.princSearchFilter");
         StringBuilder filter = new StringBuilder();
         if(princSearchFilter == null) {
             filter.append("(").append(princField).append("={0})");

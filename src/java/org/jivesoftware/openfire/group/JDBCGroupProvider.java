@@ -27,37 +27,24 @@ import java.util.List;
  * It is best used with the JDBCAuthProvider to provide integration between your external system and
  * Openfire.  All data is treated as read-only so any set operations will result in an exception.
  *
- * To enable this provider, set the following in the XML configuration file:
+ * To enable this provider, set the following in the system properties:
  *
- * <pre>
- * &lt;provider&gt;
- *     &lt;group&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.group.JDBCGroupProvider&lt;/className&gt;
- *     &lt;/group&gt;
- * &lt;/provider&gt;
- * </pre>
+ * <ul>
+ * <li><tt>provider.group.className = org.jivesoftware.openfire.group.JDBCGroupProvider</tt></li>
+ * </ul>
  *
  * Then you need to set your driver, connection string and SQL statements:
  *
- * <pre>
- * &lt;jdbcProvider&gt;
- *     &lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
- *     &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;password=secret&lt;/connectionString&gt;
- * &lt;/jdbcProvider&gt;
- *
- * &lt;jdbcGroupProvider&gt;
- *      &lt;groupCountSQL&gt;SELECT count(*) FROM myGroups&lt;/groupCountSQL&gt;
- *      &lt;allGroupsSQL&gt;SELECT groupName FROM myGroups&lt;/allGroupsSQL&gt;
- *      &lt;userGroupsSQL&gt;SELECT groupName FORM myGroupUsers WHERE
- * username=?&lt;/userGroupsSQL&gt;
- *      &lt;descriptionSQL&gt;SELECT groupDescription FROM myGroups WHERE
- * groupName=?&lt;/descriptionSQL&gt;
- *      &lt;loadMembersSQL&gt;SELECT username FORM myGroupUsers WHERE groupName=? AND
- * isAdmin='N'&lt;/loadMembersSQL&gt;
- *      &lt;loadAdminsSQL&gt;SELECT username FORM myGroupUsers WHERE groupName=? AND
- * isAdmin='Y'&lt;/loadAdminsSQL&gt;
- * &lt;/jdbcGroupProvider&gt;
- * </pre>
+ * <ul>
+ * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
+ * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
+ * <li><tt>jdbcGroupProvider.groupCountSQL = SELECT count(*) FROM myGroups</tt></li>
+ * <li><tt>jdbcGroupProvider.allGroupsSQL = SELECT groupName FROM myGroups</tt></li>
+ * <li><tt>jdbcGroupProvider.userGroupsSQL = SELECT groupName FORM myGroupUsers WHERE username=?</tt></li>
+ * <li><tt>jdbcGroupProvider.descriptionSQL = SELECT groupDescription FROM myGroups WHERE groupName=?</tt></li>
+ * <li><tt>jdbcGroupProvider.loadMembersSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='N'</tt></li>
+ * <li><tt>jdbcGroupProvider.loadAdminsSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='Y'</tt></li>
+ * </ul>
  *
  * @author David Snopek
  */
@@ -78,8 +65,18 @@ public class JDBCGroupProvider implements GroupProvider {
      * Constructor of the JDBCGroupProvider class.
      */
     public JDBCGroupProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("jdbcProvider.driver");
+        JiveGlobals.migrateProperty("jdbcProvider.connectionString");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.groupCountSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.allGroupsSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.userGroupsSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.descriptionSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.loadMembersSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.loadAdminsSQL");
+
         // Load the JDBC driver and connection string.
-        String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
+        String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
         try {
             Class.forName(jdbcDriver).newInstance();
         }
@@ -87,15 +84,15 @@ public class JDBCGroupProvider implements GroupProvider {
             Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
             return;
         }
-        connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
+        connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 
         // Load SQL statements
-        groupCountSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.groupCountSQL");
-        allGroupsSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.allGroupsSQL");
-        userGroupsSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.userGroupsSQL");
-        descriptionSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.descriptionSQL");
-        loadMembersSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.loadMembersSQL");
-        loadAdminsSQL = JiveGlobals.getXMLProperty("jdbcGroupProvider.loadAdminsSQL");
+        groupCountSQL = JiveGlobals.getProperty("jdbcGroupProvider.groupCountSQL");
+        allGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.allGroupsSQL");
+        userGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.userGroupsSQL");
+        descriptionSQL = JiveGlobals.getProperty("jdbcGroupProvider.descriptionSQL");
+        loadMembersSQL = JiveGlobals.getProperty("jdbcGroupProvider.loadMembersSQL");
+        loadAdminsSQL = JiveGlobals.getProperty("jdbcGroupProvider.loadAdminsSQL");
     }
 
     /**

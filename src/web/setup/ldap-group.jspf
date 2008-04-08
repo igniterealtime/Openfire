@@ -9,6 +9,8 @@
 
 <%
     // Get parameters
+    @SuppressWarnings("unchecked")
+    Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
 
     String serverType = ParamUtils.getParameter(request, "serverType");
     // Server type should never be null, but if it is, assume "other"
@@ -19,12 +21,12 @@
     LdapManager manager = LdapManager.getInstance();
 
     // Determine the right default values based on the the server type.
-    String defaultGroupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField");
-    String defaultGroupMemberField = JiveGlobals.getXMLProperty("ldap.groupMemberField");
-    String defaultGroupDescriptionField = JiveGlobals.getXMLProperty("ldap.groupDescriptionField");
-    String posixModeString = JiveGlobals.getXMLProperty("ldap.posixMode");
+    String defaultGroupNameField = JiveGlobals.getProperty("ldap.groupNameField");
+    String defaultGroupMemberField = JiveGlobals.getProperty("ldap.groupMemberField");
+    String defaultGroupDescriptionField = JiveGlobals.getProperty("ldap.groupDescriptionField");
+    String posixModeString = JiveGlobals.getProperty("ldap.posixMode");
     boolean defaultPosixMode = Boolean.parseBoolean(posixModeString);
-    String defaultGroupSearchFilter = JiveGlobals.getXMLProperty("ldap.groupSearchFilter");
+    String defaultGroupSearchFilter = JiveGlobals.getProperty("ldap.groupSearchFilter");
 
     if (serverType.equals("activedirectory")) {
         if (defaultGroupNameField == null) {
@@ -109,8 +111,20 @@
             }
 
             // Enable the LDAP auth provider. The LDAP user provider will be enabled on the next step.
-            JiveGlobals.setXMLProperty("provider.group.className",
+            JiveGlobals.setProperty("provider.group.className",
                     "org.jivesoftware.openfire.ldap.LdapGroupProvider");
+
+            // Save the settings for later, if we're in setup
+            if (xmppSettings != null) {
+                xmppSettings.put("provider.group.className",
+                        "org.jivesoftware.openfire.ldap.LdapGroupProvider");
+                xmppSettings.put("ldap.groupNameField", groupNameField);
+                xmppSettings.put("ldap.groupMemberField", groupMemberField);
+                xmppSettings.put("ldap.groupDescriptionField", groupDescriptionField);
+                xmppSettings.put("ldap.posixMode", Boolean.toString(posixMode));
+                xmppSettings.put("ldap.groupSearchFilter", groupSearchFilter);
+                session.setAttribute("xmppSettings", xmppSettings);
+            }
 
             // Redirect
             response.sendRedirect(nextPage);

@@ -19,10 +19,7 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
@@ -68,17 +65,7 @@ public class GroupManager {
         // a particular user
         groupMetaCache = CacheFactory.createCache("Group Metadata Cache");
 
-        // Load a group provider.
-        String className = JiveGlobals.getXMLProperty("provider.group.className",
-                "org.jivesoftware.openfire.group.DefaultGroupProvider");
-        try {
-            Class c = ClassUtils.forName(className);
-            provider = (GroupProvider) c.newInstance();
-        }
-        catch (Exception e) {
-            Log.error("Error loading group provider: " + className, e);
-            provider = new DefaultGroupProvider();
-        }
+        initProvider();
 
         GroupEventDispatcher.addListener(new GroupEventListener() {
             public void groupCreated(Group group, Map params) {
@@ -156,6 +143,28 @@ public class GroupManager {
             }
         });
 
+        // Detect when a new auth provider class is set
+        PropertyEventListener propListener = new PropertyEventListener() {
+            public void propertySet(String property, Map params) {
+                if ("provider.group.className".equals(property)) {
+                    initProvider();
+                }
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+                //Ignore
+            }
+        };
+        PropertyEventDispatcher.addListener(propListener);
+
         // Pre-load shared groups. This will provide a faster response
         // time to the first client that logs in.
         Runnable task = new Runnable() {
@@ -178,6 +187,23 @@ public class GroupManager {
             }
         };
         TaskEngine.getInstance().submit(task);
+    }
+
+    private void initProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.group.className");
+
+        // Load a group provider.
+        String className = JiveGlobals.getProperty("provider.group.className",
+                "org.jivesoftware.openfire.group.DefaultGroupProvider");
+        try {
+            Class c = ClassUtils.forName(className);
+            provider = (GroupProvider) c.newInstance();
+        }
+        catch (Exception e) {
+            Log.error("Error loading group provider: " + className, e);
+            provider = new DefaultGroupProvider();
+        }
     }
 
     /**

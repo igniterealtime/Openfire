@@ -77,7 +77,9 @@ public class UserManager implements IQResultListener {
         // Detect when a new auth provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
             public void propertySet(String property, Map params) {
-                //Ignore
+                if ("provider.user.className".equals(property)) {
+                    initProvider();
+                }
             }
 
             public void propertyDeleted(String property, Map params) {
@@ -85,9 +87,7 @@ public class UserManager implements IQResultListener {
             }
 
             public void xmlPropertySet(String property, Map params) {
-                if ("provider.user.className".equals(property)) {
-                    initProvider();
-                }
+                //Ignore
             }
 
             public void xmlPropertyDeleted(String property, Map params) {
@@ -410,7 +410,10 @@ public class UserManager implements IQResultListener {
     }
 
     private void initProvider() {
-        String className = JiveGlobals.getXMLProperty("provider.user.className",
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.user.className");
+
+        String className = JiveGlobals.getProperty("provider.user.className",
                 "org.jivesoftware.openfire.user.DefaultUserProvider");
         // Check if we need to reset the provider class
         if (provider == null || !className.equals(provider.getClass().getName())) {

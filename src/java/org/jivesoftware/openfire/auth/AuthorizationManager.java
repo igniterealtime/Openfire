@@ -51,7 +51,13 @@ public class AuthorizationManager {
     private static AuthorizationManager instance = new AuthorizationManager();
 
     static {
-        String classList = JiveGlobals.getXMLProperty("provider.authorization.classList");
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.authorization.classList");
+        JiveGlobals.migrateProperty("provider.authorizationMapping.classList");
+        JiveGlobals.migrateProperty("sasl.approvedRealms");
+        JiveGlobals.migrateProperty("sasl.realm");
+
+        String classList = JiveGlobals.getProperty("provider.authorization.classList");
         if (classList != null) {
             StringTokenizer st = new StringTokenizer(classList, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
@@ -72,10 +78,8 @@ public class AuthorizationManager {
             Log.debug("AuthorizationManager: No AuthorizationProvider's found. Loading DefaultAuthorizationPolicy");
             authorizationPolicies.add(new DefaultAuthorizationPolicy());
         }
-        classList = null;
-        classList = JiveGlobals.getXMLProperty("provider.authorizationMapping.classList");
 
-
+        classList = JiveGlobals.getProperty("provider.authorizationMapping.classList");
         if (classList != null) {
             StringTokenizer st = new StringTokenizer(classList, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
@@ -97,7 +101,7 @@ public class AuthorizationManager {
         }
         if (authorizationMapping.isEmpty()) {
             Log.debug("AuthorizationManager: No AuthorizationMapping's found. Loading DefaultAuthorizationMapping");
-            authorizationMapping.add((AuthorizationMapping)new DefaultAuthorizationMapping());
+            authorizationMapping.add(new DefaultAuthorizationMapping());
         }
     }
 

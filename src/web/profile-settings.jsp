@@ -37,9 +37,9 @@
     <body>
     <%
         boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
-                JiveGlobals.getXMLProperty("provider.auth.className"));
+                JiveGlobals.getProperty("provider.auth.className"));
         boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
-                JiveGlobals.getXMLProperty("provider.auth.className"));
+                JiveGlobals.getProperty("provider.auth.className"));
     %>
     <p>
     <fmt:message key="profile-settings.info"/>

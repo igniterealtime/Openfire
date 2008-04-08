@@ -31,33 +31,25 @@ import java.util.Date;
  * section below, as well as the <i>usernameField</i>, the <i>nameField</i> and the
  * <i>emailField</i>.<p/>
  *
- * To enable this provider, set the following in the XML configuration file:<p/>
- * <pre>
- * &lt;provider&gt;
- *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.user.JDBCUserProvider&lt;/className&gt;
- *     &lt;/user&gt;
- * &lt;/provider&gt;
- * </pre><p/>
+ * To enable this provider, set the following in the system properties:<p/>
+ *
+ * <ul>
+ * <li><tt>provider.user.className = org.jivesoftware.openfire.user.JDBCUserProvider</tt></li>
+ * </ul>
  *
  * Then you need to set your driver, connection string and SQL statements:
  * <p/>
- * <pre>
- * &lt;jdbcProvider&gt;
- *     &lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
- *     &lt;connectionString&gt;jdbc:mysql://localhost/dbname?user=username&amp;password=secret&lt;/connectionString&gt;
- * &lt;/jdbcProvider&gt;
- *
- * &lt;jdbcUserProvider&gt;
- *      &lt;loadUserSQL&gt;SELECT name,email FROM myUser WHERE user = ?&lt;/loadUserSQL&gt;
- *      &lt;userCountSQL&gt;SELECT COUNT(*) FROM myUser&lt;/userCountSQL&gt;
- *      &lt;allUsersSQL&gt;SELECT user FROM myUser&lt;/allUsersSQL&gt;
- *      &lt;searchSQL&gt;SELECT user FROM myUser WHERE&lt;/searchSQL&gt;
- *      &lt;usernameField&gt;myUsernameField&lt;/usernameField&gt;
- *      &lt;nameField&gt;myNameField&lt;/nameField&gt;
- *      &lt;emailField&gt;mymailField&lt;/emailField&gt;
- * &lt;/jdbcUserProvider&gt;
- * </pre>
+ * <ul>
+ * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
+ * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
+ * <li><tt>jdbcUserProvider.loadUserSQL = SELECT name,email FROM myUser WHERE user = ?</tt></li>
+ * <li><tt>jdbcUserProvider.userCountSQL = SELECT COUNT(*) FROM myUser</tt></li>
+ * <li><tt>jdbcUserProvider.allUsersSQL = SELECT user FROM myUser</tt></li>
+ * <li><tt>jdbcUserProvider.searchSQL = SELECT user FROM myUser WHERE</tt></li>
+ * <li><tt>jdbcUserProvider.usernameField = myUsernameField</tt></li>
+ * <li><tt>jdbcUserProvider.nameField = myNameField</tt></li>
+ * <li><tt>jdbcUserProvider.emailField = mymailField</tt></li>
+ * </ul>
  *
  * @author Huw Richards huw.richards@gmail.com
  */
@@ -77,8 +69,19 @@ public class JDBCUserProvider implements UserProvider {
      * Constructs a new JDBC user provider.
      */
     public JDBCUserProvider() {
-		// Load the JDBC driver and connection string.
-		String jdbcDriver = JiveGlobals.getXMLProperty("jdbcProvider.driver");
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("jdbcProvider.driver");
+        JiveGlobals.migrateProperty("jdbcProvider.connectionString");
+        JiveGlobals.migrateProperty("jdbcUserProvider.loadUserSQL");
+        JiveGlobals.migrateProperty("jdbcUserProvider.userCountSQL");
+        JiveGlobals.migrateProperty("jdbcUserProvider.allUsersSQL");
+        JiveGlobals.migrateProperty("jdbcUserProvider.searchSQL");
+        JiveGlobals.migrateProperty("jdbcUserProvider.usernameField");
+        JiveGlobals.migrateProperty("jdbcUserProvider.nameField");
+        JiveGlobals.migrateProperty("jdbcUserProvider.emailField");
+
+        // Load the JDBC driver and connection string.
+		String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
 		try {
 			Class.forName(jdbcDriver).newInstance();
 		}
@@ -86,16 +89,16 @@ public class JDBCUserProvider implements UserProvider {
 			Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
 			return;
 		}
-		connectionString = JiveGlobals.getXMLProperty("jdbcProvider.connectionString");
+		connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 
         // Load database statements for user data.
-        loadUserSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.loadUserSQL");
-		userCountSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.userCountSQL");
-		allUsersSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.allUsersSQL");
-		searchSQL = JiveGlobals.getXMLProperty("jdbcUserProvider.searchSQL");
-		usernameField = JiveGlobals.getXMLProperty("jdbcUserProvider.usernameField");
-		nameField = JiveGlobals.getXMLProperty("jdbcUserProvider.nameField");
-		emailField = JiveGlobals.getXMLProperty("jdbcUserProvider.emailField");
+        loadUserSQL = JiveGlobals.getProperty("jdbcUserProvider.loadUserSQL");
+		userCountSQL = JiveGlobals.getProperty("jdbcUserProvider.userCountSQL");
+		allUsersSQL = JiveGlobals.getProperty("jdbcUserProvider.allUsersSQL");
+		searchSQL = JiveGlobals.getProperty("jdbcUserProvider.searchSQL");
+		usernameField = JiveGlobals.getProperty("jdbcUserProvider.usernameField");
+		nameField = JiveGlobals.getProperty("jdbcUserProvider.nameField");
+		emailField = JiveGlobals.getProperty("jdbcUserProvider.emailField");
 	}
 
 	public User loadUser(String username) throws UserNotFoundException {

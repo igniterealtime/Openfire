@@ -75,17 +75,17 @@ public class LdapManager {
         Map<String, String> properties = new Map<String, String>() {
 
             public String get(Object key) {
-                return JiveGlobals.getXMLProperty((String)key);
+                return JiveGlobals.getProperty((String)key);
             }
 
             public String put(String key, String value) {
-                JiveGlobals.setXMLProperty(key, value);
+                JiveGlobals.setProperty(key, value);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
 
             public String remove(Object key) {
-                JiveGlobals.deleteXMLProperty((String)key);
+                JiveGlobals.deleteProperty((String)key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
@@ -181,6 +181,37 @@ public class LdapManager {
      */
     public LdapManager(Map<String, String> properties) {
         this.properties = properties;
+
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("ldap.host");
+        JiveGlobals.migrateProperty("ldap.port");
+        JiveGlobals.migrateProperty("ldap.readTimeout");
+        JiveGlobals.migrateProperty("ldap.usernameField");
+        JiveGlobals.migrateProperty("ldap.usernameSuffix");
+        JiveGlobals.migrateProperty("ldap.baseDN");
+        JiveGlobals.migrateProperty("ldap.alternateBaseDN");
+        JiveGlobals.migrateProperty("ldap.nameField");
+        JiveGlobals.migrateProperty("ldap.emailField");
+        JiveGlobals.migrateProperty("ldap.connectionPoolEnabled");
+        JiveGlobals.migrateProperty("ldap.searchFilter");
+        JiveGlobals.migrateProperty("ldap.subTreeSearch");
+        JiveGlobals.migrateProperty("ldap.groupNameField");
+        JiveGlobals.migrateProperty("ldap.groupMemberField");
+        JiveGlobals.migrateProperty("ldap.groupDescriptionField");
+        JiveGlobals.migrateProperty("ldap.posixMode");
+        JiveGlobals.migrateProperty("ldap.groupSearchFilter");
+        JiveGlobals.migrateProperty("ldap.adminDN");
+        JiveGlobals.migrateProperty("ldap.adminPassword");
+        JiveGlobals.migrateProperty("ldap.debugEnabled");
+        JiveGlobals.migrateProperty("ldap.sslEnabled");
+        JiveGlobals.migrateProperty("ldap.autoFollowReferrals");
+        JiveGlobals.migrateProperty("ldap.autoFollowAliasReferrals");
+        JiveGlobals.migrateProperty("ldap.encloseUserDN");
+        JiveGlobals.migrateProperty("ldap.encloseGroupDN");
+        JiveGlobals.migrateProperty("ldap.initialContextFactory");
+        JiveGlobals.migrateProperty("ldap.pagedResultsSize");
+        JiveGlobals.migrateProperty("ldap.clientSideSorting");
+        JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
         
         String host = properties.get("ldap.host");
         if (host != null) {
@@ -1485,8 +1516,12 @@ public class LdapManager {
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim) {
         List<String> results = new ArrayList<String>();
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
-        Boolean clientSideSort = JiveGlobals.getXMLProperty("ldap.clientSideSorting", false);
+        int pageSize = -1;
+        String pageSizeStr = properties.get("ldap.pagedResultsSize");
+        if (pageSizeStr != null) pageSize = Integer.parseInt(pageSizeStr, -1);
+        Boolean clientSideSort = false;
+        String clientSideSortStr = properties.get("ldap.clientSideSorting");
+        if (clientSideSortStr != null) clientSideSort = Boolean.valueOf(clientSideSortStr);
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         try {
@@ -1688,7 +1723,9 @@ public class LdapManager {
      * @return The number of entries that match the filter.
      */
     public Integer retrieveListCount(String attribute, String searchFilter) {
-        int pageSize = JiveGlobals.getXMLProperty("ldap.pagedResultsSize", -1);
+        int pageSize = -1;
+        String pageSizeStr = properties.get("ldap.pagedResultsSize");
+        if (pageSizeStr != null) pageSize = Integer.parseInt(pageSizeStr, -1);
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         Integer count = 0;

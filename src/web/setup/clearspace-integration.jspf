@@ -13,6 +13,8 @@
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
+    @SuppressWarnings("unchecked")
+    Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
 
     ClearspaceManager manager = null;
     if (ClearspaceManager.getInstance() != null) {
@@ -46,21 +48,42 @@
                 manager.setConnectionURI(uri);
                 manager.setSharedSecret(sharedSecret);
 
-                // Enable the Clearspace user, auth, group, and vcard providers.
-                JiveGlobals.setXMLProperty("provider.user.className",
-                        "org.jivesoftware.openfire.clearspace.ClearspaceUserProvider");
-                JiveGlobals.setXMLProperty("provider.auth.className",
+                // Enable the Clearspace auth, user, group, vcard, lockout, security audit, and admin providers.
+                JiveGlobals.setProperty("provider.auth.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider");
-                JiveGlobals.setXMLProperty("provider.group.className",
+                JiveGlobals.setProperty("provider.user.className",
+                        "org.jivesoftware.openfire.clearspace.ClearspaceUserProvider");
+                JiveGlobals.setProperty("provider.group.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceGroupProvider");
-                JiveGlobals.setXMLProperty("provider.vcard.className",
+                JiveGlobals.setProperty("provider.vcard.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceVCardProvider");
-                JiveGlobals.setXMLProperty("provider.lockout.className",
+                JiveGlobals.setProperty("provider.lockout.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceLockOutProvider");
-                JiveGlobals.setXMLProperty("provider.securityAudit.className",
+                JiveGlobals.setProperty("provider.securityAudit.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceSecurityAuditProvider");
-                JiveGlobals.setXMLProperty("provider.admin.className",
+                JiveGlobals.setProperty("provider.admin.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
+
+                // Save the settings for later, if we're in setup
+                if (xmppSettings != null) {
+                    xmppSettings.put("provider.auth.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider");
+                    xmppSettings.put("provider.user.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceUserProvider");
+                    xmppSettings.put("provider.group.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceGroupProvider");
+                    xmppSettings.put("provider.vcard.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceVCardProvider");
+                    xmppSettings.put("provider.lockout.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceLockOutProvider");
+                    xmppSettings.put("provider.securityAudit.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceSecurityAuditProvider");
+                    xmppSettings.put("provider.admin.className",
+                            "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
+                    xmppSettings.put("clearspace.uri", uri);
+                    xmppSettings.put("clearspace.sharedSecret", sharedSecret);
+                    session.setAttribute("xmppSettings", xmppSettings);
+                }
 
                 // Redirect to next step.
                 response.sendRedirect(nextPage);

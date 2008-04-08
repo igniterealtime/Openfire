@@ -17,6 +17,9 @@
     boolean referralsEnabled = false;
     boolean aliasReferralsEnabled = true;
 
+    @SuppressWarnings("unchecked")
+    Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
@@ -53,8 +56,12 @@
             settings.put("ldap.host", host);
             settings.put("ldap.port", Integer.toString(port));
             settings.put("ldap.baseDN", baseDN);
-            settings.put("ldap.adminDN", adminDN);
-            settings.put("ldap.adminPassword", adminPassword);
+            if (adminDN != null) {
+                settings.put("ldap.adminDN", adminDN);
+            }
+            if (adminPassword != null) {
+                settings.put("ldap.adminPassword", adminPassword);
+            }
             settings.put("ldap.connectionPoolEnabled",
                     Boolean.toString(connectionPoolEnabled));
             settings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
@@ -82,6 +89,21 @@
                 manager.setDebugEnabled(debugEnabled);
                 manager.setFollowReferralsEnabled(referralsEnabled);
                 manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
+
+                // Save the settings for later, if we're in setup
+                if (xmppSettings != null) {
+                    xmppSettings.put("ldap.host", host);
+                    xmppSettings.put("ldap.port", Integer.toString(port));
+                    xmppSettings.put("ldap.baseDN", baseDN);
+                    xmppSettings.put("ldap.adminDN", adminDN);
+                    xmppSettings.put("ldap.adminPassword", adminPassword);
+                    xmppSettings.put("ldap.connectionPoolEnabled", Boolean.toString(connectionPoolEnabled));
+                    xmppSettings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
+                    xmppSettings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
+                    xmppSettings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
+                    xmppSettings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
+                    session.setAttribute("xmppSettings", xmppSettings);
+                }
 
                 // Redirect to next step.
                 response.sendRedirect(nextPage);

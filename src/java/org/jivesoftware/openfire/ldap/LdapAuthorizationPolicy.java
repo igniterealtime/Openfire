@@ -11,7 +11,6 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.openfire.ldap.LdapManager;
 import org.jivesoftware.openfire.auth.AuthorizationPolicy;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
@@ -27,14 +26,13 @@ import java.util.Enumeration;
 /**
  * Provider for authorization using LDAP. Checks if the authenticated
  * principal is in the user's LDAP object using the authorizeField
- * from the <tt>openfire.xml</tt> file. An entry in that file would
+ * from the system properties. An entry in that file would
  * look like the following:
- * <p/>
- * <pre>
- *   &lt;ldap&gt;
- *     &lt;authorizeField&gt; k5login &lt;/authorizeField&gt;
- *   &lt;/ldap&gt;</pre>
- * <p/>
+ *
+ * <ul>
+ * <li><tt>ldap.authorizeField = k5login</tt></li>
+ * </ul>
+ *
  * This implementation requires that LDAP be configured, obviously.
  *
  * @author Jay Kline
@@ -46,9 +44,12 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
     private String authorizeField;
 
     public LdapAuthorizationPolicy() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("ldap.authorizeField");
+
         manager = LdapManager.getInstance();
         usernameField = manager.getUsernameField();
-        authorizeField = JiveGlobals.getXMLProperty("ldap.authorizeField", "k5login");
+        authorizeField = JiveGlobals.getProperty("ldap.authorizeField", "k5login");
     }
 
     /**

@@ -23,6 +23,9 @@
 
     LdapManager manager = LdapManager.getInstance();
 
+    @SuppressWarnings("unchecked")
+    Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+
     // Determine the right default values based on the the server type.
     String defaultUsernameField;
     String defaultSearchFields;
@@ -38,9 +41,9 @@
     }
     else {
         // No info in the session so try stored XML values or default ones
-        defaultUsernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
-        defaultSearchFields = JiveGlobals.getXMLProperty("ldap.searchFields");
-        defaultSearchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
+        defaultUsernameField = JiveGlobals.getProperty("ldap.usernameField");
+        defaultSearchFields = JiveGlobals.getProperty("ldap.searchFields");
+        defaultSearchFilter = JiveGlobals.getProperty("ldap.searchFilter");
         vcardBean = new LdapUserProfile();
         if (vcardBean.loadFromProperties()) {
             // Loaded from stored settings, no need to do anything else.  
@@ -95,11 +98,8 @@
             vcardBean.setAvatarStoredInDB(false);
         }
         // Store the vcard db setting for later saving.
-        @SuppressWarnings("unchecked")
-        Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
         if (xmppSettings != null) {
             xmppSettings.put("ldap.override.avatar", vcardBean.getAvatarStoredInDB().toString());
-            session.setAttribute("xmppSettings", xmppSettings);
         }
 
         // Save settings and redirect.
@@ -116,12 +116,17 @@
                 manager.setUsernameField(usernameField);
                 if (searchFields != null) {
                     if ("org.jivesoftware.openfire.ldap.LdapUserProvider"
-                            .equals(JiveGlobals.getXMLProperty("provider.user.className"))) {
+                            .equals(JiveGlobals.getProperty("provider.user.className"))) {
                         // Update current instance being used
                         ((LdapUserProvider) UserManager.getUserProvider()).setSearchFields(searchFields);
                     } else {
                         // Just update the property. It will be later used by LdapUserProvider 
-                        JiveGlobals.setXMLProperty("ldap.searchFields", searchFields);
+                        JiveGlobals.setProperty("ldap.searchFields", searchFields);
+
+                        // Store in xmppSettings for later saving if we're in setup
+                        if (xmppSettings != null) {
+                            xmppSettings.put("ldap.searchFields", searchFields);
+                        }
                     }
                 }
                 if (searchFilter != null) {
@@ -131,15 +136,28 @@
                 vcardBean.saveProperties();
 
                 // Enable the LDAP auth and user providers. The group provider will be enabled on the next step.
-                JiveGlobals.setXMLProperty("provider.user.className",
+                JiveGlobals.setProperty("provider.user.className",
                         "org.jivesoftware.openfire.ldap.LdapUserProvider");
-                JiveGlobals.setXMLProperty("provider.auth.className",
+                JiveGlobals.setProperty("provider.auth.className",
                         "org.jivesoftware.openfire.ldap.LdapAuthProvider");
+
+                // Store in xmppSettings for later saving if we're in setup
+                if (xmppSettings != null) {
+                    xmppSettings.put("provider.user.className",
+                            "org.jivesoftware.openfire.ldap.LdapUserProvider");
+                    xmppSettings.put("provider.auth.className",
+                            "org.jivesoftware.openfire.ldap.LdapAuthProvider");
+                }
 
                 // Redirect
                 response.sendRedirect(nextPage + "?serverType=" + serverType);
                 return;
             }
+        }
+
+        // Save the settings for later, if we're in setup
+        if (xmppSettings != null) {
+            session.setAttribute("xmppSettings", xmppSettings);
         }
     }
 %>

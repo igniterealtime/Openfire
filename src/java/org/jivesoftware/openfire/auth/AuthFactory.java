@@ -22,9 +22,9 @@ import java.util.Map;
 /**
  * Pluggable authentication service. Users of Openfire that wish to change the AuthProvider
  * implementation used to authenticate users can set the <code>AuthProvider.className</code>
- * XML property. For example, if you have configured Openfire to use LDAP for user information,
+ * system property. For example, if you have configured Openfire to use LDAP for user information,
  * you'd want to send a custom implementation of AuthFactory to make LDAP auth queries.
- * After changing the <code>AuthProvider.className</code> XML property, you must restart your
+ * After changing the <code>AuthProvider.className</code> system property, you must restart your
  * application server.
  *
  * @author Matt Tucker
@@ -50,7 +50,9 @@ public class AuthFactory {
         // Detect when a new auth provider class is set 
         PropertyEventListener propListener = new PropertyEventListener() {
             public void propertySet(String property, Map params) {
-                //Ignore
+                if ("provider.auth.className".equals(property)) {
+                    initProvider();
+                }
             }
 
             public void propertyDeleted(String property, Map params) {
@@ -58,9 +60,7 @@ public class AuthFactory {
             }
 
             public void xmlPropertySet(String property, Map params) {
-                if ("provider.auth.className".equals(property)) {
-                    initProvider();
-                }
+                //Ignore
             }
 
             public void xmlPropertyDeleted(String property, Map params) {
@@ -71,7 +71,10 @@ public class AuthFactory {
     }
 
     private static void initProvider() {
-        String className = JiveGlobals.getXMLProperty("provider.auth.className",
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.auth.className");
+
+        String className = JiveGlobals.getProperty("provider.auth.className",
                 "org.jivesoftware.openfire.auth.DefaultAuthProvider");
         // Check if we need to reset the auth provider class 
         if (authProvider == null || !className.equals(authProvider.getClass().getName())) {

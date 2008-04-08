@@ -195,8 +195,12 @@ public class JiveProperties implements Map<String, String> {
     }
 
     public String put(String key, String value) {
-        if (key == null || value == null) {
-            throw new NullPointerException("Key or value cannot be null. Key=" +
+        if (value == null) {
+            // This is the same as deleting, so remove it.
+            return remove(key);
+        }
+        if (key == null) {
+            throw new NullPointerException("Key cannot be null. Key=" +
                     key + ", value=" + value);
         }
         if (key.endsWith(".")) {

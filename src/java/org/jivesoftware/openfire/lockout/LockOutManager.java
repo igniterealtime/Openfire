@@ -21,14 +21,11 @@ import java.util.Map;
  * whether accounts are disabled or enabled, and provides a single point of entry for handling
  * locked/disabled accounts.
  *
- * The provider can be specified in <tt>openfire.xml</tt> by adding:
- *  ...
- *    <provider>
- *       <lockout>
- *          <className>my.lock.out.provider</className>
- *       </lockout>
- *    </provider>
- *  ...
+ * The provider can be specified in system properties by adding:
+ *
+ * <ul>
+ * <li><tt>provider.lockout.className = my.lock.out.provider</tt></li>
+ * </ul>
  *
  * @author Daniel Henninger
  */
@@ -77,7 +74,9 @@ public class LockOutManager {
         // Detect when a new lockout provider class is set 
         PropertyEventListener propListener = new PropertyEventListener() {
             public void propertySet(String property, Map params) {
-                //Ignore
+                if ("provider.lockout.className".equals(property)) {
+                    initProvider();
+                }
             }
 
             public void propertyDeleted(String property, Map params) {
@@ -85,9 +84,7 @@ public class LockOutManager {
             }
 
             public void xmlPropertySet(String property, Map params) {
-                if ("provider.lockout.className".equals(property)) {
-                    initProvider();
-                }
+                //Ignore
             }
 
             public void xmlPropertyDeleted(String property, Map params) {
@@ -102,7 +99,10 @@ public class LockOutManager {
      * DefaultLockOutProvider if the specified provider is not valid or not specified.
      */
     private void initProvider() {
-        String className = JiveGlobals.getXMLProperty("provider.lockout.className",
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.lockout.className");
+
+        String className = JiveGlobals.getProperty("provider.lockout.className",
                 "org.jivesoftware.openfire.lockout.DefaultLockOutProvider");
         // Check if we need to reset the provider class
         if (provider == null || !className.equals(provider.getClass().getName())) {

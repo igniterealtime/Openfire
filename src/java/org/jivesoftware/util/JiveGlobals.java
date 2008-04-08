@@ -138,6 +138,8 @@ public class JiveGlobals {
     /**
      * Sets the global time zone used by Jive. The default time zone is the VM's
      * time zone.
+     *
+     * @param newTimeZone Time zone to set.
      */
     public static void setTimeZone(TimeZone newTimeZone) {
         timeZone = newTimeZone;
@@ -616,6 +618,7 @@ public class JiveGlobals {
      * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
      * <tt>C</tt> (<tt>C.D</tt> would not be returned using this method).<p>
      *
+     * @param parent Parent "node" to find the children of.
      * @return a List of all immediate children property names (Strings).
      */
     public static List<String> getPropertyNames(String parent) {
@@ -721,6 +724,33 @@ public class JiveGlobals {
             properties = JiveProperties.getInstance();
         }
         properties.remove(name);
+    }
+
+    /**
+     * Convenience routine to migrate an XML property into the database
+     * storage method.  Will check for the XML property being null before
+     * migrating.
+     *
+     * @param name the name of the property to migrate.
+     */
+    public static void migrateProperty(String name) {
+        if (isSetupMode()) {
+            return;
+        }
+        if (getXMLProperty(name) != null) {
+            if (getProperty(name) == null) {
+                Log.debug("JiveGlobals: Migrating XML property '"+name+"' into database.");
+                setProperty(name, getXMLProperty(name));
+                deleteXMLProperty(name);
+            }
+            else if (getProperty(name).equals(getXMLProperty(name))) {
+                Log.debug("JiveGlobals: Deleting duplicate XML property '"+name+"' that is already in database.");
+                deleteXMLProperty(name);
+            }
+            else if (!getProperty(name).equals(getXMLProperty(name))) {
+                Log.warn("Property '"+name+"' as specified in openfire.xml differs from what is stored in the database.  Please make property changes in the database instead of openfire.xml.");
+            }
+        }
     }
 
    /**

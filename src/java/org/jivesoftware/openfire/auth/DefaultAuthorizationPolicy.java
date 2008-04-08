@@ -37,7 +37,7 @@ import java.util.Vector;
  *     <li>The SASL realm of the server
  *     <li>Be in the list of acceptable realms
  *     </ul>
- * <li>If the requested username contains an '@' then the porotion before the
+ * <li>If the requested username contains an '@' then the portion before the
  *     '@' will be considered the requested username only if the portion after
  *     the '@' matches the XMPP domain of the server or the portion after the 
  *     '@' in the authenticated ID, if any.
@@ -54,7 +54,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
     public DefaultAuthorizationPolicy() {
         approvedRealms = new Vector<String>();
         
-        String realmList = JiveGlobals.getXMLProperty("sasl.approvedRealms");
+        String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
         if(realmList != null) {
             StringTokenizer st = new StringTokenizer(realmList, " ,\t\n\r\f");
             while(st.hasMoreTokens()) {
@@ -108,7 +108,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             if(authenRealm.equals(JiveGlobals.getProperty("xmpp.domain")))  {
                 Log.debug("DefaultAuthorizationPolicy: authenRealm = xmpp.domain");
                 authorized = true;
-            } else if(authenRealm.equals(JiveGlobals.getXMLProperty("sasl.realm")))  {
+            } else if(authenRealm.equals(JiveGlobals.getProperty("sasl.realm")))  {
                 Log.debug("DefaultAuthorizationPolicy: authenRealm = sasl.realm");
                 authorized = true;
             } else { 

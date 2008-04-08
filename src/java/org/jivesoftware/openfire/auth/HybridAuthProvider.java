@@ -29,28 +29,16 @@ import java.util.HashSet;
  *      <li>If the tertiary provider is defined, attempt authentication.
  * </ol>
  *
- * To enable this provider, set the following in the XML configuration file:
+ * To enable this provider, set the <tt>provider.auth.className</tt> system property to
+ * <tt>org.jivesoftware.openfire.auth.HybridAuthProvider</tt>.
  *
- * <pre>
- * &lt;provider&gt;
- *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.auth.HybridAuthProvider&lt;/className&gt;
- *     &lt;/auth&gt;
- * &lt;/provider&gt;
- * </pre>
+ * The primary, secondary, and tertiary providers are configured be setting system properties similar to
+ * the following:
  *
- * The primary, secondary, and tertiary providers are configured as in the following example:
- *
- * <pre>
- * &lt;hybridAuthProvider&gt;
- *      &lt;primaryProvider&gt;
- *          &lt;className&gt;org.jivesoftware.openfire.auth.DefaultAuthProvider&lt;className&gt;
- *      &lt;/primaryProvider&gt;
- *      &lt;secondaryProvider&gt;
- *          &lt;className&gt;org.jivesoftware.openfire.auth.NativeAuthProvider&lt;/className&gt;
- *      &lt;/secondaryProvider&gt;
- * &lt;/hybridAuthProvider&gt;
- * </pre>
+ * <ul>
+ * <li><tt>hybridAuthProvider.primaryProvider = org.jivesoftware.openfire.auth.DefaultAuthProvider</tt></li>
+ * <li><tt>hybrodAuthProvider.secondaryProvider = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
+ * </ul>
  *
  * Each of the chained providers can have a list of override users. If a user is in
  * an override list, authentication will only be attempted with the associated provider
@@ -88,8 +76,17 @@ public class HybridAuthProvider implements AuthProvider {
     private Set<String> tertiaryOverrides = new HashSet<String>();
 
     public HybridAuthProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.className");
+        JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.className");
+        JiveGlobals.migrateProperty("hybridAuthProvider.secondaryProvider.className");
+        JiveGlobals.migrateProperty("hybridAuthProvider.tertiaryProvider.className");
+        JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.overrideList");
+        JiveGlobals.migrateProperty("hybridAuthProvider.secondaryProvider.overrideList");
+        JiveGlobals.migrateProperty("hybridAuthProvider.tertiaryProvider.overrideList");
+
         // Load primary, secondary, and tertiary auth providers.
-        String primaryClass = JiveGlobals.getXMLProperty(
+        String primaryClass = JiveGlobals.getProperty(
                 "hybridAuthProvider.primaryProvider.className");
         if (primaryClass == null) {
             Log.error("A primary AuthProvider must be specified. Authentication will be disabled.");
@@ -113,7 +110,7 @@ public class HybridAuthProvider implements AuthProvider {
             return;
         }
 
-        String secondaryClass = JiveGlobals.getXMLProperty(
+        String secondaryClass = JiveGlobals.getProperty(
                 "hybridAuthProvider.secondaryProvider.className");
         if (secondaryClass != null) {
             try {
@@ -134,7 +131,7 @@ public class HybridAuthProvider implements AuthProvider {
             }
         }
 
-        String tertiaryClass = JiveGlobals.getXMLProperty(
+        String tertiaryClass = JiveGlobals.getProperty(
                 "hybridAuthProvider.tertiaryProvider.className");
         if (tertiaryClass != null) {
             try {
@@ -157,14 +154,14 @@ public class HybridAuthProvider implements AuthProvider {
         }
 
         // Now, load any overrides.
-        String overrideList = JiveGlobals.getXMLProperty(
+        String overrideList = JiveGlobals.getProperty(
                 "hybridAuthProvider.primaryProvider.overrideList", "");
         for (String user: overrideList.split(",")) {
             primaryOverrides.add(user.trim().toLowerCase());
         }
 
         if (secondaryProvider != null) {
-            overrideList = JiveGlobals.getXMLProperty(
+            overrideList = JiveGlobals.getProperty(
                     "hybridAuthProvider.secondaryProvider.overrideList", "");
             for (String user: overrideList.split(",")) {
                 secondaryOverrides.add(user.trim().toLowerCase());
@@ -172,7 +169,7 @@ public class HybridAuthProvider implements AuthProvider {
         }
 
         if (tertiaryProvider != null) {
-            overrideList = JiveGlobals.getXMLProperty(
+            overrideList = JiveGlobals.getProperty(
                     "hybridAuthProvider.tertiaryProvider.overrideList", "");
             for (String user: overrideList.split(",")) {
                 tertiaryOverrides.add(user.trim().toLowerCase());

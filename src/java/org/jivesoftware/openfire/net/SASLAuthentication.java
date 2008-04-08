@@ -662,8 +662,14 @@ public class SASLAuthentication {
     }
 
     private static void initMechanisms() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("sasl.mechs");
+        JiveGlobals.migrateProperty("sasl.gssapi.debug");
+        JiveGlobals.migrateProperty("sasl.gssapi.config");
+        JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
+
         mechanisms = new HashSet<String>();
-        String available = JiveGlobals.getXMLProperty("sasl.mechs");
+        String available = JiveGlobals.getProperty("sasl.mechs");
         if (available == null) {
             mechanisms.add("ANONYMOUS");
             mechanisms.add("PLAIN");
@@ -690,13 +696,13 @@ public class SASLAuthentication {
             }
 
             if (mechanisms.contains("GSSAPI")) {
-                if (JiveGlobals.getXMLProperty("sasl.gssapi.config") != null) {
+                if (JiveGlobals.getProperty("sasl.gssapi.config") != null) {
                     System.setProperty("java.security.krb5.debug",
-                            JiveGlobals.getXMLProperty("sasl.gssapi.debug", "false"));
+                            JiveGlobals.getProperty("sasl.gssapi.debug", "false"));
                     System.setProperty("java.security.auth.login.config",
-                            JiveGlobals.getXMLProperty("sasl.gssapi.config"));
+                            JiveGlobals.getProperty("sasl.gssapi.config"));
                     System.setProperty("javax.security.auth.useSubjectCredsOnly",
-                            JiveGlobals.getXMLProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
+                            JiveGlobals.getProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
                 }
                 else {
                     //Not configured, remove the option.

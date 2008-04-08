@@ -32,18 +32,12 @@ import java.lang.reflect.Field;
  * The appropriate native library must be manually moved from the resources/nativeAuth
  * directory to the lib directory.<p>
  *
- * To enable this provider, set the following in the XML configuration file:
+ * To enable this provider, set the following in the system properties:
  *
- * <pre>
- * &lt;provider&gt;
- *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.auth.NativeAuthProvider&lt;/className&gt;
- *     &lt;/auth&gt;
- *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.openfire.user.NativeUserProvider&lt;/className&gt;
- *     &lt;/user&gt;
- * &lt;/provider&gt;
- * </pre>
+ * <ul>
+ * <li><tt>provider.auth.className = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
+ * <li><tt>provider.user.className = org.jivesoftware.openfire.user.NativeUserProvider</tt></li>
+ * </ul>
  *
  * The properties to configure the provider are as follows:
  *
@@ -66,7 +60,10 @@ public class NativeAuthProvider implements AuthProvider {
     private String domain;
 
     public NativeAuthProvider() {
-        this.domain = JiveGlobals.getXMLProperty("nativeAuth.domain");
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("nativeAuth.domain");
+
+        this.domain = JiveGlobals.getProperty("nativeAuth.domain");
 
         // Configure the library path so that we can load the shaj native library
         // from the Openfire lib directory.

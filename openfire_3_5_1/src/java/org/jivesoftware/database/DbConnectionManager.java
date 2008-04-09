@@ -818,7 +818,7 @@ public class DbConnectionManager {
 
     public static String getTestSQL(String driver) {
         if (driver.contains("db2")) {
-            return "select current_timestamp from sysibm.sysdummy1";
+            return "select 1 from sysibm.sysdummy1";
         }
         else if (driver.contains("oracle")) {
             return "select 1 from dual";

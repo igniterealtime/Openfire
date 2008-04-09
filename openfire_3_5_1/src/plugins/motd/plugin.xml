@@ -6,7 +6,7 @@
    <description>Allows admins to have a message sent to users each time they log in.</description>
    <author>Ryan Graham</author>
    <version>1.0.4</version>
-   <date>3/11/2008</date>
+   <date>4/7/2008</date>
    <minServerVersion>3.5.0</minServerVersion>
 
    <adminconsole>

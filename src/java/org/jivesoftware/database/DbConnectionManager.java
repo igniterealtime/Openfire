@@ -817,7 +817,10 @@ public class DbConnectionManager {
     }
 
     public static String getTestSQL(String driver) {
-        if (driver.contains("db2")) {
+        if (driver == null) {
+            return "select 1";
+        }
+        else if (driver.contains("db2")) {
             return "select 1 from sysibm.sysdummy1";
         }
         else if (driver.contains("oracle")) {

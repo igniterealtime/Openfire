@@ -6,7 +6,7 @@
     <description>Provides support for SIP account management</description>
     <author>Ignite Realtime</author>
     <version>1.0.4</version>
-    <date>3/11/2008</date>
+    <date>4/7/2008</date>
     <databaseKey>sip</databaseKey>
     <databaseVersion>2</databaseVersion>
     <minServerVersion>3.6.0</minServerVersion>

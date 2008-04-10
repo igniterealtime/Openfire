@@ -3,10 +3,11 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
- * a copy of which is included in this distribution.
+ * a copy of which is included in this distribution, or a commercial license
+ * agreement with Jive.
  */
 
 package org.jivesoftware.admin;
@@ -361,27 +362,6 @@ public class AdminConsole {
                     overrideTab(existingTab, tab);
                 }
             }
-        }
-
-        // Special case: show an informational tab about Openfire Enterprise if Enterprise
-        // is not installed and if the user has not chosen to hide tab.
-        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        boolean pluginExists = pluginManager != null && pluginManager.isPluginDownloaded(
-                "enterprise.jar");
-        if (!pluginExists && JiveGlobals.getBooleanProperty("enterpriseInfoEnabled", true)) {
-            Element enterprise = generatedModel.addElement("tab");
-            enterprise.addAttribute("id", "tab-enterprise");
-            enterprise.addAttribute("name", "Enterprise");
-            enterprise.addAttribute("url", "enterprise-info.jsp");
-            enterprise.addAttribute("description", "Click for Enterprise information.");
-            Element sidebar = enterprise.addElement("sidebar");
-            sidebar.addAttribute("id", "sidebar-enterprise-info");
-            sidebar.addAttribute("name", "Openfire Enterprise");
-            Element item = sidebar.addElement("item");
-            item.addAttribute("id", "enterprise-info");
-            item.addAttribute("name", "Try Enterprise");
-            item.addAttribute("url", "enterprise-info.jsp");
-            item.addAttribute("description", "Openfire Enterprise overview inforation");
         }
     }
 

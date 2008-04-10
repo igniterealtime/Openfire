@@ -2,10 +2,11 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2008 Jive Software. All rights reserved.
  *
- * This software is published under the terms of the GNU Public License (GPL),
- * a copy of which is included in this distribution.
+ * This software is published under the terms of the GNU Public License (GPL) 
+ * or a commercial license agreement with Jive, a copy of which is included
+ * in this distribution.
  */
 
 package org.jivesoftware.openfire.interceptor;

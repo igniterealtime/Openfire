@@ -37,7 +37,7 @@
             TimeZone tz = TimeZone.getTimeZone(timeZoneID);
             JiveGlobals.setTimeZone(tz);
             // Log the event
-            webManager.logEvent("updated time zone to "+tz, null);
+            webManager.logEvent("updated time zone to "+tz.getID(), tz.toString());
         }
         catch (Exception e) {
             Log.error(e);
@@ -50,7 +50,7 @@
             else {
                 JiveGlobals.setLocale(newLocale);
                 // Log the event
-                webManager.logEvent("updated locale to "+newLocale, null);
+                webManager.logEvent("updated locale to "+newLocale.getDisplayName(), null);
                 response.sendRedirect("server-locale.jsp?success=true");
                 return;
             }

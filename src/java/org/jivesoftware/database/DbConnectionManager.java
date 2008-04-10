@@ -51,10 +51,6 @@ public class DbConnectionManager {
     private static boolean scrollResultsSupported;
     // True if the database supports batch updates.
     private static boolean batchUpdatesSupported;
-    // True if the database supports the dual table.
-    private static boolean dualTableSupported;
-    // True if the database does not support select without from.
-    private static boolean selectRequiresFrom;
 
     private static DatabaseType databaseType = DatabaseType.unknown;
 
@@ -692,8 +688,6 @@ public class DbConnectionManager {
         streamTextRequired = false;
         maxRowsSupported = true;
         fetchSizeSupported = true;
-        dualTableSupported = false;
-        selectRequiresFrom = false;
 
         // Get the database name so that we can perform meta data settings.
         String dbName = metaData.getDatabaseProductName().toLowerCase();
@@ -704,8 +698,6 @@ public class DbConnectionManager {
             databaseType = DatabaseType.oracle;
             streamTextRequired = true;
             scrollResultsSupported = false;
-            dualTableSupported = true;
-            selectRequiresFrom = true;
             // The i-net AUGURO JDBC driver
             if (driverName.indexOf("auguro") != -1) {
                 streamTextRequired = false;
@@ -739,7 +731,6 @@ public class DbConnectionManager {
         else if (dbName.indexOf("mysql") != -1) {
             databaseType = DatabaseType.mysql;
             transactionsSupported = false;
-            dualTableSupported = true;
         }
         // HSQL properties
         else if (dbName.indexOf("hsql") != -1) {
@@ -821,16 +812,23 @@ public class DbConnectionManager {
         return batchUpdatesSupported;
     }
 
-    public static boolean isDualTableSupported() {
-        return dualTableSupported;
-    }
-
-    public static boolean doesSelectRequireFrom() {
-        return selectRequiresFrom;
-    }
-
     public static boolean isEmbeddedDB() {
         return connectionProvider != null && connectionProvider instanceof EmbeddedConnectionProvider;
+    }
+
+    public static String getTestSQL(String driver) {
+        if (driver == null) {
+            return "select 1";
+        }
+        else if (driver.contains("db2")) {
+            return "select 1 from sysibm.sysdummy1";
+        }
+        else if (driver.contains("oracle")) {
+            return "select 1 from dual";
+        }
+        else {
+            return "select 1";
+        }
     }
 
     /**

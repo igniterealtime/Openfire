@@ -107,8 +107,8 @@ public class DefaultLockOutProvider implements LockOutProvider {
             else {
                 pstmt.setNull(2, Types.VARCHAR);
             }
-            if (flag.getStartTime() != null) {
-                pstmt.setString(3, StringUtils.dateToMillis(flag.getStartTime()));
+            if (flag.getEndTime() != null) {
+                pstmt.setString(3, StringUtils.dateToMillis(flag.getEndTime()));
             }
             else {
                 pstmt.setNull(3, Types.VARCHAR);

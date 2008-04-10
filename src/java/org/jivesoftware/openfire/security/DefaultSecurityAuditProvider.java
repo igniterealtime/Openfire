@@ -13,6 +13,7 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 
 import java.util.List;
@@ -28,7 +29,7 @@ import java.sql.*;
 public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
 
     private static final String LOG_ENTRY =
-            "INSERT INTO ofSecurityAuditLog VALUES(?,?,?,?,?,?)";
+            "INSERT INTO ofSecurityAuditLog(msgID,username,entryStamp,summary,node,details) VALUES(?,?,?,?,?,?)";
     private static final String GET_EVENTS =
             "SELECT msgID,username,entryStamp,summary,node,details FROM ofSecurityAuditLog";
     private static final String GET_EVENT =
@@ -57,7 +58,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
             pstmt.setLong(1, msgID);
             pstmt.setString(2, username);
             pstmt.setLong(3, new Date().getTime());
-            pstmt.setString(4, summary);
+            pstmt.setString(4, StringUtils.abbreviate(summary, 250));
             pstmt.setString(5, XMPPServer.getInstance().getServerInfo().getHostname());
             pstmt.setString(6, details);
             pstmt.executeUpdate();

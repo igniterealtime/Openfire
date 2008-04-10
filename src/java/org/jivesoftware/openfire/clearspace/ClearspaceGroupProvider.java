@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -323,7 +324,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
     private Element getGroupByName(String name) throws GroupNotFoundException {
         try {
-            String path = URL_PREFIX + "groups/" + name;
+            String path = URL_PREFIX + "groups/" + URLEncoder.encode(name, "UTF-8");
 
             return ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (GroupNotFoundException gnfe) {

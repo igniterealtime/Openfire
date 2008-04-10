@@ -82,6 +82,13 @@ public class MonitoringPlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         System.out.println("Starting Monitoring Plugin");
 
+        // Check that the enterprise plugin is not being used
+        if (manager.getPlugin("enterprise") != null) {
+            // Stop loading this plugin since the enterprise is being used
+            System.out.println("Enterprise plugin found. Stopping Monitoring Plugin");
+            throw new IllegalStateException("This plugin cannot run next to the Enterprise plugin");
+        }
+
         shuttingDown = false;
 
         // Make sure that the enteprise folder exists under the home directory

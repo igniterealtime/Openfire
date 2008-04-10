@@ -3,7 +3,7 @@
   -	$Revision: 3710 $
   -	$Date: 2006-04-05 11:53:01 -0700 (Wed, 05 Apr 2006) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2008 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution.

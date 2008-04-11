@@ -949,6 +949,53 @@ public class StringUtils {
             return sb.toString();
         }
     }
+
+    /**
+     * Returns a formatted String from time.
+     *
+     * @param diff the amount of elapsed time.
+     * @return the formatte String.
+     */
+    public static String getTimeFromLong(long diff) {
+        final String HOURS = "h";
+        final String MINUTES = "min";
+        final String SECONDS = "sec";
+
+        final long MS_IN_A_DAY = 1000 * 60 * 60 * 24;
+        final long MS_IN_AN_HOUR = 1000 * 60 * 60;
+        final long MS_IN_A_MINUTE = 1000 * 60;
+        final long MS_IN_A_SECOND = 1000;
+        Date currentTime = new Date();
+        long numDays = diff / MS_IN_A_DAY;
+        diff = diff % MS_IN_A_DAY;
+        long numHours = diff / MS_IN_AN_HOUR;
+        diff = diff % MS_IN_AN_HOUR;
+        long numMinutes = diff / MS_IN_A_MINUTE;
+        diff = diff % MS_IN_A_MINUTE;
+        long numSeconds = diff / MS_IN_A_SECOND;
+        diff = diff % MS_IN_A_SECOND;
+        long numMilliseconds = diff;
+
+        StringBuffer buf = new StringBuffer();
+        if (numHours > 0) {
+            buf.append(numHours + " " + HOURS + ", ");
+        }
+
+        if (numMinutes > 0) {
+            buf.append(numMinutes + " " + MINUTES);
+        }
+
+        //buf.append(numSeconds + " " + SECONDS);
+
+        String result = buf.toString();
+
+        if (numMinutes < 1) {
+            result = "< 1 minute";
+        }
+
+        return result;
+    }
+
     /**
      * Returns a collection of Strings as a comma-delimitted list of strings.
      *

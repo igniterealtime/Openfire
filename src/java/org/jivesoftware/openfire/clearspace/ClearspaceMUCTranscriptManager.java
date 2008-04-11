@@ -2,12 +2,14 @@ package org.jivesoftware.openfire.clearspace;
 
 import org.jivesoftware.openfire.muc.MUCEventListener;
 import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.CacheSizes;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.IQ;
+import org.dom4j.Element;
 
 import java.util.*;
 
@@ -25,7 +27,40 @@ import java.util.*;
  * the effective size as it will appear in a transcript-update packet).
  *
  * Example of a transcript-update packet:
- * TODO: Add example
+ *     <iq type='set' to='clearspace.example.org' from='clearspace-conference.example.org'>
+ *         <transcript-update xmlns='http://jivesoftware.com/clearspace'>
+ *             <presence from='user1@example.org'>
+ *                 <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+ *                 <timestamp>1207933781000</timestamp>
+ *             </presence>
+ *             <message from='user1@example.org'>
+ *                 <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+ *                 <timestamp>1207933783000</timestamp>
+ *                 <body>user2, I won the lottery!</body>
+ *             </message>
+ *             <message from='user2@example.org'>
+ *                 <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+ *                 <timestamp>1207933785000</timestamp>
+ *                 <body>WHAT?!</body>
+ *             </message>
+ *             <message from='user1@example.org'>
+ *                 <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+ *                 <timestamp>1207933787000</timestamp>
+ *                 <body>April Fools!</body>
+ *             </message>
+ *             <presence from='user3@example.org' type='unavailable'>
+ *                 <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+ *                 <timestamp>1207933789000</timestamp>
+ *             </presence>
+ *             <message from="user2@example.org">
+ *                 <roomjid>14-1234@clearspace-conference.example.org</roomjid>
+ *                 <timestamp>120793379100</timestamp>
+ *                 <body>Wow, that was lame.</body>
+ *             </message>
+ *
+ *               ...
+ *         </transcript-update>
+ *     </iq>
  *
  * @author Armando Jagucki
  */
@@ -33,19 +68,25 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
 
     /**
      * Group chat events that are pending to be sent to Clearspace.
-     * Key: MUC Room JID; Value: List of group chat events.
      */
     private final List<ClearspaceMUCTranscriptEvent> roomEvents;
 
     private final TaskEngine taskEngine;
     private TimerTask  transcriptUpdateTask;
 
-    private final int MAX_QUEUE_SIZE = 32768;   // TODO: Fine tune this size value during testing
-    private final long  FLUSH_PERIOD = JiveConstants.MINUTE * 1;    // TODO: FIXME: Set to 5 when done testing
+    private final int MAX_QUEUE_SIZE = 64;
+    private final long  FLUSH_PERIOD = JiveConstants.MINUTE * 2;
+
+    private String csMucDomain;
+    private String csComponentAddress;
 
     public ClearspaceMUCTranscriptManager(TaskEngine taskEngine) {
         this.taskEngine = taskEngine;
         roomEvents = new ArrayList<ClearspaceMUCTranscriptEvent>();
+
+        String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        csMucDomain = ClearspaceManager.MUC_SUBDOMAIN + "." + xmppDomain;
+        csComponentAddress = ClearspaceManager.CLEARSPACE_COMPONENT + "." + xmppDomain;
     }
 
     public void start() {
@@ -58,16 +99,50 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                     return;
                 }
 
+                // Create the transcript-update packet
+                IQ packet = new IQ();
+                packet.setTo(csComponentAddress);
+                packet.setFrom(csMucDomain);
+                packet.setType(IQ.Type.set);
+                Element transcriptElement = packet.setChildElement("transcript-update", "http://jivesoftware.com/clearspace");
+
                 for (ClearspaceMUCTranscriptEvent event : roomEvents) {
                     // Add event to the packet
+                    Element mucEventElement = null;
 
-                    // TODO: FIXME: Remove after finished testing
-                    Log.info(event.roomJID.getNode() + " - " + event.nickname + ": " + event.body);
+                    switch (event.type) {
+                        case roomMessageReceived:
+                            mucEventElement = transcriptElement.addElement("message");
+                            mucEventElement.addElement("body").setText(event.body);
+                            break;
+                        case occupantJoined:
+                            mucEventElement = transcriptElement.addElement("presence");
+                            break;
+                        case occupantLeft:
+                            mucEventElement = transcriptElement.addElement("presence");
+                            mucEventElement.addAttribute("type", "unavailable");
+                            break;
+                    }
+
+                    // Now add those event fields that are common to all elements in the transcript-update packet.
+                    if (mucEventElement != null) {
+                        mucEventElement.addAttribute("from", event.user.toBareJID());
+                        mucEventElement.addElement("roomjid").setText(event.roomJID.toBareJID());
+                        mucEventElement.addElement("timestamp").setText(Long.toString(event.timestamp));
+                    }
                 }
 
-                // TODO: Send the packet to Clearspace
+                // Send the transcript-update packet to Clearspace.
+                IQ result = ClearspaceManager.getInstance().query(packet, 15000);
+                if (result == null) {
+                    // No answer was received from Clearspace.
+                    Log.warn("Did not get a reply from sending a transcript-update packet to Clearspace.");
 
-                // We can empty the queue now
+                    // Return early so that the room-events queue is not cleared.
+                    return;
+                }
+
+                // We can clear the queue now.
                 roomEvents.clear();
             }
         };
@@ -80,28 +155,29 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void roomCreated(JID roomJID) {
-        // TODO: Implement
+        // Do nothing
     }
 
     public void roomDestroyed(JID roomJID) {
-        // TODO: Implement
+        // We want to flush the queue immediately when a room is destroyed.
+        forceQueueFlush();
     }
 
     public void occupantJoined(JID roomJID, JID user, String nickname) {
-        // TODO: Implement
+        addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantJoined(roomJID, user, new Date().getTime()));
     }
 
     public void occupantLeft(JID roomJID, JID user) {
-        // TODO: Implement
+        addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantLeft(roomJID, user, new Date().getTime()));
     }
 
     public void nicknameChanged(JID roomJID, JID user, String oldNickname, String newNickname) {
-        // TODO: Implement
+        // Do nothing
     }
 
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
-        addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomMessageReceived(roomJID, user, nickname, message.getBody(),
-                                                                           new Date()));
+        addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomMessageReceived(roomJID, user, message.getBody(),
+                                                                           new Date().getTime()));
     }
 
     /**
@@ -113,23 +189,21 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
         roomEvents.add(event);
 
         // Check if we have exceeded the allowed size before a flush should occur.
-        if (getEffectiveQueueSize(roomEvents) > MAX_QUEUE_SIZE) {
+        if (roomEvents.size() > MAX_QUEUE_SIZE) {
             // Flush the queue immediately and reschedule the task.
-            transcriptUpdateTask.cancel();
-            transcriptUpdateTask.run();
-            taskEngine.schedule(transcriptUpdateTask, FLUSH_PERIOD, FLUSH_PERIOD);
+            forceQueueFlush();
         }
     }
 
     /**
-     * Used to estimate the 'effective' size of the event queue as represented in the
-     * transcript-update packet sent by ClearspaceMUCTranscriptManager. We are not calculating
-     * the size of the object in memory, but rather the approximate size of the resulting packet
-     * to be sent, in bytes.
+     * Forces the transcript-event queue to be sent to Clearspace by running the transcript-update
+     * task immediately.
      *
-     * @return the estimated size of the event queue represented as a transcript-update packet.
+     * The transcript-update task is then rescheduled.
      */
-    public int getEffectiveQueueSize(List<ClearspaceMUCTranscriptEvent> queue) {
-        return CacheSizes.sizeOfCollection(queue);
+    private void forceQueueFlush() {
+        transcriptUpdateTask.cancel();
+        transcriptUpdateTask.run();
+        taskEngine.schedule(transcriptUpdateTask, FLUSH_PERIOD, FLUSH_PERIOD);
     }
 }

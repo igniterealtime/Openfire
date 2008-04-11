@@ -466,8 +466,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             startClearspaceConfig();
 
             // Starts the Clearspace MUC transcript manager
-            // TODO: Uncomment when the transcript manager is implemented completely
-            //mucTranscriptManager.start();
+            mucTranscriptManager.start();
         }
     }
 
@@ -475,8 +474,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         super.stop();
 
         // Stops the Clearspace MUC transcript manager
-        // TODO: Uncomment when the transcript manager is implemented completely
-        //mucTranscriptManager.stop();
+        mucTranscriptManager.stop();
 
         // Unregister/shut down custom MUC service
         XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(MUC_SUBDOMAIN);

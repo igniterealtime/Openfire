@@ -300,6 +300,36 @@ public class UserManager implements IQResultListener {
     }
 
     /**
+     * Searches for users based on a set of fields and a query string. The fields must
+     * be taken from the values returned by {@link #getSearchFields()}. The query can
+     * include wildcards. For example, a search on the field "Name" with a query of "Ma*"
+     * might return user's with the name "Matt", "Martha" and "Madeline".<p>
+     *
+     * The startIndex and numResults parameters are used to page through search
+     * results. For example, if the startIndex is 0 and numResults is 10, the first
+     * 10 search results will be returned. Note that numResults is a request for the
+     * number of results to return and that the actual number of results returned
+     * may be fewer.<p>
+     *
+     * This method should throw an UnsupportedOperationException if this
+     * operation is not supported by the backend user store.
+     *
+     * @param fields the fields to search on.
+     * @param query the query string.
+     * @param startIndex the starting index in the search result to return.
+     * @param numResults the number of users to return in the search result.
+     * @return a Collection of users that match the search.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
+            int numResults)
+            throws UnsupportedOperationException
+    {
+        return provider.findUsers(fields, query, startIndex, numResults);
+    }
+
+    /**
      * Returns true if the specified local username belongs to a registered local user.
      *
      * @param username to username of the user to check it it's a registered user.

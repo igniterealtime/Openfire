@@ -6,6 +6,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.IQ;
@@ -75,7 +76,8 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     private TimerTask  transcriptUpdateTask;
 
     private final int MAX_QUEUE_SIZE = 64;
-    private final long  FLUSH_PERIOD = JiveConstants.MINUTE * 2;
+    private final long  FLUSH_PERIOD =
+            JiveGlobals.getLongProperty("clearspace.transcript.flush.period", JiveConstants.MINUTE * 2);
 
     private String csMucDomain;
     private String csComponentAddress;

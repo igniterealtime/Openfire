@@ -567,6 +567,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             String query = entry.getValue();
 
             Collection<User> foundUsers = new ArrayList<User>();
+            // TODO Check if max number of results was requested and use the new method in UserManager
             if (userManager != null) {
                 if (query.length() > 0
                         && !query.equals(NAMESPACE_JABBER_IQ_SEARCH)) {

@@ -3,10 +3,11 @@
   -	$Revision: 9909 $
   -	$Date: 2008-02-13 22:32:17 -0500 (Wed, 13 Feb 2008) $
   -
-  - Copyright (C) 2004 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
-  - a copy of which is included in this distribution.
+  - a copy of which is included in this distribution, or a commercial license
+  - agreement with Jive.
 --%>
 
 <%@ page import="org.jivesoftware.util.LocaleUtils,

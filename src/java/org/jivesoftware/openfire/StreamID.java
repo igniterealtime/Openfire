@@ -3,10 +3,11 @@
  * $Revision: 655 $
  * $Date: 2004-12-09 21:54:27 -0300 (Thu, 09 Dec 2004) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
- * a copy of which is included in this distribution.
+ * a copy of which is included in this distribution, or a commercial license
+ * agreement with Jive.
  */
 
 package org.jivesoftware.openfire;

@@ -2,7 +2,7 @@
  * $Revision$
  * $Date$
  *
- * Copyright (C) 1999-2007 Jive Software. All rights reserved.
+ * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  * This software is the proprietary information of Jive Software. Use is subject to license terms.
  */
 package org.jivesoftware.openfire.session;

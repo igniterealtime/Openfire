@@ -3,10 +3,11 @@
  * $Revision: 1751 $
  * $Date: 2005-08-07 20:08:47 -0300 (Sun, 07 Aug 2005) $
  *
- * Copyright (C) 2007 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
- * a copy of which is included in this distribution.
+ * a copy of which is included in this distribution, or a commercial license
+ * agreement with Jive.
  */
 
 package org.jivesoftware.openfire.roster;

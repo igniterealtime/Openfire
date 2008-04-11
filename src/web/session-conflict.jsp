@@ -2,10 +2,11 @@
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
-  - a copy of which is included in this distribution.
+  - a copy of which is included in this distribution, or a commercial license
+  - agreement with Jive.
 --%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>

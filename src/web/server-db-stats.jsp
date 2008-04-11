@@ -2,7 +2,7 @@
   - $Revision: 27964 $
   - $Date: 2006-03-02 09:27:01 -0800 (Thu, 02 Mar 2006) $
   -
-  - Copyright (C) 1999-2004 Jive Software. All rights reserved.
+  - Copyright (C) 1999-2008 Jive Software. All rights reserved.
   - This software is the proprietary information of Jive Software. Use is subject to license terms.
 --%>
 

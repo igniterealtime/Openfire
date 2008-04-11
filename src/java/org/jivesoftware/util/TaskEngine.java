@@ -2,10 +2,11 @@
  * $Revision: 4005 $
  * $Date: 2006-06-16 08:58:27 -0700 (Fri, 16 Jun 2006) $
  *
- * Copyright (C) 2006 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
- * a copy of which is included in this distribution.
+ * a copy of which is included in this distribution, or a commercial license
+ * agreement with Jive.
  */
 
 package org.jivesoftware.util;

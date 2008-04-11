@@ -3,7 +3,7 @@
 //  Preference panel for Openfire
 //
 //  Created by Daniel Henninger on 7/7/06.
-//  Copyright (c) 2006 Jive Software. All rights reserved.
+//  Copyright (C) 2005-2008 Jive Software. All rights reserved.
 //
 //  Concept taken from MySQL preference panel, as well as some borrowed code.
 //

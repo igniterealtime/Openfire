@@ -484,7 +484,7 @@
             <doctitle>
                 <![CDATA[<font face="arial,helvetica,sans-serif">Openfire ${version} Javadoc</font>]]></doctitle>
             <header><![CDATA[<b>Openfire ${version} Javadoc</b>]]></header>
-            <bottom><![CDATA[<i>Copyright &copy; 2003-2007 Jive Software.</i>]]></bottom>
+            <bottom><![CDATA[<i>Copyright &copy; 2003-2008 Jive Software.</i>]]></bottom>
             <classpath>
                 <path refid="javadoc.dependencies"/>
             </classpath>

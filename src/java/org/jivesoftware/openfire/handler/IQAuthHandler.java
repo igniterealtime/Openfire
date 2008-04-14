@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -58,7 +59,6 @@ import java.util.List;
 public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     private boolean anonymousAllowed;
-    private boolean iqAuthAllowed;
 
     private Element probeResponse;
     private IQHandlerInfo info;
@@ -102,6 +102,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             return reply;
         }
         IQ response;
+        boolean resourceBound = false;
         if (JiveGlobals.getBooleanProperty("xmpp.auth.iqauth",true)) {
             try {
                 Element iq = packet.getElement();
@@ -127,6 +128,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     if (query.elements().isEmpty()) {
                         // Anonymous authentication
                         response = anonymousLogin(session, packet);
+                        resourceBound = session.getStatus() == Session.STATUS_AUTHENTICATED;
                     }
                     else {
                         String username = query.elementTextTrim("username");
@@ -144,6 +146,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                         else {
                             // it is an auth attempt
                             response = login(username, query, packet, password, session, digest);
+                            resourceBound = session.getStatus() == Session.STATUS_AUTHENTICATED;
                         }
                     }
                 }
@@ -168,6 +171,10 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         // to the correct session. Any other session of the same user but with different
         // resource is incorrect.
         session.process(response);
+        if (resourceBound) {
+            // After the client has been informed, inform all listeners as well.
+            SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
+        }
         return null;
     }
 

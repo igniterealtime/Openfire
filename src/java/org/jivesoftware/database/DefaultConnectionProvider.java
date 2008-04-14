@@ -39,6 +39,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     private String password;
     private int minConnections = 3;
     private int maxConnections = 10;
+    private int activeTimeout = 900000; // 15 minutes in milliseconds
     private String testSQL = "";
     private Boolean testBeforeUse = true;
     private Boolean testAfterUse = true;
@@ -88,6 +89,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     public void start() {
         proxoolURL = "proxool.openfire:"+getDriver()+":"+getServerURL();
         settings = new Properties();
+        settings.setProperty("proxool.maximum-activetime", Integer.toString(activeTimeout));
         settings.setProperty("proxool.maximum-connection-count", Integer.toString(getMaxConnections()));
         settings.setProperty("proxool.minimum-connection-count", Integer.toString(getMinConnections()));
         settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * getConnectionTimeout())));

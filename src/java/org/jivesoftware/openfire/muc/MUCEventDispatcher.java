@@ -80,4 +80,10 @@ public class MUCEventDispatcher {
         }
     }
 
+    public static void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
+        for (MUCEventListener listener : listeners) {
+            listener.roomSubjectChanged(roomJID, user, newSubject);
+        }
+    }
+
 }

@@ -113,9 +113,9 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                     Element mucEventElement = null;
 
                     switch (event.type) {
-                        case roomMessageReceived:
+                        case messageReceived:
                             mucEventElement = transcriptElement.addElement("message");
-                            mucEventElement.addElement("body").setText(event.body);
+                            mucEventElement.addElement("body").setText(event.content);
                             break;
                         case occupantJoined:
                             mucEventElement = transcriptElement.addElement("presence");
@@ -124,12 +124,20 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                             mucEventElement = transcriptElement.addElement("presence");
                             mucEventElement.addAttribute("type", "unavailable");
                             break;
+                        case roomSubjectChanged:
+                            mucEventElement = transcriptElement.addElement("subject-change");
+                            mucEventElement.addElement("subject").setText(event.content);
+                            break;
                     }
 
                     // Now add those event fields that are common to all elements in the transcript-update packet.
                     if (mucEventElement != null) {
-                        mucEventElement.addAttribute("from", event.user.toBareJID());
-                        mucEventElement.addElement("roomjid").setText(event.roomJID.toBareJID());
+                        if (event.user != null) {
+                            mucEventElement.addAttribute("from", event.user.toBareJID());
+                        }
+                        if (event.roomJID != null) {
+                            mucEventElement.addElement("roomjid").setText(event.roomJID.toBareJID());
+                        }
                         mucEventElement.addElement("timestamp").setText(Long.toString(event.timestamp));
                     }
                 }
@@ -178,8 +186,13 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
-        addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomMessageReceived(roomJID, user, message.getBody(),
-                                                                           new Date().getTime()));
+        addGroupChatEvent(ClearspaceMUCTranscriptEvent.messageReceived(roomJID, user, message.getBody(),
+                                                                       new Date().getTime()));
+    }
+
+    public void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
+        addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomSubjectChanged(roomJID, user, newSubject,
+                                                                          new Date().getTime()));
     }
 
     /**

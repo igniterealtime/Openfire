@@ -1608,6 +1608,9 @@ public class LocalMUCRoom implements MUCRoom {
             // Notify all the occupants that the subject has changed
             packet.setFrom(role.getRoleAddress());
             send(packet);
+
+            // Fire event signifying that the room's subject has changed.
+            MUCEventDispatcher.roomSubjectChanged(getJID(), role.getUserAddress(), subject);
         }
         else {
             throw new ForbiddenException();

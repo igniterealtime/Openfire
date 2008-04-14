@@ -79,7 +79,7 @@
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
                     authToken = new AuthToken(username);
                 }
-                else if ("clearspace".equals(nodeID) && ClearspaceManager.getInstance().isEnabled()) {
+                else if ("clearspace".equals(nodeID) && ClearspaceManager.isEnabled()) {
                     ClearspaceManager csmanager = ClearspaceManager.getInstance();
                     String sharedSecret = csmanager.getSharedSecret();
                     if (nonce == null || sharedSecret == null || !csmanager.isValidNonce(nonce) ||

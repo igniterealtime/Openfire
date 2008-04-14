@@ -283,7 +283,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
 
         // Init nonce cache
-        nonceCache = CacheFactory.createCache("cache.clearspace.nonce");
+        nonceCache = CacheFactory.createCache("Clearspace SSO Nonce");
         // Init nonce generator
         nonceGenerator = new Random();
     }

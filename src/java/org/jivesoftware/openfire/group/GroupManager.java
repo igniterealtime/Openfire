@@ -13,6 +13,7 @@
 package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
@@ -70,6 +71,15 @@ public class GroupManager {
 
         GroupEventDispatcher.addListener(new GroupEventListener() {
             public void groupCreated(Group group, Map params) {
+
+                // Adds default properties if they don't exists, since the creator of
+                // the group could set them.
+                if (group.getProperties().get("sharedRoster.showInRoster") == null) {
+                    group.getProperties().put("sharedRoster.showInRoster", "nobody");
+                    group.getProperties().put("sharedRoster.displayName", "");
+                    group.getProperties().put("sharedRoster.groupList", "");
+                }
+                
                 // Since the group could be created by the provider, add it possible again
                 groupCache.put(group.getName(), group);
 
@@ -244,7 +254,21 @@ public class GroupManager {
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name) throws GroupNotFoundException {
-        Group group = groupCache.get(name);
+        return getGroup(name, false);
+    }
+
+    /**
+     * Returns a Group by name.
+     *
+     * @param name The name of the group to retrieve
+     * @return The group corresponding to that name
+     * @throws GroupNotFoundException if the group does not exist.
+     */
+    public Group getGroup(String name, boolean forceLookup) throws GroupNotFoundException {
+        Group group = null;
+        if (!forceLookup) {
+            group = groupCache.get(name);
+        }
         // If ID wan't found in cache, load it up and put it there.
         if (group == null) {
             synchronized (name.intern()) {
@@ -425,6 +449,16 @@ public class GroupManager {
         return provider.isReadOnly();
     }
 
+    /**
+     * Returns true if properties of groups are read only.
+     * They are read only if Clearspace is the group provider.
+     *
+     * @return true if properties of groups are read only.
+     */
+    public boolean isPropertyReadOnly() {
+        return ClearspaceManager.isEnabled();
+    }
+    
     /**
      * Returns true if searching for groups is supported.
      *

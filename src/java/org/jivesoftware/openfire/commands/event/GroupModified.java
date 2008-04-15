@@ -113,7 +113,7 @@ public class GroupModified extends AdHocCommand {
         // Sends the event
         Group group;
         try {
-            group = GroupManager.getInstance().getGroup(groupname);
+            group = GroupManager.getInstance().getGroup(groupname, true);
 
             // Fire event.
             GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_modified, params);

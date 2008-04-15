@@ -448,6 +448,11 @@ public class Group implements Cacheable, Externalizable {
             synchronized (keyString.intern()) {
                 if (properties.containsKey(keyString)) {
                     String originalValue = properties.get(keyString);
+
+                    // if is the same value don't update it.
+                    if (originalValue != null && originalValue.equals(value)) {
+                        return value;
+                    }
                     answer = properties.put(keyString, (String)value);
                     updateProperty(keyString, (String)value);
                     // Configure event.

@@ -9,16 +9,16 @@
   - agreement with Jive.
 --%>
 
-<%@ page import="org.jivesoftware.util.Log,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.group.Group,
-                 org.jivesoftware.openfire.group.GroupAlreadyExistsException"
+<%@ page import="org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupAlreadyExistsException,
+                 org.jivesoftware.openfire.security.SecurityAuditManager,
+                 org.jivesoftware.util.Log"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -60,10 +60,6 @@
                 if (description != null) {
                     newGroup.setDescription(description);
                 }
-
-                newGroup.getProperties().put("sharedRoster.showInRoster", "nobody");
-                newGroup.getProperties().put("sharedRoster.displayName", "");
-                newGroup.getProperties().put("sharedRoster.groupList", "");
 
                 if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
                     // Log the event
@@ -160,6 +156,12 @@
     </table>
     </div><br>
 <%  } %>
+
+<% if (webManager.getGroupManager().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="group.read_only"/>
+</div>
+<% } %>
 
 <p>
     <%
@@ -272,6 +274,20 @@
 <script language="JavaScript" type="text/javascript">
 document.f.name.focus();
 </script>
+
+<%  // Disable the form if a read-only user provider.
+if (webManager.getGroupManager().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+var limit = document.forms[0].elements.length;
+for (i=0;i<limit;i++) {
+  document.forms[0].elements[i].disabled = true;
+}
+  }
+  disable();
+</script>
+<% } %>
 
 </body>
 </html>%>

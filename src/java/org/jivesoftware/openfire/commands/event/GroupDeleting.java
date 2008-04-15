@@ -63,7 +63,7 @@ public class GroupDeleting extends AdHocCommand {
         // Sends the event
         Group group;
         try {
-            group = GroupManager.getInstance().getGroup(groupname);
+            group = GroupManager.getInstance().getGroup(groupname, true);
 
             // Fire event.
             Map<String, Object> params = Collections.emptyMap();

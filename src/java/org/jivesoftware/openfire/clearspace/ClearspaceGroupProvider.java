@@ -10,12 +10,10 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.*;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import static org.jivesoftware.openfire.clearspace.WSUtils.parseStringArray;
 import org.jivesoftware.openfire.group.Group;
@@ -23,10 +21,8 @@ import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -35,60 +31,21 @@ import java.util.List;
  * @author Daniel Henninger
  */
 public class ClearspaceGroupProvider implements GroupProvider {
-    protected static final String URL_PREFIX = "groupService/";
+    protected static final String URL_PREFIX = "socialGroupService/";
 
     private Boolean readOnly;
+    private static final String TYPE_ID_OWNER = "0";
+    private static final String TYPE_ID_MEMBER = "1";
 
     public ClearspaceGroupProvider() {
     }
 
     public Group createGroup(String name) throws UnsupportedOperationException, GroupAlreadyExistsException {
-        // Check if this operation is supported
-        if (isReadOnly()) {
-            throw new UnsupportedOperationException("Could not create groups.");
-        }
-
-        try {
-
-            String path = URL_PREFIX + "groups";
-
-            // Creates the XML with the data
-            Document groupDoc = DocumentHelper.createDocument();
-            Element rootE = groupDoc.addElement("createGroup");
-            Element nameE = rootE.addElement("name");
-            nameE.addText(name);
-            rootE.addElement("description");
-
-            Element group = ClearspaceManager.getInstance().executeRequest(POST, path, groupDoc.asXML());
-
-            return translateGroup(group);
-
-        } catch (GroupAlreadyExistsException gaee) {
-            throw gaee;
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
+        throw new UnsupportedOperationException("Could not create groups.");
     }
 
     public void deleteGroup(String name) throws UnsupportedOperationException {
-        // Check if this operation is supported
-        if (isReadOnly()) {
-            throw new UnsupportedOperationException("Could not delete groups.");
-        }
-
-        try {
-            long groupID = ClearspaceManager.getInstance().getGroupID(name);
-            String path = URL_PREFIX + "groups/" + groupID;
-            ClearspaceManager.getInstance().executeRequest(DELETE, path);
-
-        } catch (GroupNotFoundException gnfe) {
-            Log.error(gnfe);
-            // it is ok, the group doesn't exist "anymore"
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
+        throw new UnsupportedOperationException("Could not delete groups.");
     }
 
     public Group getGroup(String name) throws GroupNotFoundException {
@@ -96,43 +53,16 @@ public class ClearspaceGroupProvider implements GroupProvider {
     }
 
     public void setName(String oldName, String newName) throws UnsupportedOperationException, GroupAlreadyExistsException {
-        try {
-            Element group = getGroupByName(oldName);
-            WSUtils.modifyElementText(group, "name", newName);
-
-            String path = URL_PREFIX + "groups";
-            ClearspaceManager.getInstance().executeRequest(PUT, path);
-
-        } catch (GroupNotFoundException gnfe) {
-            Log.error(gnfe);
-            // no further action required
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into a UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
-
+        throw new UnsupportedOperationException("Could not modify groups.");
     }
 
     public void setDescription(String name, String description) throws GroupNotFoundException {
-        try {
-            Element group = getGroupByName(name);
-            WSUtils.modifyElementText(group, "description", description);
-
-            String path = URL_PREFIX + "groups";
-            ClearspaceManager.getInstance().executeRequest(PUT, path);
-
-        } catch (GroupNotFoundException gnfe) {
-            Log.error(gnfe);
-            // no further action required
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into a UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
+        throw new UnsupportedOperationException("Could not modify groups.");
     }
 
     public int getGroupCount() {
         try {
-            String path = URL_PREFIX + "groupCount";
+            String path = URL_PREFIX + "socialGroupCount";
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             return Integer.valueOf(getReturn(element));
         } catch (Exception e) {
@@ -143,7 +73,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
     public Collection<String> getGroupNames() {
         try {
-            String path = URL_PREFIX + "groupNames";
+            String path = URL_PREFIX + "socialGroupNames";
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
@@ -155,7 +85,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
 
     public Collection<String> getGroupNames(int startIndex, int numResults) {
         try {
-            String path = URL_PREFIX + "groupNamesBounded/" + startIndex + "/" + numResults;
+            String path = URL_PREFIX + "socialGroupNamesBounded/" + startIndex + "/" + numResults;
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
@@ -168,7 +98,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
     public Collection<String> getGroupNames(JID user) {
         try {
             long userID = ClearspaceManager.getInstance().getUserID(user);
-            String path = URL_PREFIX + "userGroupNames/" + userID;
+            String path = URL_PREFIX + "userSocialGroupNames/" + userID;
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
             return parseStringArray(element);
@@ -181,99 +111,19 @@ public class ClearspaceGroupProvider implements GroupProvider {
     }
 
     public void addMember(String groupName, JID user, boolean administrator) throws UnsupportedOperationException {
-        try {
-            long userID = ClearspaceManager.getInstance().getUserID(user);
-            long groupID = ClearspaceManager.getInstance().getGroupID(groupName);
-
-            String path = URL_PREFIX;
-
-            Document groupDoc = DocumentHelper.createDocument();
-            Element rootE;
-            if (administrator) {
-                rootE = groupDoc.addElement("addAdministratorToGroup");
-                path += "groupAdmins";
-            } else {
-                rootE = groupDoc.addElement("addMemberToGroup");
-                path += "groupMembers";
-            }
-            Element nameE = rootE.addElement("userID");
-            nameE.addText(String.valueOf(userID));
-            rootE.addElement("groupID");
-            nameE.addText(String.valueOf(groupID));
-
-            ClearspaceManager.getInstance().executeRequest(POST, path, groupDoc.asXML());
-
-
-        } catch (GroupNotFoundException e) {
-            throw new UnsupportedOperationException("Group not found", e);
-        } catch (UserNotFoundException e) {
-            throw new UnsupportedOperationException("User not found", e);
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
+        throw new UnsupportedOperationException("Could not modify groups.");
     }
 
     public void updateMember(String groupName, JID user, boolean administrator) throws UnsupportedOperationException {
-        deleteMember(groupName, user);
-        addMember(groupName, user, administrator);
+        throw new UnsupportedOperationException("Could not modify groups.");
     }
 
     public void deleteMember(String groupName, JID user) throws UnsupportedOperationException {
-
-        long userID;
-        long groupID;
-        try {
-            userID = ClearspaceManager.getInstance().getUserID(user);
-            groupID = ClearspaceManager.getInstance().getGroupID(groupName);
-
-        } catch (GroupNotFoundException e) {
-            // It's ok, that not existing group doesn't contains that memeber, :)
-            return;
-        } catch (UserNotFoundException e) {
-            // It's ok, that group doesn't contains that not existing memeber, :)
-            return;
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
-
-        //Another try catch because it is going to remove it two times, one for admin and one
-        //for user. Therefore one of them could throw an exception.
-        try {
-            String path = URL_PREFIX + "groupAdmins/" + groupID + "/" + userID;
-            ClearspaceManager.getInstance().executeRequest(DELETE, path);
-
-            path = URL_PREFIX + "groupMembers/" + groupID + "/" + userID;
-            ClearspaceManager.getInstance().executeRequest(DELETE, path);
-        } catch (GroupNotFoundException e) {
-            //won't happend, the group exist
-        } catch (UserNotFoundException e) {
-            //won't happend, the user exist
-        } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
-        }
-
+        throw new UnsupportedOperationException("Could not modify groups.");
     }
 
     public boolean isReadOnly() {
-        if (readOnly == null) {
-            loadReadOnly();
-        }
-        // If it is null returns the most restrictive anwser.
-        return (readOnly == null ? false : readOnly);
-    }
-
-    private void loadReadOnly() {
-        try {
-            // See if the is read only
-            String path = URL_PREFIX + "isReadOnly";
-            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
-            readOnly = Boolean.valueOf(getReturn(element));
-        } catch (Exception e) {
-            // if there is a problem, keep it null, maybe in the next call succes.
-        }
+        return true;
     }
 
     public Collection<String> search(String query) {
@@ -288,80 +138,110 @@ public class ClearspaceGroupProvider implements GroupProvider {
         return false;
     }
 
+    /**
+     * Translate a XML respose of a group to a <code>Group</code>.
+     *
+     * @param responseNode the XML representation of a CS group.
+     * @return the group that corresponds to the XML.
+     */
     private Group translateGroup(Element responseNode) {
 
         Node groupNode = responseNode.selectSingleNode("return");
 
-        // Get the name, description and id of the group
-        String name = null;
-        String description = null;
-        long id = -1;
+        // Gets the CS DISPLAY NAME that is OF NAME
+        String name = groupNode.selectSingleNode("displayName").getText();
 
-        // Gets the group name
-        name = groupNode.selectSingleNode("name").getText();
+        // Gets the CS NAME that is OF DISPLAY NAME
+        String displayName = groupNode.selectSingleNode("name").getText();
 
         // Gets the group ID
-        id = Long.parseLong(groupNode.selectSingleNode("ID").getText());
+        long id = Long.parseLong(groupNode.selectSingleNode("ID").getText());
+
+        // Gets the group type
+        int type = Integer.parseInt(groupNode.selectSingleNode("typeID").getText());
 
         // Gets the group description if it exist
+        String description = null;
         Node tmpNode = groupNode.selectSingleNode("description");
         if (tmpNode != null) {
             description = tmpNode.getText();
         }
 
         // Get the members and administrators
-        Collection<JID> members = null;
-        Collection<JID> administrators = null;
+        Collection<JID> members = new ArrayList<JID>();
+        Collection<JID> administrators = new ArrayList<JID>();
         try {
-            members = getGroupMembers(id, false);
-            administrators = getGroupMembers(id, true);
+            XMPPServer server = XMPPServer.getInstance();
+
+            // Gets the JID from the response
+            List<Element> membersElement = (List<Element>) getGroupMembers(id).elements("return");
+            for (Element memberElement : membersElement) {
+
+                String username = memberElement.element("user").element("username").getText();
+
+                String typeID = memberElement.element("typeID").getText();
+
+                if (TYPE_ID_OWNER.equals(typeID)) {
+                    administrators.add(server.createJID(username, null));
+                } else if (TYPE_ID_MEMBER.equals(typeID)) {
+                    members.add(server.createJID(username, null));
+                } else {
+                    // nothing to do, waiting for approval
+                }
+            }
         } catch (GroupNotFoundException e) {
             // this won't happen, the group exists.
         }
 
         // Creates the group
-        return new Group(name, description, members, administrators);
+        Group group = new Group(name, description, members, administrators);
+
+        // Type 0 is OPEN
+        if (type == 0) {
+            group.getProperties().put("sharedRoster.showInRoster", "everybody");
+        } else {
+            // Types 1, 2 or 3 are MEMBER_ONLY, PRIVATE, SECRET
+            group.getProperties().put("sharedRoster.showInRoster", "onlyGroup");
+        }
+
+        group.getProperties().put("sharedRoster.displayName", displayName);
+        group.getProperties().put("sharedRoster.groupList", "");
+
+        return group;
     }
 
+    /**
+     * Returns a group by its name.
+     *
+     * @param name the name of the group to retrive.
+     * @return the group.                                                   
+     * @throws GroupNotFoundException if a group with that name doesn't exist or there is a problem getting it.
+     */
     private Element getGroupByName(String name) throws GroupNotFoundException {
         try {
-            String path = URL_PREFIX + "groups/" + URLEncoder.encode(name, "UTF-8");
+            String path = URL_PREFIX + "socialGroupsByName/" + name;
 
             return ClearspaceManager.getInstance().executeRequest(GET, path);
-        } catch (GroupNotFoundException gnfe) {
-            // It is a supported exception, throw it again
-            throw gnfe;
         } catch (Exception e) {
             // It is not supported exception, wrap it into a GroupNotFoundException
             throw new GroupNotFoundException("Unexpected error", e);
         }
     }
 
-    private Collection<JID> getGroupMembers(long groupID, boolean admin) throws GroupNotFoundException {
+    /**
+     * Returns the all the members of the group. It continas the onwers and the members of the group.
+     *
+     * @param groupID the group id to return the members of.
+     * @return all the members of the group.
+     * @throws GroupNotFoundException if the groups doesn't exist or there is a problem getting the members.
+     */
+    private Element getGroupMembers(long groupID) throws GroupNotFoundException {
         try {
-            XMPPServer server = XMPPServer.getInstance();
-            Collection<JID> members = new ArrayList<JID>();
-
-            // Gets the members or administrators
+            // Gets the members and administrators
             String path = null;
-            if (admin) {
-                path = URL_PREFIX + "groupAdmins/" + groupID;
-            } else {
-                path = URL_PREFIX + "groupMembers/" + groupID;
-            }
+            path = URL_PREFIX + "members/" + groupID;
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
-
-            // Gets the JID from the response
-            List<Node> users = (List<Node>) element.selectNodes("return");
-            for (Node user : users) {
-                String username = user.selectSingleNode("username").getText();
-                members.add(server.createJID(username, null));
-
-            }
-            return members;
-        } catch (GroupNotFoundException gnfe) {
-            // It is a supported exception, throw it again
-            throw gnfe;
+            return element;
         } catch (Exception e) {
             // It is not supported exception, wrap it into a GroupNotFoundException
             throw new GroupNotFoundException("Unexpected error", e);

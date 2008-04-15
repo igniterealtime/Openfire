@@ -81,7 +81,7 @@ public class GroupAdminAdded extends AdHocCommand {
         // Sends the event
         Group group;
         try {
-            group = GroupManager.getInstance().getGroup(groupname);
+            group = GroupManager.getInstance().getGroup(groupname, true);
 
             // Fire event.
             GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.admin_added, params);

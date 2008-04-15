@@ -9,24 +9,24 @@
   - agreement with Jive.
 --%>
 
-<%@ page import="org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.Log,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.PresenceManager,
+<%@ page import="org.jivesoftware.openfire.PresenceManager,
                  org.jivesoftware.openfire.group.Group,
-                 org.jivesoftware.openfire.group.GroupManager"
+                 org.jivesoftware.openfire.group.GroupManager,
+                 org.jivesoftware.openfire.security.SecurityAuditManager,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager,
+                 org.jivesoftware.openfire.user.UserNotFoundException"
 %>
-<%@ page import="org.jivesoftware.openfire.user.User"%>
-<%@ page import="org.jivesoftware.openfire.user.UserManager"%>
-<%@ page import="org.jivesoftware.openfire.user.UserNotFoundException"%>
+<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.Log"%>
+<%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
 <%@ page import="java.net.URLDecoder"%>
 <%@ page import="java.net.URLEncoder"%>
-<%@ page import="java.util.*"%>
-<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="java.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -255,6 +255,12 @@
 </head>
 <body>
 
+<% if (webManager.getGroupManager().isReadOnly() && webManager.getGroupManager().isPropertyReadOnly()) { %>
+<div class="error">
+    <fmt:message key="group.read_only"/>
+</div>
+<% } %>
+
 <p>
 	<fmt:message key="group.edit.form_info" />
 </p>
@@ -339,7 +345,17 @@
 
 	</div>
 	<div class="jive-contentBox">
-		<p>
+            <% if (webManager.getGroupManager().isPropertyReadOnly()) { %>
+        <p>
+                <% if (enableRosterGroups) { %>
+            <fmt:message key="group.edit.share_status_enabled" />
+                <% } else { %>
+            <fmt:message key="group.edit.share_status_disabled" />
+                <% } %>
+        </p>
+
+            <% } else { %>
+        <p>
             <fmt:message key="group.edit.share_content" />
         </p>
 
@@ -444,8 +460,7 @@
         </tr>
     </tbody>
     </table>
-
-
+            <% } %>
 	</div>
 	<!-- END contact list settings -->
 

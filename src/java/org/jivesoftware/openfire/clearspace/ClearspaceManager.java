@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
@@ -105,6 +106,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         exceptionMap.put("com.jivesoftware.base.GroupNotFoundException", "org.jivesoftware.openfire.group.GroupNotFoundException");
         exceptionMap.put("com.jivesoftware.base.GroupAlreadyExistsException", "org.jivesoftware.openfire.group.GroupAlreadyExistsException");
         exceptionMap.put("org.acegisecurity.BadCredentialsException", "org.jivesoftware.openfire.auth.UnauthorizedException");
+        exceptionMap.put("com.jivesoftware.base.UnauthorizedException", "org.jivesoftware.openfire.auth.UnauthorizedException");
+        exceptionMap.put("com.jivesoftware.community.NotFoundException", "org.jivesoftware.util.NotFoundException");
     }
 
     private ConfigClearspaceTask configClearspaceTask;
@@ -343,6 +346,37 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     /**
+     * Returns true if Openfire is connected to Clearspace.
+     * This method may delay some time since it has to ping Clearspace to know if
+     * Openfire is able to connect to it.
+     *
+     * @return true if Openfire is connected to Clearspace.
+     */
+    public Boolean isOpenfireConnected() {
+        return testConnection();
+    }
+
+    /**
+     * Returns true if Clearspce is connected to Openfire.
+     *
+     * @return true if Clearspce is connected to Openfire.
+     */
+    public Boolean isClearspaceConnected() {
+        XMPPServer server = XMPPServer.getInstance();
+        if (server == null) {
+            return false;
+        }
+        
+        Collection<ComponentSession> componentSessions = server.getSessionManager().getComponentSessions();
+        for (ComponentSession cs : componentSessions) {
+            // All Clearspace sessions start with "clearspace"
+            if (cs.getAddress().getDomain().startsWith("clearspace")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
      * Returns the Clearspace service URI; e.g. <tt>https://localhost:80/clearspace</tt>.
      * This value is stored as the Jive Property <tt>clearspace.uri</tt>.
      *
@@ -543,6 +577,15 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
         }
+    }
+
+    /**
+     * Returns true if Clerspace was configured at least one time since Openfire startup.
+     *
+     * @return true if Clerspace was configured at least one time since Openfire startup.
+     */
+    public boolean isClearspaceConfigured() {
+        return configClearspaceTask == null;
     }
 
     private List<String> getServerInterfaces() {

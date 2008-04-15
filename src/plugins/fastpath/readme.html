@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Fastpath Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Fastpath Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The monitoring plugin adds chat archiving support to Openfire together with a neat dashboard and
+a list of reports.
+</p>
+
+<h2>Installation</h2>
+
+<p>Copy monitoring.jar into the plugins directory of your Openfire installation. The
+plugin will then be automatically deployed. To upgrade to a new version, copy the new
+monitoring.jar file over the existing file.</p>
+
+<p>Make sure that the enterprise plugin is removed before installing this plugin. Otherwise
+the enterprise plugin will rename the fastpath.jar to fastpath.jar.old thus removing thus
+plugin. If this happens just stop the server, remove the enterprise.jar plugin and rename
+fastpath.jar.old to fastpath.jar and start the server again.</p>
+
+<h2>Configuration</h2>
+
+Chat archiving is enabled by default. However, only meta data about conversations is
+enabled not include chat transcript archving. To enable chat transcript archiving
+or group chat archving you have to log into the admin console and go to
+Monitoring --> Archiving --> Archiving Settings..
+
+<h2>Configuration</h2>
+
+Run the corresponding migration script located in the database folder. You might need to start
+the server so that this plugin is exploded. You can also use an extracion tool like winzip to
+decompress this plugin and obtain the database scripts.
+
+</body>
+</html>

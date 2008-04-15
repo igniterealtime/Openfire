@@ -28,7 +28,6 @@ import java.io.File;
  * Openfire Monitoring plugin.
  *
  * @author Matt Tucker
- * @src.include false
  */
 public class MonitoringPlugin implements Plugin {
 

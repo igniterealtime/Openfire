@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
@@ -28,6 +29,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.Cache;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
@@ -421,6 +423,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     public void setActiveList(PrivacyList activeList) {
         this.activeList = activeList != null ? activeList.getName() : null;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     /**
@@ -447,7 +454,17 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param defaultList the default Privacy list used for the session's user.
      */
     public void setDefaultList(PrivacyList defaultList) {
+        // Do nothing if nothing has changed
+        if ((this.defaultList == null && defaultList == null) ||
+                (defaultList != null && defaultList.getName().equals(this.defaultList))) {
+            return;
+        }
         this.defaultList = defaultList != null ? defaultList.getName() : null;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     /**
@@ -669,6 +686,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else if (this.presence.isAvailable()) {
             // Notify listeners that the show or status value of the presence has changed
             PresenceEventDispatcher.presenceChanged(this, presence);
+        }
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
         }
     }
 

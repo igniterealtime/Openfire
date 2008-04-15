@@ -53,6 +53,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
     public static final String ISS_CACHE_NAME = "Incoming Server Sessions";
+    public static final String C2S_INFO_CACHE_NAME = "Client Session Info Cache";
 
     public static final int NEVER_KICK = -1;
 
@@ -70,6 +71,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * for each cluster node. 
      */
     private final AtomicInteger connectionsCounter = new AtomicInteger(0);
+
+    /**
+     * Cache (unlimited, never expire) that holds information about client sessions (as soon as
+     * a resource has been bound). The cache is used by Remote sessions to avoid generating big
+     * number of remote calls.
+     * Key: full JID, Value: ClientSessionInfo
+     */
+    private Cache<String, ClientSessionInfo> sessionInfoCache;
 
     /**
      * Cache (unlimited, never expire) that holds external component sessions.
@@ -517,6 +526,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
                 SessionEventDispatcher.EventType.session_created;
         // Fire session created event.
         SessionEventDispatcher.dispatchEvent(session, event);
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            sessionInfoCache.put(session.getAddress().toString(), new ClientSessionInfo(session));
+        }
     }
 
     /**
@@ -1056,6 +1069,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
+
+        // Stop tracking information about the session and share it with other cluster nodes
+        sessionInfoCache.remove(fullJID.toString());
+
         if (removed || preauth_removed) {
             // Decrement the counter of user sessions
             connectionsCounter.decrementAndGet();
@@ -1249,6 +1266,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         incomingServerSessionsCache = CacheFactory.createCache(ISS_CACHE_NAME);
         hostnameSessionsCache = CacheFactory.createCache("Sessions by Hostname");
         validatedDomainsCache = CacheFactory.createCache("Validated Domains");
+        sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
         // Listen to cluster events
         ClusterManager.addListener(this);
     }
@@ -1397,8 +1415,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
     }
 
+    public Cache<String, ClientSessionInfo> getSessionInfoCache() {
+        return sessionInfoCache;
+    }
+
     public void joinedCluster() {
         restoreCacheContent();
+        // Track information about local sessions and share it with other cluster nodes
+        for (ClientSession session : routingTable.getClientsRoutes(true)) {
+            sessionInfoCache.put(session.getAddress().toString(), new ClientSessionInfo((LocalClientSession)session));
+        }
     }
 
     public void joinedCluster(byte[] nodeID) {

@@ -375,20 +375,14 @@ public class AdminConsole {
             clearspace.addAttribute("url", "clearspace-info.jsp");
             clearspace.addAttribute("description", LocaleUtils.getLocalizedString("tab.tab-clearspace.descr"));
             Element sidebar = clearspace.addElement("sidebar");
-            sidebar.addAttribute("id", "sidebar-clearspace-admin");
-            sidebar.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.sidebar-clearspace-admin"));
+            sidebar.addAttribute("id", "sidebar-clearspace");
+            sidebar.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.sidebar-clearspace"));
 
             Element item = sidebar.addElement("item");
             item.addAttribute("id", "clearspace-info");
             item.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-info"));
             item.addAttribute("url", "clearspace-info.jsp");
             item.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-info.descr"));
-
-            item = sidebar.addElement("item");
-            item.addAttribute("id", "clearspace-connection");
-            item.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-connection"));
-            item.addAttribute("url", "clearspace-connection.jsp");
-            item.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-connection.descr"));
         }
     }
 

@@ -515,6 +515,29 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(MUC_SUBDOMAIN);
     }
 
+    public synchronized boolean configClearspace() {
+        // If the task is running, stop it
+        if (configClearspaceTask != null) {
+            configClearspaceTask.cancel();
+            Log.debug("Stopping previous configuration Clearspace task.");
+        }
+
+        boolean configured = false;
+        try {
+            doConfigClearspace();
+            configured = true;
+        } catch (UnauthorizedException e) {
+            Log.info("Unauthorized to configure Clearspace.", e);
+        } catch (UnsupportedOperationException e) {
+            Log.info("Error configuring Clearspace.", e);
+        }
+
+        if (!configured) {
+            startClearspaceConfig();
+        }
+        return configured;
+    }
+
     /**
      *
      */
@@ -532,7 +555,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         Log.debug("Starting configuration Clearspace task in 10 seconds.");
     }
 
-    private synchronized void configClearspace() throws UnauthorizedException {
+    private synchronized void doConfigClearspace() throws UnauthorizedException {
 
         Log.debug("Starting Clearspace configuration.");
 
@@ -1121,7 +1144,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         public void run() {
             try {
                 Log.debug("Trying to configure Clearspace.");
-                configClearspace();
+                doConfigClearspace();
             } catch (UnauthorizedException e) {
                 Log.warn("Unauthorization problem trying to configure Clearspace, trying again in 1 minute", e);
                 // TODO: Mark that there is an authorization problem

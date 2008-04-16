@@ -445,16 +445,27 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
 
         final Element incomingForm = packet.getChildElement();
-        final boolean isDataFormQuery = (incomingForm.element(QName.get("x",
-                "jabber:x:data")) != null);
-        final Set<User> searchResults = performSearch(incomingForm);
+        final boolean isDataFormQuery = (incomingForm.element(QName.get("x", "jabber:x:data")) != null);
 
         final Element rsmElement = incomingForm.element(QName.get("set",
                 ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT));
 
-        final boolean applyRSM = rsmElement != null && !searchResults.isEmpty();
+        if (rsmElement != null) {
+            final Element maxElement = rsmElement.element("max");
+            final Element startIndexElement = rsmElement.element("index");
 
-        if (applyRSM) {
+            int startIndex = 0;
+            if(startIndexElement != null) {
+                startIndex = Integer.parseInt(startIndexElement.getTextTrim());
+            }
+
+            int max = -1;
+            if(maxElement != null) {
+                max = Integer.parseInt(maxElement.getTextTrim());
+            }
+
+            final Set<User> searchResults = performSearch(incomingForm, startIndex, max);
+            
             // apply RSM
             final List<User> rsmResults;
             final ResultSet<User> rs = new ResultSetImpl<User>(searchResults);
@@ -476,6 +487,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             resultIQ.getChildElement().add(set);
 
         } else {
+            final Set<User> searchResults = performSearch(incomingForm);
             // don't apply RSM
             if (isDataFormQuery) {
                 resultIQ = replyDataFormResult(searchResults, packet);
@@ -551,14 +563,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         return true;
     }
 
-    /**
-     * Performs a search based on form data, and returns the search results.
-     *
-     * @param incomingForm
-     *            The form containing the search data
-     * @return A set of users that matches the search criteria.
-     */
-    private Set<User> performSearch(Element incomingForm) {
+    private Set<User> performSearch(Element incomingForm, int startIndex, int max) {
         Set<User> users = new HashSet<User>();
 
         Hashtable<String, String> searchList = extractSearchQuery(incomingForm);
@@ -568,16 +573,13 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             String query = entry.getValue();
 
             Collection<User> foundUsers = new ArrayList<User>();
-            // TODO Check if max number of results was requested and use the new method in UserManager
-            if (userManager != null) {
-                if (query.length() > 0
-                        && !query.equals(NAMESPACE_JABBER_IQ_SEARCH)) {
-                    foundUsers
-                            .addAll(userManager.findUsers(new HashSet<String>(
-                                    Arrays.asList((field))), query));
+
+            if (userManager != null && query.length() > 0 && !query.equals(NAMESPACE_JABBER_IQ_SEARCH)) {
+                if(max >= 0) {
+                    foundUsers.addAll(userManager.findUsers(new HashSet<String>(Arrays.asList(field)), query, startIndex, max));
+                } else {
+                    foundUsers.addAll(userManager.findUsers(new HashSet<String>(Arrays.asList(field)), query));
                 }
-            } else {
-                foundUsers.addAll(findUsers(field, query));
             }
 
             // occasionally a null User is returned so filter them out
@@ -588,6 +590,17 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             }
         }
         return users;
+    }
+
+    /**
+     * Performs a search based on form data, and returns the search results.
+     *
+     * @param incomingForm
+     *            The form containing the search data
+     * @return A set of users that matches the search criteria.
+     */
+    private Set<User> performSearch(Element incomingForm) {
+        return performSearch(incomingForm, -1, -1);
     }
 
     /**
@@ -971,80 +984,5 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      */
     public Collection<String> getSearchPluginUserManagerSearchFields() {
         return Arrays.asList("Username", "Name", "Email");
-    }
-
-    /**
-     * Finds a user using the specified field and query string. For example, a
-     * field name of "email" and query of "jsmith@example.com" would search for
-     * the user with that email address. Wildcard (*) characters are allowed as
-     * part of queries.
-     *
-     * A possible future improvement would be to have a third parameter that
-     * sets the maximum number of users returned and/or the number of users
-     * that are searched.
-     *
-     * @param field Field we will be searching on.
-     * @param query Comparison to make on specified field.
-     * @return Collection of User's matching query.
-     */
-    public Collection<User> findUsers(String field, String query) {
-        List<User> foundUsers = new ArrayList<User>();
-
-        if (!getSearchPluginUserManagerSearchFields().contains(field)) {
-            return foundUsers;
-        }
-
-        int index = query.indexOf("*");
-        if (index == -1) {
-            Collection<User> users = userManager.getUsers();
-            for (User user : users) {
-                if (field.equals("Username")) {
-                    try {
-                        foundUsers.add(userManager.getUser(query));
-                        return foundUsers;
-                    }
-                    catch (UserNotFoundException e) {
-                        Log.error("Error getting user", e);
-                    }
-                }
-                else if (field.equals("Name")) {
-                    if (user.isNameVisible()) {
-                        if (query.equalsIgnoreCase(user.getName())) {
-                            foundUsers.add(user);
-                        }
-                    }
-                } else if (field.equals("Email")) {
-                    if (user.isEmailVisible() && user.getEmail() != null) {
-                        if (query.equalsIgnoreCase(user.getEmail())) {
-                            foundUsers.add(user);
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            String prefix = query.substring(0, index);
-            Collection<User> users = userManager.getUsers();
-            for (User user : users) {
-                String userInfo = "";
-                if (field.equals("Username")) {
-                    userInfo = user.getUsername();
-                }
-                else if (field.equals("Name")) {
-                    userInfo = user.getName();
-                }
-                else if (field.equals("Email")) {
-                    userInfo = user.getEmail() == null ? "" : user.getEmail();
-                }
-
-                if (index < userInfo.length()) {
-                    if (userInfo.substring(0, index).equalsIgnoreCase(prefix)) {
-                        foundUsers.add(user);
-                    }
-                }
-            }
-        }
-
-        return foundUsers;
     }
 }

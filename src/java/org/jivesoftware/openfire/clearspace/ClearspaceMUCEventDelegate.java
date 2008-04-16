@@ -51,7 +51,7 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
 
         IQ query = new IQ();
         query.setFrom(csMucDomain);
-        Element cmd = query.setChildElement("room-invite", "http://jivesoftware.com/clearspace");
+        Element cmd = query.setChildElement("invite-check", "http://jivesoftware.com/clearspace");
         Element inviterjidElement = cmd.addElement("inviter");
         inviterjidElement.setText(inviter.toBareJID());
         Element inviteejidElement = cmd.addElement("invitee");

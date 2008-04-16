@@ -39,7 +39,7 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class RemoteMUCRole implements MUCRole, Externalizable {
-    private MultiUserChatService server;
+    private String serviceDomain;
     private Presence presence;
     private Role role;
     private Affiliation affiliation;
@@ -57,7 +57,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     }
 
     public RemoteMUCRole(MultiUserChatService server, OccupantAddedEvent event) {
-        this.server = server;
+        this.serviceDomain = server.getServiceDomain();
         presence = event.getPresence();
         role = event.getRole();
         affiliation = event.getAffiliation();
@@ -95,7 +95,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
 
     public void changeNickname(String nickname) {
         this.nickname = nickname;
-        setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nickname, true));
+        setRoleAddress(new JID(room.getName(), serviceDomain, nickname, true));
     }
 
     private void setRoleAddress(JID jid) {
@@ -141,6 +141,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, serviceDomain);
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
         ExternalizableUtil.getInstance().writeInt(out, role.ordinal());
         ExternalizableUtil.getInstance().writeInt(out, affiliation.ordinal());
@@ -152,6 +153,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        serviceDomain = ExternalizableUtil.getInstance().readSafeUTF(in);
         presence = new Presence((Element)ExternalizableUtil.getInstance().readSerializable(in), true);
         role = Role.values()[ExternalizableUtil.getInstance().readInt(in)];
         affiliation = Affiliation.values()[ExternalizableUtil.getInstance().readInt(in)];

@@ -35,7 +35,7 @@ public class UpdateOccupantRequest extends MUCRoomTask {
     private Element answer;
     private String nickname;
     private int role;
-    private int affiliation;
+    private MUCRole.Affiliation affiliation;
 
 
     public UpdateOccupantRequest() {
@@ -46,7 +46,7 @@ public class UpdateOccupantRequest extends MUCRoomTask {
         super(room);
         this.nickname = nickname;
         this.role = newRole.ordinal();
-        this.affiliation = newAffiliation.ordinal();
+        this.affiliation = newAffiliation;
     }
 
     public String getNickname() {
@@ -58,7 +58,11 @@ public class UpdateOccupantRequest extends MUCRoomTask {
     }
 
     public MUCRole.Affiliation getAffiliation() {
-        return MUCRole.Affiliation.values()[affiliation];
+        return affiliation;
+    }
+
+    public boolean isAffiliationChanged() {
+        return affiliation != null;
     }
 
     public Object getResult() {
@@ -80,13 +84,18 @@ public class UpdateOccupantRequest extends MUCRoomTask {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
         ExternalizableUtil.getInstance().writeInt(out, role);
-        ExternalizableUtil.getInstance().writeInt(out, affiliation);
+        ExternalizableUtil.getInstance().writeBoolean(out, affiliation != null);
+        if (affiliation != null) {
+            ExternalizableUtil.getInstance().writeInt(out, affiliation.ordinal());
+        }
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
         role = ExternalizableUtil.getInstance().readInt(in);
-        affiliation = ExternalizableUtil.getInstance().readInt(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            affiliation = MUCRole.Affiliation.values()[ExternalizableUtil.getInstance().readInt(in)];
+        }
     }
 }

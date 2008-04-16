@@ -22,7 +22,10 @@ import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.*;
@@ -1175,12 +1178,28 @@ public class LocalMUCRoom implements MUCRoom {
         // Try looking the role in the bare JID list
         MUCRole role = occupantsByFullJID.get(jid);
         if (role != null) {
-            // Update the presence with the new role
-            role.setRole(newRole);
-            // Notify the othe cluster nodes to update the occupant
-            CacheFactory.doClusterTask(new UpdateOccupant(this, role));
-            // Prepare a new presence to be sent to all the room occupants
-            return role.getPresence().createCopy();
+            if (role.isLocal()) {
+                // Update the presence with the new role
+                role.setRole(newRole);
+                // Notify the othe cluster nodes to update the occupant
+                CacheFactory.doClusterTask(new UpdateOccupant(this, role));
+                // Prepare a new presence to be sent to all the room occupants
+                return role.getPresence().createCopy();
+            }
+            else {
+                // Ask the cluster node hosting the occupant to make the changes. Note that if the change
+                // is not allowed a NotAllowedException will be thrown
+                Element element = (Element) CacheFactory.doSynchronousClusterTask(
+                        new UpdateOccupantRequest(this, role.getNickname(), null, newRole),
+                        role.getNodeID().toByteArray());
+                if (element != null) {
+                    // Prepare a new presence to be sent to all the room occupants
+                    return new Presence(element, true);
+                }
+                else {
+                    throw new NotAllowedException();
+                }
+            }
         }
         return null;
     }
@@ -1534,7 +1553,8 @@ public class LocalMUCRoom implements MUCRoom {
             }
             else {
                 Log.error("Tried to update local occupant with info of local occupant?. Occupant nickname: " +
-                        update.getNickname());
+                        update.getNickname() + " new role: " + update.getRole() + " new affiliation: " +
+                        update.getAffiliation());
             }
         }
         else {
@@ -1545,7 +1565,9 @@ public class LocalMUCRoom implements MUCRoom {
     public Presence updateOccupant(UpdateOccupantRequest updateRequest) throws NotAllowedException {
         MUCRole occupantRole = occupants.get(updateRequest.getNickname().toLowerCase());
         if (occupantRole != null) {
-            occupantRole.setAffiliation(updateRequest.getAffiliation());
+            if (updateRequest.isAffiliationChanged()) {
+                occupantRole.setAffiliation(updateRequest.getAffiliation());
+            }
             occupantRole.setRole(updateRequest.getRole());
             // Notify the othe cluster nodes to update the occupant
             CacheFactory.doClusterTask(new UpdateOccupant(this, occupantRole));

@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.roster.RosterEventListener;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.*;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -119,16 +120,17 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // that was slowing down the server
         Thread thread = new Thread("PEP avaiable sessions handler ") {
             public void run() {
-                for (; ;) {
+                final XMPPServer server = XMPPServer.getInstance();
+                while (!server.isShuttingDown()) {
                     try {
                         JID availableSessionJID = availableSessions.take();
 
                         // Send the last published items for the contacts on availableSessionJID's roster.
                         try {
-                            Roster roster = XMPPServer.getInstance().getRosterManager()
-                                    .getRoster(availableSessionJID.getNode());
+                            Roster roster = server.getRosterManager().getRoster(availableSessionJID.getNode());
                             for (RosterItem item : roster.getRosterItems()) {
-                                if (item.getSubStatus() == RosterItem.SUB_BOTH) {
+                                if (server.isLocal(item.getJid()) && (item.getSubStatus() == RosterItem.SUB_BOTH ||
+                                        item.getSubStatus() == RosterItem.SUB_TO)) {
                                     PEPService pepService = getPEPService(item.getJid().toBareJID());
                                     if (pepService != null) {
                                         pepService.sendLastPublishedItems(availableSessionJID);
@@ -167,6 +169,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         UserEventDispatcher.addListener(this);
 
         pubSubEngine = new PubSubEngine(server.getPacketRouter());
+    }
+
+    /**
+     * Returns true if the PEP service is enabled in the server.
+     *
+     * @return true if the PEP service is enabled in the server.
+     */
+    public boolean isEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.pep.enabled", true);
     }
 
     /**
@@ -257,6 +268,14 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
+        // Do nothing if server is not enabled
+        if (!isEnabled()) {
+            IQ reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(PacketError.Condition.service_unavailable);
+            return reply;
+        }
+
         JID senderJID = packet.getFrom();
         if (packet.getTo() == null) {
             if (packet.getType() == IQ.Type.set) {
@@ -367,6 +386,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         if (pepService == null) {
             pepService = loadPEPServiceFromDB(jid);
+            // TODO Cache that no PEP service was found so we do not look for it again. Remove from cache when created
         }
 
         return pepService;
@@ -538,6 +558,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void availableSession(ClientSession session, Presence presence) {
+        // Do nothing if server is not enabled
+        if (!isEnabled()) {
+            return;
+        }
         JID newlyAvailableJID = presence.getFrom();
 
         if (newlyAvailableJID == null) {
@@ -549,6 +573,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void remoteUserAvailable(Presence presence) {
+        // Do nothing if server is not enabled
+        if (!isEnabled()) {
+            return;
+        }
         JID jidFrom = presence.getFrom();
         JID jidTo = presence.getTo();
 
@@ -565,6 +593,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
             }
 
+            // TODO Check the roster presence subscription to allow or ignore the received presence.
+            // TODO Directed presences should be ignored when no presence subscription exists
+
             // Send the presence packet recipient's last published items to the remote user.
             PEPService pepService = getPEPService(jidTo.toBareJID());
             if (pepService != null) {
@@ -574,6 +605,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     public void remoteUserUnavailable(Presence presence) {
+        // Do nothing if server is not enabled
+        if (!isEnabled()) {
+            return;
+        }
         JID jidFrom = presence.getFrom();
         JID jidTo = presence.getTo();
 

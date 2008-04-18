@@ -208,7 +208,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
-            Lock lock = CacheFactory.getLock(domain, serversCache);
+            // TODO: Evaluate why removing the oss part causes nasty s2s and lockup issues.
+            Lock lock = CacheFactory.getLock(domain+"oss", serversCache);
             try {
                 lock.lock();
                 created = LocalOutgoingServerSession

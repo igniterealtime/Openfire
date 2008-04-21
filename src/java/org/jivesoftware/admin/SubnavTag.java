@@ -13,7 +13,6 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.Log;
 import org.dom4j.Element;
 
 import javax.servlet.jsp.tagext.BodyTagSupport;

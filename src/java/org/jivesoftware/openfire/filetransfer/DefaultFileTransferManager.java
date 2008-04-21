@@ -12,8 +12,6 @@
 package org.jivesoftware.openfire.filetransfer;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.DefaultCache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.auth.UnauthorizedException;

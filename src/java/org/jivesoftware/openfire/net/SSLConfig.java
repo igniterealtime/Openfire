@@ -18,7 +18,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.net.ssl.*;
-import javax.net.ServerSocketFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,7 +25,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 

@@ -14,7 +14,6 @@ package org.jivesoftware.admin;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.Log;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;

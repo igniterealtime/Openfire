@@ -12,7 +12,6 @@
 package org.jivesoftware.openfire.commands;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.xmpp.packet.JID;
 

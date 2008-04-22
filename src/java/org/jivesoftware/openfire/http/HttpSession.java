@@ -384,7 +384,7 @@ public class HttpSession extends LocalClientSession {
      * @return the version of the BOSH XEP which the client is utilizing.
      */
     public double getVersion() {
-        if (this.version != Double.NaN) {
+        if (!Double.isNaN(this.version)) {
             return this.version;
         }
         else {

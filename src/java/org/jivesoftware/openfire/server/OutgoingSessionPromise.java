@@ -108,7 +108,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                                 packetsProcessor = packetsProcessors.get(domain);
                                 if (packetsProcessor == null) {
                                     packetsProcessor =
-                                            new PacketsProcessor(OutgoingSessionPromise.this, domain, routingTable);
+                                            new PacketsProcessor(OutgoingSessionPromise.this, domain);
                                     packetsProcessors.put(domain, packetsProcessor);
                                     newProcessor = true;
                                 }
@@ -177,18 +177,16 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
         private OutgoingSessionPromise promise;
         private String domain;
-        private RoutingTable routingTable;
-        private Queue<Packet> packets = new ConcurrentLinkedQueue<Packet>();
+        private Queue<Packet> packetQueue = new ConcurrentLinkedQueue<Packet>();
 
-        public PacketsProcessor(OutgoingSessionPromise promise, String domain, RoutingTable routingTable) {
+        public PacketsProcessor(OutgoingSessionPromise promise, String domain) {
             this.promise = promise;
             this.domain = domain;
-            this.routingTable = routingTable;
         }
 
         public void run() {
             while (!isDone()) {
-                Packet packet = packets.poll();
+                Packet packet = packetQueue.poll();
                 if (packet != null) {
                     try {
                         sendPacket(packet);
@@ -277,7 +275,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         }
 
         public void addPacket(Packet packet) {
-            packets.add(packet);
+            packetQueue.add(packet);
         }
 
         public String getDomain() {
@@ -285,7 +283,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         }
 
         public boolean isDone() {
-            return packets.isEmpty();
+            return packetQueue.isEmpty();
         }
     }
 }

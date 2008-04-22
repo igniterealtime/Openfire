@@ -51,13 +51,6 @@ public class ClearspaceUserProvider implements UserProvider {
      * @throws UserNotFoundException if the user could not be found
      */
     public User loadUser(String username) throws UserNotFoundException {
-        // Checks if the user is local
-        if (username.contains("@")) {
-            if (!XMPPServer.getInstance().isLocal(new JID(username))) {
-                throw new UserNotFoundException("Cannot load user of remote server: " + username);
-            }
-            username = username.substring(0, username.lastIndexOf("@"));
-        }
 
         // Translate the response
         return translate(getUserByUsername(username));
@@ -564,6 +557,14 @@ public class ClearspaceUserProvider implements UserProvider {
      * @throws UserNotFoundException The user was not found in the Clearspace database or there was an error.
      */
     private Element getUserByUsername(String username) throws UserNotFoundException {
+        // Checks if the user is local
+        if (username.contains("@")) {
+            if (!XMPPServer.getInstance().isLocal(new JID(username))) {
+                throw new UserNotFoundException("Cannot load user of remote server: " + username);
+            }
+            username = username.substring(0, username.lastIndexOf("@"));
+        }
+        
         try {
 
             // Requests the user

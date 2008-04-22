@@ -14,12 +14,14 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.jivesoftware.openfire.XMPPServer;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
 import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
 import java.util.List;
 
@@ -194,6 +196,14 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * @throws UserNotFoundException The user was not found in the Clearspace database or there was an error.
      */
     private Element getUserByUsername(String username) throws UserNotFoundException {
+        // Checks if the user is local
+        if (username.contains("@")) {
+            if (!XMPPServer.getInstance().isLocal(new JID(username))) {
+                throw new UserNotFoundException("Cannot load user of remote server: " + username);
+            }
+            username = username.substring(0, username.lastIndexOf("@"));
+        }
+        
         try {
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;

@@ -640,6 +640,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     public void setOfflineFloodStopped(boolean offlineFloodStopped) {
         this.offlineFloodStopped = offlineFloodStopped;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     /**
@@ -747,6 +752,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     public void incrementConflictCount() {
         conflictCount++;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     /**

@@ -51,7 +51,6 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     private IQDiscoItemsHandler itemsHandler;
 
     private RoutingTable routingTable;
-    private SessionManager sessionManager;
     private UserManager userManager;
     private OfflineMessageStore messageStore;
 
@@ -178,7 +177,6 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         infoHandler = server.getIQDiscoInfoHandler();
         itemsHandler = server.getIQDiscoItemsHandler();
         messageStore = server.getOfflineMessageStore();
-        sessionManager = server.getSessionManager();
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
     }

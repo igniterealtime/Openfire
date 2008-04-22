@@ -14,7 +14,6 @@ package org.jivesoftware.openfire.handler;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
@@ -45,7 +44,6 @@ public class IQPrivacyHandler extends IQHandler
     private IQHandlerInfo info;
     private PrivacyListManager manager = PrivacyListManager.getInstance();
     private PrivacyListProvider provider = new PrivacyListProvider();
-    private SessionManager sessionManager;
 
     public IQPrivacyHandler() {
         super("Blocking Communication Handler");
@@ -428,6 +426,5 @@ public class IQPrivacyHandler extends IQHandler
 
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        sessionManager = server.getSessionManager();
     }
 }

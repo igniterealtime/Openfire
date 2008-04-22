@@ -65,7 +65,6 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     private String serverName;
     private UserManager userManager;
-    private SessionManager sessionManager;
     private RoutingTable routingTable;
 
     /**
@@ -294,7 +293,6 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         userManager = server.getUserManager();
-        sessionManager = server.getSessionManager();
         routingTable = server.getRoutingTable();
         serverName = server.getServerInfo().getXMPPDomain();
     }

@@ -69,7 +69,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
     private UserManager userManager;
     private XMPPServer localServer;
-    private SessionManager sessionManager;
     private PacketRouter router;
 
     public IQRosterHandler() {
@@ -297,7 +296,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         localServer = server;
         userManager = server.getUserManager();
         router = server.getPacketRouter();
-        sessionManager = server.getSessionManager();
     }
 
     public IQHandlerInfo getInfo() {

@@ -17,7 +17,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
@@ -78,7 +77,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     private UserManager userManager;
     private RosterManager rosterManager;
-    private SessionManager sessionManager;
 
     private IQHandlerInfo info;
 
@@ -94,7 +92,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         super.initialize(server);
         userManager = server.getUserManager();
         rosterManager = server.getRosterManager();
-        sessionManager = server.getSessionManager();
 
         if (probeResult == null) {
             // Create the basic element of the probeResult which contains the basic registration

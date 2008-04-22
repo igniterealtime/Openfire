@@ -460,7 +460,7 @@ public class CacheFactory {
         try {
             CacheFactoryStrategy cacheFactory = (CacheFactoryStrategy) Class.forName(
                     clusteredCacheFactoryClass, true,
-                    getClusteredCacheStrategyClassLoader("enterprise")).newInstance();
+                    getClusteredCacheStrategyClassLoader()).newInstance();
             return cacheFactory.getMaxClusterNodes();
         } catch (ClassNotFoundException e) {
             // Do nothing
@@ -535,15 +535,18 @@ public class CacheFactory {
         }
     }
 
-    private static ClassLoader getClusteredCacheStrategyClassLoader(String pluginName) {
+    private static ClassLoader getClusteredCacheStrategyClassLoader() {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        Plugin enterprisePlugin = pluginManager.getPlugin(pluginName);
-        PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(enterprisePlugin);
+        Plugin plugin = pluginManager.getPlugin("clustering");
+        if (plugin == null) {
+            plugin = pluginManager.getPlugin("enterprise");
+        }
+        PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
         if (pluginLoader != null) {
             return pluginLoader;
         }
         else {
-            Log.debug("Unable to find PluginClassloader for plugin: " + pluginName + " in CacheFactory.");
+            Log.debug("CacheFactory - Unable to find a Plugin that provides clustering support.");
             return Thread.currentThread().getContextClassLoader();
         }
     }
@@ -553,7 +556,7 @@ public class CacheFactory {
         clusteringStarting = true;
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
-                    getClusteredCacheStrategyClassLoader("enterprise"))
+                    getClusteredCacheStrategyClassLoader())
                     .newInstance();
             clusteringStarted = cacheFactoryStrategy.startCluster();
         }

@@ -94,23 +94,6 @@ public class PresenceEventDispatcher {
 
 
     /**
-     * Notification message indicating that the presence priority of a session has
-     * been modified. Presence priorities are used when deciding which session of
-     * the same user should receive a message that was sent to the user bare's JID.
-     *
-     * @param session the affected session.
-     * @param presence the presence that changed the priority.
-     */
-    public static void presencePriorityChanged(ClientSession session, Presence presence) {
-        if (!listeners.isEmpty()) {
-            for (PresenceEventListener listener : listeners) {
-                listener.presencePriorityChanged(session, presence);
-            }
-        }
-    }
-
-
-    /**
      * Notification message indicating that an available session has changed its
      * presence. This is the case when the user presence changed the show value
      * (e.g. away, dnd, etc.) or the presence status message.

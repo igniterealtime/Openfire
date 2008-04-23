@@ -662,11 +662,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     }
 
-    public void presencePriorityChanged(ClientSession session, Presence presence) {
-        // Do nothing
-
-    }
-
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
         // Do nothing
         return true;

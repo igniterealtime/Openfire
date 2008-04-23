@@ -686,7 +686,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             // The client has changed the priority of his presence
             sessionManager.changePriority(this, oldPresence.getPriority());
             // Notify listeners that the priority of the session/resource has changed
-            PresenceEventDispatcher.presencePriorityChanged(this, presence);
+            PresenceEventDispatcher.presenceChanged(this, presence);
         }
         else if (this.presence.isAvailable()) {
             // Notify listeners that the show or status value of the presence has changed

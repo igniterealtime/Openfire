@@ -249,7 +249,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             }
         }
-        else if (jid.getDomain().contains(serverName)) {
+        else if (jid.getDomain().contains(serverName) && hasComponentRoute(jid)) {
             // Packet sent to component hosted in this server
             // First check if the component is being hosted in this JVM
             RoutableChannelHandler route = localRoutingTable.getRoute(jid.getDomain());

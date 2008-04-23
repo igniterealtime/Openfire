@@ -85,8 +85,8 @@ public class WSUtils {
      * <return>text3</return>
      * </something>
      *
-     * @param element
-     * @return
+     * @param element XML element to pull strings from
+     * @return the array of parsed out strings
      */
     protected static List<String> parseStringArray(Element element) {
         List<String> list = new ArrayList<String>();

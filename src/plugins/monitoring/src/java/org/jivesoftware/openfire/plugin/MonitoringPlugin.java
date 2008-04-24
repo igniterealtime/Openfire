@@ -23,6 +23,7 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.io.File;
+import java.io.FileFilter;
 
 /**
  * Openfire Monitoring plugin.
@@ -81,16 +82,23 @@ public class MonitoringPlugin implements Plugin {
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         System.out.println("Starting Monitoring Plugin");
 
-        // Check that the enterprise plugin is not being used
-        if (manager.getPlugin("enterprise") != null) {
-            // Stop loading this plugin since the enterprise is being used
+        // Check if we Enterprise is installed and stop loading this plugin if found
+        File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+        File[] jars = pluginDir.listFiles(new FileFilter() {
+            public boolean accept(File pathname) {
+                String fileName = pathname.getName().toLowerCase();
+                return (fileName.equalsIgnoreCase("enterprise.jar"));
+            }
+        });
+        if (jars.length > 0) {
+            // Do not load this plugin since Enterprise is still installed
             System.out.println("Enterprise plugin found. Stopping Monitoring Plugin");
             throw new IllegalStateException("This plugin cannot run next to the Enterprise plugin");
         }
 
         shuttingDown = false;
 
-        // Make sure that the enteprise folder exists under the home directory
+        // Make sure that the monitoring folder exists under the home directory
         File dir = new File(JiveGlobals.getHomeDirectory() +
             File.separator + "monitoring");
         if (!dir.exists()) {

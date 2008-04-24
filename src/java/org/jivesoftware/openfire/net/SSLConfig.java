@@ -17,7 +17,10 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -181,7 +184,7 @@ public class SSLConfig {
                 c2sTrustFactory.init(c2sTrustStore);
 
                 c2sContext.init(keyFactory.getKeyManagers(),
-                    s2sTrustFactory.getTrustManagers(),
+                    c2sTrustFactory.getTrustManagers(),
                     new java.security.SecureRandom());
 
                 c2sFactory = c2sContext.getServerSocketFactory();

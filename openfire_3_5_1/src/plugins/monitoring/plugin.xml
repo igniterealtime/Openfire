@@ -6,14 +6,14 @@
     <description>Monitors conversations and statistics of the server.</description>
     <author>Jive Software</author>
     <version>1.0.0</version>
-    <date>4/21/2008</date>
+    <date>4/24/2008</date>
     <minServerVersion>3.5.1</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>0</databaseVersion>
 	
     <adminconsole>
-        <tab id="tab-monitoring" name="${admin.tab.monitoring.name}" url="stats-dashboard.jsp" description="${admin.tab.monitoring.description}">
-            <sidebar id="stats-dashboard" name="${admin.item.stats-dashboard.name}" description="${admin.item.stats-dashboard.description}">
+        <tab id="tab-server">
+            <sidebar id="stats-dashboard" name="${admin.sidebar.statistics.name}" description="${admin.item.stats-dashboard.description}">
                 <item id="statistics" name="${admin.sidebar.statistics.name}"
                       url="stats-dashboard.jsp"
                       description="${admin.sidebar.statistics.description}"/>

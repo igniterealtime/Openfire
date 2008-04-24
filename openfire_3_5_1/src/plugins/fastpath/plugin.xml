@@ -3,7 +3,7 @@
 <plugin>
     <class>org.jivesoftware.openfire.fastpath.FastpathPlugin</class>
     <name>Fastpath Service</name>
-    <description>Monitors conversations and statistics of the server.</description>
+    <description>Support for managed queued chat requests, such as a support team might use.</description>
     <author>Jive Software</author>
     <version>1.0.0</version>
     <date>4/24/2008</date>

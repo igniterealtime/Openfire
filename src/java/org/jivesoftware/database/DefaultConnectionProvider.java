@@ -70,20 +70,13 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     public Connection getConnection() throws SQLException {
-        Connection connection = null;
         try {
             Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
-            try {
-                connection = DriverManager.getConnection(proxoolURL, settings);
-            }
-            catch (SQLException e) {
-                Log.error("DbConnectionProvider: Error while getting connection: ", e);
-            }
+                return DriverManager.getConnection(proxoolURL, settings);
         }
         catch (ClassNotFoundException e) {
-            Log.error("DbConnectionProvider: Unable to find driver: ", e);
+            throw new SQLException("DbConnectionProvider: Unable to find driver", e);
         }
-        return connection;
     }
 
     public void start() {

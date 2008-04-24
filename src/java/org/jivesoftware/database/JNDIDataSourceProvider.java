@@ -107,17 +107,10 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
 
     }
 
-    public Connection getConnection() {
+    public Connection getConnection() throws SQLException {
         if (dataSource == null) {
-            Log.error("DataSource has not been initialized.", null);
-            return null;
+            throw new SQLException("DataSource has not been initialized.");
         }
-        try {
-            return dataSource.getConnection();
-        }
-        catch (SQLException e) {
-            Log.error("Could not retrieve Connection from DataSource", e);
-            return null;
-        }
+        return dataSource.getConnection();
     }
 }

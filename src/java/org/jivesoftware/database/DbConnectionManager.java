@@ -95,10 +95,18 @@ public class DbConnectionManager {
         Integer retryCnt = 0;
         Integer retryMax = 10;
         Integer retryWait = 250; // milliseconds
-        Connection con;
+        Connection con = null;
+        SQLException lastException = null;
         do {
             retryCnt++;
-            con = connectionProvider.getConnection();
+            try {
+            	con = connectionProvider.getConnection();
+            } catch (SQLException e) {
+            	// TODO distinguish recoverable from non-recoverable exceptions.
+            	lastException = e;
+            	Log.info("Unable to get a connection from the database pool " +
+            			"(attempt "+retryCnt+" out of "+retryMax+").", e);
+			}
             if (con != null) {
                 // Got one, lets hand it off.
                 break;
@@ -112,8 +120,12 @@ public class DbConnectionManager {
         } while (retryCnt <= retryMax);
 
         if (con == null) {
-            Log.warn("ConnectionManager.getConnection() " +
-                    "failed to obtain a connection.");
+        	final SQLException ex = new SQLException("ConnectionManager.getConnection() " +
+                    "failed to obtain a connection after " + retryCnt +" retries. " +
+                    "The exception from the last attempt is attached to this exception.",
+                    lastException);
+            Log.error("Unable to obtain a connection from the database pool.", ex);
+            throw ex;
         }
 
         // See if profiling is enabled. If yes, wrap the connection with a

@@ -122,8 +122,7 @@ public class DbConnectionManager {
         if (con == null) {
         	final SQLException ex = new SQLException("ConnectionManager.getConnection() " +
                     "failed to obtain a connection after " + retryCnt +" retries. " +
-                    "The exception from the last attempt is attached to this exception.",
-                    lastException);
+                    "The exception from the last attempt is as follows: "+lastException);
             Log.error("Unable to obtain a connection from the database pool.", ex);
             throw ex;
         }

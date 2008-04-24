@@ -75,7 +75,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
                 return DriverManager.getConnection(proxoolURL, settings);
         }
         catch (ClassNotFoundException e) {
-            throw new SQLException("DbConnectionProvider: Unable to find driver", e);
+            throw new SQLException("DbConnectionProvider: Unable to find driver: "+e);
         }
     }
 

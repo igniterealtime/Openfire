@@ -52,7 +52,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             return DriverManager.getConnection(proxoolURL, settings);
         }
         catch (ClassNotFoundException e) {
-            throw new SQLException("EmbeddedConnectionProvider: Unable to find driver: ", e);
+            throw new SQLException("EmbeddedConnectionProvider: Unable to find driver: "+e);
         }
     }
 

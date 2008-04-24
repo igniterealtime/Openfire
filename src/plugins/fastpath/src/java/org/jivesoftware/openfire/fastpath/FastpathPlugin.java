@@ -28,6 +28,7 @@ import org.xmpp.component.ComponentException;
 import org.xmpp.packet.JID;
 
 import java.io.File;
+import java.io.FileFilter;
 
 /**
  * Openfire Fastpath plugin.
@@ -44,7 +45,21 @@ public class FastpathPlugin implements Plugin, ClusterEventListener {
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         System.out.println("Starting Fastpath Server");
 
-        // Make sure that the enteprise folder exists under the home directory
+        // Check if we Enterprise is installed and stop loading this plugin if found
+        File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+        File[] jars = pluginDir.listFiles(new FileFilter() {
+            public boolean accept(File pathname) {
+                String fileName = pathname.getName().toLowerCase();
+                return (fileName.equalsIgnoreCase("enterprise.jar"));
+            }
+        });
+        if (jars.length > 0) {
+            // Do not load this plugin since Enterprise is still installed
+            System.out.println("Enterprise plugin found. Stopping Fastpath Plugin");
+            throw new IllegalStateException("This plugin cannot run next to the Enterprise plugin");
+        }
+
+        // Make sure that the fastpath folder exists under the home directory
         File fastpathDir = new File(JiveGlobals.getHomeDirectory() +
             File.separator + "fastpath");
         if (!fastpathDir.exists()) {

@@ -138,11 +138,13 @@
                 conProvider.setServerURL(serverURL);
                 conProvider.setUsername(username);
                 conProvider.setPassword(password);
+                conProvider.setTestSQL(DbConnectionManager.getTestSQL(driver));
 
                 JiveGlobals.setXMLProperty("database.defaultProvider.driver", driver);
                 JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);
                 JiveGlobals.setXMLProperty("database.defaultProvider.username", username);
                 JiveGlobals.setXMLProperty("database.defaultProvider.password", password);
+                JiveGlobals.setXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(driver));
 
                 JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
                         Integer.toString(minConnections));

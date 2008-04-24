@@ -16,6 +16,7 @@ hamcrest.jar                        | 1.0 (JMock 2.1.0)
 hamcrest-api.jar                    | 1.0 (JMock 2.1.0)
 hsqldb.jar                          | 1.8.0.5
 jetty.jar                           | Jetty 6.1.7
+jetty-sslengine.jar                 | Jetty 6.1.7
 jetty-util.jar                      | Jetty 6.1.7
 jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)
 jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)

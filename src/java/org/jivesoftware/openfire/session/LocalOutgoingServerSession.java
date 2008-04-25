@@ -557,6 +557,10 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
         try {
             if (packet instanceof IQ) {
+            	if (((IQ) packet).isResponse()) {
+            		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet);
+            		return;
+            	}
                 IQ reply = new IQ();
                 reply.setID(packet.getID());
                 reply.setTo(packet.getFrom());

@@ -301,9 +301,13 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         email = iqElement.elementText("email");
                         name = iqElement.elementText("name");
                     }
-                    if (email == null || "".equals(email)) {
-                        email = " ";
+                    if (email != null && email.matches("\\s*")) {
+                    	email = null;
                     }
+                    if (name != null && name.matches("\\s*")) {
+                    	name = null;
+                    }
+                    
                     // So that we can set a more informative error message back, lets test this for
                     // stringprep validity now.
                     if (username != null) {

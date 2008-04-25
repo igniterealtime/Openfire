@@ -146,7 +146,7 @@ public class UserManager implements IQResultListener {
         catch (StringprepException se) {
             throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
-        if (provider.isNameRequired() && (name == null || name.equals(""))) {
+        if (provider.isNameRequired() && (name == null || name.matches("\\s*"))) {
             throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name. User: "
                                                 + username + " Name: " + name);
         }

@@ -144,13 +144,13 @@ public class DefaultUserProvider implements UserProvider {
                 else {
                     pstmt.setString(3, encryptedPassword);
                 }
-                if (name == null) {
+                if (name == null || name.matches("\\s*")) {
                     pstmt.setNull(4, Types.VARCHAR);
                 }
                 else {
                     pstmt.setString(4, name);
                 }
-                if (email == null) {
+                if (email == null || email.matches("\\s*")) {
                     pstmt.setNull(5, Types.VARCHAR);
                 }
                 else {
@@ -287,7 +287,12 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_NAME);
-            pstmt.setString(1, name);
+            if (name == null || name.matches("\\s*")) {
+            	pstmt.setNull(1, Types.VARCHAR);
+            } 
+            else {
+            	pstmt.setString(1, name);
+            }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -309,7 +314,12 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_EMAIL);
-            pstmt.setString(1, email);
+            if (email == null || email.matches("\\s*")) {
+            	pstmt.setNull(1, Types.VARCHAR);
+            } 
+            else {
+            	pstmt.setString(1, email);
+            }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }

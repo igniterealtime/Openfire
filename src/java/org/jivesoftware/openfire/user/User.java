@@ -190,10 +190,14 @@ public class User implements Cacheable, Externalizable, Result {
             throw new UnsupportedOperationException("User provider is read-only.");
         }
 
-        if ((name == null || name.equals("")) && UserManager.getUserProvider().isNameRequired()) {
+        if (name != null && name.matches("\\s*")) {
+        	name = null;
+        }
+        
+        if (name == null && UserManager.getUserProvider().isNameRequired()) {
             throw new IllegalArgumentException("User provider requires name.");
         }
-
+        
         try {
             String originalName = this.name;
             UserManager.getUserProvider().setName(username, name);
@@ -232,7 +236,7 @@ public class User implements Cacheable, Externalizable, Result {
     /**
      * Returns the email address of the user or <tt>null</tt> if none is defined.
      *
-     * @return the email address of the user or nullif none is defined.
+     * @return the email address of the user or null if none is defined.
      */
     public String getEmail() {
         return email;
@@ -241,6 +245,10 @@ public class User implements Cacheable, Externalizable, Result {
     public void setEmail(String email) {
         if (UserManager.getUserProvider().isReadOnly()) {
             throw new UnsupportedOperationException("User provider is read-only.");
+        }
+        
+        if (email != null && email.matches("\\s*")) {
+        	email = null;
         }
 
         if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {

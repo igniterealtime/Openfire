@@ -42,6 +42,7 @@ import java.text.MessageFormat;
  *      <li>ldap.alternateBaseDN</li>
  *      <li>ldap.adminDN</li>
  *      <li>ldap.adminPassword</li>
+ *      <li>ldap.encloseDNs</li>
  *      <li>ldap.usernameField -- default value is "uid".</li>
  *      <li>ldap.usernameSuffix -- default value is "".</li>
  *      <li>ldap.nameField -- default value is "cn".</li>
@@ -141,6 +142,7 @@ public class LdapManager {
     private String alternateBaseDN = null;
     private String adminDN = null;
     private String adminPassword;
+    private boolean encloseDNs;
     private boolean ldapDebugEnabled = false;
     private boolean sslEnabled = false;
     private String initialContextFactory;
@@ -158,8 +160,7 @@ public class LdapManager {
     private boolean posixMode = false;
     private String groupSearchFilter = null;
 
-    private Pattern userDNPattern;
-    private Pattern groupDNPattern;
+    private Pattern dnPattern;
 
     private Map<String, String> properties;
 
@@ -209,11 +210,12 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.autoFollowAliasReferrals");
         JiveGlobals.migrateProperty("ldap.encloseUserDN");
         JiveGlobals.migrateProperty("ldap.encloseGroupDN");
+        JiveGlobals.migrateProperty("ldap.encloseDNs");
         JiveGlobals.migrateProperty("ldap.initialContextFactory");
         JiveGlobals.migrateProperty("ldap.pagedResultsSize");
         JiveGlobals.migrateProperty("ldap.clientSideSorting");
         JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
-        
+
         String host = properties.get("ldap.host");
         if (host != null) {
             // Parse the property and check if many hosts were defined. Hosts can be separated
@@ -251,11 +253,30 @@ public class LdapManager {
         if (usernameSuffix == null) {
             usernameSuffix = "";
         }
+
+        // Set the pattern to use to wrap DN values with "
+        dnPattern = Pattern.compile("([^\\\\]=)([^\"].*?[^\\\\])(,|$)");
+
+        // are we going to enclose DN values with quotes? (needed when DNs contain non-delimiting commas)
+        encloseDNs = true;
+        String encloseStr = properties.get("ldap.encloseDNs");
+        if (encloseStr != null) {
+            encloseDNs = Boolean.valueOf(encloseStr);
+        }
+
         baseDN = properties.get("ldap.baseDN");
         if (baseDN == null) {
             baseDN = "";
         }
+        if (encloseDNs) {
+           baseDN = getEnclosedDN(baseDN);
+        }
+
         alternateBaseDN = properties.get("ldap.alternateBaseDN");
+        if (encloseDNs && alternateBaseDN != null) {
+           alternateBaseDN = getEnclosedDN(alternateBaseDN);
+        }
+
         nameField = properties.get("ldap.nameField");
         if (nameField == null) {
             nameField = "cn";
@@ -298,6 +319,10 @@ public class LdapManager {
         if (adminDN != null && adminDN.trim().equals("")) {
             adminDN = null;
         }
+        if (encloseDNs && adminDN != null) {
+           adminDN = getEnclosedDN(adminDN);
+        }
+
         adminPassword = properties.get("ldap.adminPassword");
         ldapDebugEnabled = false;
         String ldapDebugStr = properties.get("ldap.debugEnabled");
@@ -319,20 +344,17 @@ public class LdapManager {
         if (followAliasReferralsStr != null) {
             followAliasReferrals = Boolean.valueOf(followAliasReferralsStr);
         }
+        // the following two properties have been deprecated by ldap.encloseDNs.  keeping around for backwards compatibility
         encloseUserDN = true;
         String encloseUserStr = properties.get("ldap.encloseUserDN");
         if (encloseUserStr != null) {
-            encloseUserDN = Boolean.valueOf(encloseUserStr);    
+            encloseUserDN = Boolean.valueOf(encloseUserStr) || encloseDNs;
         }
         encloseGroupDN = true;
         String encloseGroupStr = properties.get("ldap.encloseGroupDN");
         if (encloseGroupStr != null) {
-            encloseGroupDN = Boolean.valueOf(encloseGroupStr);
+            encloseGroupDN = Boolean.valueOf(encloseGroupStr) || encloseDNs;
         }
-        // Set the pattern to use to wrap userDNs values "
-        userDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
-        // Set the pattern to use to wrap groupDNs values "
-        groupDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
         this.initialContextFactory = properties.get("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
@@ -718,13 +740,7 @@ public class LdapManager {
                 userDN = java.net.URLDecoder.decode(userDN, "UTF-8");
             }
             if (encloseUserDN) {
-                // Enclose userDN values between "
-                // eg. cn=John\, Doe,ou=People --> cn="John\, Doe",ou="People"
-                Matcher matcher = userDNPattern.matcher(userDN);
-                userDN = matcher.replaceAll("$1\"$2\",");
-                if (userDN.endsWith(",")) {
-                    userDN = userDN.substring(0, userDN.length() - 1);
-                }
+                userDN = getEnclosedDN(userDN);
             }
             return userDN;
         }
@@ -868,13 +884,7 @@ public class LdapManager {
                 groupDN = java.net.URLDecoder.decode(groupDN, "UTF-8");
             }
             if (encloseGroupDN) {
-                // Enclose groupDN values between "
-                // eg. cn=Domain\, Users,ou=Administrators --> cn="Domain\, Users",ou="Administrators"
-                Matcher matcher = groupDNPattern.matcher(groupDN);
-                groupDN = matcher.replaceAll("$1\"$2\",");
-                if (groupDN.endsWith(",")) {
-                    groupDN = groupDN.substring(0, groupDN.length() - 1);
-                }
+                groupDN = getEnclosedDN(groupDN);
             }
             return groupDN;
         }
@@ -1133,7 +1143,10 @@ public class LdapManager {
      * @return the starting DN used for performing searches.
      */
     public String getBaseDN() {
-        return baseDN;
+        if (encloseDNs)
+            return getEnclosedDN(baseDN);
+        else
+            return baseDN;
     }
 
     /**
@@ -1156,7 +1169,7 @@ public class LdapManager {
      *      DN is set, this method will return <tt>null</tt>.
      */
     public String getAlternateBaseDN() {
-        return alternateBaseDN;
+        return getEnclosedDN(alternateBaseDN);
     }
 
     /**
@@ -1235,7 +1248,10 @@ public class LdapManager {
      * @return the starting DN used for performing searches.
      */
     public String getAdminDN() {
-        return adminDN;
+        if (encloseDNs)
+            return getEnclosedDN(adminDN);
+        else
+            return adminDN;
     }
 
     /**
@@ -1841,5 +1857,23 @@ public class LdapManager {
             }
         }
         return count;
+    }
+
+    /**
+     * Encloses DN values with "
+     *
+     * @param dnValue the unenclosed value of a DN (e.g. ou=Jive Software\, Inc,dc=support,dc=jive,dc=com)
+     * @return String the enclosed value of the DN (e.g. ou="Jive Software\, Inc",dc="support",dc="jive",dc="com")
+     */
+    private String getEnclosedDN(String dnValue) {
+        if (dnValue == null || dnValue.equals("")) {
+            return dnValue;
+        }
+
+        Matcher matcher = dnPattern.matcher(dnValue);
+        dnValue = matcher.replaceAll("$1\"$2\"$3");
+        dnValue = dnValue.replace("\\,", ",");
+
+        return dnValue;
     }
 }

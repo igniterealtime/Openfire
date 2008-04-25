@@ -10,11 +10,13 @@
  */
 package org.jivesoftware.openfire.admin;
 
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.JID;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The AdminManager manages the AdminProvider configured for this server, caches knowledge of
@@ -89,9 +91,6 @@ public class AdminManager {
             }
         };
         PropertyEventDispatcher.addListener(propListener);
-
-        // Loads up the initial admin list.
-        loadAdminList();
     }
 
     /**

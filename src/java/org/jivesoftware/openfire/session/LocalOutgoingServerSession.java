@@ -558,7 +558,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         try {
             if (packet instanceof IQ) {
             	if (((IQ) packet).isResponse()) {
-            		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet);
+            		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());
             		return;
             	}
                 IQ reply = new IQ();

@@ -275,12 +275,12 @@
             %>
               <tr class="<%= (isLocalMember ? "local" : "") %>" valign="middle">
                   <td align="center" width="1%">
-                      <a href="plugins/enterprise/system-clustering-node.jsp?UID=<%= nodeID %>"
+                      <a href="plugins/clustering/system-clustering-node.jsp?UID=<%= nodeID %>"
                        title="Click for more details"
                        ><img src="images/server-network-24x24.gif" width="24" height="24" border="0" alt=""></a>
                   </td>
                   <td class="jive-description" nowrap width="1%" valign="middle">
-                      <a href="plugins/enterprise/system-clustering-node.jsp?UID=<%= nodeID %>">
+                      <a href="plugins/clustering/system-clustering-node.jsp?UID=<%= nodeID %>">
                       <%  if (isLocalMember) { %>
                           <b><%= nodeInfo.getHostName() %></b>
                       <%  } else { %>

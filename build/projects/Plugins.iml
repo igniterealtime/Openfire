@@ -11,7 +11,9 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/debugger/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/dumper/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/emailListener/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/fastpath/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/loadStats/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/monitoring/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/motd/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/packetFilter/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/packetFilter/src/test" isTestSource="true" />
@@ -25,7 +27,6 @@
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/userservice/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/plugins/xmldebugger/src/java" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/enterprise" />
-      <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/fastpath" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/plugins/gateway" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -90,6 +91,96 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../src/plugins/sip/lib/nist-sip-1.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/picocontainer.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/fastpath/lib/xstream.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/jrobin.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/fastpath/lib/commons-fileupload-1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/jcommon.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/itext.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/fastpath/lib/lucene.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/lucene.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/dwr.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../src/plugins/monitoring/lib/jfreechart.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

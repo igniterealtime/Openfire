@@ -12,7 +12,6 @@
 <%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
 <%@ page import="org.jivesoftware.openfire.session.ComponentSession" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Date" %>
@@ -27,11 +26,11 @@
 
     boolean test = request.getParameter("test") != null;
     boolean configure = request.getParameter("configure") != null;
-    boolean csAdmin = request.getParameter("csAdmin") != null;
     String testPage = "setup/setup-clearspace-integration_test.jsp";
     ClearspaceManager manager = ClearspaceManager.getInstance();
     boolean configured = false;
 
+    // First if there is configure action configure clearspace
     if (configure) {
         configured = manager.configClearspace();
     }
@@ -40,20 +39,7 @@
     boolean connectedCS = manager.isClearspaceConnected();
     boolean connectedOF = manager.isOpenfireConnected();
 
-    if (csAdmin) {
-        String username = webManager.getUser().getUsername();
-        String secret = manager.getSharedSecret();
-        String uri = manager.getConnectionURI();
-        String nonce = manager.getNonce();
-
-        if (connectedOF && username != null && secret != null && uri != null) {
-            // Redirect to the admin console of Clearspace.
-            response.sendRedirect(uri + "admin/login.jsp?login=true&username=" + username + "&secret=" +
-                    StringUtils.hash(username + ":" + secret + ":" + nonce) + "&nonce=" + nonce);
-            return;
-        }
-    }
-
+    // This fields will hold the status information of the connection
     Date creationDate = null;
     Date lastActivity = null;
     int numServerPackets = 0;
@@ -89,8 +75,8 @@
 
 <html>
 <head>
-<title><fmt:message key="clearspace.info.title"/></title>
-<meta name="pageID" content="clearspace-info"/>
+<title><fmt:message key="clearspace.status.title"/></title>
+<meta name="pageID" content="clearspace-status"/>
 
 <style type="text/css" title="setupStyle" media="screen">
     @import "style/lightbox.css";
@@ -121,85 +107,49 @@
 
 <% } %>
 
-<% if (!connectedCS || !connectedOF) { %>
-<div class="error">
-    <fmt:message key="clearspace.info.status.disconnected.error"/>
-</div>
-
 <% if (configure && !configured) { %>
 
 <div class="error">
-    <fmt:message key="clearspace.info.status.config.error"/>
+    <fmt:message key="clearspace.status.error.config"/>
 </div>
 
 <% } %>
 
+<% if (connectedCS && connectedOF) { %>
 <p>
-<% if (!connectedCS && !connectedOF) { %>
-<h3><fmt:message key="clearspace.info.status.disconnected.of_and_cs.title"/></h3>
-<fmt:message key="clearspace.info.status.disconnected.of_and_cs.description">
-    <fmt:param value="<%= "<a href='clearspace-connection.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
-</fmt:message>
-
-<% } else if (!connectedCS) { %>
-<h3><fmt:message key="clearspace.info.status.disconnected.cs.title"/></h3>
-<fmt:message key="clearspace.info.status.disconnected.cs.description">
-    <fmt:param value="<%= "<a href='clearspace-connection.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
-</fmt:message>
-<% } else if (!connectedOF) { %>
-<h3><fmt:message key="clearspace.info.status.disconnected.of.title"/></h3>
-<fmt:message key="clearspace.info.status.disconnected.of.description">
-    <fmt:param value="<%= "<a href='clearspace-connection.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
-</fmt:message>
-<% } %>
-<p>
-<fmt:message key="clearspace.info.status.disconnected.buttons.description"/>    
+<fmt:message key="clearspace.status.connected.description"/>
 </p>
-<form action="clearspace-info.jsp" method="post">
-    <!-- BEGIN jive-buttons -->
-    <div class="jive-buttons">
-
-        <!-- BEGIN right-aligned buttons -->
-        <div align="left">
-
-            <input type="Submit" name="test" value="<fmt:message key="clearspace.info.status.test" />" id="jive-clearspace-test" border="0">
-
-            <input type="Submit" name="configure" value="<fmt:message key="clearspace.info.status.configure" />" id="jive-clearspace-configure" border="0">
-        </div>
-        <!-- END right-aligned buttons -->
-
-    </div>
-    <!-- END jive-buttons -->
-
-</form>
-
-<% } else { %>
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
         <th colspan="2">
-            <fmt:message key="clearspace.info.table.title" />
+            <fmt:message key="clearspace.status.connected.table.title" />
         </th>
     </tr>
 </thead>
 <tbody>
-    <% if (numComponents > 1) { %>
     <tr>
         <td class="c1">
-            <fmt:message key="clearspace.info.label.num_components" />
+            <fmt:message key="clearspace.status.connected.table.label.connected" />
+        </td>
+        <td>
+            <fmt:message key="clearspace.status.connected.table.value.connected" />
+        </td>
+    </tr>
+        <% if (numComponents > 1) { %>
+    <tr>
+        <td class="c1">
+            <fmt:message key="clearspace.status.connected.table.label.num_components" />
         </td>
         <td>
             <%= numFormatter.format(numComponents) %>
         </td>
     </tr>
-    <% } %>
+        <% } %>
     <tr>
         <td class="c1">
-            <fmt:message key="clearspace.info.label.creation" />
+            <fmt:message key="clearspace.status.connected.table.label.creation" />
         </td>
         <td>
             <%= JiveGlobals.formatDateTime(creationDate) %>
@@ -207,7 +157,7 @@
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="clearspace.info.label.last_active" />
+            <fmt:message key="clearspace.status.connected.table.label.last_active" />
         </td>
         <td>
             <%= JiveGlobals.formatDateTime(lastActivity) %>
@@ -215,20 +165,20 @@
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="clearspace.info.label.statistics" />
+            <fmt:message key="clearspace.status.connected.table.label.statistics" />
         </td>
         <td>
-            <fmt:message key="clearspace.info.label.received" />
+            <fmt:message key="clearspace.status.connected.table.label.received" />
             <%= numFormatter.format(numClientPackets) %>/<%= numFormatter.format(numServerPackets) %>
         </td>
     </tr>
     <% boolean first = true;
-    for (ComponentSession cs : componentSessions) {
-        if (first) {
-            first = false;  %>
+        for (ComponentSession cs : componentSessions) {
+            if (first) {
+                first = false;  %>
     <tr>
         <td rowsapn="<%= componentSessions.size() %>" class="c1">
-            <fmt:message key="clearspace.info.label.hostname" />
+            <fmt:message key="clearspace.status.connected.table.label.hostname" />
         </td>
         <td>
             <%= cs.getHostAddress() %>
@@ -236,7 +186,7 @@
             <%= cs.getHostName() %>
         </td>
     </tr>
-     <% } else { %>
+        <% } else { %>
     <tr>
         <td>
             <%= cs.getHostAddress() %>
@@ -244,35 +194,68 @@
             <%= cs.getHostName() %>
         </td>
     </tr>
-    <% } %>
+        <% } %>
 </tbody>
 </table>
 </div>
 
-<% } %>
+    <% } %>
 
-    <h3>Clearspace Admin Console</h3>
-    <br>
-    <p>Click the following button to go to Clearspace Admin console</p>
-    <form action="clearspace-info.jsp" method="post">
-        <!-- BEGIN jive-buttons -->
-        <div class="jive-buttons">
 
-            <!-- BEGIN right-aligned buttons -->
-            <div align="left">
+<% } else { %>
 
-                <input type="Submit" name="csAdmin" value="<fmt:message key="clearspace.info.status.admin" />" id="jive-clearspace-admin" border="0">
+    <% if (!connectedCS && !connectedOF) { %>
+<div class="error">
+    <fmt:message key="clearspace.status.error.disconnected.of_and_cs"/>
+</div>
 
-            </div>
-            <!-- END right-aligned buttons -->
+<p>
+<fmt:message key="clearspace.status.disconnected.of_and_cs.description">
+    <fmt:param value="<%= "<a href='clearspace-integration.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
 
+    <% } else if (!connectedCS) { %>
+<div class="error">
+    <fmt:message key="clearspace.status.error.disconnected.cs"/>
+</div>
+
+<p>
+<fmt:message key="clearspace.status.disconnected.cs.description">
+    <fmt:param value="<%= "<a href='clearspace-integration.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
+    <% } else if (!connectedOF) { %>
+<div class="error">
+    <fmt:message key="clearspace.status.error.disconnected.of"/>
+</div>
+
+<p>
+<fmt:message key="clearspace.status.disconnected.of.description">
+    <fmt:param value="<%= "<a href='clearspace-integration.jsp'>" %>" />
+    <fmt:param value="<%= "</a>" %>" />
+</fmt:message>
+    <% } %>
+<p>
+<fmt:message key="clearspace.status.disconnected.buttons.description"/>
+</p>
+<form action="clearspace-status.jsp" method="post">
+    <!-- BEGIN jive-buttons -->
+    <div class="jive-buttons">
+
+        <!-- BEGIN right-aligned buttons -->
+        <div align="left">
+
+            <input type="Submit" name="test" value="<fmt:message key="clearspace.status.disconnected.testbutton" />" id="jive-clearspace-test" border="0">
+
+            <input type="Submit" name="configure" value="<fmt:message key="clearspace.status.disconnected.configbutton" />" id="jive-clearspace-configure" border="0">
         </div>
-        <!-- END jive-buttons -->
+        <!-- END right-aligned buttons -->
 
-    </form>
+    </div>
+    <!-- END jive-buttons -->
 
-    
-
+</form>
 
 <% } %>
 

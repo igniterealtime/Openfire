@@ -372,17 +372,24 @@ public class AdminConsole {
             Element clearspace = generatedModel.addElement("tab");
             clearspace.addAttribute("id", "tab-clearspace");
             clearspace.addAttribute("name", LocaleUtils.getLocalizedString("tab.tab-clearspace"));
-            clearspace.addAttribute("url", "clearspace-info.jsp");
+            clearspace.addAttribute("url", "clearspace-status.jsp");
             clearspace.addAttribute("description", LocaleUtils.getLocalizedString("tab.tab-clearspace.descr"));
             Element sidebar = clearspace.addElement("sidebar");
             sidebar.addAttribute("id", "sidebar-clearspace");
             sidebar.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.sidebar-clearspace"));
 
-            Element item = sidebar.addElement("item");
-            item.addAttribute("id", "clearspace-info");
-            item.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-info"));
-            item.addAttribute("url", "clearspace-info.jsp");
-            item.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-info.descr"));
+            Element statusItem = sidebar.addElement("item");
+            statusItem.addAttribute("id", "clearspace-status");
+            statusItem.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-status"));
+            statusItem.addAttribute("url", "clearspace-status.jsp");
+            statusItem.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-status.descr"));
+
+            Element adminItem = sidebar.addElement("item");
+            adminItem.addAttribute("id", "clearspace-admin");
+            adminItem.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-admin"));
+            adminItem.addAttribute("url", "clearspace-admin.jsp");
+            adminItem.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-admin.descr"));
+
         }
     }
 

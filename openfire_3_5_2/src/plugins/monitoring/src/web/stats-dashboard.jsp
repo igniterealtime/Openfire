@@ -764,13 +764,13 @@ function createCookie(name,value,days) {
                                                    // Display "group conversation" with a link to the room occupants
                                                    /*participantNames = LocaleUtils.getLocalizedString(
                                                            "archive.group_conversation", "monitoring", Arrays.asList(
-                                                           "<a href='../../muc-room-occupants.jsp?roomName=" +
-                                                                   URLEncoder.encode(conversation.getRoom().getNode(),
+                                                           "<a href='../../muc-room-occupants.jsp?roomJID=" +
+                                                                   URLEncoder.encode(conversation.getRoom().toBareJID(),
                                                                            "UTF-8") + "'>", "</a>"));*/
 
                                                    participantNames = LocaleUtils.getLocalizedString("dashboard.group_conversation", "monitoring");
                                                    participantNames += "<br/>";
-                                                   participantNames += "(<i>" + LocaleUtils.getLocalizedString("muc.room.summary.room") + ": <a href='../../muc-room-occupants.jsp?roomName=" + URLEncoder.encode(conversation.getRoom().getNode(),"UTF-8") + "'>" + conversation.getRoom().getNode() + "</a></i>)";
+                                                   participantNames += "(<i>" + LocaleUtils.getLocalizedString("muc.room.summary.room") + ": <a href='../../muc-room-occupants.jsp?roomJID=" + URLEncoder.encode(conversation.getRoom().toBareJID(),"UTF-8") + "'>" + conversation.getRoom().getNode() + "</a></i>)";
                                                }
                                                activityTime =
                                                        StatsAction.formatTimeLong(conversation.getLastActivity());

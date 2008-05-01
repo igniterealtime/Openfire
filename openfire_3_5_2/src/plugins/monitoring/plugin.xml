@@ -5,8 +5,8 @@
     <name>Monitoring Service</name>
     <description>Monitors conversations and statistics of the server.</description>
     <author>Jive Software</author>
-    <version>1.0.0</version>
-    <date>4/24/2008</date>
+    <version>1.0.1</version>
+    <date>5/1/2008</date>
     <minServerVersion>3.5.1</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>0</databaseVersion>

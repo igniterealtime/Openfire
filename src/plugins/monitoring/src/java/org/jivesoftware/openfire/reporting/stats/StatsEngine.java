@@ -274,7 +274,17 @@ public class StatsEngine implements Startable {
 
         public void run() {
             if (!ClusterManager.isSeniorClusterMember()) {
-                // Do not create new samples of the statistics since we are not the senior cluster member
+                // Create statistics definitions but do not sample them since we are not the senior cluster member
+                for (Map.Entry<String, Statistic> statisticEntry : statsManager.getAllStatistics()) {
+                    String key = statisticEntry.getKey();
+                    StatDefinition def = createDefintion(key);
+                    // Check to see if this stat belongs to a multi-stat and if that multi-stat group
+                    // has been completly defined
+                    String group = statsManager.getMultistatGroup(key);
+                    if (group != null) {
+                        checkAndCreateGroup(group, def, false);
+                    }
+                }
                 return;
             }
             long newTime = getLastMinute();

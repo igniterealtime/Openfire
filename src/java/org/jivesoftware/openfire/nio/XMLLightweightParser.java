@@ -347,7 +347,7 @@ class XMLLightweightParser {
 
     private static class PropertyListener implements PropertyEventListener {
         public void propertySet(String property, Map<String, Object> params) {
-            if (MAX_PROPERTY_NAME.equals(property)) {                                         2
+            if (MAX_PROPERTY_NAME.equals(property)) {
                 String value = (String) params.get("value");
                 if (value != null) {
                     maxBufferSize = Integer.parseInt(value);

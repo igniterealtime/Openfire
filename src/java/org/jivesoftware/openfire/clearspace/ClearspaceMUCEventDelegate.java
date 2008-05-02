@@ -110,6 +110,10 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         IQ result = ClearspaceManager.getInstance().query(query, 15000);
         if (result == null) {
             // No answer was received, assume false for security reasons.
+            if (Log.isDebugEnabled()) {
+                Log.debug("No answer from Clearspace on join-check in ClearspaceMUCEventDelegate. User: "
+                        + userjid.toBareJID() + " Room: " + room.getJID().toBareJID());
+            }
             return false;
         }
 

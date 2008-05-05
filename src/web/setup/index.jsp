@@ -135,7 +135,12 @@
 			</label><br>
 
 			<label for="loc09">
-			<input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %> id="loc09" />
+			<input type="radio" name="localeCode" value="sk" <%= ("sk".equals(locale.toString()) ? "checked" : "") %> id="loc09" />
+			<b>Sloven&#269;ina</b> (sk)
+			</label><br>
+
+			<label for="loc10">
+			<input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %> id="loc10" />
             <img src="../images/setup_language_zh_CN.gif" border="0" align="top" />
             <b>Simplified Chinese</b> (zh_CN)
 			</label><br>

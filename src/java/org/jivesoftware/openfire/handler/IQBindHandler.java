@@ -17,9 +17,9 @@ import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.stringprep.StringprepException;
@@ -109,9 +109,17 @@ public class IQBindHandler extends IQHandler {
             ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
             if (oldSession != null) {
                 try {
-                    oldSession.incrementConflictCount();
                     int conflictLimit = sessionManager.getConflictKickLimit();
-                    if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
+                    if (conflictLimit == SessionManager.NEVER_KICK) {
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.conflict);
+                        // Send the error directly since a route does not exist at this point.
+                        session.process(reply);
+                        return null;
+                    }
+
+                    int conflictCount = oldSession.incrementConflictCount();
+                    if (conflictCount > conflictLimit) {
                         // Kick out the old connection that is conflicting with the new one
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         oldSession.deliverRawText(error.toXML());

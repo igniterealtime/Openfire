@@ -699,21 +699,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    /**
-     * Returns the number of conflicts detected on this session.
-     * Conflicts typically occur when another session authenticates properly
-     * to the user account and requests to use a resource matching the one
-     * in use by this session. Administrators may configure the server to automatically
-     * kick off existing sessions when their conflict count exceeds some limit including
-     * 0 (old sessions are kicked off immediately to accommodate new sessions). Conflicts
-     * typically signify the existing (old) session is broken/hung.
-     *
-     * @return The number of conflicts detected for this session
-     */
-    public int getConflictCount() {
-        return conflictCount;
-    }
-
     public String getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already secured
@@ -750,13 +735,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     /**
      * Increments the conflict by one.
      */
-    public void incrementConflictCount() {
+    public int incrementConflictCount() {
         conflictCount++;
-        if (ClusterManager.isClusteringStarted()) {
-            // Track information about the session and share it with other cluster nodes
-            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
-            cache.put(getAddress().toString(), new ClientSessionInfo(this));
-        }
+        return conflictCount;
     }
 
     /**

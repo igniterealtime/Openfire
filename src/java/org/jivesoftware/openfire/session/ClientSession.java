@@ -133,20 +133,9 @@ public interface ClientSession extends Session {
     public void setPresence(Presence presence);
 
     /**
-     * Returns the number of conflicts detected on this session.
-     * Conflicts typically occur when another session authenticates properly
-     * to the user account and requests to use a resource matching the one
-     * in use by this session. Administrators may configure the server to automatically
-     * kick off existing sessions when their conflict count exceeds some limit including
-     * 0 (old sessions are kicked off immediately to accommodate new sessions). Conflicts
-     * typically signify the existing (old) session is broken/hung.
+     * Increments the conflict by one and returns new number of conflicts detected on this session.
      *
-     * @return The number of conflicts detected for this session
+     * @return the new number of conflicts detected on this session.
      */
-    public int getConflictCount();
-
-    /**
-     * Increments the conflict by one.
-     */
-    public void incrementConflictCount();
+    public int incrementConflictCount();
 }

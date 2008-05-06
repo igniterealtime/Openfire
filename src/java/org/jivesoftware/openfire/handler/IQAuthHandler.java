@@ -218,9 +218,16 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
         if (oldSession != null) {
             try {
-                oldSession.incrementConflictCount();
                 int conflictLimit = sessionManager.getConflictKickLimit();
-                if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
+                if (conflictLimit == SessionManager.NEVER_KICK) {
+                    IQ response = IQ.createResultIQ(packet);
+                    response.setChildElement(packet.getChildElement().createCopy());
+                    response.setError(PacketError.Condition.forbidden);
+                    return response;
+                }
+
+                int conflictCount = oldSession.incrementConflictCount();
+                if (conflictCount > conflictLimit) {
                     // Send a stream:error before closing the old connection
                     StreamError error = new StreamError(StreamError.Condition.conflict);
                     oldSession.deliverRawText(error.toXML());

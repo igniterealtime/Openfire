@@ -37,7 +37,6 @@ public class ClientSessionInfo implements Externalizable {
     private Presence presence;
     private String defaultList;
     private String activeList;
-    private int conflictCount;
     private boolean offlineFloodStopped;
 
     public ClientSessionInfo() {
@@ -47,7 +46,6 @@ public class ClientSessionInfo implements Externalizable {
         presence = session.getPresence();
         defaultList = session.getDefaultList() != null ? session.getDefaultList().getName() : null;
         activeList = session.getActiveList() != null ? session.getActiveList().getName() : null;
-        conflictCount = session.getConflictCount();
         offlineFloodStopped = session.isOfflineFloodStopped();
     }
 
@@ -61,10 +59,6 @@ public class ClientSessionInfo implements Externalizable {
 
     public String getActiveList() {
         return activeList;
-    }
-
-    public int getConflictCount() {
-        return conflictCount;
     }
 
     public boolean isOfflineFloodStopped() {
@@ -81,7 +75,6 @@ public class ClientSessionInfo implements Externalizable {
         if (activeList != null) {
             ExternalizableUtil.getInstance().writeSafeUTF(out, activeList);
         }
-        ExternalizableUtil.getInstance().writeInt(out, conflictCount);
         ExternalizableUtil.getInstance().writeBoolean(out, offlineFloodStopped);
     }
 
@@ -94,7 +87,6 @@ public class ClientSessionInfo implements Externalizable {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             activeList = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        conflictCount = ExternalizableUtil.getInstance().readInt(in);
         offlineFloodStopped = ExternalizableUtil.getInstance().readBoolean(in);
     }
 }

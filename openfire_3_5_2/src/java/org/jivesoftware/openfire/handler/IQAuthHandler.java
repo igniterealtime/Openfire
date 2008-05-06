@@ -16,10 +16,10 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -219,9 +219,16 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
         if (oldSession != null) {
             try {
-                oldSession.incrementConflictCount();
                 int conflictLimit = sessionManager.getConflictKickLimit();
-                if (conflictLimit != SessionManager.NEVER_KICK && oldSession.getConflictCount() > conflictLimit) {
+                if (conflictLimit == SessionManager.NEVER_KICK) {
+                    IQ response = IQ.createResultIQ(packet);
+                    response.setChildElement(packet.getChildElement().createCopy());
+                    response.setError(PacketError.Condition.forbidden);
+                    return response;
+                }
+
+                int conflictCount = oldSession.incrementConflictCount();
+                if (conflictCount > conflictLimit) {
                     // Send a stream:error before closing the old connection
                     StreamError error = new StreamError(StreamError.Condition.conflict);
                     oldSession.deliverRawText(error.toXML());

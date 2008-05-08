@@ -169,8 +169,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void roomDestroyed(JID roomJID) {
-        // We want to flush the queue immediately when a room is destroyed.
-        forceQueueFlush();
+        // Do nothing
     }
 
     public void occupantJoined(JID roomJID, JID user, String nickname) {

@@ -477,9 +477,33 @@ public class LocalMUCRoom implements MUCRoom {
                     throw new RoomLockedException();
                 }
             }
-            // If the user is already in the room raise a UserAlreadyExists exception
+            // Check if the nickname is already used in the room
             if (occupants.containsKey(nickname.toLowerCase())) {
-                throw new UserAlreadyExistsException();
+                if (occupants.get(nickname.toLowerCase()).getUserAddress().toBareJID().equals(user.getAddress().toBareJID())) {
+                    // Nickname exists in room, and belongs to this user, pretend to kick the previous instance.
+                    // The previous instance will see that they are disconnected, and the new instance will
+                    // "take over" the previous role.  Participants in the room shouldn't notice anything
+                    // has occurred.
+                    String reason = "Your account signed into this chatroom with the same nickname from another location.";
+                    Presence updatedPresence = new Presence(Presence.Type.unavailable);
+                    updatedPresence.setFrom(occupants.get(nickname.toLowerCase()).getRoleAddress());
+                    updatedPresence.setTo(occupants.get(nickname.toLowerCase()).getUserAddress());
+                    Element frag = updatedPresence.addChildElement(
+                            "x", "http://jabber.org/protocol/muc#user");
+
+                    // Set the person who performed the kick ("you" effectively)
+                    frag.addElement("item").addElement("actor").setText(user.getAddress().toString());
+                    // Add the reason why the user was kicked
+                    frag.element("item").addElement("reason").setText(reason);
+                    // Add the status code 307 that indicates that the user was kicked
+                    frag.addElement("status").addAttribute("code", "307");
+
+                    router.route(updatedPresence);
+                }
+                else {
+                    // Nickname is already used, and not by the same JID
+                    throw new UserAlreadyExistsException();
+                }
             }
             // If the room is password protected and the provided password is incorrect raise a
             // Unauthorized exception

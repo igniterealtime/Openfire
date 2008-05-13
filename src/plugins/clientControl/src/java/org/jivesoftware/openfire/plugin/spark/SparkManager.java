@@ -137,8 +137,8 @@ public class SparkManager implements Component {
                 else if ("jabber:iq:version".equals(namespace)) {
                     IQ reply = IQ.createResultIQ(iqPacket);
                     Element version = reply.setChildElement("query", "jabber:iq:version");
-                    version.addElement("name").setText("Enterprise Manager");
-                    version.addElement("version").setText("3.2");
+                    version.addElement("name").setText("Client Control Manager");
+                    version.addElement("version").setText("3.5");
                     sendPacket(reply);
                 }
                 else {
@@ -295,7 +295,7 @@ public class SparkManager implements Component {
         Element identity = responseElement.addElement("identity");
         identity.addAttribute("category", "manager");
         identity.addAttribute("type", "text");
-        identity.addAttribute("name", "Enterprise Manager");
+        identity.addAttribute("name", "Client Control Manager");
         // Add features set
         buildFeatureSet(responseElement);
         // Send reply

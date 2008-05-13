@@ -15,8 +15,10 @@ import org.jivesoftware.openfire.plugin.spark.BookmarkInterceptor;
 import org.jivesoftware.openfire.plugin.spark.TaskEngine;
 import org.jivesoftware.openfire.plugin.spark.manager.SparkVersionManager;
 import org.jivesoftware.openfire.plugin.spark.manager.FileTransferFilterManager;
+import org.jivesoftware.util.JiveGlobals;
 
 import java.io.File;
+import java.io.FileFilter;
 
 /**
  * Client control plugin.
@@ -24,8 +26,6 @@ import java.io.File;
  * @author Matt Tucker
  */
 public class ClientControlPlugin implements Plugin {
-
-    private PluginManager pluginManager;
 
     private SparkManager sparkManager;
     private BookmarkInterceptor bookmarkInterceptor;
@@ -42,7 +42,21 @@ public class ClientControlPlugin implements Plugin {
     // Plugin Interface
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        pluginManager = manager;
+        System.out.println("Starting Client Control Plugin");
+
+        // Check if we Enterprise is installed and stop loading this plugin if found
+        File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+        File[] jars = pluginDir.listFiles(new FileFilter() {
+            public boolean accept(File pathname) {
+                String fileName = pathname.getName().toLowerCase();
+                return (fileName.equalsIgnoreCase("enterprise.jar"));
+            }
+        });
+        if (jars.length > 0) {
+            // Do not load this plugin since Enterprise is still installed
+            System.out.println("Enterprise plugin found. Stopping Client Control Plugin");
+            throw new IllegalStateException("This plugin cannot run next to the Enterprise plugin");
+        }
 
         taskEngine = TaskEngine.getInstance();
         sparkManager = new SparkManager(taskEngine);
@@ -65,8 +79,6 @@ public class ClientControlPlugin implements Plugin {
     }
 
     public void destroyPlugin() {
-        pluginManager = null;
-
         if (sparkManager != null) {
             sparkManager.stop();
             sparkManager.shutdown();

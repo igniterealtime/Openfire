@@ -14,7 +14,9 @@ package org.jivesoftware.openfire.net;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.FlashCrossDomainHandler;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -90,8 +92,18 @@ public abstract class StanzaHandler {
         boolean initialStream = stanza.startsWith("<stream:stream") || stanza.startsWith("<flash:stream");
         if (!sessionCreated || initialStream) {
             if (!initialStream) {
-                // Ignore <?xml version="1.0"?>
-                return;
+                // Allow requests for flash socket policy files directly on the client listener port
+                if (stanza.startsWith("<policy-file-request/>")) {
+                    String crossDomainText = FlashCrossDomainHandler.CROSS_DOMAIN_TEXT +
+                            XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +
+                            FlashCrossDomainHandler.CROSS_DOMAIN_END_TEXT + '\0';
+                    connection.deliverRawText(crossDomainText);
+                    return;
+                }
+                else {
+                    // Ignore <?xml version="1.0"?>
+                    return;
+                }
             }
             // Found an stream:stream tag...
             if (!sessionCreated) {

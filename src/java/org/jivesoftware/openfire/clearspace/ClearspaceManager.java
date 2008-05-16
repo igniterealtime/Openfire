@@ -1093,7 +1093,18 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         // If component is Clearspace then keep track of the component
         if (isClearspace) {
             clearspaces.add(iq.getFrom().getDomain());
+            // Now send acknowledgement to Clearspace that we received its info
+            acknowledgeInfoReceived(iq.getFrom());
         }
+    }
+
+    private void acknowledgeInfoReceived(JID infoSender) {
+        IQ iq = new IQ();
+        iq.setTo(infoSender);
+        iq.setFrom(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+        iq.setID("component_info_recvd_" + StringUtils.randomString(3));
+        iq.setChildElement("component-info-recvd", "http://jivesoftware.com/clearspace");
+        getInstance().query(iq, 30000);
     }
 
     /**

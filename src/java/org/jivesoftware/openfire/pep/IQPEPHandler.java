@@ -381,7 +381,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * @param jid the bare JID of the user that owns the PEP service.
      * @return the requested PEP service if found or null if not found.
      */
-    private PEPService getPEPService(String jid) {
+    public PEPService getPEPService(String jid) {
         PEPService pepService = pepServices.get(jid);
 
         if (pepService == null) {

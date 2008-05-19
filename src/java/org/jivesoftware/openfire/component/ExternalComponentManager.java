@@ -41,13 +41,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ExternalComponentManager {
 
     private static final String ADD_CONFIGURATION =
-        "INSERT INTO ofExtComponentConf (subdomain,secret,permission) VALUES (?,?,?)";
+        "INSERT INTO ofExtComponentConf (subdomain,wildcard,secret,permission) VALUES (?,?,?,?)";
     private static final String DELETE_CONFIGURATION =
-        "DELETE FROM ofExtComponentConf WHERE subdomain=?";
+        "DELETE FROM ofExtComponentConf WHERE subdomain=? and wildcard=?";
     private static final String LOAD_CONFIGURATION =
-        "SELECT secret,permission FROM ofExtComponentConf where subdomain=?";
+        "SELECT secret,permission FROM ofExtComponentConf where subdomain=? AND wildcard=0";
+    private static final String LOAD_WILDCARD_CONFIGURATION =
+        "SELECT secret,permission FROM ofExtComponentConf where ? like subdomain AND wildcard=1";
     private static final String LOAD_CONFIGURATIONS =
-        "SELECT subdomain,secret FROM ofExtComponentConf where permission=?";
+        "SELECT subdomain,wildcard,secret FROM ofExtComponentConf where permission=?";
 
     /**
      * List of listeners that will be notified when vCards are created, updated or deleted.
@@ -95,7 +97,7 @@ public class ExternalComponentManager {
             listener.componentAllowed(configuration.getSubdomain(), configuration);
         }
         // Remove any previous configuration for this external component
-        deleteConfigurationFromDB(configuration.getSubdomain());
+        deleteConfigurationFromDB(configuration);
         // Update the database with the new granted permission and configuration
         configuration.setPermission(Permission.allowed);
         addConfiguration(configuration);
@@ -114,9 +116,9 @@ public class ExternalComponentManager {
             listener.componentBlocked(subdomain);
         }
         // Remove any previous configuration for this external component
-        deleteConfigurationFromDB(subdomain);
+        deleteConfigurationFromDB(getConfiguration(subdomain, false));
         // Update the database with the new revoked permission
-        ExternalComponentConfiguration config = new ExternalComponentConfiguration(subdomain, Permission.blocked, null);
+        ExternalComponentConfiguration config = new ExternalComponentConfiguration(subdomain, false, Permission.blocked, null);
         addConfiguration(config);
         // Check if the component was connected and proceed to close the connection
         String domain = subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
@@ -138,7 +140,7 @@ public class ExternalComponentManager {
         // By default there is no permission defined for the XMPP entity
         Permission permission = null;
 
-        ExternalComponentConfiguration config = getConfiguration(subdomain);
+        ExternalComponentConfiguration config = getConfiguration(subdomain, true);
         if (config != null) {
             permission = config.getPermission();
         }
@@ -180,15 +182,15 @@ public class ExternalComponentManager {
         for (ExternalComponentManagerListener listener : listeners) {
             listener.componentSecretUpdated(subdomain, secret);
         }
-        ExternalComponentConfiguration configuration = getConfiguration(subdomain);
+        ExternalComponentConfiguration configuration = getConfiguration(subdomain, false);
         if (configuration != null) {
             configuration.setPermission(Permission.allowed);
             configuration.setSecret(secret);
             // Remove any previous configuration for this external component
-            deleteConfigurationFromDB(subdomain);
+            deleteConfigurationFromDB(configuration);
         }
         else {
-            configuration = new ExternalComponentConfiguration(subdomain, Permission.allowed, secret);
+            configuration = new ExternalComponentConfiguration(subdomain, false, Permission.allowed, secret);
         }
         addConfiguration(configuration);
     }
@@ -205,24 +207,30 @@ public class ExternalComponentManager {
         for (ExternalComponentManagerListener listener : listeners) {
             listener.componentConfigurationDeleted(subdomain);
         }
+
         // Proceed to delete the configuration of the component
-        deleteConfigurationFromDB(subdomain);
+        deleteConfigurationFromDB(getConfiguration(subdomain, false));
     }
 
     /**
      * Removes any existing defined permission and configuration for the specified
      * external component from the database.
      *
-     * @param subdomain the subdomain of the external component.
+     * @param configuration the external component configuration to delete.
      */
-    private static void deleteConfigurationFromDB(String subdomain) {
+    private static void deleteConfigurationFromDB(ExternalComponentConfiguration configuration) {
+        if (configuration == null) {
+            // Do nothing
+            return;
+        }
         // Remove the permission for the entity from the database
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_CONFIGURATION);
-            pstmt.setString(1, subdomain);
+            pstmt.setString(1, configuration.getSubdomain());
+            pstmt.setInt(2, configuration.isWildcard() ? 1 : 0);
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -248,9 +256,10 @@ public class ExternalComponentManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_CONFIGURATION);
-            pstmt.setString(1, configuration.getSubdomain());
-            pstmt.setString(2, configuration.getSecret());
-            pstmt.setString(3, configuration.getPermission().toString());
+            pstmt.setString(1, configuration.getSubdomain() + (configuration.isWildcard() ? "%" : ""));
+            pstmt.setInt(2, configuration.isWildcard() ? 1 : 0);
+            pstmt.setString(3, configuration.getSecret());
+            pstmt.setString(4, configuration.getPermission().toString());
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -265,23 +274,27 @@ public class ExternalComponentManager {
     }
 
     /**
-     * Returns the configuration for an external component.
+     * Returns the configuration for an external component. A query for the exact requested
+     * subdomain will be made. If nothing was found and using wildcards is requested then
+     * another query will be made but this time using wildcards.
      *
      * @param subdomain the subdomain of the external component.
+     * @param useWildcard true if an attempt to find a subdomain with wildcards should be attempted.
      * @return the configuration for an external component.
      */
-    public static ExternalComponentConfiguration getConfiguration(String subdomain) {
+    private static ExternalComponentConfiguration getConfiguration(String subdomain, boolean useWildcard) {
         ExternalComponentConfiguration configuration = null;
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
         try {
+            // Check if there is a configuration for the subdomain
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_CONFIGURATION);
             pstmt.setString(1, subdomain);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                configuration = new ExternalComponentConfiguration(subdomain, Permission.valueOf(rs.getString(2)),
+                configuration = new ExternalComponentConfiguration(subdomain, false, Permission.valueOf(rs.getString(2)),
                         rs.getString(1));
             }
             rs.close();
@@ -294,6 +307,32 @@ public class ExternalComponentManager {
             catch (Exception e) { Log.error(e); }
             try { if (con != null) con.close(); }
             catch (Exception e) { Log.error(e); }
+        }
+
+        if (configuration == null && useWildcard) {
+            // Check if there is a configuration that is using wildcards for domains
+            try {
+                // Check if there is a configuration for the subdomain
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(LOAD_WILDCARD_CONFIGURATION);
+                pstmt.setString(1, subdomain);
+                ResultSet rs = pstmt.executeQuery();
+
+                while (rs.next()) {
+                    configuration = new ExternalComponentConfiguration(subdomain, true, Permission.valueOf(rs.getString(2)),
+                            rs.getString(1));
+                }
+                rs.close();
+            }
+            catch (SQLException sqle) {
+                Log.error(sqle);
+            }
+            finally {
+                try { if (pstmt != null) pstmt.close(); }
+                catch (Exception e) { Log.error(e); }
+                try { if (con != null) con.close(); }
+                catch (Exception e) { Log.error(e); }
+            }
         }
         return configuration;
     }
@@ -311,7 +350,12 @@ public class ExternalComponentManager {
             ResultSet rs = pstmt.executeQuery();
             ExternalComponentConfiguration configuration;
             while (rs.next()) {
-                configuration = new ExternalComponentConfiguration(rs.getString(1), permission, rs.getString(2));
+                String subdomain = rs.getString(1);
+                boolean wildcard = rs.getInt(2) == 1;
+                // Remove the trailing % if using wildcards
+                subdomain = wildcard ? subdomain.substring(0, subdomain.length()-1) : subdomain;
+                configuration = new ExternalComponentConfiguration(subdomain, wildcard, permission,
+                        rs.getString(3));
                 answer.add(configuration);
             }
             rs.close();
@@ -367,7 +411,7 @@ public class ExternalComponentManager {
         // By default there is no shared secret defined for the XMPP entity
         String secret = null;
 
-        ExternalComponentConfiguration config = getConfiguration(subdomain);
+        ExternalComponentConfiguration config = getConfiguration(subdomain, true);
         if (config != null) {
             secret = config.getSecret();
         }

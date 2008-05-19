@@ -130,7 +130,7 @@
         if (errors.isEmpty()) {
             // Remove the hostname if the user is not sending just the subdomain
             subdomain = subdomain.replace("." + serverName, "");
-            ExternalComponentConfiguration configuration = new ExternalComponentConfiguration(subdomain,
+            ExternalComponentConfiguration configuration = new ExternalComponentConfiguration(subdomain, false,
                     ExternalComponentConfiguration.Permission.allowed, secret);
             try {
                 ExternalComponentManager.allowAccess(configuration);

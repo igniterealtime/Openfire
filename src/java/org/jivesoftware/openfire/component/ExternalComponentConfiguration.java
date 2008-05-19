@@ -11,19 +11,29 @@ package org.jivesoftware.openfire.component;
 public class ExternalComponentConfiguration {
 
     private String subdomain;
+    /**
+     * Flag that indicates if components whose domain starts with the subdomain of this configuration
+     * should use this configuration.
+     */
+    private boolean wildcard;
 
     private Permission permission;
 
     private String secret;
 
-    public ExternalComponentConfiguration(String subdomain, Permission permission, String secret) {
+    public ExternalComponentConfiguration(String subdomain, boolean wildcard, Permission permission, String secret) {
         this.subdomain = subdomain;
+        this.wildcard = wildcard;
         this.permission = permission;
         this.secret = secret;
     }
 
     public String getSubdomain() {
         return subdomain;
+    }
+
+    public boolean isWildcard() {
+        return wildcard;
     }
 
     public Permission getPermission() {

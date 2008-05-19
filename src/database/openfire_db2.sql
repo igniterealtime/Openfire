@@ -134,6 +134,7 @@ CREATE TABLE ofVersion (
 
 CREATE TABLE ofExtComponentConf (
   subdomain             VARCHAR(255)    NOT NULL,
+  wildcard              INTEGER         NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
   CONSTRAINT ofExtComponentConf_pk PRIMARY KEY (subdomain)
@@ -385,7 +386,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 19);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 20);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

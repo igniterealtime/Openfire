@@ -424,7 +424,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      */
     public void setSharedSecret(String sharedSecret) {
         // Set new password for external component
-        ExternalComponentConfiguration configuration = new ExternalComponentConfiguration("clearspace",
+        ExternalComponentConfiguration configuration = new ExternalComponentConfiguration("clearspace", true,
                 ExternalComponentConfiguration.Permission.allowed, sharedSecret);
         try {
             ExternalComponentManager.allowAccess(configuration);

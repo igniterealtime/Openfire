@@ -186,7 +186,7 @@
                     JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections"));
         }
         catch (Exception e) {
-            maxConnections = 15;
+            maxConnections = 25;
         }
         try {
             connectionTimeout = Double.parseDouble(

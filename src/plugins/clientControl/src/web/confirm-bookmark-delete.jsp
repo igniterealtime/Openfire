@@ -4,7 +4,7 @@
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.muc.MUCRoom" %>
-<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatServer" %>
+<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="java.util.Collection" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -170,20 +170,4 @@ else { %>
         return returnStr;
     }
 
-    public String getJidFromRoomName(String roomName) {
-        // Load the MultiUserChatServer
-        XMPPServer xmppServer = XMPPServer.getInstance();
-        MultiUserChatServer mucServer = xmppServer.getMultiUserChatServer();
-        MUCRoom room = null;
-        try {
-            room = mucServer.getChatRoom(roomName);
-        }
-        catch (Exception e) {
-            Log.error(e);
-
-            return null;
-        }
-
-        return "";//Todo. Return actual name. Checking in for file transfer.
-    }
 %>

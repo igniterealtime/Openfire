@@ -9,8 +9,6 @@
     String broadcastEnabledString = JiveGlobals.getProperty("broadcast.enabled", "true");
     String fileTransferString = JiveGlobals.getProperty("transfer.enabled", "true");
 
-    boolean isMucEnabled = XMPPServer.getInstance().getMultiUserChatServer().isServiceEnabled();
-    String musEnabledString = JiveGlobals.getProperty("muc.enabled", "true");
     String vcardEnabledString = JiveGlobals.getProperty("vcard.enabled", "true");
 
 
@@ -18,20 +16,16 @@
     if (submit) {
         broadcastEnabledString = request.getParameter("broadcastEnabled");
         fileTransferString = request.getParameter("transferEnabled");
-        musEnabledString = request.getParameter("mucEnabled");
         vcardEnabledString = request.getParameter("vcardEnabled");
 
         JiveGlobals.setProperty("broadcast.enabled", broadcastEnabledString);
         JiveGlobals.setProperty("transfer.enabled", fileTransferString);
 
-        boolean mucEnabled = Boolean.parseBoolean(musEnabledString);
-        XMPPServer.getInstance().getMultiUserChatServer().enableService(mucEnabled, true);
         JiveGlobals.setProperty("vcard.enabled", vcardEnabledString);
 
     }
     boolean broadcastEnabled = Boolean.parseBoolean(broadcastEnabledString);
     boolean transferEnabled = Boolean.parseBoolean(fileTransferString);
-    boolean mucEnabled = XMPPServer.getInstance().getMultiUserChatServer().isServiceEnabled();
     boolean vcardEnabled = Boolean.parseBoolean(vcardEnabledString);
 
     // Enable File Transfer in the system.
@@ -102,19 +96,6 @@
                 <input type="radio" name="vcardEnabled" value="false" <%= !vcardEnabled ? "checked" : "" %> />
             </td>
         </tr>
-
-         <tr>
-            <td><b><fmt:message key="client.features.groupchat" /></b><br/><span class="jive-description">
-               <fmt:message key="client.features.groupchat.description" />
-           </span></td>
-            <td width="1%" nowrap>
-                <input type="radio" name="mucEnabled" value="true" <%= mucEnabled ? "checked" : "" %> />
-            </td>
-            <td width="1%" nowrap>
-                <input type="radio" name="mucEnabled" value="false" <%= !mucEnabled ? "checked" : "" %> />
-            </td>
-        </tr>
-
 
     </table>
 

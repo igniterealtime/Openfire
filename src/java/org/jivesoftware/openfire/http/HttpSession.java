@@ -155,7 +155,10 @@ public class HttpSession extends LocalClientSession {
      * on the session ID.
      */
     public void close() {
-        closeConnection();
+        if (isClosed) {
+            return;
+        }
+        conn.close();
     }
 
     /**
@@ -663,8 +666,6 @@ public class HttpSession extends LocalClientSession {
             return;
         }
         isClosed = true;
-
-        conn.close();
 
         if (pendingElements.size() > 0) {
             failDelivery();

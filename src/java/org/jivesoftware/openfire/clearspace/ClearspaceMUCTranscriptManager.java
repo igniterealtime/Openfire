@@ -1,7 +1,6 @@
 package org.jivesoftware.openfire.clearspace;
 
-import org.jivesoftware.openfire.muc.MUCEventListener;
-import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.JiveConstants;
@@ -77,7 +76,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
 
     private final int MAX_QUEUE_SIZE = 64;
     private final long  FLUSH_PERIOD =
-            JiveGlobals.getLongProperty("clearspace.transcript.flush.period", JiveConstants.MINUTE * 2);
+            JiveGlobals.getLongProperty("clearspace.transcript.flush.period", JiveConstants.MINUTE * 1);
 
     private String csMucDomain;
     private String csComponentAddress;
@@ -101,6 +100,10 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                     return;
                 }
 
+                // Store JIDs of rooms that had presence changes, to track occupant counts
+                // TODO: Refactor out into a different class
+                Set<String> presenceRoomJids = new HashSet<String>();
+
                 // Create the transcript-update packet
                 IQ packet = new IQ();
                 packet.setTo(csComponentAddress);
@@ -119,10 +122,12 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                             break;
                         case occupantJoined:
                             mucEventElement = transcriptElement.addElement("presence");
+                            presenceRoomJids.add(event.roomJID.toBareJID());
                             break;
                         case occupantLeft:
                             mucEventElement = transcriptElement.addElement("presence");
                             mucEventElement.addAttribute("type", "unavailable");
+                            presenceRoomJids.add(event.roomJID.toBareJID());
                             break;
                         case roomSubjectChanged:
                             mucEventElement = transcriptElement.addElement("subject-change");
@@ -140,6 +145,19 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                         }
                         mucEventElement.addElement("timestamp").setText(Long.toString(event.timestamp));
                     }
+                }
+
+                // Add occupant count updates to packet
+                // TODO: Refactor out into a different class
+                MultiUserChatManager mucManager = XMPPServer.getInstance().getMultiUserChatManager();
+                for (String roomJid : presenceRoomJids) {
+                    JID jid = new JID(roomJid);
+                    MultiUserChatService mucService = mucManager.getMultiUserChatService(jid);
+                    MUCRoom room = mucService.getChatRoom(jid.getNode());
+
+                    Element occUpdateElement = transcriptElement.addElement("occupant-count-update");
+                    occUpdateElement.addElement("roomjid").setText(roomJid);
+                    occUpdateElement.addElement("count").setText(Integer.toString(room.getOccupantsCount()));
                 }
 
                 // Send the transcript-update packet to Clearspace.

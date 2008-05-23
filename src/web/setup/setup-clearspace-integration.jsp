@@ -14,6 +14,5 @@
     String nextPage = "setup-finished.jsp";
     Map<String, String> meta = new HashMap<String, String>();
     meta.put("currentStep", "3");
-    JiveGlobals.setXMLProperty("setup","true");
 %>
 <%@ include file="clearspace-integration.jspf" %>

@@ -84,7 +84,10 @@
                     xmppSettings.put("clearspace.sharedSecret", sharedSecret);
                     session.setAttribute("xmppSettings", xmppSettings);
                 }
-
+                if (initialSetup) {
+                    // Set that the setup has been completed
+                    JiveGlobals.setXMLProperty("setup","true");
+                }
                 // Redirect to next step.
                 response.sendRedirect(nextPage);
                 return;

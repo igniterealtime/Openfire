@@ -19,6 +19,7 @@ import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.*;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import static org.jivesoftware.openfire.clearspace.WSUtils.parseStringArray;
 import org.jivesoftware.openfire.user.*;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -490,6 +491,7 @@ public class ClearspaceUserProvider implements UserProvider {
             readOnly = Boolean.valueOf(getReturn(element));
         } catch (Exception e) {
             // if there is a problem, keep it null, maybe in the next call success.
+            Log.error("Failed checking #isReadOnly with Clearspace" , e);
         }
     }
 

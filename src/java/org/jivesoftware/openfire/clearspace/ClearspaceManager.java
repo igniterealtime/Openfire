@@ -320,6 +320,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             return true;
         } catch (Exception e) {
             // Nothing to do.
+            Log.warn("Failed authenticating user with Clearspace. User = " + username , e);
         }
 
         return false;
@@ -340,6 +341,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             return true;
         } catch (Exception e) {
             // It is not ok, return false.
+            Log.warn("Failed testing communicating with Clearspace" , e);
         }
 
         return false;
@@ -1118,7 +1120,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Element element = executeRequest(GET, path);
 
             return WSUtils.getReturn(element);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            Log.error("Failed executing #generateNonce with Clearspace" , e);
+        }
 
         return null;
     }

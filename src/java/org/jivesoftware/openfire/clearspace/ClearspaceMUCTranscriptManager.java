@@ -76,7 +76,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
 
     private final int MAX_QUEUE_SIZE = 64;
     private final long  FLUSH_PERIOD =
-            JiveGlobals.getLongProperty("clearspace.transcript.flush.period", JiveConstants.MINUTE * 2);
+            JiveGlobals.getLongProperty("clearspace.transcript.flush.period", JiveConstants.MINUTE * 1);
 
     private String csMucDomain;
     private String csComponentAddress;

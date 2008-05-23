@@ -6,6 +6,7 @@
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -31,9 +32,22 @@
 
         if ("default".equals(mode)) {
             // Set to default providers by deleting any existing values.
-            JiveGlobals.deleteProperty("provider.user.className");
-            JiveGlobals.deleteProperty("provider.group.className");
-            JiveGlobals.deleteProperty("provider.auth.className");
+            @SuppressWarnings("unchecked")
+            Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+            xmppSettings.put("provider.auth.className",
+                    org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName());
+            xmppSettings.put("provider.user.className",
+                    org.jivesoftware.openfire.user.DefaultUserProvider.class.getName());
+            xmppSettings.put("provider.group.className",
+                    org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName());
+            xmppSettings.put("provider.vcard.className",
+                    org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName());
+            xmppSettings.put("provider.lockout.className",
+                    org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName());
+            xmppSettings.put("provider.securityAudit.className",
+                    org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName());
+            xmppSettings.put("provider.admin.className",
+                    org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName());
             // Redirect
             response.sendRedirect("setup-admin-settings.jsp");
             return;

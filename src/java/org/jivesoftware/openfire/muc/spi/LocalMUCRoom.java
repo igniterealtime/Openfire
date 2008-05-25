@@ -1233,33 +1233,39 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public List<Presence> addOwner(String bareJID, MUCRole sendRole) throws ForbiddenException {
-        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-        if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
-            throw new ForbiddenException();
+        lock.writeLock().lock();
+        try {
+            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+            if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+                throw new ForbiddenException();
+            }
+            // Check if user is already an owner
+            if (owners.contains(bareJID)) {
+                // Do nothing
+                return Collections.emptyList();
+            }
+            owners.add(bareJID);
+            // Remove the user from other affiliation lists
+            if (removeAdmin(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.admin;
+            }
+            else if (removeMember(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.member;
+            }
+            else if (removeOutcast(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.outcast;
+            }
+            // Update the DB if the room is persistent
+            MUCPersistenceManager.saveAffiliationToDB(
+                this,
+                bareJID,
+                null,
+                MUCRole.Affiliation.owner,
+                oldAffiliation);
         }
-        // Check if user is already an owner
-        if (owners.contains(bareJID)) {
-            // Do nothing
-            return Collections.emptyList();
+        finally {
+            lock.writeLock().unlock();
         }
-        owners.add(bareJID);
-        // Remove the user from other affiliation lists
-        if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.admin;
-        }
-        else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.member;
-        }
-        else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.outcast;
-        }
-        // Update the DB if the room is persistent
-        MUCPersistenceManager.saveAffiliationToDB(
-            this,
-            bareJID,
-            null,
-            MUCRole.Affiliation.owner,
-            oldAffiliation);
         // Update the presence with the new affiliation and inform all occupants
         try {
             return changeOccupantAffiliation(bareJID, MUCRole.Affiliation.owner,
@@ -1277,37 +1283,43 @@ public class LocalMUCRoom implements MUCRoom {
 
     public List<Presence> addAdmin(String bareJID, MUCRole sendRole) throws ForbiddenException,
             ConflictException {
-        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-        if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
-            throw new ForbiddenException();
+        lock.writeLock().lock();
+        try {
+            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+            if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+                throw new ForbiddenException();
+            }
+            // Check that the room always has an owner
+            if (owners.contains(bareJID) && owners.size() == 1) {
+                throw new ConflictException();
+            }
+            // Check if user is already an admin
+            if (admins.contains(bareJID)) {
+                // Do nothing
+                return Collections.emptyList();
+            }
+            admins.add(bareJID);
+            // Remove the user from other affiliation lists
+            if (removeOwner(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.owner;
+            }
+            else if (removeMember(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.member;
+            }
+            else if (removeOutcast(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.outcast;
+            }
+            // Update the DB if the room is persistent
+            MUCPersistenceManager.saveAffiliationToDB(
+                this,
+                bareJID,
+                null,
+                MUCRole.Affiliation.admin,
+                oldAffiliation);
         }
-        // Check that the room always has an owner
-        if (owners.contains(bareJID) && owners.size() == 1) {
-            throw new ConflictException();
+        finally {
+            lock.writeLock().unlock();
         }
-        // Check if user is already an admin
-        if (admins.contains(bareJID)) {
-            // Do nothing
-            return Collections.emptyList();
-        }
-        admins.add(bareJID);
-        // Remove the user from other affiliation lists
-        if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.owner;
-        }
-        else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.member;
-        }
-        else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.outcast;
-        }
-        // Update the DB if the room is persistent
-        MUCPersistenceManager.saveAffiliationToDB(
-            this,
-            bareJID,
-            null,
-            MUCRole.Affiliation.admin,
-            oldAffiliation);
         // Update the presence with the new affiliation and inform all occupants
         try {
             return changeOccupantAffiliation(bareJID, MUCRole.Affiliation.admin,
@@ -1325,52 +1337,58 @@ public class LocalMUCRoom implements MUCRoom {
 
     public List<Presence> addMember(String bareJID, String nickname, MUCRole sendRole)
             throws ForbiddenException, ConflictException {
-        MUCRole.Affiliation oldAffiliation = (members.containsKey(bareJID) ?
-                MUCRole.Affiliation.member : MUCRole.Affiliation.none);
-        if (isMembersOnly()) {
-            if (!canOccupantsInvite()) {
+        lock.writeLock().lock();
+        try {
+            MUCRole.Affiliation oldAffiliation = (members.containsKey(bareJID) ?
+                    MUCRole.Affiliation.member : MUCRole.Affiliation.none);
+            if (isMembersOnly()) {
+                if (!canOccupantsInvite()) {
+                    if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
+                            && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+                        throw new ForbiddenException();
+                    }
+                }
+            }
+            else {
                 if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
                         && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
                     throw new ForbiddenException();
                 }
             }
-        }
-        else {
-            if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
-                    && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
-                throw new ForbiddenException();
+            // Check if the desired nickname is already reserved for another member
+            if (nickname != null && nickname.trim().length() > 0 && members.containsValue(nickname)) {
+                if (!nickname.equals(members.get(bareJID))) {
+                    throw new ConflictException();
+                }
             }
-        }
-        // Check if the desired nickname is already reserved for another member
-        if (nickname != null && nickname.trim().length() > 0 && members.containsValue(nickname)) {
-            if (!nickname.equals(members.get(bareJID))) {
+            // Check that the room always has an owner
+            if (owners.contains(bareJID) && owners.size() == 1) {
                 throw new ConflictException();
             }
+            // Associate the reserved nickname with the bareJID. If nickname is null then associate an
+            // empty string
+            members.put(bareJID, (nickname == null ? "" : nickname));
+            // Remove the user from other affiliation lists
+            if (removeOwner(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.owner;
+            }
+            else if (removeAdmin(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.admin;
+            }
+            else if (removeOutcast(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.outcast;
+            }
+            // Update the DB if the room is persistent
+            MUCPersistenceManager.saveAffiliationToDB(
+                this,
+                bareJID,
+                nickname,
+                MUCRole.Affiliation.member,
+                oldAffiliation);
         }
-        // Check that the room always has an owner
-        if (owners.contains(bareJID) && owners.size() == 1) {
-            throw new ConflictException();
+        finally {
+            lock.writeLock().unlock();
         }
-        // Associate the reserved nickname with the bareJID. If nickname is null then associate an
-        // empty string
-        members.put(bareJID, (nickname == null ? "" : nickname));
-        // Remove the user from other affiliation lists
-        if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.owner;
-        }
-        else if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.admin;
-        }
-        else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.outcast;
-        }
-        // Update the DB if the room is persistent
-        MUCPersistenceManager.saveAffiliationToDB(
-            this,
-            bareJID,
-            nickname,
-            MUCRole.Affiliation.member,
-            oldAffiliation);
         // Update other cluster nodes with new member
         CacheFactory.doClusterTask(new AddMember(this, bareJID, (nickname == null ? "" : nickname)));
         // Update the presence with the new affiliation and inform all occupants
@@ -1392,19 +1410,45 @@ public class LocalMUCRoom implements MUCRoom {
 
     public List<Presence> addOutcast(String bareJID, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException, ConflictException {
-        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-        if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
-                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
-            throw new ForbiddenException();
+        lock.writeLock().lock();
+        try {
+            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+            if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                    && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+                throw new ForbiddenException();
+            }
+            // Check that the room always has an owner
+            if (owners.contains(bareJID) && owners.size() == 1) {
+                throw new ConflictException();
+            }
+            // Check if user is already an outcast
+            if (outcasts.contains(bareJID)) {
+                // Do nothing
+                return Collections.emptyList();
+            }
+
+            // Update the affiliation lists
+            outcasts.add(bareJID);
+            // Remove the user from other affiliation lists
+            if (removeOwner(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.owner;
+            }
+            else if (removeAdmin(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.admin;
+            }
+            else if (removeMember(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.member;
+            }
+            // Update the DB if the room is persistent
+            MUCPersistenceManager.saveAffiliationToDB(
+                this,
+                bareJID,
+                null,
+                MUCRole.Affiliation.outcast,
+                oldAffiliation);
         }
-        // Check that the room always has an owner
-        if (owners.contains(bareJID) && owners.size() == 1) {
-            throw new ConflictException();
-        }
-        // Check if user is already an outcast
-        if (outcasts.contains(bareJID)) {
-            // Do nothing
-            return Collections.emptyList();
+        finally {
+            lock.writeLock().unlock();
         }
         // Update the presence with the new affiliation and inform all occupants
         // actorJID will be null if the room itself (ie. via admin console) made the request
@@ -1430,25 +1474,6 @@ public class LocalMUCRoom implements MUCRoom {
             // Effectively kick the occupant from the room
             kickPresence(presence, actorJID);
         }
-        // Update the affiliation lists
-        outcasts.add(bareJID);
-        // Remove the user from other affiliation lists
-        if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.owner;
-        }
-        else if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.admin;
-        }
-        else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.member;
-        }
-        // Update the DB if the room is persistent
-        MUCPersistenceManager.saveAffiliationToDB(
-            this,
-            bareJID,
-            null,
-            MUCRole.Affiliation.outcast,
-            oldAffiliation);
         return updatedPresences;
     }
 
@@ -1458,34 +1483,39 @@ public class LocalMUCRoom implements MUCRoom {
 
     public List<Presence> addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException {
-        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-        if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
-                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
-            throw new ForbiddenException();
-        }
-        // Check that the room always has an owner
-        if (owners.contains(bareJID) && owners.size() == 1) {
-            throw new ConflictException();
-        }
         List<Presence> updatedPresences = null;
-        boolean wasMember = members.containsKey(bareJID) || admins.contains(bareJID) ||
-                owners.contains(bareJID);
-        // Remove the user from ALL the affiliation lists
-        if (removeOwner(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.owner;
+        boolean wasMember = false;
+        lock.writeLock().lock();
+        try {
+            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+            if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
+                    && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+                throw new ForbiddenException();
+            }
+            // Check that the room always has an owner
+            if (owners.contains(bareJID) && owners.size() == 1) {
+                throw new ConflictException();
+            }
+            wasMember = members.containsKey(bareJID) || admins.contains(bareJID) || owners.contains(bareJID);
+            // Remove the user from ALL the affiliation lists
+            if (removeOwner(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.owner;
+            }
+            else if (removeAdmin(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.admin;
+            }
+            else if (removeMember(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.member;
+            }
+            else if (removeOutcast(bareJID)) {
+                oldAffiliation = MUCRole.Affiliation.outcast;
+            }
+            // Remove the affiliation of this user from the DB if the room is persistent
+            MUCPersistenceManager.removeAffiliationFromDB(this, bareJID, oldAffiliation);
         }
-        else if (removeAdmin(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.admin;
+        finally {
+            lock.writeLock().unlock();
         }
-        else if (removeMember(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.member;
-        }
-        else if (removeOutcast(bareJID)) {
-            oldAffiliation = MUCRole.Affiliation.outcast;
-        }
-        // Remove the affiliation of this user from the DB if the room is persistent
-        MUCPersistenceManager.removeAffiliationFromDB(this, bareJID, oldAffiliation);
-
         // Update the presence with the new affiliation and inform all occupants
         try {
             MUCRole.Role newRole;

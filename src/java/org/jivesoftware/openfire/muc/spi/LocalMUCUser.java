@@ -286,13 +286,7 @@ public class LocalMUCUser implements MUCUser {
                                         // Add the user as a member of the room if the room is
                                         // members only
                                         if (room.isMembersOnly()) {
-                                            room.lock.writeLock().lock();
-                                            try {
-                                                room.addMember(info.attributeValue("to"), null, role);
-                                            }
-                                            finally {
-                                                room.lock.writeLock().unlock();
-                                            }
+                                            room.addMember(info.attributeValue("to"), null, role);
                                         }
 
                                         // Send the invitation to the invitee

@@ -152,28 +152,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         if (!allowedIPs.isEmpty()) {
-            boolean forbidAccess = false;
             String hostAddress = "Unknown";
             // The server is using a whitelist so check that the IP address of the client
             // is authorized to connect to the server
             try {
                hostAddress = connection.getHostAddress();
-                if (!allowedIPs.containsKey(hostAddress)) {
-                    byte[] address = connection.getAddress();
-                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
-                            (address[2] & 0xff) +
-                            ".*";
-                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
-                    String range3 = (address[0] & 0xff) + ".*.*.*";
-                    if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
-                            !allowedIPs.containsKey(range3)) {
-                        forbidAccess = true;
-                    }
-                }
             } catch (UnknownHostException e) {
-                forbidAccess = true;
+                // Do nothing
             }
-            if (forbidAccess) {
+            if (!isAllowed(connection)) {
                 // Client cannot connect from this IP address so end the stream and
                 // TCP connection
                 Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
@@ -308,6 +295,32 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
         connection.deliverRawText(sb.toString());
         return session;
+    }
+
+    public static boolean isAllowed(Connection connection) {
+        if (!allowedIPs.isEmpty()) {
+            // The server is using a whitelist so check that the IP address of the client
+            // is authorized to connect to the server
+            boolean forbidAccess = false;
+            try {
+                if (!allowedIPs.containsKey(connection.getHostAddress())) {
+                    byte[] address = connection.getAddress();
+                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
+                            (address[2] & 0xff) +
+                            ".*";
+                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+                    String range3 = (address[0] & 0xff) + ".*.*.*";
+                    if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
+                            !allowedIPs.containsKey(range3)) {
+                        forbidAccess = true;
+                    }
+                }
+            } catch (UnknownHostException e) {
+                forbidAccess = true;
+            }
+            return !forbidAccess;
+        }
+        return true;
     }
 
     /**

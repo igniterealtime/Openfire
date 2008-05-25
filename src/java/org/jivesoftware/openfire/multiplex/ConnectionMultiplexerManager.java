@@ -26,6 +26,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
 
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -123,26 +124,40 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * @param connectionManagerDomain the connection manager that is handling the connection
      *        of the session.
      * @param streamID the stream ID created by the connection manager for the new session.
+     * @param hostName the address's hostname of the client or null if using old connection manager.
+     * @param hostAddress the textual representation of the address of the client or null if using old CM.
+     * @return true if a session was created or false if the client should disconnect.
      */
-    public void createClientSession(String connectionManagerDomain, String streamID) {
-        // TODO Consider that client session may return null when IP address is forbidden
-        Connection connection = new ClientSessionConnection(connectionManagerDomain);
-        LocalClientSession session =
-                SessionManager.getInstance().createClientSession(connection, new BasicStreamID(streamID));
-        // Register that this streamID belongs to the specified connection manager
-        streamIDs.put(streamID, connectionManagerDomain);
-        // Register which sessions are being hosted by the speicifed connection manager
-        Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
-        if (sessions == null) {
-            synchronized (connectionManagerDomain.intern()) {
-                sessions = sessionsByManager.get(connectionManagerDomain);
-                if (sessions == null) {
-                    sessions = new ConcurrentHashMap<String, LocalClientSession>();
-                    sessionsByManager.put(connectionManagerDomain, sessions);
+    public boolean createClientSession(String connectionManagerDomain, String streamID, String hostName, String hostAddress) {
+        Connection connection = new ClientSessionConnection(connectionManagerDomain, hostName, hostAddress);
+        // Check if client is allowed to connect from the specified IP address. Ignore the checking if connection
+        // manager is old version and is not passing client's address
+        byte[] address = null;
+        try {
+            address = connection.getAddress();
+        } catch (UnknownHostException e) {
+            // Ignore
+        }
+        if (address == null || LocalClientSession.isAllowed(connection)) {
+            LocalClientSession session =
+                    SessionManager.getInstance().createClientSession(connection, new BasicStreamID(streamID));
+            // Register that this streamID belongs to the specified connection manager
+            streamIDs.put(streamID, connectionManagerDomain);
+            // Register which sessions are being hosted by the speicifed connection manager
+            Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
+            if (sessions == null) {
+                synchronized (connectionManagerDomain.intern()) {
+                    sessions = sessionsByManager.get(connectionManagerDomain);
+                    if (sessions == null) {
+                        sessions = new ConcurrentHashMap<String, LocalClientSession>();
+                        sessionsByManager.put(connectionManagerDomain, sessions);
+                    }
                 }
             }
+            sessions.put(streamID, session);
+            return true;
         }
-        sessions.put(streamID, session);
+        return false;
     }
 
     /**

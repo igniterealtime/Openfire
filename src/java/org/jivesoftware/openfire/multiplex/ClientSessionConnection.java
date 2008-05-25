@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -34,11 +35,15 @@ public class ClientSessionConnection extends VirtualConnection {
     private String connectionManagerName;
     private String serverName;
     private ConnectionMultiplexerManager multiplexerManager;
+    private String hostName;
+    private String hostAddress;
 
-    public ClientSessionConnection(String connectionManagerName) {
+    public ClientSessionConnection(String connectionManagerName, String hostName, String hostAddress) {
         this.connectionManagerName = connectionManagerName;
         multiplexerManager = ConnectionMultiplexerManager.getInstance();
         serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        this.hostName = hostName;
+        this.hostAddress = hostAddress;
     }
 
     /**
@@ -97,11 +102,16 @@ public class ClientSessionConnection extends VirtualConnection {
     }
 
     public byte[] getAddress() throws UnknownHostException {
+        if (hostAddress != null) {
+            return InetAddress.getByName(hostAddress).getAddress();
+        }
         return null;
     }
 
     public String getHostAddress() throws UnknownHostException {
-        //TODO Future version may return actual IP client address. We would need to pass this info
+        if (hostAddress != null) {
+            return hostAddress;
+        }
         // Return IP address of the connection manager that the client used to log in
         ConnectionMultiplexerSession multiplexerSession =
                 multiplexerManager.getMultiplexerSession(connectionManagerName);
@@ -112,7 +122,9 @@ public class ClientSessionConnection extends VirtualConnection {
     }
 
     public String getHostName() throws UnknownHostException {
-        //TODO Future version may return actual IP client address. We would need to pass this info
+        if (hostName != null) {
+            return hostName;
+        }
         // Return IP address of the connection manager that the client used to log in
         ConnectionMultiplexerSession multiplexerSession =
                 multiplexerManager.getMultiplexerSession(connectionManagerName);

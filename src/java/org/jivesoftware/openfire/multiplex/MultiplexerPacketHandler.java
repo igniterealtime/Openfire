@@ -73,10 +73,22 @@ public class MultiplexerPacketHandler {
                     sendErrorPacket(iq, PacketError.Condition.bad_request, extraError);
                 }
                 else if ("session".equals(child.getName())) {
-                    if (child.element("create") != null) {
+                    Element create = child.element("create");
+                    if (create != null) {
+                        // Get the InetAddress of the client
+                        Element hostElement = create.element("host");
+                        String hostName = hostElement != null ? hostElement.attributeValue("name") : null;
+                        String hostAddress = hostElement != null ? hostElement.attributeValue("address") : null;
                         // Connection Manager wants to create a Client Session
-                        multiplexerManager.createClientSession(connectionManagerDomain, streamID);
-                        sendResultPacket(iq);
+                        boolean created = multiplexerManager
+                                .createClientSession(connectionManagerDomain, streamID, hostName, hostAddress);
+                        if (created) {
+                            sendResultPacket(iq);
+                        }
+                        else {
+                            // Send error to CM. The CM should close the new-borned connection
+                            sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
+                        }
                     }
                     else {
                         ClientSession session = multiplexerManager

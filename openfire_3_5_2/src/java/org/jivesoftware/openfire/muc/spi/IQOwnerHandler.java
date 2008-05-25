@@ -235,7 +235,6 @@ public class IQOwnerHandler {
                 }
 
                 room.lock.readLock().unlock();
-                room.lock.writeLock().lock();
                 try {
                     String targetAffiliation = null;
                     for (Iterator<String> it = jids.keySet().iterator(); it.hasNext();) {
@@ -266,7 +265,6 @@ public class IQOwnerHandler {
                     }
                 }
                 finally {
-                    room.lock.writeLock().unlock();
                     room.lock.readLock().lock();
                 }
             }
@@ -369,181 +367,174 @@ public class IQOwnerHandler {
         // Keep a registry of the updated presences
         List presences = new ArrayList(admins.size() + owners.size());
 
-        room.lock.writeLock().lock();
-        try {
-            field = completedForm.getField("muc#roomconfig_roomname");
-            if (field != null) {
-                values = field.getValues();
-                room.setNaturalLanguageName((values.hasNext() ? values.next() : " "));
-            }
-
-            field = completedForm.getField("muc#roomconfig_roomdesc");
-            if (field != null) {
-                values = field.getValues();
-                room.setDescription((values.hasNext() ? values.next() : " "));
-            }
-
-            field = completedForm.getField("muc#roomconfig_changesubject");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setCanOccupantsChangeSubject(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("muc#roomconfig_maxusers");
-            if (field != null) {
-                values = field.getValues();
-                room.setMaxUsers((values.hasNext() ? Integer.parseInt(values.next()) : 30));
-            }
-
-            field = completedForm.getField("muc#roomconfig_presencebroadcast");
-            if (field != null) {
-                values = field.getValues();
-                list = new ArrayList<String>();
-                while (values.hasNext()) {
-                    list.add(values.next());
-                }
-                room.setRolesToBroadcastPresence(list);
-            }
-
-            field = completedForm.getField("muc#roomconfig_publicroom");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setPublicRoom(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("muc#roomconfig_persistentroom");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                boolean isPersistent = ("1".equals(booleanValue) ? true : false);
-                // Delete the room from the DB if it's no longer persistent
-                if (room.isPersistent() && !isPersistent) {
-                    MUCPersistenceManager.deleteFromDB(room);
-                }
-                room.setPersistent(isPersistent);
-            }
-
-            field = completedForm.getField("muc#roomconfig_moderatedroom");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setModerated(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("muc#roomconfig_membersonly");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                presences.addAll(room.setMembersOnly(("1".equals(booleanValue) ?
-                        true : false)));
-            }
-
-            field = completedForm.getField("muc#roomconfig_allowinvites");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setCanOccupantsInvite(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("muc#roomconfig_passwordprotectedroom");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                boolean isPasswordProtected = "1".equals(booleanValue);
-                if (isPasswordProtected) {
-                    // The room is password protected so set the new password
-                    field = completedForm.getField("muc#roomconfig_roomsecret");
-                    if (field != null) {
-                        values = completedForm.getField("muc#roomconfig_roomsecret").getValues();
-                        room.setPassword((values.hasNext() ? values.next() : null));
-                    }
-                }
-                else {
-                    // The room is not password protected so remove any previous password
-                    room.setPassword(null);
-                }
-            }
-
-            field = completedForm.getField("muc#roomconfig_whois");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("muc#roomconfig_enablelogging");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setLogEnabled(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("x-muc#roomconfig_reservednick");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setLoginRestrictedToNickname(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("x-muc#roomconfig_canchangenick");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setChangeNickname(("1".equals(booleanValue) ? true : false));
-            }
-
-            field = completedForm.getField("x-muc#roomconfig_registration");
-            if (field != null) {
-                values = field.getValues();
-                booleanValue = (values.hasNext() ? values.next() : "1");
-                room.setRegistrationEnabled(("1".equals(booleanValue) ? true : false));
-            }
-
-            // Update the modification date to reflect the last time when the room's configuration
-            // was modified
-            room.setModificationDate(new Date());
-
-            if (room.isPersistent()) {
-                room.saveToDB();
-            }
-
-            // Set the new owners and admins of the room
-            presences.addAll(room.addOwners(owners, senderRole));
-            presences.addAll(room.addAdmins(admins, senderRole));
-
-            if (ownersSent) {
-                // Change the affiliation to "member" for the current owners that won't be neither
-                // owner nor admin (if the form included the owners field)
-                List<String> ownersToRemove = new ArrayList<String>(room.owners);
-                ownersToRemove.removeAll(admins);
-                ownersToRemove.removeAll(owners);
-                for (String jid : ownersToRemove) {
-                    presences.addAll(room.addMember(jid, null, senderRole));
-                }
-            }
-
-            if (adminsSent) {
-                // Change the affiliation to "member" for the current admins that won't be neither
-                // owner nor admin (if the form included the admins field)
-                List<String> adminsToRemove = new ArrayList<String>(room.admins);
-                adminsToRemove.removeAll(admins);
-                adminsToRemove.removeAll(owners);
-                for (String jid : adminsToRemove) {
-                    presences.addAll(room.addMember(jid, null, senderRole));
-                }
-            }
-
-            // Destroy the room if the room is no longer persistent and there are no occupants in
-            // the room
-            if (!room.isPersistent() && room.getOccupantsCount() == 0) {
-                room.destroyRoom(null, null);
-            }
-
+        field = completedForm.getField("muc#roomconfig_roomname");
+        if (field != null) {
+            values = field.getValues();
+            room.setNaturalLanguageName((values.hasNext() ? values.next() : " "));
         }
-        finally {
-            room.lock.writeLock().unlock();
+
+        field = completedForm.getField("muc#roomconfig_roomdesc");
+        if (field != null) {
+            values = field.getValues();
+            room.setDescription((values.hasNext() ? values.next() : " "));
+        }
+
+        field = completedForm.getField("muc#roomconfig_changesubject");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setCanOccupantsChangeSubject(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("muc#roomconfig_maxusers");
+        if (field != null) {
+            values = field.getValues();
+            room.setMaxUsers((values.hasNext() ? Integer.parseInt(values.next()) : 30));
+        }
+
+        field = completedForm.getField("muc#roomconfig_presencebroadcast");
+        if (field != null) {
+            values = field.getValues();
+            list = new ArrayList<String>();
+            while (values.hasNext()) {
+                list.add(values.next());
+            }
+            room.setRolesToBroadcastPresence(list);
+        }
+
+        field = completedForm.getField("muc#roomconfig_publicroom");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setPublicRoom(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("muc#roomconfig_persistentroom");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            boolean isPersistent = ("1".equals(booleanValue) ? true : false);
+            // Delete the room from the DB if it's no longer persistent
+            if (room.isPersistent() && !isPersistent) {
+                MUCPersistenceManager.deleteFromDB(room);
+            }
+            room.setPersistent(isPersistent);
+        }
+
+        field = completedForm.getField("muc#roomconfig_moderatedroom");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setModerated(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("muc#roomconfig_membersonly");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            presences.addAll(room.setMembersOnly(("1".equals(booleanValue) ?
+                    true : false)));
+        }
+
+        field = completedForm.getField("muc#roomconfig_allowinvites");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setCanOccupantsInvite(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("muc#roomconfig_passwordprotectedroom");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            boolean isPasswordProtected = "1".equals(booleanValue);
+            if (isPasswordProtected) {
+                // The room is password protected so set the new password
+                field = completedForm.getField("muc#roomconfig_roomsecret");
+                if (field != null) {
+                    values = completedForm.getField("muc#roomconfig_roomsecret").getValues();
+                    room.setPassword((values.hasNext() ? values.next() : null));
+                }
+            }
+            else {
+                // The room is not password protected so remove any previous password
+                room.setPassword(null);
+            }
+        }
+
+        field = completedForm.getField("muc#roomconfig_whois");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("muc#roomconfig_enablelogging");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setLogEnabled(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("x-muc#roomconfig_reservednick");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setLoginRestrictedToNickname(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("x-muc#roomconfig_canchangenick");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setChangeNickname(("1".equals(booleanValue) ? true : false));
+        }
+
+        field = completedForm.getField("x-muc#roomconfig_registration");
+        if (field != null) {
+            values = field.getValues();
+            booleanValue = (values.hasNext() ? values.next() : "1");
+            room.setRegistrationEnabled(("1".equals(booleanValue) ? true : false));
+        }
+
+        // Update the modification date to reflect the last time when the room's configuration
+        // was modified
+        room.setModificationDate(new Date());
+
+        if (room.isPersistent()) {
+            room.saveToDB();
+        }
+
+        // Set the new owners and admins of the room
+        presences.addAll(room.addOwners(owners, senderRole));
+        presences.addAll(room.addAdmins(admins, senderRole));
+
+        if (ownersSent) {
+            // Change the affiliation to "member" for the current owners that won't be neither
+            // owner nor admin (if the form included the owners field)
+            List<String> ownersToRemove = new ArrayList<String>(room.owners);
+            ownersToRemove.removeAll(admins);
+            ownersToRemove.removeAll(owners);
+            for (String jid : ownersToRemove) {
+                presences.addAll(room.addMember(jid, null, senderRole));
+            }
+        }
+
+        if (adminsSent) {
+            // Change the affiliation to "member" for the current admins that won't be neither
+            // owner nor admin (if the form included the admins field)
+            List<String> adminsToRemove = new ArrayList<String>(room.admins);
+            adminsToRemove.removeAll(admins);
+            adminsToRemove.removeAll(owners);
+            for (String jid : adminsToRemove) {
+                presences.addAll(room.addMember(jid, null, senderRole));
+            }
+        }
+
+        // Destroy the room if the room is no longer persistent and there are no occupants in
+        // the room
+        if (!room.isPersistent() && room.getOccupantsCount() == 0) {
+            room.destroyRoom(null, null);
         }
 
         // Send the updated presences to the room occupants

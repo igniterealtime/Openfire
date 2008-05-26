@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution, or a commercial license
@@ -36,21 +36,35 @@ import java.util.Map;
 public class DebuggerPlugin implements Plugin, PropertyEventListener {
     private RawPrintFilter defaultPortFilter;
     private RawPrintFilter oldPortFilter;
+    private RawPrintFilter componentPortFilter;
+    private RawPrintFilter multiplexerPortFilter;
 
     private InterpretedXMLPrinter interpretedPrinter;
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         // Add filter to filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        defaultPortFilter = new RawPrintFilter();
+        defaultPortFilter = new RawPrintFilter("C2S");
         SocketAcceptor socketAcceptor = connManager.getSocketAcceptor();
         if (socketAcceptor != null) {
             socketAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", defaultPortFilter);
         }
-        oldPortFilter = new RawPrintFilter();
+        oldPortFilter = new RawPrintFilter("SSL");
         SocketAcceptor sslAcceptor = connManager.getSSLSocketAcceptor();
         if (sslAcceptor != null) {
             sslAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", oldPortFilter);
+        }
+
+        componentPortFilter = new RawPrintFilter("ExComp");
+        SocketAcceptor componentAcceptor = connManager.getComponentAcceptor();
+        if (componentAcceptor != null) {
+            componentAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", componentPortFilter);
+        }
+
+        multiplexerPortFilter = new RawPrintFilter("CM");
+        SocketAcceptor multiplexerAcceptor = connManager.getMultiplexerSocketAcceptor();
+        if (multiplexerAcceptor != null) {
+            multiplexerAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", multiplexerPortFilter);
         }
 
         interpretedPrinter = new InterpretedXMLPrinter();
@@ -75,6 +89,14 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
                 connManager.getSSLSocketAcceptor().getFilterChain().contains("rawDebugger")) {
             connManager.getSSLSocketAcceptor().getFilterChain().remove("rawDebugger");
         }
+        if (connManager.getComponentAcceptor() != null &&
+                connManager.getComponentAcceptor().getFilterChain().contains("rawDebugger")) {
+            connManager.getComponentAcceptor().getFilterChain().remove("rawDebugger");
+        }
+        if (connManager.getMultiplexerSocketAcceptor() != null &&
+                connManager.getMultiplexerSocketAcceptor().getFilterChain().contains("rawDebugger")) {
+            connManager.getMultiplexerSocketAcceptor().getFilterChain().remove("rawDebugger");
+        }
         // Remove the filters from existing sessions
         if (defaultPortFilter != null) {
             defaultPortFilter.shutdown();
@@ -82,15 +104,38 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         if (oldPortFilter != null) {
             oldPortFilter.shutdown();
         }
+        if (componentPortFilter != null) {
+            componentPortFilter.shutdown();
+        }
+        if (multiplexerPortFilter != null) {
+            multiplexerPortFilter.shutdown();
+        }
 
         // Remove the packet interceptor that prints interpreted XML
         InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);
 
         defaultPortFilter = null;
         oldPortFilter = null;
+        componentPortFilter = null;
         interpretedPrinter = null;
+        multiplexerPortFilter = null;
     }
 
+    public RawPrintFilter getDefaultPortFilter() {
+        return defaultPortFilter;
+    }
+
+    public RawPrintFilter getOldPortFilter() {
+        return oldPortFilter;
+    }
+
+    public RawPrintFilter getComponentPortFilter() {
+        return componentPortFilter;
+    }
+
+    public RawPrintFilter getMultiplexerPortFilter() {
+        return multiplexerPortFilter;
+    }
 
     public void propertySet(String property, Map<String, Object> params) {
         if (property.equals("plugin.debugger.interpretedAllowed")) {

@@ -37,6 +37,7 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
     private RawPrintFilter defaultPortFilter;
     private RawPrintFilter oldPortFilter;
     private RawPrintFilter componentPortFilter;
+    private RawPrintFilter multiplexerPortFilter;
 
     private InterpretedXMLPrinter interpretedPrinter;
 
@@ -58,6 +59,12 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         SocketAcceptor componentAcceptor = connManager.getComponentAcceptor();
         if (componentAcceptor != null) {
             componentAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", componentPortFilter);
+        }
+
+        multiplexerPortFilter = new RawPrintFilter("CM");
+        SocketAcceptor multiplexerAcceptor = connManager.getMultiplexerSocketAcceptor();
+        if (multiplexerAcceptor != null) {
+            multiplexerAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", multiplexerPortFilter);
         }
 
         interpretedPrinter = new InterpretedXMLPrinter();
@@ -86,6 +93,10 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
                 connManager.getComponentAcceptor().getFilterChain().contains("rawDebugger")) {
             connManager.getComponentAcceptor().getFilterChain().remove("rawDebugger");
         }
+        if (connManager.getMultiplexerSocketAcceptor() != null &&
+                connManager.getMultiplexerSocketAcceptor().getFilterChain().contains("rawDebugger")) {
+            connManager.getMultiplexerSocketAcceptor().getFilterChain().remove("rawDebugger");
+        }
         // Remove the filters from existing sessions
         if (defaultPortFilter != null) {
             defaultPortFilter.shutdown();
@@ -96,6 +107,9 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         if (componentPortFilter != null) {
             componentPortFilter.shutdown();
         }
+        if (multiplexerPortFilter != null) {
+            multiplexerPortFilter.shutdown();
+        }
 
         // Remove the packet interceptor that prints interpreted XML
         InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);
@@ -104,8 +118,24 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         oldPortFilter = null;
         componentPortFilter = null;
         interpretedPrinter = null;
+        multiplexerPortFilter = null;
     }
 
+    public RawPrintFilter getDefaultPortFilter() {
+        return defaultPortFilter;
+    }
+
+    public RawPrintFilter getOldPortFilter() {
+        return oldPortFilter;
+    }
+
+    public RawPrintFilter getComponentPortFilter() {
+        return componentPortFilter;
+    }
+
+    public RawPrintFilter getMultiplexerPortFilter() {
+        return multiplexerPortFilter;
+    }
 
     public void propertySet(String property, Map<String, Object> params) {
         if (property.equals("plugin.debugger.interpretedAllowed")) {

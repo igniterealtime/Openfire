@@ -40,7 +40,7 @@ public class SparkDownloadServlet extends HttpServlet {
 
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        AuthCheckFilter.addExclude("enterprise/getspark");
+        AuthCheckFilter.addExclude("clientControl/getspark");
     }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

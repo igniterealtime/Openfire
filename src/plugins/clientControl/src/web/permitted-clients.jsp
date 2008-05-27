@@ -16,7 +16,7 @@
         Spark("Spark", "spark", "http://www.igniterealtime.org/projects/spark/index.jsp", "images/client-icon_spark.gif"),
         Adium("Adium", "libgaim", "http://www.adiumx.com/", "images/client-icon_adium.gif"),
         Exodus("Exodus", "exodus", "http://exodus.jabberstudio.org/", "images/client-icon_exodus.gif"),
-        Gaim("Gaim", "gaim", "http://gaim.sourceforge.net", "images/client-icon_gaim.gif"),
+        Pidgin("Pidgin", "pidgin", "http://www.pidgin.im/", "images/client-icon_pidgin.gif"),
         IChat("IChat", "ichat", "http://www.mac.com/1/ichat.html", "images/client-icon_ichat.gif"),
         JBother("JBother", "jbother", "http://www.jbother.org/", "images/client-icon_jbother.gif"),
         Pandion("Pandion", "pandion", "http://www.pandion.be/", "images/client-icon_pandion.gif"),

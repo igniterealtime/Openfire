@@ -1,7 +1,7 @@
 -- $Revision$
 -- $Date$
 
-INSERT INTO jiveVersion (name, version) VALUES ('clientcontrol', 0);
+INSERT INTO ofVersion (name, version) VALUES ('clientcontrol', 0);
 
 CREATE TABLE ofBookmark (
    bookmarkID       INTEGER          NOT NULL,

@@ -14,6 +14,7 @@ import org.jivesoftware.util.Log;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,61 +47,91 @@ public class ClientTrustManager implements X509TrustManager {
      * Holds the CRL's to validate certs
      */
     private CertStore crlStore = null;
+    
+    /**
+     * Holds the actual CRL's
+     */
+    private Collection<X509CRL> crls = null;
 
+    /**
+     * Last time the CRL file was updated 
+     */
+    private long crlLastUpdated = 0;
+    
+    
     public ClientTrustManager(KeyStore trustTrust) {
         super();
         this.trustStore = trustTrust;
 
-
         //Note: A reference of the Collection is used in the CertStore, so we can add CRL's 
         // after creating the CertStore.
-        Collection<X509CRL> crls = new ArrayList<X509CRL>();
+        crls = new ArrayList<X509CRL>();
         CollectionCertStoreParameters params = new CollectionCertStoreParameters(crls);
-        X509CRL crl;
-        CertificateFactory cf;
-
+        
         try {
-            crlStore = CertStore.getInstance("Collection",params);
+            crlStore = CertStore.getInstance("Collection", params);
+        }
+        catch (InvalidAlgorithmParameterException ex) {
+            Log.warn("ClientTrustManager: ",ex);
+        } catch (NoSuchAlgorithmException ex) {
+            Log.warn("ClientTrustManager: ",ex);
+        }
+          
+        loadCRL();
+       
+    }
+    
+    private void loadCRL() {
+        File crlFile = new File(JiveGlobals.getProperty("xmpp.client.certificate.crl",
+                "resources" + File.separator + "security" + File.separator + "crl.pem"));
+        
+        if (!crlFile.isFile()) {
+            //dosnt exist or is something weird, skip it
+            return;
+        }
+        
+        long modified = crlFile.lastModified();
+        if (modified > crlLastUpdated) {
+            crlLastUpdated = modified;
+            Log.debug("ClientTrustManager: Updating CRLs");
+            try {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");;
 
-            FileInputStream crlFile = new FileInputStream(JiveGlobals.getProperty("xmpp.client.certificate.crl","/tmp/crl.pem"));
-            BufferedInputStream crlBuffer = new BufferedInputStream(crlFile);
-            cf = CertificateFactory.getInstance("X.509");
-            while (crlBuffer.available() > 0) {
-                crl = (X509CRL)cf.generateCRL(crlBuffer);
-                Log.debug("ClientTrustManager: adding CRL for "+crl.getIssuerDN());
-                crls.add(crl);
+                X509CRL crl;
+
+                FileInputStream crlStream = new FileInputStream(crlFile);
+                BufferedInputStream crlBuffer = new BufferedInputStream(crlStream);
+                
+                crls.clear(); //remove existing CRLs
+                while (crlBuffer.available() > 0) {
+                    crl = (X509CRL)cf.generateCRL(crlBuffer);
+                    Log.debug("ClientTrustManager: adding CRL for "+crl.getIssuerDN());
+                    crls.add(crl);
+                }
+            }
+            catch(FileNotFoundException e) {
+                // Its ok if the file wasnt found- maybe we dont have any CRL's
+                Log.debug("ClientTrustManager: CRL file not found: "+crlFile.toString());
+            }
+            catch(IOException e) {
+                //Thrown bot the input streams
+                Log.error("ClientTrustManager: IOException while parsing CRLs", e);
+            }
+            catch(CertificateException e) {
+                //Thrown by CertificateFactory.getInstance(...)
+                Log.error("ClientTrustManager: ",e);
+            }
+            catch(CRLException e) {
+                Log.error("ClientTrustManager: CRLException while parsing CRLs", e);
             }
         }
-        catch(FileNotFoundException e) {
-            // Its ok if the file wasnt found- maybe we dont have any CRL's
-            Log.debug("ClientTrustManager: CRL file not found: "+JiveGlobals.getProperty("xmpp.client.certificate.crl","/tmp/crl.pem"));
-        }
-        catch(IOException e) {
-            //Thrown bot the input streams
-            Log.error("ClientTrustManager: IOException while parsing CRLs", e);
-        }
-        catch(CertificateException e) {
-            //Thrown by CertificateFactory.getInstance(...)
-            Log.error("ClientTrustManager: ",e);
-        }
-        catch(CRLException e) {
-            Log.error("ClientTrustManager: CRLException while parsing CRLs", e);
-        }
-        catch(InvalidAlgorithmParameterException e) {
-            Log.error("ClientTrustManager: ",e);
-        }
-        catch(NoSuchAlgorithmException e) {
-            Log.error("ClientTrustManager: ",e);
-        }
-
-
-
     }
 
     public void checkClientTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
         Log.debug("ClientTrustManager: checkClientTrusted(x509Certificates,"+string+") called");
 
+        loadCRL();
         ArrayList<X509Certificate> certs = new ArrayList<X509Certificate>();
         for(int i = 0; i < x509Certificates.length ; i++) {
             certs.add(x509Certificates[i]);
@@ -210,7 +241,7 @@ public class ClientTrustManager implements X509TrustManager {
                 X509CertSelector certSelector = new X509CertSelector();
                 certSelector.setSubject(x509Certificates[0].getIssuerX500Principal());
                 PKIXBuilderParameters params = new PKIXBuilderParameters(trustStore,new X509CertSelector());
-                if(crlStore != null)
+                if(crlStore != null) 
                     params.addCertStore(crlStore);
 
                 CertPathBuilderResult cpbr = cpb.build(params);

@@ -2,7 +2,7 @@
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2008 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution, or a commercial license
@@ -23,6 +23,7 @@
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+<% webManager.init(request, response, session, application, out ); %>
 
 <% // Get parameters
     boolean cancel = request.getParameter("cancel") != null;

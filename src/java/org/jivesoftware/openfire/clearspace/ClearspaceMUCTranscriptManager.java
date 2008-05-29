@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.clearspace;
 
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
@@ -154,10 +155,21 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                     JID jid = new JID(roomJid);
                     MultiUserChatService mucService = mucManager.getMultiUserChatService(jid);
                     MUCRoom room = mucService.getChatRoom(jid.getNode());
+                    // Not count room owners as occupants
+                    int totalOccupants = room.getOccupantsCount();
+                    for (String owner : room.getOwners()) {
+                        try {
+                            if (!room.getOccupantsByBareJID(owner).isEmpty()) {
+                                totalOccupants--;
+                            }
+                        } catch (UserNotFoundException e) {
+                            // Ignore
+                        }
+                    }
 
                     Element occUpdateElement = transcriptElement.addElement("occupant-count-update");
                     occUpdateElement.addElement("roomjid").setText(roomJid);
-                    occUpdateElement.addElement("count").setText(Integer.toString(room.getOccupantsCount()));
+                    occUpdateElement.addElement("count").setText(Integer.toString(totalOccupants));
                 }
 
                 // Send the transcript-update packet to Clearspace.
@@ -191,11 +203,15 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void occupantJoined(JID roomJID, JID user, String nickname) {
-        addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantJoined(roomJID, user, new Date().getTime()));
+        if (!isRoomOwner(roomJID, user)) {
+            addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantJoined(roomJID, user, new Date().getTime()));
+        }
     }
 
     public void occupantLeft(JID roomJID, JID user) {
-        addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantLeft(roomJID, user, new Date().getTime()));
+        if (!isRoomOwner(roomJID, user)) {
+            addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantLeft(roomJID, user, new Date().getTime()));
+        }
     }
 
     public void nicknameChanged(JID roomJID, JID user, String oldNickname, String newNickname) {
@@ -203,13 +219,24 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
-        addGroupChatEvent(ClearspaceMUCTranscriptEvent.messageReceived(roomJID, user, message.getBody(),
-                                                                       new Date().getTime()));
+        if (!isRoomOwner(roomJID, user)) {
+            addGroupChatEvent(ClearspaceMUCTranscriptEvent.messageReceived(roomJID, user, message.getBody(),
+                    new Date().getTime()));
+        }
     }
 
     public void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
-        addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomSubjectChanged(roomJID, user, newSubject,
-                                                                          new Date().getTime()));
+        if (!isRoomOwner(roomJID, user)) {
+            addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomSubjectChanged(roomJID, user, newSubject,
+                    new Date().getTime()));
+        }
+    }
+
+    private boolean isRoomOwner(JID roomJID, JID user) {
+        MultiUserChatService chatService =
+                XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID);
+        MUCRoom room = chatService.getChatRoom(roomJID.getNode());
+        return room != null && room.getOwners().contains(user.toBareJID());
     }
 
     /**

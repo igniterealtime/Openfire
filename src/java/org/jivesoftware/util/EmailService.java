@@ -171,7 +171,7 @@ public class EmailService {
         }
         else {
             try {
-                String encoding = MimeUtility.mimeCharset("iso-8859-1");
+                String encoding = MimeUtility.mimeCharset("UTF-8");
                 MimeMessage message = createMimeMessage();
                 Address to;
                 Address from;
@@ -209,8 +209,9 @@ public class EmailService {
                     content.addBodyPart(text);
                     // HTML
                     MimeBodyPart html = new MimeBodyPart();
-                    html.setContent(htmlBody, "text/html");
+                    html.setContent(htmlBody, "text/html; charset=UTF-8");
                     html.setDisposition(Part.INLINE);
+                   html.setHeader("Content-Transfer-Encoding", "8bit");
                     content.addBodyPart(html);
                     // Add multipart to message.
                     message.setContent(content);
@@ -221,6 +222,7 @@ public class EmailService {
                     MimeBodyPart bPart = new MimeBodyPart();
                     bPart.setText(textBody, encoding);
                     bPart.setDisposition(Part.INLINE);
+                   bPart.setHeader("Content-Transfer-Encoding", "8bit");
                     MimeMultipart mPart = new MimeMultipart();
                     mPart.addBodyPart(bPart);
                     message.setContent(mPart);
@@ -230,8 +232,9 @@ public class EmailService {
                 }
                 else if (htmlBody != null) {
                     MimeBodyPart bPart = new MimeBodyPart();
-                    bPart.setContent(htmlBody, "text/html");
+                    bPart.setContent(htmlBody, "text/html; charset=UTF-8");
                     bPart.setDisposition(Part.INLINE);
+                   bPart.setHeader("Content-Transfer-Encoding", "8bit");
                     MimeMultipart mPart = new MimeMultipart();
                     mPart.addBodyPart(bPart);
                     message.setContent(mPart);

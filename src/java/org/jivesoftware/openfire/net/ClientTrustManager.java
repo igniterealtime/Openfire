@@ -58,6 +58,11 @@ public class ClientTrustManager implements X509TrustManager {
      */
     private long crlLastUpdated = 0;
     
+    /**
+     * Should CRL checking be done
+     */
+    private boolean useCRLs = false;
+    
     
     public ClientTrustManager(KeyStore trustTrust) {
         super();
@@ -85,15 +90,19 @@ public class ClientTrustManager implements X509TrustManager {
         File crlFile = new File(JiveGlobals.getProperty("xmpp.client.certificate.crl",
                 "resources" + File.separator + "security" + File.separator + "crl.pem"));
         
+        
         if (!crlFile.isFile()) {
-            //dosnt exist or is something weird, skip it
+            Log.debug("ClientTrustmanager: crl file not found "+crlFile.toString());
+            useCRLs = false;
             return;
         }
+        
         
         long modified = crlFile.lastModified();
         if (modified > crlLastUpdated) {
             crlLastUpdated = modified;
             Log.debug("ClientTrustManager: Updating CRLs");
+            useCRLs = false;
             try {
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");;
 
@@ -108,6 +117,7 @@ public class ClientTrustManager implements X509TrustManager {
                     Log.debug("ClientTrustManager: adding CRL for "+crl.getIssuerDN());
                     crls.add(crl);
                 }
+                useCRLs = true;
             }
             catch(FileNotFoundException e) {
                 // Its ok if the file wasnt found- maybe we dont have any CRL's
@@ -239,13 +249,22 @@ public class ClientTrustManager implements X509TrustManager {
                 CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
                 CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
                 X509CertSelector certSelector = new X509CertSelector();
-                certSelector.setSubject(x509Certificates[0].getIssuerX500Principal());
-                PKIXBuilderParameters params = new PKIXBuilderParameters(trustStore,new X509CertSelector());
-                if(crlStore != null) 
+                certSelector.setCertificate(x509Certificates[0]);
+                PKIXBuilderParameters params = new PKIXBuilderParameters(trustStore,certSelector);
+                if(useCRLs) {
                     params.addCertStore(crlStore);
+                } else {
+                    Log.debug("ClientTrustManager: no CRL's found, so setRevocationEnabled(false)");
+                    params.setRevocationEnabled(false);
+                }
 
                 CertPathBuilderResult cpbr = cpb.build(params);
                 CertPath cp = cpbr.getCertPath();
+                if(JiveGlobals.getBooleanProperty("ocsp.enable",false)) {
+                    Log.debug("ClientTrustManager: OCSP requested");
+                    OCSPChecker ocspChecker = new OCSPChecker(cp,params);
+                    params.addCertPathChecker(ocspChecker);
+                }
                 PKIXCertPathValidatorResult cpvResult = (PKIXCertPathValidatorResult) cpv.validate(cp, params);
                 X509Certificate trustedCert = (X509Certificate) cpvResult.getTrustAnchor().getTrustedCert();
                 if(trustedCert == null) {
@@ -255,42 +274,18 @@ public class ClientTrustManager implements X509TrustManager {
                 }
             }
             catch(CertPathBuilderException e) {
+                Log.debug("ClientTrustManager:",e);
                 throw new CertificateException("certificate path failed: "+e.getMessage());
             }
             catch(CertPathValidatorException e) {
+                Log.debug("ClientTrustManager:",e);
                 throw new CertificateException("certificate path failed: "+e.getMessage());
             }
-            catch(KeyStoreException e) {
-                Log.debug("ClientTrustManager: ",e);
-            }
-            catch(InvalidAlgorithmParameterException e) {
-                Log.debug("ClientTrustManager: ",e);
-            }
-            catch(NoSuchAlgorithmException e) {
-                Log.debug("ClientTrustManager: ",e);
+            catch(Exception e) {
+                Log.debug("ClientTrustManager:",e);
+                throw new CertificateException("unexpected error: "+e.getMessage());
             }
             
-            //If we did not get any CRL's, we have nothing more to do.
-            if(crlStore == null)
-                return;
-
-            try {
-                X509CRLSelector crlSelector = new X509CRLSelector();
-                crlSelector.addIssuerName(x509Certificates[0].getIssuerDN().getName());
-                crlSelector.setDateAndTime(new Date()); //right now
-                Collection<X509CRL> selectedCrls = (Collection<X509CRL>) crlStore.getCRLs(crlSelector);
-                for(X509CRL crl : selectedCrls) {
-                    if(crl.isRevoked(x509Certificates[0])) {
-                        throw new CertificateException("certificate is revoked: "+peerIdentities);
-                    }
-                }
-            }
-            catch(CertStoreException e) {
-                Log.error("ClientTrustManager: ",e);
-            }
-            catch(IOException e) {
-                Log.error("ClientTrustManager: ",e);
-            }
         }
     }
 

@@ -469,8 +469,14 @@ public class SASLAuthentication {
                 Log.warn("Error retrieving client certificates of: " + session, e);
             }
 
-
-            principal = principals.get(0);
+            if(principals.size() == 1) {
+                principal = principals.get(0);
+            } else if(principals.size() > 1) {
+                Log.debug("SASLAuthentication: EXTERNAL authentication: more than one principal found, using first.");
+                principal = principals.get(0);
+            } else {
+                Log.debug("SASLAuthentication: EXTERNAL authentication: No principals found.");
+            }
 
             if (username == null || username.length() == 0) {
                 // No username was provided, according to XEP-0178 we need to:

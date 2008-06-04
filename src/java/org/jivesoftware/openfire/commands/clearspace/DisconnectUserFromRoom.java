@@ -54,8 +54,6 @@ public class DisconnectUserFromRoom extends AdHocCommand {
 
         Map<String, List<String>> data = sessionData.getData();
         
-        Log.debug("Got command "+command.asXML());
-
         // Gets the userjid
         String userjid = get(data, "userjid", 0);
 
@@ -77,11 +75,6 @@ public class DisconnectUserFromRoom extends AdHocCommand {
         JID rjid = new JID(roomjid);
         JID ujid = new JID(userjid);
         String nickname = ujid.getNode();
-        Log.debug("userjid = "+userjid);
-        Log.debug("roomjid = "+roomjid);
-        Log.debug("nickname = "+nickname);
-        Log.debug("rjid = "+rjid);
-        Log.debug("ujid = "+ujid);
         MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(rjid);
         if (service != null) {
             MUCRoom room = service.getChatRoom(rjid.getNode());

@@ -1201,6 +1201,9 @@
 
     <!-- plugins =============================================================================== -->
     <target name="plugins" description="Builds all plugins">
+        <tstamp>
+            <format property="buildJavaDate" pattern="MMM dd, yyyy"/>
+        </tstamp>
         <!-- Call jar task, can't do this is as a 'depends' call of this target because
              of the way class loading works for jspc calls.
         -->
@@ -1304,6 +1307,9 @@
                         <srcinc />
                     </not>
                 </fileset>
+                <filterset>
+                    <filter token="DATE" value="${buildJavaDate}"/>
+                </filterset>
             </copy>
 
             <if>

@@ -174,12 +174,11 @@ public class CertificateManager {
         if (names.isEmpty()) {
             String name = x509Certificate.getSubjectDN().getName();
             Matcher matcher = cnPattern.matcher(name);
-            if (matcher.find()) {
-                name = matcher.group(2);
-            }
-            // Create an array with the unique identity
+            // Create an array with the detected identities
             names = new ArrayList<String>();
-            names.add(name);
+            while (matcher.find()) {
+                names.add(matcher.group(2));
+            }
         }
         return names;
     }

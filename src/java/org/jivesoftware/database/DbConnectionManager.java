@@ -59,10 +59,11 @@ public class DbConnectionManager {
 
     /**
      * Returns a database connection from the currently active connection
-     * provider. (auto commit is set to true).
+     * provider. An exception will be thrown if no connection was found.
+     * (auto commit is set to true).
      *
      * @return a connection.
-     * @throws SQLException if a SQL exception occurs.
+     * @throws SQLException if a SQL exception occurs or no connection was found.
      */
     public static Connection getConnection() throws SQLException {
         if (connectionProvider == null) {
@@ -120,11 +121,9 @@ public class DbConnectionManager {
         } while (retryCnt <= retryMax);
 
         if (con == null) {
-        	final SQLException ex = new SQLException("ConnectionManager.getConnection() " +
+            throw new SQLException("ConnectionManager.getConnection() " +
                     "failed to obtain a connection after " + retryCnt +" retries. " +
                     "The exception from the last attempt is as follows: "+lastException);
-            Log.error("Unable to obtain a connection from the database pool.", ex);
-            throw ex;
         }
 
         // See if profiling is enabled. If yes, wrap the connection with a

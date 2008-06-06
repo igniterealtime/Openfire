@@ -3,7 +3,7 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution, or a commercial license
@@ -174,12 +174,11 @@ public class CertificateManager {
         if (names.isEmpty()) {
             String name = x509Certificate.getSubjectDN().getName();
             Matcher matcher = cnPattern.matcher(name);
-            if (matcher.find()) {
-                name = matcher.group(2);
-            }
-            // Create an array with the unique identity
+            // Create an array with the detected identities
             names = new ArrayList<String>();
-            names.add(name);
+            while (matcher.find()) {
+                names.add(matcher.group(2));
+            }
         }
         return names;
     }

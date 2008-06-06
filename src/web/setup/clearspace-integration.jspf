@@ -107,6 +107,11 @@
                             "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
                     xmppSettings.put("clearspace.uri", uri);
                     xmppSettings.put("clearspace.sharedSecret", sharedSecret);
+                    xmppSettings.put("clearspace.certificate.verify.chain", Boolean.toString(verifyChain));
+                    xmppSettings.put("clearspace.certificate.verify.root", Boolean.toString(verifyRoot));
+                    xmppSettings.put("clearspace.certificate.accept-selfsigned", Boolean.toString(selfSigned));
+                    xmppSettings.put("clearspace.certificate.verify.identity", Boolean.toString(verifyIdentity));
+                    xmppSettings.put("clearspace.certificate.verify.validity", Boolean.toString(verifyValidity));
                     session.setAttribute("xmppSettings", xmppSettings);
                 }
                 if (initialSetup) {

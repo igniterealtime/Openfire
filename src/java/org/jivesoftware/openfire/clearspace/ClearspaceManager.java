@@ -13,6 +13,8 @@
 package org.jivesoftware.openfire.clearspace;
 
 import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
 import org.dom4j.*;
@@ -226,6 +228,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     }
 
     private void init() {
+        // Register the trust manager to use when using HTTPS
+        Protocol easyhttps = new Protocol("https", (ProtocolSocketFactory) new SSLProtocolSocketFactory(this), 443);
+        Protocol.registerProtocol("https", easyhttps);
+
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("clearspace.uri");
         JiveGlobals.migrateProperty("clearspace.sharedSecret");
@@ -331,20 +337,19 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      *
      * @return True if connection test was successful.
      */
-    public Boolean testConnection() {
+    public Throwable testConnection() {
         // Test invoking a simple method
         try {
             // If there is a problem with the URL or the user/password this service throws an exception
             String path = IM_URL_PREFIX + "testCredentials";
             executeRequest(GET, path);
 
-            return true;
+            return null;
         } catch (Exception e) {
             // It is not ok, return false.
             Log.warn("Failed testing communicating with Clearspace" , e);
+            return e.getCause();
         }
-
-        return false;
     }
 
     /**
@@ -355,7 +360,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @return true if Openfire is connected to Clearspace.
      */
     public Boolean isOpenfireConnected() {
-        return testConnection();
+        return testConnection() == null;
     }
 
     /**
@@ -378,6 +383,11 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
         return false;
     }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
     /**
      * Returns the Clearspace service URI; e.g. <tt>https://localhost:80/clearspace</tt>.
      * This value is stored as the Jive Property <tt>clearspace.uri</tt>.
@@ -816,7 +826,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             // Checks the http status
             if (method.getStatusCode() != 200) {
-                throw new ConnectException("Error connecting to Clearspace, http status code: " + method.getStatusCode());
+                throw new ConnectException(
+                        "Error connecting to Clearspace, http status code: " + method.getStatusCode(),
+                        new HTTPConnectionException(method.getStatusCode()));
             }
 
             Element response = localParser.get().parseDocument(body).getRootElement();

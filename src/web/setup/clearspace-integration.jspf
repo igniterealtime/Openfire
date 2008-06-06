@@ -10,13 +10,20 @@
     String uri;
     String sharedSecret;
 
+    boolean verifyChain = JiveGlobals.getBooleanProperty("clearspace.certificate.verify.chain", true);
+    boolean verifyRoot = JiveGlobals.getBooleanProperty("clearspace.certificate.verify.root", true);
+    boolean selfSigned = JiveGlobals.getBooleanProperty("clearspace.certificate.accept-selfsigned", false);
+    boolean verifyIdentity = JiveGlobals.getBooleanProperty("clearspace.certificate.verify.identity", false);
+    boolean verifyValidity = JiveGlobals.getBooleanProperty("clearspace.certificate.verify.validity", true);
+
+
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
     @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
 
-    ClearspaceManager manager = null;
+    ClearspaceManager manager;
     if (ClearspaceManager.getInstance() != null) {
         // Use the existing manager. This will be the case after setup was completed
         manager = ClearspaceManager.getInstance();
@@ -36,11 +43,22 @@
             errors.put("secret", LocaleUtils.getLocalizedString("setup.clearspace.service.secret_error"));
         }
 
+        verifyChain = ParamUtils.getBooleanParameter(request, "verifyChain", verifyChain);
+        verifyRoot = ParamUtils.getBooleanParameter(request, "verifyRoot", verifyRoot);
+        selfSigned = ParamUtils.getBooleanParameter(request, "selfSigned", selfSigned);
+        verifyIdentity = ParamUtils.getBooleanParameter(request, "verifyIdentity", verifyIdentity);
+        verifyValidity = ParamUtils.getBooleanParameter(request, "verifyValidity", verifyValidity);
+
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
             Map<String, String> settings = new HashMap<String, String>();
             settings.put("clearspace.uri", uri);
             settings.put("clearspace.sharedSecret", sharedSecret);
+            settings.put("clearspace.certificate.verify.chain", Boolean.toString(verifyChain));
+            settings.put("clearspace.certificate.verify.root", Boolean.toString(verifyRoot));
+            settings.put("clearspace.certificate.accept-selfsigned", Boolean.toString(selfSigned));
+            settings.put("clearspace.certificate.verify.identity", Boolean.toString(verifyIdentity));
+            settings.put("clearspace.certificate.verify.validity", Boolean.toString(verifyValidity));
             session.setAttribute("clearspaceSettings", settings);
 
             if (save) {
@@ -63,6 +81,13 @@
                         "org.jivesoftware.openfire.clearspace.ClearspaceSecurityAuditProvider");
                 JiveGlobals.setProperty("provider.admin.className",
                         "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
+
+                // Set configuration for certificate validation
+                JiveGlobals.setProperty("clearspace.certificate.verify.chain", Boolean.toString(verifyChain));
+                JiveGlobals.setProperty("clearspace.certificate.verify.root", Boolean.toString(verifyRoot));
+                JiveGlobals.setProperty("clearspace.certificate.accept-selfsigned", Boolean.toString(selfSigned));
+                JiveGlobals.setProperty("clearspace.certificate.verify.identity", Boolean.toString(verifyIdentity));
+                JiveGlobals.setProperty("clearspace.certificate.verify.validity", Boolean.toString(verifyValidity));
 
                 // Save the settings for later, if we're in setup
                 if (xmppSettings != null) {
@@ -183,6 +208,101 @@
 			</table>
         </div>
 		<!-- END jive-contentBox_bluebox -->
+
+        <!-- BEGIN jiveAdvancedButton -->
+        <div class="jiveAdvancedButton">
+            <a href="#" onclick="togglePanel(jiveAdvanced); return false;" id="jiveAdvancedLink"><fmt:message key="setup.clearspace.service.advanced" /></a>
+        </div>
+        <!-- END jiveAdvancedButton -->
+
+        <!-- BEGIN jiveAdvancedPanelcs (advanced connection settings) -->
+        <div class="jiveadvancedPanelcs" id="jiveAdvanced" style="display: none;">
+            <div>
+                <table border="0" cellpadding="0" cellspacing="1">
+                <thead>
+                <tr>
+                    <th width="10%"></th>
+                    <th></th>
+                    <th width="50"><fmt:message key="global.yes" /></th>
+                    <th width="50"><fmt:message key="global.no" /></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.clearspace.service.certificate.verify.chain" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.clearspace.service.certificate.verify.chain_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="verifyChain" value="true" <% if (verifyChain) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="verifyChain" value="false" <% if (!verifyChain) { %>checked <% } %>>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.clearspace.service.certificate.verify.root" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.clearspace.service.certificate.verify.root_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="verifyRoot" value="true" <% if (verifyRoot) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="verifyRoot" value="false" <% if (!verifyRoot) { %>checked <% } %>>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.clearspace.service.certificate.accept-selfsigned" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.clearspace.service.certificate.accept-selfsigned_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="selfSigned" value="true" <% if (selfSigned) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="selfSigned" value="false" <% if (!selfSigned) { %>checked <% } %>>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.clearspace.service.certificate.verify.identity" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.clearspace.service.certificate.verify.identity_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="verifyIdentity" value="true" <% if (verifyIdentity) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="verifyIdentity" value="false" <% if (!verifyIdentity) { %>checked <% } %>>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.clearspace.service.certificate.verify.validity" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.clearspace.service.certificate.verify.validity_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="verifyValidity" value="true" <% if (verifyValidity) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="verifyValidity" value="false" <% if (!verifyValidity) { %>checked <% } %>>
+                    </td>
+                </tr>
+                </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- END jiveAdvancedPanelcs (advanced connection settings) -->
 
         <!-- BEGIN jive-buttons -->
 		<div class="jive-buttons">

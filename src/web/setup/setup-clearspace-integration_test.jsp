@@ -1,21 +1,32 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
+<%@ page import="java.net.UnknownHostException" %>
+<%@ page import="javax.net.ssl.SSLException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%
     boolean success = false;
+    Throwable exception = null;
     String errorDetail = "";
+    String exceptionDetail = "";
     Map<String, String> settings = (Map<String, String>) session.getAttribute("clearspaceSettings");
     if (settings != null) {
         ClearspaceManager manager = new ClearspaceManager(settings);
-        if (manager.testConnection()) {
+        exception = manager.testConnection();
+        if (exception == null) {
             success = true;
         }
         else {
             errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-connection");
+            if (exception instanceof UnknownHostException) {
+                exceptionDetail = exception.toString();
+            }
+            else {
+                exceptionDetail = exception.getMessage();
+            }
         }
     }
 %>
@@ -36,6 +47,8 @@
             <% } else { %>
             <h4 class="jive-testError"><fmt:message key="setup.clearspace.service.test.status-error" /></h4>
             <p><%= errorDetail %></p>
+            <p><b><fmt:message key="setup.clearspace.service.test.error-detail" /></b></p>
+            <p><%= exceptionDetail %></p>
             <% } %>
 
         </div>

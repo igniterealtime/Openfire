@@ -44,11 +44,6 @@
         try {
             con = DbConnectionManager.getConnection();
             if (con == null) {
-                success = false;
-                errors.put("general","A connection to the database could not be "
-                    + "made. View the error message by opening the "
-                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
-                    + "file, then go back to fix the problem.");
             }
             else {
             	// See if the Jive db schema is installed.
@@ -67,7 +62,14 @@
             	}
             }
         }
-        catch (Exception ignored) {}
+        catch (SQLException ex) {
+            success = false;
+            errors.put("general","A connection to the database could not be "
+                + "made. View the error message by opening the "
+                + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
+                + "file, then go back to fix the problem.");
+
+        }
         finally {
             try {
         	    con.close();

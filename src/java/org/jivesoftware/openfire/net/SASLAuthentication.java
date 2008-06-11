@@ -456,7 +456,7 @@ public class SASLAuthentication {
                 return Status.authenticated;
             }
             // Check that hostname matches the one provided in a certificate
-            SocketConnection connection = (SocketConnection) session.getConnection();
+            Connection connection = session.getConnection();
             
             for (Certificate certificate : connection.getPeerCertificates()) {
                 for (String identity : CertificateManager.getPeerIdentities((X509Certificate) certificate)) {
@@ -466,7 +466,7 @@ public class SASLAuthentication {
                     }
                 }
             }
-            
+
         }
         else if (session instanceof LocalClientSession) {
             // Client EXTERNALL login

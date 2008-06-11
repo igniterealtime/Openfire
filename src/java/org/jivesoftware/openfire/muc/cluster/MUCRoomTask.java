@@ -13,7 +13,9 @@
 package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
@@ -30,17 +32,50 @@ import java.io.ObjectOutput;
  */
 public abstract class MUCRoomTask implements ClusterTask {
     private boolean originator;
-    private LocalMUCRoom room;
+    private String roomName;
 
     protected MUCRoomTask() {
     }
 
     protected MUCRoomTask(LocalMUCRoom room) {
-        this.room = room;
+        this.roomName = room.getName();
     }
 
     public LocalMUCRoom getRoom() {
+        LocalMUCRoom room = (LocalMUCRoom) XMPPServer.getInstance().getMultiUserChatServer().getChatRoom(roomName);
+        if (room == null) {
+            throw new IllegalArgumentException("Room not found: " + roomName);
+        }
         return room;
+    }
+
+    /**
+     * Executes the requested task considering that this JVM may still be joining the cluster.
+     * This means that events regarding rooms that were not loaded yet will be stored for later
+     * processing. Once the JVM is done joining the cluster queued tasks will be processed.
+     *
+     * @param runnable the task to execute.
+     */
+    protected void execute(Runnable runnable) {
+        // Check if we are joining a cluster
+        boolean clusterStarting = ClusterManager.isClusteringStarting();
+        try {
+            // Check that the room exists
+            getRoom();
+            // Room was found so now execute the task
+            runnable.run();
+        }
+        catch (IllegalArgumentException e) {
+            // Room not found so check if we are still joining the cluster
+            if (clusterStarting) {
+                // Queue task in case the cluster
+                QueuedTasksManager.getInstance().addTask(this);
+            }
+            else {
+                // Task failed since room was not found
+                Log.error(e);
+            }
+        }
     }
 
     public boolean isOriginator() {
@@ -53,15 +88,11 @@ public abstract class MUCRoomTask implements ClusterTask {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeBoolean(out, originator);
-        ExternalizableUtil.getInstance().writeSafeUTF(out, room.getName());
+        ExternalizableUtil.getInstance().writeSafeUTF(out, roomName);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         originator = ExternalizableUtil.getInstance().readBoolean(in);
-        String roomName = ExternalizableUtil.getInstance().readSafeUTF(in);
-        room = (LocalMUCRoom) XMPPServer.getInstance().getMultiUserChatServer().getChatRoom(roomName);
-        if (room == null) {
-            throw new IllegalArgumentException("Room not found: " + roomName);
-        }
+        roomName = ExternalizableUtil.getInstance().readSafeUTF(in);
     }
 }

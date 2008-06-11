@@ -62,7 +62,12 @@ public class ChangeNickname extends MUCRoomTask {
     }
 
     public void run() {
-        getRoom().nicknameChanged(this);
+        // Execute the operation considering that we may still be joining the cluster
+        execute(new Runnable() {
+            public void run() {
+                getRoom().nicknameChanged(ChangeNickname.this);
+            }
+        });
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

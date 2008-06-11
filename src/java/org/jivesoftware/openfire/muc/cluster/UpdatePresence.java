@@ -55,7 +55,12 @@ public class UpdatePresence extends MUCRoomTask {
     }
 
     public void run() {
-        getRoom().presenceUpdated(this);
+        // Execute the operation considering that we may still be joining the cluster
+        execute(new Runnable() {
+            public void run() {
+                getRoom().presenceUpdated(UpdatePresence.this);
+            }
+        });
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

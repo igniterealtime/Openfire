@@ -51,7 +51,12 @@ public class AddMember extends MUCRoomTask {
     }
 
     public void run() {
-        getRoom().memberAdded(this);
+        // Execute the operation considering that we may still be joining the cluster
+        execute(new Runnable() {
+            public void run() {
+                getRoom().memberAdded(AddMember.this);
+            }
+        });
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

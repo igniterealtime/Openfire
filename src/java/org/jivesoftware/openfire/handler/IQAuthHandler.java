@@ -36,6 +36,7 @@ import org.xmpp.packet.StreamError;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.net.UnknownHostException;
 
 /**
  * Implements the TYPE_IQ jabber:iq:auth protocol (plain only). Clients
@@ -276,12 +277,42 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     private IQ anonymousLogin(LocalClientSession session, IQ packet) {
         IQ response = IQ.createResultIQ(packet);
         if (anonymousAllowed) {
-            session.setAnonymousAuth();
-            response.setTo(session.getAddress());
-            Element auth = response.setChildElement("query", "jabber:iq:auth");
-            auth.addElement("resource").setText(session.getAddress().getResource());
+            // Verify that client can connect from his IP address
+            boolean forbidAccess = false;
+            try {
+                String hostAddress = session.getConnection().getHostAddress();
+                if (!LocalClientSession.getAllowedAnonymIPs().isEmpty() &&
+                        !LocalClientSession.getAllowedAnonymIPs().containsKey(hostAddress)) {
+                    byte[] address = session.getConnection().getAddress();
+                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
+                            (address[2] & 0xff) +
+                            ".*";
+                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+                    String range3 = (address[0] & 0xff) + ".*.*.*";
+                    if (!LocalClientSession.getAllowedAnonymIPs().containsKey(range1) &&
+                            !LocalClientSession.getAllowedAnonymIPs().containsKey(range2) &&
+                            !LocalClientSession.getAllowedAnonymIPs().containsKey(range3)) {
+                        forbidAccess = true;
+                    }
+                }
+            } catch (UnknownHostException e) {
+                forbidAccess = true;
+            }
+            if (forbidAccess) {
+                // Connection forbidden from that IP address
+                response.setChildElement(packet.getChildElement().createCopy());
+                response.setError(PacketError.Condition.forbidden);
+            }
+            else {
+                // Anonymous authentication allowed
+                session.setAnonymousAuth();
+                response.setTo(session.getAddress());
+                Element auth = response.setChildElement("query", "jabber:iq:auth");
+                auth.addElement("resource").setText(session.getAddress().getResource());
+            }
         }
         else {
+            // Anonymous authentication is not allowed
             response.setChildElement(packet.getChildElement().createCopy());
             response.setError(PacketError.Condition.forbidden);
         }

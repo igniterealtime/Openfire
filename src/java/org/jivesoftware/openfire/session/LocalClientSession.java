@@ -61,6 +61,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * performance reasons.
      */
     private static Map<String,String> allowedIPs = new HashMap<String,String>();
+    private static Map<String,String> allowedAnonymIPs = new HashMap<String,String>();
 
     /**
      * The authentication token for this session.
@@ -109,16 +110,36 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             String address = tokens.nextToken().trim();
             allowedIPs.put(address, "");
         }
+        String allowedAnonym = JiveGlobals.getProperty("xmpp.client.login.allowedAnonym", "");
+        tokens = new StringTokenizer(allowedAnonym, ", ");
+        while (tokens.hasMoreTokens()) {
+            String address = tokens.nextToken().trim();
+            allowedAnonymIPs.put(address, "");
+
+        }
     }
 
     /**
      * Returns the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server.
+     * empty then anyone is allowed to connect to the server except for anonymous users that are
+     * subject to {@link #getAllowedAnonymIPs()}. This list is used for both anonymous and
+     * non-anonymous users.
      *
      * @return the list of IP address that are allowed to connect to the server.
      */
     public static Map<String, String> getAllowedIPs() {
         return allowedIPs;
+    }
+
+
+    /**
+     * Returns the list of IP address that are allowed to connect to the server for anonymous
+     * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
+     *
+     * @return the list of IP address that are allowed to connect to the server.
+     */
+    public static Map<String, String> getAllowedAnonymIPs() {
+        return allowedAnonymIPs;
     }
 
     /**
@@ -325,7 +346,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     /**
      * Sets the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server.
+     * empty then anyone is allowed to connect to the server except for anonymous users that are
+     * subject to {@link #getAllowedAnonymIPs()}. This list is used for both anonymous and
+     * non-anonymous users.
      *
      * @param allowed the list of IP address that are allowed to connect to the server.
      */
@@ -345,6 +368,31 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 buf.append(", ").append(iter.next());
             }
             JiveGlobals.setProperty("xmpp.client.login.allowed", buf.toString());
+        }
+    }
+
+    /**
+     * Sets the list of IP address that are allowed to connect to the server for anonymous
+     * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
+     *
+     * @param allowed the list of IP address that are allowed to connect to the server.
+     */
+    public static void setAllowedAnonymIPs(Map<String, String> allowed) {
+        allowedAnonymIPs = allowed;
+        if (allowedAnonymIPs.isEmpty()) {
+            JiveGlobals.deleteProperty("xmpp.client.login.allowedAnonym");
+        }
+        else {
+            // Iterate through the elements in the map.
+            StringBuilder buf = new StringBuilder();
+            Iterator<String> iter = allowedAnonymIPs.keySet().iterator();
+            if (iter.hasNext()) {
+                buf.append(iter.next());
+            }
+            while (iter.hasNext()) {
+                buf.append(", ").append(iter.next());
+            }
+            JiveGlobals.setProperty("xmpp.client.login.allowedAnonym", buf.toString());
         }
     }
 

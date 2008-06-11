@@ -42,7 +42,7 @@
     boolean canChangePassword = ParamUtils.getBooleanParameter(request, "canChangePassword");
     boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     String allowedIPs = request.getParameter("allowedIPs");
-
+    String allowedAnonymIPs = request.getParameter("allowedAnonymIPs");
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
     IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
@@ -64,7 +64,18 @@
                 newMap.put(address, "");
             }
         }
+        
+
+        Map<String, String> allowedAnonymMap = new HashMap<String, String>();
+        StringTokenizer tokens1 = new StringTokenizer(allowedAnonymIPs, ", ");
+        while (tokens1.hasMoreTokens()) {
+            String address = tokens1.nextToken().trim();
+            if (pattern.matcher(address).matches()) {
+                allowedAnonymMap.put(address, "");
+            }
+        }
         LocalClientSession.setAllowedIPs(newMap);
+        LocalClientSession.setAllowedAnonymIPs(allowedAnonymMap);
 
         // Log the event
         webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs);
@@ -84,6 +95,16 @@
         buf.append(", ").append(iter.next());
     }
     allowedIPs = buf.toString();
+
+    StringBuilder buf1 = new StringBuilder();
+    Iterator<String> iter1 = org.jivesoftware.openfire.session.LocalClientSession.getAllowedAnonymIPs().keySet().iterator();
+    if (iter1.hasNext()) {
+        buf1.append(iter1.next());
+    }
+    while (iter1.hasNext()) {
+        buf1.append(", ").append(iter1.next());
+    }
+    allowedAnonymIPs = buf1.toString();
 %>
 
 <p>
@@ -211,8 +232,15 @@
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
+            <td valign='top'><b><fmt:message key="reg.settings.ips_all" /></b></td>
             <td>
                 <textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><%= ((allowedIPs != null) ? allowedIPs : "") %></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td valign='top'><b><fmt:message key="reg.settings.ips_anonymous" /></b></td>
+            <td>
+                <textarea name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><%= ((allowedAnonymIPs != null) ? allowedAnonymIPs : "") %></textarea>
             </td>
         </tr>
     </tbody>
@@ -226,4 +254,5 @@
 
 
 </body>
+
 </html>

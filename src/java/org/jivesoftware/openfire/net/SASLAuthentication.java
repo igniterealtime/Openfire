@@ -38,6 +38,7 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.net.UnknownHostException;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -396,6 +397,31 @@ public class SASLAuthentication {
 
     private static Status doAnonymousAuthentication(LocalSession session) {
         if (XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
+            // Verify that client can connect from his IP address
+            boolean forbidAccess = false;
+            try {
+                String hostAddress = session.getConnection().getHostAddress();
+                if (!LocalClientSession.getAllowedAnonymIPs().isEmpty() &&
+                        !LocalClientSession.getAllowedAnonymIPs().containsKey(hostAddress)) {
+                    byte[] address = session.getConnection().getAddress();
+                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
+                            (address[2] & 0xff) +
+                            ".*";
+                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+                    String range3 = (address[0] & 0xff) + ".*.*.*";
+                    if (!LocalClientSession.getAllowedAnonymIPs().containsKey(range1) &&
+                            !LocalClientSession.getAllowedAnonymIPs().containsKey(range2) &&
+                            !LocalClientSession.getAllowedAnonymIPs().containsKey(range3)) {
+                        forbidAccess = true;
+                    }
+                }
+            } catch (UnknownHostException e) {
+                forbidAccess = true;
+            }
+            if (forbidAccess) {
+                authenticationFailed(session);
+                return Status.failed;
+            }
             // Just accept the authentication :)
             authenticationSuccessful(session, null, null);
             return Status.authenticated;

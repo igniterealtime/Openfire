@@ -115,7 +115,12 @@ public class OccupantAddedEvent extends MUCRoomTask {
     }
 
     public void run() {
-        getRoom().occupantAdded(this);
+        // Execute the operation considering that we may still be joining the cluster
+        execute(new Runnable() {
+            public void run() {
+                getRoom().occupantAdded(OccupantAddedEvent.this);
+            }
+        });
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

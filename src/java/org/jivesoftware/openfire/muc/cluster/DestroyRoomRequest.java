@@ -44,7 +44,12 @@ public class DestroyRoomRequest extends MUCRoomTask {
     }
 
     public void run() {
-        getRoom().destroyRoom(this);
+        // Execute the operation considering that we may still be joining the cluster
+        execute(new Runnable() {
+            public void run() {
+                getRoom().destroyRoom(DestroyRoomRequest.this);
+            }
+        });
     }
 
     public String getAlternateJID() {

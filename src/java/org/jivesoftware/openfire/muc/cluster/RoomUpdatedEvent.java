@@ -41,7 +41,12 @@ public class RoomUpdatedEvent extends MUCRoomTask {
     }
 
     public void run() {
-        getRoom().updateConfiguration(room);
+        // Execute the operation considering that we may still be joining the cluster
+        execute(new Runnable() {
+            public void run() {
+                getRoom().updateConfiguration(room);
+            }
+        });
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

@@ -18,10 +18,10 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -29,16 +29,15 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.net.UnknownHostException;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -458,19 +457,16 @@ public class SASLAuthentication {
             }
             // Check that hostname matches the one provided in a certificate
             SocketConnection connection = (SocketConnection) session.getConnection();
-            try {
-                for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                    for (String identity : CertificateManager.getPeerIdentities((X509Certificate) certificate)) {
-                        if (identity.equals(hostname) || identity.equals("*." + hostname)) {
-                            authenticationSuccessful(session, hostname, null);
-                            return Status.authenticated;
-                        }
+            
+            for (Certificate certificate : connection.getPeerCertificates()) {
+                for (String identity : CertificateManager.getPeerIdentities((X509Certificate) certificate)) {
+                    if (identity.equals(hostname) || identity.equals("*." + hostname)) {
+                        authenticationSuccessful(session, hostname, null);
+                        return Status.authenticated;
                     }
                 }
             }
-            catch (SSLPeerUnverifiedException e) {
-                Log.warn("Error retrieving client certificates of: " + session, e);
-            }
+            
         }
         else if (session instanceof LocalClientSession) {
             // Client EXTERNALL login
@@ -481,18 +477,14 @@ public class SASLAuthentication {
             String principal = "";
             ArrayList<String> principals = new ArrayList<String>();
             Connection connection = session.getConnection();
-            if (connection.getSSLSession() == null) {
-                Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no SSL/TLS connection found.");
+            if (connection.getPeerCertificates().length < 1) {
+                Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no certificates found.");
                 authenticationFailed(session);
                 return Status.failed; 
             }
-            try {
-                for (Certificate certificate : connection.getSSLSession().getPeerCertificates()) {
-                    principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)certificate));
-                }
-            }
-            catch (SSLPeerUnverifiedException e) {
-                Log.warn("Error retrieving client certificates of: " + session, e);
+
+            for (Certificate certificate : connection.getPeerCertificates()) {
+                principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)certificate));
             }
 
             if(principals.size() == 1) {

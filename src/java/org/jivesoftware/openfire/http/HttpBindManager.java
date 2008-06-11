@@ -25,6 +25,7 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSelectChannelConnector;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.webapp.WebAppContext;
+
 import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.security.KeyStore;
@@ -145,9 +146,20 @@ public final class HttpBindManager {
                 sslConnector.setTrustPassword(SSLConfig.getc2sTrustPassword());
                 sslConnector.setTruststoreType(SSLConfig.getStoreType());
                 sslConnector.setTruststore(SSLConfig.getc2sTruststoreLocation());
-                sslConnector.setNeedClientAuth(false);
-                sslConnector.setWantClientAuth(false);
 
+                // Set policy for checking client certificates
+                String certPol = JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled");
+                if(certPol.equals("needed")) {                    
+                    sslConnector.setNeedClientAuth(true);
+                    sslConnector.setWantClientAuth(true);
+                } else if(certPol.equals("wanted")) {
+                    sslConnector.setNeedClientAuth(false);
+                    sslConnector.setWantClientAuth(true);
+                } else {
+                    sslConnector.setNeedClientAuth(false);
+                    sslConnector.setWantClientAuth(false);
+                }
+                
                 sslConnector.setKeyPassword(SSLConfig.getKeyPassword());
                 sslConnector.setKeystoreType(SSLConfig.getStoreType());
                 sslConnector.setKeystore(SSLConfig.getKeystoreLocation());
@@ -474,7 +486,7 @@ public final class HttpBindManager {
 
         @Override
         protected SSLContext createSSLContext() throws Exception {
-            return SSLConfig.getSSLContext();
+            return SSLConfig.getc2sSSLContext();
         }
     }
 

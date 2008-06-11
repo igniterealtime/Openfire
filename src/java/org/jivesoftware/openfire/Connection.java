@@ -16,8 +16,8 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.xmpp.packet.Packet;
 
-import javax.net.ssl.SSLSession;
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 
 /**
  * Represents a connection on the server.
@@ -90,11 +90,11 @@ public interface Connection {
     public String getHostName() throws UnknownHostException;
 
     /**
-     * Returns the underlying {@link SSLSession} for the connection.
+     * Returns the underlying {@link javax.security.cert.X509Certificate} for the connection.
      *
-     * @return <tt>null</tt> if no {@link SSLSession} is initialized yet.
+     * @return <tt>null</tt> if no {@link javax.security.cert.X509Certificate} is present for the connection.
      */
-    public SSLSession getSSLSession();
+    public Certificate[] getPeerCertificates();
 
     /**
      * Close this session including associated socket connection. The order of

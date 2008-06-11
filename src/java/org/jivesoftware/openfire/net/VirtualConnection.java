@@ -20,7 +20,7 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 
-import javax.net.ssl.SSLSession;
+import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,9 +58,9 @@ public abstract class VirtualConnection implements Connection {
         return 0;
     }
 
-    public SSLSession getSSLSession() {
+    public Certificate[] getPeerCertificates() {
         // Ignore
-        return null;
+        return new Certificate[0];
     }
 
     public boolean isClosed() {

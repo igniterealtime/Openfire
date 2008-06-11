@@ -27,7 +27,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Packet;
 
-import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -35,6 +35,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.channels.Channels;
+import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -394,11 +395,16 @@ public class SocketConnection implements Connection {
         this.flashClient = flashClient;
     }
 
-    public SSLSession getSSLSession() {
+    public Certificate[] getPeerCertificates() {
         if (tlsStreamHandler != null) {
-            return tlsStreamHandler.getSSLSession();
+            try {
+                return tlsStreamHandler.getSSLSession().getPeerCertificates();
+            } catch (SSLPeerUnverifiedException e ) {
+                Log.warn("Error retrieving client certificates of: " + tlsStreamHandler.getSSLSession(), e);
+                //pretend tlsStreamHandler is null
+            }
         }
-        return null;
+        return new Certificate[0];
     }
 
     public PacketDeliverer getPacketDeliverer() {

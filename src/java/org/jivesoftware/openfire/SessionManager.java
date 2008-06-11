@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
+import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
@@ -315,14 +316,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         return session;
     }
 
-    public HttpSession createClientHttpSession(long rid, InetAddress address, StreamID id)
-            throws UnauthorizedException
-    {
+    public HttpSession createClientHttpSession(long rid, InetAddress address, StreamID id, HttpConnection connection)
+            throws UnauthorizedException {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
         PacketDeliverer backupDeliverer = server.getPacketDeliverer();
-        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid);
+        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid, connection);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);

@@ -38,6 +38,8 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -88,6 +90,7 @@ public class HttpSession extends LocalClientSession {
     private int maxRequests;
     private PacketDeliverer backupDeliverer;
     private Double version = Double.NaN;
+    private X509Certificate[] sslCertificates;
 
     private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
@@ -101,12 +104,13 @@ public class HttpSession extends LocalClientSession {
     };
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
-                       StreamID streamID, long rid) {
+                       StreamID streamID, long rid, HttpConnection connection) {
         super(serverName, null, streamID);
         conn = new HttpVirtualConnection(address);
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;
         this.backupDeliverer = backupDeliverer;
+        this.sslCertificates = connection.getPeerCertificates();
     }
 
     /**
@@ -470,6 +474,15 @@ public class HttpSession extends LocalClientSession {
             }
         }
     }
+    
+    /**
+     * Return the X509Certificates associated with this session.
+     * 
+     * @return the X509Certificate associated with this session.
+     */
+    public X509Certificate[] getPeerCertificates() {
+        return sslCertificates;
+    }
 
     /**
      * Creates a new connection on this session. If a response is currently available for this
@@ -491,7 +504,7 @@ public class HttpSession extends LocalClientSession {
                                                  boolean isSecure)
             throws HttpConnectionClosedException, HttpBindException
     {
-        HttpConnection connection = new HttpConnection(rid, isSecure);
+        HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates);
         if (rid <= lastRequestID) {
             Delivered deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
@@ -540,6 +553,8 @@ public class HttpSession extends LocalClientSession {
                     "connections on this session must be secured.", BoshBindingError.badRequest);
         }
 
+        sslCertificates = connection.getPeerCertificates();
+        
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
@@ -762,6 +777,10 @@ public class HttpSession extends LocalClientSession {
 
         public void deliverRawText(String text) {
             ((HttpSession) session).deliver(text);
+        }
+        
+        public Certificate[] getPeerCertificates() {
+            return ((HttpSession) session).getPeerCertificates();
         }
     }
 

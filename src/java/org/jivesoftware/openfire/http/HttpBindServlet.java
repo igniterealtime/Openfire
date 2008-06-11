@@ -11,29 +11,30 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmlpull.v1.XmlPullParserException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.dom4j.io.XMPPPacketReader;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
-import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.util.Log;
 import org.mortbay.util.ajax.ContinuationSupport;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletException;
-import javax.servlet.ServletConfig;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 import java.net.InetAddress;
 import java.net.URLDecoder;
+import java.security.cert.X509Certificate;
 
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently
@@ -261,7 +262,9 @@ public class HttpBindServlet extends HttpServlet {
         }
 
         try {
-            HttpConnection connection = new HttpConnection(rid, request.isSecure());
+            X509Certificate[] certificates =
+                    (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+            HttpConnection connection = new HttpConnection(rid, request.isSecure(), certificates);
             InetAddress address = InetAddress.getByName(request.getRemoteAddr());
             connection.setSession(sessionManager.createSession(address, rootNode, connection));
             respond(response, connection, request.getMethod());

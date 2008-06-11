@@ -14,6 +14,8 @@ package org.jivesoftware.openfire.http;
 
 import org.mortbay.util.ajax.Continuation;
 
+import java.security.cert.X509Certificate;
+
 /**
  * Represents one HTTP connection with a client using the HTTP Binding service. The client will wait
  * on {@link #getResponse()} until the server forwards a message to it or the wait time on the
@@ -29,6 +31,7 @@ public class HttpConnection {
     private boolean isClosed;
     private boolean isSecure = false;
     private boolean isDelivered;
+    private X509Certificate[] sslCertificates;
 
     private static final String CONNECTION_CLOSED = "connection closed";
 
@@ -37,11 +40,13 @@ public class HttpConnection {
      *
      * @param requestId the ID which uniquely identifies this request.
      * @param isSecure true if this connection is using HTTPS
+     * @param sslCertificates list of certificates presented by the client.
      */
-    public HttpConnection(long requestId, boolean isSecure) {
+    public HttpConnection(long requestId, boolean isSecure, X509Certificate[] sslCertificates) {
         this.requestId = requestId;
         this.isSecure = isSecure;
         this.isDelivered = false;
+        this.sslCertificates = sslCertificates;
     }
 
     /**
@@ -164,6 +169,15 @@ public class HttpConnection {
      */
     public HttpSession getSession() {
         return session;
+    }
+    
+    /**
+     * Returns the peer certificates for this connection. 
+     * 
+     * @return the peer certificates for this connection or null.
+     */
+    public X509Certificate[] getPeerCertificates() {
+        return sslCertificates;
     }
 
     void setContinuation(Continuation continuation) {

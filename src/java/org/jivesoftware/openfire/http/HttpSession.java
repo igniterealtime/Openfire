@@ -768,7 +768,7 @@ public class HttpSession extends LocalClientSession {
         }
 
         public void systemShutdown() {
-            ((HttpSession) session).closeConnection();
+            close();
         }
 
         public void deliver(Packet packet) throws UnauthorizedException {

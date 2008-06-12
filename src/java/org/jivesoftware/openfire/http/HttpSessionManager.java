@@ -46,7 +46,6 @@ public class HttpSessionManager {
 
         public void sessionClosed(HttpSession session) {
             sessionMap.remove(session.getStreamID().getID());
-            sessionManager.removeSession(session);
         }
     };
 

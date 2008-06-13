@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.openfire.commands.admin.user.UserProperties;
 import org.jivesoftware.openfire.commands.clearspace.ChangeSharedSecret;
 import org.jivesoftware.openfire.commands.clearspace.GenerateNonce;
-import org.jivesoftware.openfire.commands.clearspace.DisconnectUserFromRoom;
 import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
@@ -221,7 +220,6 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new VCardModified());
         addCommand(new GetAdminConsoleInfo());
         addCommand(new GenerateNonce());
-        addCommand(new DisconnectUserFromRoom());
     }
 
     private void startCommand(AdHocCommand command) {

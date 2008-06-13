@@ -66,6 +66,17 @@ public abstract class MUCEventDelegate {
     public abstract boolean destroyingRoom(String roomName, JID userjid);
 
     /**
+     * Returns true if the room that is not present in the server should have existed and needs
+     * to be recreated.
+     *
+     * @param roomName name of the room.
+     * @param userjid JID Of the user trying to join/create the room.
+     * @return true if the room that is not present in the server should have existed and needs
+     * to be recreated.
+     */
+    public abstract boolean shouldRecreate(String roomName, JID userjid);
+
+    /**
      * Loads a delegate provided room configuration for the room specified.
      *
      * @param room the room to load the configuration for.

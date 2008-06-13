@@ -1,20 +1,20 @@
 package org.jivesoftware.openfire.clearspace;
 
+import org.dom4j.Attribute;
+import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-import org.dom4j.Element;
-import org.dom4j.Attribute;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Handles checking with Clearspace regarding whether a user can join a particular MUC room (based
@@ -124,6 +124,10 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
 
         // No successful return, not allowed.
         return false;
+    }
+
+    public boolean shouldRecreate(String roomName, JID userjid) {
+        return !(roomName + "@" + csComponentAddress).equals(userjid.toBareJID());
     }
 
     public Map<String, String> getRoomConfig(String roomName) {

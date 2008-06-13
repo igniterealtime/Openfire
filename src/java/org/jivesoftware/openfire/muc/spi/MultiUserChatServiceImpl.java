@@ -480,7 +480,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 catch (IllegalArgumentException e) {
                     // Check if room needs to be recreated in case it failed to be created previously
                     // (or was deleted somehow and is expected to exist by a delegate).
-                    if (mucEventDelegate != null) {
+                    if (mucEventDelegate != null && mucEventDelegate.shouldRecreate(roomName, userjid)) {
                         if (mucEventDelegate.loadConfig(room)) {
                             loaded = true;
                             if (room.isPersistent()) {

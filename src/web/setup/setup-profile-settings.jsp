@@ -84,7 +84,7 @@
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP) { %>checked<% } %>>
+        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP && !isCLEARSPACE) { %>checked<% } %>>
     </td>
     <td>
         <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>

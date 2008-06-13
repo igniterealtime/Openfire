@@ -12,10 +12,15 @@
 
 package org.jivesoftware.util;
 
+import org.jivesoftware.database.DbConnectionManager;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -774,12 +779,33 @@ public class JiveGlobals {
     }
 
     /**
-     * Returns true if in setup mode.
+     * Returns true if in setup mode. A false value means that setup has been completed
+     * or that a connection to the database was possible to properies stored in the
+     * datbase can be retrieved now. The latter means that once the database settings
+     * during the setup was done a connection to the datbase should be available thus
+     * properties stored from a previous setup will be available.
      *
      * @return true if in setup mode.
      */
     private static boolean isSetupMode() {
-        return !Boolean.valueOf(JiveGlobals.getXMLProperty("setup"));
+        if (Boolean.valueOf(JiveGlobals.getXMLProperty("setup"))) {
+            return false;
+        }
+        // Check if the DB configuration is done
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            // Properties can now be loaded from DB so consider setup done
+        }
+        catch (SQLException e) {
+            // Properties cannot be loaded from DB so do not consider setup done
+            return true;
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+        return false;
     }
 
     /**

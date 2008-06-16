@@ -34,7 +34,7 @@ public class JettyLog implements Logger {
 
     public void info(String string, Object object, Object object1) {
         // Send info log messages to debug because they are generally not useful.
-        Log.debug("JettyLog: "+string);
+        Log.debug("JettyLog: "+format(string,object,object1));
     }
 
     public void debug(String string, Throwable throwable) {
@@ -42,11 +42,11 @@ public class JettyLog implements Logger {
     }
 
     public void debug(String string, Object object, Object object1) {
-        Log.debug("JettyLog: "+string);
+        Log.debug("JettyLog: "+format(string,object,object1));
     }
 
     public void warn(String string, Object object, Object object1) {
-        Log.warn(string);
+        Log.warn(format(string,object,object1));
     }
 
     public void warn(String string, Throwable throwable) {
@@ -55,5 +55,18 @@ public class JettyLog implements Logger {
 
     public Logger getLogger(String string) {
         return new JettyLog();
+    }
+
+    private String format(String msg, Object arg0, Object arg2) {
+        int sub0 = msg.indexOf("{}");
+        int sub1 = (sub0 > 0) ? ( 0 ) : ( msg.indexOf("{}") );
+
+        if (arg0 != null && sub0 > 0)
+            msg = msg.substring(0,sub0)+arg0+msg.substring(sub0+2);
+
+        if (arg1 != null && sub1 > 0)
+            msg = msg.substring(0,sub1)+arg1+msg.substring(sub1+2);
+
+        return msg;
     }
 }

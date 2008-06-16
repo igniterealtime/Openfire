@@ -136,21 +136,20 @@ public class ServerTrustManager implements X509TrustManager {
                 }
             }
 
-            // Verify that the first certificate in the chain corresponds to
-            // the server we desire to authenticate.
-            // Check if the certificate uses a wildcard indicating that subdomains are valid
-            if (peerIdentities.size() == 1 && peerIdentities.get(0).startsWith("*.")) {
-                // Remove the wildcard
-                String peerIdentity = peerIdentities.get(0).replace("*.", "");
-                // Check if the requested subdomain matches the certified domain
-                if (!server.endsWith(peerIdentity)) {
-                    throw new CertificateException("target verification failed of " + peerIdentities);
+            // Verify that the server either matches an identity from the chain, or
+            // a wildcard.
+            Boolean found = false;
+            for (String identity : peerIdentities) {
+                if (identity.equals(server) || identity.equals("*." + server)) {
+                    found = true;
+                    break;
                 }
             }
-            else if (!peerIdentities.contains(server)) {
+
+            if (!found) {
                 throw new CertificateException("target verification failed of " + peerIdentities);
             }
-
+            
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.validity", true)) {
                 // For every certificate in the chain, verify that the certificate
                 // is valid at the current time.

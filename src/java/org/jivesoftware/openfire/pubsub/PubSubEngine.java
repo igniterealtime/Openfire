@@ -850,27 +850,21 @@ public class PubSubEngine {
         IQ reply = IQ.createResultIQ(iq);
         Element replyChildElement = childElement.createCopy();
         reply.setChildElement(replyChildElement);
-        if (subscriptions.isEmpty()) {
-            // User does not have any affiliation or subscription with the pubsub service
-            reply.setError(PacketError.Condition.item_not_found);
-        }
-        else {
-            Element affiliationsElement = replyChildElement.element("subscriptions");
-            // Add information about subscriptions including existing affiliations
-            for (NodeSubscription subscription : subscriptions) {
-                Element subElement = affiliationsElement.addElement("subscription");
-                Node node = subscription.getNode();
-                NodeAffiliate nodeAffiliate = subscription.getAffiliate();
-                // Do not include the node id when node is the root collection node
-                if (!node.isRootCollectionNode()) {
-                    subElement.addAttribute("node", node.getNodeID());
-                }
-                subElement.addAttribute("jid", subscription.getJID().toString());
-                subElement.addAttribute("affiliation", nodeAffiliate.getAffiliation().name());
-                subElement.addAttribute("subscription", subscription.getState().name());
-                if (node.isMultipleSubscriptionsEnabled()) {
-                    subElement.addAttribute("subid", subscription.getID());
-                }
+        Element affiliationsElement = replyChildElement.element("subscriptions");
+        // Add information about subscriptions including existing affiliations
+        for (NodeSubscription subscription : subscriptions) {
+            Element subElement = affiliationsElement.addElement("subscription");
+            Node node = subscription.getNode();
+            NodeAffiliate nodeAffiliate = subscription.getAffiliate();
+            // Do not include the node id when node is the root collection node
+            if (!node.isRootCollectionNode()) {
+                subElement.addAttribute("node", node.getNodeID());
+            }
+            subElement.addAttribute("jid", subscription.getJID().toString());
+            subElement.addAttribute("affiliation", nodeAffiliate.getAffiliation().name());
+            subElement.addAttribute("subscription", subscription.getState().name());
+            if (node.isMultipleSubscriptionsEnabled()) {
+                subElement.addAttribute("subid", subscription.getID());
             }
         }
         // Send reply

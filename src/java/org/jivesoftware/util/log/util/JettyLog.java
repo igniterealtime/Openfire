@@ -57,7 +57,7 @@ public class JettyLog implements Logger {
         return new JettyLog();
     }
 
-    private String format(String msg, Object arg0, Object arg2) {
+    private String format(String msg, Object arg0, Object arg1) {
         int sub0 = msg.indexOf("{}");
         int sub1 = (sub0 > 0) ? ( 0 ) : ( msg.indexOf("{}") );
 

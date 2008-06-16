@@ -135,6 +135,7 @@ public class HttpBindServlet extends HttpServlet {
             return;
         }
 
+        System.out.println("HTTP RECV: " + document.asXML());
         Element node = document.getRootElement();
         if (node == null || !"body".equals(node.getName())) {
             Log.warn("Body missing from request content. [" + request.getRemoteAddr() + "]");
@@ -304,6 +305,7 @@ public class HttpBindServlet extends HttpServlet {
             content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
         }
 
+        System.out.println("HTTP SENT: " + content);
         byte[] byteContent = content.getBytes("utf-8");
         response.setContentLength(byteContent.length);
         response.getOutputStream().write(byteContent);

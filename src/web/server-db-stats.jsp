@@ -1,9 +1,12 @@
 <%--
-  - $Revision: 27964 $
-  - $Date: 2006-03-02 09:27:01 -0800 (Thu, 02 Mar 2006) $
+  -	$Revision: 10204 $
+  -	$Date: 2008-04-11 18:44:25 -0400 (Fri, 11 Apr 2008) $
   -
-  - Copyright (C) 1999-2008 Jive Software. All rights reserved.
-  - This software is the proprietary information of Jive Software. Use is subject to license terms.
+  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  -
+  - This software is published under the terms of the GNU Public License (GPL),
+  - a copy of which is included in this distribution, or a commercial license
+  - agreement with Jive.
 --%>
 
 <%@ page import="java.text.*"

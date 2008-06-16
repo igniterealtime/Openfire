@@ -788,24 +788,7 @@ public class JiveGlobals {
      * @return true if in setup mode.
      */
     private static boolean isSetupMode() {
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("setup"))) {
-            return false;
-        }
-        // Check if the DB configuration is done
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            // Properties can now be loaded from DB so consider setup done
-        }
-        catch (SQLException e) {
-            // Properties cannot be loaded from DB so do not consider setup done
-            return true;
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-        return false;
+        return !Boolean.valueOf(JiveGlobals.getXMLProperty("setup"));
     }
 
     /**

@@ -20,6 +20,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.mortbay.util.ajax.ContinuationSupport;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -135,7 +136,9 @@ public class HttpBindServlet extends HttpServlet {
             return;
         }
 
-        System.out.println("HTTP RECV: " + document.asXML());
+        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+            System.out.println("HTTP RECV: " + document.asXML());
+        }
         Element node = document.getRootElement();
         if (node == null || !"body".equals(node.getName())) {
             Log.warn("Body missing from request content. [" + request.getRemoteAddr() + "]");
@@ -305,7 +308,9 @@ public class HttpBindServlet extends HttpServlet {
             content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
         }
 
-        System.out.println("HTTP SENT: " + content);
+        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+            System.out.println("HTTP SENT: " + content);
+        }
         byte[] byteContent = content.getBytes("utf-8");
         response.setContentLength(byteContent.length);
         response.getOutputStream().write(byteContent);

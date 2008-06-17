@@ -460,7 +460,12 @@ public class SASLAuthentication {
             
             for (Certificate certificate : connection.getPeerCertificates()) {
                 for (String identity : CertificateManager.getPeerIdentities((X509Certificate) certificate)) {
-                    if (identity.equals(hostname) || identity.equals("*." + hostname)) {
+                    // Verify that either the identity is the same as the hostname, or for wildcarded
+                    // identities that the hostname ends with .domainspecified or -is- domainspecified.
+                    if ((identity.startsWith("*.")
+                         && (hostname.endsWith(identity.replace("*.", "."))
+                             || hostname.equals(identity.replace("*.", ""))))
+                            || hostname.equals(identity)) {
                         authenticationSuccessful(session, hostname, null);
                         return Status.authenticated;
                     }

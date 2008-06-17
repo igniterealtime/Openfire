@@ -140,23 +140,15 @@ public class ServerTrustManager implements X509TrustManager {
             // a wildcard.
             Boolean found = false;
             for (String identity : peerIdentities) {
-                if (identity.startsWith("*.")) {
-                    // strip off asterisks, but keep leading dot
-                    // to insure endsWith() only matches a subdomain
-                    // of the intended domain
-                    identity = identity.replace("*.", ".");
-                    if (server.endsWith(identity)) {
-                        found = true;
-                        break;
-                    }
+                // Verify that either the identity is the same as the hostname, or for wildcarded
+                // identities that the hostname ends with .domainspecified or -is- domainspecified.
+                if ((identity.startsWith("*.")
+                        && (server.endsWith(identity.replace("*.", "."))
+                        || server.equals(identity.replace("*.", ""))))
+                        || server.equals(identity)) {
+                    found = true;
+                    break;
                 }
-                else {
-                    if (server.equals(identity)) {
-                        found = true;
-                        break;
-                    }
-                }
-
             }
 
             if (!found) {

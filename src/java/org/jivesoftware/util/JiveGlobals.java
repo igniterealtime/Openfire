@@ -16,11 +16,11 @@ import org.jivesoftware.database.DbConnectionManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.util.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.util.*;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -788,7 +788,28 @@ public class JiveGlobals {
      * @return true if in setup mode.
      */
     private static boolean isSetupMode() {
-        return !Boolean.valueOf(JiveGlobals.getXMLProperty("setup"));
+        if (Boolean.valueOf(JiveGlobals.getXMLProperty("setup"))) {
+            return false;
+        }
+        // Check if the DB configuration is done
+        if (DbConnectionManager.getConnectionProvider() == null) {
+            // DB setup is still not completed so setup is needed
+            return true;
+        }
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            // Properties can now be loaded from DB so consider setup done
+        }
+        catch (SQLException e) {
+            // Properties cannot be loaded from DB so do not consider setup done
+            return true;
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+        return false;
     }
 
     /**

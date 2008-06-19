@@ -322,6 +322,9 @@ public class LocalMUCUser implements MUCUser {
                     catch (CannotBeInvitedException e) {
                         sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                     }
+                    catch (IllegalArgumentException e) {
+                        sendErrorPacket(packet, PacketError.Condition.jid_malformed);
+                    }
                 }
             }
         }

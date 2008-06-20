@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.IQ;
@@ -618,9 +619,13 @@ public class HttpSession extends LocalClientSession {
     private void checkPollingInterval() throws HttpBindException {
         long time = System.currentTimeMillis();
         if (((time - lastPoll) / 1000) < maxPollingInterval) {
-            throw new HttpBindException("Too frequent polling minimum interval is "
-                    + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000),
-                    BoshBindingError.policyViolation);
+            Log.debug("Too frequent polling minimum interval is "
+                    + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000));
+            if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignorePollingCap", false)) {
+                throw new HttpBindException("Too frequent polling minimum interval is "
+                        + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000),
+                        BoshBindingError.policyViolation);
+            }
         }
         lastPoll = time;
     }

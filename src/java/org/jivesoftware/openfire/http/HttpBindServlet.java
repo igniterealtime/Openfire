@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently
@@ -137,7 +138,7 @@ public class HttpBindServlet extends HttpServlet {
         }
 
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println("HTTP RECV: " + document.asXML());
+            System.out.println(new Date()+": HTTP RECV: " + document.asXML());
         }
         Element node = document.getRootElement();
         if (node == null || !"body".equals(node.getName())) {
@@ -309,7 +310,7 @@ public class HttpBindServlet extends HttpServlet {
         }
 
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println("HTTP SENT: " + content);
+            System.out.println(new Date()+": HTTP SENT: " + content);
         }
         byte[] byteContent = content.getBytes("utf-8");
         response.setContentLength(byteContent.length);

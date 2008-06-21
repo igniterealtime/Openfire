@@ -364,6 +364,9 @@ public class XMPPServer {
                 Log.error("Error generating self-signed certificates", e);
             }
 
+            // Initialize list of admins now (before we restart Jetty)
+            AdminManager.getInstance().getAdminAccounts();
+
             Thread finishSetup = new Thread() {
                 public void run() {
                     try {

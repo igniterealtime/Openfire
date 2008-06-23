@@ -1,0 +1,11 @@
+#!/bin/sh
+
+OPENFIRE_HOME=/usr/local/openfire/
+OPENFIRE_GID=`cat /private/tmp/openfiregid`
+rm /private/tmp/openfiregid
+
+sudo chown -R openfire $OPENFIRE_HOME
+sudo chgrp -R $OPENFIRE_GID $OPENFIRE_HOME
+sudo chmod o-rwx $OPENFIRE_HOME
+
+/bin/launchctl load /Library/LaunchDaemons/org.jivesoftware.openfire.plist

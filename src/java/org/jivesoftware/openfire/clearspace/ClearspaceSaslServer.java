@@ -75,8 +75,13 @@ public class ClearspaceSaslServer implements SaslServer {
             if ("true".equals(WSUtils.getReturn(resultElement))) {
                 completed = true;
             }
+            else {
+                // Failed to authenticate the user so throw an error so SASL failure is returned
+                throw new SaslException("SASL CLEARSPACE: user not authorized: " + jid);
+            }
         } catch (Exception e) {
             Log.error("Failed communicating with Clearspace" , e);
+            throw new SaslException("SASL CLEARSPACE: user not authorized due to an error: " + jid);
         }
 
         return null;

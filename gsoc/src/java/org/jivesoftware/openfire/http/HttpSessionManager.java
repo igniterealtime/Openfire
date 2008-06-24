@@ -279,6 +279,7 @@ public class HttpSessionManager {
         response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
         if(session.getVersion() >= 1.6) {
+            response.addAttribute("hold", String.valueOf(session.getHold()));
             response.addAttribute("ver", String.valueOf(session.getVersion()));
         }
 

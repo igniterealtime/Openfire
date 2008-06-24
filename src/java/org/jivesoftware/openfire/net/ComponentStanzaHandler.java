@@ -129,6 +129,15 @@ public class ComponentStanzaHandler extends StanzaHandler {
             session.process(reply);
             return;
         }
+        // Keep track of the component that sent an IQ get/set
+        if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
+            // Handle subsequent bind packets
+            LocalComponentSession componentSession = (LocalComponentSession) session;
+            // Get the external component of this session
+            LocalComponentSession.LocalExternalComponent component =
+                    (LocalComponentSession.LocalExternalComponent) componentSession.getExternalComponent();
+            component.track(packet);
+        }
         super.processIQ(packet);
     }
 

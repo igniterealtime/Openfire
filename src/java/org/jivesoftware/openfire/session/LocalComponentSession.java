@@ -24,13 +24,12 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents a session between the server and a component.
@@ -256,6 +255,12 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
      * @author Gaston Dombiak
      */
     public static class LocalExternalComponent implements ComponentSession.ExternalComponent {
+        /**
+         * Keeps track of the IQ (get/set) packets that were sent from a given component's connection. This
+         * information will be used to ensure that the IQ reply will be sent to the same component's connection.
+         */
+        private static final Map<String, LocalExternalComponent> iqs = new HashMap<String, LocalExternalComponent>();
+
         private LocalComponentSession session;
         private Connection connection;
         private String name = "";
@@ -274,6 +279,21 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         }
 
         public void processPacket(Packet packet) {
+            if (packet instanceof IQ) {
+                IQ iq = (IQ) packet;
+                if (iq.getType() == IQ.Type.result || iq.getType() == IQ.Type.error) {
+                    // Check if this IQ reply belongs to a specific component and route
+                    // reply to that specific component (if it exists)
+                    LocalExternalComponent targetComponent;
+                    synchronized (iqs) {
+                        targetComponent = iqs.remove(packet.getID());
+                    }
+                    if (targetComponent != null) {
+                        targetComponent.processPacket(packet);
+                        return;
+                    }
+                }
+            }
             // Ask the session to process the outgoing packet. This will
             // give us the chance to apply PacketInterceptors
             session.process(packet);
@@ -347,10 +367,29 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         }
 
         public void shutdown() {
+            // Remove tracking of IQ packets sent from this component
+            synchronized (iqs) {
+                List<String> toRemove = new ArrayList<String>();
+                for (Map.Entry<String,LocalExternalComponent> entry : iqs.entrySet()) {
+                    if (entry.getValue() == this) {
+                        toRemove.add(entry.getKey());
+                    }
+                }
+                // Remove keys pointing to component being removed
+                for (String key : toRemove) {
+                    iqs.remove(key);
+                }
+            }
         }
 
         public String toString() {
             return super.toString() + " - subdomains: " + subdomains;
+        }
+
+        public void track(IQ iq) {
+            synchronized (iqs) {
+                iqs.put(iq.getID(), this);
+            }
         }
     }
 }

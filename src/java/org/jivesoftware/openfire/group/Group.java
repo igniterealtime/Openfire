@@ -121,6 +121,62 @@ public class Group implements Cacheable, Externalizable {
     }
 
     /**
+     * Constructs a new group. Note: this constructor is intended for implementors of the
+     * {@link GroupProvider} interface. To create a new group, use the
+     * {@link GroupManager#createGroup(String)} method.
+     *
+     * @param name the name.
+     * @param description the description.
+     * @param members a Collection of the group members.
+     * @param administrators a Collection of the group administrators.
+     * @param properties a Map of properties with names and its values.
+     */
+    public Group(String name, String description, Collection<JID> members,
+            Collection<JID> administrators, Map<String, String> properties)
+    {
+        this.groupManager = GroupManager.getInstance();
+        this.provider = groupManager.getProvider();
+        this.name = name;
+        this.description = description;
+        this.members = new HashSet<JID>(members);
+        this.administrators = new HashSet<JID>(administrators);
+
+        this.properties = new ConcurrentHashMap<String, String>();
+        // Load the properties that this groups has in the DB
+        loadProperties();
+
+        // Check if we have to create or update some properties
+        for (Map.Entry<String, String> property : properties.entrySet()) {
+            // If the DB contains this property
+            if (properties.containsKey(property.getKey())) {
+                // then check if we need to update it
+                if (!property.getValue().equals(properties.get(property.getKey()))) {
+                    // update the properties map
+                    properties.put(property.getKey(), property.getValue());
+                    // and the DB
+                    updateProperty(property.getKey(), property.getValue());
+                }
+            } // else we need to add it
+            else {
+                // add to the properties map
+                properties.put(property.getKey(), property.getValue());
+                // and insert it to the DB
+                insertProperty(property.getKey(), property.getValue());
+            }
+        }
+
+        // Check if we have to delete some properties
+        for (String oldPropName : properties.keySet()) {
+            if (!properties.containsKey(oldPropName)) {
+                // delete it from the property map
+                properties.remove(oldPropName);
+                // delete it from the DB
+                deleteProperty(oldPropName);
+            }
+        }
+    }
+
+    /**
      * Returns the name of the group. For example, 'XYZ Admins'.
      *
      * @return the name of the group.

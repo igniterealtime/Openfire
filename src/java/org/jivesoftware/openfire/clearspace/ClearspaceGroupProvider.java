@@ -23,9 +23,7 @@ import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Daniel Henninger
@@ -193,19 +191,28 @@ public class ClearspaceGroupProvider implements GroupProvider {
             // this won't happen, the group exists.
         }
 
-        // Creates the group
-        Group group = new Group(name, description, members, administrators);
+        Map<String, String> properties = new HashMap<String, String>();
 
         // Type 0 is OPEN
         if (type == 0) {
-            group.getProperties().put("sharedRoster.showInRoster", "everybody");
+            properties.put("sharedRoster.showInRoster", "everybody");
         } else {
             // Types 1, 2 or 3 are MEMBER_ONLY, PRIVATE, SECRET
-            group.getProperties().put("sharedRoster.showInRoster", "onlyGroup");
+            properties.put("sharedRoster.showInRoster", "onlyGroup");
         }
 
-        group.getProperties().put("sharedRoster.displayName", displayName);
-        group.getProperties().put("sharedRoster.groupList", "");
+        properties.put("sharedRoster.displayName", displayName);
+        properties.put("sharedRoster.groupList", "");
+
+        // Creates the group
+        // There are some interesting things happening here.
+        // If this is the first time that this group is loaded from CS, the OF will save this properties.
+        // If this is not the first time and these properties haven't changed, then nothing happens
+        // If this is not the first time but these properties have changed, then OF will update it's saved data.
+        // And this is OK, event if this "getGroup" is to be used in a "change group properties event", the group should
+        // always show the last information.
+        Group group = new Group(name, description, members, administrators, properties);
+
 
         return group;
     }

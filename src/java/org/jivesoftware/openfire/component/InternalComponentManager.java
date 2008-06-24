@@ -399,16 +399,16 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * considered.
      *
      * @param componentJID the jid mapped to the component.
-     * @return the component with the specified id.
+     * @return the list of components with the specified id.
      */
-    private Component getComponent(JID componentJID) {
+    private List<Component> getComponents(JID componentJID) {
         synchronized (routables) {
             if (componentJID.getNode() != null) {
-                return null;
+                return Collections.emptyList();
             }
             RoutableComponents routable = routables.get(componentJID.getDomain());
             if (routable != null) {
-                return routable.getNextComponent();
+                return routable.getComponents();
             }
             else {
                 // Search again for those JIDs whose domain include the server name but this
@@ -418,11 +418,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                 if (index > -1) {
                     routable = routables.get(serverName.substring(0, index));
                     if (routable != null) {
-                        return routable.getNextComponent();
+                        return routable.getComponents();
                     }
                 }
             }
-            return null;
+            return Collections.emptyList();
         }
     }
 
@@ -503,9 +503,9 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * @param packet the packet to process.
      */
     public void process(Packet packet) throws PacketException {
-        Component component = getComponent(packet.getFrom());
+        List<Component> components = getComponents(packet.getFrom());
         // Only process packets that were sent by registered components
-        if (component != null) {
+        if (!components.isEmpty()) {
             if (packet instanceof IQ && IQ.Type.result == ((IQ) packet).getType()) {
                 IQ iq = (IQ) packet;
                 Element childElement = iq.getChildElement();
@@ -522,16 +522,18 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
                             XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
                                     .toBareJID(),
                                     identity.attributeValue("name"));
-                            if (component instanceof ComponentSession.ExternalComponent) {
-                                ComponentSession.ExternalComponent externalComponent =
-                                        (ComponentSession.ExternalComponent) component;
-                                externalComponent.setName(identity.attributeValue("name"));
-                                externalComponent.setType(identity.attributeValue("type"));
-                                externalComponent.setCategory(identity.attributeValue("category"));
+                            for (Component component : components) {
+                                if (component instanceof ComponentSession.ExternalComponent) {
+                                    ComponentSession.ExternalComponent externalComponent =
+                                            (ComponentSession.ExternalComponent) component;
+                                    externalComponent.setName(identity.attributeValue("name"));
+                                    externalComponent.setType(identity.attributeValue("type"));
+                                    externalComponent.setCategory(identity.attributeValue("category"));
+                                }
                             }
                         }
                         catch (Exception e) {
-                            Log.error("Error processing disco packet of component: " + component +
+                            Log.error("Error processing disco packet of components: " + components +
                                     " - " + packet.toXML(), e);
                         }
                         // Store the IQ disco#info returned by the component
@@ -562,11 +564,10 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     private static class RoutableComponents implements RoutableChannelHandler {
 
         private JID jid;
-        final private List<Component> components;
+        final private List<Component> components = new ArrayList<Component>();
 
         public RoutableComponents(JID jid, Component component) {
             this.jid = jid;
-            this.components = new ArrayList<Component>();
             addComponent(component);
         }
 
@@ -600,7 +601,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             return components;
         }
 
-        public Component getNextComponent() {
+        private Component getNextComponent() {
             Component component;
             synchronized (components) {
                 component = components.get(0);

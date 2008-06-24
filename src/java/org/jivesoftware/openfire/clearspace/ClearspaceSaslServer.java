@@ -71,7 +71,8 @@ public class ClearspaceSaslServer implements SaslServer {
 
         try {
             responseStr = StringUtils.encodeBase64(responseStr);
-            Element resultElement = csManager.executeRequest(GET, "groupChatAuthService/isAuthTokenValid/" + responseStr);
+            Element resultElement =
+                    csManager.executeRequest(GET, "groupChatAuthService/isAuthTokenValid/" + responseStr);
             if ("true".equals(WSUtils.getReturn(resultElement))) {
                 completed = true;
             }
@@ -79,8 +80,11 @@ public class ClearspaceSaslServer implements SaslServer {
                 // Failed to authenticate the user so throw an error so SASL failure is returned
                 throw new SaslException("SASL CLEARSPACE: user not authorized: " + jid);
             }
+        } catch (SaslException e) {
+            // rethrow exception
+            throw e;
         } catch (Exception e) {
-            Log.error("Failed communicating with Clearspace" , e);
+            Log.error("Failed communicating with Clearspace", e);
             throw new SaslException("SASL CLEARSPACE: user not authorized due to an error: " + jid);
         }
 

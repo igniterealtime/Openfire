@@ -132,12 +132,12 @@ public class User implements Cacheable, Externalizable, Result {
             throw new NullPointerException("Username cannot be null");
         }
         this.username = username;
-        if (UserManager.getUserProvider().isNameRequired() && (name == null || name.equals(""))) {
+        if (UserManager.getUserProvider().isNameRequired() && (name == null || "".equals(name.trim()))) {
             throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name");
         }
         this.name = name;
-        if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
-            throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address. User: "
+        if (UserManager.getUserProvider().isEmailRequired() && (email == null || "".equals(email.trim()))) {
+            throw new IllegalArgumentException("Empty email address specified with provider that requires email address. User: "
                                                 + username + " Email: " + email);
         }
         this.email = email;

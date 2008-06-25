@@ -45,7 +45,7 @@ public enum BoshBindingError {
     /**
      * (1) 'sid' is not valid, (2) 'stream' is not valid, (3) 'rid' is larger than the upper limit
      * of the expected window, (4) connection manager is unable to resend response, (5) 'key'
-     * sequence is invalid
+     * sequence is invalid (6) script syntax is not enabled
      */
     itemNotFound(Type.terminal, "item-not-found", HttpServletResponse.SC_NOT_FOUND),
     /**

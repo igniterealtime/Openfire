@@ -119,7 +119,11 @@ public class HttpSessionManager {
 
         int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
         int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
-        double version = getDoubleAttribute(rootNode.attributeValue("ver"), 1.5);
+        
+        String version = rootNode.attributeValue("ver");
+        if (version == null || "".equals(version)) {
+        	version = "1.5";
+        }
 
         HttpSession session = createSession(connection.getRequestId(), address, connection);
         session.setWait(Math.min(wait, getMaxWait()));
@@ -130,7 +134,11 @@ public class HttpSessionManager {
         session.setInactivityTimeout(getInactivityTimeout());
         // Store language and version information in the connection.
         session.setLanaguage(language);
-        session.setVersion(version);
+        
+        String [] versionString = version.split("\\.");
+        session.setMajorVersion(Integer.parseInt(versionString[0]));
+        session.setMinorVersion(Integer.parseInt(versionString[1]));
+        
         try {
             connection.deliverBody(createSessionCreationResponse(session));
         }
@@ -278,9 +286,11 @@ public class HttpSessionManager {
         response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
         response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
-        if(session.getVersion() >= 1.6) {
+        if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
+        	session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));
-            response.addAttribute("ver", String.valueOf(session.getVersion()));
+            response.addAttribute("ver", String.valueOf(session.getMajorVersion())
+            		+ "." + String.valueOf(session.getMinorVersion()));
         }
 
         Element features = response.addElement("stream:features");

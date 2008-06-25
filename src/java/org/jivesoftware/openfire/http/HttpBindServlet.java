@@ -181,7 +181,8 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         try {
-            if (session.getVersion() >= 1.6) {
+        	if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
+                	session.getMajorVersion() > 1) {
                 respond(response, createErrorBody(bindingError.getErrorType().getType(),
                         bindingError.getCondition()), request.getMethod());
             }
@@ -306,6 +307,10 @@ public class HttpBindServlet extends HttpServlet {
         response.setCharacterEncoding("utf-8");
 
         if ("GET".equals(method)) {
+        	// Prevent caching of responses
+        	response.addHeader("Cache-Control", "no-store");
+        	response.addHeader("Cache-Control", "no-cache");
+        	response.addHeader("Pragma", "no-cache");
             content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
         }
 

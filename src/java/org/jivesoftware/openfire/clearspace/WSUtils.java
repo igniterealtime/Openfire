@@ -12,6 +12,7 @@ package org.jivesoftware.openfire.clearspace;
 
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.xmpp.packet.JID;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -99,6 +100,31 @@ public class WSUtils {
         List<Node> nodes = (List<Node>) element.selectNodes("return");
         for (Node node : nodes) {
             list.add(node.getText());
+        }
+        return list;
+    }
+
+    /**
+     * Parse REST responses of the type String[] that represent usernames, that are XML of the form:
+     * <p/>
+     * <something>
+     * <return>text1</return>
+     * <return>text2</return>
+     * <return>text3</return>
+     * </something>
+     *
+     * @param element Element from REST response to be parsed.
+     * @return An array of strings from the REST response.
+     */
+    protected static List<String> parseUsernameArray(Element element) {
+        List<String> list = new ArrayList<String>();
+        @SuppressWarnings("unchecked")
+        List<Node> nodes = (List<Node>) element.selectNodes("return");
+        for (Node node : nodes) {
+            String username = node.getText();
+            // Escape username.
+            username = JID.escapeNode(username);
+            list.add(username);
         }
         return list;
     }

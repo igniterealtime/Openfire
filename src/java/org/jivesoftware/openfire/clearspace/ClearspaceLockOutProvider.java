@@ -169,6 +169,8 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
 
             // Gets the username
             String username = userNode.selectSingleNode("username").getText();
+            // Escape the username so that it can be used as a JID.
+            username = JID.escapeNode(username);
 
             // Gets the enabled field
             boolean isEnabled = Boolean.valueOf(userNode.selectSingleNode("enabled").getText());
@@ -205,6 +207,8 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
         }
         
         try {
+            // Un-escape username.
+            username = JID.unescapeNode(username);
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response

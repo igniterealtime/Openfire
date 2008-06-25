@@ -13,8 +13,9 @@ package org.jivesoftware.openfire.clearspace;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.xmpp.packet.JID;
 
 /**
  * The ClearspaceAuthProvider uses the PermissionService web service inside of Clearspace
@@ -60,6 +61,8 @@ public class ClearspaceAuthProvider implements AuthProvider {
      */
     public void authenticate(String username, String password) throws UnauthorizedException {
         try {
+            // Un-escape username.
+            username = JID.unescapeNode(username);
             String path = URL_PREFIX + "authenticate/" + username + "/" + password;
             ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (UnauthorizedException ue) {

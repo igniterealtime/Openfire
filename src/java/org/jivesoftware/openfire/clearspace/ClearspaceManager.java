@@ -13,10 +13,10 @@
 package org.jivesoftware.openfire.clearspace;
 
 import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
+import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.IQResultListener;
@@ -321,6 +321,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      */
     public Boolean checkAuthentication(String username, String password) {
         try {
+            // Un-escape username.
+            username = JID.unescapeNode(username);
             String path = ClearspaceAuthProvider.URL_PREFIX + "authenticate/" + username + "/" + password;
             executeRequest(GET, path);
             return true;
@@ -929,9 +931,11 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             return userIDCache.get(username);
         }
 
+        // Un-escape username.
+        String unescapedUsername = JID.unescapeNode(username);
         // Gets the user's ID from Clearspace
         try {
-            String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/" + username;
+            String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/" + unescapedUsername;
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 
             Long id = Long.valueOf(WSUtils.getElementText(element.selectSingleNode("return"), "ID"));
@@ -962,8 +966,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         if (!server.isLocal(user)) {
             throw new UserNotFoundException("Cannot load user of remote server: " + user.toString());
         }
-        String username = JID.unescapeNode(user.getNode());
-        return getUserID(username);
+        return getUserID(user.getNode());
     }
 
     /**
@@ -986,6 +989,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 
             String username = WSUtils.getElementText(element.selectSingleNode("return"), "username"); // TODO: is this right?
+
+            // Escape the username so that it can be used as a JID.
+            username = JID.escapeNode(username);
 
             usernameCache.put(id, username);
 

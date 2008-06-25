@@ -31,7 +31,6 @@ import java.util.*;
 public class ClearspaceGroupProvider implements GroupProvider {
     protected static final String URL_PREFIX = "socialGroupService/";
 
-    private Boolean readOnly;
     private static final String TYPE_ID_OWNER = "0";
     private static final String TYPE_ID_MEMBER = "1";
 
@@ -176,13 +175,15 @@ public class ClearspaceGroupProvider implements GroupProvider {
             for (Element memberElement : membersElement) {
 
                 String username = memberElement.element("user").element("username").getText();
+                // Escape username to accept usernames with @ or spaces
+                String escapedUsername = JID.escapeNode(username);
 
                 String typeID = memberElement.element("typeID").getText();
 
                 if (TYPE_ID_OWNER.equals(typeID)) {
-                    administrators.add(server.createJID(username, null));
+                    administrators.add(server.createJID(escapedUsername, null));
                 } else if (TYPE_ID_MEMBER.equals(typeID)) {
-                    members.add(server.createJID(username, null));
+                    members.add(server.createJID(escapedUsername, null));
                 } else {
                     // nothing to do, waiting for approval
                 }
@@ -211,10 +212,7 @@ public class ClearspaceGroupProvider implements GroupProvider {
         // If this is not the first time but these properties have changed, then OF will update it's saved data.
         // And this is OK, event if this "getGroup" is to be used in a "change group properties event", the group should
         // always show the last information.
-        Group group = new Group(name, description, members, administrators, properties);
-
-
-        return group;
+        return new Group(name, description, members, administrators, properties);
     }
 
     /**
@@ -245,10 +243,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
     private Element getGroupMembers(long groupID) throws GroupNotFoundException {
         try {
             // Gets the members and administrators
-            String path = null;
-            path = URL_PREFIX + "members/" + groupID;
-            Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
-            return element;
+            String path = URL_PREFIX + "members/" + groupID;
+            return ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (Exception e) {
             // It is not supported exception, wrap it into a GroupNotFoundException
             throw new GroupNotFoundException("Unexpected error", e);

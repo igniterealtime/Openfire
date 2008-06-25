@@ -10,17 +10,18 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.jivesoftware.openfire.security.SecurityAuditProvider;
-import org.jivesoftware.openfire.security.SecurityAuditEvent;
-import org.jivesoftware.openfire.security.EventNotFoundException;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
-import org.jivesoftware.util.Log;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
+import org.jivesoftware.openfire.security.EventNotFoundException;
+import org.jivesoftware.openfire.security.SecurityAuditEvent;
+import org.jivesoftware.openfire.security.SecurityAuditProvider;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * The ClearspaceSecurityAuditProvider uses the AuditService web service inside of Clearspace
@@ -53,6 +54,8 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
             Document auditDoc =  DocumentHelper.createDocument();
             Element rootE = auditDoc.addElement("auditEvent");
             Element userE = rootE.addElement("username");
+            // Un-escape username.
+            username = JID.unescapeNode(username);
             userE.addText(username);
             Element descE = rootE.addElement("description");
             if (summary != null) {

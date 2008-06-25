@@ -16,8 +16,6 @@ import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.*;
-import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
-import static org.jivesoftware.openfire.clearspace.WSUtils.parseStringArray;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
@@ -87,6 +85,8 @@ public class ClearspaceUserProvider implements UserProvider {
 
             // adds the username
             Element usernameE = userE.addElement("username");
+            // Un-escape username.
+            username = JID.unescapeNode(username);
             usernameE.addText(username);
 
             // adds the name if it is not empty
@@ -151,8 +151,7 @@ public class ClearspaceUserProvider implements UserProvider {
         try {
             String path = USER_URL_PREFIX + "users/count";
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
-            int count = Integer.valueOf(getReturn(element));
-            return count;
+            return Integer.valueOf(WSUtils.getReturn(element));
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -179,7 +178,7 @@ public class ClearspaceUserProvider implements UserProvider {
             String path = USER_URL_PREFIX + "userNames";
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
-            return parseStringArray(element);
+            return WSUtils.parseUsernameArray(element);
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
@@ -388,6 +387,8 @@ public class ClearspaceUserProvider implements UserProvider {
             List<Node> userNodes = (List<Node>) element.selectNodes("return");
             for (Node userNode : userNodes) {
                 String username = userNode.selectSingleNode("username").getText();
+                // Escape the username so that it can be used as a JID.
+                username = JID.escapeNode(username);
                 usernames.add(username);
             }
 
@@ -435,6 +436,8 @@ public class ClearspaceUserProvider implements UserProvider {
             List<Node> userNodes = (List<Node>) element.selectNodes("return");
             for (Node userNode : userNodes) {
                 String username = userNode.selectSingleNode("username").getText();
+                // Escape the username so that it can be used as a JID.
+                username = JID.escapeNode(username);
                 usernames.add(username);
             }
 
@@ -488,7 +491,7 @@ public class ClearspaceUserProvider implements UserProvider {
             // See if the is read only
             String path = USER_URL_PREFIX + "isReadOnly";
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
-            readOnly = Boolean.valueOf(getReturn(element));
+            readOnly = Boolean.valueOf(WSUtils.getReturn(element));
         } catch (Exception e) {
             // if there is a problem, keep it null, maybe in the next call success.
             Log.error("Failed checking #isReadOnly with Clearspace" , e);
@@ -502,7 +505,7 @@ public class ClearspaceUserProvider implements UserProvider {
      * @return a User instance with its information
      */
     private User translate(Node responseNode) {
-        String username = null;
+        String username;
         String name = null;
         String email = null;
         Date creationDate = null;
@@ -513,6 +516,8 @@ public class ClearspaceUserProvider implements UserProvider {
 
         // Gets the username
         username = userNode.selectSingleNode("username").getText();
+        // Escape the username so that it can be used as a JID.
+        username = JID.escapeNode(username);
 
         // Gets the name if it is visible
         boolean nameVisible = Boolean.valueOf(userNode.selectSingleNode("nameVisible").getText());
@@ -568,13 +573,12 @@ public class ClearspaceUserProvider implements UserProvider {
         }
         
         try {
-
+            // Un-escape username.
+            username = JID.unescapeNode(username);
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
-            Element response = ClearspaceManager.getInstance().executeRequest(GET, path);
-
             // return the response
-            return response;
+            return ClearspaceManager.getInstance().executeRequest(GET, path);
 
         } catch (UserNotFoundException unfe) {
             throw unfe;

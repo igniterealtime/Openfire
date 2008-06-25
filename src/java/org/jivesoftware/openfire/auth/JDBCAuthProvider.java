@@ -40,6 +40,8 @@ import java.sql.*;
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
  * <li><tt>jdbcAuthProvider.passwordSQL = SELECT password FROM user_account WHERE username=?</tt></li>
  * <li><tt>jdbcAuthProvider.passwordType = plain</tt></li>
+ * <li><tt>jdbcAuthProvider.allowUpdate = true</tt></li>
+ * <li><tt>jdbcAuthProvider.setPasswordSQL = UPDATE user_account SET password=? WHERE username=?</tt></li>
  * </ul>
  *
  * The passwordType setting tells Openfire how the password is stored. Setting the value
@@ -56,7 +58,9 @@ public class JDBCAuthProvider implements AuthProvider {
     private String connectionString;
 
     private String passwordSQL;
+    private String setPasswordSQL;
     private PasswordType passwordType;
+    private boolean allowUpdate;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -67,6 +71,8 @@ public class JDBCAuthProvider implements AuthProvider {
         JiveGlobals.migrateProperty("jdbcProvider.connectionString");
         JiveGlobals.migrateProperty("jdbcAuthProvider.passwordSQL");
         JiveGlobals.migrateProperty("jdbcAuthProvider.passwordType");
+        JiveGlobals.migrateProperty("jdbcAuthProvider.setPasswordSQL");
+        JiveGlobals.migrateProperty("jdbcAuthProvider.allowUpdate");
 
         // Load the JDBC driver and connection string.
         String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
@@ -81,6 +87,10 @@ public class JDBCAuthProvider implements AuthProvider {
 
         // Load SQL statements.
         passwordSQL = JiveGlobals.getProperty("jdbcAuthProvider.passwordSQL");
+        setPasswordSQL = JiveGlobals.getProperty("jdbcAuthProvider.setPasswordSQL");
+
+        allowUpdate = JiveGlobals.getBooleanProperty("jdbcAuthProvider.allowUpdate",false);
+
         passwordType = PasswordType.plain;
         try {
             passwordType = PasswordType.valueOf(
@@ -202,7 +212,11 @@ public class JDBCAuthProvider implements AuthProvider {
     public void setPassword(String username, String password)
             throws UserNotFoundException, UnsupportedOperationException
     {
-        throw new UnsupportedOperationException();
+        if (allowUpdate && setPasswordSQL != null) {
+            setPasswordValue(username, password);
+        } else { 
+            throw new UnsupportedOperationException();
+        }
     }
 
     public boolean supportsPasswordRetrieval() {
@@ -255,6 +269,46 @@ public class JDBCAuthProvider implements AuthProvider {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return password;
+    }
+
+    private void setPasswordValue(String username, String password) throws UserNotFoundException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain.
+                throw new UserNotFoundException();
+            }
+        }
+        try {
+            con = DriverManager.getConnection(connectionString);
+            pstmt = con.prepareStatement(setPasswordSQL);
+            pstmt.setString(1, username);
+            if (passwordType == PasswordType.md5) {
+                password = StringUtils.hash(password, "MD5");
+            }
+            else if (passwordType == PasswordType.sha1) {
+                password = StringUtils.hash(password, "SHA-1");
+            }
+            pstmt.setString(2, password);
+
+            rs = pstmt.executeQuery();
+
+        }
+        catch (SQLException e) {
+            Log.error("Exception in JDBCAuthProvider", e);
+            throw new UserNotFoundException();
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        
     }
 
     /**

@@ -90,7 +90,8 @@ public class HttpSession extends LocalClientSession {
     private long lastRequestID;
     private int maxRequests;
     private PacketDeliverer backupDeliverer;
-    private Double version = Double.NaN;
+    private int majorVersion = -1;
+    private int minorVersion = -1;
     private X509Certificate[] sslCertificates;
 
     private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
@@ -362,38 +363,67 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the version of BOSH which the client implements. Currently, the only versions supported
-     * by Openfire are 1.5 and 1.6. Any versions less than or equal to 1.5 will be interpreted as
-     * 1.5 and any values greater than or equal to 1.6 will be interpreted as 1.6.
+     * Sets the major version of BOSH which the client implements. Currently, the only versions supported
+     * by Openfire are 1.5 and 1.6.
      *
-     * @param version the version of BOSH which the client implements, represented as a Double,
-     * {major version}.{minor version}.
+     * @param version the major version of BOSH which the client implements.
      */
-    public void setVersion(double version) {
-        if(version <= 1.5) {
+    public void setMajorVersion(int majorVersion) {
+        if(majorVersion != 1) {
             return;
         }
-        else if(version >= 1.6) {
-            version = 1.6;
-        }
-        this.version = version;
+        this.majorVersion = majorVersion;
     }
 
     /**
-     * Returns the BOSH version which this session utilizes. The version refers to the
+     * Returns the major version of BOSH which this session utilizes. The version refers to the
      * version of the XEP which the connecting client implements. If the client did not specify
-     * a version 1.5 is returned as this is the last version of the <a
+     * a version 1 is returned as 1.5 is the last version of the <a
      * href="http://www.xmpp.org/extensions/xep-0124.html">XEP</a> that the client was not
      * required to pass along its version information when creating a session.
      *
-     * @return the version of the BOSH XEP which the client is utilizing.
+     * @return the major version of the BOSH XEP which the client is utilizing.
      */
-    public double getVersion() {
-        if (!Double.isNaN(this.version)) {
-            return this.version;
+    public int getMajorVersion() {
+        if (this.majorVersion != -1) {
+            return this.majorVersion;
         }
         else {
-            return 1.5;
+            return 1;
+        }
+    }
+    
+    /**
+     * Sets the minor version of BOSH which the client implements. Currently, the only versions supported
+     * by Openfire are 1.5 and 1.6. Any versions less than or equal to 5 will be interpreted as
+     * 5 and any values greater than or equal to 6 will be interpreted as 6.
+     *
+     * @param version the minor version of BOSH which the client implements.
+     */
+    public void setMinorVersion(int minorVersion) {
+    	if(minorVersion <= 5) {
+        	this.minorVersion = 5;
+        }
+    	else if(minorVersion >= 6) {
+        	this.minorVersion = 6;
+        }
+    }
+
+    /**
+     * Returns the major version of BOSH which this session utilizes. The version refers to the
+     * version of the XEP which the connecting client implements. If the client did not specify
+     * a version 5 is returned as 1.5 is the last version of the <a
+     * href="http://www.xmpp.org/extensions/xep-0124.html">XEP</a> that the client was not
+     * required to pass along its version information when creating a session.
+     *
+     * @return the minor version of the BOSH XEP which the client is utilizing.
+     */
+    public int getMinorVersion() {
+        if (this.minorVersion != -1) {
+            return this.minorVersion;
+        }
+        else {
+            return 5;
         }
     }
 

@@ -137,9 +137,6 @@ public class HttpBindServlet extends HttpServlet {
             return;
         }
 
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date()+": HTTP RECV: " + document.asXML());
-        }
         Element node = document.getRootElement();
         if (node == null || !"body".equals(node.getName())) {
             Log.warn("Body missing from request content. [" + request.getRemoteAddr() + "]");
@@ -148,6 +145,7 @@ public class HttpBindServlet extends HttpServlet {
         }
 
         String sid = node.attributeValue("sid");
+
         // We have a new session
         if (sid == null) {
             createNewSession(request, response, node);
@@ -166,7 +164,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         synchronized (session) {
             try {
-                respond(response, session.getResponse((Long) request.getAttribute("request")),
+                respond(session, response, session.getResponse((Long) request.getAttribute("request")),
                         request.getMethod());
             }
             catch (HttpBindException e) {
@@ -180,9 +178,12 @@ public class HttpBindServlet extends HttpServlet {
                            BoshBindingError bindingError, HttpSession session)
             throws IOException
     {
+        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+            System.out.println(new Date()+": HTTP ERR("+session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
+        }
         try {
             if (session.getVersion() >= 1.6) {
-                respond(response, createErrorBody(bindingError.getErrorType().getType(),
+                respond(session, response, createErrorBody(bindingError.getErrorType().getType(),
                         bindingError.getCondition()), request.getMethod());
             }
             else {
@@ -208,6 +209,9 @@ public class HttpBindServlet extends HttpServlet {
                                       HttpServletResponse response, Element rootNode)
             throws IOException
     {
+        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+            System.out.println(new Date()+": HTTP RECV(" + sid + "): " + rootNode.asXML());
+        }
         long rid = getLongAttribue(rootNode.attributeValue("rid"), -1);
         if (rid <= 0) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Body missing RID (Request ID)");
@@ -239,14 +243,14 @@ public class HttpBindServlet extends HttpServlet {
             String type = rootNode.attributeValue("type");
             if ("terminate".equals(type)) {
                 session.close();
-                respond(response, createEmptyBody(), request.getMethod());
+                respond(session, response, createEmptyBody(), request.getMethod());
             }
             else {
                 connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
                 try {
-                    respond(response, session.getResponse(connection.getRequestId()),
+                    respond(session, response, session.getResponse(connection.getRequestId()),
                             request.getMethod());
                 }
                 catch (HttpBindException e) {
@@ -272,6 +276,9 @@ public class HttpBindServlet extends HttpServlet {
             HttpConnection connection = new HttpConnection(rid, request.isSecure(), certificates);
             InetAddress address = InetAddress.getByName(request.getRemoteAddr());
             connection.setSession(sessionManager.createSession(address, rootNode, connection));
+            if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+                System.out.println(new Date()+": HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + rootNode.asXML());
+            }
             respond(response, connection, request.getMethod());
         }
         catch (UnauthorizedException e) {
@@ -296,10 +303,10 @@ public class HttpBindServlet extends HttpServlet {
             content = createEmptyBody();
         }
 
-        respond(response, content, method);
+        respond(connection.getSession(), response, content, method);
     }
 
-    private void respond(HttpServletResponse response, String content, String method)
+    private void respond(HttpSession session, HttpServletResponse response, String content, String method)
             throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("GET".equals(method) ? "text/javascript" : "text/xml");
@@ -310,7 +317,7 @@ public class HttpBindServlet extends HttpServlet {
         }
 
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date()+": HTTP SENT: " + content);
+            System.out.println(new Date()+": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
         byte[] byteContent = content.getBytes("utf-8");
         response.setContentLength(byteContent.length);

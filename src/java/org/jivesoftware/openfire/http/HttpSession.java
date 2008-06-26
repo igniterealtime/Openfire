@@ -26,8 +26,8 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.IQ;
@@ -829,6 +829,11 @@ public class HttpSession extends LocalClientSession {
         }
 
         public Collection<Packet> getPackets() {
+            // Check if the Deliverable is about Packets or raw XML
+            if (packets == null) {
+                // No packets here (should be just raw XML like <stream> so return nothing
+                return null;
+            }
             List<Packet> answer = new ArrayList<Packet>();
             for (String packetXML : packets) {
                 try {

@@ -131,7 +131,15 @@ public class HttpSessionManager {
         session.setSecure(connection.isSecure());
         session.setMaxPollingInterval(getPollingInterval());
         session.setMaxRequests(getMaxRequests());
-        session.setInactivityTimeout(getInactivityTimeout());
+        session.setMaxPause(getMaxPause());
+        
+        if(session.isPollingSession()) {
+        	session.setInactivityTimeout(getPollingInactivityTimeout());
+        }
+        else {
+        	session.setInactivityTimeout(getInactivityTimeout());
+        }
+        
         // Store language and version information in the connection.
         session.setLanaguage(language);
         
@@ -153,6 +161,17 @@ public class HttpSessionManager {
         return session;
     }
 
+
+    /**
+     * Returns the maximum length of a temporary session pause (in seconds) that the client MAY 
+     * request.
+     *
+     * @return the maximum length of a temporary session pause (in seconds) that the client MAY 
+     *         request.
+     */
+    public int getMaxPause() {
+        return JiveGlobals.getIntProperty("xmpp.httpbind.client.maxpause", 300);
+    }
 
     /**
      * Returns the longest time (in seconds) that Openfire is allowed to wait before responding to
@@ -196,7 +215,7 @@ public class HttpSessionManager {
     }
 
     /**
-     * Seconds a session has to be idle to be closed. Default is 30 minutes. Sending stanzas to the
+     * Seconds a session has to be idle to be closed. Default is 30. Sending stanzas to the
      * client is not considered as activity. We are only considering the connection active when the
      * client sends some data or hearbeats (i.e. whitespaces) to the server. The reason for this is
      * that sending data will fail if the connection is closed. And if the thread is blocked while
@@ -207,6 +226,20 @@ public class HttpSessionManager {
      */
     public int getInactivityTimeout() {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle", 30);
+    }
+
+    /**
+     * Seconds a polling session has to be idle to be closed. Default is 60. Sending stanzas to the
+     * client is not considered as activity. We are only considering the connection active when the
+     * client sends some data or hearbeats (i.e. whitespaces) to the server. The reason for this is
+     * that sending data will fail if the connection is closed. And if the thread is blocked while
+     * sending data (because the socket is closed) then the clean up thread will close the socket
+     * anyway.
+     *
+     * @return Seconds a polling session has to be idle to be closed.
+     */
+    public int getPollingInactivityTimeout() {
+        return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
     }
 
     /**
@@ -286,6 +319,7 @@ public class HttpSessionManager {
         response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
         response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
+        response.addAttribute("maxpause", String.valueOf(session.getMaxPause()));
         if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
         	session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));

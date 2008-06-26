@@ -89,6 +89,7 @@ public class HttpSession extends LocalClientSession {
     private long lastActivity;
     private long lastRequestID;
     private int maxRequests;
+    private int maxPause;
     private PacketDeliverer backupDeliverer;
     private int majorVersion = -1;
     private int minorVersion = -1;
@@ -286,6 +287,28 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Sets the maximum length of a temporary session pause (in seconds) that the client MAY 
+     * request.
+     * 
+     * @param maxPause the maximum length of a temporary session pause (in seconds) that the client 
+     * MAY request.
+     */
+    public void setMaxPause(int maxPause) {
+        this.maxPause = maxPause;
+    }
+
+    /**
+     * Returns the maximum length of a temporary session pause (in seconds) that the client MAY 
+     * request.
+     *
+     * @return the maximum length of a temporary session pause (in seconds) that the client MAY 
+     *         request.
+     */
+    public int getMaxPause() {
+        return this.maxPause;
+    }
+
+    /**
      * Returns true if all connections on this session should be secured, and false if they should
      * not.
      *
@@ -294,6 +317,15 @@ public class HttpSession extends LocalClientSession {
      */
     public boolean isSecure() {
         return isSecure;
+    }
+
+    /**
+     * Returns true if this session is a polling session, i.e. wait or hold attribute is set to 0.
+     *
+     * @return true if this session is a polling session.
+     */
+    public boolean isPollingSession() {
+        return (this.wait == 0 || this.hold == 0);
     }
 
     /**
@@ -450,10 +482,10 @@ public class HttpSession extends LocalClientSession {
         }
         catch (HttpBindTimeoutException e) {
             // This connection timed out we need to increment the request count
-            if (connection.getRequestId() != lastRequestID + 1) {
+            /*if (connection.getRequestId() != lastRequestID + 1) {
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
-            }
+            }*/
             lastRequestID = connection.getRequestId();
         }
         if (response == null) {
@@ -546,9 +578,9 @@ public class HttpSession extends LocalClientSession {
             connection.deliverBody(createDeliverable(deliverable.deliverables));
             return connection;
         }
-        else if (rid > (lastRequestID + hold + 1)) {
+        else if (rid > (lastRequestID + maxRequests)) {
             // TODO handle the case of greater RID which basically has it wait
-            Log.warn("Request " + rid + " > " + (lastRequestID + hold + 1) + ", ending session.");
+            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session.");
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
         }
@@ -589,10 +621,12 @@ public class HttpSession extends LocalClientSession {
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
-        if (hold <= 0 || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
+        if (hold <= 0 || wait <= 0 || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
             deliver(connection, pendingElements);
             lastRequestID = connection.getRequestId();
             pendingElements.clear();
+            connectionQueue.add(connection);
+            Collections.sort(connectionQueue, connectionComparator);
         }
         else {
             // With this connection we need to check if we will have too many connections open,
@@ -600,7 +634,9 @@ public class HttpSession extends LocalClientSession {
 
             // Number of current connections open plus the current one tells us how many that
             // we need to close.
-            int connectionsToClose = (getOpenConnectionCount() + 1) - hold;
+            connectionQueue.add(connection);
+            Collections.sort(connectionQueue, connectionComparator);
+            int connectionsToClose = getOpenConnectionCount() - hold;
             int closed = 0;
             for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
                 HttpConnection toClose = connectionQueue.get(i);
@@ -611,8 +647,6 @@ public class HttpSession extends LocalClientSession {
                 }
             }
         }
-        connectionQueue.add(connection);
-        Collections.sort(connectionQueue, connectionComparator);
         fireConnectionOpened(connection);
     }
 

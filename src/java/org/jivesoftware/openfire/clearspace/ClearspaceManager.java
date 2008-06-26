@@ -17,12 +17,15 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
@@ -32,7 +35,9 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.session.ComponentSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
@@ -49,6 +54,8 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 
 
 /**
@@ -62,7 +69,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Daniel Henninger
  */
-public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener, ComponentEventListener {
+public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener, ComponentEventListener, PropertyEventListener, CertificateEventListener {
     /**
      * This is the username of the user that Openfires uses to connect
      * to Clearspace. It is fixed a well known by Openfire and Clearspace.
@@ -489,8 +496,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
             // Listen for changes to external component settings
             ExternalComponentManager.addListener(this);
-            // List for registration of new components
+            // Listen for registration of new components
             InternalComponentManager.getInstance().addListener(this);
+            // Listen for changes in certificates
+            CertificateManager.addListener(this);
+            // Listen for property changes
+            PropertyEventDispatcher.addListener(this);
             // Set up custom clearspace MUC service
             // Create service if it doesn't exist, load if it does.
             MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(MUC_SUBDOMAIN);
@@ -583,6 +594,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         try {
 
             XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
+            ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+            SocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
+            HttpBindManager httpBindManager = HttpBindManager.getInstance();
 
             String path = IM_URL_PREFIX + "configureComponent/";
 
@@ -598,8 +612,38 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Element portE = rootE.addElement("port");
             portE.setText(String.valueOf(ExternalComponentManager.getServicePort()));
 
+            Integer boshUnsecurePort = 0;
+            Integer boshSecurePort = 0;
+            Integer tcpPort = 0;
+            if (httpBindManager.isHttpBindEnabled()) {
+                if (httpBindManager.getHttpBindSecurePort() > 0) {
+                    boshSecurePort = httpBindManager.getHttpBindSecurePort();
+                }
+                if (httpBindManager.getHttpBindUnsecurePort() > 0) {
+                    boshUnsecurePort = httpBindManager.getHttpBindUnsecurePort();
+                }
+            } 
+            if (socketAcceptor != null) {
+                for (SocketAddress socketAddress : socketAcceptor.getManagedServiceAddresses()) {
+                    InetSocketAddress address = (InetSocketAddress) socketAddress;
+                    tcpPort = address.getPort();
+                    break;
+                }
+            }
+
+            Element boshSecurePortElem = rootE.addElement("clientBoshSslPort");
+            boshSecurePortElem.setText(String.valueOf(boshSecurePort));
+
+            Element boshUnsecurePortElem = rootE.addElement("clientBoshPort");
+            boshUnsecurePortElem.setText(String.valueOf(boshUnsecurePort));
+
+            Element tcpPortElem = rootE.addElement("clientTcpPort");
+            tcpPortElem.setText(String.valueOf(tcpPort));
+
             Log.debug("Trying to configure Clearspace with: Domain: " + serverInfo.getXMPPDomain() + ", hosts: " +
-                    bindInterfaces.toString() + ", port: " + port);
+                    bindInterfaces.toString() + ", port: " + port + ", client bosh ssl port: " + boshSecurePort
+                    + ", client bosh port: " + boshUnsecurePort + ", client tcp port: " + tcpPort
+            );
 
             executeRequest(POST, path, rootE.asXML());
 
@@ -689,6 +733,46 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Log.error("Error updating the password of Clearspace", ue);
         } catch (Exception e) {
             Log.error("Error updating the password of Clearspace", e);
+        }
+
+    }
+
+    private void updateClearspaceClientSettings() {
+        String xmppBoshSslPort = "0";
+        String xmppBoshPort = "0";
+        String xmppPort = String.valueOf(XMPPServer.getInstance().getConnectionManager().getClientListenerPort());
+        if (JiveGlobals.getBooleanProperty(HttpBindManager.HTTP_BIND_ENABLED, HttpBindManager.HTTP_BIND_ENABLED_DEFAULT)) {
+            int boshSslPort = HttpBindManager.getInstance().getHttpBindSecurePort();
+            int boshPort = HttpBindManager.getInstance().getHttpBindUnsecurePort();
+            try {
+                if (CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain()) && LocalClientSession.getTLSPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled && boshSslPort > 0) {
+                    xmppBoshSslPort = String.valueOf(boshSslPort);
+                }
+            }
+            catch (Exception e) {
+                // Exception while working with certificate
+                Log.debug("Error while checking SSL certificate.  Instructing Clearspace not to use SSL port.");
+            }
+            if (boshPort > 0) {
+                xmppBoshPort = String.valueOf(boshPort);
+            }
+        }
+
+        try {
+            String path = IM_URL_PREFIX + "updateClientSettings/";
+
+            // Creates the XML with the data
+            Document groupDoc = DocumentHelper.createDocument();
+            Element rootE = groupDoc.addElement("updateClientSettings");
+            rootE.addElement("boshSslPort").setText(xmppBoshSslPort);
+            rootE.addElement("boshPort").setText(xmppBoshPort);
+            rootE.addElement("tcpPort").setText(xmppPort);
+
+            executeRequest(POST, path, groupDoc.asXML());
+        } catch (UnauthorizedException ue) {
+            Log.error("Error updating the client settings of Clearspace", ue);
+        } catch (Exception e) {
+            Log.error("Error updating the client settings of Clearspace", e);
         }
 
     }
@@ -1159,6 +1243,41 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             return false;
         }
         return System.currentTimeMillis() - time < JiveConstants.MINUTE;
+    }
+
+    public void propertySet(String property, Map params) {
+        if (property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_ENABLED) ||
+                property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_PORT) ||
+                property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_SECURE_PORT) ||
+                property.equalsIgnoreCase("xmpp.socket.plain.port")) {
+            updateClearspaceClientSettings();
+        }
+    }
+
+    public void propertyDeleted(String property, Map params) {
+        if (property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_ENABLED) ||
+                property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_PORT) ||
+                property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_SECURE_PORT) ||
+                property.equalsIgnoreCase("xmpp.socket.plain.port")) {
+            updateClearspaceClientSettings();
+        }
+    }
+
+    public void xmlPropertySet(String property, Map params) {
+    }
+
+    public void xmlPropertyDeleted(String property, Map params) {
+    }
+
+    public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+        updateClearspaceClientSettings();
+    }
+
+    public void certificateDeleted(KeyStore keyStore, String alias) {
+        updateClearspaceClientSettings();
+    }
+
+    public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
     }
 
     private class ConfigClearspaceTask extends TimerTask {

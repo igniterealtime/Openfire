@@ -58,6 +58,8 @@ public final class HttpBindManager {
 
     private int bindSecurePort;
 
+    private boolean sslEnabled = false;
+
     private CertificateListener certificateListener;
 
     private HttpSessionManager httpSessionManager;
@@ -276,7 +278,11 @@ public final class HttpBindManager {
             httpBindServer.addConnector(httpConnector);
         }
         if (httpsConnector != null) {
+            sslEnabled = true;
             httpBindServer.addConnector(httpsConnector);
+        }
+        else {
+            sslEnabled = false;
         }
 
         createBoshHandler(contexts, "/http-bind");
@@ -357,6 +363,9 @@ public final class HttpBindManager {
      * @return the HTTP binding port which uses SSL.
      */
     public int getHttpBindSecurePort() {
+        if (!sslEnabled) {
+            return 0;
+        }
         return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, HTTP_BIND_SECURE_PORT_DEFAULT);
     }
 

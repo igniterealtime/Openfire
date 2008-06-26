@@ -50,6 +50,7 @@ public class AdminConsolePlugin implements Plugin {
     private ContextHandlerCollection contexts;
     private CertificateEventListener certificateListener;
     private boolean restartNeeded = false;
+    private boolean sslEnabled = false;
 
     private File pluginDir;
 
@@ -92,6 +93,7 @@ public class AdminConsolePlugin implements Plugin {
         }
 
         // Create a connector for https traffic if it's enabled.
+        sslEnabled = false;
         try {
             if (adminSecurePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*"))
             {
@@ -115,6 +117,8 @@ public class AdminConsolePlugin implements Plugin {
                 httpsConnector.setKeystoreType(SSLConfig.getStoreType());
                 httpsConnector.setKeystore(SSLConfig.getKeystoreLocation());
                 adminServer.addConnector(httpsConnector);
+
+                sslEnabled = true;
             }
         }
         catch (Exception e) {
@@ -217,6 +221,9 @@ public class AdminConsolePlugin implements Plugin {
      * @return the SSL port on which the admin console is current operating.
      */
     public int getAdminSecurePort() {
+        if (!sslEnabled) {
+            return 0;
+        }
         return adminSecurePort;
     }
 

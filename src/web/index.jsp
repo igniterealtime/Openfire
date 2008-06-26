@@ -444,10 +444,14 @@
     <tr>
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
-        <% if (LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
+        <% try { %>
+        <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain()) || LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } else { %>
             <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+        <% } %>
+        <% } catch (Exception e) { %>
+            <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } %>
         <td><fmt:message key="ports.client_to_server" /></td>
         <td><fmt:message key="ports.client_to_server.desc">
@@ -536,6 +540,9 @@
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_unsecured" /></td>
     </tr>
+    <%
+        if (adminConsolePlugin.getAdminSecurePort() > 0) {
+    %>
     <tr>
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
         <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
@@ -543,6 +550,7 @@
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_secured" /></td>
     </tr>
+    <% } %>
     <%
         if (fileTransferProxy.isProxyEnabled()) {
     %>

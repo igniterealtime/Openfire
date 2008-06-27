@@ -550,6 +550,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         boolean configured = false;
         try {
             doConfigClearspace();
+            updateClearspaceClientSettings();
             configured = true;
         } catch (UnauthorizedException e) {
             Log.info("Unauthorized to configure Clearspace.", e);
@@ -594,9 +595,6 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         try {
 
             XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
-            ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-            SocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
-            HttpBindManager httpBindManager = HttpBindManager.getInstance();
 
             String path = IM_URL_PREFIX + "configureComponent/";
 
@@ -612,38 +610,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Element portE = rootE.addElement("port");
             portE.setText(String.valueOf(ExternalComponentManager.getServicePort()));
 
-            Integer boshUnsecurePort = 0;
-            Integer boshSecurePort = 0;
-            Integer tcpPort = 0;
-            if (httpBindManager.isHttpBindEnabled()) {
-                if (httpBindManager.getHttpBindSecurePort() > 0) {
-                    boshSecurePort = httpBindManager.getHttpBindSecurePort();
-                }
-                if (httpBindManager.getHttpBindUnsecurePort() > 0) {
-                    boshUnsecurePort = httpBindManager.getHttpBindUnsecurePort();
-                }
-            } 
-            if (socketAcceptor != null) {
-                for (SocketAddress socketAddress : socketAcceptor.getManagedServiceAddresses()) {
-                    InetSocketAddress address = (InetSocketAddress) socketAddress;
-                    tcpPort = address.getPort();
-                    break;
-                }
-            }
-
-            Element boshSecurePortElem = rootE.addElement("clientBoshSslPort");
-            boshSecurePortElem.setText(String.valueOf(boshSecurePort));
-
-            Element boshUnsecurePortElem = rootE.addElement("clientBoshPort");
-            boshUnsecurePortElem.setText(String.valueOf(boshUnsecurePort));
-
-            Element tcpPortElem = rootE.addElement("clientTcpPort");
-            tcpPortElem.setText(String.valueOf(tcpPort));
-
             Log.debug("Trying to configure Clearspace with: Domain: " + serverInfo.getXMPPDomain() + ", hosts: " +
-                    bindInterfaces.toString() + ", port: " + port + ", client bosh ssl port: " + boshSecurePort
-                    + ", client bosh port: " + boshUnsecurePort + ", client tcp port: " + tcpPort
-            );
+                    bindInterfaces.toString() + ", port: " + port);
 
             executeRequest(POST, path, rootE.asXML());
 
@@ -1286,6 +1254,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             try {
                 Log.debug("Trying to configure Clearspace.");
                 doConfigClearspace();
+                updateClearspaceClientSettings();
             } catch (UnauthorizedException e) {
                 Log.warn("Unauthorization problem trying to configure Clearspace, trying again in 1 minute", e);
                 // TODO: Mark that there is an authorization problem

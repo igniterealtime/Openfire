@@ -482,10 +482,10 @@ public class HttpSession extends LocalClientSession {
         }
         catch (HttpBindTimeoutException e) {
             // This connection timed out we need to increment the request count
-            /*if (connection.getRequestId() != lastRequestID + 1) {
+            if (connection.getRequestId() != lastRequestID + 1) {
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
-            }*/
+            }
             lastRequestID = connection.getRequestId();
         }
         if (response == null) {
@@ -578,9 +578,8 @@ public class HttpSession extends LocalClientSession {
             connection.deliverBody(createDeliverable(deliverable.deliverables));
             return connection;
         }
-        else if (rid > (lastRequestID + maxRequests)) {
-            // TODO handle the case of greater RID which basically has it wait
-            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session.");
+        else if (rid > (lastRequestID + maxRequests + 5)) {
+            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests + 5) + ", ending session.");
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
         }
@@ -621,7 +620,7 @@ public class HttpSession extends LocalClientSession {
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
-        if (hold <= 0 || wait <= 0 || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
+        if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
             deliver(connection, pendingElements);
             lastRequestID = connection.getRequestId();
             pendingElements.clear();
@@ -632,17 +631,32 @@ public class HttpSession extends LocalClientSession {
             // With this connection we need to check if we will have too many connections open,
             // closing any extras.
 
-            // Number of current connections open plus the current one tells us how many that
-            // we need to close.
             connectionQueue.add(connection);
             Collections.sort(connectionQueue, connectionComparator);
-            int connectionsToClose = getOpenConnectionCount() - hold;
+            
+            int connectionsToClose;
+            if(connectionQueue.get(connectionQueue.size() - 1) != connection) {
+            	// Current connection does not have the greatest rid. That means 
+            	// requests were received out of order, respond to all.
+            	connectionsToClose = connectionQueue.size();
+            }
+            else {
+                // Everything's fine, number of current connections open tells us 
+            	// how many that we need to close.
+            	connectionsToClose = getOpenConnectionCount() - hold;
+            }
             int closed = 0;
             for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
                 HttpConnection toClose = connectionQueue.get(i);
-                if (!toClose.isClosed()) {
+                if (!toClose.isClosed() && toClose.getRequestId() == lastRequestID + 1) {
+                    if(toClose == connection) {
+                    	// Current connection has no continuation yet, just deliver.
+                    	deliver("");
+                    }
+                    else {
+                        toClose.close();
+                    }
                     lastRequestID = toClose.getRequestId();
-                    toClose.close();
                     closed++;
                 }
             }

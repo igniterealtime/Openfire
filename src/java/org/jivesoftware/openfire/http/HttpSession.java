@@ -296,6 +296,19 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Returns true if this session is a polling session. Some clients may be restricted to open 
+     * only one connection to the server. In this case the client SHOULD inform the server by 
+     * setting the values of the 'wait' and/or 'hold' attributes in its session creation request 
+     * to "0", and then "poll" the server at regular intervals throughout the session for stanzas 
+     * it may have received from the server.  
+     *
+     * @return true if this session is a polling session.
+     */
+    public boolean isPollingSession() {
+        return (this.wait == 0 || this.hold == 0);
+    }
+
+    /**
      * Adds a {@link org.jivesoftware.openfire.http.SessionListener} to this session. The listener
      * will be notified of changes to the session.
      *
@@ -559,30 +572,47 @@ public class HttpSession extends LocalClientSession {
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
-        if (hold <= 0 || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
+        if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
             deliver(connection, pendingElements);
             lastRequestID = connection.getRequestId();
             pendingElements.clear();
+            connectionQueue.add(connection);
+            Collections.sort(connectionQueue, connectionComparator);
         }
         else {
             // With this connection we need to check if we will have too many connections open,
             // closing any extras.
 
-            // Number of current connections open plus the current one tells us how many that
-            // we need to close.
-            int connectionsToClose = (getOpenConnectionCount() + 1) - hold;
+            connectionQueue.add(connection);
+            Collections.sort(connectionQueue, connectionComparator);
+            
+            int connectionsToClose;
+            if(connectionQueue.get(connectionQueue.size() - 1) != connection) {
+            	// Current connection does not have the greatest rid. That means 
+            	// requests were received out of order, respond to all.
+            	connectionsToClose = connectionQueue.size();
+            }
+            else {
+                // Everything's fine, number of current connections open tells us 
+            	// how many that we need to close.
+            	connectionsToClose = getOpenConnectionCount() - hold;
+            }
             int closed = 0;
             for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
                 HttpConnection toClose = connectionQueue.get(i);
-                if (!toClose.isClosed()) {
+                if (!toClose.isClosed() && toClose.getRequestId() == lastRequestID + 1) {
+                    if(toClose == connection) {
+                    	// Current connection has no continuation yet, just deliver.
+                    	deliver("");
+                    }
+                    else {
+                        toClose.close();
+                    }
                     lastRequestID = toClose.getRequestId();
-                    toClose.close();
                     closed++;
                 }
             }
         }
-        connectionQueue.add(connection);
-        Collections.sort(connectionQueue, connectionComparator);
         fireConnectionOpened(connection);
     }
 

@@ -141,7 +141,7 @@ public class HttpSessionManager {
         }
         
         // Store language and version information in the connection.
-        session.setLanaguage(language);
+        session.setLanguage(language);
         
         String [] versionString = version.split("\\.");
         session.setMajorVersion(Integer.parseInt(versionString[0]));
@@ -323,6 +323,7 @@ public class HttpSessionManager {
         if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
         	session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));
+            response.addAttribute("ack", String.valueOf(session.getLastAcknowledged()));
             response.addAttribute("ver", String.valueOf(session.getMajorVersion())
             		+ "." + String.valueOf(session.getMinorVersion()));
         }

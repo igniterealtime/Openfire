@@ -230,7 +230,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @param language the language this session is using.
      */
-    public void setLanaguage(String language) {
+    public void setLanguage(String language) {
         this.language = language;
     }
 
@@ -320,7 +320,11 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Returns true if this session is a polling session, i.e. wait or hold attribute is set to 0.
+     * Returns true if this session is a polling session. Some clients may be restricted to open 
+     * only one connection to the server. In this case the client SHOULD inform the server by 
+     * setting the values of the 'wait' and/or 'hold' attributes in its session creation request 
+     * to "0", and then "poll" the server at regular intervals throughout the session for stanzas 
+     * it may have received from the server.  
      *
      * @return true if this session is a polling session.
      */
@@ -395,8 +399,26 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the major version of BOSH which the client implements. Currently, the only versions supported
-     * by Openfire are 1.5 and 1.6.
+     * Returns the time in milliseconds since the epoch that this session was last active. Activity
+     * is a request was either made or responded to. If the session is currently active, meaning
+     * there are connections awaiting a response, the current time is returned.
+     *
+     * @return the time in milliseconds since the epoch that this session was last active.
+     */
+    public long getLastAcknowledged() {
+    	long ack = lastRequestID;
+    	Collections.sort(connectionQueue, connectionComparator);
+        for (HttpConnection connection : connectionQueue) {
+            if (connection.getRequestId() == ack + 1) {
+            	ack++;
+            }
+        }
+        return ack;
+    }
+
+    /**
+     * Sets the major version of BOSH which the client implements. Currently, the only versions 
+     * supported by Openfire are 1.5 and 1.6.
      *
      * @param version the major version of BOSH which the client implements.
      */
@@ -426,9 +448,9 @@ public class HttpSession extends LocalClientSession {
     }
     
     /**
-     * Sets the minor version of BOSH which the client implements. Currently, the only versions supported
-     * by Openfire are 1.5 and 1.6. Any versions less than or equal to 5 will be interpreted as
-     * 5 and any values greater than or equal to 6 will be interpreted as 6.
+     * Sets the minor version of BOSH which the client implements. Currently, the only versions 
+     * supported by Openfire are 1.5 and 1.6. Any versions less than or equal to 5 will be 
+     * interpreted as 5 and any values greater than or equal to 6 will be interpreted as 6.
      *
      * @param version the minor version of BOSH which the client implements.
      */
@@ -751,7 +773,13 @@ public class HttpSession extends LocalClientSession {
 
     private String createDeliverable(Collection<Deliverable> elements) {
         StringBuilder builder = new StringBuilder();
-        builder.append("<body xmlns='" + "http://jabber.org/protocol/httpbind" + "'>");
+        builder.append("<body xmlns='" + "http://jabber.org/protocol/httpbind" + "'");
+
+        long ack = getLastAcknowledged();
+        if(ack > lastRequestID)
+        	builder.append(" ack='" + ack + "'");
+        
+        builder.append(">");
         for (Deliverable child : elements) {
             builder.append(child.getDeliverable());
         }
@@ -816,9 +844,12 @@ public class HttpSession extends LocalClientSession {
     }
 
 
-    private static String createEmptyBody() {
+    private String createEmptyBody() {
         Element body = DocumentHelper.createElement("body");
         body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        long ack = getLastAcknowledged();
+        if(ack > lastRequestID)
+        	body.addAttribute("ack", String.valueOf(ack));
         return body.asXML();
     }
 

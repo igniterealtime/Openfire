@@ -399,11 +399,14 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Returns the time in milliseconds since the epoch that this session was last active. Activity
-     * is a request was either made or responded to. If the session is currently active, meaning
-     * there are connections awaiting a response, the current time is returned.
-     *
-     * @return the time in milliseconds since the epoch that this session was last active.
+     * Returns the highest 'rid' attribute the server has received where it has also received 
+     * all requests with lower 'rid' values. When responding to a request that it has been 
+     * holding, if the server finds it has already received another request with a higher 'rid' 
+     * attribute (typically while it was holding the first request), then it MAY acknowledge the 
+     * reception to the client.
+     * 
+     * @return the highest 'rid' attribute the server has received where it has also received 
+     * all requests with lower 'rid' values.
      */
     public long getLastAcknowledged() {
     	long ack = lastRequestID;

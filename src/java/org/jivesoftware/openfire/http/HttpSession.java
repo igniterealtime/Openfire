@@ -600,8 +600,8 @@ public class HttpSession extends LocalClientSession {
             connection.deliverBody(createDeliverable(deliverable.deliverables));
             return connection;
         }
-        else if (rid > (lastRequestID + maxRequests + 5)) {
-            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests + 5) + ", ending session.");
+        else if (rid > (lastRequestID + maxRequests)) {
+            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session.");
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
         }

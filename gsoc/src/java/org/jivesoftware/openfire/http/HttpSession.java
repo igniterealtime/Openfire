@@ -86,6 +86,7 @@ public class HttpSession extends LocalClientSession {
     private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
     private volatile boolean isClosed;
     private int inactivityTimeout;
+    private int defaultInactivityTimeout;
     private long lastActivity;
     private long lastRequestID;
     private int maxRequests;
@@ -353,6 +354,18 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Sets the default inactivity timeout of this session. A session's inactivity timeout can 
+     * be temporarily changed using session pause requests.
+     * 
+     * @see #pause(int)
+     *
+     * @param defaultInactivityTimeout the default inactivity timeout of this session.
+     */
+    public void setDefaultInactivityTimeout(int defaultInactivityTimeout) {
+        this.defaultInactivityTimeout = defaultInactivityTimeout;
+    }
+
+    /**
      * Sets the time, in seconds, after which this session will be considered inactive and be be
      * terminated.
      *
@@ -364,6 +377,16 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Resets the inactivity timeout of this session to default. A session's inactivity timeout can 
+     * be temporarily changed using session pause requests.
+     * 
+     * @see #pause(int)
+     */
+    public void resetInactivityTimeout() {
+        this.inactivityTimeout = this.defaultInactivityTimeout;
+    }
+
+    /**
      * Returns the time, in seconds, after which this session will be considered inactive and
      * terminated.
      *
@@ -372,6 +395,28 @@ public class HttpSession extends LocalClientSession {
      */
     public int getInactivityTimeout() {
         return inactivityTimeout;
+    }
+
+    /**
+     * Pauses the session for the given amount of time. If a client encounters an exceptional 
+     * temporary situation during which it will be unable to send requests to the connection 
+     * manager for a period of time greater than the maximum inactivity period, then the client MAY 
+     * request a temporary increase to the maximum inactivity period by including a 'pause' 
+     * attribute in a request.
+     * 
+     * @param duration the time, in seconds, after which this session will be considered inactive 
+     *        and terminated.
+     */
+    public void pause(int duration) {    	
+    	// Respond immediately to all pending requests
+    	for (int i = 0; i < connectionQueue.size(); i++) {
+            HttpConnection toClose = connectionQueue.get(i);
+            if (!toClose.isClosed()) {
+                toClose.close();
+                lastRequestID = toClose.getRequestId();
+            }
+        }
+    	setInactivityTimeout(duration);
     }
 
     /**

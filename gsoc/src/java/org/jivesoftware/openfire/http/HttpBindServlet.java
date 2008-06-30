@@ -238,11 +238,18 @@ public class HttpBindServlet extends HttpServlet {
             }
 
             String type = rootNode.attributeValue("type");
+            int pauseDuration = getIntAttribue(rootNode.attributeValue("pause"), -1);
+            
             if ("terminate".equals(type)) {
                 session.close();
                 respond(response, createEmptyBody(), request.getMethod());
             }
+            else if (pauseDuration > 0 && pauseDuration <= session.getMaxPause()) {                
+            	session.pause(pauseDuration);
+                respond(response, createEmptyBody(), request.getMethod());
+            }
             else {
+                session.resetInactivityTimeout();
                 connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
@@ -335,6 +342,18 @@ public class HttpBindServlet extends HttpServlet {
         }
         try {
             return Long.valueOf(value);
+        }
+        catch (Exception ex) {
+            return defaultValue;
+        }
+    }
+
+    private int getIntAttribue(String value, int defaultValue) {
+        if (value == null || "".equals(value)) {
+            return defaultValue;
+        }
+        try {
+            return Integer.valueOf(value);
         }
         catch (Exception ex) {
             return defaultValue;

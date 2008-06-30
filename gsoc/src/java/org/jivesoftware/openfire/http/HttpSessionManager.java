@@ -134,11 +134,12 @@ public class HttpSessionManager {
         session.setMaxPause(getMaxPause());
         
         if(session.isPollingSession()) {
-        	session.setInactivityTimeout(getPollingInactivityTimeout());
+        	session.setDefaultInactivityTimeout(getPollingInactivityTimeout());
         }
         else {
-        	session.setInactivityTimeout(getInactivityTimeout());
+        	session.setDefaultInactivityTimeout(getInactivityTimeout());
         }
+    	session.resetInactivityTimeout();
         
         // Store language and version information in the connection.
         session.setLanguage(language);
@@ -319,11 +320,11 @@ public class HttpSessionManager {
         response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
         response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
-        response.addAttribute("maxpause", String.valueOf(session.getMaxPause()));
         if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
         	session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));
             response.addAttribute("ack", String.valueOf(session.getLastAcknowledged()));
+            response.addAttribute("maxpause", String.valueOf(session.getMaxPause()));
             response.addAttribute("ver", String.valueOf(session.getMajorVersion())
             		+ "." + String.valueOf(session.getMinorVersion()));
         }
@@ -341,8 +342,8 @@ public class HttpSessionManager {
         public void run() {
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
-                long lastActive = (currentTime - session.getLastActivity()) / 1000;
-                if (lastActive > session.getInactivityTimeout()) {
+                long lastActive = currentTime - session.getLastActivity();
+                if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
                     session.close();
                 }
             }
@@ -350,7 +351,7 @@ public class HttpSessionManager {
     }
 
     /**
-     * A runner that gurantees that the packets per a session will be sent and
+     * A runner that guarantees that the packets per a session will be sent and
      * processed in the order in which they were received.
      */
     private class HttpPacketSender implements Runnable {

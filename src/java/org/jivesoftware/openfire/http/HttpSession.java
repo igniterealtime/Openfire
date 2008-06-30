@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParserException;
@@ -89,6 +90,7 @@ public class HttpSession extends LocalClientSession {
     private int defaultInactivityTimeout;
     private long lastActivity;
     private long lastRequestID;
+    private boolean lastResponseEmpty;
     private int maxRequests;
     private int maxPause;
     private PacketDeliverer backupDeliverer;
@@ -528,6 +530,16 @@ public class HttpSession extends LocalClientSession {
             return 5;
         }
     }
+    
+    /**
+     * lastResponseEmpty true if last response of this session is an empty body element. This
+     * is used in overactivity checking.
+     *
+     * @param lastResponseEmpty true if last response of this session is an empty body element.
+     */
+	public void setLastResponseEmpty(boolean lastResponseEmpty) {
+		this.lastResponseEmpty = lastResponseEmpty;
+	}
 
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
@@ -560,6 +572,7 @@ public class HttpSession extends LocalClientSession {
         }
         if (response == null) {
             response = createEmptyBody();
+            setLastResponseEmpty(true);
         }
         return response;
     }
@@ -676,9 +689,7 @@ public class HttpSession extends LocalClientSession {
             throw new IllegalArgumentException("Connection cannot be null.");
         }
 
-        if (isPoll) {
-            checkPollingInterval();
-        }
+        checkOveractivity(isPoll);
 
         if (isSecure && !connection.isSecure()) {
             throw new HttpBindException("Session was started from secure connection, all " +
@@ -763,19 +774,47 @@ public class HttpSession extends LocalClientSession {
             listener.connectionOpened(this, connection);
         }
     }
-
-    private void checkPollingInterval() throws HttpBindException {
-        long time = System.currentTimeMillis();
-        if (((time - lastPoll) / 1000) < maxPollingInterval) {
-            Log.debug("Too frequent polling minimum interval is "
-                    + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000));
-            if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignorePollingCap", false)) {
-                throw new HttpBindException("Too frequent polling minimum interval is "
-                        + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000),
-                        BoshBindingError.policyViolation);
+    
+    /**
+     * @see {@link http://www.xmpp.org/extensions/xep-0124.html#overactive}.
+     */
+    private void checkOveractivity(boolean isPoll) throws HttpBindException {
+    	int pendingConnections = 0;
+    	boolean overactivity = false;
+    	String errorMessage = "Overactivity detected";
+    	
+        for (int i = 0; i < connectionQueue.size(); i++) {
+            HttpConnection conn = connectionQueue.get(i);
+            if (!conn.isClosed()) {
+            	pendingConnections++;
             }
         }
-        lastPoll = time;
+    	
+        if(pendingConnections >= maxRequests) {
+        	overactivity = true;
+        	errorMessage += ", too many simultaneous requests.";
+        }
+        else if(isPoll) {
+	    	long time = System.currentTimeMillis();
+	        if (time - lastPoll < maxPollingInterval * JiveConstants.SECOND) {
+	        	if(isPollingSession()) {
+	        		overactivity = lastResponseEmpty;
+	        	}
+	        	else {
+	        		overactivity = (pendingConnections >= maxRequests - 1);
+	        	}
+	        }
+	        lastPoll = time;
+	        errorMessage += ", minimum polling interval is " 
+	        	+ maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
+        }
+        
+        if(overactivity) {
+        	Log.debug(errorMessage);
+            if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignoreOveractivity", false)) {
+                throw new HttpBindException(errorMessage, BoshBindingError.policyViolation);
+            }
+        }
     }
 
     private synchronized void deliver(String text) {

@@ -181,8 +181,15 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                     // Return early so that the room-events queue is not cleared.
                     return;
                 }
+                else if (result.getType() == IQ.Type.error) {
+                    // Clearspace was not able to process the transcript-update
+                    Log.warn("Clearspace received a transcript-update packet but was not able to process it.");
 
-                // We can clear the queue now.
+                    // Return early so that the room-events queue is not cleared.
+                    return;
+                }
+
+                // We can clear the queue now, as Clearspace has processed the transcript-update packet.
                 roomEvents.clear();
             }
         };

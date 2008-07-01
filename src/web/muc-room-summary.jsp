@@ -195,7 +195,12 @@
             <% } %>
         </td>
         <td width="45%" valign="middle">
-            <%=  room.getDescription() %>
+            <% if (!room.getDescription().isEmpty()) { %>
+                <%= room.getDescription() %>
+            <% }
+               else { %>
+                &nbsp;
+            <% } %>
         </td>
         <td width="1%" align="center">
                 <% if (room.isPersistent()) { %>

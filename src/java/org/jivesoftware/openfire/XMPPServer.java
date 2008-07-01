@@ -484,6 +484,7 @@ public class XMPPServer {
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());
         loadModule(IQAuthHandler.class.getName());
+        loadModule(IQPingHandler.class.getName());
         loadModule(IQPrivateHandler.class.getName());
         loadModule(IQRegisterHandler.class.getName());
         loadModule(IQRosterHandler.class.getName());

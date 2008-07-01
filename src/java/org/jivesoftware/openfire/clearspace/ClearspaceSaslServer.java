@@ -4,6 +4,7 @@ import org.dom4j.Element;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.xmpp.packet.JID;
 
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -68,6 +69,12 @@ public class ClearspaceSaslServer implements SaslServer {
         }
 
         jid = tokens.nextToken();
+
+        int atIndex = jid.lastIndexOf("@");
+
+        String node = jid.substring(0, atIndex);
+
+        jid = JID.escapeNode(node) + "@" + jid.substring(atIndex + 1);
 
         try {
             responseStr = StringUtils.encodeBase64(responseStr);

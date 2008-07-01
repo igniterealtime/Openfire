@@ -373,7 +373,7 @@ public class GroupManager {
             synchronized(SHARED_GROUPS_KEY.intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
                 if (groupNames == null) {
-                    groupNames = Group.getSharedGroupsNames();
+                    groupNames = provider.getSharedGroupsNames();
                     groupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
                 }
             }

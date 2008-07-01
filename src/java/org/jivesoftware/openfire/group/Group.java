@@ -71,7 +71,7 @@ public class Group implements Cacheable, Externalizable {
      *
      * @return the name of the groups that are shared groups.
      */
-    static Set<String> getSharedGroupsNames() {
+    public static Set<String> getSharedGroupsNames() {
         Set<String> groupNames = new HashSet<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -148,28 +148,28 @@ public class Group implements Cacheable, Externalizable {
         // Check if we have to create or update some properties
         for (Map.Entry<String, String> property : properties.entrySet()) {
             // If the DB contains this property
-            if (properties.containsKey(property.getKey())) {
+            if (this.properties.containsKey(property.getKey())) {
                 // then check if we need to update it
-                if (!property.getValue().equals(properties.get(property.getKey()))) {
+                if (!property.getValue().equals(this.properties.get(property.getKey()))) {
                     // update the properties map
-                    properties.put(property.getKey(), property.getValue());
+                    this.properties.put(property.getKey(), property.getValue());
                     // and the DB
                     updateProperty(property.getKey(), property.getValue());
                 }
             } // else we need to add it
             else {
                 // add to the properties map
-                properties.put(property.getKey(), property.getValue());
+                this.properties.put(property.getKey(), property.getValue());
                 // and insert it to the DB
                 insertProperty(property.getKey(), property.getValue());
             }
         }
 
         // Check if we have to delete some properties
-        for (String oldPropName : properties.keySet()) {
+        for (String oldPropName : this.properties.keySet()) {
             if (!properties.containsKey(oldPropName)) {
                 // delete it from the property map
-                properties.remove(oldPropName);
+                this.properties.remove(oldPropName);
                 // delete it from the DB
                 deleteProperty(oldPropName);
             }

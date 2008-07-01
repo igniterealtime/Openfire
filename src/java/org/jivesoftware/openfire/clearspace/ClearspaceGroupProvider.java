@@ -68,6 +68,11 @@ public class ClearspaceGroupProvider implements GroupProvider {
         }
     }
 
+    public Collection<String> getSharedGroupsNames() {
+        // Return all social group names since every social group is a shared group
+        return getGroupNames();
+    }
+
     public Collection<String> getGroupNames() {
         try {
             String path = URL_PREFIX + "socialGroupNames";

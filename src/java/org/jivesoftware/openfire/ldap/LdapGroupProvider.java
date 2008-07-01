@@ -144,6 +144,11 @@ public class LdapGroupProvider implements GroupProvider {
         return this.groupCount;
     }
 
+    public Collection<String> getSharedGroupsNames() {
+        // Get the list of shared groups from the database
+        return Group.getSharedGroupsNames();
+    }
+
     public Collection<String> getGroupNames() {
         return getGroupNames(-1, -1);
     }

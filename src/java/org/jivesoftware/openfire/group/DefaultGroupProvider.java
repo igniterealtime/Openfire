@@ -262,6 +262,11 @@ public class DefaultGroupProvider implements GroupProvider {
         return count;
     }
 
+    public Collection<String> getSharedGroupsNames() {
+        // Get the list of shared groups from the database
+        return Group.getSharedGroupsNames();
+    }
+
     public Collection<String> getGroupNames() {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;

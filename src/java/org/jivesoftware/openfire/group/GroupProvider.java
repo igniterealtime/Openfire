@@ -105,6 +105,13 @@ public interface GroupProvider {
     Collection<String> getGroupNames();
 
     /**
+     * Returns an unmodifiable Collection of all shared groups in the system.
+     *
+     * @return unmodifiable Collection of all shared groups in the system.
+     */
+    Collection<String> getSharedGroupsNames();
+
+    /**
      * Returns the Collection of all groups in the system.
      *
      * @param startIndex start index in results.

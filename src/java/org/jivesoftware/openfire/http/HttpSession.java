@@ -808,6 +808,7 @@ public class HttpSession extends LocalClientSession {
 	        errorMessage += ", minimum polling interval is " 
 	        	+ maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
         }
+        setLastResponseEmpty(false);
         
         if(overactivity) {
         	Log.debug(errorMessage);
@@ -867,6 +868,8 @@ public class HttpSession extends LocalClientSession {
         	builder.append(" ack='" + ack + "'");
         
         builder.append(">");
+
+        setLastResponseEmpty(elements.size() == 0);
         for (Deliverable child : elements) {
             builder.append(child.getDeliverable());
         }

@@ -251,7 +251,6 @@ public class HttpBindServlet extends HttpServlet {
             }
             else {
                 session.resetInactivityTimeout();
-                session.setLastResponseEmpty(false);
                 connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
@@ -304,7 +303,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         catch (HttpBindTimeoutException e) {
             content = createEmptyBody();
-            connection.getSession().setLastResponseEmpty(false);
+            connection.getSession().setLastResponseEmpty(true);
         }
 
         respond(response, content, method);

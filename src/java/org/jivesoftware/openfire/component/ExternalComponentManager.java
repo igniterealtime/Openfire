@@ -229,7 +229,7 @@ public class ExternalComponentManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_CONFIGURATION);
-            pstmt.setString(1, configuration.getSubdomain());
+            pstmt.setString(1, configuration.getSubdomain() + (configuration.isWildcard() ? "%" : ""));
             pstmt.setInt(2, configuration.isWildcard() ? 1 : 0);
             pstmt.executeUpdate();
         }

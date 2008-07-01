@@ -195,7 +195,7 @@
             <% } %>
         </td>
         <td width="45%" valign="middle">
-            <% if (!room.getDescription().isEmpty()) { %>
+            <% if (!room.getDescription().equals("")) { %>
                 <%= room.getDescription() %>
             <% }
                else { %>

@@ -62,7 +62,12 @@ public class ClearspaceAdminProvider implements AdminProvider {
                 }
             }
             return admins;
-        } catch (Exception e) {
+        }
+        catch (ConnectException e) {
+            Log.error(e);
+            return new ArrayList();
+        }
+        catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
         }

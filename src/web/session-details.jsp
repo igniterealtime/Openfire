@@ -168,9 +168,13 @@
                 else {
                     statusTxt = "";
                 }
-                if (show == Presence.Show.away) {
+                if (!currentSess.getPresence().isAvailable()) {
             %>
-
+                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
+                <fmt:message key="user.properties.offline" />
+            <%
+                } else if (show == Presence.Show.away) {
+            %>
                 <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <fmt:message key="session.details.away" /> <%= statusTxt %>
 

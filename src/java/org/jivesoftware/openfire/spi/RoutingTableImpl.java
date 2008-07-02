@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
@@ -249,7 +250,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             }
         }
-        else if (jid.getDomain().contains(serverName) && hasComponentRoute(jid)) {
+        else if (jid.getDomain().contains(serverName) &&
+                (hasComponentRoute(jid) || ExternalComponentManager.hasConfiguration(jid.getDomain()))) {
             // Packet sent to component hosted in this server
             // First check if the component is being hosted in this JVM
             RoutableChannelHandler route = localRoutingTable.getRoute(jid.getDomain());

@@ -156,6 +156,18 @@ public class ExternalComponentManager {
     }
 
     /**
+     * Returns true if there is a configuration for the specified subdomain. This
+     * checking can be used as an indirect way of checking that the specified
+     * subdomain belongs to an external component.
+     *
+     * @param subdomain the subdomain of the external component.
+     * @return true if there is a configuration for the specified subdomain.
+     */
+    public static boolean hasConfiguration(String subdomain) {
+        return getConfiguration(subdomain, true) != null;
+    }
+
+    /**
      * Returns the list of registered external components that are allowed to connect to this
      * server when using a whitelist policy. However, when using a blacklist policy (i.e. anyone
      * may connect to the server) the returned list of configurations will be used for obtaining

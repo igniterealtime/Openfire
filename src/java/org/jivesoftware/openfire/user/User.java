@@ -158,8 +158,9 @@ public class User implements Cacheable, Externalizable, Result {
      * Sets a new password for this user.
      *
      * @param password the new password for the user.
+     * @throws UnsupportedOperationException
      */
-    public void setPassword(String password) {
+    public void setPassword(String password) throws UnsupportedOperationException {
         if (UserManager.getUserProvider().isReadOnly()) {
             throw new UnsupportedOperationException("User provider is read-only.");
         }
@@ -172,9 +173,6 @@ public class User implements Cacheable, Externalizable, Result {
             params.put("type", "passwordModified");
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
-        }
-        catch (UnsupportedOperationException uoe) {
-            Log.error(uoe);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);

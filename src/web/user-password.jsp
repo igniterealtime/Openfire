@@ -39,17 +39,23 @@
 
     // Handle a password update:
     boolean errors = false;
+    boolean unsupported = false;
     if (update) {
         // Validate the passwords:
         if (password != null && passwordConfirm != null && password.equals(passwordConfirm)) {
-            user.setPassword(password);
-            if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
-                // Log the event
-                admin.logEvent("set password for user "+username, null);
+            try {
+                user.setPassword(password);
+                if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+                    // Log the event
+                    admin.logEvent("set password for user "+username, null);
+                }
+                // Done, so redirect
+                response.sendRedirect("user-password.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));
+                return;
             }
-            // Done, so redirect
-            response.sendRedirect("user-password.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));
-            return;
+            catch (UnsupportedOperationException uoe) {
+                unsupported = true;
+            }
         }
         else {
             errors = true;
@@ -80,6 +86,19 @@
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="user.password.error_set_pwd" />
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<%  } else if (unsupported) { %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label">
+        <fmt:message key="user.password.error_set_pwd_unsupp" />
         </td></tr>
     </tbody>
     </table>

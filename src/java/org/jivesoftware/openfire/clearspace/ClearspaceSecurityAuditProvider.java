@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.security.SecurityAuditEvent;
 import org.jivesoftware.openfire.security.SecurityAuditProvider;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
+import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.Date;
 import java.util.List;
@@ -56,6 +57,8 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
             Element userE = rootE.addElement("username");
             // Un-escape username.
             username = JID.unescapeNode(username);
+            // Encode potentially non-ASCII characters
+            username = URLUTF8Encoder.encode(username);
             userE.addText(username);
             Element descE = rootE.addElement("description");
             if (summary != null) {

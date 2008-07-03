@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
+import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.*;
 
@@ -229,6 +230,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
      */
     private Element getGroupByName(String name) throws GroupNotFoundException {
         try {
+            // Encode potentially non-ASCII characters
+            name = URLUTF8Encoder.encode(name);
             String path = URL_PREFIX + "socialGroupsByName/" + name;
 
             return ClearspaceManager.getInstance().executeRequest(GET, path);

@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
+import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.List;
 
@@ -209,6 +210,8 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
         try {
             // Un-escape username.
             username = JID.unescapeNode(username);
+            // Encode potentially non-ASCII characters
+            username = URLUTF8Encoder.encode(username);
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response

@@ -158,7 +158,7 @@ public class User implements Cacheable, Externalizable, Result {
      * Sets a new password for this user.
      *
      * @param password the new password for the user.
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException exception
      */
     public void setPassword(String password) throws UnsupportedOperationException {
         if (UserManager.getUserProvider().isReadOnly()) {

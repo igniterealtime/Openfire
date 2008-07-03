@@ -124,7 +124,7 @@ public class ClearspaceUserProvider implements UserProvider {
     }
 
     /**
-     * Creates user using the userService/users DELETE service. If the user is not found returns.
+     * Deletes a user using the userService/users DELETE service. If the user is not found returns.
      *
      * @param username the username of the user to delete
      */
@@ -135,7 +135,7 @@ public class ClearspaceUserProvider implements UserProvider {
         }
 
         try {
-             // Encode potentially non-ASCII characters
+            // Encode potentially non-ASCII characters
             username = URLUTF8Encoder.encode(username);
             long userID = ClearspaceManager.getInstance().getUserID(username);
             String path = USER_URL_PREFIX + "users/" + userID;

@@ -47,6 +47,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -330,6 +331,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         try {
             // Un-escape username.
             username = JID.unescapeNode(username);
+            // Encode potentially non-ASCII characters
+            username = URLUTF8Encoder.encode(username);
             String path = ClearspaceAuthProvider.URL_PREFIX + "authenticate/" + username + "/" + password;
             executeRequest(GET, path);
             return true;
@@ -985,6 +988,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
         // Un-escape username.
         String unescapedUsername = JID.unescapeNode(username);
+        // Encode potentially non-ASCII characters
+        unescapedUsername = URLUTF8Encoder.encode(unescapedUsername);
         // Gets the user's ID from Clearspace
         try {
             String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/" + unescapedUsername;
@@ -1070,6 +1075,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             return groupIDCache.get(groupname);
         }
         try {
+            // Encode potentially non-ASCII characters
+            groupname = URLUTF8Encoder.encode(groupname);
             String path = ClearspaceGroupProvider.URL_PREFIX + "groups/" + groupname;
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 

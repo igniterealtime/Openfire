@@ -65,7 +65,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
         }
         catch (ConnectException e) {
             Log.error(e);
-            return new ArrayList();
+            return new ArrayList<JID>();
         }
         catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException

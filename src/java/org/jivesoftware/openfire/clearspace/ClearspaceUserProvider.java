@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
+import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.*;
 
@@ -88,6 +89,8 @@ public class ClearspaceUserProvider implements UserProvider {
             Element usernameE = userE.addElement("username");
             // Un-escape username.
             username = JID.unescapeNode(username);
+            // Encode potentially non-ASCII characters
+            username = URLUTF8Encoder.encode(username);
             usernameE.addText(username);
 
             // adds the name if it is not empty
@@ -132,6 +135,8 @@ public class ClearspaceUserProvider implements UserProvider {
         }
 
         try {
+             // Encode potentially non-ASCII characters
+            username = URLUTF8Encoder.encode(username);
             long userID = ClearspaceManager.getInstance().getUserID(username);
             String path = USER_URL_PREFIX + "users/" + userID;
             ClearspaceManager.getInstance().executeRequest(DELETE, path);
@@ -414,6 +419,8 @@ public class ClearspaceUserProvider implements UserProvider {
                 String username = userNode.selectSingleNode("username").getText();
                 // Escape the username so that it can be used as a JID.
                 username = JID.escapeNode(username);
+                // Encode potentially non-ASCII characters
+                username = URLUTF8Encoder.encode(username);
                 usernames.add(username);
             }
         } catch (Exception e) {
@@ -461,6 +468,8 @@ public class ClearspaceUserProvider implements UserProvider {
                 String username = userNode.selectSingleNode("username").getText();
                 // Escape the username so that it can be used as a JID.
                 username = JID.escapeNode(username);
+                // Encode potentially non-ASCII characters
+                username = URLUTF8Encoder.encode(username);
                 usernames.add(username);
             }
 
@@ -597,6 +606,8 @@ public class ClearspaceUserProvider implements UserProvider {
         try {
             // Un-escape username.
             username = JID.unescapeNode(username);
+            // Encode potentially non-ASCII characters
+            username = URLUTF8Encoder.encode(username);
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response

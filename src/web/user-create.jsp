@@ -64,8 +64,7 @@
         // Trim the password. This means we don't accept spaces as passwords. We don't
         // trim the passwordConfirm as well since not trimming will ensure the user doesn't
         // think space is an ok password character.
-        password = password.trim();
-        if (password == null || password.equals("")) {
+        if (password == null || password.trim().equals("")) {
             errors.put("password","");
         }
         if (passwordConfirm == null) {
@@ -76,7 +75,7 @@
         }
         // If provider requires email, validate
         if (UserManager.getUserProvider().isEmailRequired()) {
-            if (StringUtils.isValidEmailAddress(email)) {
+            if (!StringUtils.isValidEmailAddress(email)) {
                 errors.put("email","");
             }
         }

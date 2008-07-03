@@ -47,7 +47,7 @@
     if (save) {
         // If provider requires email, validate
         if (UserManager.getUserProvider().isEmailRequired()) {
-            if (StringUtils.isValidEmailAddress(email)) {
+            if (!StringUtils.isValidEmailAddress(email)) {
                 errors.put("email","");
             }
         }
@@ -58,27 +58,29 @@
             }
         }
 
-        user.setEmail(email);
-        user.setName(name);
+        if (errors.size() == 0) {
+            user.setEmail(email);
+            user.setName(name);
 
-        if (!AdminManager.getAdminProvider().isReadOnly()) {
-            boolean isCurrentAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
-            if (isCurrentAdmin && !isAdmin) {
-                AdminManager.getInstance().removeAdminAccount(user.getUsername());
+            if (!AdminManager.getAdminProvider().isReadOnly()) {
+                boolean isCurrentAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
+                if (isCurrentAdmin && !isAdmin) {
+                    AdminManager.getInstance().removeAdminAccount(user.getUsername());
+                }
+                else if (!isCurrentAdmin && isAdmin) {
+                    AdminManager.getInstance().addAdminAccount(user.getUsername());
+                }
             }
-            else if (!isCurrentAdmin && isAdmin) {
-                AdminManager.getInstance().addAdminAccount(user.getUsername());
+
+            if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
+                // Log the event
+                webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email+", admin = "+isAdmin);
             }
-        }
 
-        if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
-            // Log the event
-            webManager.logEvent("edited user "+username, "set name = "+name+", email = "+email+", admin = "+isAdmin);
+            // Changes good, so redirect
+            response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));
+            return;
         }
-
-        // Changes good, so redirect
-        response.sendRedirect("user-properties.jsp?editsuccess=true&username=" + URLEncoder.encode(username, "UTF-8"));
-        return;
     }
 %>
 

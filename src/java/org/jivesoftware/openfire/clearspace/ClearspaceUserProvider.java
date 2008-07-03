@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.*;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -114,8 +115,9 @@ public class ClearspaceUserProvider implements UserProvider {
         } catch (UserAlreadyExistsException uaee) {
             throw uaee;
         } catch (Exception e) {
-            throw new UnsupportedOperationException("Error creating the user", e);
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
+        return new User(username, name, email, new Date(), new Date());
     }
 
     /**
@@ -137,8 +139,7 @@ public class ClearspaceUserProvider implements UserProvider {
         } catch (UserNotFoundException gnfe) {
             // it is OK, the user doesn't exist "anymore"
         } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+            Log.error(e);
         }
     }
 
@@ -153,9 +154,9 @@ public class ClearspaceUserProvider implements UserProvider {
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             return Integer.valueOf(WSUtils.getReturn(element));
         } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+            Log.error(e);
         }
+        return 0;
     }
 
     /**
@@ -180,9 +181,9 @@ public class ClearspaceUserProvider implements UserProvider {
 
             return WSUtils.parseUsernameArray(element);
         } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+            Log.error(e);
         }
+        return new ArrayList<String>();
     }
 
     /**
@@ -217,15 +218,21 @@ public class ClearspaceUserProvider implements UserProvider {
             throw new UnsupportedOperationException();
         }
 
-        // Creates the params
-        Element userUpdateParams = getUserUpdateParams(username);
+        try {
+            // Creates the params
+            Element userUpdateParams = getUserUpdateParams(username);
 
-        // Modifies the attribute of the user
-        String[] path = new String[]{"user", "name"};
-        WSUtils.modifyElementText(userUpdateParams, path, name);
+            // Modifies the attribute of the user
+            String[] path = new String[]{"user", "name"};
+            WSUtils.modifyElementText(userUpdateParams, path, name);
 
-        // Updates the user
-        updateUser(userUpdateParams);
+            // Updates the user
+            updateUser(userUpdateParams);
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserNotFoundException(e);
+        }
     }
 
     /**
@@ -241,15 +248,21 @@ public class ClearspaceUserProvider implements UserProvider {
             throw new UnsupportedOperationException();
         }
 
-        // Creates the params
-        Element userUpdateParams = getUserUpdateParams(username);
+        try {
+            // Creates the params
+            Element userUpdateParams = getUserUpdateParams(username);
 
-        // Modifies the attribute of the user
-        String[] path = new String[]{"user", "email"};
-        WSUtils.modifyElementText(userUpdateParams, path, email);
+            // Modifies the attribute of the user
+            String[] path = new String[]{"user", "email"};
+            WSUtils.modifyElementText(userUpdateParams, path, email);
 
-        // Updates the user
-        updateUser(userUpdateParams);
+            // Updates the user
+            updateUser(userUpdateParams);
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserNotFoundException(e);
+        }
     }
 
 
@@ -266,16 +279,22 @@ public class ClearspaceUserProvider implements UserProvider {
             throw new UnsupportedOperationException();
         }
 
-        // Creates the params
-        Element userUpdateParams = getUserUpdateParams(username);
+        try {
+            // Creates the params
+            Element userUpdateParams = getUserUpdateParams(username);
 
-        // Modifies the attribute of the user
-        String[] path = new String[]{"user", "creationDate"};
-        String newValue = WSUtils.formatDate(creationDate);
-        WSUtils.modifyElementText(userUpdateParams, path, newValue);
+            // Modifies the attribute of the user
+            String[] path = new String[]{"user", "creationDate"};
+            String newValue = WSUtils.formatDate(creationDate);
+            WSUtils.modifyElementText(userUpdateParams, path, newValue);
 
-        // Updates the user
-        updateUser(userUpdateParams);
+            // Updates the user
+            updateUser(userUpdateParams);
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserNotFoundException(e);
+        }
     }
 
     /**
@@ -291,16 +310,22 @@ public class ClearspaceUserProvider implements UserProvider {
             throw new UnsupportedOperationException();
         }
 
-        // Creates the params
-        Element userUpdateParams = getUserUpdateParams(username);
+        try {
+            // Creates the params
+            Element userUpdateParams = getUserUpdateParams(username);
 
-        // Modifies the attribute of the user
-        String[] path = new String[]{"user", "modificationDate"};
-        String newValue = WSUtils.formatDate(modificationDate);
-        WSUtils.modifyElementText(userUpdateParams, path, newValue);
+            // Modifies the attribute of the user
+            String[] path = new String[]{"user", "modificationDate"};
+            String newValue = WSUtils.formatDate(modificationDate);
+            WSUtils.modifyElementText(userUpdateParams, path, newValue);
 
-        // Updates the user
-        updateUser(userUpdateParams);
+            // Updates the user
+            updateUser(userUpdateParams);
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserNotFoundException(e);
+        }
     }
 
     /**
@@ -377,8 +402,8 @@ public class ClearspaceUserProvider implements UserProvider {
         queryE.addElement("searchEmail").addText("true");
         queryE.addElement("searchProfile").addText("false");
 
+        List<String> usernames = new ArrayList<String>();
         try {
-            List<String> usernames = new ArrayList<String>();
 
             //TODO create a service on CS to get only the username field
             String path = SEARCH_URL_PREFIX + "searchProfile";
@@ -391,12 +416,10 @@ public class ClearspaceUserProvider implements UserProvider {
                 username = JID.escapeNode(username);
                 usernames.add(username);
             }
-
-            return new UserCollection(usernames.toArray(new String[usernames.size()]));
         } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+            Log.error(e);
         }
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     /**
@@ -426,8 +449,8 @@ public class ClearspaceUserProvider implements UserProvider {
         paramsE.addElement("startIndex").addText(String.valueOf(startIndex));
         paramsE.addElement("numResults").addText(String.valueOf(numResults));
 
+        List<String> usernames = new ArrayList<String>();
         try {
-            List<String> usernames = new ArrayList<String>();
 
             //TODO create a service on CS to get only the username field
             String path = SEARCH_URL_PREFIX + "searchProfile";
@@ -441,11 +464,10 @@ public class ClearspaceUserProvider implements UserProvider {
                 usernames.add(username);
             }
 
-            return new UserCollection(usernames.toArray(new String[usernames.size()]));
         } catch (Exception e) {
-            // It is not supported exception, wrap it into an UnsupportedOperationException
-            throw new UnsupportedOperationException("Unexpected error", e);
+            Log.error(e);
         }
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     /**

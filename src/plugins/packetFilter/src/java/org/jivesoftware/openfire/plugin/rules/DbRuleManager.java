@@ -171,6 +171,8 @@ public class DbRuleManager {
             }
         } catch (SQLException sqle) {
             Log.error(sqle);
+            // Result set probably empty
+            return 0;
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

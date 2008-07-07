@@ -19,7 +19,6 @@ import org.jivesoftware.openfire.security.SecurityAuditEvent;
 import org.jivesoftware.openfire.security.SecurityAuditProvider;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.Date;
 import java.util.List;

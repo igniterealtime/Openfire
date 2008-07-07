@@ -16,7 +16,6 @@ import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GE
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
-import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 /**
  * The ClearspaceAuthProvider uses the PermissionService web service inside of Clearspace

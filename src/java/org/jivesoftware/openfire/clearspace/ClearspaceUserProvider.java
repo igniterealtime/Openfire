@@ -20,7 +20,6 @@ import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.JID;
-import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.*;
 

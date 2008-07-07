@@ -22,7 +22,6 @@ import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.List;
 

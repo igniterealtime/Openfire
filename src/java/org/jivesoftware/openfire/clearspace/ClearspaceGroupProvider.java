@@ -22,7 +22,6 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
-import org.jdesktop.jdic.desktop.internal.impl.URLUTF8Encoder;
 
 import java.util.*;
 

@@ -178,6 +178,15 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         private OutgoingSessionPromise promise;
         private String domain;
         private Queue<Packet> packetQueue = new ConcurrentLinkedQueue<Packet>();
+        /**
+         * Keep track of the last time s2s failed. Once a packet failed to be sent to a
+         * remote server this stamp will be used so that for the next 5 seconds future packets
+         * for the same domain will automatically fail. After 5 seconds a new attempt to
+         * establish a s2s connection and deliver pendings packets will be performed.
+         * This optimization is good when the server is receiving many packets per second for the
+         * same domain. This will help reduce high CPU consumption.
+         */
+        private long failureTimestamp = -1;
 
         public PacketsProcessor(OutgoingSessionPromise promise, String domain) {
             this.promise = promise;
@@ -188,6 +197,21 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             while (!isDone()) {
                 Packet packet = packetQueue.poll();
                 if (packet != null) {
+                    // Check if s2s already failed
+                    if (failureTimestamp > 0) {
+                        // Check if enough time has passed to attempt a new s2s
+                        if (System.currentTimeMillis() - failureTimestamp < 5000) {
+                            returnErrorToSender(packet);
+                            Log.debug(
+                                    "OutgoingSessionPromise: Error sending packet to remote server (fast discard): " +
+                                            packet);
+                            continue;
+                        }
+                        else {
+                            // Reset timestamp of last failure since we are ready to try again doing a s2s
+                            failureTimestamp = -1;
+                        }
+                    }
                     try {
                         sendPacket(packet);
                     }
@@ -196,6 +220,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         Log.debug(
                                 "OutgoingSessionPromise: Error sending packet to remote server: " + packet,
                                 e);
+                        // Mark the time when s2s failed
+                        failureTimestamp = System.currentTimeMillis();
                     }
                 }
             }

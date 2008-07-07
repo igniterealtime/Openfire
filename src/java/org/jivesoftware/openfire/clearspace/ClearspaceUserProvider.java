@@ -134,8 +134,6 @@ public class ClearspaceUserProvider implements UserProvider {
         }
 
         try {
-            // Encode potentially non-ASCII characters
-            username = URLUTF8Encoder.encode(username);
             long userID = ClearspaceManager.getInstance().getUserID(username);
             String path = USER_URL_PREFIX + "users/" + userID;
             ClearspaceManager.getInstance().executeRequest(DELETE, path);

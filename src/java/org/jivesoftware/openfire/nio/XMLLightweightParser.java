@@ -205,6 +205,10 @@ class XMLLightweightParser {
         boolean isHighSurrogate = false;
         for (int i = 0; i < readByte; i++) {
             ch = buf[i];
+            if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD) {
+                //Unicode characters in the range 0x0000-0x001F other than 9, A, and D are not allowed in XML
+                throw new Exception("Disallowed character");
+            }
             if (isHighSurrogate) {
                 if (Character.isLowSurrogate(ch)) {
                     // Everything is fine. Clean up traces for surrogates

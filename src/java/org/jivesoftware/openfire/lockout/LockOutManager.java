@@ -130,7 +130,7 @@ public class LockOutManager {
         if (username == null) {
             throw new UnsupportedOperationException("Null username not allowed!");
         }
-        if (!provider.shouldNotBeCached()) {
+        if (provider.shouldNotBeCached()) {
             return provider.getDisabledStatus(username);
         }
         LockOutFlag flag = lockOutCache.get(username);

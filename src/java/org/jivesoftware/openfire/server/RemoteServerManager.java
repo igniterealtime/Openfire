@@ -151,7 +151,7 @@ public class RemoteServerManager {
      *         data from a remote server.
      */
     public static int getSocketTimeout() {
-        return JiveGlobals.getIntProperty("xmpp.server.read.timeout", 20000);
+        return JiveGlobals.getIntProperty("xmpp.server.read.timeout", 120000);
     }
 
     /**

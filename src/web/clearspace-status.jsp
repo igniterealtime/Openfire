@@ -30,14 +30,14 @@
     ClearspaceManager manager = ClearspaceManager.getInstance();
     boolean configured = false;
 
-    // First if there is configure action configure clearspace
-    if (configure) {
-        configured = manager.configClearspace();
-    }
-
     // Checks if CS and OF are currently connected
     boolean connectedCS = manager.isClearspaceConnected();
     boolean connectedOF = manager.isOpenfireConnected();
+
+    // If OF is connected to CS and there is a configure action, configure clearspace
+    if (connectedOF && configure) {
+        configured = manager.configClearspace();
+    }
 
     // This fields will hold the status information of the connection
     Date creationDate = null;

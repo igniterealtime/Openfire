@@ -19,8 +19,8 @@ import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.mortbay.util.ajax.ContinuationSupport;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -182,7 +182,8 @@ public class HttpBindServlet extends HttpServlet {
             System.out.println(new Date()+": HTTP ERR("+session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
         }
         try {
-            if (session.getVersion() >= 1.6) {
+        	if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
+                	session.getMajorVersion() > 1) {
                 respond(session, response, createErrorBody(bindingError.getErrorType().getType(),
                         bindingError.getCondition()), request.getMethod());
             }
@@ -241,11 +242,19 @@ public class HttpBindServlet extends HttpServlet {
             }
 
             String type = rootNode.attributeValue("type");
+            int pauseDuration = getIntAttribue(rootNode.attributeValue("pause"), -1);
+
             if ("terminate".equals(type)) {
                 session.close();
                 respond(session, response, createEmptyBody(), request.getMethod());
             }
+            else if (pauseDuration > 0 && pauseDuration <= session.getMaxPause()) {
+            	session.pause(pauseDuration);
+                respond(session, response, createEmptyBody(), request.getMethod());
+                session.setLastResponseEmpty(true);
+            }
             else {
+                session.resetInactivityTimeout();
                 connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
@@ -301,6 +310,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         catch (HttpBindTimeoutException e) {
             content = createEmptyBody();
+            connection.getSession().setLastResponseEmpty(true);
         }
 
         respond(connection.getSession(), response, content, method);
@@ -313,6 +323,10 @@ public class HttpBindServlet extends HttpServlet {
         response.setCharacterEncoding("utf-8");
 
         if ("GET".equals(method)) {
+        	// Prevent caching of responses
+        	response.addHeader("Cache-Control", "no-store");
+        	response.addHeader("Cache-Control", "no-cache");
+        	response.addHeader("Pragma", "no-cache");
             content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
         }
 
@@ -337,6 +351,18 @@ public class HttpBindServlet extends HttpServlet {
         }
         try {
             return Long.valueOf(value);
+        }
+        catch (Exception ex) {
+            return defaultValue;
+        }
+    }
+
+    private int getIntAttribue(String value, int defaultValue) {
+        if (value == null || "".equals(value)) {
+            return defaultValue;
+        }
+        try {
+            return Integer.valueOf(value);
         }
         catch (Exception ex) {
             return defaultValue;

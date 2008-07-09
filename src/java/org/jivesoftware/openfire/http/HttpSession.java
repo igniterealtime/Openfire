@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParserException;
@@ -86,11 +87,15 @@ public class HttpSession extends LocalClientSession {
     private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
     private volatile boolean isClosed;
     private int inactivityTimeout;
+    private int defaultInactivityTimeout;
     private long lastActivity;
     private long lastRequestID;
+    private boolean lastResponseEmpty;
     private int maxRequests;
+    private int maxPause;
     private PacketDeliverer backupDeliverer;
-    private Double version = Double.NaN;
+    private int majorVersion = -1;
+    private int minorVersion = -1;
     private X509Certificate[] sslCertificates;
 
     private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
@@ -228,7 +233,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @param language the language this session is using.
      */
-    public void setLanaguage(String language) {
+    public void setLanguage(String language) {
         this.language = language;
     }
 
@@ -285,6 +290,28 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Sets the maximum length of a temporary session pause (in seconds) that the client MAY
+     * request.
+     *
+     * @param maxPause the maximum length of a temporary session pause (in seconds) that the client
+     * MAY request.
+     */
+    public void setMaxPause(int maxPause) {
+        this.maxPause = maxPause;
+    }
+
+    /**
+     * Returns the maximum length of a temporary session pause (in seconds) that the client MAY
+     * request.
+     *
+     * @return the maximum length of a temporary session pause (in seconds) that the client MAY
+     *         request.
+     */
+    public int getMaxPause() {
+        return this.maxPause;
+    }
+
+    /**
      * Returns true if all connections on this session should be secured, and false if they should
      * not.
      *
@@ -296,11 +323,11 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Returns true if this session is a polling session. Some clients may be restricted to open 
-     * only one connection to the server. In this case the client SHOULD inform the server by 
-     * setting the values of the 'wait' and/or 'hold' attributes in its session creation request 
-     * to "0", and then "poll" the server at regular intervals throughout the session for stanzas 
-     * it may have received from the server.  
+     * Returns true if this session is a polling session. Some clients may be restricted to open
+     * only one connection to the server. In this case the client SHOULD inform the server by
+     * setting the values of the 'wait' and/or 'hold' attributes in its session creation request
+     * to "0", and then "poll" the server at regular intervals throughout the session for stanzas
+     * it may have received from the server.
      *
      * @return true if this session is a polling session.
      */
@@ -329,6 +356,18 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Sets the default inactivity timeout of this session. A session's inactivity timeout can
+     * be temporarily changed using session pause requests.
+     *
+     * @see #pause(int)
+     *
+     * @param defaultInactivityTimeout the default inactivity timeout of this session.
+     */
+    public void setDefaultInactivityTimeout(int defaultInactivityTimeout) {
+        this.defaultInactivityTimeout = defaultInactivityTimeout;
+    }
+
+    /**
      * Sets the time, in seconds, after which this session will be considered inactive and be be
      * terminated.
      *
@@ -340,6 +379,16 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
+     * Resets the inactivity timeout of this session to default. A session's inactivity timeout can
+     * be temporarily changed using session pause requests.
+     *
+     * @see #pause(int)
+     */
+    public void resetInactivityTimeout() {
+        this.inactivityTimeout = this.defaultInactivityTimeout;
+    }
+
+    /**
      * Returns the time, in seconds, after which this session will be considered inactive and
      * terminated.
      *
@@ -348,6 +397,27 @@ public class HttpSession extends LocalClientSession {
      */
     public int getInactivityTimeout() {
         return inactivityTimeout;
+    }
+
+    /**
+     * Pauses the session for the given amount of time. If a client encounters an exceptional
+     * temporary situation during which it will be unable to send requests to the connection
+     * manager for a period of time greater than the maximum inactivity period, then the client MAY
+     * request a temporary increase to the maximum inactivity period by including a 'pause'
+     * attribute in a request.
+     *
+     * @param duration the time, in seconds, after which this session will be considered inactive
+     *        and terminated.
+     */
+    public void pause(int duration) {
+    	// Respond immediately to all pending requests
+        for (HttpConnection toClose : connectionQueue) {
+            if (!toClose.isClosed()) {
+                toClose.close();
+                lastRequestID = toClose.getRequestId();
+            }
+        }
+    	setInactivityTimeout(duration);
     }
 
     /**
@@ -375,40 +445,100 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the version of BOSH which the client implements. Currently, the only versions supported
-     * by Openfire are 1.5 and 1.6. Any versions less than or equal to 1.5 will be interpreted as
-     * 1.5 and any values greater than or equal to 1.6 will be interpreted as 1.6.
+     * Returns the highest 'rid' attribute the server has received where it has also received
+     * all requests with lower 'rid' values. When responding to a request that it has been
+     * holding, if the server finds it has already received another request with a higher 'rid'
+     * attribute (typically while it was holding the first request), then it MAY acknowledge the
+     * reception to the client.
      *
-     * @param version the version of BOSH which the client implements, represented as a Double,
-     * {major version}.{minor version}.
+     * @return the highest 'rid' attribute the server has received where it has also received
+     * all requests with lower 'rid' values.
      */
-    public void setVersion(double version) {
-        if(version <= 1.5) {
-            return;
+    public long getLastAcknowledged() {
+    	long ack = lastRequestID;
+    	Collections.sort(connectionQueue, connectionComparator);
+        for (HttpConnection connection : connectionQueue) {
+            if (connection.getRequestId() == ack + 1) {
+            	ack++;
+            }
         }
-        else if(version >= 1.6) {
-            version = 1.6;
-        }
-        this.version = version;
+        return ack;
     }
 
     /**
-     * Returns the BOSH version which this session utilizes. The version refers to the
+     * Sets the major version of BOSH which the client implements. Currently, the only versions
+     * supported by Openfire are 1.5 and 1.6.
+     *
+     * @param majorVersion the major version of BOSH which the client implements.
+     */
+    public void setMajorVersion(int majorVersion) {
+        if(majorVersion != 1) {
+            return;
+        }
+        this.majorVersion = majorVersion;
+    }
+
+    /**
+     * Returns the major version of BOSH which this session utilizes. The version refers to the
      * version of the XEP which the connecting client implements. If the client did not specify
-     * a version 1.5 is returned as this is the last version of the <a
+     * a version 1 is returned as 1.5 is the last version of the <a
      * href="http://www.xmpp.org/extensions/xep-0124.html">XEP</a> that the client was not
      * required to pass along its version information when creating a session.
      *
-     * @return the version of the BOSH XEP which the client is utilizing.
+     * @return the major version of the BOSH XEP which the client is utilizing.
      */
-    public double getVersion() {
-        if (!Double.isNaN(this.version)) {
-            return this.version;
+    public int getMajorVersion() {
+        if (this.majorVersion != -1) {
+            return this.majorVersion;
         }
         else {
-            return 1.5;
+            return 1;
         }
     }
+
+    /**
+     * Sets the minor version of BOSH which the client implements. Currently, the only versions
+     * supported by Openfire are 1.5 and 1.6. Any versions less than or equal to 5 will be
+     * interpreted as 5 and any values greater than or equal to 6 will be interpreted as 6.
+     *
+     * @param minorVersion the minor version of BOSH which the client implements.
+     */
+    public void setMinorVersion(int minorVersion) {
+    	if(minorVersion <= 5) {
+        	this.minorVersion = 5;
+        }
+    	else if(minorVersion >= 6) {
+        	this.minorVersion = 6;
+        }
+    }
+
+    /**
+     * Returns the major version of BOSH which this session utilizes. The version refers to the
+     * version of the XEP which the connecting client implements. If the client did not specify
+     * a version 5 is returned as 1.5 is the last version of the <a
+     * href="http://www.xmpp.org/extensions/xep-0124.html">XEP</a> that the client was not
+     * required to pass along its version information when creating a session.
+     *
+     * @return the minor version of the BOSH XEP which the client is utilizing.
+     */
+    public int getMinorVersion() {
+        if (this.minorVersion != -1) {
+            return this.minorVersion;
+        }
+        else {
+            return 5;
+        }
+    }
+
+    /**
+     * lastResponseEmpty true if last response of this session is an empty body element. This
+     * is used in overactivity checking.
+     *
+     * @param lastResponseEmpty true if last response of this session is an empty body element.
+     */
+	public void setLastResponseEmpty(boolean lastResponseEmpty) {
+		this.lastResponseEmpty = lastResponseEmpty;
+	}
 
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
@@ -441,6 +571,7 @@ public class HttpSession extends LocalClientSession {
         }
         if (response == null) {
             response = createEmptyBody();
+            setLastResponseEmpty(true);
         }
         return response;
     }
@@ -488,10 +619,10 @@ public class HttpSession extends LocalClientSession {
             }
         }
     }
-    
+
     /**
      * Return the X509Certificates associated with this session.
-     * 
+     *
      * @return the X509Certificate associated with this session.
      */
     public X509Certificate[] getPeerCertificates() {
@@ -529,9 +660,8 @@ public class HttpSession extends LocalClientSession {
             connection.deliverBody(createDeliverable(deliverable.deliverables));
             return connection;
         }
-        else if (rid > (lastRequestID + hold + 1)) {
-            // TODO handle the case of greater RID which basically has it wait
-            Log.warn("Request " + rid + " > " + (lastRequestID + hold + 1) + ", ending session.");
+        else if (rid > (lastRequestID + maxRequests)) {
+            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session.");
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
         }
@@ -558,9 +688,7 @@ public class HttpSession extends LocalClientSession {
             throw new IllegalArgumentException("Connection cannot be null.");
         }
 
-        if (isPoll) {
-            checkPollingInterval();
-        }
+        checkOveractivity(isPoll);
 
         if (isSecure && !connection.isSecure()) {
             throw new HttpBindException("Session was started from secure connection, all " +
@@ -568,7 +696,7 @@ public class HttpSession extends LocalClientSession {
         }
 
         sslCertificates = connection.getPeerCertificates();
-        
+
         connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
@@ -585,15 +713,15 @@ public class HttpSession extends LocalClientSession {
 
             connectionQueue.add(connection);
             Collections.sort(connectionQueue, connectionComparator);
-            
+
             int connectionsToClose;
             if(connectionQueue.get(connectionQueue.size() - 1) != connection) {
-            	// Current connection does not have the greatest rid. That means 
+            	// Current connection does not have the greatest rid. That means
             	// requests were received out of order, respond to all.
             	connectionsToClose = connectionQueue.size();
             }
             else {
-                // Everything's fine, number of current connections open tells us 
+                // Everything's fine, number of current connections open tells us
             	// how many that we need to close.
             	connectionsToClose = getOpenConnectionCount() - hold;
             }
@@ -646,18 +774,53 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private void checkPollingInterval() throws HttpBindException {
-        long time = System.currentTimeMillis();
-        if (((time - lastPoll) / 1000) < maxPollingInterval) {
-            Log.debug("Too frequent polling minimum interval is "
-                    + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000));
-            if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignorePollingCap", false)) {
-                throw new HttpBindException("Too frequent polling minimum interval is "
-                        + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000),
-                        BoshBindingError.policyViolation);
+    /**
+     * Check that the client SHOULD NOT make more simultaneous requests than specified
+     * by the 'requests' attribute in the connection manager's Session Creation Response.
+     * However the client MAY make one additional request if it is to pause or terminate a session.
+     *
+     * @see <a href="http://www.xmpp.org/extensions/xep-0124.html#overactive">overactive</a>.
+     * @param isPoll true if the session is using polling.
+     * @throws HttpBindException if the connection has violated a facet of the HTTP binding
+     *         protocol.
+     */
+    private void checkOveractivity(boolean isPoll) throws HttpBindException {
+    	int pendingConnections = 0;
+    	boolean overactivity = false;
+    	String errorMessage = "Overactivity detected";
+
+        for (HttpConnection conn : connectionQueue) {
+            if (!conn.isClosed()) {
+                pendingConnections++;
             }
         }
-        lastPoll = time;
+
+        if(pendingConnections >= maxRequests) {
+        	overactivity = true;
+        	errorMessage += ", too many simultaneous requests.";
+        }
+        else if(isPoll) {
+	    	long time = System.currentTimeMillis();
+	        if (time - lastPoll < maxPollingInterval * JiveConstants.SECOND) {
+	        	if(isPollingSession()) {
+	        		overactivity = lastResponseEmpty;
+	        	}
+	        	else {
+	        		overactivity = (pendingConnections >= maxRequests - 1);
+	        	}
+	        }
+	        lastPoll = time;
+	        errorMessage += ", minimum polling interval is "
+	        	+ maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
+        }
+        setLastResponseEmpty(false);
+
+        if(overactivity) {
+        	Log.debug(errorMessage);
+            if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignoreOveractivity", false)) {
+                throw new HttpBindException(errorMessage, BoshBindingError.policyViolation);
+            }
+        }
     }
 
     private synchronized void deliver(String text) {
@@ -703,7 +866,15 @@ public class HttpSession extends LocalClientSession {
 
     private String createDeliverable(Collection<Deliverable> elements) {
         StringBuilder builder = new StringBuilder();
-        builder.append("<body xmlns='" + "http://jabber.org/protocol/httpbind" + "'>");
+        builder.append("<body xmlns='" + "http://jabber.org/protocol/httpbind" + "'");
+
+        long ack = getLastAcknowledged();
+        if(ack > lastRequestID)
+            builder.append(" ack='").append(ack).append("'");
+
+        builder.append(">");
+
+        setLastResponseEmpty(elements.size() == 0);
         for (Deliverable child : elements) {
             builder.append(child.getDeliverable());
         }
@@ -768,9 +939,12 @@ public class HttpSession extends LocalClientSession {
     }
 
 
-    private static String createEmptyBody() {
+    private String createEmptyBody() {
         Element body = DocumentHelper.createElement("body");
         body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        long ack = getLastAcknowledged();
+        if(ack > lastRequestID)
+        	body.addAttribute("ack", String.valueOf(ack));
         return body.asXML();
     }
 
@@ -813,7 +987,7 @@ public class HttpSession extends LocalClientSession {
         public void deliverRawText(String text) {
             ((HttpSession) session).deliver(text);
         }
-        
+
         public Certificate[] getPeerCertificates() {
             return ((HttpSession) session).getPeerCertificates();
         }

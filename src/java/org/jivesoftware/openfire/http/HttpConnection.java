@@ -12,6 +12,7 @@
 
 package org.jivesoftware.openfire.http;
 
+import org.jivesoftware.util.JiveConstants;
 import org.mortbay.util.ajax.Continuation;
 
 import java.security.cert.X509Certificate;
@@ -185,7 +186,7 @@ public class HttpConnection {
     }
 
     private String waitForResponse() throws HttpBindTimeoutException {
-        if (continuation.suspend(session.getWait() * 1000)) {
+        if (continuation.suspend(session.getWait() * JiveConstants.SECOND)) {
             String deliverable = (String) continuation.getObject();
             // This will occur when the hold attribute of a session has been exceded.
             this.isDelivered = true;

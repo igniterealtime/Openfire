@@ -210,13 +210,13 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void occupantJoined(JID roomJID, JID user, String nickname) {
-        if (!isRoomOwner(roomJID, user)) {
+        if (isClearspaceRoom(roomJID) && !isRoomOwner(roomJID, user)) {
             addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantJoined(roomJID, user, new Date().getTime()));
         }
     }
 
     public void occupantLeft(JID roomJID, JID user) {
-        if (!isRoomOwner(roomJID, user)) {
+        if (isClearspaceRoom(roomJID) && !isRoomOwner(roomJID, user)) {
             addGroupChatEvent(ClearspaceMUCTranscriptEvent.occupantLeft(roomJID, user, new Date().getTime()));
         }
     }
@@ -226,14 +226,14 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
     }
 
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
-        if (!isRoomOwner(roomJID, user)) {
+        if (isClearspaceRoom(roomJID) && !isRoomOwner(roomJID, user)) {
             addGroupChatEvent(ClearspaceMUCTranscriptEvent.messageReceived(roomJID, user, message.getBody(),
                     new Date().getTime()));
         }
     }
 
     public void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
-        if (!isRoomOwner(roomJID, user)) {
+        if (isClearspaceRoom(roomJID) && !isRoomOwner(roomJID, user)) {
             addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomSubjectChanged(roomJID, user, newSubject,
                     new Date().getTime()));
         }
@@ -247,6 +247,10 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                 XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID);
         MUCRoom room = chatService.getChatRoom(roomJID.getNode());
         return room != null && room.getOwners().contains(user.toBareJID());
+    }
+
+    private boolean isClearspaceRoom(JID roomJID) {
+        return roomJID.getDomain().equals(csMucDomain);
     }
 
     /**

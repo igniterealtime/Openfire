@@ -323,10 +323,12 @@ public class HttpBindServlet extends HttpServlet {
         response.setCharacterEncoding("utf-8");
 
         if ("GET".equals(method)) {
-        	// Prevent caching of responses
-        	response.addHeader("Cache-Control", "no-store");
-        	response.addHeader("Cache-Control", "no-cache");
-        	response.addHeader("Pragma", "no-cache");
+            if (JiveGlobals.getBooleanProperty("xmpp.httpbind.client.no-cache.enabled", true)) {
+                // Prevent caching of responses
+                response.addHeader("Cache-Control", "no-store");
+                response.addHeader("Cache-Control", "no-cache");
+                response.addHeader("Pragma", "no-cache");
+            }
             content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
         }
 

@@ -77,6 +77,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private static final String OPENFIRE_USERNAME = "openfire_SHRJKZCNU53";
     private static final String WEBSERVICES_PATH = "rpc/rest/";
     protected static final String IM_URL_PREFIX = "imService/";
+    protected static final String CHAT_URL_PREFIX = "chatService/";
     public  static final String MUC_SUBDOMAIN = "clearspace-conference";
     private static final String MUC_DESCRIPTION = "Clearspace Conference Services";
     public  static final String CLEARSPACE_COMPONENT = "clearspace";
@@ -729,7 +730,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
 
         try {
-            String path = IM_URL_PREFIX + "updateClientSettings/";
+            String path = CHAT_URL_PREFIX + "updateClientSettings/";
 
             // Creates the XML with the data
             Document groupDoc = DocumentHelper.createDocument();

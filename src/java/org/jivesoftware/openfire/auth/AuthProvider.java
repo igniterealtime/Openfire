@@ -61,8 +61,11 @@ public interface AuthProvider {
      * @param password the passwordl
      * @throws UnauthorizedException if the username and password do
      *      not match any existing user.
+     * @throws ConnectionException it there is a problem connecting to user and group sytem
+     * @throws InternalUnauthenticatedException if there is a problem authentication Openfire iteself into the user and group system
      */
-    void authenticate(String username, String password) throws UnauthorizedException;
+    void authenticate(String username, String password) throws UnauthorizedException,
+            ConnectionException, InternalUnauthenticatedException;
 
     /**
      * Returns if the username, token, and digest are valid; otherwise this
@@ -77,9 +80,11 @@ public interface AuthProvider {
      * @param digest the digest generated from plain-text password and unique token.
      * @throws UnauthorizedException if the username and password
      *      do not match any existing user.
+     * @throws ConnectionException it there is a problem connecting to user and group sytem
+     * @throws InternalUnauthenticatedException if there is a problem authentication Openfire iteself into the user and group system
      */
     void authenticate(String username, String token, String digest)
-            throws UnauthorizedException;
+            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException;
 
     /**
      * Returns the user's password. This method should throw an UnsupportedOperationException

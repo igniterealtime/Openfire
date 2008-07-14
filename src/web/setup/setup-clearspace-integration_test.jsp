@@ -3,6 +3,7 @@
 <%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
 <%@ page import="java.net.UnknownHostException" %>
 <%@ page import="javax.net.ssl.SSLException" %>
+<%@ page import="org.jivesoftware.openfire.clearspace.ConnectionException" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -20,11 +21,40 @@
             success = true;
         }
         else {
-            errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-connection");
-            if (exception instanceof UnknownHostException) {
-                exceptionDetail = exception.toString();
+            if (exception instanceof ConnectionException) {
+                ConnectionException connException = (ConnectionException) exception;
+                switch (connException.getErrorType()) {
+                    case AUTHENTICATION:
+                        errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-authentication");
+                        break;
+                    case PAGE_NOT_FOUND:
+                        errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-pageNotFound");
+                        break;
+                    case SERVICE_NOT_AVAIBLE:
+                        errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-serviceNotAvaitble");
+                        break;
+                    case UPDATE_STATE:
+                        errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-updateState");
+                        break;
+                    case UNKNOWN_HOST:
+                        errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-unknownHost");
+                        break;
+                    case OTHER:
+                        errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-connection");
+                        break;
+                }
+            } else {
+                errorDetail = LocaleUtils.getLocalizedString("setup.clearspace.service.test.error-connection");
             }
-            else {
+
+            if (exception.getCause() != null) {
+                if (exception.getCause() instanceof UnknownHostException) {
+                    exceptionDetail = exception.toString();
+                }
+                else {
+                    exceptionDetail = exception.getCause().getMessage();
+                }
+            } else {
                 exceptionDetail = exception.getMessage();
             }
         }

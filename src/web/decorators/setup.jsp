@@ -37,6 +37,14 @@
     int currentStep = decoratedPage.getIntProperty("meta.currentStep");
 %>
 
+<%
+    String preloginSidebar = (String) session.getAttribute("prelogin.setup.sidebar");
+    if (preloginSidebar == null) {
+        preloginSidebar = "false";
+    }
+    boolean showPreloginSidebar = Boolean.parseBoolean(preloginSidebar);
+%>
+
 <%!
     final PropertyDescriptor getPropertyDescriptor(PropertyDescriptor[] pd, String name) {
         for (PropertyDescriptor aPd : pd) {
@@ -144,24 +152,37 @@
 <!-- BEGIN jive-sidebar -->
                         <div id="jive-sidebar">
                             <%  if (showSidebar) {
-                                       String[] names = {
-                                            LocaleUtils.getLocalizedString("setup.sidebar.language"),
-                                            LocaleUtils.getLocalizedString("setup.sidebar.settings"),
-                                            LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
-                                            LocaleUtils.getLocalizedString("setup.sidebar.profile"),
-                                            LocaleUtils.getLocalizedString("setup.sidebar.admin")
+                                    String[] names;
+                                    String[] links;
+                                    if (showPreloginSidebar) {
+                                        names = new String[] {
+                                                LocaleUtils.getLocalizedString((String) session.getAttribute("prelogin.setup.sidebar.title"))
                                         };
-                                        String[] links = {
-                                            "index.jsp",
-                                            "setup-host-settings.jsp",
-                                            "setup-datasource-settings.jsp",
-                                            "setup-profile-settings.jsp",
-                                            "setup-admin-settings.jsp"
+                                        links = new String[] {
+                                                (String) session.getAttribute("prelogin.setup.sidebar.link")
                                         };
+                                    } else {
+                                        names = new String[] {
+                                             LocaleUtils.getLocalizedString("setup.sidebar.language"),
+                                             LocaleUtils.getLocalizedString("setup.sidebar.settings"),
+                                             LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
+                                             LocaleUtils.getLocalizedString("setup.sidebar.profile"),
+                                             LocaleUtils.getLocalizedString("setup.sidebar.admin")
+                                         };
+                                         links = new String[] {
+                                             "index.jsp",
+                                             "setup-host-settings.jsp",
+                                             "setup-datasource-settings.jsp",
+                                             "setup-profile-settings.jsp",
+                                             "setup-admin-settings.jsp"
+                                         };
+                                    }
                                     %>
                                 <ul id="jive-sidebar-progress">
+                                    <%  if (!showPreloginSidebar) { %>
                                     <li class="category"><fmt:message key="setup.sidebar.title" /></li>
                                     <li><img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13" border="0"></li>
+                                    <%  } %>
                                     <%  for (int i=0; i<names.length; i++) { %>
                                         <%  if (currentStep < i) { %>
                                         <li><a href="<%= links[i] %>"><%= names[i] %></a></li>

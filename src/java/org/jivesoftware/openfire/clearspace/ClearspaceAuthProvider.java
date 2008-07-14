@@ -12,6 +12,8 @@ package org.jivesoftware.openfire.clearspace;
 
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.ConnectionException;
+import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -59,7 +61,8 @@ public class ClearspaceAuthProvider implements AuthProvider {
      * @param password the password.
      * @throws UnauthorizedException if the username of password are incorrect.
      */
-    public void authenticate(String username, String password) throws UnauthorizedException {
+    public void authenticate(String username, String password) throws UnauthorizedException,
+            ConnectionException, InternalUnauthenticatedException {
         try {
             // Un-escape username.
             username = JID.unescapeNode(username);
@@ -69,6 +72,12 @@ public class ClearspaceAuthProvider implements AuthProvider {
             ClearspaceManager.getInstance().executeRequest(GET, path);
         } catch (UnauthorizedException ue) {
             throw ue;
+        } catch (org.jivesoftware.openfire.clearspace.ConnectionException e) {
+            if (e.getErrorType() == org.jivesoftware.openfire.clearspace.ConnectionException.ErrorType.AUTHENTICATION) {
+                throw new InternalUnauthenticatedException("Bad credentials to use Clearspace webservices", e);
+            } else {
+                throw new ConnectionException("Error connection to Clearspace webservices", e);
+            }
         } catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnauthorizedException("Unexpected error", e);

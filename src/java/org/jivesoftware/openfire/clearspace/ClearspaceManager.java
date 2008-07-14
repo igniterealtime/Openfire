@@ -17,14 +17,12 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
-import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -347,7 +345,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     /**
      * Tests the web services connection with Clearspace given the manager's current configuration.
      *
-     * @return True if connection test was successful.
+     * @return The exception or unll if connection test was successful.
      */
     public Throwable testConnection() {
         // Test invoking a simple method
@@ -360,7 +358,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         } catch (Exception e) {
             // It is not ok, return false.
             Log.warn("Failed testing communicating with Clearspace" , e);
-            return e.getCause();
+            return e;
         }
     }
 
@@ -804,10 +802,10 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @param type      Must be GET or DELETE
      * @param urlSuffix The url suffix of the rest request
      * @return The response as a xml doc.
-     * @throws ConnectException Thrown if there are issues perfoming the request.
+     * @throws ConnectionException Thrown if there are issues perfoming the request.
      * @throws Exception Thrown if the response from Clearspace contains an exception.
      */
-    public Element executeRequest(HttpType type, String urlSuffix) throws ConnectException, Exception {
+    public Element executeRequest(HttpType type, String urlSuffix) throws ConnectionException, Exception {
         assert (type == HttpType.GET || type == HttpType.DELETE);
         return executeRequest(type, urlSuffix, null);
     }
@@ -822,11 +820,11 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @param urlSuffix The url suffix of the rest request
      * @param xmlParams The xml with the request params, must be null if type is GET or DELETE only
      * @return The response as a xml doc.
-     * @throws ConnectException Thrown if there are issues perfoming the request.
+     * @throws ConnectionException Thrown if there are issues perfoming the request.
      * @throws Exception Thrown if the response from Clearspace contains an exception.
      */
     public Element executeRequest(HttpType type, String urlSuffix, String xmlParams)
-            throws ConnectException, Exception {
+            throws ConnectionException, Exception {
         if (Log.isDebugEnabled()) {
             Log.debug("Outgoing REST call [" + type + "] to " + urlSuffix + ": " + xmlParams);
         }
@@ -883,9 +881,27 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
             // Checks the http status
             if (method.getStatusCode() != 200) {
-                throw new ConnectException(
-                        "Error connecting to Clearspace, http status code: " + method.getStatusCode(),
-                        new HTTPConnectionException(method.getStatusCode()));
+                if (method.getStatusCode() == 401) {
+                    throw new ConnectionException(
+                            "Invalid password to connect to Clearspace.", ConnectionException.ErrorType.AUTHENTICATION);
+                }
+                else if (method.getStatusCode() == 404) {
+                    throw new ConnectionException(
+                            "Web service not found in Clearspace.", ConnectionException.ErrorType.PAGE_NOT_FOUND);
+                }
+                else if (method.getStatusCode() == 503) {
+                    throw new ConnectionException(
+                            "Web service not avaible in Clearspace.", ConnectionException.ErrorType.SERVICE_NOT_AVAIBLE);
+                }
+                else {
+                    throw new ConnectionException(
+                            "Error connecting to Clearspace, http status code: " + method.getStatusCode(),
+                            new HTTPConnectionException(method.getStatusCode()), ConnectionException.ErrorType.OTHER);
+                }
+            } else if (body.contains("Clearspace Upgrade Console")) {
+                //TODO Change CS to send a more standard error message
+                throw new ConnectionException(
+                        "Clearspace is in an update state.", ConnectionException.ErrorType.UPDATE_STATE);
             }
 
             Element response = localParser.get().parseDocument(body).getRootElement();
@@ -896,11 +912,13 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             // Since there is no exception, returns the response
             return response;
         } catch (DocumentException e) {
-            throw new ConnectException("Error parsing the response of Clearspace.", e);
+            throw new ConnectionException("Error parsing the response of Clearspace.", e, ConnectionException.ErrorType.OTHER);
         } catch (HttpException e) {
-            throw new ConnectException("Error peforming http request to Clearspace", e);
+            throw new ConnectionException("Error performing http request to Clearspace", e, ConnectionException.ErrorType.OTHER);
+        } catch (UnknownHostException e) {
+            throw new ConnectionException("Unknown Host " + getConnectionURI() + " trying to connect to Clearspace", e, ConnectionException.ErrorType.UNKNOWN_HOST);
         } catch (IOException e) {
-            throw new ConnectException("Error peforming http request to Clearspace.", e);
+            throw new ConnectionException("Error peforming http request to Clearspace.", e, ConnectionException.ErrorType.OTHER);
         } finally {
             method.releaseConnection();
         }

@@ -186,7 +186,7 @@ public class HybridAuthProvider implements AuthProvider {
         return false;
     }
 
-    public void authenticate(String username, String password) throws UnauthorizedException {
+    public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
         // Check overrides first.
         if (primaryOverrides.contains(username.toLowerCase())) {
             primaryProvider.authenticate(username, password);

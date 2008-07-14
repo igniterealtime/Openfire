@@ -16,9 +16,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.openfire.auth.AuthToken;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.*;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
@@ -160,6 +158,14 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 response = IQ.createResultIQ(packet);
                 response.setChildElement(packet.getChildElement().createCopy());
                 response.setError(PacketError.Condition.not_authorized);
+            } catch (ConnectionException e) {
+                response = IQ.createResultIQ(packet);
+                response.setChildElement(packet.getChildElement().createCopy());
+                response.setError(PacketError.Condition.internal_server_error);
+            } catch (InternalUnauthenticatedException e) {
+                response = IQ.createResultIQ(packet);
+                response.setChildElement(packet.getChildElement().createCopy());
+                response.setError(PacketError.Condition.internal_server_error);
             }
         }
         else {
@@ -179,7 +185,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     }
 
     private IQ login(String username, Element iq, IQ packet, String password, LocalClientSession session, String digest)
-            throws UnauthorizedException, UserNotFoundException {
+            throws UnauthorizedException, UserNotFoundException, ConnectionException, InternalUnauthenticatedException {
         // Verify that specified resource is not violating any string prep rule
         String resource = iq.elementTextTrim("resource");
         if (resource != null) {

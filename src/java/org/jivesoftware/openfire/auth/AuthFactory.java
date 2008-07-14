@@ -150,8 +150,7 @@ public class AuthFactory {
      *      or the account is locked out.
      */
     public static AuthToken authenticate(String username, String password)
-            throws UnauthorizedException
-    {
+            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
         if (LockOutManager.getInstance().isAccountDisabled(username)) {
             LockOutManager.getInstance().recordFailedLogin(username);
             throw new UnauthorizedException();
@@ -175,8 +174,7 @@ public class AuthFactory {
      *      existing user or the account is locked out.
      */
     public static AuthToken authenticate(String username, String token, String digest)
-            throws UnauthorizedException
-    {
+            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
         if (LockOutManager.getInstance().isAccountDisabled(username)) {
             LockOutManager.getInstance().recordFailedLogin(username);
             throw new UnauthorizedException();

@@ -5,20 +5,17 @@
 --%>
 
 <%@ page import="org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.openfire.admin.AdminManager,
-                 org.jivesoftware.openfire.auth.AuthFactory,
-                 org.jivesoftware.openfire.auth.AuthToken"
+                 org.jivesoftware.openfire.admin.AdminManager"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException"%>
 <%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager"%>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
-<%@ page import="org.jivesoftware.util.Base64" %>
-<%@ page import="org.jivesoftware.util.Log" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.auth.*" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -68,7 +65,7 @@
 
     // Check the request/response for a login token
 
-    boolean errors = false;
+    Map<String, String> errors = new HashMap<String, String>();
 
     if (ParamUtils.getBooleanParameter(request, "login")) {
         try {
@@ -99,9 +96,45 @@
             response.sendRedirect(go(url));
             return;
         }
+        catch (ConnectionException ue) {
+            Log.debug(ue);
+            if (ClearspaceManager.isEnabled()) {
+                if (session.getAttribute("prelogin.setup.error.firstTime.connection") != null) {
+                    session.removeAttribute("prelogin.setup.error.firstTime.connection");
+                    session.setAttribute("prelogin.setup.error", "prelogin.setup.error.clearspace.connection");
+                    session.setAttribute("prelogin.setup.sidebar", "true");
+                    session.setAttribute("prelogin.setup.sidebar.title", "prelogin.setup.sidebar.title.clearspace");
+                    session.setAttribute("prelogin.setup.sidebar.link", "clearspace-integration-prelogin.jsp");
+                    response.sendRedirect(go("setup/clearspace-integration-prelogin.jsp"));
+                } else {
+                   session.setAttribute("prelogin.setup.error.firstTime.connection", true);
+                   errors.put("connection", LocaleUtils.getLocalizedString("login.failed.connection.clearspace"));
+                }
+            } else {
+                errors.put("connection", LocaleUtils.getLocalizedString("login.failed.connection"));
+            }
+        }
+        catch (InternalUnauthenticatedException ue) {
+            Log.debug(ue);
+            if (ClearspaceManager.isEnabled()) {
+                if (session.getAttribute("prelogin.setup.error.firstTime.sharedsecret") != null) {
+                    session.removeAttribute("prelogin.setup.error.firstTime.sharedsecret");
+                    session.setAttribute("prelogin.setup.error", "prelogin.setup.error.clearspace.sharedsecret");
+                    session.setAttribute("prelogin.setup.sidebar", "true");
+                    session.setAttribute("prelogin.setup.sidebar.title", "prelogin.setup.sidebar.title.clearspace");
+                    session.setAttribute("prelogin.setup.sidebar.link", "clearspace-integration-prelogin.jsp");
+                    response.sendRedirect(go("setup/clearspace-integration-prelogin.jsp"));
+                } else {
+                   session.setAttribute("prelogin.setup.error.firstTime.sharedsecret", true); 
+                   errors.put("authentication", LocaleUtils.getLocalizedString("login.failed.authentication.clearspace"));
+                }
+            } else {
+                errors.put("authentication", LocaleUtils.getLocalizedString("login.failed.authentication"));
+            }
+        }
         catch (UnauthorizedException ue) {
             Log.debug(ue);
-            errors = true;
+            errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
         }
     }
 %>
@@ -174,14 +207,16 @@
                                 </td>
                             </tr>
                         </noscript>
-                        <%  if (errors) { %>
+                        <%  if (errors.size() > 0) { %>
                             <tr>
                                 <td colspan="3">
                                     <table cellpadding="0" cellspacing="0" border="0">
+                                        <% for (String error:errors.values()) { %>
                                     <tr valign="top">
                                         <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.failed" /></div></td>
+                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><%= error%></div></td>
                                     </tr>
+                                        <% } %>
                                     </table>
                                 </td>
                             </tr>

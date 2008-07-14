@@ -87,7 +87,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
                     AuthToken at = AuthFactory.authenticate(name, new String(vpcb.getPassword()));
                     vpcb.setVerified((at != null));
                 }
-                catch (UnauthorizedException e) {
+                catch (Exception e) {
                     vpcb.setVerified(false);
                 }
             }

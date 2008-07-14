@@ -63,7 +63,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
             }
             return admins;
         }
-        catch (ConnectException e) {
+        catch (ConnectionException e) {
             Log.error(e);
             return new ArrayList<JID>();
         }

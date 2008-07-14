@@ -3,12 +3,15 @@
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%
     String uri;
     String sharedSecret;
+    String existingHashSharedSecret = "";
+    String plainSharedSecret = null;
 
     boolean verifyChain = JiveGlobals.getBooleanProperty("clearspace.certificate.verify.chain", true);
     boolean verifyRoot = JiveGlobals.getBooleanProperty("clearspace.certificate.verify.root", true);
@@ -33,14 +36,48 @@
     }
     Map<String, String> errors = new HashMap<String, String>();
 
+    // If we came from a prelogin error, show it and remove it from the session
+    String preloginError = (String) session.getAttribute("prelogin.setup.error");
+    if (preloginError != null) {
+        errors.put("prelogin", LocaleUtils.getLocalizedString(preloginError));
+        session.removeAttribute("prelogin.setup.error");
+    }
+
     if (save || test) {
         uri = ParamUtils.getParameter(request, "uri");
         if (uri == null) {
             errors.put("uri", LocaleUtils.getLocalizedString("setup.clearspace.service.uri_error"));
         }
+        // this could be the new entered plain shared secret or the current hashed shared secret
         sharedSecret = ParamUtils.getParameter(request, "sharedSecret");
+
+        // this will store new entered plain shared secret or the current plain shared secret
+        //String plainSharedSecret = null;
         if (sharedSecret == null || sharedSecret.length() == 0) {
             errors.put("secret", LocaleUtils.getLocalizedString("setup.clearspace.service.secret_error"));
+        } else {
+            // set to the current plain shared secret
+            plainSharedSecret = manager.getSharedSecret();
+
+            // Hash the current shared secret
+            if (plainSharedSecret != null) {
+                existingHashSharedSecret = StringUtils.hash(plainSharedSecret);
+                System.out.println("2- existingHashSharedSecret: " + existingHashSharedSecret);
+            }
+            // Check if the new shared secret was changed. If it wasn't changed, then it is the original hashed shared secret
+            // NOTE: if the new PLAIN password equals the previous HASHED password this fails, but is unlikely.
+            if (!existingHashSharedSecret.equals(sharedSecret)) {
+                // Hash the new shared secret since it was changed
+                String newHashSharedSecret = "";
+                if (sharedSecret != null) {
+                        newHashSharedSecret = StringUtils.hash(sharedSecret);
+                }
+
+                // Change password if their hash values are different
+                if (!existingHashSharedSecret.equals(newHashSharedSecret)) {
+                    plainSharedSecret = sharedSecret;
+                }
+            }
         }
 
         verifyChain = ParamUtils.getBooleanParameter(request, "verifyChain", verifyChain);
@@ -49,22 +86,40 @@
         verifyIdentity = ParamUtils.getBooleanParameter(request, "verifyIdentity", verifyIdentity);
         verifyValidity = ParamUtils.getBooleanParameter(request, "verifyValidity", verifyValidity);
 
+        Map<String, String> settings = new HashMap<String, String>();
+        // If there are no errors check if there is a need to run a force test
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
-            Map<String, String> settings = new HashMap<String, String>();
             settings.put("clearspace.uri", uri);
-            settings.put("clearspace.sharedSecret", sharedSecret);
+
+            // Sets the current shared secret, it will be changed if the new shared secret is different
+            settings.put("clearspace.sharedSecret", plainSharedSecret);
+
             settings.put("clearspace.certificate.verify.chain", Boolean.toString(verifyChain));
             settings.put("clearspace.certificate.verify.root", Boolean.toString(verifyRoot));
             settings.put("clearspace.certificate.accept-selfsigned", Boolean.toString(selfSigned));
             settings.put("clearspace.certificate.verify.identity", Boolean.toString(verifyIdentity));
             settings.put("clearspace.certificate.verify.validity", Boolean.toString(verifyValidity));
+
+            if (save && forceTest) {
+                ClearspaceManager managerTest = new ClearspaceManager(settings);
+                if (managerTest.testConnection() != null) {
+                    // if there is any problems don't save it
+                    // add an error (this is the reason of why this check is in another "if errors.isEmpty()"
+                    errors.put("connection", LocaleUtils.getLocalizedString("setup.clearspace.service.connection_error"));
+                }
+            }
+        }
+
+        if (errors.isEmpty()) {
             session.setAttribute("clearspaceSettings", settings);
 
             if (save) {
+
                 // Save settings and redirect
                 manager.setConnectionURI(uri);
-                manager.setSharedSecret(sharedSecret);
+                manager.setSharedSecret(plainSharedSecret);
+                System.out.println("6- plainSharedSecret: " + plainSharedSecret);
 
                 // Enable the Clearspace auth, user, group, vcard, lockout, security audit, and admin providers.
                 JiveGlobals.setProperty("provider.auth.className",
@@ -106,7 +161,7 @@
                     xmppSettings.put("provider.admin.className",
                             "org.jivesoftware.openfire.clearspace.ClearspaceAdminProvider");
                     xmppSettings.put("clearspace.uri", uri);
-                    xmppSettings.put("clearspace.sharedSecret", sharedSecret);
+                    xmppSettings.put("clearspace.sharedSecret", plainSharedSecret);
                     xmppSettings.put("clearspace.certificate.verify.chain", Boolean.toString(verifyChain));
                     xmppSettings.put("clearspace.certificate.verify.root", Boolean.toString(verifyRoot));
                     xmppSettings.put("clearspace.certificate.accept-selfsigned", Boolean.toString(selfSigned));
@@ -126,7 +181,7 @@
     } else {
         // See if there are already values for the variables defined.
         uri = manager.getConnectionURI();
-        sharedSecret = manager.getSharedSecret();
+        sharedSecret = manager.getSharedSecret() == null || manager.getSharedSecret().trim().length() == 0 ? "" : StringUtils.hash(manager.getSharedSecret());
     }
 %>
 <html>
@@ -196,12 +251,12 @@
                 </td>
 			</tr>
 			<tr>
-                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.clearspace.service.secret" />:</td>
+                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.clearspace.service.secret" /> <%=plainSharedSecret%>:</td>
                 <td colspan="3">
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                         <td width="1%" nowrap="nowrap">
-                            <input type="password" name="sharedSecret" id="jiveCLEARSPACEsecret" size="22" maxlength="30" value="<%= sharedSecret!=null?sharedSecret:""%>">
+                            <input type="password" name="sharedSecret" id="jiveCLEARSPACEsecret" size="22" maxlength="35" value="<%= (sharedSecret != null) ? sharedSecret : "" %>">
                         </td>
                         <td width="99%">
                             <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.clearspace.service.secret_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span>

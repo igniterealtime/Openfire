@@ -1,5 +1,6 @@
 <%
     boolean initialSetup = false;
+    boolean forceTest = false;
     String currentPage = "clearspace-integration.jsp";
     String testPage = "setup/setup-clearspace-integration_test.jsp";
     String nextPage = "profile-settings.jsp";

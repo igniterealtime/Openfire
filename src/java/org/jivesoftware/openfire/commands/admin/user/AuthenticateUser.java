@@ -15,6 +15,8 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.ConnectionException;
+import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -85,6 +87,16 @@ public class AuthenticateUser extends AdHocCommand {
             AuthFactory.getAuthProvider().authenticate(user.getUsername(), password);
         }
         catch (UnauthorizedException e) {
+            // Auth failed
+            note.addAttribute("type", "error");
+            note.setText("Authentication failed.");
+            return;
+        } catch (ConnectionException e) {
+            // Auth failed
+            note.addAttribute("type", "error");
+            note.setText("Authentication failed.");
+            return;
+        } catch (InternalUnauthenticatedException e) {
             // Auth failed
             note.addAttribute("type", "error");
             note.setText("Authentication failed.");

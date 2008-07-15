@@ -1,0 +1,1807 @@
+<?xml version="1.0"?>
+
+<!--
+    $RCSfile: build.xml,v $
+    $Revision$
+    $Date$
+
+    This software is published under the terms of the GNU Public License (GPL),
+    a copy of which is included in this distribution.
+-->
+
+<!--
+    Build Requirements:
+
+        * Ant 1.6 or 1.7 (including optional tasks)
+        * JDK 1.5 or higher
+        * jUnit in your Ant or Java classpath
+-->
+
+<project name="Openfire XMPP Server" default="openfire" basedir="..">
+
+    <description>
+        Openfire build script.
+    </description>
+
+    <!-- ======================================================================================= -->
+    <!-- GLOBAL TASKDEFs                                                                         -->
+    <!-- ======================================================================================= -->
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/ant-contrib.jar"/>
+        </classpath>
+    </taskdef>
+    <taskdef name="subdirinfo" classname="org.jivesoftware.ant.SubDirInfoTask">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/ant-subdirtask.jar"/>
+        </classpath>
+    </taskdef>
+    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/xmltask.jar"/>
+        </classpath>
+    </taskdef>
+    <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+        </classpath>
+    </taskdef>
+    <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
+        <classpath>
+            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+        </classpath>
+    </taskdef>
+    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
+        <classpath>
+            <pathelement location="${basedir}/build/lib/ant-jive-edition.jar"/>
+            <pathelement location="${basedir}/build/lib/qdox.jar"/>
+        </classpath>
+    </typedef>
+
+
+    <!-- ======================================================================================= -->
+    <!-- GLOBAL PROPERTIES                                                                       -->
+    <!-- ======================================================================================= -->
+
+    <property name="version.major" value="3"/>
+    <property name="version.minor" value="5"/>
+    <property name="version.revision" value="2"/>
+    <property name="version.extra" value=""/>    <!-- For 'beta' or 'alpha' -->
+    <property name="dist.prefix" value="openfire"/>
+
+    <property file="${basedir}/build/build.properties"/>
+
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="src.java.dir" value="${src.dir}/java"/>
+    <property name="src.i18n.dir" value="${src.dir}/i18n"/>
+    <property name="src.test.dir" value="${src.dir}/test"/>
+    <property name="src.test.java.dir" value="${src.test.dir}/java"/>
+    <property name="docs.dir" value="${basedir}/documentation"/>
+    <property name="web.dir" value="${src.dir}/web"/>
+    <property name="spank.dir" value="${src.dir}/spank"/>
+    <property name="lib.build.dir" value="${basedir}/build/lib"/>
+    <property name="lib.build.installer.dir" value="${basedir}/build/installer"/>
+    <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
+    <property name="lib.dist.dir" value="${lib.build.dir}/dist"/>
+    <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib"/>
+    <property name="i18n.basename" value="openfire_i18n"/>
+    <property name="i18n.default.locale" value="en"/>
+
+    <property name="work.dir" value="${basedir}/work"/>
+    <property name="temp.build.dir" value="${work.dir}/tempbuild"/>
+    <property name="target.i18n.dir" value="${temp.build.dir}/i18n"/>
+
+    <property name="target.dir" value="${basedir}/target"/>
+    <property name="target.openfireHome" value="${target.dir}/openfire"/>
+
+    <property name="compile.dir" value="${work.dir}/classes"/>
+    <property name="jar.name" value="openfire.jar"/>
+    <property name="jar.starter.name" value="startup.jar"/>
+    <property name="jar.dest.dir" value="${work.dir}/lib"/>
+    <property name="resources.dir" value="${src.dir}/resources"/>
+
+    <property name="overlay.dir"   value="${basedir}/custom"/>
+    <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
+    <property name="overlay.web.dir"   value="${overlay.dir}/webapp"/>
+    <property name="overlay.properties.file"   value="overlay.properties"/>
+    <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>    
+
+    <property name="javadoc.src.dir" value="${src.dir}/javadoc"/>
+    <property name="javadoc.dest.dir" value="${work.dir}/javadoc"/>
+    <property name="jspc.jsp.src.dir" value="${work.dir}/jspc/jsp"/>
+    <property name="jspc.dest.dir" value="${work.dir}/jspc"/>
+    <property name="jspc.java.dest.dir" value="${work.dir}/jspc/java"/>
+    <property name="jspc.classes.dest.dir" value="${work.dir}/jspc/classes"/>
+    <property name="jspc.jar.name" value="admin-jsp.jar"/>
+
+    <property name="test.dest.dir" value="${work.dir}/test"/>
+    <property name="test.classes.dest.dir" value="${test.dest.dir}/classes"/>
+    <property name="test.results.dest.dir" value="${test.dest.dir}/results"/>
+
+    <property name="plugin.src.dir" value="${src.dir}/plugins"/>
+    <property name="plugin.dev.dir" value=""/>
+    <!-- Set by a developer as alt plugin location -->
+    <property name="plugin.dev.dest.dir" value="${work.dir}/plugins-dev"/>
+    <property name="plugin.dest.dir" value="${work.dir}/plugins"/>
+    <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
+    <property name="webapp.dest.dir" value="${work.dir}/webapp"/>
+
+    <property name="release.dest.dir" value="${target.dir}/release"/>
+    <property name="package.dest.dir" value="${release.dest.dir}"/>
+    <property name="overwrite" value="false"/>
+    <property name="deploy.jar.dir" value="${jar.dest.dir}"/>
+    <property name="anttools.src.dir" value="${src.dir}/tools"/>
+    <property name="anttools.target.dir" value="${work.dir}/tools"/>
+    <property name="copy.dbscripts" value="true"/>
+    <property name="overwrite" value="true"/>
+
+    <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
+    <property name="installer.src" value="${basedir}/build/installer"/>
+    <property name="installer.dest.dir" value="${release.dest.dir}"/>
+    <property name="installer.install4j.srcfile" value="${installer.src}/openfire.install4j"/>
+    <property name="installer.app_name" value="Openfire"/>
+    <property name="installer.app_short_name" value="openfire"/>
+    <property name="installer.product_name" value="openfire"/>
+    <property name="installer.application_id" value="6886-9911-0474-3571"/>
+    <property name="installer.unix_install_dir" value="openfire"/>
+    <property name="installer.windows_install_dir" value="Openfire"/>
+    <property name="installer.publisher" value="Jive Software"/>
+    <property name="installer.publisher_url" value="www.igniterealtime.org"/>
+    <property name="installer.file_prefix" value="${installer.app_short_name}"/>
+    <property name="installer.release_root_path" value="${release.dest.dir}"/>
+
+    <property name="license.file.path" value="${docs.dir}/dist"/>
+
+    <!-- For auto-running and debugging -->
+    <property name="debug" value="false"/>
+
+    <!-- ======================================================================================= -->
+    <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
+    <!-- ======================================================================================= -->
+
+    <path id="javadoc.dependencies">
+        <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
+        <fileset dir="${lib.merge.dir}" includes="*.jar"/>
+        <fileset dir="${lib.dist.dir}"
+                 includes="servlet.jar, mail.jar, activation.jar, jdic.jar, bouncycastle.jar"/>
+    </path>
+
+    <path id="compile.dependencies">
+        <path refid="javadoc.dependencies"/>
+    </path>
+
+    <path id="jspc.dependencies">
+        <path refid="compile.dependencies"/>
+        <fileset dir="${lib.web.dir}" includes="*.jar"/>
+    </path>
+
+    <path id="test.dependencies">
+        <path refid="compile.dependencies"/>
+        <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
+        <fileset dir="${lib.build.dir}" includes="junit.jar"/>
+        <!-- <fileset dir="${ant.home}/lib" includes="clover.jar" /> -->
+    </path>
+
+    <path id="plugin.dependencies">
+        <path refid="javadoc.dependencies"/>
+        <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
+    </path>
+
+    <patternset id="compile.sources">
+        <include name="**/*.java"/>
+    </patternset>
+
+    <patternset id="test.sources">
+        <include name="**/*Test.java"/>
+    </patternset>
+
+    <patternset id="web.sources">
+        <include name="**/*.jsp"/>
+        <include name="**/*.jar"/>
+        <include name="**/*.tld"/>
+        <include name="**/*.jspf"/>
+        <include name="**/*.html"/>
+        <include name="**/*.css"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.png"/>
+        <include name="**/favicon.ico"/>
+        <include name="**/*.js"/>
+    </patternset>
+
+    <!-- ======================================================================================= -->
+    <!-- TARGETs                                                                                 -->
+    <!-- ======================================================================================= -->
+
+    <!-- init ================================================================================== -->
+    <target name="init">
+
+        <!-- Check for min build requirements -->
+
+        <condition property="ant.not.ok" value="true">
+            <not>
+                <or>
+                    <contains string="${ant.version}" substring="1.6"/>
+                    <contains string="${ant.version}" substring="1.7"/>
+                </or>
+            </not>
+        </condition>
+        <condition property="java.not.ok" value="true">
+            <not>
+                <or>
+                    <contains string="${ant.java.version}" substring="1.5"/>
+                    <contains string="${ant.java.version}" substring="1.6"/>
+                </or>
+            </not>
+        </condition>
+        <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Openfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.5.x or higher to build Openfire"/>
+
+        <tstamp/>
+        <tstamp>
+            <format property="builddate" pattern="MM/dd/yyyy"/>
+        </tstamp>
+        <tstamp>
+            <format property="dailybuild.tstamp" pattern="yyyy-MM-dd" locale="en"/>
+        </tstamp>
+
+        <mkdir dir="${work.dir}"/>
+        <mkdir dir="${overlay.compile.dir}"/>
+
+        <!-- Setup the full version property correctly -->
+        <if>
+            <equals arg1="${version.extra}" arg2=""/>
+            <then>
+                <property name="version"
+                          value="${version.major}.${version.minor}.${version.revision}"/>
+                <property name="version.filename"
+                          value="${version.major}_${version.minor}_${version.revision}"/>
+            </then>
+            <else>
+                <property name="version"
+                          value="${version.major}.${version.minor}.${version.revision}.${version.extra}"/>
+                <property name="version.filename"
+                          value="${version.major}_${version.minor}_${version.revision}_${version.extra}"/>
+            </else>
+        </if>
+    </target>
+
+    <!-- compile =============================================================================== -->
+    <target name="compile" depends="init" description="Compiles Openfire app code">
+        <mkdir dir="${compile.dir}"/>
+        <javac
+                destdir="${compile.dir}"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                target="1.5"
+                >
+            <src path="${src.java.dir}"/>
+            <patternset refid="compile.sources"/>
+            <classpath>
+                <path refid="compile.dependencies"/>
+            </classpath>
+        </javac>
+
+        <available file="${overlay.src.dir}" type="dir" property="overlay.source.found"/>
+        <if>
+            <equals arg1="${overlay.source.found}" arg2="true"/>
+            <then>
+
+                <mkdir dir="${overlay.compile.dir}"/>
+                <javac
+                        destdir="${overlay.compile.dir}"
+                        includeAntRuntime="no"
+                        debug="on"
+                        source="1.5"
+                        target="1.5"
+                        >
+                    <src path="${overlay.src.dir}"/>
+                    <patternset refid="compile.sources"/>
+                    <classpath>
+                        <path refid="compile.dependencies"/>
+                        <path location="${compile.dir}"/>
+                    </classpath>
+                </javac>
+
+            </then>
+            <else><echo>Nothing to compile from custom here </echo></else>
+        </if>
+
+    </target>
+
+    <!-- i18n ================================================================================== -->
+    <!-- Note, this is a "private" target - no need to call it externally -->
+    <target name="-i18n">
+        <!-- Auto generates a default base i18n file -->
+        <mkdir dir="${target.i18n.dir}"/>
+        <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
+              tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
+
+        <!-- if title override file exists, overwrite all i18n files -->
+        <available file="${overlay.dir}/${overlay.properties.file}" type="file" property="overlay.props.found"/>
+        <if>
+                <equals arg1="${overlay.props.found}" arg2="true"/>
+                <then>
+                  <echo>Found overlay file: ${overlay.dir}/${overlay.properties.file}</echo>
+		          <property file="${overlay.dir}/${overlay.properties.file}"/>
+                    <replace dir="${target.i18n.dir}">
+                        <replacefilter token="title = Wildfire" value="title=${title}"/>
+                        <replacefilter token="short.title = Wildfire" value="short.title=${short.title}"/>
+                    </replace>
+
+                </then>
+        </if>
+    </target>
+
+    <target name="plugins-dev">
+        <!-- Setup Openfire -->
+        <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="openfire"
+             inheritAll="false" inheritRefs="false"/>
+
+        <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
+        <copy file="${ant.home}/lib/ant.jar" todir="${jar.dest.dir}"></copy>
+
+        <!-- Retrieve each plugin -->
+        <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make.
+        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin"/>
+
+        <for list="${dirlist}" param="plugin" trim="true">
+            <sequential>
+                <xmltask source="${plugin.src.dir}/@{plugin}/plugin.xml" dest="${plugin.src.dir}/@{plugin}/plugins2.xml">
+                    <insert path="/plugin/minOpenfireVersion[last()]"  position="after">
+                        <![CDATA[
+                          <development>
+                            <webRoot>
+                              ${java.home}
+                            </webRoot>
+                            <classesDir>
+                              XXXXXXXXX
+                            </classesDir>
+                          </development>
+                        ]]>
+                      </insert>
+                </xmltask>
+                <jar jarfile="c:\\test\\@{plugin}.jar">
+                    <fileset dir="${plugin.src.dir}/@{plugin}" includes="*.xml"/>
+                </jar>
+            </sequential>
+        </for>
+        -->
+
+    </target>
+
+    <!-- openfire =================================================================================== -->
+    <target name="openfire" depends="compile, jspc, -i18n"
+            description="Compiles and generates runnable target/openfire folder">
+        <mkdir dir="${jar.dest.dir}"/>
+        <!-- Make main Openfire jar -->
+        <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
+            <fileset dir="${compile.dir}" includes="**/*.class"
+                     excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class">
+                <!-- don't include files that have an overlay counterpart -->
+                 <present present="srconly" targetdir="${overlay.compile.dir}"/>
+            </fileset>
+            <!-- now include overlay files -->
+            <fileset dir="${overlay.compile.dir}" includes="**/*.class"/>                      
+            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${target.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${resources.dir}/jar" includes="**"/>
+            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
+            <manifest>
+                <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
+            </manifest>
+        </jar>
+
+        <!-- Make startup jar -->
+        <jar jarfile="${jar.dest.dir}/${jar.starter.name}">
+            <fileset dir="${compile.dir}">
+                <include name="org/jivesoftware/openfire/starter/ServerStarter*.class"/>
+                <include name="org/jivesoftware/openfire/launcher/*.class"/>
+                <include name="org/jivesoftware/openfire/starter/JiveClassLoader*.class"/>
+            </fileset>
+            <fileset dir="${lib.build.installer.dir}/images" includes="**/*.gif"/>
+            <fileset dir="${lib.build.installer.dir}/images" includes="**/*.png"/>
+            <manifest>
+                <attribute name="Main-Class"
+                           value="org.jivesoftware.openfire.starter.ServerStarter"/>
+                <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
+            </manifest>
+        </jar>
+        <!-- Copy application dependent files -->
+        <copy todir="${jar.dest.dir}">
+            <fileset dir="${lib.dist.dir}" includes="*.*"/>
+        </copy>
+
+        <!-- Copy in tag library support -->
+        <copy todir="${jar.dest.dir}">
+            <fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
+        </copy>
+
+        <!-- Copy in jasper runtime jar -->
+        <copy todir="${jar.dest.dir}">
+            <fileset dir="${lib.build.dir}" includes="jasper-runtime.jar"/>
+            <fileset dir="${lib.build.dir}" includes="jasper-compiler.jar"/>
+        </copy>
+
+        <!-- Update/create target/openfire directory -->
+        <antcall target="openfireHome"/>
+    </target>
+
+    <!-- run =================================================================================== -->
+    <target name="run" description="Starts Openfire inline to the build process.">
+        <available file="${target.openfireHome}" type="dir" property="openfire.found"/>
+        <fail unless="openfire.found"
+              message="Can't find openfire, run 'ant openfire' or specify with -Dtarget.openfireHome."/>
+
+        <condition property="run.debug"
+                   value="-Xdebug -Xint -server -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000">
+            <isset property="debug"/>
+        </condition>
+
+        <property name="run.spawn" value="false"/>
+
+        <java jar="${target.openfireHome}/lib/startup.jar" fork="true" spawn="${run.spawn}"
+              dir="${target.openfireHome}/bin">
+            <jvmarg line="${run.debug}"/>
+        </java>
+    </target>
+
+
+    <!-- run.test.init ========================================================================= -->
+    <target name="run.test.init">
+        <delete dir="${target.openfireHome}"/>
+
+        <property name="openfireHome.preconfigured" value="true"/>
+
+        <property name="run.spawn" value="true"/>
+    </target>
+
+    <!-- run.test ============================================================================== -->
+    <!--    Starts Openfire inline to the build process, with a clean pre-configured openfireHome -->
+    <target name="run.test" depends="run.test.init,openfireHome,run">
+        <echo>Openfire server started.</echo>
+    </target>
+
+    <!-- javadoc =============================================================================== -->
+    <target name="javadoc" depends="init" description="Produces Openfire Javadocs">
+        <mkdir dir="${javadoc.dest.dir}"/>
+        <antcall target="-javadoc-impl"/>
+    </target>
+
+    <target name="-javadoc-impl" unless="no.javadoc">
+        <!-- Run javadoc over all source code -->
+        <javadoc
+                packagenames="org.jivesoftware.*, org.xmpp.*"
+                destdir="${javadoc.dest.dir}"
+                windowtitle="Openfire ${version} Javadoc"
+                overview="${src.java.dir}/overview.html"
+                failonerror="yes"
+                >
+            <sourcepath>
+                <path location="${src.java.dir}"/>
+            </sourcepath>
+            <doctitle>
+                <![CDATA[<font face="arial,helvetica,sans-serif">Openfire ${version} Javadoc</font>]]></doctitle>
+            <header><![CDATA[<b>Openfire ${version} Javadoc</b>]]></header>
+            <bottom><![CDATA[<i>Copyright &copy; 2003-2007 Jive Software.</i>]]></bottom>
+            <classpath>
+                <path refid="javadoc.dependencies"/>
+            </classpath>
+            <link offline="true" href="http://java.sun.com/j2se/1.5.0/docs/api/"
+                  packagelistLoc="${javadoc.src.dir}/jdk15"/>
+        </javadoc>
+    </target>
+
+    <!-- jspc ================================================================================== -->
+    <target name="jspc" depends="compile" description="Compiles all JSP pages in the admin console">
+        <mkdir dir="${jspc.dest.dir}"/>
+        <mkdir dir="${jspc.java.dest.dir}"/>
+        <mkdir dir="${jspc.classes.dest.dir}"/>
+        <mkdir dir="${webapp.dest.dir}"/>
+
+        <antcall target="-jspc-impl"/>
+    </target>
+    
+    <target name="-jspc-impl" unless="no.jspc">
+
+        <!-- we're forced to create a temp dir to properly overwrite sources from overlay directory -->
+        <mkdir dir="${jspc.jsp.src.dir}"/>
+
+        <copy todir="${jspc.jsp.src.dir}">
+            <fileset dir="${web.dir}"/>
+        </copy>
+        <!-- copy overlay -->
+
+        <available file="${overlay.web.dir}" type="dir" property="overlay.webdir.found"/>
+        <if>
+            <equals arg1="${overlay.webdir.found}" arg2="true"/>
+            <then>
+                <copy todir="${jspc.jsp.src.dir}" overwrite="true">
+                    <fileset dir="${overlay.web.dir}"/>
+                </copy>
+            </then>
+        </if>
+
+
+        <java classname="org.apache.jasper.JspC" fork="true">
+            <classpath>
+                <pathelement location="${java.home}/../lib/tools.jar"/>
+                <pathelement path="${compile.dir}"/>
+                <path refid="jspc.dependencies"/>
+            </classpath>
+            <arg line="-uriroot '${jspc.jsp.src.dir}'"/>
+            <arg line="-d '${jspc.java.dest.dir}'"/>
+            <arg line="-p org.jivesoftware.openfire.admin"/>
+            <arg line="-webinc '${jspc.dest.dir}/web.partial.xml'"/>
+        </java>
+
+        <!-- Compile java source -->
+        <javac
+                destdir="${jspc.classes.dest.dir}"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                target="1.5"
+                includes="org/jivesoftware/openfire/admin/**/*.java"
+                >
+            <src path="${jspc.java.dest.dir}"/>
+            <classpath>
+                <pathelement path="${compile.dir}"/>
+                <path refid="jspc.dependencies"/>
+            </classpath>
+        </javac>
+
+        <!-- Update the web.xml to include the servlet and servlet mapping defs from jspc -->
+        <loadfile property="servlet-xml" srcFile="${jspc.dest.dir}/web.partial.xml" failonerror="false" />
+        <copy file="${web.dir}/WEB-INF/web.xml"
+              toFile="${webapp.dest.dir}/WEB-INF/web.xml"
+              overwrite="true">
+            <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
+                <filter token="JSPC-SERVLETS" value="${servlet-xml}"/>
+            </filterset>
+        </copy>
+
+        <!-- Copy over Sitemesh files. -->
+        <copy file="${web.dir}/WEB-INF/decorators.xml"
+              toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
+              overwrite="true">
+        </copy>
+        <copy file="${web.dir}/WEB-INF/sitemesh.xml"
+              toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
+              overwrite="true">
+        </copy>
+        <copy file="${web.dir}/WEB-INF/dwr.xml"
+              toFile="${webapp.dest.dir}/WEB-INF/dwr.xml"
+              overwrite="true">
+        </copy>
+
+        <!-- Create a jar of compiled servlets -->
+        <jar jarfile="${jspc.dest.dir}/${jspc.jar.name}">
+            <fileset dir="${jspc.classes.dest.dir}" includes="**/*.class"/>
+        </jar>
+
+    </target>
+
+    <!-- test ================================================================================== -->
+    <target name="test" depends="openfire" description="Compiles and runs test cases">
+        <!-- Compile all test code -->
+        <mkdir dir="${test.classes.dest.dir}"/>
+        <javac
+                destdir="${test.classes.dest.dir}"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.5"
+                target="1.5"
+                >
+            <src path="${src.test.java.dir}"/>
+            <patternset refid="test.sources"/>
+            <classpath>
+                <path refid="test.dependencies"/>
+                <pathelement path="${compile.dir}"/>
+            </classpath>
+        </javac>
+
+        <!-- Copy resources -->
+        <copy todir="${test.dest.dir}">
+            <fileset dir="${src.test.dir}" includes="resources/**/*.*"/>
+        </copy>
+
+        <!-- Run jUnit -->
+        <mkdir dir="${test.results.dest.dir}"/>
+        <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}">
+
+            <!-- We must add our own classes to the classpath for testing -->
+            <classpath>
+                <path refid="test.dependencies"/>
+                <pathelement path="${test.classes.dest.dir}"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest todir="${test.results.dest.dir}">
+                <fileset dir="${src.test.java.dir}">
+                    <patternset refid="test.sources"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- openfireHome ========================================================================== -->
+    <target name="openfireHome" unless="openfireHome.no.update">
+        <!-- Set this to true to enable a pre-setup openfireHome directory -->
+        <property name="openfireHome.preconfigured" value="false"/>
+        <property name="openfireHome.no.plugins" value="false"/>
+
+        <mkdir dir="${target.openfireHome}"/>
+
+        <!-- Copy conf dir -->
+        <copy todir="${target.openfireHome}">
+            <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
+        </copy>
+
+        <!-- Copy database scripts -->
+        <if>
+            <equals arg1="${copy.dbscripts}" arg2="true"/>
+            <then>
+                <copy todir="${target.openfireHome}/resources">
+                    <fileset dir="${src.dir}" includes="database/**/*.sql"></fileset>
+                </copy>
+            </then>
+        </if>
+
+        <!-- Copy security resources -->
+        <copy todir="${target.openfireHome}/resources">
+            <fileset dir="${src.dir}">
+                <include name="security/*"/>
+                <include name="security/*.*"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy native authentication files -->
+        <copy todir="${target.openfireHome}/resources">
+            <fileset dir="${src.dir}/resources">
+                <include name="nativeAuth/**"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy lib dir -->
+        <copy todir="${target.openfireHome}/lib">
+            <fileset dir="${jar.dest.dir}" includes="*.*"></fileset>
+        </copy>
+
+        <!-- Overwrite config with build/openfireHome dir, if requested -->
+        <if>
+            <equals arg1="${openfireHome.preconfigured}" arg2="true"/>
+            <then>
+                <!-- Copy pre-configured openfireHome dir -->
+                <copy todir="${target.openfireHome}">
+                    <fileset dir="${basedir}/build/openfireHome" includes="**/*.*"/>
+                </copy>
+            </then>
+        </if>
+
+        <!-- Copy admin Plugin -->
+        <antcall target="adminPlugin">
+            <param name="plugin.dest.dir" value="${target.openfireHome}/plugins"/>
+        </antcall>
+
+        <antcall target="spank">
+            <param name="plugin.dest.dir" value="${target.openfireHome}/plugins"/>
+        </antcall>
+
+        <!-- Copy compiled plugins if we need to -->
+        <if>
+            <and>
+                <equals arg1="${openfireHome.no.plugins}" arg2="false"/>
+                <available file="${plugin.dest.dir}" />
+            </and>
+            <then>
+                <copy todir="${target.openfireHome}/plugins" failonerror="false">
+                    <fileset dir="${plugin.dest.dir}"/>
+                </copy>
+            </then>
+        </if>
+
+        <!-- Copy bin dir -->
+        <copy todir="${target.openfireHome}">
+            <fileset dir="${src.dir}" includes="bin/**/*"/>
+        </copy>
+        <fixcrlf srcdir="${target.openfireHome}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
+
+        <!-- Create a logs dir in the binary release -->
+        <mkdir dir="${target.openfireHome}/logs"/>
+    </target>
+
+    <!-- adminPlugin =========================================================================== -->
+    <target name="adminPlugin">
+        <!-- Copy admin plugin source (if any) -->
+        <copy todir="${plugin.dest.dir}">
+            <fileset dir="${src.dir}/plugins" includes="admin/*.*"/>
+        </copy>
+
+        <!-- Copy admin plugin resources -->
+        <copy todir="${plugin.dest.dir}/admin/webapp">
+            <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+            <fileset dir="${web.dir}">
+                <patternset refid="web.sources"/>
+                <exclude name="**/*.jsp"/>
+                <exclude name="**/*.jspf"/>
+            </fileset>
+        </copy>
+        <!-- Copy other admin WEB-INF stuff -->
+        <copy todir="${plugin.dest.dir}/admin/webapp">
+            <fileset dir="${webapp.dest.dir}"/>
+        </copy>
+
+        <!-- Copy in pre-compiled JSP jar -->
+        <copy todir="${plugin.dest.dir}/admin/webapp/WEB-INF/lib" overwrite="${overwrite}">
+            <fileset dir="${jspc.dest.dir}" includes="${jspc.jar.name}"/>
+        </copy>
+
+    </target>
+
+    <target name="spank">
+        <mkdir dir="${target.openfireHome}/resources/spank"/>
+        <copy todir="${target.openfireHome}/resources/spank">
+            <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+            <fileset dir="${spank.dir}">
+                <patternset refid="web.sources"/>
+                <exclude name="**/*.jsp"/>
+                <exclude name="**/*.jspf"/>
+                <include name="**/*.xml"/>
+                <include name="**/*.swf"/>
+            </fileset>
+        </copy>
+    </target>
+    
+    <!-- dist.init ============================================================================== -->
+    <target name="dist.init" >
+        <!-- ie: openfire_src -->
+        <property name="release.name.src" value="${dist.prefix}_src"/>
+        <!-- ie: openfire_src_2_1_2 -->
+        <property name="release.fullname.src" value="${dist.prefix}_src_${version.filename}"/>
+        <property name="package.dest.filename.zip" value="${package.dest.dir}/${release.fullname.src}.zip" />
+        <property name="package.dest.filename.tar" value="${package.dest.dir}/${release.fullname.src}.tar" />
+        <property name="package.dest.filename.tar.gz" value="${package.dest.filename.tar}.gz" />
+        <property name="release.src.out.dir" value="${release.dest.dir}/${release.name.src}"/>
+
+        <!-- ie: openfire -->
+        <property name="release.name" value="${dist.prefix}"/>
+        <!-- ie: openfire_2_1_2 -->
+        <property name="release.fullname" value="${dist.prefix}_${version.filename}"/>
+        <property name="release.out.dir" value="${release.dest.dir}/${release.name}"/>
+    </target>    
+
+    <target name="clean.dist.folders" depends="init, dist.init">
+        <!-- Removes the expanded release folders, makes for easier automation of builds -->
+        <delete dir="${release.src.out.dir}"/>
+        <delete dir="${release.out.dir}"/>
+    </target>    
+
+    <!-- dist.src =============================================================================== -->
+    <target name="dist.src" depends="init, dist.init, javadoc, -i18n"
+            description="Creates a source distribution package">
+
+        <mkdir dir="${release.dest.dir}"/>
+
+        <!-- Create a new prop for the final release dirs then create the dirs -->
+        <mkdir dir="${release.src.out.dir}"/>
+        <!-- Copy dist docs, use filtering  -->
+        <copy todir="${release.src.out.dir}">
+            <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
+            <filterset>
+                <filter token="builddate" value="${builddate}"/>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
+        <!-- Copy the license -->
+        <copy todir="${release.src.out.dir}" file="${license.file.path}/LICENSE.html"/>
+        <!-- Copy text docs -->
+        <copy todir="${release.src.out.dir}/documentation">
+            <fileset dir="${docs.dir}" includes="**/*.html,**/*.txt"/>
+            <filterset>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
+        <!-- Copy rest of docs -->
+        <copy todir="${release.src.out.dir}/documentation">
+            <fileset dir="${docs.dir}" excludes="**/*.html,**/*.txt"/>
+        </copy>
+        <!-- Copy Javadocs -->
+        <copy todir="${release.src.out.dir}/documentation/docs/javadoc">
+            <fileset dir="${javadoc.dest.dir}"/>
+        </copy>
+        <!-- Copy non-java source -->
+        <copy todir="${release.src.out.dir}/src">
+            <fileset dir="${src.dir}" excludes="**/*.java"/>
+        </copy>
+
+        <!-- Copy java source, stripping non-distributable files and replacing DATE strings -->
+        <copy todir="${release.src.out.dir}/src">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java" />
+                <srcinc />
+            </fileset>
+            <filterset>
+                <filter token="DATE" value="${builddate}"/>
+            </filterset>
+        </copy>
+
+        <if>
+            <available file="${work.dir}/plugins-dev/enterprise/target/lib" />
+            <then>
+                <copy todir="${release.src.out.dir}/src/plugins/enterprise/lib" failonerror="false">
+                    <fileset dir="${work.dir}/plugins-dev/enterprise/target/lib">
+                        <include name="*-lib.jar" />
+                    </fileset>
+                </copy>
+            </then>
+        </if>
+
+        <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
+        <copy todir="${release.src.out.dir}/resources/i18n">
+            <fileset dir="${target.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+        </copy>
+        <!-- Copy build -->
+        <copy todir="${release.src.out.dir}/build">
+            <fileset dir="${basedir}/build"/>
+        </copy>
+
+        <if>
+            <not>
+                <isset property="no.package"/>
+            </not>
+            <then>
+                <parallel>
+                    <!-- Source Packages -->
+                    <zip zipfile="${package.dest.filename.zip}"
+                         basedir="${release.src.out.dir}/.."
+                         includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
+                            />
+                    <tar tarfile="${package.dest.filename.tar.gz}"
+                         basedir="${release.src.out.dir}/.."
+                         includes="${release.fullname.src}/**/*, ${release.name.src}/**/*"
+                         compression="gzip"
+                         longfile="gnu"
+                            />
+                </parallel>
+            </then>
+        </if>
+    </target>
+
+    <!-- dist.bin =============================================================================== -->
+    <target name="dist.bin" depends="init, dist.init, plugins, javadoc, enterprise"
+            description="Creates a binary distribution package">
+
+        <mkdir dir="${release.out.dir}"/>
+
+        <!-- Make & copy the search plugin. -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${work.dir}">
+                <include name="plugins/search.jar"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy all prepare dirs to the binary dist -->
+        <antcall target="openfireHome">
+            <param name="target.openfireHome" value="${release.out.dir}"/>
+            <param name="openfireHome.no.plugins" value="true"/>
+        </antcall>
+
+        <!-- Remove the development scripts -->
+        <delete file="${release.out.dir}/bin/openfire-dev.bat"/>
+        <delete file="${release.out.dir}/bin/openfire-dev.sh"/>
+
+        <!-- Pack200 processing on JAR files in lib dir -->
+
+        <for param="jar">
+            <path>
+                <fileset dir="${release.out.dir}/lib" includes="*.jar"
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+            </path>
+            <sequential>
+                <delete file="@{jar}.pack"/>
+                <pack200 src="@{jar}"
+                         destfile="@{jar}.pack"
+                         gzipoutput="false"
+                        />
+                <delete file="@{jar}"/>
+            </sequential>
+        </for>
+
+        <!-- Pack200 processing on JAR files in admin plugin lib dir -->
+
+        <for param="jar">
+            <path>
+                <fileset dir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib" includes="*.jar"
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bouncycastle.jar"/>
+            </path>
+            <sequential>
+                <delete file="@{jar}.pack"/>
+                <pack200 src="@{jar}"
+                         destfile="@{jar}.pack"
+                         gzipoutput="false"
+                        />
+                <delete file="@{jar}"/>
+            </sequential>
+        </for>
+
+        <!-- Copy dist docs, use filtering  -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
+            <filterset>
+                <filter token="builddate" value="${builddate}"/>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
+
+        <!-- Copy the license -->
+        <copy todir="${release.out.dir}" file="${license.file.path}/LICENSE.html"/>
+        <mkdir dir="${release.out.dir}/logs"/>
+        <touch file="${release.out.dir}/logs/stderr.out"/>
+
+        <!-- Copy docs -->
+        <copy todir="${release.out.dir}/documentation">
+            <fileset dir="${docs.dir}/docs"/>
+            <filterset>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
+        <copy todir="${release.out.dir}/documentation/images" filtering="false" overwrite="true">
+            <fileset dir="${docs.dir}/docs/images"/>
+        </copy>
+
+        <!-- Copy Javadocs -->
+        <copy todir="${release.out.dir}/documentation/javadoc">
+            <fileset dir="${javadoc.dest.dir}"/>
+        </copy>
+
+
+        <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
+        <copy todir="${release.out.dir}/resources/i18n">
+            <fileset dir="${target.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+        </copy>
+
+        <!-- Package the release -->
+        <property name="package.dest.dir" value="${release.dest.dir}"/>
+
+        <if>
+            <not>
+                <isset property="no.package"/>
+            </not>
+            <then>
+                <parallel>
+                    <!-- Binary packages -->
+                    <zip zipfile="${package.dest.dir}/${release.fullname}.zip"
+                         basedir="${release.out.dir}/.."
+                         includes="${release.fullname}/**/*, ${release.name}/**/*"/>
+                    <tar tarfile="${package.dest.dir}/${release.fullname}.tar.gz"
+                         basedir="${release.out.dir}/.."
+                         includes="${release.fullname}/**/*, ${release.name}/**/*"
+                         compression="gzip"
+                         longfile="gnu"/>
+                </parallel>
+            </then>
+        </if>
+    </target>
+
+    <target name="enterprise" if="do.enterprise">
+        <!-- Copy enterprise plugins. -->
+        <copy todir="${release.out.dir}">
+            <fileset dir="${work.dir}">
+                <include name="plugins/enterprise.jar"/>
+                <include name="plugins/fastpath.jar"/>
+                <include name="plugins/webchat.war"/>
+            </fileset>
+        </copy>
+        <!-- Remove GPL libs from distribution -->
+        <delete file="${release.out.dir}/lib/mysql.jar.pack"/>
+    </target>
+
+    <!-- dailybuild ============================================================================ -->
+    <target name="dailybuild" depends="init" description="Creates a daily build release">
+        <property name="release.out.name" value="${dist.prefix}_${dailybuild.tstamp}"/>
+        <property name="release.fullname" value="${release.out.name}"/>
+        <property name="release.src.out.name" value="${dist.prefix}_src_${dailybuild.tstamp}"/>
+        <property name="release.fullname.src" value="${release.src.out.name}"/>
+        <property name="release.out.dir"
+                  value="${release.dest.dir}/dailybuild/${release.out.name}"/>
+        <property name="release.src.out.dir"
+                  value="${release.dest.dir}/dailybuild/${release.src.out.name}"/>
+        <antcall target="dist.src">
+            <param name="release.src.out.name" value="${release.src.out.name}"/>
+            <param name="release.src.out.dir" value="${release.src.out.dir}"/>
+            <param name="package.dest.dir" value="${release.dest.dir}/dailybuild"/>
+        </antcall>
+        <antcall target="dist.bin">
+            <param name="release.out.name" value="${release.out.name}"/>
+            <param name="release.out.dir" value="${release.out.dir}"/>
+            <param name="package.dest.dir" value="${release.dest.dir}/dailybuild"/>
+            <!-- dist.src above does this already, so don't need to do it twice -->
+            <param name="no.javadoc" value="true"/>
+        </antcall>
+    </target>
+
+    <!-- installer ============================================================================= -->
+    <target name="installer" description="Creates Openfire installers">
+        <condition property="install4j.not.ok" value="true">
+            <not>
+                <available file="${installer.install4j.home}/bin/install4j.jar"/>
+            </not>
+        </condition>
+        <fail if="install4j.not.ok"
+              message="Path to Install4j not set, see build.properties.template file."/>
+    
+        <antcall target="dist.bin">
+            <!-- Don't need package for installer build -->
+            <param name="no.package" value="true"/>
+        </antcall>
+
+        <antcall target="dist.src">
+            <!-- Already built javadoc with dist.bin above -->
+            <param name="no.javadoc" value="true"/>
+        </antcall>
+
+        <taskdef name="install4j"
+                 classname="com.install4j.Install4JTask"
+                 classpath="${installer.install4j.home}/bin/ant.jar"/>
+
+        <mkdir dir="${installer.dest.dir}"/>
+
+        <!-- Install4j doesn't support extra version info (like beta) correctly, so
+             define a special revision number.  -->
+        <if>
+            <equals arg1="${version.extra}" arg2=""/>
+            <then>
+                <property name="install4j.revision" value="${version.revision}"/>
+            </then>
+            <else>
+                <property name="install4j.revision" value="${version.revision}.${version.extra}"/>
+            </else>
+        </if>
+
+        <install4j projectfile="${installer.install4j.srcfile}" destination="${installer.dest.dir}">
+            <variable name="RELEASE_DIR" value="${dist.prefix}"/>
+            <variable name="VERSION_MAJOR" value="${version.major}"/>
+            <variable name="VERSION_MINOR" value="${version.minor}"/>
+            <variable name="VERSION_REVISION" value="${install4j.revision}"/>
+            <variable name="APP_NAME" value="${installer.app_name}"/>
+            <variable name="APP_SHORT_NAME" value="${installer.app_short_name}"/>
+            <variable name="PRODUCT_NAME" value="${installer.product_name}"/>
+            <variable name="PUBLISHER" value="${installer.publisher}"/>
+            <variable name="PUBLISHER_URL" value="${installer.publisher_url}"/>
+            <variable name="FILE_PREFIX" value="${installer.app_short_name}"/>
+            <variable name="RELEASE_ROOT_PATH" value="${installer.release_root_path}"/>
+            <variable name="APPLICATION_ID" value="${installer.application_id}"/>
+            <variable name="UNIX_INSTALL_DIR" value="${installer.unix_install_dir}"/>
+            <variable name="WINDOWS_INSTALL_DIR" value="${installer.windows_install_dir}"/>
+        </install4j>
+
+    </target>
+    
+    <!-- installer.rpm ========================================================================= -->
+    <property name="bundle.jre" value="true" />
+    <property name="target.work.subdir" value="rpm" />
+    <property name="target.rpm" value="${work.dir}/${target.work.subdir}" />
+    <property name="rpm.spec.file" value="${basedir}/build/rpm/openfire.spec"/>
+    <tstamp>
+        <format property="rpm.builddate" pattern="EEE MMM dd yyyy" locale="en"/>
+    </tstamp>
+    <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of openfire.">
+        <antcall target="dist.src"/>
+
+        <mkdir dir="${target.rpm}/SPECS" />
+        <mkdir dir="${target.rpm}/SOURCES" />
+        <mkdir dir="${target.rpm}/BUILD" />
+        <mkdir dir="${target.rpm}/SRPMS" />
+        <mkdir dir="${target.rpm}/RPMS" />
+
+        <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
+        <if>
+            <equals arg1="${bundle.jre}" arg2="true"/>
+            <then>
+                <!-- Include bundled jre -->
+                <copy todir="${target.rpm}/SOURCES" file="${basedir}/build/rpm/jre-dist.tar.gz" />
+            </then>
+        </if>
+        <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+
+
+        <rpm specFile="openfire.spec"
+             topDir="${target.rpm}"
+             command="-ba --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+             failOnError="true"
+             />
+             
+        <copy todir="${release.dest.dir}" >
+            <fileset dir="${target.rpm}/SRPMS" />
+            <fileset dir="${target.rpm}/RPMS/i386" />
+        </copy>
+    </target>
+
+    <!-- installer.solaris ========================================================================= -->
+    <target name="installer.solaris" depends="init, dist.init, dist.bin" description="Builds a solaris pkg of openfire.">
+        <property name="target.solaris" value="${work.dir}/solaris" />
+        <property name="target.solaris.root" value="${target.solaris}/root" />
+<!--        <property name="target.solaris.pkg" value="${target.solaris}/pkg" /> -->
+        <property name="target.solaris.pkg" value="/var/spool/pkg" />
+        <property name="solaris.pkg.name" value="JSopenfire"/>
+        <property name="solaris.pkg.filename" value="${solaris.pkg.name}-${version}-ALL.pkg"/>
+        <tstamp>
+            <format property="solaris.builddate" pattern="yyyymmdd" locale="en"/>
+        </tstamp>
+
+        <antcall target="dist.bin">
+            <!-- Don't need package for installer build -->
+            <param name="no.package" value="true"/>
+        </antcall>
+
+        <mkdir dir="${target.solaris.root}" />
+        <mkdir dir="${target.solaris.root}/opt" />
+<!--        <mkdir dir="${target.solaris.pkg}" /> -->
+        <mkdir dir="${target.solaris.root}/opt/openfire/resources/solaris" />
+
+        <copy todir="${target.solaris.root}/opt/openfire">
+            <fileset dir="${release.out.dir}"/>
+        </copy>
+
+	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/openfirectl" />
+	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/openfire.sh" />
+	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.sh" />
+
+	<delete file="${target.solaris.root}/opt/openfire/bin/openfire.bat" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/openfire-dev.bat" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/openfire-launchd-wrapper.sh" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/openfired" />
+	<delete dir="${target.solaris.root}/opt/openfire/bin/extra/redhat" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/redhat-postinstall.sh" />
+	<delete file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.bat" />
+
+        <copy tofile="${target.solaris.root}/pkginfo" file="${basedir}/build/pkg/pkginfo" />
+        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/openfire.xml" file="${basedir}/build/solaris/openfire.xml" />
+        <copy tofile="${target.solaris.root}/checkinstall" file="${basedir}/build/solaris/checkinstall" />
+        <copy tofile="${target.solaris.root}/postinstall" file="${basedir}/build/solaris/postinstall" />
+        <copy tofile="${target.solaris.root}/preremove" file="${basedir}/build/solaris/preremove" />
+
+        <copy tofile="${target.solaris.root}/Prototype" file="${basedir}/build/pkg/Prototype.template" overwrite="true"/>
+        <exec executable="/usr/bin/pkgproto" output="${target.solaris.root}/Prototype" append="true" failonerror="true">
+            <arg value="${target.solaris.root}/opt/openfire=/opt/openfire"/>
+        </exec>
+
+        <replaceregexp file="${target.solaris.root}/Prototype" match="(.* .* .* .*) .* .*" replace="\1 daemon daemon" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/conf/openfire.xml=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/keystore=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/truststore=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/client.truststore=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/bin/embedded-db.rc=.* .* .* .*)" replace="e \1" byline="true"/>
+
+        <exec executable="/usr/bin/pkgmk" dir="${target.solaris.root}" failonerror="true">
+            <arg value="-o"/>
+<!--            <arg value="-d ${target.solaris.pkg}"/> this doesn't work as advertised -->
+            <arg value="-v ${version}"/>
+            <arg value="-p ${solaris.builddate}"/>
+        </exec>
+
+        <touch file="${release.dest.dir}/${solaris.pkg.filename}"/>
+
+        <exec executable="/usr/bin/pkgtrans" failonerror="true">
+            <arg value="-s"/>
+            <arg value="${target.solaris.pkg}"/>
+            <arg value="${release.dest.dir}/${solaris.pkg.filename}"/>
+            <arg value="${solaris.pkg.name}"/>
+        </exec>
+
+        <gzip src="${release.dest.dir}/${solaris.pkg.filename}" destfile="${release.dest.dir}/${solaris.pkg.filename}.gz"/>
+
+        <delete dir="${target.solaris.pkg}/${solaris.pkg.name}"/>
+    </target>
+
+    <!-- plugins =============================================================================== -->
+    <target name="plugins" description="Builds all plugins">
+        <tstamp>
+            <format property="buildJavaDate" pattern="MMM dd, yyyy"/>
+        </tstamp>
+        <!-- Call jar task, can't do this is as a 'depends' call of this target because
+             of the way class loading works for jspc calls.
+        -->
+        <antcall target="openfire">
+            <param name="openfireHome.no.update" value="true"/>
+        </antcall>
+
+        <mkdir dir="${plugin.dest.dir}"/>
+
+        <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. -->
+        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml"
+                    except="admin"/>
+
+        <antcall target="-plugins-impl-dev"/>
+        <antcall target="-plugins-impl"/>
+
+        <!-- Update/create target/openfire directory -->
+        <antcall target="openfireHome"/>
+
+    </target>
+    <target name="-plugins-impl" if="dirlist">
+
+        <!-- For each plugin in the main src dir, call the 'buildplugin' macro -->
+        <for list="${dirlist}" param="plugin" trim="true">
+            <sequential>
+                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
+            </sequential>
+        </for>
+
+    </target>
+    <target name="-plugins-impl-dev" if="plugin.dev.dir">
+
+        <!-- Get a list of plugins in the optional dev dir -->
+        <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml"/>
+
+        <antcall target="-plugin-impl-dev-build"/>
+
+    </target>
+    <target name="-plugin-impl-dev-build" if="dirlist2">
+
+        <!-- For each list of plugins in the dev dir call the 'buildplugin' macro -->
+        <for list="${dirlist2}" param="plugin" trim="true">
+            <sequential>
+                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}"/>
+            </sequential>
+        </for>
+
+    </target>
+    <target name="plugin" description="build one plugin">
+        <mkdir dir="${plugin.dest.dir}"/>
+
+        <delete dir="${plugin.dev.dest.dir}/${plugin}"/>
+        <delete file="${plugin.dev.dest.dir}/${plugin}.jar"/>
+        <delete file="${plugin.dest.dir}/${plugin}.jar"/>
+        <buildplugin plugin="${plugin}" pluginsrc="${plugin.src.dir}"/>
+
+        <!-- Update/create target/openfire directory -->
+        <antcall target="openfireHome"/>
+    </target>
+
+    <!-- buildplugin (MACRO) =================================================================== -->
+    <macrodef name="buildplugin">
+        <attribute name="plugin"/>
+        <attribute name="pluginsrc"/>
+        <attribute name="pluginlib" default="${plugin.dev.dest.dir}/@{plugin}/work/lib" />
+        <sequential>
+
+            <!-- For each plugin, copile code, make a jar and copy resources. -->
+            <mkdir dir="${plugin.dev.dest.dir}"/>
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}"/>
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target"/>
+
+            <!-- Compile plugin source code -->
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
+            <javac
+                    destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
+                    includeAntRuntime="no"
+                    debug="on"
+                    source="1.5"
+                    target="1.5"
+                    >
+                <src path="@{pluginsrc}/@{plugin}/src/java"/>
+                <classpath>
+                    <path refid="plugin.dependencies"/>
+                    <!-- Jars used by the plugin to compile with -->
+                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                </classpath>
+            </javac>
+
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
+
+            <!-- Searchs source of a plugin and makes a <plugin>-lib.jar that contains compiled versions of all
+                 non-distributable source -->
+            <mkdir dir="@{pluginlib}/source" />
+            <mkdir dir="@{pluginlib}/classes" />
+
+            <!-- copy the source we want to compile -->
+            <copy todir="@{pluginlib}/source">
+                <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" >
+                    <not>
+                        <srcinc />
+                    </not>
+                </fileset>
+                <filterset>
+                    <filter token="DATE" value="${buildJavaDate}"/>
+                </filterset>
+            </copy>
+
+            <if>
+                <not><uptodate>
+                    <srcfiles dir="@{pluginlib}/source" includes="**/*.java"/>
+                    <mapper type="merge" to="@{pluginlib}/@{plugin}-lib.jar"/>
+                </uptodate></not>
+                <then>
+                    <javac
+                        destdir="@{pluginlib}/classes"
+                        includeAntRuntime="no"
+                        debug="on"
+                        source="1.5"
+                        includes="**/*.java"
+                    >
+                        <src path="@{pluginlib}/source"/>
+                        <classpath>
+                            <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
+                            <path>
+                                <path refid="plugin.dependencies"/>
+                                <!-- Jars used by the plugin to compile with -->
+                                <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                            </path>
+                        </classpath>
+                    </javac>
+
+                    
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/@{plugin}-lib.jar">
+                        <fileset dir="@{pluginlib}/classes" />
+                    </jar>
+                </then>
+            </if>
+
+            <!-- Make the jar -->
+            <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/classes" >
+                    <present present="srconly" targetdir="@{pluginlib}/classes"/>
+                </fileset>
+            </jar>
+
+            <!-- Clean-up our source files for the "srcinc" files -->
+            <delete dir="@{pluginlib}/classes" />
+            <delete dir="@{pluginlib}/source" />
+
+            <available file="@{pluginsrc}/@{plugin}/src/include" type="dir"
+                       property="@{plugin}.include.exists"/>
+            <if>
+                <equals arg1="${@{plugin}.include.exists}" arg2="true"/>
+                <then>
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"
+                         update="true">
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/include" includes="**/*.*"/>
+                    </jar>
+                </then>
+            </if>
+
+            <!-- Copy anything in the plugin's lib dir to the target lib dir -->
+            <if>
+                <available file="@{pluginsrc}/@{plugin}/lib" />
+                <then>
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/lib" failonerror="false"
+                          overwrite="${overwrite}">
+                        <fileset dir="@{pluginsrc}/@{plugin}/lib" includes="**/*.*"/>
+                    </copy>
+                </then>
+            </if>
+
+            <!-- Copy web.xml to web-custom.xml -->
+            <if>
+                <available file="@{pluginsrc}/@{plugin}/src/web/WEB-INF" />
+                <then>
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF" failonerror="false"
+                          overwrite="${overwrite}">
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/web/WEB-INF" includes="web.xml"/>
+                        <mapper type="glob" from="web.xml" to="web-custom.xml"/>
+                    </copy>
+                </then>
+            </if>
+
+            <!-- Copy the plugin.xml and documentation to the target dir, code below assumes it's there -->
+            <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" failonerror="false"
+                  overwrite="${overwrite}">
+                <fileset dir="@{pluginsrc}/@{plugin}" includes="*.xml, *.html, *.gif, *.png, *.ico"/>
+            </copy>
+
+            <!-- Copy the database and i18n file to the target dir, if they exist. -->
+            <!--<copy todir="${plugin.dev.dest.dir}/@{plugin}/target/database" failonerror="false">-->
+            <!--<fileset dir="@{pluginsrc}/@{plugin}/src/database"/>-->
+            <!--</copy>-->
+
+            <!-- JSPC any JSP pages. Do this conditionally as there might not be a web dir. -->
+            <available property="plugin.@{plugin}.webdocs.available"
+                       type="dir" file="@{pluginsrc}/@{plugin}/src/web"/>
+            <if>
+                <equals arg1="${plugin.@{plugin}.webdocs.available}" arg2="true"/>
+                <then>
+
+                    <!-- Continue with JSPC tasks... -->
+
+                    <!-- Create output dir -->
+                    <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
+                    <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"/>
+
+                    <!-- Copy jsp's from plugin and web.xml from openfire to a temp dir. We'll
+                         not fail on an error since the web dir might not exist.
+                    -->
+                    <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web"
+                          overwrite="${overwrite}">
+                        <fileset dir="@{pluginsrc}/@{plugin}/src/web">
+                            <exclude name="WEB-INF/web.xml"/>
+                        </fileset>
+                        <fileset dir="${web.dir}">
+                            <include name="WEB-INF/**/*.*"/>
+                            <exclude name="WEB-INF/web.xml"/>
+                            <exclude name="WEB-INF/classes/openfire_init.xml"/>
+                            <exclude name="WEB-INF/tmp/**/*.*"/>
+                            <exclude name="WEB-INF/work/**/*.*"/>
+                        </fileset>
+                    </copy>
+
+                    <!-- Declare the jspc task with our plugin's classpath -->
+                    <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperB">
+                        <classpath>
+                            <pathelement location="${java.home}/../lib/tools.jar"/>
+                            <pathelement
+                                    location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
+                            <path refid="jspc.dependencies"/>
+                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target" includes="lib/*.jar"/>
+                            <pathelement path="${compile.dir}"/>
+                        </classpath>
+                    </taskdef>
+
+                    <!-- JSP to Java -->
+                    <jasper2
+                            validateXml="false"
+                            uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
+                            outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
+                            package="org.jivesoftware.openfire.plugin.@{plugin}"
+                            webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                            />
+
+                    <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
+                    <available property="plugin.@{plugin}.webxml.available"
+                               type="file" file="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml"/>
+
+                    <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF"/>
+
+                    <if>
+                        <equals arg1="${plugin.@{plugin}.webxml.available}" arg2="true"/>
+                        <then>
+
+                            <!-- Copy the servlet and servlet-mapping elements from the original web.xml to a temp buffer.
+                                 Note: The original web.xml can only contain one servlet and servlet-mapping -->
+                            <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
+                                <copy path="//web-app/servlet[last()]" buffer="foobar"/>
+                                <copy path="//web-app/servlet-mapping[last()]" buffer="foobar2"/>
+                            </xmltask>
+                            <!-- Add the copied servlet and servlet-mapping elements to the generated web.xml -->
+                            <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                                     dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
+                                <insert path="/web-app/servlet[last()]" buffer="foobar"
+                                        position="after"/>
+                                <insert path="/web-app/servlet-mapping[last()]" buffer="foobar2"
+                                        position="after"/>
+                            </xmltask>
+
+                        </then>
+                        <else>
+                            <copy todir="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF"
+                                  file="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
+                                  overwrite="${overwrite}"/>
+                        </else>
+                    </if>
+
+                    <!-- Compile java classes -->
+                    <javac
+                            destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
+                            includeAntRuntime="no"
+                            debug="on"
+                            source="1.5"
+                            target="1.5"
+                            >
+                        <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
+                        <classpath>
+                            <path refid="jspc.dependencies"/>
+                            <pathelement path="${compile.dir}"/>
+                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target" includes="lib/*.jar"/>
+                        </classpath>
+                    </javac>
+
+                    <!-- Make a jar of compiled jsp classes -->
+                    <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}-jspc.jar">
+                        <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
+                                 includes="**/*.class"/>
+                    </jar>
+
+                </then>
+            </if>
+
+            <!-- Some JAR files don't work well through Pack200. When that's the case, they should
+                 be manually added to this list.
+            -->
+            <property name="pack200.excludes"
+                      value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar,tangosol.jar"/>
+
+            <for param="jar">
+                <path>
+                    <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar"
+                             excludes="${pack200.excludes}"/>
+                </path>
+                <sequential>
+                    <delete file="@{jar}.pack"/>
+                    <pack200 src="@{jar}"
+                             destfile="@{jar}.pack"
+                             gzipoutput="false"
+                            />
+                </sequential>
+            </for>
+
+            <!-- Copy everything else to Openfire's plugin dir -->
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
+                    <include name="lib/*.pack"/>
+                    <include name="web/WEB-INF/web.xml"/>
+                    <include name="web/WEB-INF/web-custom.xml"/>
+                </fileset>
+                <fileset dir="@{pluginsrc}/@{plugin}">
+                    <include name="classes/**/*.*"/>
+                </fileset>
+                <fileset dir="@{pluginsrc}/@{plugin}/src">
+                    <include name="database/**/*.sql"/>
+                    <include name="i18n/*.properties"/>
+                    <include name="web/**/*.*"/>
+                    <exclude name="web/WEB-INF/web.xml"/>
+                    <exclude name="web/**/*.jsp"/>
+                    <exclude name="web/**/*.jspf"/>
+                    <exclude name="java/**/*.java"/>
+                </fileset>
+            </copy>
+
+            <!-- Excluded pack files need to be copied over as well -->
+            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"
+                         includes="${pack200.excludes}"/>
+            </copy>
+
+            <!-- Jar the plugin -->
+            <jar jarfile="${plugin.dest.dir}/@{plugin}.jar">
+                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>
+            </jar>
+
+            <!-- Delete the exploded plugin -->
+            <delete dir="${plugin.dev.dest.dir}/@{plugin}/jar"/>
+
+        </sequential>
+    </macrodef>
+
+    <!-- anttasks ============================================================================== -->
+    <target name="anttasks" depends="init">
+
+        <mkdir dir="${anttools.target.dir}"/>
+        <mkdir dir="${anttools.target.dir}/classes"/>
+
+        <javac
+                destdir="${anttools.target.dir}/classes"
+                includeAntRuntime="no"
+                debug="on"
+                source="1.4"
+                >
+            <src path="${anttools.src.dir}"/>
+            <patternset refid="compile.sources"/>
+            <classpath>
+                <path refid="compile.dependencies"/>
+            </classpath>
+        </javac>
+
+        <jar jarfile="${anttools.target.dir}/ant-subdirtask.jar">
+            <fileset dir="${anttools.target.dir}/classes" includes="**/*.class"/>
+        </jar>
+    </target>
+
+    <!-- clean ================================================================================= -->
+    <target name="clean" description="Cleans up all build-generated output">
+        <delete dir="${work.dir}"/>
+        <delete dir="${target.dir}"/>
+
+        <!-- Delete the Enterprise plugin in the openfire plugin directory, if this isn't an enterprise build -->
+        <if>
+            <not><equals arg1="${do.enterprise}" arg2="true"/></not>
+            <then>
+                <!-- Copy pre-configured openfireHome dir -->
+                <delete dir="${basedir}/src/plugins/enterprise" />
+            </then>
+        </if>
+    </target>
+
+    <!-- clean-jspc ============================================================================ -->
+    <!-- Cleans all JSPC output -->
+    <target name="clean-jspc">
+        <delete dir="${jspc.dest.dir}"/>
+    </target>
+
+    <!-- clean-test ============================================================================ -->
+    <!-- Cleans all compiled test classes -->
+    <target name="clean-test">
+        <delete dir="${test.classes.dest.dir}"/>
+    </target>
+
+    <!-- clean-plugins ========================================================================= -->
+    <!-- Cleans all generated plugins -->
+    <target name="clean-plugins">
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*"/>
+        </delete>
+        <!--<delete dir="${plugin.dest.dir}"/> -->
+        <delete dir="${plugin.dev.dest.dir}"/>
+    </target>
+
+    <!-- Mac installer ========================================================================= -->
+    <property name="target.osx" value="${work.dir}/osx" />
+    <property name="mac.pkg.dir" value="${target.osx}/macpkg"/>
+    <property name="mac.dmg.dir" value="${target.osx}/Openfire"/>
+    <property name="mac.dmg.file" value="${release.dest.dir}/openfire.dmg"/>
+    <property name="mac.template" value="${target.osx}/template"/>
+    <property name="mac.prefpane.build" value="${target.osx}/prefPane"/>
+
+    <target name="mac.delete">
+        <delete dir="${mac.pkg.dir}" failonerror="false"/>
+        <delete dir="${mac.dmg.dir}" failonerror="false"/>
+        <delete file="${mac.dmg.file}" failonerror="false"/>
+        <delete dir="${mac.template}" failonerror="false"/>
+        <delete dir="${mac.prefpane.build}" failonerror="false"/>
+    </target>
+    
+    <target name="mac.prefpane">
+    <!-- install will put it in macpkg/Library/PreferencePanes/ as specified in the target settings -->
+        <copy todir="${mac.prefpane.build}" >
+            <fileset dir="${basedir}/build/osx/openfirePrefPane" />
+        </copy>
+        <exec executable="/usr/bin/xcodebuild" dir="${mac.prefpane.build}" failonerror="true">
+            <arg value="-configuration"/>
+            <arg value="Deployment"/>
+            <arg value="-target"/>
+            <arg value="Openfire"/>
+            <arg value="clean"/>
+            <arg value="install"/>
+        </exec>
+    </target>
+
+    <target name="mac.prepare" depends="mac.delete,openfire, mac.prefpane">
+        <copy todir="${mac.pkg.dir}/usr/local/openfire">
+            <fileset dir="${target.dir}/openfire">
+                <exclude name="**/openfired"/>
+                <exclude name="**/openfirectl"/>
+                <exclude name="**/redhat"/>
+                <exclude name="**/embedded-db*"/>
+                <exclude name="**/redhat-postinstall.sh"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${mac.pkg.dir}/Library/LaunchDaemons"/>
+        <copy file="${basedir}/build/osx/org.jivesoftware.openfire.plist"
+              todir="${mac.pkg.dir}/Library/LaunchDaemons"/>
+        <mkdir dir="${mac.dmg.dir}"/>
+        <mkdir dir="${mac.pkg.dir}/Library/PreferencePanes"/>
+        <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
+            <fileset dir="${mac.prefpane.build}/build/UninstalledProducts/"/>
+        </copy>
+        <chmod perm="o+x">
+            <fileset dir="${mac.pkg.dir}/Library/PreferencePanes/Openfire.prefPane/Contents/MacOS/">
+                <include name="HelperTool"/>
+            </fileset>
+        </chmod>
+        <chmod perm="ug+x">
+            <fileset dir="${mac.pkg.dir}/usr/local/openfire/bin">
+                <include name="extra/openfire-launchd-wrapper.sh"/>
+            </fileset>
+            <fileset dir="${basedir}/build/osx/resources"/>
+        </chmod>
+        <mkdir dir="${mac.template}/.background"/>
+        <copy todir="${mac.template}/.background">
+            <fileset file="${basedir}/build/osx/dmgBackground.png"/>
+        </copy>
+    </target>
+
+    <!-- Create a Mac OS X installer -->
+    <target name="mac.pkg" depends="mac.prepare">
+        <tstamp>
+            <format property="copyrightyear" pattern="yyyy"/>
+        </tstamp>
+        <copy todir="${target.osx}" file="${basedir}/build/osx/Info.plist"/>
+        <replace file="${target.osx}/Info.plist">
+            <replacefilter token="%VERSION%" value="${version}"/>
+            <replacefilter token="%VERSIONMAJOR%" value="${version.major}"/>
+            <replacefilter token="%VERSIONMINOR%" value="${version.minor}"/>
+            <replacefilter token="%COPYRIGHT%" value="${copyrightyear}"/>
+        </replace>
+        <copy todir="${target.osx}" file="${basedir}/build/osx/Description.plist"/>
+        <exec executable="/Developer/Tools/packagemaker">
+            <arg value="-build"/>
+            <arg value="-f"/>
+            <arg value="${mac.pkg.dir}"/>
+            <arg value="-i"/>
+            <arg value="${target.osx}/Info.plist"/>
+            <arg value="-d"/>
+            <arg value="${target.osx}/Description.plist"/>
+            <arg value="-r"/>
+            <arg value="${basedir}/build/osx/resources"/>
+            <!--<arg value="-proj"/>
+            <arg value="${basedir}/build/osx/openfire.pmproj"/> -->
+            <arg value="-p"/>
+            <arg value="${mac.template}/Openfire.pkg"/>
+            <arg value="-ds"/>
+            <arg value="-v"/>
+        </exec>
+    </target>
+
+    <target name="installer.mac" depends="mac.pkg" description="Creates a Mac OS X package">
+        <mkdir dir="${release.dest.dir}"/>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="create -srcfolder '${mac.template}' -volname 'Openfire' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${target.osx}/tmp.dmg'"/>
+        </exec>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="attach '${target.osx}/tmp.dmg' -readwrite -noverify -noautoopen -noidme -mountpoint '${mac.dmg.dir}'"/>
+        </exec>
+        <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
+            <arg value="dmg_openfire.scpt"/>
+            <arg value="Openfire"/>
+            <arg value="images"/>
+            <arg value="360"/>
+            <arg value="200"/>
+            <arg value="450"/>
+            <arg value="220"/>
+            <arg value="128"/>
+        </exec>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="detach ${mac.dmg.dir} -quiet -force"/>
+        </exec>
+        <exec executable="hdiutil" failonerror="true">
+            <arg line="convert ${target.osx}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${mac.dmg.file}"/>
+        </exec>
+        <delete file="${target.osx}/tmp.dmg"/>
+    </target>
+
+    <!-- Debian package ========================================================================= -->
+    <property name="debian.dir" value="${basedir}/build/debian"/>
+    <property name="debian.release.dir" value="${release.dest.dir}/debian"/>
+    <property name="debian.version" value="${version.major}.${version.minor}.${version.revision}"/>
+    <property name="debian.work.dir" value="${work.dir}/debian/${dist.prefix}-${debian.version}"/>
+    <tstamp>
+        <format property="debian.builddate" pattern="EEE, dd MMM yyyy HH:mm:ss Z" locale="en"/>
+    </tstamp>
+
+    <target name="installer.debian" depends="dist.src" description="Creates a Debian package">
+        <!-- Copy the sources to some place to work -->
+        <copy todir="${debian.work.dir}"> 
+            <fileset dir="${release.src.out.dir}">
+                <include name="**/*" />
+            </fileset>
+        </copy>
+
+        <!-- Copy build/debian into workdir -->
+        <copy todir="${debian.work.dir}/debian">
+            <fileset dir="${debian.dir}/" includes="**/*"/>
+            <filterset>
+                <filter token="builddate" value="${debian.builddate}"/>
+                <filter token="version" value="${debian.version}"/>
+            </filterset>
+        </copy>
+
+        <!-- Make the copied 'rules' executable -->
+        <chmod file="${debian.work.dir}/debian/rules" perm="755" />
+
+        <!-- Create the package -->
+        <exec executable="dpkg-buildpackage" dir="${debian.work.dir}" failonerror="true">
+            <!-- Allow building without root-privs -->
+            <arg line="-rfakeroot"/>
+            <!-- Don't sign source -->
+            <arg line="-us"/>
+            <!-- Don't sign changelog -->
+            <arg line="-uc"/>
+        </exec>
+
+	<!-- Copy the resulting files into target -->
+	<copy todir="${debian.release.dir}">
+            <fileset dir="${debian.work.dir}/.." followsymlinks="false">
+		<include name="**/*.deb" />
+		<include name="**/*.changes" />
+		<include name="**/*.dsc" />
+		<include name="**/*.gz" />
+            </fileset>
+        </copy>
+    </target>
+
+</project>

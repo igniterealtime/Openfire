@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<adminconsole>
+    <tab id="foobar" name="Foo Bar" url="foobar.jsp" description="Click to see foo bar" />
+</adminconsole>

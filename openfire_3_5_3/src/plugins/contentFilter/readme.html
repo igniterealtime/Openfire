@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>ContentFilter Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+ContentFilter Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+<p>
+The content filter plugin allows admins to configure various actions based on
+message content. These actions include notifying the admin of content matches,
+notifying the sender that a message was rejected or masking the content with
+alternative content.
+</p>
+
+<h2>Installation</h2>
+<p>
+Copy the contentfilter.jar into the plugins directory of your Jive Messenger
+installation. The plugin will then be automatically deployed. To upgrade to a
+new version, copy the new contentfilter.jar file over the existing file.
+</p>
+
+<h2>Configuration</h2>
+<p>
+By default, after the plugin has been deployed all of its features are disabled.
+This plugin is configured via the "Content Filter" sidebar item located under the
+"System" tab in the Jive Messenger Admin Console.
+</p>
+
+<p>
+The default comma separated patterns are "fox,dog". This will perform a case
+sensitive match on all words containing these strings. e.g. "fox", "firefox",
+"foxy", "dog", "hotdog", "dogdays" but not "Fox", "firefoX". These simple patterns
+can be enhanced with more complex regular expressions as required e.g.:
+<ul>
+  <li>for a complete word match, add boundary checks with \b e.g. \bfox\b will match against the word "fox" and nothing else.
+  <li>for case insensitive matchs add (?i) e.g. (?i)\bfox\b will match against "fox", "Fox", "foX" etc.
+  <li>it is also possible to group related patterns patterns e.g. fox|dog, this can be used to reduce the number of individual patterns to test for.
+</ul>
+</p>
+<p>
+If you choose to filter your users presence status and there is a content match then:
+<ul>
+  <li>if you are masking content, other users will see a masked status.
+  <li>if you are rejecting content, other users not see the status change, how it affects the user with the invalid status is client dependant.
+</ul>
+</p>
+<p>
+Want to know more about regular expressions in Java? This official <a href="http://java.sun.com/docs/books/tutorial/extra/regex/">tutorial</a>
+is useful.
+</p>
+
+<p>
+The default mask is "***", you can change it to anything you like including smilies!
+</p>
+
+<h2>Using the plugin</h2>
+<p>
+After the plugin has been configured, nothing else needs to be done to use it.
+</p>
+
+<h2>Trouble shooting</h2>
+<p>
+If the plugin behaviour is not as expected you can enable server debug logging. This will allow the plugin to start logging.
+Server debug logging should only be enabled temporarily, as it will generate a lot of additional logging that will both slow
+your server down and consume a lot of disk space.
+</p> 
+</body>
+</html>

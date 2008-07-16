@@ -90,12 +90,39 @@ public interface Connection {
     public String getHostName() throws UnknownHostException;
 
     /**
-     * Returns the underlying {@link javax.security.cert.X509Certificate} for the connection.
+     * Returns the local underlying {@link javax.security.cert.X509Certificate} for the connection.
+     *
+     * @return <tt>null</tt> if no {@link javax.security.cert.X509Certificate} is present for the connection.
+     */
+    public Certificate[] getLocalCertificates();
+
+    /**
+     * Returns the underlying {@link javax.security.cert.X509Certificate} for the connection of the peer.
      *
      * @return <tt>null</tt> if no {@link javax.security.cert.X509Certificate} is present for the connection.
      */
     public Certificate[] getPeerCertificates();
 
+    /**
+     * Keeps track if the other peer of this session presented a self-signed certificate. When
+     * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
+     * used and instead server-dialback will be preferred for vcerifying the identify of the remote
+     * server.
+     *
+     * @param isSelfSigned true if the other peer presented a self-signed certificate.
+     */
+    public void setUsingSelfSignedCertificate(boolean isSelfSigned);
+
+    /**
+     * Returns true if the other peer of this session presented a self-signed certificate. When
+     * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
+     * used and instead server-dialback will be preferred for vcerifying the identify of the remote
+     * server.
+     *
+     * @return true if the other peer of this session presented a self-signed certificate.
+     */
+    public boolean isUsingSelfSignedCertificate();
+    
     /**
      * Close this session including associated socket connection. The order of
      * events for closing the session is:

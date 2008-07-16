@@ -99,12 +99,43 @@ public class ServerDialback {
      *
      * When TLS is enabled between servers and server dialback method is enabled then TLS is going
      * to be tried first, when connecting to a remote server, and if TLS fails then server dialback
-     * is going to be used as a last resort.
+     * is going to be used as a last resort. If enabled and the remote server offered server-dialback
+     * after TLS and no SASL EXTERNAL then server dialback will be used.
      *
      * @return true if server dialback is enabled.
      */
     public static boolean isEnabled() {
         return JiveGlobals.getBooleanProperty("xmpp.server.dialback.enabled", true);
+    }
+
+    /**
+     * Returns true if server dialback can be used when the remote server presented a self-signed
+     * certificate. During TLS the remote server can present a self-signed certificate, if this
+     * setting is enabled then the self-signed certificate will be accepted and if SASL EXTERNAL
+     * is not offered then server dialback will be used for verifying the remote server.<p>
+     *
+     * If self-signed certificates are accepted then server dialback over TLS is enabled.
+     *
+     * @return true if server dialback can be used when the remote server presented a self-signed
+     * certificate.
+     */
+    public static boolean isEnabledForSelfSigned() {
+        return JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
+    }
+
+    /**
+     * Sets if server dialback can be used when the remote server presented a self-signed
+     * certificate. During TLS the remote server can present a self-signed certificate, if this
+     * setting is enabled then the self-signed certificate will be accepted and if SASL EXTERNAL
+     * is not offered then server dialback will be used for verifying the remote server.<p>
+     *
+     * If self-signed certificates are accepted then server dialback over TLS is enabled.
+     *
+     * @param enabled if server dialback can be used when the remote server presented a self-signed
+     * certificate.
+     */
+    public static void setEnabledForSelfSigned(boolean enabled) {
+        JiveGlobals.setProperty("xmpp.server.certificate.accept-selfsigned", Boolean.toString(enabled));
     }
 
     /**
@@ -352,8 +383,6 @@ public class ServerDialback {
                         // Create a server Session for the remote server
                         LocalIncomingServerSession session = sessionManager.
                                 createIncomingServerSession(connection, streamID);
-                        // Set the first validated domain as the address of the session
-                        session.setAddress(new JID(null, hostname, null));
                         // Add the validated domain as a valid domain
                         session.addValidatedDomain(hostname);
                         // Set the domain or subdomain of the local server used when

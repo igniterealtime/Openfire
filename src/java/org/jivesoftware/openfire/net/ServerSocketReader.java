@@ -219,6 +219,10 @@ public class ServerSocketReader extends SocketReader {
         return "jabber:server";
     }
 
+    public String getExtraNamespaces() {
+        return "xmlns:db=\"jabber:server:dialback\"";
+    }
+
     String getName() {
         return "Server SR - " + hashCode();
     }

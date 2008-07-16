@@ -335,4 +335,16 @@ public abstract class LocalSession implements Session {
         answer[1] = Integer.parseInt(versionString[1]);
         return answer;
     }
+
+    /**
+     * Returns true if the other peer of this session presented a self-signed certificate. When
+     * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
+     * used and instead server-dialback will be preferred for vcerifying the identify of the remote
+     * server.
+     *
+     * @return true if the other peer of this session presented a self-signed certificate.
+     */
+    public boolean isUsingSelfSignedCertificate() {
+        return conn.isUsingSelfSignedCertificate();
+    }
 }

@@ -12,6 +12,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.util.JiveGlobals;
 
 import javax.net.ssl.SSLEngine;
@@ -83,6 +84,7 @@ public class TLSStreamHandler {
      * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
      * will be <code>false</code> and  <tt>remoteServer</tt> null.
      *
+     * @param connection the connection to secure
      * @param socket the plain socket connection to secure
      * @param clientMode boolean indicating if this entity is a client or a server.
      * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
@@ -92,9 +94,9 @@ public class TLSStreamHandler {
      *        EXTERNAL SASL is going to be used.
      * @throws java.io.IOException
      */
-    public TLSStreamHandler(Socket socket, boolean clientMode, String remoteServer,
+    public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
                             boolean needClientAuth) throws IOException {
-        wrapper = new TLSWrapper(clientMode, needClientAuth, remoteServer);
+        wrapper = new TLSWrapper(connection, clientMode, needClientAuth, remoteServer);
         tlsEngine = wrapper.getTlsEngine();
         reader = new TLSStreamReader(wrapper, socket);
         writer = new TLSStreamWriter(wrapper, socket);

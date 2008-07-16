@@ -27,7 +27,6 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.xmpp.packet.JID;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -123,7 +122,7 @@ public class SASLAuthentication {
      *
      * @return a string with the valid SASL mechanisms available for the specified session.
      */
-    public static String getSASLMechanisms(Session session) {
+    public static String getSASLMechanisms(LocalSession session) {
         if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
             return "";
         }
@@ -132,8 +131,23 @@ public class SASLAuthentication {
         if (session instanceof IncomingServerSession) {
             // Server connections dont follow the same rules as clients
             if (session.isSecure()) {
-                // Offer SASL EXTERNAL only if TLS has already been negotiated
-                sb.append("<mechanism>EXTERNAL</mechanism>");
+                boolean usingSelfSigned = false;
+                Certificate[] certificates = session.getConnection().getLocalCertificates();
+                for (Certificate certificate : certificates) {
+                    try {
+                        if (CertificateManager
+                                .isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) certificate)) {
+                            usingSelfSigned = true;
+                        }
+                    } catch (Exception e) {
+                        usingSelfSigned = true;
+                    }
+                }
+                if (!usingSelfSigned) {
+                    // Offer SASL EXTERNAL only if TLS has already been negotiated and we are not
+                    // using a self-signed certificate
+                    sb.append("<mechanism>EXTERNAL</mechanism>");
+                }
             }
         }
         else {
@@ -604,8 +618,6 @@ public class SASLAuthentication {
         }
         else if (session instanceof IncomingServerSession) {
             String hostname = username;
-            // Set the first validated domain as the address of the session
-            session.setAddress(new JID(null, hostname, null));
             // Add the validated domain as a valid domain. The remote server can
             // now send packets from this address
             ((LocalIncomingServerSession) session).addValidatedDomain(hostname);

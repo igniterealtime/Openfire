@@ -58,9 +58,21 @@ public abstract class VirtualConnection implements Connection {
         return 0;
     }
 
+    public Certificate[] getLocalCertificates() {
+        // Ignore
+        return new Certificate[0];
+    }
+
     public Certificate[] getPeerCertificates() {
         // Ignore
         return new Certificate[0];
+    }
+
+    public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
+    }
+
+    public boolean isUsingSelfSignedCertificate() {
+        return false;
     }
 
     public boolean isClosed() {

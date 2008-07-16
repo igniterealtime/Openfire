@@ -471,4 +471,8 @@ public abstract class SocketReader implements Runnable {
      */
     abstract boolean createSession(String namespace) throws UnauthorizedException,
             XmlPullParserException, IOException;
+
+    public String getExtraNamespaces() {
+        return null;
+    }
 }

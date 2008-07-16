@@ -8,6 +8,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -40,11 +41,16 @@ public class ServerTrustManager implements X509TrustManager {
      * Holds the domain of the remote server we are trying to connect
      */
     private String server;
+    /**
+     * Holds the LocalIncomingServerSession that is part of the TLS negotiation.
+     */
+    private Connection connection;
 
-    public ServerTrustManager(String server, KeyStore trustTrust) {
+    public ServerTrustManager(String server, KeyStore trustTrust, Connection connection) {
         super();
         this.server = server;
         this.trustStore = trustTrust;
+        this.connection = connection;
     }
 
     public void checkClientTrusted(X509Certificate[] x509Certificates,
@@ -120,6 +126,8 @@ public class ServerTrustManager implements X509TrustManager {
                 boolean trusted = false;
                 try {
                     trusted = trustStore.getCertificateAlias(x509Certificates[nSize - 1]) != null;
+                    // Keep track if the other peer presented a self-signed certificate
+                    connection.setUsingSelfSignedCertificate(!trusted && nSize == 1);
                     if (!trusted && nSize == 1 && JiveGlobals
                             .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
                     {

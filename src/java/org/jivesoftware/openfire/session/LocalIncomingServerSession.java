@@ -21,14 +21,17 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -95,31 +98,24 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection) throws XmlPullParserException, IOException {
         XmlPullParser xpp = reader.getXPPParser();
-        if (xpp.getNamespace("db") != null) {
-            // Server is trying to establish connection and authenticate using server dialback
+        String version = xpp.getAttributeValue("", "version");
+        int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+        if (serverVersion[0] >= 1) {
+            // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
+            try {
+                return createIncomingSession(connection, serverName);
+            }
+            catch (Exception e) {
+                Log.error("Error establishing connection from remote server", e);
+            }
+        }
+        else if (xpp.getNamespace("db") != null) {
+            // Server is trying to establish connection and authenticate using server dialback (pre XMPP 1.0)
             if (ServerDialback.isEnabled()) {
                 ServerDialback method = new ServerDialback(connection, serverName);
                 return method.createIncomingSession(reader);
             }
             Log.debug("LocalIncomingServerSession: Server dialback is disabled. Rejecting connection: " + connection);
-        }
-        String version = xpp.getAttributeValue("", "version");
-        int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
-        if (serverVersion[0] >= 1) {
-            // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection
-            if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) {
-                try {
-                    return createIncomingSession(connection, serverName);
-                }
-                catch (Exception e) {
-                    Log.error("Error establishing connection from remote server", e);
-                }
-            }
-            else {
-                connection.deliverRawText(
-                        new StreamError(StreamError.Condition.invalid_namespace).toXML());
-                Log.debug("LocalIncomingServerSession: Server TLS is disabled. Rejecting connection: " + connection);
-            }
         }
         // Close the connection since remote server is not XMPP 1.0 compliant and is not
         // using server dialback to establish and authenticate the connection
@@ -148,6 +144,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         // Send the stream header
         StringBuilder openingStream = new StringBuilder();
         openingStream.append("<stream:stream");
+        openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
         openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
         openingStream.append(" xmlns=\"jabber:server\"");
         openingStream.append(" from=\"").append(serverName).append("\"");
@@ -182,12 +179,19 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
 
         StringBuilder sb = new StringBuilder();
         sb.append("<stream:features>");
-        sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-        if (!ServerDialback.isEnabled()) {
-            // Server dialback is disabled so TLS is required
-            sb.append("<required/>");
+        if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) {
+            sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            if (!ServerDialback.isEnabled()) {
+                // Server dialback is disabled so TLS is required
+                sb.append("<required/>");
+            }
+            sb.append("</starttls>");
         }
-        sb.append("</starttls>");
+        if (ServerDialback.isEnabled()) {
+            // Also offer server dialback (when TLS is not required). Server dialback may be offered
+            // after TLS has been negotiated and a self-signed certificate is being used
+            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"/>");
+        }
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));
         sb.append("</stream:features>");
@@ -273,6 +277,10 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
      */
     public void addValidatedDomain(String domain) {
         if (validatedDomains.add(domain)) {
+            // Set the first validated domain as the address of the session
+            if (validatedDomains.size() < 2) {
+                setAddress(new JID(null, domain, null));
+            }
             // Register the new validated domain for this server session in SessionManager
             SessionManager.getInstance().registerIncomingServerSession(domain, this);
         }
@@ -329,12 +337,28 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
     }
 
     public String getAvailableStreamFeatures() {
+        StringBuilder sb = new StringBuilder();
         // Include Stream Compression Mechanism
         if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
-            return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
+            sb.append("<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
         }
-        // Nothing special to add
-        return null;
+        // Offer server dialback if using self-signed certificaftes and no authentication has been done yet
+        boolean usingSelfSigned = false;
+        Certificate[] certificates = conn.getLocalCertificates();
+        for (Certificate certificate : certificates) {
+            try {
+                if (CertificateManager
+                        .isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) certificate)) {
+                    usingSelfSigned = true;
+                }
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
+            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"/>");
+        }
+        return sb.toString();
     }
 }

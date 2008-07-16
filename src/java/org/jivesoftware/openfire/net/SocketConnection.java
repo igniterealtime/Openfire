@@ -102,6 +102,7 @@ public class SocketConnection implements Connection {
      * TLS policy currently in use for this connection.
      */
     private TLSPolicy tlsPolicy = TLSPolicy.optional;
+    private boolean usingSelfSignedCertificate;
 
     /**
      * Compression policy currently in use for this connection.
@@ -158,7 +159,8 @@ public class SocketConnection implements Connection {
         if (!secure) {
             secure = true;
             // Prepare for TLS
-            tlsStreamHandler = new TLSStreamHandler(socket, clientMode, remoteServer, session instanceof IncomingServerSession);
+            tlsStreamHandler = new TLSStreamHandler(this, socket, clientMode, remoteServer,
+                    session instanceof IncomingServerSession);
             if (!clientMode) {
                 // Indicate the client that the server is ready to negotiate TLS
                 deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -395,6 +397,13 @@ public class SocketConnection implements Connection {
         this.flashClient = flashClient;
     }
 
+    public Certificate[] getLocalCertificates() {
+        if (tlsStreamHandler != null) {
+            return tlsStreamHandler.getSSLSession().getLocalCertificates();
+        }
+        return new Certificate[0];
+    }
+
     public Certificate[] getPeerCertificates() {
         if (tlsStreamHandler != null) {
             try {
@@ -405,6 +414,14 @@ public class SocketConnection implements Connection {
             }
         }
         return new Certificate[0];
+    }
+
+    public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
+        this.usingSelfSignedCertificate = isSelfSigned;
+    }
+
+    public boolean isUsingSelfSignedCertificate() {
+        return usingSelfSignedCertificate;
     }
 
     public PacketDeliverer getPacketDeliverer() {

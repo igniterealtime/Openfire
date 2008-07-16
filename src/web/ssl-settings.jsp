@@ -12,11 +12,12 @@
 <%@ page import="org.jivesoftware.openfire.Connection,
                  org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.server.ServerDialback,
                  org.jivesoftware.openfire.session.LocalClientSession,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils"
+                 org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -35,6 +36,7 @@
     String serverSecurityRequired = ParamUtils.getParameter(request, "serverSecurityRequired");
     String dialback = ParamUtils.getParameter(request, "dialback");
     String server_tls = ParamUtils.getParameter(request, "server_tls");
+    boolean selfSigned = ParamUtils.getBooleanParameter(request, "selfSigned");
 
     if (update) {
         if ("req".equals(clientSecurityRequired)) {
@@ -107,6 +109,7 @@
                 JiveGlobals.setProperty("xmpp.server.tls.enabled", "false");
             }
         }
+        ServerDialback.setEnabledForSelfSigned(selfSigned);
         success = true;
         // Log the event
         webManager.logEvent("updated SSL configuration", "xmpp.server.dialback.enabled = "+JiveGlobals.getProperty("xmpp.server.dialback.enabled")+"\nxmpp.server.tls.enabled = "+JiveGlobals.getProperty("xmpp.server.tls.enabled"));
@@ -152,6 +155,7 @@
         dialback = dialbackEnabled ? "available" : "notavailable";
         server_tls = "notavailable";
     }
+    selfSigned = ServerDialback.isEnabledForSelfSigned();
 %>
 
 <html>
@@ -380,6 +384,16 @@
 						</table>
 					</td>
 				</tr>
+                <tr valign="middle">
+                    <td width="1%" nowrap>
+                        <input type="checkbox" name="selfSigned" id="cb02" <%= (selfSigned ? "checked" : "") %>>
+                    </td>
+                    <td width="99%">
+                        <label for="rb02">
+                        <fmt:message key="ssl.settings.client.label_self-signed" />
+                        </label>
+                    </td>
+                </tr>
 		    </tbody>
 		</table>
 	</div>

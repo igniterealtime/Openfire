@@ -12,6 +12,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.util.Log;
 
 import javax.net.ssl.*;
@@ -57,7 +58,7 @@ public class TLSWrapper {
     private int netBuffSize;
     private int appBuffSize;
 
-    public TLSWrapper(boolean clientMode, boolean needClientAuth, String remoteServer) {
+    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer) {
 
         boolean c2sConnection = (remoteServer == null);
         if (debug) {
@@ -85,7 +86,7 @@ public class TLSWrapper {
                 }
                 else {
                     // Check if we can trust certificates presented by the server
-                    tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
+                    tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, connection)};
                 }
             }
 
@@ -101,10 +102,10 @@ public class TLSWrapper {
                 */
             tlsEngine = tlsContext.createSSLEngine();
             tlsEngine.setUseClientMode(clientMode);
-            SSLSession session = tlsEngine.getSession();
+            SSLSession sslSession = tlsEngine.getSession();
 
-            netBuffSize = session.getPacketBufferSize();
-            appBuffSize = session.getApplicationBufferSize();
+            netBuffSize = sslSession.getPacketBufferSize();
+            appBuffSize = sslSession.getApplicationBufferSize();
 
         } catch (KeyManagementException e) {
             Log.error("TLSHandler startup problem.\n" + "  SSLContext initialisation failed.", e);

@@ -322,6 +322,23 @@ public class CertificateManager {
     }
 
     /**
+     * Returns true if the specified certificate is a self-signed certificate. If the certificate
+     * was not found in the store then a KeyStoreException is returned.
+     *
+     * @param keyStore key store that holds the certificate to verify.
+     * @param certificate the certificate in the key store.
+     * @return true if the specified certificate is a self-signed certificate.
+     * @throws KeyStoreException if an error happens while usign the keystore
+     */
+    public static boolean isSelfSignedCertificate(KeyStore keyStore, X509Certificate certificate) throws KeyStoreException {
+        String alias = keyStore.getCertificateAlias(certificate);
+        if (alias == null) {
+            throw new KeyStoreException("Certificate not found in store: " + certificate);
+        }
+        return isSelfSignedCertificate(keyStore, alias);
+    }
+
+    /**
      * Returns true if the specified certificate is ready to be signed by a Certificate Authority. Self-signed
      * certificates need to get their issuer information entered to be able to generate a Certificate
      * Signing Request (CSR).

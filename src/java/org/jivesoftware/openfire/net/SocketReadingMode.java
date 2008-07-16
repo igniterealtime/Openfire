@@ -248,8 +248,12 @@ abstract class SocketReadingMode {
             sb.append("<stream:stream ");
         }
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
-        sb.append(socketReader.getNamespace());
-        sb.append("\" from=\"");
+        sb.append(socketReader.getNamespace()).append("\"");
+        if (socketReader.getExtraNamespaces() != null) {
+            sb.append(" ");
+            sb.append(socketReader.getExtraNamespaces());
+        }
+        sb.append(" from=\"");
         sb.append(socketReader.session.getServerName());
         sb.append("\" id=\"");
         sb.append(socketReader.session.getStreamID().toString());

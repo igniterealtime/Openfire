@@ -237,67 +237,69 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             //useTLS = configuration.isTLSEnabled();
         }
 
-        if (useTLS) {
-            // Connect to remote server using TLS + SASL
-            SocketConnection connection = null;
-            String realHostname = null;
-            int realPort = port;
-            Socket socket = new Socket();
-            try {
-                // Get the real hostname to connect to using DNS lookup of the specified hostname
-                DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
-                realHostname = address.getHost();
-                realPort = address.getPort();
-                Log.debug("LocalOutgoingServerSession: OS - Trying to connect to " + hostname + ":" + port +
-                        "(DNS lookup: " + realHostname + ":" + realPort + ")");
-                // Establish a TCP connection to the Receiving Server
-                socket.connect(new InetSocketAddress(realHostname, realPort),
-                        RemoteServerManager.getSocketTimeout());
-                Log.debug("LocalOutgoingServerSession: OS - Plain connection to " + hostname + ":" + port + " successful");
+        // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
+        SocketConnection connection = null;
+        String realHostname = null;
+        int realPort = port;
+        Socket socket = new Socket();
+        try {
+            // Get the real hostname to connect to using DNS lookup of the specified hostname
+            DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
+            realHostname = address.getHost();
+            realPort = address.getPort();
+            Log.debug("LocalOutgoingServerSession: OS - Trying to connect to " + hostname + ":" + port +
+                    "(DNS lookup: " + realHostname + ":" + realPort + ")");
+            // Establish a TCP connection to the Receiving Server
+            socket.connect(new InetSocketAddress(realHostname, realPort),
+                    RemoteServerManager.getSocketTimeout());
+            Log.debug("LocalOutgoingServerSession: OS - Plain connection to " + hostname + ":" + port + " successful");
+        }
+        catch (Exception e) {
+            Log.error("Error trying to connect to remote server: " + hostname +
+                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+            return null;
+        }
+
+        try {
+            connection =
+                    new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
+                            false);
+
+            // Send the stream header
+            StringBuilder openingStream = new StringBuilder();
+            openingStream.append("<stream:stream");
+            openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            openingStream.append(" xmlns=\"jabber:server\"");
+            openingStream.append(" to=\"").append(hostname).append("\"");
+            openingStream.append(" version=\"1.0\">");
+            connection.deliverRawText(openingStream.toString());
+
+            // Set a read timeout (of 5 seconds) so we don't keep waiting forever
+            int soTimeout = socket.getSoTimeout();
+            socket.setSoTimeout(5000);
+
+            XMPPPacketReader reader = new XMPPPacketReader();
+            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
+                    CHARSET));
+            // Get the answer from the Receiving Server
+            XmlPullParser xpp = reader.getXPPParser();
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
             }
-            catch (Exception e) {
-                Log.error("Error trying to connect to remote server: " + hostname +
-                        "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
-                return null;
-            }
 
-            try {
-                connection =
-                        new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
-                                false);
+            String serverVersion = xpp.getAttributeValue("", "version");
+            String id = xpp.getAttributeValue("", "id");
 
-                // Send the stream header
-                StringBuilder openingStream = new StringBuilder();
-                openingStream.append("<stream:stream");
-                openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-                openingStream.append(" xmlns=\"jabber:server\"");
-                openingStream.append(" to=\"").append(hostname).append("\"");
-                openingStream.append(" version=\"1.0\">");
-                connection.deliverRawText(openingStream.toString());
-
-                // Set a read timeout (of 5 seconds) so we don't keep waiting forever
-                int soTimeout = socket.getSoTimeout();
-                socket.setSoTimeout(5000);
-
-                XMPPPacketReader reader = new XMPPPacketReader();
-                reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
-                        CHARSET));
-                // Get the answer from the Receiving Server
-                XmlPullParser xpp = reader.getXPPParser();
-                for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
-                    eventType = xpp.next();
-                }
-
-                String serverVersion = xpp.getAttributeValue("", "version");
-
-                // Check if the remote server is XMPP 1.0 compliant
-                if (serverVersion != null && decodeVersion(serverVersion)[0] >= 1) {
-                    // Restore default timeout
-                    socket.setSoTimeout(soTimeout);
-                    // Get the stream features
-                    Element features = reader.parseDocument().getRootElement();
+            // Check if the remote server is XMPP 1.0 compliant
+            if (serverVersion != null && decodeVersion(serverVersion)[0] >= 1) {
+                // Restore default timeout
+                socket.setSoTimeout(soTimeout);
+                // Get the stream features
+                Element features = reader.parseDocument().getRootElement();
+                if (features != null) {
                     // Check if TLS is enabled
-                    if (features != null && features.element("starttls") != null) {
+                    if (useTLS && features.element("starttls") != null) {
                         // Secure the connection with TLS and authenticate using SASL
                         LocalOutgoingServerSession answer;
                         answer = secureAndAuthenticate(hostname, connection, reader, openingStream,
@@ -308,45 +310,64 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                             return answer;
                         }
                     }
-                    else {
-                        Log.debug("LocalOutgoingServerSession: OS - Error, <starttls> was not received");
+                    // Check if we are going to try server dialback (XMPP 1.0)
+                    else if (ServerDialback.isEnabled() && features.element("dialback") != null) {
+                        Log.debug("LocalOutgoingServerSession: OS - About to try connecting using server dialback XMPP 1.0 with: " + hostname);
+                        ServerDialback method = new ServerDialback(connection, domain);
+                        OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
+                        if (method.authenticateDomain(newSocketReader, domain, hostname, id)) {
+                            Log.debug("LocalOutgoingServerSession: OS - SERVER DIALBACK XMPP 1.0 with " + hostname + " was successful");
+                            StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                            LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, newSocketReader, streamID);
+                            connection.init(session);
+                            // Set the hostname as the address of the session
+                            session.setAddress(new JID(null, hostname, null));
+                            return session;
+                        }
+                        else {
+                            Log.debug("LocalOutgoingServerSession: OS - Error, SERVER DIALBACK with " + hostname + " failed");
+                        }
                     }
                 }
-                // Something went wrong so close the connection and try server dialback over
-                // a plain connection
-                if (connection != null) {
-                    connection.close();
+                else {
+                    Log.debug("LocalOutgoingServerSession: OS - Error, <starttls> was not received");
                 }
             }
-            catch (SSLHandshakeException e) {
-                Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
-                        "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
-                        ")", e);
-                // Close the connection
-                if (connection != null) {
-                    connection.close();
-                }
-            }
-            catch (XmlPullParserException e) {
-                Log.warn("Error creating secured outgoing session to remote server: " + hostname +
-                        "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
-                // Close the connection
-                if (connection != null) {
-                    connection.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error("Error creating secured outgoing session to remote server: " + hostname +
-                        "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
-                // Close the connection
-                if (connection != null) {
-                    connection.close();
-                }
+            // Something went wrong so close the connection and try server dialback over
+            // a plain connection
+            if (connection != null) {
+                connection.close();
             }
         }
+        catch (SSLHandshakeException e) {
+            Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
+                    "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
+                    ")", e);
+            // Close the connection
+            if (connection != null) {
+                connection.close();
+            }
+        }
+        catch (XmlPullParserException e) {
+            Log.warn("Error creating secured outgoing session to remote server: " + hostname +
+                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+            // Close the connection
+            if (connection != null) {
+                connection.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error("Error creating secured outgoing session to remote server: " + hostname +
+                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+            // Close the connection
+            if (connection != null) {
+                connection.close();
+            }
+        }
+
         if (ServerDialback.isEnabled()) {
             Log.debug("LocalOutgoingServerSession: OS - Going to try connecting using server dialback with: " + hostname);
-            // Use server dialback over a plain connection
+            // Use server dialback (pre XMPP 1.0) over a plain connection 
             return new ServerDialback().createOutgoingSession(domain, hostname, port);
         }
         return null;
@@ -380,9 +401,11 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
             }
+            // Get the stream ID 
+            String id = xpp.getAttributeValue("", "id");
             // Get new stream features
             features = reader.parseDocument().getRootElement();
-            if (features != null && features.element("mechanisms") != null) {
+            if (features != null && (features.element("mechanisms") != null || features.element("dialback") != null)) {
                 // Check if we can use stream compression
                 String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy",
                         Connection.CompressionPolicy.disabled.toString());
@@ -444,48 +467,73 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                     }
                 }
 
-                Iterator it = features.element("mechanisms").elementIterator();
-                while (it.hasNext()) {
-                    Element mechanism = (Element) it.next();
-                    if ("EXTERNAL".equals(mechanism.getTextTrim())) {
-                        Log.debug("LocalOutgoingServerSession: OS - Starting EXTERNAL SASL with " + hostname);
-                        if (doExternalAuthentication(domain, connection, reader)) {
-                            Log.debug("LocalOutgoingServerSession: OS - EXTERNAL SASL with " + hostname + " was successful");
-                            // SASL was successful so initiate a new stream
-                            connection.deliverRawText(openingStream.toString());
+                // Skip SASL EXTERNAL and use server dialback over TLS when using self-signed certificates
+                boolean dialbackOffered = features.element("dialback") != null;
+                if (!dialbackOffered || !connection.isUsingSelfSignedCertificate()) {
+                    Iterator it = features.element("mechanisms").elementIterator();
+                    while (it.hasNext()) {
+                        Element mechanism = (Element) it.next();
+                        if ("EXTERNAL".equals(mechanism.getTextTrim())) {
+                            Log.debug("LocalOutgoingServerSession: OS - Starting EXTERNAL SASL with " + hostname);
+                            if (doExternalAuthentication(domain, connection, reader)) {
+                                Log.debug("LocalOutgoingServerSession: OS - EXTERNAL SASL with " + hostname + " was successful");
+                                // SASL was successful so initiate a new stream
+                                connection.deliverRawText(openingStream.toString());
 
-                            // Reset the parser
-                            xpp.resetInput();
-                            // Skip the opening stream sent by the server
-                            for (int eventType = xpp.getEventType();
-                                 eventType != XmlPullParser.START_TAG;) {
-                                eventType = xpp.next();
+                                // Reset the parser
+                                xpp.resetInput();
+                                // Skip the opening stream sent by the server
+                                for (int eventType = xpp.getEventType();
+                                     eventType != XmlPullParser.START_TAG;) {
+                                    eventType = xpp.next();
+                                }
+
+                                // SASL authentication was successful so create new
+                                // OutgoingServerSession
+                                id = xpp.getAttributeValue("", "id");
+                                StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                                LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain,
+                                        connection, new OutgoingServerSocketReader(reader), streamID);
+                                connection.init(session);
+                                // Set the hostname as the address of the session
+                                session.setAddress(new JID(null, hostname, null));
+                                // Set that the session was created using TLS+SASL (no server dialback)
+                                session.usingServerDialback = false;
+                                return session;
                             }
-
-                            // SASL authentication was successful so create new
-                            // OutgoingServerSession
-                            String id = xpp.getAttributeValue("", "id");
-                            StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                            LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain,
-                                    connection, new OutgoingServerSocketReader(reader), streamID);
-                            connection.init(session);
-                            // Set the hostname as the address of the session
-                            session.setAddress(new JID(null, hostname, null));
-                            // Set that the session was created using TLS+SASL (no server dialback)
-                            session.usingServerDialback = false;
-                            return session;
-                        }
-                        else {
-                            Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL authentication with " + hostname +
-                                    " failed");
-                            return null;
+                            else {
+                                Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL authentication with " + hostname +
+                                        " failed");
+                                return null;
+                            }
                         }
                     }
                 }
-                Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL was not offered by " + hostname);
+                
+                // Check if server dialback (over TLS) was offered
+                if (dialbackOffered && (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned())) {
+                    Log.debug("LocalOutgoingServerSession: OS - About to try connecting using server dialback over TLS with: " + hostname);
+                    ServerDialback method = new ServerDialback(connection, domain);
+                    OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
+                    if (method.authenticateDomain(newSocketReader, domain, hostname, id)) {
+                        Log.debug("LocalOutgoingServerSession: OS - SERVER DIALBACK OVER TLS with " + hostname + " was successful");
+                        StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                        LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, newSocketReader, streamID);
+                        connection.init(session);
+                        // Set the hostname as the address of the session
+                        session.setAddress(new JID(null, hostname, null));
+                        return session;
+                    }
+                    else {
+                        Log.debug("LocalOutgoingServerSession: OS - Error, SERVER DIALBACK with " + hostname + " failed");
+                    }
+                }
+                else {
+                    Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL and SERVER DIALBACK were not offered by " + hostname);
+                }
             }
             else {
-                Log.debug("LocalOutgoingServerSession: OS - Error, no SASL mechanisms were offered by " + hostname);
+                Log.debug("LocalOutgoingServerSession: OS - Error, no SASL mechanisms or SERVER DIALBACK were offered by " + hostname);
             }
         }
         else {

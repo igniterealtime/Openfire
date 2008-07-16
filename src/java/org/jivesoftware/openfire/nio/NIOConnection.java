@@ -72,6 +72,7 @@ public class NIOConnection implements Connection {
      * TLS policy currently in use for this connection.
      */
     private TLSPolicy tlsPolicy = TLSPolicy.optional;
+    private boolean usingSelfSignedCertificate;
 
     /**
      * Compression policy currently in use for this connection.
@@ -131,6 +132,14 @@ public class NIOConnection implements Connection {
         return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
     }
 
+    public Certificate[] getLocalCertificates() {
+        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
+        if (sslSession != null) {
+            return sslSession.getLocalCertificates();
+        }
+        return new Certificate[0];
+    }
+
     public Certificate[] getPeerCertificates() {
         try {
             SSLSession sslSession = (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
@@ -141,6 +150,14 @@ public class NIOConnection implements Connection {
             Log.warn("Error retrieving client certificates of: " + session, e);
         }
         return new Certificate[0];
+    }
+
+    public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
+        this.usingSelfSignedCertificate = isSelfSigned;
+    }
+
+    public boolean isUsingSelfSignedCertificate() {
+        return usingSelfSignedCertificate;
     }
 
     public PacketDeliverer getPacketDeliverer() {
@@ -304,7 +321,7 @@ public class NIOConnection implements Connection {
                 tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
             } else {
                 // Check if we can trust certificates presented by the server
-                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
+                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, this)};
             }
         }
 

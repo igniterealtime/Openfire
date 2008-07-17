@@ -24,6 +24,7 @@ import org.xmpp.packet.JID;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
@@ -513,7 +514,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                             String field = st.nextToken();
                             String attrib = field.replaceAll("(\\{)(" + field + ")(})", "$2");
                             String value = map.get(attrib);
-                            format = format.replaceFirst("(\\{)(" + field + ")(})", value);
+                            format = format.replaceFirst("(\\{)(" + field + ")(})", Matcher.quoteReplacement(value));
                         }
                         emement.setText(format);
                     }

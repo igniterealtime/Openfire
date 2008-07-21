@@ -62,7 +62,6 @@
             // Hash the current shared secret
             if (plainSharedSecret != null) {
                 existingHashSharedSecret = StringUtils.hash(plainSharedSecret);
-                System.out.println("2- existingHashSharedSecret: " + existingHashSharedSecret);
             }
             // Check if the new shared secret was changed. If it wasn't changed, then it is the original hashed shared secret
             // NOTE: if the new PLAIN password equals the previous HASHED password this fails, but is unlikely.
@@ -119,7 +118,6 @@
                 // Save settings and redirect
                 manager.setConnectionURI(uri);
                 manager.setSharedSecret(plainSharedSecret);
-                System.out.println("6- plainSharedSecret: " + plainSharedSecret);
 
                 // Enable the Clearspace auth, user, group, vcard, lockout, security audit, and admin providers.
                 JiveGlobals.setProperty("provider.auth.className",

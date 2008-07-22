@@ -107,6 +107,10 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         if (message == null) {
             return;
         }
+        if (message.getBody() == null || message.getBody().length() == 0) {
+        	// ignore empty bodied message (typically chat-state notifications).
+        	return;
+        }
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.

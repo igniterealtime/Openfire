@@ -127,9 +127,11 @@ public class HttpSession extends LocalClientSession {
     public Collection<Element> getAvailableStreamFeaturesElements() {
         List<Element> elements = new ArrayList<Element>();
 
-        Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
-        if (sasl != null) {
-            elements.add(sasl);
+        if (getAuthToken() == null) {
+	        Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
+	        if (sasl != null) {
+	            elements.add(sasl);
+	        }
         }
 
         // Include Stream Compression Mechanism

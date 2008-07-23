@@ -28,6 +28,6 @@ public class HttpBindException extends Exception {
     }
 
     public boolean shouldCloseSession() {
-        return error.getErrorType() == BoshBindingError.Type.terminal;
+        return error.getErrorType() == BoshBindingError.Type.terminate;
     }
 }

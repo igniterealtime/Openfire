@@ -16,6 +16,8 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.Namespace;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -191,7 +193,7 @@ public class HttpBindServlet extends HttpServlet {
             }
         }
         finally {
-            if (bindingError.getErrorType() == BoshBindingError.Type.terminal) {
+            if (bindingError.getErrorType() == BoshBindingError.Type.terminate) {
                 session.close();
             }
         }
@@ -238,11 +240,20 @@ public class HttpBindServlet extends HttpServlet {
             }
 
             String type = rootNode.attributeValue("type");
+            String restartStream = rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")));
             int pauseDuration = getIntAttribue(rootNode.attributeValue("pause"), -1);
             
             if ("terminate".equals(type)) {
                 session.close();
                 respond(response, createEmptyBody(), request.getMethod());
+            }
+            else if ("true".equals(restartStream) && rootNode.nodeCount() == 0) {
+                try {
+					respond(response, createSessionRestartResponse(session), request.getMethod());
+				}
+				catch (DocumentException e) {
+					Log.error("Error sending session restart response to client.", e);
+				}
             }
             else if (pauseDuration > 0 && pauseDuration <= session.getMaxPause()) {                
             	session.pause(pauseDuration);
@@ -263,6 +274,19 @@ public class HttpBindServlet extends HttpServlet {
                 }
             }
         }
+    }
+
+    private String createSessionRestartResponse(HttpSession session) throws DocumentException {
+        Element response = DocumentHelper.createElement("body");
+        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        response.addNamespace("stream", "http://etherx.jabber.org/streams");
+
+        Element features = response.addElement("stream:features");
+        for (Element feature : session.getAvailableStreamFeaturesElements()) {
+            features.add(feature);
+        }
+
+        return response.asXML();
     }
 
     private void createNewSession(HttpServletRequest request, HttpServletResponse response,

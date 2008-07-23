@@ -21,70 +21,70 @@ public enum BoshBindingError {
      * The format of an HTTP header or binding element received from the client is unacceptable
      * (e.g., syntax error), or Script Syntax is not supported.
      */
-    badRequest(Type.terminal, "bad-request", HttpServletResponse.SC_BAD_REQUEST),
+    badRequest(Type.terminate, "bad-request", HttpServletResponse.SC_BAD_REQUEST),
     /**
      * The target domain specified in the 'to' attribute or the target host or port specified in the
      * 'route' attribute is no longer serviced by the connection manager.
      */
-    hostGone(Type.terminal, "host-gone"),
+    hostGone(Type.terminate, "host-gone"),
     /**
      * The target domain specified in the 'to' attribute or the target host or port specified in the
      * 'route' attribute is unknown to the connection manager.
      */
-    hostUnknown(Type.terminal, "host-unknown"),
+    hostUnknown(Type.terminate, "host-unknown"),
     /**
      * The initialization element lacks a 'to' or 'route' attribute (or the attribute has no value)
      * but the connection manager requires one.
      */
-    improperAddressing(Type.terminal, "improper-addressing"),
+    improperAddressing(Type.terminate, "improper-addressing"),
     /**
      * The connection manager has experienced an internal error that prevents it from servicing the
      * request.
      */
-    internalServerError(Type.terminal, "internal-server-error"),
+    internalServerError(Type.terminate, "internal-server-error"),
     /**
      * (1) 'sid' is not valid, (2) 'stream' is not valid, (3) 'rid' is larger than the upper limit
      * of the expected window, (4) connection manager is unable to resend response, (5) 'key'
      * sequence is invalid (6) script syntax is not enabled
      */
-    itemNotFound(Type.terminal, "item-not-found", HttpServletResponse.SC_NOT_FOUND),
+    itemNotFound(Type.terminate, "item-not-found", HttpServletResponse.SC_NOT_FOUND),
     /**
      * Another request being processed at the same time as this request caused the session to
      * terminate.
      */
-    otherRequest(Type.terminal, "other-request"),
+    otherRequest(Type.terminate, "other-request"),
     /**
      * The client has broken the session rules (polling too frequently, requesting too frequently,
      * too many simultaneous requests).
      */
-    policyViolation(Type.terminal, "policy-violation",
+    policyViolation(Type.terminate, "policy-violation",
             HttpServletResponse.SC_FORBIDDEN),
     /**
      * The connection manager was unable to connect to, or unable to connect securely to, or has
      * lost its connection to, the server.
      */
-    remoteConnectionFailed(Type.terminal, "remote-connection-failed"),
+    remoteConnectionFailed(Type.terminate, "remote-connection-failed"),
     /**
      * Encapsulates an error in the protocol being transported.
      */
-    remoteStreamError(Type.terminal, "remote-stream-error"),
+    remoteStreamError(Type.terminate, "remote-stream-error"),
     /**
      * The connection manager does not operate at this URI (e.g., the connection manager accepts
      * only SSL or TLS connections at some https: URI rather than the http: URI requested by the
      * client). The client may try POSTing to the URI in the content of the &lt;uri/&gt; child
      * element.
      */
-    seeOtherUri(Type.terminal, "see-other-uri"),
+    seeOtherUri(Type.terminate, "see-other-uri"),
     /**
      * The connection manager is being shut down. All active HTTP sessions are being terminated. No
      * new sessions can be created.
      */
-    systemShutdown(Type.terminal, "system-shutdown"),
+    systemShutdown(Type.terminate, "system-shutdown"),
     /**
      * The error is not one of those defined herein; the connection manager SHOULD include
      * application-specific information in the content of the &lt;body&gt; wrapper.
      */
-    undefinedCondition(Type.terminal, "undefined-condition");
+    undefinedCondition(Type.terminate, "undefined-condition");
 
     private Type errorType;
     private String condition;
@@ -127,10 +127,10 @@ public enum BoshBindingError {
 
     public enum Type {
         /**
-         * The terminal error condition prevents the client from making any further requests until a
+         * The terminate error condition prevents the client from making any further requests until a
          * new session is established.
          */
-        terminal(null),
+        terminate(null),
         /**
          * In the case of a recoverable binding error the client MUST repeat the HTTP request and
          * all the preceding HTTP requests that have not received responses. The content of these

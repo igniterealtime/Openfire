@@ -58,7 +58,7 @@
     SyndFeed lastBlogFeed = null;
     SyndFeed lastReleaseFeed = null;
     String blogFeedRSS = "http://www.igniterealtime.org/community/blogs/ignite/feeds/posts";
-    String releaseFeedRSS = "http://www.igniterealtime.org/community/community/feeds/messages?communityID=2017";
+    String releaseFeedRSS = "http://www.igniterealtime.org/community/community/feeds/messages?community=2017";
 
 %>
 <% // Get parameters //

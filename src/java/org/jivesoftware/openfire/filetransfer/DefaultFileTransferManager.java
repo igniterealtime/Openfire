@@ -12,8 +12,6 @@
 package org.jivesoftware.openfire.filetransfer;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.filetransfer.proxy.ProxyConnectionManager;
@@ -22,13 +20,15 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Provides several utility methods for file transfer manager implementaions to utilize.
@@ -39,7 +39,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
 
     private static final String CACHE_NAME = "File Transfer Cache";
 
-    private final Map<String, FileTransfer> fileTransferMap;
+    private final Cache<String, FileTransfer> fileTransferMap;
 
     private final List<FileTransferInterceptor> fileTransferInterceptorList
             = new ArrayList<FileTransferInterceptor>();
@@ -121,33 +121,27 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
                                             JID to, Element siElement) {
         String streamID = siElement.attributeValue("id");
         String mimeType = siElement.attributeValue("mime-type");
-        String profile = siElement.attributeValue("profile");
         // Check profile, the only type we deal with currently is file transfer
-        FileTransfer transfer = null;
-        if (NAMESPACE_SI_FILETRANSFER.equals(profile)) {
-            Element fileTransferElement = getChildElement(siElement, NAMESPACE_SI_FILETRANSFER);
-            // Not valid form, reject
-            if (fileTransferElement == null) {
-                return null;
-            }
-            String fileName = fileTransferElement.attributeValue("name");
-            String sizeString = fileTransferElement.attributeValue("size");
-            if (fileName == null || sizeString == null) {
-                return null;
-            }
-            
-            long size;
-            try {
-                size = Long.parseLong(sizeString);
-            }
-            catch (Exception ex) {
-                return null;
-            }
-
-            transfer = new FileTransfer(from.toString(), to.toString(),
-                    streamID, fileName, size, mimeType);
+        Element fileTransferElement = getChildElement(siElement, NAMESPACE_SI_FILETRANSFER);
+        // Not valid form, reject
+        if (fileTransferElement == null) {
+            return null;
         }
-        return transfer;
+        String fileName = fileTransferElement.attributeValue("name");
+        String sizeString = fileTransferElement.attributeValue("size");
+        if (fileName == null || sizeString == null) {
+            return null;
+        }
+
+        long size;
+        try {
+            size = Long.parseLong(sizeString);
+        }
+        catch (Exception ex) {
+            return null;
+        }
+
+        return new FileTransfer(from.toString(), to.toString(), streamID, fileName, size, mimeType);
     }
 
     public void addFileTransferInterceptor(FileTransferInterceptor interceptor) {
@@ -189,14 +183,15 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
                 }
 
                 String namespace = childElement.getNamespaceURI();
-                if (NAMESPACE_SI.equals(namespace)) {
+                String profile = childElement.attributeValue("profile");
+                // Check that the SI is about file transfer and try creating a file transfer
+                if (NAMESPACE_SI.equals(namespace) && NAMESPACE_SI_FILETRANSFER.equals(profile)) {
                     // If this is a set, check the feature offer
                     if (iq.getType().equals(IQ.Type.set)) {
                         JID from = iq.getFrom();
                         JID to = iq.getTo();
 
-                        FileTransfer transfer =
-                                createFileTransfer(from, to, childElement);
+                        FileTransfer transfer = createFileTransfer(from, to, childElement);
 
                         try {
                             if (transfer == null || !acceptIncomingFileTransferRequest(transfer)) {

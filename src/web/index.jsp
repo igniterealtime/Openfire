@@ -2,7 +2,7 @@
   -	$Revision$
   -	$Date$
   -
-  - Copyright (C) 2004-2005 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
   - This software is published under the terms of the GNU Public License (GPL),
   - a copy of which is included in this distribution, or a commercial license
@@ -58,7 +58,7 @@
     SyndFeed lastBlogFeed = null;
     SyndFeed lastReleaseFeed = null;
     String blogFeedRSS = "http://www.igniterealtime.org/community/blogs/ignite/feeds/posts";
-    String releaseFeedRSS = "http://www.igniterealtime.org/community/community/feeds/messages?communityID=2017";
+    String releaseFeedRSS = "http://www.igniterealtime.org/community/community/feeds/messages?community=2017";
 
 %>
 <% // Get parameters //

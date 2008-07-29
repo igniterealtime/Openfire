@@ -354,15 +354,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         boolean hasSender = from != null;
         if (packet instanceof IQ) {
             onlyAvailable = hasSender && !(serverName.equals(from.getDomain()) && from.getResource() == null) &&
-                    !componentsCache.containsKey(from.toString());
+                    !componentsCache.containsKey(from.getDomain());
         }
-        else if (packet instanceof Message) {
+        else if (packet instanceof Message || packet instanceof Presence) {
             onlyAvailable = !hasSender ||
-                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.toString()));
-        }
-        else if (packet instanceof Presence) {
-            onlyAvailable = !hasSender ||
-                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.toString()));
+                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.getDomain()));
         }
         return onlyAvailable;
     }

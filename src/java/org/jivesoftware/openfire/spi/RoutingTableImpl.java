@@ -3,7 +3,7 @@
  * $Revision: 3138 $
  * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution, or a commercial license
@@ -352,15 +352,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         boolean hasSender = from != null;
         if (packet instanceof IQ) {
             onlyAvailable = hasSender && !(serverName.equals(from.getDomain()) && from.getResource() == null) &&
-                    !componentsCache.containsKey(from.toString());
+                    !componentsCache.containsKey(from.getDomain());
         }
-        else if (packet instanceof Message) {
+        else if (packet instanceof Message || packet instanceof Presence) {
             onlyAvailable = !hasSender ||
-                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.toString()));
-        }
-        else if (packet instanceof Presence) {
-            onlyAvailable = !hasSender ||
-                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.toString()));
+                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.getDomain()));
         }
         return onlyAvailable;
     }

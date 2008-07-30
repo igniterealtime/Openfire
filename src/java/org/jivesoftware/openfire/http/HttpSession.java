@@ -649,7 +649,7 @@ public class HttpSession extends LocalClientSession {
      * protocol.
      */
     synchronized HttpConnection createConnection(long rid, Collection<Element> packetsToBeSent,
-                                                 boolean isSecure)
+                                                 boolean isSecure, boolean isPoll)
             throws HttpConnectionClosedException, HttpBindException
     {
         HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates);
@@ -672,7 +672,7 @@ public class HttpSession extends LocalClientSession {
         if (packetsToBeSent.size() > 0) {
             packetsToSend.add(packetsToBeSent);
         }
-        addConnection(connection, packetsToBeSent.size() <= 0);
+        addConnection(connection, isPoll);
         return connection;
     }
 
@@ -806,9 +806,9 @@ public class HttpSession extends LocalClientSession {
 	        		overactivity = (pendingConnections >= maxRequests - 1);
 	        	}
 	        }
-	        lastPoll = time;
 	        errorMessage += ", minimum polling interval is " 
 	        	+ maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
+	        lastPoll = time;
         }
         setLastResponseEmpty(false);
         

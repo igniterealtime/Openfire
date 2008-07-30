@@ -247,7 +247,7 @@ public class HttpBindServlet extends HttpServlet {
                 session.close();
                 respond(response, createEmptyBody(), request.getMethod());
             }
-            else if ("true".equals(restartStream) && rootNode.nodeCount() == 0) {
+            else if ("true".equals(restartStream) && rootNode.elements().size() == 0) {
                 try {
 					respond(response, createSessionRestartResponse(session), request.getMethod());
 				}

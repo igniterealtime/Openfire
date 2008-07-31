@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.http;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -266,7 +267,14 @@ public class HttpSessionManager {
     {
         //noinspection unchecked
         List<Element> elements = rootNode.elements();
-        HttpConnection connection = session.createConnection(rid, elements, isSecure);
+    	boolean isPoll = (elements.size() == 0);
+    	if ("terminate".equals(rootNode.attributeValue("type")))
+    		isPoll = false;
+    	else if ("true".equals(rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")))))
+    		isPoll = false;
+    	else if (rootNode.attributeValue("pause") != null)
+    		isPoll = false;
+        HttpConnection connection = session.createConnection(rid, elements, isSecure, isPoll);
         if (elements.size() > 0) {
             // creates the runnable to forward the packets
             new HttpPacketSender(session).init();

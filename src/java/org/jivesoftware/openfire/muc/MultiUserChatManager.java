@@ -10,34 +10,39 @@
  */
 package org.jivesoftware.openfire.muc;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.openfire.muc.cluster.*;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventListener;
+import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
-import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventListener;
-import org.jivesoftware.openfire.muc.cluster.*;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
-import org.xmpp.packet.JID;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.component.ComponentException;
+import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.packet.JID;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.*;
 import java.sql.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides centralized management of all configured Multi User Chat (MUC) services.
  * 
  * @author Daniel Henninger
  */
-public class MultiUserChatManager extends BasicModule implements ClusterEventListener, MUCServicePropertyEventListener {
+public class MultiUserChatManager extends BasicModule implements ClusterEventListener, MUCServicePropertyEventListener,
+        UserEventListener {
 
     private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM ofMucService";
     private static final String CREATE_SERVICE = "INSERT INTO ofMucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
@@ -85,6 +90,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         addNumberOutgoingMessages();
 
         ClusterManager.addListener(this);
+        UserEventDispatcher.addListener(this);
     }
 
     /**
@@ -94,6 +100,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         super.stop();
 
         ClusterManager.removeListener(this);
+        UserEventDispatcher.removeListener(this);
 
         // Remove the statistics.
         StatisticsManager.getInstance().removeStatistic(roomsStatKey);
@@ -819,6 +826,21 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     public void propertyDeleted(String service, String property, Map<String, Object> params) {
         // Let everyone know we've had an update.
         CacheFactory.doSynchronousClusterTask(new ServiceUpdatedEvent(service), false);
+    }
+
+    public void userCreated(User user, Map<String, Object> params) {
+        // Do nothing
+    }
+
+    public void userDeleting(User user, Map<String, Object> params) {
+        // Delete any affiliation of the user to any room of any MUC service
+        MUCPersistenceManager
+                .removeAffiliationFromDB(XMPPServer.getInstance().createJID(user.getUsername(), null, true));
+        // TODO Delete any user information from the rooms loaded into memory
+    }
+
+    public void userModified(User user, Map<String, Object> params) {
+        // Do nothing
     }
 
     private static class ServiceComparator implements Comparator<MultiUserChatService> {

@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.xmpp.packet.JID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -108,6 +109,10 @@ public class MUCPersistenceManager {
         "UPDATE ofMucAffiliation SET affiliation=? WHERE roomID=? AND jid=?";
     private static final String DELETE_AFFILIATION =
         "DELETE FROM ofMucAffiliation WHERE roomID=? AND jid=?";
+    private static final String DELETE_USER_MEMBER =
+        "DELETE FROM ofMucMember WHERE jid=?";
+    private static final String DELETE_USER_MUCAFFILIATION =
+        "DELETE FROM ofMucaffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
         "INSERT INTO ofMucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
         "VALUES (?,?,?,?,?,?)";
@@ -925,6 +930,39 @@ public class MUCPersistenceManager {
                     catch (Exception e) { Log.error(e); }
                 }
             }
+        }
+    }
+
+    /**
+     * Removes the affiliation of the user from the DB if ANY room that is persistent.
+     *
+     * @param bareJID The bareJID of the user to remove his affiliation from ALL persistent rooms.
+     */
+    public static void removeAffiliationFromDB(JID bareJID)
+    {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            // Remove the user from the members table
+            pstmt = con.prepareStatement(DELETE_USER_MEMBER);
+            pstmt.setString(1, bareJID.toBareJID());
+            pstmt.executeUpdate();
+            pstmt.close();
+                                       
+            // Remove the user from the generic affiliations table
+            pstmt = con.prepareStatement(DELETE_USER_MUCAFFILIATION);
+            pstmt.setString(1, bareJID.toBareJID());
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
         }
     }
 

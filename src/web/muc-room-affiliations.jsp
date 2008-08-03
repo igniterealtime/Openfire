@@ -54,8 +54,11 @@
     // Handle an add
     if (add) {
         // do validation
-        if (userJID == null || userJID.indexOf('@') == -1) {
+        if (userJID == null) {
             errors.put("userJID","userJID");
+        }
+        else if (userJID.indexOf('@') == -1) {
+            userJID = webManager.getXMPPServer().createJID(userJID, null).toBareJID();
         }
 
         if (errors.size() == 0) {

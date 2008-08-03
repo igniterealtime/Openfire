@@ -20,6 +20,8 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
@@ -41,10 +43,7 @@ import org.xmpp.packet.Presence;
 
 import java.sql.Connection;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -52,7 +51,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Iain Shigeoka
  */
-public class PresenceManagerImpl extends BasicModule implements PresenceManager {
+public class PresenceManagerImpl extends BasicModule implements PresenceManager, UserEventListener {
 
     private static final String LOAD_OFFLINE_PRESENCE =
             "SELECT offlinePresence, offlineDate FROM ofPresence WHERE username=?";
@@ -190,24 +189,28 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
                 return;
             }
 
-            Connection con = null;
-            PreparedStatement pstmt = null;
-            try {
-                con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(DELETE_OFFLINE_PRESENCE);
-                pstmt.setString(1, username);
-                pstmt.execute();
-            }
-            catch (SQLException sqle) {
-                Log.error(sqle);
-            }
-            finally {
-                DbConnectionManager.closeConnection(pstmt, con);
-            }
+            deleteOfflinePresenceFromDB(username);
 
             // Remove data from cache.
             offlinePresenceCache.remove(username);
             lastActivityCache.remove(username);
+        }
+    }
+
+    private void deleteOfflinePresenceFromDB(String username) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_OFFLINE_PRESENCE);
+            pstmt.setString(1, username);
+            pstmt.execute();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -462,7 +465,20 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         }
     }
 
-    // #####################################################################
+    public void userCreated(User user, Map<String, Object> params) {
+        // Do nothing
+    }
+
+    public void userDeleting(User user, Map<String, Object> params) {
+        // Delete user information
+        deleteOfflinePresenceFromDB(user.getUsername());
+    }
+
+    public void userModified(User user, Map<String, Object> params) {
+        // Do nothing
+    }
+
+// #####################################################################
     // Module management
     // #####################################################################
 
@@ -485,6 +501,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         super.start();
         // Use component manager for Presence Updates.
         componentManager = InternalComponentManager.getInstance();
+        // Listen for user deletion events
+        UserEventDispatcher.addListener(this);
 
     }
 
@@ -492,6 +510,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager 
         // Clear the caches when stopping the module.
         offlinePresenceCache.clear();
         lastActivityCache.clear();
+        // Stop listening for user deletion events
+        UserEventDispatcher.removeListener(this);
     }
 
     /**

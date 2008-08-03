@@ -53,8 +53,6 @@ public class DefaultUserProvider implements UserProvider {
             "DELETE FROM ofUserProp WHERE username=?";
     private static final String DELETE_USER =
             "DELETE FROM ofUser WHERE username=?";
-    private static final String DELETE_USER_OFFLINE =
-            "DELETE FROM ofOffline WHERE username=?";
     private static final String UPDATE_NAME =
             "UPDATE ofUser SET name=? WHERE username=?";
     private static final String UPDATE_EMAIL =
@@ -184,11 +182,6 @@ public class DefaultUserProvider implements UserProvider {
             // Delete all of the users's extended properties
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
-            pstmt.setString(1, username);
-            pstmt.execute();
-            pstmt.close();
-            // Delete all of the user's offline messages
-            pstmt = con.prepareStatement(DELETE_USER_OFFLINE);
             pstmt.setString(1, username);
             pstmt.execute();
             pstmt.close();

@@ -5,8 +5,8 @@
     <name>Fastpath Service</name>
     <description>Support for managed queued chat requests, such as a support team might use.</description>
     <author>Jive Software</author>
-    <version>1.1.0</version>
-    <date>7/31/2008</date>
+    <version>4.1.0</version>
+    <date>8/12/2008</date>
     <minServerVersion>3.6.0</minServerVersion>
     <databaseKey>fastpath</databaseKey>
     <databaseVersion>0</databaseVersion>

@@ -9,7 +9,7 @@
     <description>Controls clients allowed to connect and available features</description>
     <author>Jive Software</author>
     <version>1.0.2</version>
-    <date>6/20/2008</date>
+    <date>8/13/2008</date>
     <minServerVersion>3.5.0</minServerVersion>
     <databaseKey>clientcontrol</databaseKey>
     <databaseVersion>0</databaseVersion>

@@ -135,6 +135,7 @@
         }
         catch (UnauthorizedException ue) {
             Log.debug(ue);
+            Log.warn("Failed admin console login attempt by "+username);
             errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
         }
     }

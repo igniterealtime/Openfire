@@ -14,7 +14,9 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.cluster.MUCServicePropertyClusterEventTask;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -158,7 +160,8 @@ public class MUCServiceProperties implements Map<String, String> {
         Map<String, Object> params = Collections.emptyMap();
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, (String)key, MUCServicePropertyEventDispatcher.EventType.property_deleted, params);
 
-        // TODO: Send cluster update.
+        // Send update to other cluster members.
+        CacheFactory.doClusterTask(MUCServicePropertyClusterEventTask.createDeleteTask(subdomain, (String) key));
 
         return value;
     }
@@ -206,7 +209,8 @@ public class MUCServiceProperties implements Map<String, String> {
         params.put("value", value);
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, key, MUCServicePropertyEventDispatcher.EventType.property_set, params);
 
-        // TODO: Send cluster update.
+        // Send update to other cluster members.
+        CacheFactory.doClusterTask(MUCServicePropertyClusterEventTask.createPutTask(subdomain, key, value));
 
         return result;
     }

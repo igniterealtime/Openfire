@@ -755,7 +755,6 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                         XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
                     }
 
-                    // TODO: How do we handle non-default service implemtations properly here?
                     MultiUserChatServiceImpl serviceImpl = (MultiUserChatServiceImpl)service;
 
                     for (RoomInfo roomInfo : serviceInfo.getRooms()) {
@@ -789,7 +788,6 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         if (result != null) {
             for (RoomInfo roomInfo : result) {
                 LocalMUCRoom remoteRoom = roomInfo.getRoom();
-                // TODO: How do we handle non-default service implemtations properly here?
                 MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
                 LocalMUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
                 if (localRoom == null) {

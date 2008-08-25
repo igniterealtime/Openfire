@@ -1216,6 +1216,15 @@ public class MUCPersistenceManager {
         propertyMaps.put(subdomain, properties);
     }
 
+    public static void setLocalProperty(String subdomain, String name, String value) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+        }
+        properties.localPut(name, value);
+        propertyMaps.put(subdomain, properties);
+    }
+
    /**
      * Sets multiple Jive properties at once. If a property doesn't already exists, a new
      * one will be created.
@@ -1245,6 +1254,15 @@ public class MUCPersistenceManager {
             properties = new MUCServiceProperties(subdomain);
         }
         properties.remove(name);
+        propertyMaps.put(subdomain, properties);
+    }
+
+    public static void deleteLocalProperty(String subdomain, String name) {
+        MUCServiceProperties properties = propertyMaps.get(subdomain);
+        if (properties == null) {
+            properties = new MUCServiceProperties(subdomain);
+        }
+        properties.localRemove(name);
         propertyMaps.put(subdomain, properties);
     }
 

@@ -116,10 +116,10 @@
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
-    <servlet>
+    <!--<servlet>
         <servlet-name>WebDAVLiteServlet</servlet-name>
         <servlet-class>org.jivesoftware.openfire.webdav.WebDAVLiteServlet</servlet-class>
-    </servlet>
+    </servlet>-->
 
 
     <!--@@JSPC-SERVLETS@@-->

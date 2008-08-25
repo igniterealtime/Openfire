@@ -25,6 +25,10 @@ import javax.servlet.ServletInputStream;
 import java.io.*;
 
 /**
+ * This is a work in progress and is checked in for future use.
+ */
+
+/**
  * Implements a very light WebDAV-ish servlet for specific purposes.  It does not support WebDAV extensions
  * to the HTTP protocol.  Instead, it supports the set of commands: GET, PUT, and DELETE.  This serves
  * as a WebDAV like storage interface for MUC shared files.  It handles part of XEP-0129: WebDAV File Transfers,

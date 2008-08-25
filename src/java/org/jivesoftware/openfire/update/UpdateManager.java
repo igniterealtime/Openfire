@@ -233,6 +233,12 @@ public class UpdateManager extends BasicModule {
         boolean installed = false;
         // Download and install new version of plugin
         HttpClient httpClient = new HttpClient();
+        // Check if a proxy should be used
+        if (isUsingProxy()) {
+            HostConfiguration hc = new HostConfiguration();
+            hc.setProxy(getProxyHost(), getProxyPort());
+            httpClient.setHostConfiguration(hc);
+        }
         GetMethod getMethod = new GetMethod(url);
         //execute the method
         try {

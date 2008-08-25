@@ -16,6 +16,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="org.jivesoftware.admin.LoginLimitManager" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -70,6 +71,9 @@
 
     if (ParamUtils.getBooleanParameter(request, "login")) {
         try {
+            if (LoginLimitManager.getInstance().hasHitConnectionLimit(username, request.getRemoteAddr())) {
+                throw new UnauthorizedException("User '" + username +"' or address '" + request.getRemoteAddr() + "' has his login attempt limit.");
+            }
             if (!AdminManager.getInstance().isUserAdmin(username, true)) {
                 throw new UnauthorizedException("User '" + username + "' not allowed to login.");
             }
@@ -93,6 +97,7 @@
             else {
                 authToken = AuthFactory.authenticate(username, password);
             }
+            LoginLimitManager.getInstance().recordSuccessfulAttempt(username, request.getRemoteAddr());
             session.setAttribute("jive.admin.authToken", authToken);
             response.sendRedirect(go(url));
             return;
@@ -135,7 +140,7 @@
         }
         catch (UnauthorizedException ue) {
             Log.debug(ue);
-            Log.warn("Failed admin console login attempt by "+username);
+            LoginLimitManager.getInstance().recordFailedAttempt(username, request.getRemoteAddr());
             errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
         }
     }

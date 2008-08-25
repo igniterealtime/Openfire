@@ -139,10 +139,10 @@
         <url-pattern>/geticon</url-pattern>
     </servlet-mapping>
 
-    <servlet-mapping>
+    <!--<servlet-mapping>
         <servlet-name>WebDAVLiteServlet</servlet-name>
         <url-pattern>/webdav/*</url-pattern>
-    </servlet-mapping>
+    </servlet-mapping>-->
 
     <servlet-mapping>
         <servlet-name>dwr-invoker</servlet-name>

@@ -100,6 +100,9 @@ things.  So the steps you will need to perform are as follows:
 <li>Execute the following SQL: <tt>DELETE FROM ofVersion WHERE name = 'fastpath'</tt></li>
 <li>Execute the following SQL (this may fail if you never had enterprise instaled, that is ok): <tt>UPDATE fpWorkgroupProp SET propValue = REPLACE(propValue, 'com.jivesoftware.openfire.fastpath','org.jivesoftware.openfire.fastpath')</tt></li>
 <li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpAgentProp SET propValue = REPLACE(propValue, 'com.jivesoftware.openfire.fastpath','org.jivesoftware.openfire.fastpath')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpWorkgroupProp SET propValue = REPLACE(propValue, 'com.jivesoftware.xmpp.workgroup','org.jivesoftware.xmpp.workgroup')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpAgentProp SET propValue = REPLACE(propValue, 'com.jivesoftware.xmpp.workgroup','org.jivesoftware.xmpp.workgroup')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpDispatcherProp SET propValue = REPLACE(propValue, 'com.jivesoftware.xmpp.workgroup','org.jivesoftware.xmpp.workgroup')</tt></li>
 <li>Start up your server.  If you had enterprise installed, you -will- see an SQL error show up, but it should only show up once and is ok.  (it is an attempt to recreate a table that already exists)  The error will look like: <tt>fastpath - Database update failed. Please manually upgrade your database.</tt></li>
 </ol>
 

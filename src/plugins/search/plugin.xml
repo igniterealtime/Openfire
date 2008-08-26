@@ -5,8 +5,8 @@
     <name>Search</name>
     <description>Provides support for Jabber Search (XEP-0055)</description>
     <author>Ryan Graham</author>
-    <version>1.4.2</version>
-    <date>4/7/2008</date>
+    <version>1.4.3</version>
+    <date>8/26/2008</date>
     <minServerVersion>3.5.0</minServerVersion>
     
     <adminconsole>

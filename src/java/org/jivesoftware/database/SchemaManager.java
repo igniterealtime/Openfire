@@ -143,6 +143,7 @@ public class SchemaManager {
      * @param requiredVersion the version that the schema should be at.
      * @param resourceLoader a resource loader that knows how to load schema files.
      * @throws Exception if an error occured.
+     * @return True if the schema update was successful.
      */
     private boolean checkSchema(Connection con, String schemaKey, int requiredVersion,
             ResourceLoader resourceLoader) throws Exception
@@ -216,7 +217,8 @@ public class SchemaManager {
                 return false;
             }
             try {
-                executeSQLScript(con, resource);
+                // For plugins, we will automatically convert jiveVersion to ofVersion
+                executeSQLScript(con, resource, !schemaKey.equals("openfire") && !schemaKey.equals("wildfire"));
             }
             catch (Exception e) {
                 Log.error(e);
@@ -261,7 +263,7 @@ public class SchemaManager {
                     continue;
                 }
                 try {
-                    executeSQLScript(con, resource);
+                    executeSQLScript(con, resource, !schemaKey.equals("openfire") && !schemaKey.equals("wildfire"));
                 }
                 catch (Exception e) {
                     Log.error(e);
@@ -329,10 +331,11 @@ public class SchemaManager {
      *
      * @param con database connection.
      * @param resource an input stream for the script to execute.
+     * @param autoreplace automatically replace jiveVersion with ofVersion
      * @throws IOException if an IOException occurs.
      * @throws SQLException if an SQLException occurs.
      */
-    private static void executeSQLScript(Connection con, InputStream resource) throws IOException,
+    private static void executeSQLScript(Connection con, InputStream resource, Boolean autoreplace) throws IOException,
             SQLException
     {
         BufferedReader in = null;
@@ -363,8 +366,12 @@ public class SchemaManager {
                         command.deleteCharAt(command.length() - 1);
                     }
                     try {
+                        String cmdString = command.toString();
+                        if (autoreplace)  {
+                            cmdString = cmdString.replaceAll("jiveVersion", "ofVersion");
+                        }
                         Statement stmt = con.createStatement();
-                        stmt.execute(command.toString());
+                        stmt.execute(cmdString);
                         stmt.close();
                     }
                     catch (SQLException e) {

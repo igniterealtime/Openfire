@@ -1,0 +1,4 @@
+i pkginfo
+i checkinstall
+i postinstall
+i preremove

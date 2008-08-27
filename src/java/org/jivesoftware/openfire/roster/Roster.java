@@ -596,6 +596,13 @@ public class Roster implements Cacheable, Externalizable {
         }
         // Broadcast presence to shared contacts whose subscription status is FROM
         for (String contact : implicitFrom.keySet()) {
+            if (contact.contains("@")) {
+                String node = contact.substring(0, contact.lastIndexOf("@"));
+                String domain = contact.substring(contact.lastIndexOf("@")+1);
+                node = JID.escapeNode(node);
+                contact = new JID(node, domain, null).toBareJID();
+            }
+
             packet.setTo(contact);
             if (list != null && list.shouldBlockPacket(packet)) {
                 // Outgoing presence notifications are blocked for this contact

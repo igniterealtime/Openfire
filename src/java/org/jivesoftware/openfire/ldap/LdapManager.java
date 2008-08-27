@@ -1875,6 +1875,10 @@ public class LdapManager {
             return dnValue;
         }
 
+        if (dnPattern == null) {
+            dnPattern = Pattern.compile("([^\\\\]=)([^\"]*?[^\\\\])(,|$)");
+        }
+
         Matcher matcher = dnPattern.matcher(dnValue);
         dnValue = matcher.replaceAll("$1\"$2\"$3");
         dnValue = dnValue.replace("\\,", ",");
@@ -1883,6 +1887,6 @@ public class LdapManager {
     }
 
     // Set the pattern to use to wrap DN values with "
-    private static Pattern dnPattern = Pattern.compile("([^\\\\]=)([^\"]*?[^\\\\])(,|$)");
+    private static Pattern dnPattern;
 
 }

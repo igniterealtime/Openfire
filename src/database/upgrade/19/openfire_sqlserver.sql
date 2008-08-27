@@ -57,7 +57,7 @@ DROP INDEX jiveRoster.jiveRoster_username_idx;
 DROP INDEX jiveRoster.jiveRoster_jid_idx;
 ALTER TABLE jiveRoster DROP CONSTRAINT jiveRoster_pk;
 sp_rename 'jiveRoster', 'ofRoster';
-ALTER TABLE ofUserFlag ADD CONSTRAINT ofRoster_pk PRIMARY KEY (rosterID);
+ALTER TABLE ofRoster ADD CONSTRAINT ofRoster_pk PRIMARY KEY (rosterID);
 CREATE INDEX ofRoster_username_idx ON ofRoster (username ASC);
 CREATE INDEX ofRoster_jid_idx ON ofRoster (jid ASC);
 
@@ -137,7 +137,7 @@ ALTER TABLE ofMucServiceProp ADD CONSTRAINT ofMucServiceProp_pk PRIMARY KEY (ser
 /* Rename mucRoom to ofMucRoom */
 DROP INDEX mucRoom.mucRoom_roomID_idx;
 DROP INDEX mucRoom.mucRoom_serviceID_idx;
-ALTER TABLE mucRoom DROP CONSTRAINT mucRoom__pk;
+ALTER TABLE mucRoom DROP CONSTRAINT mucRoom_pk;
 sp_rename 'mucRoom', 'ofMucRoom';
 ALTER TABLE ofMucRoom ADD CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name);
 CREATE INDEX ofMucRoom_roomid_idx on ofMucRoom(roomID);

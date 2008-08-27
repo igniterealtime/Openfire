@@ -160,8 +160,6 @@ public class LdapManager {
     private boolean posixMode = false;
     private String groupSearchFilter = null;
 
-    private Pattern dnPattern;
-
     private Map<String, String> properties;
 
     /**
@@ -253,9 +251,6 @@ public class LdapManager {
         if (usernameSuffix == null) {
             usernameSuffix = "";
         }
-
-        // Set the pattern to use to wrap DN values with "
-        dnPattern = Pattern.compile("([^\\\\]=)([^\"].*?[^\\\\])(,|$)");
 
         // are we going to enclose DN values with quotes? (needed when DNs contain non-delimiting commas)
         encloseDNs = true;
@@ -1875,7 +1870,7 @@ public class LdapManager {
      * @param dnValue the unenclosed value of a DN (e.g. ou=Jive Software\, Inc,dc=support,dc=jive,dc=com)
      * @return String the enclosed value of the DN (e.g. ou="Jive Software\, Inc",dc="support",dc="jive",dc="com")
      */
-    private String getEnclosedDN(String dnValue) {
+    public static String getEnclosedDN(String dnValue) {
         if (dnValue == null || dnValue.equals("")) {
             return dnValue;
         }
@@ -1886,4 +1881,8 @@ public class LdapManager {
 
         return dnValue;
     }
+
+    // Set the pattern to use to wrap DN values with "
+    private static Pattern dnPattern = Pattern.compile("([^\\\\]=)([^\"]*?[^\\\\])(,|$)");
+
 }

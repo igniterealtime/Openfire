@@ -160,6 +160,8 @@ public class SchemaManager {
             }
         }
         catch (SQLException sqle) {
+            // The database schema must not be installed.
+            Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable.", sqle);
             DbConnectionManager.closeResultSet(rs);
             DbConnectionManager.closeStatement(pstmt);
             if (schemaKey.equals("openfire")) {
@@ -173,6 +175,8 @@ public class SchemaManager {
                     }
                 }
                 catch (SQLException sqlea) {
+                    // The database schema must not be installed.
+                    Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable.", sqlea);
                     DbConnectionManager.closeResultSet(rs);
                     DbConnectionManager.closeStatement(pstmt);
                     // Releases of Openfire before 2.6.0 stored a major and minor version
@@ -190,7 +194,7 @@ public class SchemaManager {
                     }
                     catch (SQLException sqle2) {
                         // The database schema must not be installed.
-                        Log.debug("SchemaManager: Error verifying server version", sqle2);
+                        Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable", sqle2);
                     }
                 }
             }

@@ -8,9 +8,9 @@
     <name>Client Control</name>
     <description>Controls clients allowed to connect and available features</description>
     <author>Jive Software</author>
-    <version>1.0.2</version>
-    <date>8/13/2008</date>
-    <minServerVersion>3.5.0</minServerVersion>
+    <version>1.0.3</version>
+    <date>8/27/2008</date>
+    <minServerVersion>3.6.0</minServerVersion>
     <databaseKey>clientcontrol</databaseKey>
     <databaseVersion>0</databaseVersion>
 

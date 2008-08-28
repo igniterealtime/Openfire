@@ -16,11 +16,8 @@ CREATE TABLE mucServiceProp (
 );
 
 -- add new indexed column to mucRoom
-ALTER TABLE mucRoom ADD COLUMN serviceID INTEGER;
+ALTER TABLE mucRoom ADD COLUMN serviceID INTEGER NOT NULL DEFAULT 1;
 CREATE INDEX mucRoom_serviceid_idx ON mucRoom (serviceID);
-
--- update all entries in mucRoom to be set to the default conference service
-UPDATE mucRoom set serviceID = 1;
 
 -- change mucRoom primary key to be referenced around serviceID
 ALTER TABLE mucRoom DROP CONSTRAINT mucRoom__pk;

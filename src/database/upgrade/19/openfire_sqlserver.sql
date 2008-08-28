@@ -137,7 +137,7 @@ ALTER TABLE ofMucServiceProp ADD CONSTRAINT ofMucServiceProp_pk PRIMARY KEY (ser
 /* Rename mucRoom to ofMucRoom */
 DROP INDEX mucRoom.mucRoom_roomID_idx;
 DROP INDEX mucRoom.mucRoom_serviceID_idx;
-ALTER TABLE mucRoom DROP CONSTRAINT mucRoom_pk;
+ALTER TABLE mucRoom DROP CONSTRAINT mucRoom__pk;
 sp_rename 'mucRoom', 'ofMucRoom';
 ALTER TABLE ofMucRoom ADD CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name);
 CREATE INDEX ofMucRoom_roomid_idx on ofMucRoom(roomID);

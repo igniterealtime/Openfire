@@ -16,21 +16,16 @@ CREATE TABLE mucServiceProp (
 );
 
 /* add new indexed column to mucRoom */
-ALTER TABLE mucRoom ADD COLUMN serviceID INT;
+ALTER TABLE mucRoom ADD COLUMN serviceID INT NOT NULL DEFAULT 1;
 CREATE INDEX mucRoom_serviceid_idx ON mucRoom(serviceID);
 
 /* change mucRoom primary key to be referenced around serviceID */
 ALTER TABLE mucRoom DROP CONSTRAINT mucRoom_pk;
+ALTER TABLE mucRoom ADD CONSTRAINT mucRoom_pk PRIMARY KEY (serviceID, name);
 
 /* add default entry for conference service and associated jiveID value */
 INSERT INTO mucService (serviceID, subdomain) VALUES (1, 'conference');
 INSERT INTO jiveID (idType, id) VALUES (26, 1);
-
-/* update all entries in mucRoom to be set to the default conference service */
-UPDATE mucRoom set serviceID = 1;
-
-/* finish change mucRoom primary key to be referenced around serviceID */
-ALTER TABLE mucRoom ADD CONSTRAINT mucRoom_pk PRIMARY KEY (serviceID, name);
 
 /* update conference name/desc if there is a custom one set */
 UPDATE mucService SET mucService.subdomain = ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = 'xmpp.muc.service' )

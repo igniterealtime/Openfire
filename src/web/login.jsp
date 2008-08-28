@@ -46,12 +46,6 @@
 
 <% // get parameters
     String username = ParamUtils.getParameter(request, "username");
-    if (username != null) {
-        username = JID.escapeNode(username);
-    }
-    // Escape HTML tags in username to prevent cross-site scripting attacks. This
-    // is necessary because we display the username in the page below.
-    username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
 
     String password = ParamUtils.getParameter(request, "password");
     String url = ParamUtils.getParameter(request, "url");
@@ -70,34 +64,38 @@
     Map<String, String> errors = new HashMap<String, String>();
 
     if (ParamUtils.getBooleanParameter(request, "login")) {
+        String loginUsername = username;
+        if (loginUsername != null) {
+            loginUsername = JID.escapeNode(loginUsername);
+        }
         try {
-            if (LoginLimitManager.getInstance().hasHitConnectionLimit(username, request.getRemoteAddr())) {
-                throw new UnauthorizedException("User '" + username +"' or address '" + request.getRemoteAddr() + "' has his login attempt limit.");
+            if (LoginLimitManager.getInstance().hasHitConnectionLimit(loginUsername, request.getRemoteAddr())) {
+                throw new UnauthorizedException("User '" + loginUsername +"' or address '" + request.getRemoteAddr() + "' has his login attempt limit.");
             }
-            if (!AdminManager.getInstance().isUserAdmin(username, true)) {
-                throw new UnauthorizedException("User '" + username + "' not allowed to login.");
+            if (!AdminManager.getInstance().isUserAdmin(loginUsername, true)) {
+                throw new UnauthorizedException("User '" + loginUsername + "' not allowed to login.");
             }
             if (secret != null && nodeID != null) {
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
-                    authToken = new AuthToken(username);
+                    authToken = new AuthToken(loginUsername);
                 }
                 else if ("clearspace".equals(nodeID) && ClearspaceManager.isEnabled()) {
                     ClearspaceManager csmanager = ClearspaceManager.getInstance();
                     String sharedSecret = csmanager.getSharedSecret();
                     if (nonce == null || sharedSecret == null || !csmanager.isValidNonce(nonce) ||
-                            !StringUtils.hash(username + ":" + sharedSecret + ":" + nonce).equals(secret)) {
+                            !StringUtils.hash(loginUsername + ":" + sharedSecret + ":" + nonce).equals(secret)) {
                         throw new UnauthorizedException("SSO failed. Invalid secret was provided");
                     }
-                    authToken = new AuthToken(username);
+                    authToken = new AuthToken(loginUsername);
                 }
                 else {
                     throw new UnauthorizedException("SSO failed. Invalid secret or node ID was provided");
                 }
             }
             else {
-                authToken = AuthFactory.authenticate(username, password);
+                authToken = AuthFactory.authenticate(loginUsername, password);
             }
-            LoginLimitManager.getInstance().recordSuccessfulAttempt(username, request.getRemoteAddr());
+            LoginLimitManager.getInstance().recordSuccessfulAttempt(loginUsername, request.getRemoteAddr());
             session.setAttribute("jive.admin.authToken", authToken);
             response.sendRedirect(go(url));
             return;
@@ -144,6 +142,11 @@
             errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
         }
     }
+
+    // Escape HTML tags in username to prevent cross-site scripting attacks. This
+    // is necessary because we display the username in the page below.
+    username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
+
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">

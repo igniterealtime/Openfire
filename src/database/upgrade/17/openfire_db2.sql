@@ -30,7 +30,8 @@ INSERT INTO jiveID (idType, id) VALUES (26, 1);
 UPDATE mucRoom set serviceID = 1;
 
 -- complete change mucRoom primary key to be referenced around serviceID
-ALTER TABLE mucRoom ADD CONSTRAINT mucRoom_pk PRIMARY KEY (serviceID, name);
+-- This does not work for some reason.  I don't understand db2 enough.
+--ALTER TABLE mucRoom ADD CONSTRAINT mucRoom_pk PRIMARY KEY (serviceID, name);
 
 -- update conference name/desc if there is a custom one set
 UPDATE mucService SET mucService.subdomain = ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = 'xmpp.muc.service' )

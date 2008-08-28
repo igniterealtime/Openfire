@@ -5,7 +5,7 @@
 CREATE TABLE jiveRemoteServerConf2 (
   xmppDomain            VARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
-  permission            VARCHAR(10)     NOT NULL,
+  permission            VARCHAR(10)     NOT NULL
 );
 
 INSERT INTO jiveRemoteServerConf2 (xmppDomain, remotePort, permission)
@@ -13,7 +13,7 @@ SELECT domain, remotePort, permission FROM jiveRemoteServerConf;
 
 DROP TABLE jiveRemoteServerConf;
 RENAME TABLE jiveRemoteServerConf2 TO jiveRemoteServerConf;
-ALTER TABLE jiveRemoteServerConf ADD CONSTRAINT jiveRmSrvConf_pk PRIMARY KEY xmppDomain;
+ALTER TABLE jiveRemoteServerConf ADD CONSTRAINT jiveRmSrvConf_pk PRIMARY KEY (xmppDomain);
 
 -- Rename column
 CREATE TABLE jiveOffline2 (
@@ -21,7 +21,7 @@ CREATE TABLE jiveOffline2 (
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
-  stanza                VARCHAR(2000)   NOT NULL,
+  stanza                VARCHAR(2000)   NOT NULL
 );
 
 INSERT INTO jiveOffline2 (username, messageID, creationDate, messageSize, stanza)
@@ -34,7 +34,7 @@ ALTER TABLE jiveOffline ADD CONSTRAINT jiveOffline_pk PRIMARY KEY (username, mes
 -- Rename column
 CREATE TABLE jiveVCard2 (
   username              VARCHAR(64)     NOT NULL,
-  vcard                 VARCHAR(2000)   NOT NULL,
+  vcard                 VARCHAR(2000)   NOT NULL
 );
 
 INSERT INTO jiveVCard2 (username, vcard)
@@ -49,21 +49,15 @@ CREATE TABLE jivePrivate2 (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
-  privateData           VARCHAR(2000)   NOT NULL,
+  privateData           VARCHAR(2000)   NOT NULL
 );
 
--- Rename column
-CREATE TABLE jiveVCard2 (
-  username              VARCHAR(64)     NOT NULL,
-  vcard                 VARCHAR(2000)   NOT NULL,
-);
+INSERT INTO jivePrivate2 (username, name, namespace, privateData)
+SELECT username, name, namespace, value FROM jivePrivate;
 
-INSERT INTO jiveVCard2 (username, vcard)
-SELECT username, value FROM jiveVCard;
-
-DROP TABLE jiveVCard;
-RENAME TABLE jiveVCard2 TO jiveVCard;
-ALTER TABLE jiveVCard ADD CONSTRAINT jiveVCard_pk PRIMARY KEY (username);
+DROP TABLE jivePrivate;
+RENAME TABLE jivePrivate2 TO jivePrivate;
+ALTER TABLE jivePrivate ADD CONSTRAINT jivePrivate_pk PRIMARY KEY (username);
 
 -- Rename column
 CREATE TABLE jiveUser2 (
@@ -73,7 +67,7 @@ CREATE TABLE jiveUser2 (
   name                  VARCHAR(100),
   email                 VARCHAR(100),
   creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
+  modificationDate      CHAR(15)        NOT NULL
 );
 
 INSERT INTO jiveUser2 (username, plainPassword, encryptedPassword, name, email, creationDate, modificationDate)
@@ -107,7 +101,7 @@ CREATE TABLE mucRoom2 (
   rolesToBroadcast    INTEGER       NOT NULL,
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
-  canRegister         INTEGER       NOT NULL,
+  canRegister         INTEGER       NOT NULL
 );
 
 INSERT INTO mucRoom2 (roomID, creationDate, modificationDate, name, naturalName, description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, canChangeNick, canRegister)

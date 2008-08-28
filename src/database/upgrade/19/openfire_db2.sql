@@ -88,12 +88,12 @@ ALTER TABLE ofVersion ADD CONSTRAINT ofVersion_pk PRIMARY KEY (name);
 -- Rename jiveExtComponentConf to ofExtComponentConf
 ALTER TABLE jiveExtComponentConf DROP CONSTRAINT jiveExtCmpConf_pk;
 RENAME jiveExtComponentConf TO ofExtComponentConf;
-ALTER TABLE ofExtComponentConf ADD CONSTRAINT ofExtComponentConf_pk PRIMARY KEY (subdomain);
+ALTER TABLE ofExtComponentConf ADD CONSTRAINT ofExtCmpConf_pk PRIMARY KEY (subdomain);
 
 -- Rename jiveRemoteServerConf to ofRemoteServerConf
 ALTER TABLE jiveRemoteServerConf DROP CONSTRAINT jiveRmSrvConf_pk;
 RENAME jiveRemoteServerConf TO ofRemoteServerConf;
-ALTER TABLE ofRemoteServerConf ADD CONSTRAINT ofRemoteServerConf_pk PRIMARY KEY (xmppDomain);
+ALTER TABLE ofRemoteServerConf ADD CONSTRAINT ofRmSrvConf_pk PRIMARY KEY (xmppDomain);
 
 -- Rename jivePrivacyList to ofPrivacyList
 DROP INDEX jList_default_idx;
@@ -105,16 +105,16 @@ CREATE INDEX ofPrivacyList_default_idx ON ofPrivacyList (username, isDefault);
 -- Rename jiveSASLAuthorized to ofSASLAuthorized
 ALTER TABLE jiveSASLAuthorized DROP CONSTRAINT jSASLAuthrizd_pk;
 RENAME jiveSASLAuthorized TO ofSASLAuthorized;
-ALTER TABLE ofSASLAuthorized ADD CONSTRAINT ofSASLAuthorized_pk PRIMARY KEY (username, principal);
+ALTER TABLE ofSASLAuthorized ADD CONSTRAINT ofSASLAuthrizd_pk PRIMARY KEY (username, principal);
 
 -- Rename jiveSecurityAuditLog to ofSecurityAuditLog
 DROP INDEX jiveSecAuditLog_tstamp_idx;
 DROP INDEX jiveSecAuditLog_uname_idx;
 ALTER TABLE jiveSecurityAuditLog DROP CONSTRAINT jiveSecAuditLog_pk;
 RENAME jiveSecurityAuditLog TO ofSecurityAuditLog;
-ALTER TABLE ofSecurityAuditLog ADD CONSTRAINT ofSecurityAuditLog_pk PRIMARY KEY (msgID);
-CREATE INDEX ofSecurityAuditLog_tstamp_idx ON ofSecurityAuditLog (entryStamp);
-CREATE INDEX ofSecurityAuditLog_uname_idx ON ofSecurityAuditLog (username);
+ALTER TABLE ofSecurityAuditLog ADD CONSTRAINT ofSecAuditLog_pk PRIMARY KEY (msgID);
+CREATE INDEX ofSecAuditLog_tstamp_idx ON ofSecurityAuditLog (entryStamp);
+CREATE INDEX ofSecAuditLog_uname_idx ON ofSecurityAuditLog (username);
 
 -- Rename mucService to ofMucService
 DROP INDEX mucService_serviceid_idx;
@@ -126,7 +126,7 @@ CREATE INDEX ofMucService_serviceid_idx ON ofMucService(serviceID);
 -- Rename mucServiceProp to ofMucServiceProp
 ALTER TABLE mucServiceProp DROP CONSTRAINT mucServiceProp_pk;
 RENAME mucServiceProp TO ofMucServiceProp;
-ALTER TABLE ofMucServiceProp ADD CONSTRAINT ofMucServiceProp_pk PRIMARY KEY (serviceID, name);
+ALTER TABLE ofMucServiceProp ADD CONSTRAINT ofMucSrvProp_pk PRIMARY KEY (serviceID, name);
 
 -- Rename mucRoom to ofMucRoom
 DROP INDEX mucRm_roomid_idx;
@@ -135,7 +135,7 @@ ALTER TABLE mucRoom DROP CONSTRAINT mucRoom_pk;
 RENAME mucRoom TO ofMucRoom;
 ALTER TABLE ofMucRoom ADD CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name);
 CREATE INDEX ofMucRoom_roomid_idx ON ofMucRoom (roomID);
-CREATE INDEX ofMucRoom_serviceid_idx ON ofMucRoom (serviceID);
+CREATE INDEX ofMucRoom_srvid_idx ON ofMucRoom (serviceID);
 
 -- Rename mucRoomProp to ofMucRoomProp
 ALTER TABLE mucRoomProp DROP CONSTRAINT mucRoomProp_pk;
@@ -145,7 +145,7 @@ ALTER TABLE ofMucRoomProp ADD CONSTRAINT ofMucRoomProp_pk PRIMARY KEY (roomID, n
 -- Rename mucAffiliation to ofMucAffiliation
 ALTER TABLE mucAffiliation DROP CONSTRAINT mucAffiliation_pk;
 RENAME mucAffiliation TO ofMucAffiliation;
-ALTER TABLE ofMucAffiliation ADD CONSTRAINT ofMucAffiliation_pk PRIMARY KEY (roomID, jid);
+ALTER TABLE ofMucAffiliation ADD CONSTRAINT ofMucAffil_pk PRIMARY KEY (roomID, jid);
 
 -- Rename mucMember to ofMucMember
 ALTER TABLE mucMember DROP CONSTRAINT mucMember_pk;
@@ -153,9 +153,10 @@ RENAME mucMember TO ofMucMember;
 ALTER TABLE ofMucMember ADD CONSTRAINT ofMucMember_pk PRIMARY KEY (roomID, jid);
 
 -- Rename mucConversationLog to ofMucConversationLog
-DROP INDEX mucLog_time_idx;
+--Past scripts make it impossible to know if this is logtime or time, sigh:
+--DROP INDEX mucLog_time_idx;
 RENAME mucConversationLog TO ofMucConversationLog;
-CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
+CREATE INDEX ofMucConvLog_time_idx ON ofMucConversationLog (logTime);
 
 -- Rename pubsubNode to ofPubsubNode
 ALTER TABLE pubsubNode DROP CONSTRAINT pubsubNode_pk;
@@ -165,17 +166,17 @@ ALTER TABLE ofPubsubNode ADD CONSTRAINT ofPubsubNode_pk PRIMARY KEY (serviceID, 
 -- Rename pubsubNodeJIDs to ofPubsubNodeJIDs
 ALTER TABLE pubsubNodeJIDs DROP CONSTRAINT pubsubJID_pk;
 RENAME pubsubNodeJIDs TO ofPubsubNodeJIDs;
-ALTER TABLE ofPubsubNodeJIDs ADD CONSTRAINT ofPubsubNodeJIDs_pk PRIMARY KEY (serviceID, nodeID, jid);
+ALTER TABLE ofPubsubNodeJIDs ADD CONSTRAINT ofPubsubNdJIDs_pk PRIMARY KEY (serviceID, nodeID, jid);
 
 -- Rename pubsubNodeGroups to ofPubsubNodeGroups
 DROP INDEX pubsubNGrps_idx;
 RENAME pubsubNodeGroups TO ofPubsubNodeGroups;
-CREATE INDEX ofPubsubNodeGroups_idx ON ofPubsubNodeGroups (serviceID, nodeID);
+CREATE INDEX ofPubsubNGrps_idx ON ofPubsubNodeGroups (serviceID, nodeID);
 
 -- Rename pubsubAffiliation to ofPubsubAffiliation
 ALTER TABLE pubsubAffiliation DROP CONSTRAINT pubsubAffil_pk;
 RENAME pubsubAffiliation TO ofPubsubAffiliation;
-ALTER TABLE ofPubsubAffiliation ADD CONSTRAINT ofPubsubAffiliation_pk PRIMARY KEY (serviceID, nodeID, jid);
+ALTER TABLE ofPubsubAffiliation ADD CONSTRAINT ofPubsubAffil_pk PRIMARY KEY (serviceID, nodeID, jid);
 
 -- Rename pubsubItem to ofPubsubItem
 ALTER TABLE pubsubItem DROP CONSTRAINT pubsubItem_pk;
@@ -185,12 +186,12 @@ ALTER TABLE ofPubsubItem ADD CONSTRAINT ofPubsubItem_pk PRIMARY KEY (serviceID, 
 -- Rename pubsubSubscription to ofPubsubSubscription
 ALTER TABLE pubsubSubscription DROP CONSTRAINT pubsubSubs_pk;
 RENAME pubsubSubscription TO ofPubsubSubscription;
-ALTER TABLE ofPubsubSubscription ADD CONSTRAINT ofPubsubSubscription_pk PRIMARY KEY (serviceID, nodeID, id);
+ALTER TABLE ofPubsubSubscription ADD CONSTRAINT ofPubsubSubs_pk PRIMARY KEY (serviceID, nodeID, id);
 
 -- Rename pubsubDefaultConf to ofPubsubDefaultConf
 ALTER TABLE pubsubDefaultConf DROP CONSTRAINT pubsubDefConf_pk;
 RENAME pubsubDefaultConf TO ofPubsubDefaultConf;
-ALTER TABLE ofPubsubDefaultConf ADD CONSTRAINT ofPubsubDefaultConf_pk PRIMARY KEY (serviceID, leaf);
+ALTER TABLE ofPubsubDefaultConf ADD CONSTRAINT ofPubsubDefConf_pk PRIMARY KEY (serviceID, leaf);
 
 -- Update version
 UPDATE ofVersion SET version = 19 WHERE name = 'openfire';

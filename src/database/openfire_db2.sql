@@ -137,7 +137,7 @@ CREATE TABLE ofExtComponentConf (
   wildcard              INTEGER         NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
-  CONSTRAINT ofExtComponentConf_pk PRIMARY KEY (subdomain)
+  CONSTRAINT ofExtCmpConf_pk PRIMARY KEY (subdomain)
 );
 
 
@@ -145,7 +145,7 @@ CREATE TABLE ofRemoteServerConf (
   xmppDomain            VARCHAR(255)    NOT NULL,
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
-  CONSTRAINT ofRemoteServerConf_pk PRIMARY KEY (xmppDomain)
+  CONSTRAINT ofRmSrvConf_pk PRIMARY KEY (xmppDomain)
 );
 
 
@@ -162,7 +162,7 @@ CREATE INDEX ofPrivacyList_default_idx ON ofPrivacyList (username, isDefault);
 CREATE TABLE ofSASLAuthorized (
   username            VARCHAR(64)   NOT NULL,
   principal           VARCHAR(190)  NOT NULL,
-  CONSTRAINT ofSASLAuthorized_pk PRIMARY KEY (username, principal)
+  CONSTRAINT ofSASLAuthrizd_pk PRIMARY KEY (username, principal)
 );
 
 CREATE TABLE ofSecurityAuditLog (
@@ -172,10 +172,10 @@ CREATE TABLE ofSecurityAuditLog (
   summary               VARCHAR(255)    NOT NULL,
   node                  VARCHAR(255)    NOT NULL,
   details               CLOB,
-  CONSTRAINT ofSecurityAuditLog_pk PRIMARY KEY (msgID)
+  CONSTRAINT ofSecAuditLog_pk PRIMARY KEY (msgID)
 );
-CREATE INDEX ofSecurityAuditLog_tstamp_idx ON ofSecurityAuditLog (entryStamp);
-CREATE INDEX ofSecurityAuditLog_uname_idx ON ofSecurityAuditLog (username);
+CREATE INDEX ofSecAuditLog_tstamp_idx ON ofSecurityAuditLog (entryStamp);
+CREATE INDEX ofSecAuditLog_uname_idx ON ofSecurityAuditLog (username);
 
 -- MUC tables
 
@@ -192,7 +192,7 @@ CREATE TABLE ofMucServiceProp (
   serviceID           INTEGER       NOT NULL,
   name                VARCHAR(100)  NOT NULL,
   propValue           VARCHAR(2000) NOT NULL,
-  CONSTRAINT ofMucServiceProp_pk PRIMARY KEY (serviceID, name)
+  CONSTRAINT ofMucSrvProp_pk PRIMARY KEY (serviceID, name)
 );
 
 CREATE TABLE ofMucRoom (
@@ -222,7 +222,7 @@ CREATE TABLE ofMucRoom (
   CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 );
 CREATE INDEX ofMucRoom_roomid_idx ON ofMucRoom (roomID);
-CREATE INDEX ofMucRoom_serviceid_idx ON ofMucRoom (serviceID);
+CREATE INDEX ofMucRoom_srvid_idx ON ofMucRoom (serviceID);
 
 
 CREATE TABLE ofMucRoomProp (
@@ -237,7 +237,7 @@ CREATE TABLE ofMucAffiliation (
   roomID              INTEGER       NOT NULL,
   jid                 VARCHAR(1000) NOT NULL,
   affiliation         INTEGER       NOT NULL,
-  CONSTRAINT ofMucAffiliation_pk PRIMARY KEY (roomID, jid)
+  CONSTRAINT ofMucAffil_pk PRIMARY KEY (roomID, jid)
 );
 
 
@@ -262,7 +262,7 @@ CREATE TABLE ofMucConversationLog (
   subject             VARCHAR(255),
   body                CLOB
 );
-CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
+CREATE INDEX ofMucConvLog_time_idx ON ofMucConversationLog (logTime);
 
 
 -- PubSub Tables
@@ -306,7 +306,7 @@ CREATE TABLE ofPubsubNodeJIDs (
   nodeID              VARCHAR(80)  NOT NULL,
   jid                 VARCHAR(90)  NOT NULL,
   associationType     VARCHAR(20)  NOT NULL,
-  CONSTRAINT ofPubsubNodeJIDs_pk PRIMARY KEY (serviceID, nodeID, jid)
+  CONSTRAINT ofPubsubNdJIDs_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
 
@@ -315,7 +315,7 @@ CREATE TABLE ofPubsubNodeGroups (
   nodeID              VARCHAR(100)  NOT NULL,
   rosterGroup         VARCHAR(100)  NOT NULL
 );
-CREATE INDEX ofPubsubNodeGroups_idx ON ofPubsubNodeGroups (serviceID, nodeID);
+CREATE INDEX ofPubsubNGrps_idx ON ofPubsubNodeGroups (serviceID, nodeID);
 
 
 CREATE TABLE ofPubsubAffiliation (
@@ -323,7 +323,7 @@ CREATE TABLE ofPubsubAffiliation (
   nodeID              VARCHAR(80)  NOT NULL,
   jid                 VARCHAR(90)  NOT NULL,
   affiliation         VARCHAR(10)  NOT NULL,
-  CONSTRAINT ofPubsubAffiliation_pk PRIMARY KEY (serviceID, nodeID, jid)
+  CONSTRAINT ofPubsubAffil_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
 
@@ -354,7 +354,7 @@ CREATE TABLE ofPubsubSubscription (
   subscriptionType    VARCHAR(10)   NOT NULL,
   subscriptionDepth   INTEGER       NOT NULL,
   keyword             VARCHAR(200),
-  CONSTRAINT ofPubsubSubscription_pk PRIMARY KEY (serviceID, nodeID, id)
+  CONSTRAINT ofPubsubSubs_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
 
@@ -377,7 +377,7 @@ CREATE TABLE ofPubsubDefaultConf (
   replyPolicy         VARCHAR(15),
   associationPolicy   VARCHAR(15)   NOT NULL,
   maxLeafNodes        INTEGER       NOT NULL,
-  CONSTRAINT ofPubsubDefaultConf_pk PRIMARY KEY (serviceID, leaf)
+  CONSTRAINT ofPubsubDefConf_pk PRIMARY KEY (serviceID, leaf)
 );
 
 -- Finally, insert default table values

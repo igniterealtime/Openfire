@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+    <!-- Servlets -->
+    <servlet>
+        <servlet-name>GraphServlet</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.reporting.graph.GraphServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>dwr-invoker</servlet-name>
+        <display-name>DWR Servlet</display-name>
+        <description>Direct Web Remoter Servlet</description>
+        <servlet-class>org.jivesoftware.openfire.reporting.MonitoringDWR</servlet-class>
+        <init-param>
+            <param-name>logLevel</param-name>
+            <param-value>FATAL</param-value>
+        </init-param>
+        <init-param>
+            <param-name>skipDefaultConfig</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </servlet>
+    <servlet>
+        <servlet-name>ConversationServlet</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.archive.ConversationPDFServlet</servlet-class>
+    </servlet>
+
+    <!-- Servlet mappings -->
+    <servlet-mapping>
+        <servlet-name>GraphServlet</servlet-name>
+        <url-pattern>/graph</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ConversationServlet</servlet-name>
+        <url-pattern>/conversation</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet-mapping>
+        <servlet-name>dwr-invoker</servlet-name>
+        <url-pattern>/dwr/*</url-pattern>
+    </servlet-mapping>
+
+</web-app>

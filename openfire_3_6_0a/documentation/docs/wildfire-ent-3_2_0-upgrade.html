@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<title>Upgrade guide to Wildfire Enterprise 3.2.0</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Upgrade guide to Wildfire Enterprise 3.2.0</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+
+	<div id="pageBody">
+
+<p>As of Wildfire Enterprise 3.2.0 the enterprise plugin and Fastpath plugin were merged into
+    the enterprise plugin. Follow these steps to upgrade your existing installation:
+
+<h3>For Wildfire Enterprise 3.1.0 or previous:</h3>
+    <ol>
+        <li>Upgrade to Wildfire Enterprise 3.1.1.</li>
+        <li>Follow  the steps in the next section.</li>
+    </ol>
+
+<h3>For Wildfire Enterprise 3.1.1:</h3>
+    <ol>
+        <li>Stop the server and make a backup of:</li>
+        <ol>
+        <li>the database where Wildfire is installed</li>
+        <li>the <i>enterprise</i> folder under <i>wildfireHome</i></li>
+        <li>the <i>index</i> folder under <i>wildfireHome</i></li>
+        <li>optional: the enterprise and fastpath plugins located in the plugins folderv
+        </ol>
+        <li>Download the latest version of Wildfire Enterprise and copy it to the <i>plugins</i> folder.</li>
+        <li>Start the server. The new version of the plugin will be loaded and the database will be updated.</li>
+        <li>Fastpath tables were replaced with new tables so you may want to <b>import existing data</b> from the old Fastpath version to the new Fastpath version. Follow these steps to import existing data:</li>
+        <ol>
+        <li>Stop the server.</li>
+        <li>Go to [wildfireHome]/plugins/enterprise/database/upgrade/4 to find the import plugins.</li>
+        <li>Execute the corresponding <i>import_*.sql</i> database script depending on your database.</li>
+        <li>Start the server, log into the admin console and verify that workgroup settings were imported.</li>
+        </ol>
+    </ol>
+
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,2114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<title>Openfire: Database Schema Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Database Schema Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+
+	<div id="pageBody">
+
+<h2>Introduction</h2>
+<p>
+This document outlines the data type conventions and tables in the Openfire database schema.
+Some information, like column indexes and foreign keys, is omitted. For this, please read
+the individual schema of the database you're interested in.
+
+<br>
+</p>
+<h2>Data Type Conventions</h2>
+<p>
+Date column type support varies widely across databases. Therefore,
+Openfire specially encodes dates as VARCHAR values. Each date is a Java long
+value which is 0-padded to 15 characters. The long value is the internal
+representation of Java Date objects, which can be obtained with code such as the
+following:
+</p>
+<pre>long currentDate = new Date().getTime();</pre>
+<p>
+Boolean values are always represented a numeric values: 0 for false and 1 for true.
+</p>
+<h2>Database Tables</h2>
+<p>
+Below is a description of each of the tables in the Openfire
+database schema.
+A <span class="primary-key">yellow row</span> denotes a primary key.
+
+</p>
+<ul>
+  <li><a href="#ofGroup">ofGroup</a> </li>
+  <li><a href="#ofGroupProp">ofGroupProp</a> </li>
+  <li><a href="#ofGroupUser">ofGroupUser</a> </li>
+  <li><a href="#ofID">ofID</a></li>
+
+  <li><a href="#ofOffline">ofOffline</a> </li>
+    <li><a href="#ofPresence">ofPresence</a> </li>
+  <li><a href="#ofPrivate">ofPrivate</a> </li>
+  <li><a href="#ofUser">ofUser</a> </li>
+  <li><a href="#ofUserProp">ofUserProp</a> </li>
+  <li><a href="#ofUserFlag">ofUserFlag</a> </li>
+
+  <li><a href="#ofRoster">ofRoster</a> </li>
+  <li><a href="#ofRosterGroups">ofRosterGroups</a> </li>
+  <li><a href="#ofPrivacyList">ofPrivacyList</a> </li>
+  <li><a href="#ofVCard">ofVCard</a> </li>
+  <li><a href="#ofVersion">ofVersion</a> </li>
+
+  <li><a href="#ofProperty">ofProperty</a> </li>
+  <li><a href="#ofExtComponentConf">ofExtComponentConf</a> </li>
+  <li><a href="#ofRemoteServerConf">ofRemoteServerConf</a> </li>
+    <li><a href="#ofSecurityAuditLog">ofSecurityAuditLog</a> </li>
+    <li><a href="#ofMucService">ofMucService</a> </li>
+    <li><a href="#ofMucServiceProp">ofMucServiceProp</a> </li>
+  <li><a href="#ofMucRoom">ofMucRoom</a> </li>
+
+  <li><a href="#ofMucRoomProp">ofMucRoomProp</a> </li>
+  <li><a href="#ofMucAffiliation">ofMucAffiliation</a> </li>
+  <li><a href="#ofMucMember">ofMucMember</a> </li>
+  <li><a href="#ofMucConversationLog">ofMucConversationLog</a> </li>
+
+  <li><a href="#ofPubsubNode">ofPubsubNode</a> </li>
+  <li><a href="#ofPubsubNodeJIDs">ofPubsubNodeJIDs</a> </li>
+  <li><a href="#ofPubsubNodeGroups">ofPubsubNodeGroups</a> </li>
+  <li><a href="#ofPubsubAffiliation">ofPubsubAffiliation</a> </li>
+  <li><a href="#ofPubsubItem">ofPubsubItem</a> </li>
+
+  <li><a href="#ofPubsubSubscription">ofPubsubSubscription</a> </li>
+  <li><a href="#ofPubsubDefaultConf">ofPubsubDefaultConf</a> </li>
+</ul>
+<br>
+
+<a name="ofGroup"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+
+      <th colspan="4">ofGroup (user Group data)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+
+    </tr>
+    <tr class="primary-key">
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Group Name (Primary Key)</td>
+    </tr>
+
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Group Description</td>
+    </tr>
+  </tbody>
+
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofGroupProp"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofGroupProp (name-value associations for a
+Group)</th>
+    </tr>
+
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Group Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Group Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>VARCHAR</td>
+
+      <td>4000</td>
+      <td>Group Property Value</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofGroupUser"></a>
+
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofGroupUser (associates Users with Groups)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+
+      <td>Group Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>User Name (Primary Key)</td>
+
+    </tr>
+    <tr class="primary-key">
+      <td>administrator</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Adminstrator (Boolean) (Primary Key)</td>
+    </tr>
+
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofID"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofID (used for unique ID sequence generation)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>idType</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID type (e.g., Group, User, Roster) (Primary Key)</td>
+    </tr>
+    <tr>
+
+      <td>id</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Next available block of ID&#8217;s (Used for Database-Independent
+ID Sequence Generator)</td>
+    </tr>
+  </tbody>
+
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofOffline"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofOffline (offline message storage)</th>
+    </tr>
+
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Change</th>
+    </tr>
+    <tr class="primary-key">
+
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td style="vertical-align: top;">messageID<br>
+
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">ID of stored message (Primary
+Key)<br>
+      </td>
+
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">creationDate<br>
+      </td>
+      <td style="vertical-align: top;">VARCHAR<br>
+      </td>
+      <td style="vertical-align: top;">15<br>
+
+      </td>
+      <td style="vertical-align: top;">Date message stored<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">messageSize<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">Size of message in bytes<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">stanza<br>
+
+      </td>
+      <td style="vertical-align: top;">TEXT<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The message text<br>
+      </td>
+
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPresence"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPresence (offline presence)</th>
+    </tr>
+
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Change</th>
+    </tr>
+    <tr class="primary-key">
+
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>64</td>
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td style="vertical-align: top;">offlinePresence<br>
+
+      </td>
+      <td style="vertical-align: top;">TEXT<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">Presence message set as user logged off<br>
+      </td>
+
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">offlineDate<br>
+      </td>
+      <td style="vertical-align: top;">CHAR<br>
+      </td>
+      <td style="vertical-align: top;">15<br>
+
+      </td>
+      <td style="vertical-align: top;">Date message stored<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPrivate"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPrivate (Private data storage)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name of the private entry (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>namespace</td>
+
+      <td>VARCHAR</td>
+      <td>200</td>
+      <td>Namespace of the private entry (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>privateData</td>
+      <td>TEXT</td>
+
+      <td>n/a</td>
+      <td>Value of the private data</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<br>
+
+<a name="ofUser"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofUser (User data)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>plainPassword</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>Plain-text password data</td>
+
+    </tr>
+      <tr>
+      <td>encryptedPassword</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Encrypted password data (default)</td>
+    </tr>
+
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name</td>
+    </tr>
+    <tr>
+
+      <td>email</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Email Address</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+
+      <td>15</td>
+      <td>Last Modified Date</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofUserProp"></a>
+
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofUserProp (name-value associations for a User)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>User Property Name (Primary Key)</td>
+
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>User Property Value</td>
+    </tr>
+
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofUserFlag"></a>
+
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofUserFlag (special flags set on a User (like disabled))</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>64</td>
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>User Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>startTime</td>
+      <td>CHAR</td>
+      <td>15</td>
+      <td>Time when the flag is to start being effective (null for 'now')</td>
+    </tr>
+    <tr>
+      <td>endTime</td>
+      <td>CHAR</td>
+      <td>15</td>
+      <td>Time when the flag is to end being effective (null for 'forever')</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofRoster"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofRoster (buddy rosters or lists)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>rosterID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of roster (Primary Key)</td>
+    </tr>
+    <tr>
+
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">jid<br>
+
+      </td>
+      <td style="vertical-align: top;">TEXT<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The address of the roster entry<br>
+      </td>
+
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">sub<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+
+      </td>
+      <td style="vertical-align: top;">The subscription status of the
+entry<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ask<br>
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">The ask status of the entry<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">recv<br>
+
+      </td>
+      <td style="vertical-align: top;">NUMBER<br>
+      </td>
+      <td style="vertical-align: top;">n/a<br>
+      </td>
+      <td style="vertical-align: top;">Flag indicating the entry is a
+roster request that was received<br>
+      </td>
+
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">nick<br>
+      </td>
+      <td style="vertical-align: top;">VARCHAR<br>
+      </td>
+      <td style="vertical-align: top;">255<br>
+
+      </td>
+      <td style="vertical-align: top;">The nickname assigned to this
+roster entry<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+
+<a name="ofRosterGroups"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofRosterGroups (Groups of buddy entries in a
+roster)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>rosterID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+
+      <td>Roster ID (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>rank</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Position of the entry (Primary Key)</td>
+
+    </tr>
+    <tr>
+      <td>groupName</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>The user defined name for this roster group</td>
+    </tr>
+
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPrivacyList"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPrivacyList (Users privacy lists)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Name of the privacy list (Primary Key)</td>
+    </tr>
+      <tr>
+        <td>isDefault</td>
+
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating if this is the default privacy list of the user</td>
+      </tr>
+    <tr>
+      <td>list</td>
+      <td>TEXT</td>
+
+      <td>n/a</td>
+      <td>XML representation of the privacy list</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofVCard"></a>
+
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofVCard (vCard contact information)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>32</td>
+
+      <td>User Name (Primary Key)</td>
+    </tr>
+    <tr>
+        <td>vcard</td>
+        <td>TEXT</td>
+
+        <td>n/a</td>
+        <td>Value of the vCard entry</td>
+    </tr>
+
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofVersion"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofVersion (contains product version information)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Name of the item that version information is being tracked for (Primary Key)</td>
+    </tr>
+    <tr>
+
+      <td>version</td>
+      <td>INTEGER</td>
+      <td>n/a</td>
+      <td>The version number</td>
+    </tr>
+  </tbody>
+</table>
+
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofProperty"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofProperty (server properties)</th>
+    </tr>
+    <tr>
+
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>TEXT</td>
+
+      <td>n/a</td>
+      <td>Value of the entry</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofExtComponentConf"></a>
+
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofExtComponentConf (external components configuration)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>subdomain</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+
+      <td>Subdomain of the external component (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>secret</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Shared secret key of the external component</td>
+
+    </tr>
+    <tr>
+      <td>permission</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Permission that indicates if the component is allowed to connect to the server</td>
+    </tr>
+
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofRemoteServerConf"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofRemoteServerConf (remote servers configuration)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>xmppDomain</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Domain of the external component (Primary Key)</td>
+    </tr>
+    <tr>
+
+      <td>remotePort</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Port of the remote server to connect to</td>
+    </tr>
+    <tr>
+      <td>permission</td>
+
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Permission that indicates if the remote server is allowed to connect to the server</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofSecurityAuditLog"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofSecurityAuditLog (logging of security events)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>msgID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of audit message (Primary Key)</td>
+    </tr>
+    <tr>
+
+      <td>username</td>
+      <td>VARCHAR</td>
+      <td>64</td>
+      <td>user who performed the action</td>
+    </tr>
+    <tr>
+      <td>entryStamp</td>
+
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Timestamp when event occurred</td>
+    </tr>
+      <tr>
+        <td>summary</td>
+
+        <td>VARCHAR</td>
+        <td>255</td>
+        <td>Summary of what occured in event</td>
+      </tr>
+      <tr>
+        <td>node</td>
+
+        <td>VARCHAR</td>
+        <td>255</td>
+        <td>Node where event occurred</td>
+      </tr>
+      <tr>
+        <td>details</td>
+
+        <td>TEXT</td>
+        <td>n/a</td>
+        <td>Verbose details of what occurred</td>
+      </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+
+<br>
+<br>
+<a name="ofMucService"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucService (A Groupchat service)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>serviceID</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>ID of service (Indexed)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>subdomain</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+
+      <td>Subdomain of service (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Description of service</td>
+
+    </tr>
+      <tr>
+        <td>isHidden</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>1 if hidden from admin interface lists, 0 of normal</td>
+
+      </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+
+<br>
+<br>
+<a name="ofMucServiceProp"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucServiceProp (name-value associations for a Groupchat service)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>serviceID</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>ID of service (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+
+      <td>Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Property Value</td>
+
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+
+<br>
+<br>
+<a name="ofMucRoom"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucRoom (Groupchat room data)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Last Modified Date</td>
+
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Name of the room used as the public ID</td>
+    </tr>
+
+    <tr>
+      <td>naturalName</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Natural name of the room</td>
+    </tr>
+    <tr>
+
+      <td>description</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Room Description</td>
+    </tr>
+    <tr>
+      <td>canChangeSubject</td>
+
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether participants can change the subject</td>
+    </tr>
+    <tr>
+      <td>maxUsers</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>Max number of room occupants</td>
+    </tr>
+    <tr>
+      <td>canChangeSubject</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+
+      <td>Flag indicating whether participants can change the subject or not</td>
+    </tr>
+    <tr>
+      <td>publicRoom</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the room will be listed in the directory or not</td>
+
+    </tr>
+    <tr>
+      <td>moderated</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the room is moderated or not</td>
+    </tr>
+
+    <tr>
+      <td>membersOnly</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the room is members-only or not</td>
+    </tr>
+    <tr>
+
+      <td>canInvite</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether occupants can invite other users</td>
+    </tr>
+    <tr>
+      <td>roomPassword</td>
+
+      <td>VARCHAR</td>
+      <td>50</td>
+      <td>Password Data for joining the room</td>
+    </tr>
+    <tr>
+      <td>canDiscoverJID</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>Flag indicating whether real JID of occupants is public or not</td>
+    </tr>
+    <tr>
+      <td>logEnabled</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+
+      <td>Flag indicating whether room conversations are logged or not</td>
+    </tr>
+    <tr>
+      <td>subject</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Last known subject of the room</td>
+
+    </tr>
+    <tr>
+      <td>rolesToBroadcast</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Binary representation of the roles to broadcast</td>
+    </tr>
+
+    <tr>
+      <td>useReservedNick</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether users can only join the room using their reserved nicknames</td>
+    </tr>
+    <tr>
+
+      <td>canChangeNick</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether occupants can change their nicknames in the room</td>
+    </tr>
+    <tr>
+      <td>canRegister</td>
+
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether users are allowed to register with the room</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+
+<br>
+<br>
+<a name="ofMucRoomProp"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucRoomProp (name-value associations for a Groupchat room)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+
+      <td>Property Name (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>propValue</td>
+      <td>VARCHAR</td>
+      <td>4000</td>
+      <td>Property Value</td>
+
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofMucAffiliation"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucAffiliation (affiliation of room users)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+
+      <td>jid</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>User JID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>affiliation</td>
+
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Number representing the affiliation level</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+
+<br>
+<br>
+<a name="ofMucMember"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucMember (rooms members information)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr class="primary-key">
+      <td>roomID</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>ID of room (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+
+      <td>User JID (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>nickname</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Reserved nickname of the member</td>
+
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofMucConversationLog"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofMucConversationLog (rooms conversations log)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr>
+      <td>roomID</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>ID of room</td>
+    </tr>
+    <tr>
+
+      <td>sender</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>JID of the user that sent the message to the room</td>
+    </tr>
+    <tr>
+      <td>nickname</td>
+
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Nickname used by the user when sending the message</td>
+    </tr>
+    <tr>
+      <td>logTime</td>
+      <td>VARCHAR</td>
+
+      <td>15</td>
+      <td>Date when the message was sent to the room</td>
+    </tr>
+    <tr>
+      <td>subject</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+
+      <td>New subject changed with the message</td>
+    </tr>
+    <tr>
+      <td>body</td>
+      <td>TEXT</td>
+      <td>n/a</td>
+      <td>Body of the message</td>
+
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubNode"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPubsubNode (nodes of the pubsub service)</th>
+
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>leaf</td>
+
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether the node is a leaf or collection node</td>
+    </tr>
+    <tr>
+      <td>creationDate</td>
+      <td>VARCHAR</td>
+
+      <td>15</td>
+      <td>Creation Date</td>
+    </tr>
+    <tr>
+      <td>modificationDate</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+
+      <td>Last Modified Date</td>
+    </tr>
+    <tr>
+      <td>parent</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the parent node (if any)</td>
+
+    </tr>
+      <tr>
+        <td>deliverPayloads</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether payloads are included in notifications</td>
+      </tr>
+
+      <tr>
+        <td>maxPayloadSize</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max size of the payload in bytes</td>
+      </tr>
+      <tr>
+
+        <td>persistItems</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether the node will persist published items</td>
+      </tr>
+      <tr>
+        <td>maxItems</td>
+
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max number of items to persist</td>
+      </tr>
+      <tr>
+        <td>notifyConfigChanges</td>
+        <td>NUMBER</td>
+
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when the node configuration has changed</td>
+      </tr>
+      <tr>
+        <td>notifyDelete</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+
+        <td>Flag indicating whether to send notifications when the node is deleted</td>
+      </tr>
+      <tr>
+        <td>notifyRetract</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when published items are deleted</td>
+
+      </tr>
+    <tr>
+      <td>presenceBased</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send notifications to only users only</td>
+    </tr>
+
+    <tr>
+      <td>sendItemSubscribe</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send last published item to new subscribers</td>
+    </tr>
+    <tr>
+
+      <td>publisherModel</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Publisher model used by the node</td>
+    </tr>
+    <tr>
+      <td>subscriptionEnabled</td>
+
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether subscriptions are allowed</td>
+    </tr>
+    <tr>
+      <td>configSubscription</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>Flag indicating whether new subscriptions must be configured to become active</td>
+    </tr>
+    <tr>
+      <td>accessModel</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+
+      <td>Access model used by the node</td>
+    </tr>
+    <tr>
+      <td>payloadType</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Type of payload data to be provided at the node</td>
+
+    </tr>
+    <tr>
+      <td>bodyXSLT</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>URL of an XSLT for transforming the payload format into a message body</td>
+    </tr>
+
+    <tr>
+      <td>dataformXSLT</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>URL of an XSLT for transforming the payload format into Data Forms result</td>
+    </tr>
+    <tr>
+
+      <td>creator</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the entity that created the node</td>
+    </tr>
+    <tr>
+      <td>description</td>
+
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Description of the node</td>
+    </tr>
+    <tr>
+      <td>language</td>
+      <td>VARCHAR</td>
+
+      <td>255</td>
+      <td>Default language of the node</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>VARCHAR</td>
+      <td>50</td>
+
+      <td>Name of the node</td>
+    </tr>
+    <tr>
+      <td>replyPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines whether owners or publisher should receive replies to items</td>
+
+    </tr>
+    <tr>
+      <td>associationPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines who may associate leaf nodes with a collection</td>
+    </tr>
+
+    <tr>
+      <td>maxLeafNodes</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Max number of leaf nodes that a collection node might have</td>
+    </tr>
+  </tbody>
+
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubNodeJIDs"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPubsubNodeJIDs (JIDs associated with nodes)</th>
+    </tr>
+
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>VARCHAR</td>
+
+      <td>1024</td>
+      <td>JID of the entity (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>associationType</td>
+      <td>VARCHAR</td>
+      <td>20</td>
+
+      <td>Type of association with the node</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubNodeGroups"></a>
+<table class="dbtable">
+  <tbody>
+
+    <tr>
+      <th colspan="4">ofPubsubNodeGroups (Roster groups associated with nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node</td>
+
+    </tr>
+    <tr>
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node</td>
+    </tr>
+
+    <tr>
+      <td>rosterGroup</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>Roster group of the node owner allowed to subscribe and retrieve items</td>
+    </tr>
+  </tbody>
+
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubAffiliation"></a>
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPubsubAffiliation (node affiliates)</th>
+    </tr>
+
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>jid</td>
+      <td>VARCHAR</td>
+
+      <td>1024</td>
+      <td>JID of the affiliate (Primary Key)</td>
+    </tr>
+    <tr>
+      <td>affiliation</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+
+      <td>Type of affiliation</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubItem"></a>
+<table class="dbtable">
+  <tbody>
+
+    <tr>
+      <th colspan="4">ofPubsubItem (items published to nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+    </tr>
+
+      <tr class="primary-key">
+      <td>id</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the published item (unique per node) (Primary Key)</td>
+    </tr>
+    <tr>
+
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the publisher</td>
+    </tr>
+      <tr>
+        <td>creationDate</td>
+
+        <td>VARCHAR</td>
+        <td>15</td>
+        <td>Creation Date</td>
+      </tr>
+      <tr>
+        <td>payload</td>
+        <td>TEXT</td>
+
+        <td>n/a</td>
+        <td>XML of the payload included in the published item</td>
+      </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubSubscription"></a>
+
+<table class="dbtable">
+  <tbody>
+    <tr>
+      <th colspan="4">ofPubsubSubscription (subscriptions to nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+
+      <th>Length</th>
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+
+      <td>ID of service hosting the node (Primary Key)</td>
+    </tr>
+    <tr class="primary-key">
+      <td>nodeID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the node (Primary Key)</td>
+
+    </tr>
+    <tr class="primary-key">
+      <td>id</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of the subscription (Primary Key)</td>
+    </tr>
+
+    <tr>
+      <td>jid</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>Address to receive notifications</td>
+    </tr>
+    <tr>
+
+      <td>owner</td>
+      <td>VARCHAR</td>
+      <td>1024</td>
+      <td>JID of the affiliate that owns the subscription</td>
+    </tr>
+    <tr>
+      <td>state</td>
+
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>State of the subscription (in the workflow)</td>
+    </tr>
+      <tr>
+        <td>deliver</td>
+        <td>NUMBER</td>
+
+        <td>n/a</td>
+        <td>Flag indicating whether notifications are enabled or not</td>
+      </tr>
+      <tr>
+        <td>digest</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+
+          <td>Flag indicating whether an entity wants to receive digests of notifications</td>
+      </tr>
+      <tr>
+        <td>digest_frequency</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Minimum number of milliseconds between sending any two notification digests</td>
+
+      </tr>
+      <tr>
+        <td>expire</td>
+        <td>VARCHAR</td>
+        <td>15</td>
+        <td>Date at which a leased subscription will end or has ended</td>
+      </tr>
+
+      <tr>
+        <td>includeBody</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether an entity wants to receive a message body in addition to the payload format</td>
+      </tr>
+      <tr>
+
+        <td>showValues</td>
+        <td>VARCHAR</td>
+        <td>30</td>
+        <td>Presence states for which an entity wants to receive notifications</td>
+      </tr>
+    <tr>
+      <td>subscriptionType</td>
+
+      <td>VARCHAR</td>
+      <td>10</td>
+      <td>Whether subscriber is subscribed to items or nodes (collection nodes only)</td>
+    </tr>
+      <tr>
+        <td>subscriptionDepth</td>
+        <td>NUMBER</td>
+
+        <td>n/a</td>
+        <td>Receive notification from children up to certain depth (collection nodes only)</td>
+      </tr>
+    <tr>
+      <td>keyword</td>
+      <td>VARCHAR</td>
+      <td>200</td>
+
+      <td>Keyword that the event needs to match</td>
+    </tr>
+  </tbody>
+</table>
+&nbsp;<a href="#top" class="top">top of page</a>
+<br>
+<br>
+<br>
+<a name="ofPubsubDefaultConf"></a>
+<table class="dbtable">
+  <tbody>
+
+    <tr>
+      <th colspan="4">ofPubsubDefaultConf (default configuration of nodes)</th>
+    </tr>
+    <tr>
+      <th>Column Name</th>
+      <th>Type</th>
+      <th>Length</th>
+
+      <th>Description</th>
+    </tr>
+    <tr  class="primary-key">
+      <td>serviceID</td>
+      <td>VARCHAR</td>
+      <td>100</td>
+      <td>ID of service hosting the node (Primary Key)</td>
+
+    </tr>
+    <tr class="primary-key">
+      <td>leaf</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether configuration belongs to a leaf or collection node (Primary Key)</td>
+    </tr>
+
+      <tr>
+        <td>deliverPayloads</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether payloads are included in notifications</td>
+      </tr>
+      <tr>
+
+        <td>maxPayloadSize</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Max size of the payload in bytes</td>
+      </tr>
+      <tr>
+        <td>persistItems</td>
+
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether the node will persist published items</td>
+      </tr>
+      <tr>
+        <td>maxItems</td>
+        <td>NUMBER</td>
+
+        <td>n/a</td>
+        <td>Max number of items to persist</td>
+      </tr>
+      <tr>
+        <td>notifyConfigChanges</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+
+        <td>Flag indicating whether to send notifications when the node configuration has changed</td>
+      </tr>
+      <tr>
+        <td>notifyDelete</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when the node is deleted</td>
+
+      </tr>
+      <tr>
+        <td>notifyRetract</td>
+        <td>NUMBER</td>
+        <td>n/a</td>
+        <td>Flag indicating whether to send notifications when published items are deleted</td>
+      </tr>
+
+    <tr>
+      <td>presenceBased</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send notifications to only users only</td>
+    </tr>
+    <tr>
+
+      <td>sendItemSubscribe</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Flag indicating whether to send last published item to new subscribers</td>
+    </tr>
+    <tr>
+      <td>publisherModel</td>
+
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Publisher model used by the node</td>
+    </tr>
+    <tr>
+      <td>subscriptionEnabled</td>
+      <td>NUMBER</td>
+
+      <td>n/a</td>
+      <td>Flag indicating whether subscriptions are allowed</td>
+    </tr>
+    <tr>
+      <td>accessModel</td>
+      <td>VARCHAR</td>
+      <td>10</td>
+
+      <td>Access model used by the node</td>
+    </tr>
+    <tr>
+      <td>language</td>
+      <td>VARCHAR</td>
+      <td>255</td>
+      <td>Default language of the node</td>
+
+    </tr>
+    <tr>
+      <td>replyPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines whether owners or publisher should receive replies to items</td>
+    </tr>
+
+    <tr>
+      <td>associationPolicy</td>
+      <td>VARCHAR</td>
+      <td>15</td>
+      <td>Policy that defines who may associate leaf nodes with a collection</td>
+    </tr>
+    <tr>
+
+      <td>maxLeafNodes</td>
+      <td>NUMBER</td>
+      <td>n/a</td>
+      <td>Max number of leaf nodes that a collection node might have</td>
+    </tr>
+  </tbody>
+</table>
+
+&nbsp;<a href="#top" class="top">top of page</a>
+
+	</div>
+
+</div>
+
+</body>
+</html>

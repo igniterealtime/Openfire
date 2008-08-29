@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Email Listener Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Email Listener Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The email listener plugin is a service that connects to an email server using IMAP and
+forwards new email messages to specified users.
+</p>
+
+<h2>Installation</h2>
+
+<p>Copy emailListener.jar into the plugins directory of your Openfire installation. The
+plugin will then be automatically deployed. To upgrade to a new version, copy the new
+emailListener.jar file over the existing file or upgrade from the admin console.</p>
+
+<h2>Configuration</h2>
+
+The email listener plugin can be configured via the Openfire Admin Console.
+Use the configuration page to specify the email server and user to use to
+connect to the server. The list of users to notify of new email messages should be
+comma delimited and the bare JID (e.g. john@server.com) should be used. Once the
+service has been configued it will automatically connect and start monitoring for new
+email messages.
+
+<h2>Using the Plugin</h2>
+
+Once Openfire is started the plugin will connect to the email server and start to monitor
+for new email messages. New email message will be sent to specified users. Every time the
+configuration of the email listener service is updated the service will be automatically
+restarted. 
+
+</body>
+</html>

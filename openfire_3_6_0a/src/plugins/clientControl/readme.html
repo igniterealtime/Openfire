@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Client Control Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Client Control Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The client control plugin allows to specify which XMPP clients are allowed to connect to the server; which
+client features are enabled; manage groupchat and URL bookmarks and control which Spark version should be
+used by clients.
+</p>
+
+<p><i>Note: Filtering clients that are allowed to connect to the server depends on the identity presented
+by the client. Therefore, a client that was modified to appear as another XMPP client may connect to the
+server. However, only sophisticated and knowledgeable users may be able to do such modification.
+</i></p>
+
+<h2>Installation</h2>
+
+<p>
+Copy clientControl.jar into the plugins directory of your Openfire installation.
+The plugin will then be automatically deployed. To upgrade to a new version,
+copy the new clientControl.jar file over the existing file.
+</p>
+
+<p><i>Note: Installations using the spark manager plugin will need to uninstall the plugin before installing
+this new plugin.
+</i></p>
+
+<h2>Upgrading from Enterprise</h2>
+
+<p>
+If you are upgrading from the Enterprise plugin, and wish to keep your old
+bookmarks, you will need to manually run some database scripts to
+perform the migration.  Note, if you don't care about your previous
+bookmarks, you don't have to worry about these steps.
+</p>
+
+<p>
+First, you will need to shut down your Openfire server and remove the
+enterprise plugin.  To do this, perform the following steps:
+<ol>
+<li>Shut down your Openfire server</li>
+<li>Remove the <b>enterprise.jar</b> file and the <b>enterprise</b> directory from the plugins directory in your Openfire install root</li>
+<li>Install this plugin, <b>clientControl.jar</b> by copying it into the plugins directory.</li>
+<li>At this point, you will need to start up Openfire and let it extract and install the <b>clientControl</b> plugin.  You can watch for this to occur by looking under the Plugins tab in the Openfire admin console.  Once it appears in the list, continue to the next step.</li>
+<li>Shut the server back down again.</li>
+<li>Go into your plugins/clientControl/database directory.  There you will see
+some scripts prefixed with <b>import_</b>.  Log into your database, switch
+to the Openfire's database as you configured during setup (you can find
+this information in conf/openfire.xml if you don't remember it), and run
+the script that matches the database you are using.  Note that the embedded
+database is hsqldb and you can use the script in bin/extra from the Openfire
+install root (bin/extra/embedded-db-viewer.sh or
+bin/extra/embedded-db-viewer.bat, depending on whether you are using Windows)
+to access your embedded database.</li>
+<li>Once the script has completed, you can start Openfire back up and all of your settings should be the way they were when you were running the Enterprise plugin.</li>
+</ol>
+</p>
+
+</body>
+</html>

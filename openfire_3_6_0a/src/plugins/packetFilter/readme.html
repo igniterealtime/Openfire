@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Packet Filter Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+
+<h1>
+Packet Filter Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The packet filter plugin allows you to create rules that will block or reject certain packets to the server.
+If you are upgrading, this version *WILL DELETE ALL YOUR OLD RULES!* I wasn't happy with some of the design
+of the 1.0 version so I fixed it. The old format of the rules was unworkable with the new and I couldn't find
+a good way to convert from the old format, sorry. 
+</p>
+
+<h2>Installation</h2>
+
+<p>Copy packetFilter.jar into the plugins directory of your Openfire installation. The
+plugin will then be automatically deployed. To upgrade to a new version, copy the new
+packetFilter.jar file over the existing file.</p>
+
+<p>Currently only the following databases are supported :</p>
+<ul>
+    <li>Postgresql</li>
+    <li>Mysql</li>
+    <li>MSSQL</li>
+    <li>Hsqldb (embedded)</li>
+    <li>Oracle - I created a schema for this and put it in the database/extra subdirectory of the plugin.
+        I can't get the schema to automatically apply itself when the plugin deploys, it has to be deployed
+        manually</li>
+</ul>
+<h2>Configuration</h2>
+
+<p>The Packet Filter plugin can be configured under "Server"-"Server Settings"-"Packet Filter Rules".</p>
+
+<h2>Using the Plugin - Creating Rules</h2>
+
+<h2>Actions</h2>
+<p>
+  Actions come in 3 types Pass, Drop and Reject.
+  <ul>
+    <li>Pass - This will allow the packet to be delivered normally.</li>
+    <li>Drop - This will silently drop the packet without notifying the sender.</li>
+    <li>Reject - This rule tries to notify the person who sent it that their message was rejected.
+             There are a couple issues with this. First, not all clients handle forbidden packet
+             condition. The notification of users that their packet was rejected is therefore pretty
+             spotty, your mileage may vary. This rule has 2 configurable options that can be set in
+             the system properties screen :</li>
+             <ul>
+                <li>1. pf.rejectMessage : Defaults to "Your message was rejected by the packet filter".</li>
+                <li>2. pf.rejectSubject : Defaults to "Rejected"</li>
+                <li>3. pf.From : Defaults to "packetFilter".</li>
+             </ul>
+  </ul>
+
+<h2>Disable</h2>
+<p>
+    This allows you to quickly disable a rule without deleting it. Disabled rules will still appear on the main
+    rule page but will have a strike through like so :
+</p>
+<img src="/plugins/packetfilter/disabled.gif" alt="disabled rule">
+
+<h2>Packet Type</h2>
+<p>
+    This specifies what type of packets you want to disable your choices are :
+    <ul>
+        <li>
+            Message - Regular old message.
+        </li>
+        <li>
+            Presence - Presence Info.
+        </li>
+        <li>
+           IQ - Used to transfer most other data.
+        </li>
+        <li>
+           MUC - Multi User Chat, chat rooms.
+        </li>
+        <li>
+           MUC Private Message - A private message within a chat room
+        </li>
+        <li>
+            Any - All of the above
+        </li>
+    </ul>
+
+
+<h2>From</h2>
+<p>
+    This specifies the source base JID. Currently resource specific rules aren't supported.
+    The options for specifying a source are :
+
+    <ul>
+        <li>
+            Any - Just like it sounds, if the source is anything.
+        </li>
+        <li>
+            User - These are all the local users defined on your Openfire server, all user accounts.
+        </li>
+        <li>
+            Group - All groups defined on your server. The source will match if the sender is a member of the specified
+            group.
+        </li>
+        <li>
+            Other - This will let you specify a free form JID. (test@example.com). One wild card can be specified to do
+            a whole domain e.g. *@example.com.
+        </li>
+    </ul>
+
+
+
+<h2>To</h2>
+<p>
+   This specifies the destination base JID. The options for selecting the destination JID are the same as above.
+</p>
+
+<h2>Log</h2>
+
+<p>
+    This prints a message to the info.log when the rule is executed. This is recommend only for trouble shooting as
+    it can fill up the logs pretty quickly in production environments. Some example output :
+</p>
+<p>
+    Rejecting packet from bart@nate-putnams-computer.local/Adium to lisa@nate-putnams-computer.local/Psi
+</p>
+
+<h2>Description</h2>
+
+Leave yourself a note so you can remember why you wrote the rule in the first place. :)
+
+<h2>Changing Rule Order</h2>
+
+<p>
+    The first rule that matches an incoming packet will be executed. For example consider the following rules :
+</p>
+    <img src="/plugins/packetfilter/examplerules.gif" alt="example rules"/>
+<p>
+    Here we don't want any of the Simpson's talking to each other so every message from members of the Simpson group
+    to each other are dropped. However, Marge and Homer should be able to talk to each other. To accomplish this rules
+    allowing Homer to send message packets to Marge and vice versa are placed before the drop rule. New rules are automatically
+    appended to the rule list. Rules can be moved at anytime using the arrows in the UI. When a rule is moved the changes
+    take effect immediately.
+</p>
+
+<h2> Known Issues</h2>
+
+<li> Selectable components are only loaded when the plugin is initialized. If you add a component (AIM Transport etc..), it won't appear in the rule form until the server or plugin is restarted.</li> 
+
+<li> 2.0 will delete all your 1.0 rules. </li>
+<li> Clustering - I haven't tested this plugin in a cluster. I've added some support for it so that rules *should* be synced across all nodes but I haven't tested it.  2.1 will contain more clustering goodness.</li>
+
+</body>
+</html>

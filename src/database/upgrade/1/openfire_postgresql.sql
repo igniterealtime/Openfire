@@ -29,7 +29,7 @@ CREATE TABLE jiveGroupUser (
 );
 
 -- mucRoom: Add new columns: "lockedDate" and "emptyDate". Rename column "invitationRequired" to "membersOnly". Delete columns: "lastActiveDate" and "inMemory".
-ALTER TABLE mucRoom ADD COLUMN lockedDate CHAR(15) NOT NULL;
+ALTER TABLE mucRoom ADD COLUMN lockedDate CHAR(15) NULL;
 ALTER TABLE mucRoom ADD COLUMN emptyDate CHAR(15) NULL;
 ALTER TABLE mucRoom RENAME COLUMN invitationRequired TO membersOnly;
 ALTER TABLE mucRoom DROP COLUMN lastActiveDate;

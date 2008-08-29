@@ -1633,7 +1633,7 @@
     <property name="target.osx" value="${work.dir}/osx" />
     <property name="mac.pkg.dir" value="${target.osx}/macpkg"/>
     <property name="mac.dmg.dir" value="${target.osx}/Openfire"/>
-    <property name="mac.dmg.file" value="${release.dest.dir}/openfire.dmg"/>
+    <property name="mac.dmg.file" value="${release.dest.dir}/${release.fullname}.dmg"/>
     <property name="mac.template" value="${target.osx}/template"/>
     <property name="mac.prefpane.build" value="${target.osx}/prefPane"/>
 

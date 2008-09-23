@@ -119,13 +119,25 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
             return;
         }
 
-        // Examine the packet and check if it has caps info and a 'ver' hash,
+        // Examine the packet and check if it has caps info,
         // if not -- do nothing by returning.
         Element capsElement = packet.getChildElement("c", "http://jabber.org/protocol/caps");
         if (capsElement == null) {
             return;
         }
 
+        // Examine the packet and check if it's in legacy format (pre version 1.4
+        // of XEP-0115). If so, do nothing by returning.
+		// TODO: if this packet is in legacy format, we SHOULD check the 'node',
+		// 'ver', and 'ext' combinations as specified in the archived version
+		// 1.3 of the specification, and cache the results. See JM-1447
+        String hashAttribute = capsElement.attributeValue("hash");
+        if (hashAttribute == null) {
+            return;
+        }
+        
+        // Examine the packet and check if it has and a 'ver' hash
+        // if not -- do nothing by returning.
         String newVerAttribute = capsElement.attributeValue("ver");
         if (newVerAttribute == null) {
             return;

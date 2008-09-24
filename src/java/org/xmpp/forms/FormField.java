@@ -239,6 +239,15 @@ public class FormField {
     }
 
     /**
+     * Creates and returns a new object that is an exact copy of this FormField object.
+     * 
+     * @return an exact copy of this instance.
+     */
+    public FormField createCopy() {
+        return new FormField(this.element.createCopy());
+    }
+    
+    /**
      * Represents the available option of a given FormField.
      *
      * @author Gaston Dombiak

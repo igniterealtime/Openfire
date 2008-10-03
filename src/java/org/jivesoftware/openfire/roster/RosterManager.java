@@ -494,7 +494,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @param newUser the newly created user.
      * @param params event parameters.
      */
-    public void userCreated(User newUser, Map params) {
+    public void userCreated(User newUser, Map<String,Object> params) {
         JID newUserJID = server.createJID(newUser.getUsername(), null);
         // Shared public groups that are public should have a presence subscription
         // of type FROM for the new user
@@ -530,7 +530,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         }
     }
 
-    public void userDeleting(User user, Map params) {
+    public void userDeleting(User user, Map<String,Object> params) {
         // Shared public groups that have a presence subscription of type FROM
         // for the deleted user should no longer have a reference to the deleted user
         JID userJID = server.createJID(user.getUsername(), null);
@@ -570,7 +570,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         deleteRoster(userJID);
     }
 
-    public void userModified(User user, Map params) {
+    public void userModified(User user, Map<String,Object> params) {
         //Do nothing
     }
 

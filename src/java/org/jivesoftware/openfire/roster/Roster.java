@@ -107,9 +107,9 @@ public class Roster implements Cacheable, Externalizable {
 
         // Add RosterItems that belong to the personal roster
         rosterItemProvider =  RosterItemProvider.getInstance();
-        Iterator items = rosterItemProvider.getItems(username);
+        Iterator<RosterItem> items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
-            RosterItem item = (RosterItem)items.next();
+            RosterItem item = items.next();
             // Check if the item (i.e. contact) belongs to a shared group of the user. Add the
             // shared group (if any) to this item
             for (Group group : sharedGroups) {
@@ -123,14 +123,16 @@ public class Roster implements Cacheable, Externalizable {
         }
         // Add RosterItems that belong only to shared groups
         Map<JID,List<Group>> sharedUsers = getSharedUsers(sharedGroups);
-        for (JID jid : sharedUsers.keySet()) {
+        for (Map.Entry<JID, List<Group>> entry : sharedUsers.entrySet()) {
+            JID jid = entry.getKey();
+            List<Group> groups = entry.getValue();
             try {
                 Collection<Group> itemGroups = new ArrayList<Group>();
                 String nickname = "";
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_TO, RosterItem.ASK_NONE,
                         RosterItem.RECV_NONE, nickname , null);
                 // Add the shared groups to the new roster item
-                for (Group group : sharedUsers.get(jid)) {
+                for (Group group : groups) {
                     if (group.isUser(jid)) {
                         item.addSharedGroup(group);
                         itemGroups.add(group);
@@ -148,7 +150,7 @@ public class Roster implements Cacheable, Externalizable {
                     // Set subscription type to FROM if the contact does not belong to any of
                     // the associated shared groups
                     boolean belongsToGroup = false;
-                    for (Group group : sharedUsers.get(jid)) {
+                    for (Group group : groups) {
                         if (group.isUser(jid)) {
                             belongsToGroup = true;
                         }
@@ -174,7 +176,7 @@ public class Roster implements Cacheable, Externalizable {
                 }
             }
             catch (UserNotFoundException e) {
-                Log.error("Groups (" + sharedUsers.get(jid) + ") include non-existent username (" +
+                Log.error("Groups (" + groups + ") include non-existent username (" +
                         jid.getNode() +
                         ")");
             }

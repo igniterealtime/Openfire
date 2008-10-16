@@ -17,9 +17,10 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * An XMPP address (JID). A JID is made up of a node (generally a username), a domain,
@@ -46,7 +47,7 @@ public class JID implements Comparable<JID>, Externalizable {
     // Stringprep operations are very expensive. Therefore, we cache node, domain and
     // resource values that have already had stringprep applied so that we can check
     // incoming values against the cache.
-    private static Map<String,Object> stringprepCache = Collections.synchronizedMap(new Cache(10000));
+    private static Cache<String> stringprepCache = new Cache<String>(10000);
 
     private String node;
     private String domain;
@@ -198,13 +199,13 @@ public class JID implements Comparable<JID>, Externalizable {
 
     public static String resourceprep(String resource) throws StringprepException {
         String answer = resource;
-        if (!stringprepCache.containsKey(resource)) {
+        if (!stringprepCache.contains(resource)) {
             answer = Stringprep.resourceprep(resource);
             // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
             if (answer != null && answer.length()*2 > 1023) {
                 return answer;
             }
-            stringprepCache.put(answer, null);
+            stringprepCache.put(answer);
         }
         return answer;
     }
@@ -346,14 +347,14 @@ public class JID implements Comparable<JID>, Externalizable {
         }
         // Stringprep (node prep, resourceprep, etc).
         try {
-            if (!stringprepCache.containsKey(node)) {
+            if (!stringprepCache.contains(node)) {
                 this.node = Stringprep.nodeprep(node);
                 // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
                 if (this.node != null && this.node.length()*2 > 1023) {
                     throw new IllegalArgumentException("Node cannot be larger than 1023 bytes. " +
                             "Size is " + (this.node.length() * 2) + " bytes.");
                 }
-                stringprepCache.put(this.node, null);
+                stringprepCache.put(this.node);
             }
             else {
                 this.node = node;
@@ -362,14 +363,14 @@ public class JID implements Comparable<JID>, Externalizable {
             // that they should be run through nameprep before doing any
             // comparisons. We always run the domain through nameprep to
             // make comparisons easier later.
-            if (!stringprepCache.containsKey(domain)) {
+            if (!stringprepCache.contains(domain)) {
                 this.domain = Stringprep.nameprep(IDNA.toASCII(domain), false);
                 // Validate field is not greater than 1023 bytes. UTF-8 characters use two bytes.
                 if (this.domain.length()*2 > 1023) {
                     throw new IllegalArgumentException("Domain cannot be larger than 1023 bytes. " +
                             "Size is " + (this.domain.length() * 2) + " bytes.");
                 }
-                stringprepCache.put(this.domain, null);
+                stringprepCache.put(this.domain);
             }
             else {
                 this.domain = domain;
@@ -536,22 +537,77 @@ public class JID implements Comparable<JID>, Externalizable {
         return new JID(jid1).equals(new JID(jid2));
     }
 
-    /**
-     * A simple cache class that extends LinkedHashMap. It uses an LRU policy to
-     * keep the cache at a maximum size.
-     */
-    private static class Cache extends LinkedHashMap<String,Object> {
+	/**
+	 * A simple cache class with limited functionality. It uses an FIFO 
+	 * eviction policy to keep the cache at a maximum size. This class
+	 * offers acceptable thread safety for the purpose of the parent class.
+	 * 
+	 * @author Guus der Kinderen, guus@nimbuzz.com
+	 */
+    private static class Cache<K> {
 
-        private int maxSize;
+		/** Cannot add null values in ConcurrentHashMap... */
+		private final static Object NULL = new Object();
 
-        public Cache(int maxSize) {
-            super(64, .75f, true);
-            this.maxSize = maxSize;
-        }
+		/** Queue that records insertion order. Used to implement FIFO behavior. */
+		private final Queue<K> fifoQueue = new ConcurrentLinkedQueue<K>();
 
-        protected boolean removeEldestEntry(Map.Entry eldest) {
-            return size() > maxSize;
-        }
+		/** Values are cached in a hashmap for fast lookup. **/
+		private final Map<K, Object> cachedValues = new ConcurrentHashMap<K, Object>();
+
+		/** Cache capacity */
+		private int maxSize;
+
+		/**
+		 * Constructs a new capacity-bound cache.
+		 * 
+		 * @param maxSize
+		 *            The maximum number of elements that the cache can contain.
+		 */
+		public Cache(int maxSize) {
+			this.maxSize = maxSize;
+		}
+
+		/**
+		 * Adds a new element to the cache. The cache is pruned if the maximum
+		 * capacity has been reached.
+		 * 
+		 * @param entry
+		 *            The element to be added to the cache
+		 */
+		public void put(K entry) {
+			synchronized (entry) {
+				// add value to the cache
+				if (cachedValues.put(entry, NULL) != null) {
+					// ensure that queue doesn't contain duplicates.
+					fifoQueue.offer(entry);
+				}
+			}
+
+			// apply eviction policy if required.
+			while (cachedValues.size() > maxSize) {
+				cachedValues.remove(fifoQueue.poll());
+			}
+		}
+
+		/**
+		 * Checks if the cache contains an element.
+		 * 
+		 * @param entry
+		 *            The element to check for.
+		 * @return <tt>true</tt> if the cache currently contains the entry,
+		 *         <tt>false</tt> otherwise.
+		 */
+		public boolean contains(K entry) {
+			// no need to nodeprep null - it'll result in null.
+			if (entry == null) {
+				return true;
+			}
+
+			// Note that this method will need to record access if
+			// we want to switch to LRU.
+			return cachedValues.containsKey(entry);
+		}
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -107,7 +108,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 Element query = iq.element("query");
                 Element queryResponse = probeResponse.createCopy();
                 if (IQ.Type.get == packet.getType()) {
-                    String username = query.elementTextTrim("username");
+                    String username = query.elementText("username");
                     if (username != null) {
                         queryResponse.element("username").setText(username);
                     }
@@ -129,12 +130,12 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                         resourceBound = session.getStatus() == Session.STATUS_AUTHENTICATED;
                     }
                     else {
-                        String username = query.elementTextTrim("username");
+                        String username = query.elementText("username");
                         // Login authentication
-                        String password = query.elementTextTrim("password");
+                        String password = query.elementText("password");
                         String digest = null;
                         if (query.element("digest") != null) {
-                            digest = query.elementTextTrim("digest").toLowerCase();
+                            digest = query.elementText("digest").toLowerCase();
                         }
     
                         // If we're already logged in, this is a password reset
@@ -186,14 +187,21 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     private IQ login(String username, Element iq, IQ packet, String password, LocalClientSession session, String digest)
             throws UnauthorizedException, UserNotFoundException, ConnectionException, InternalUnauthenticatedException {
-        // Verify that specified resource is not violating any string prep rule
-        String resource = iq.elementTextTrim("resource");
+    	// Verify the validity of the username
+    	try {
+    		Stringprep.nodeprep(username);
+    	} catch (StringprepException e) {
+            throw new UnauthorizedException("Invalid username: " + username, e);
+		}
+    	
+    	// Verify that specified resource is not violating any string prep rule
+        String resource = iq.elementText("resource");
         if (resource != null) {
             try {
                 resource = JID.resourceprep(resource);
             }
             catch (StringprepException e) {
-                throw new IllegalArgumentException("Invalid resource: " + resource);
+                throw new UnauthorizedException("Invalid resource: " + resource, e);
             }
         }
         else {

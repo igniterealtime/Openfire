@@ -188,6 +188,9 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     private IQ login(String username, Element iq, IQ packet, String password, LocalClientSession session, String digest)
             throws UnauthorizedException, UserNotFoundException, ConnectionException, InternalUnauthenticatedException {
     	// Verify the validity of the username
+    	if (username == null || username.trim().length() == 0) {
+    		throw new UnauthorizedException("Invalid username (empty or null).");
+    	}
     	try {
     		Stringprep.nodeprep(username);
     	} catch (StringprepException e) {

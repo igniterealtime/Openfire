@@ -578,7 +578,7 @@ public class JID implements Comparable<JID>, Externalizable {
 		public void put(K entry) {
 			synchronized (entry) {
 				// add value to the cache
-				if (cachedValues.put(entry, NULL) != null) {
+				if (cachedValues.put(entry, NULL) == null) {
 					// ensure that queue doesn't contain duplicates.
 					fifoQueue.offer(entry);
 				}

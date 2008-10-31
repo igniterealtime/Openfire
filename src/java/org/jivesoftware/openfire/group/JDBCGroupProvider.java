@@ -47,6 +47,13 @@ import java.util.List;
  * <li><tt>jdbcGroupProvider.loadAdminsSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='Y'</tt></li>
  * </ul>
  *
+ * In order to use the configured JDBC connection provider do not use a JDBC
+ * connection string, set the following property
+ *
+ * <ul>
+ * <li><tt>jdbcGroupProvider.useConnectionProvider = true</tt></li>
+ * </ul>
+ *
  * @author David Snopek
  */
 public class JDBCGroupProvider implements GroupProvider {
@@ -59,6 +66,7 @@ public class JDBCGroupProvider implements GroupProvider {
     private String userGroupsSQL;
     private String loadMembersSQL;
     private String loadAdminsSQL;
+    private boolean useConnectionProvider;
 
     private XMPPServer server = XMPPServer.getInstance();  
 
@@ -76,16 +84,20 @@ public class JDBCGroupProvider implements GroupProvider {
         JiveGlobals.migrateProperty("jdbcGroupProvider.loadMembersSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.loadAdminsSQL");
 
-        // Load the JDBC driver and connection string.
-        String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
-        try {
-            Class.forName(jdbcDriver).newInstance();
+        useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcGroupProvider.useConnectionProvider");
+
+        if (!useConnectionProvider) {
+            // Load the JDBC driver and connection string.
+            String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
+            try {
+                Class.forName(jdbcDriver).newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+                return;
+            }
+            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
         }
-        catch (Exception e) {
-            Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-            return;
-        }
-        connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 
         // Load SQL statements
         groupCountSQL = JiveGlobals.getProperty("jdbcGroupProvider.groupCountSQL");
@@ -116,6 +128,12 @@ public class JDBCGroupProvider implements GroupProvider {
         throw new UnsupportedOperationException();
     }
 
+    private Connection getConnection() throws SQLException {
+        if (useConnectionProvider)
+            return DbConnectionManager.getConnection();
+        return DriverManager.getConnection(connectionString);
+    }
+
     public Group getGroup(String name) throws GroupNotFoundException {
         String description = null;
 
@@ -123,7 +141,7 @@ public class JDBCGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = con.prepareStatement(descriptionSQL);
             pstmt.setString(1, name);
             rs = pstmt.executeQuery();
@@ -151,7 +169,7 @@ public class JDBCGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             if (adminsOnly) {
                 if (loadAdminsSQL == null) {
                     return members;
@@ -216,7 +234,7 @@ public class JDBCGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = con.prepareStatement(groupCountSQL);
             rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -243,7 +261,7 @@ public class JDBCGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = con.prepareStatement(allGroupsSQL);
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -265,7 +283,7 @@ public class JDBCGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = DbConnectionManager.createScrollablePreparedStatement(con, allGroupsSQL);
             rs = pstmt.executeQuery();
             DbConnectionManager.scrollResultSet(rs, start);
@@ -290,7 +308,7 @@ public class JDBCGroupProvider implements GroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = con.prepareStatement(userGroupsSQL);
             pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toString());
             rs = pstmt.executeQuery();

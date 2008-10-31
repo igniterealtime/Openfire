@@ -52,6 +52,14 @@ import java.util.Date;
  * <li><tt>jdbcUserProvider.emailField = mymailField</tt></li>
  * </ul>
  *
+ * In order to use the configured JDBC connection provider do not use a JDBC
+ * connection string, set the following property
+ *
+ * <ul>
+ * <li><tt>jdbcUserProvider.useConnectionProvider = true</tt></li>
+ * </ul>
+ *
+ *
  * @author Huw Richards huw.richards@gmail.com
  */
 public class JDBCUserProvider implements UserProvider {
@@ -65,6 +73,7 @@ public class JDBCUserProvider implements UserProvider {
 	private String usernameField;
 	private String nameField;
 	private String emailField;
+	private boolean useConnectionProvider;
 
     /**
      * Constructs a new JDBC user provider.
@@ -81,16 +90,20 @@ public class JDBCUserProvider implements UserProvider {
         JiveGlobals.migrateProperty("jdbcUserProvider.nameField");
         JiveGlobals.migrateProperty("jdbcUserProvider.emailField");
 
-        // Load the JDBC driver and connection string.
-		String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
-		try {
-			Class.forName(jdbcDriver).newInstance();
+        useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcUserProvider.useConnectionProvider");
+
+            // Load the JDBC driver and connection string.
+		if (!useConnectionProvider) {
+			String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
+			try {
+				Class.forName(jdbcDriver).newInstance();
+			}
+			catch (Exception e) {
+				Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+				return;
+			}
+			connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 		}
-		catch (Exception e) {
-			Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-			return;
-		}
-		connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 
         // Load database statements for user data.
         loadUserSQL = JiveGlobals.getProperty("jdbcUserProvider.loadUserSQL");
@@ -113,7 +126,7 @@ public class JDBCUserProvider implements UserProvider {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
         try {
-			con = DriverManager.getConnection(connectionString);
+			con = getConnection();
 			pstmt = con.prepareStatement(loadUserSQL);
 			pstmt.setString(1, username);
 			rs = pstmt.executeQuery();
@@ -139,7 +152,7 @@ public class JDBCUserProvider implements UserProvider {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
         try {
-			con = DriverManager.getConnection(connectionString);
+			con = getConnection();
 			pstmt = con.prepareStatement(userCountSQL);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
@@ -155,6 +168,12 @@ public class JDBCUserProvider implements UserProvider {
 		return count;
 	}
 
+	private Connection getConnection() throws SQLException {
+		if (useConnectionProvider)
+			return DbConnectionManager.getConnection();
+		return DriverManager.getConnection(connectionString);
+	}
+
 	public Collection<User> getUsers() {
 		Collection<String> usernames = getUsernames();
 		return new UserCollection(usernames.toArray(new String[usernames.size()]));
@@ -166,7 +185,7 @@ public class JDBCUserProvider implements UserProvider {
 		PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-			con = DriverManager.getConnection(connectionString);
+			con = getConnection();
 			pstmt = con.prepareStatement(allUsersSQL);
 			rs = pstmt.executeQuery();
 			// Set the fetch size. This will prevent some JDBC drivers from trying
@@ -192,7 +211,7 @@ public class JDBCUserProvider implements UserProvider {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
         try {
-			con = DriverManager.getConnection(connectionString);
+			con = getConnection();
 			pstmt = DbConnectionManager.createScrollablePreparedStatement(con, allUsersSQL);
 			rs = pstmt.executeQuery();
 			DbConnectionManager.setFetchSize(rs, startIndex + numResults);
@@ -273,7 +292,7 @@ public class JDBCUserProvider implements UserProvider {
 		Statement stmt = null;
 		ResultSet rs = null;
         try {
-			con = DriverManager.getConnection(connectionString);
+			con = getConnection();
 			stmt = con.createStatement();
 			StringBuilder sql = new StringBuilder();
 			sql.append(searchSQL);
@@ -348,7 +367,7 @@ public class JDBCUserProvider implements UserProvider {
 		Statement stmt = null;
         ResultSet rs = null;
         try {
-			con = DriverManager.getConnection(connectionString);
+			con = getConnection();
 			stmt = con.createStatement();
 			StringBuilder sql = new StringBuilder();
 			sql.append(searchSQL);

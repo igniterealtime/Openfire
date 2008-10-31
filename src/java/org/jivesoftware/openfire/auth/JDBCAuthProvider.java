@@ -44,6 +44,13 @@ import java.sql.*;
  * <li><tt>jdbcAuthProvider.setPasswordSQL = UPDATE user_account SET password=? WHERE username=?</tt></li>
  * </ul>
  *
+ * In order to use the configured JDBC connection provider do not use a JDBC
+ * connection string, set the following property
+ *
+ * <ul>
+ * <li><tt>jdbcAuthProvider.useConnectionProvider = true</tt></li>
+ * </ul>
+ *
  * The passwordType setting tells Openfire how the password is stored. Setting the value
  * is optional (when not set, it defaults to "plain"). The valid values are:<ul>
  *      <li>{@link PasswordType#plain plain}
@@ -61,6 +68,7 @@ public class JDBCAuthProvider implements AuthProvider {
     private String setPasswordSQL;
     private PasswordType passwordType;
     private boolean allowUpdate;
+    private boolean useConnectionProvider;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -74,16 +82,20 @@ public class JDBCAuthProvider implements AuthProvider {
         JiveGlobals.migrateProperty("jdbcAuthProvider.setPasswordSQL");
         JiveGlobals.migrateProperty("jdbcAuthProvider.allowUpdate");
 
-        // Load the JDBC driver and connection string.
-        String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
-        try {
-            Class.forName(jdbcDriver).newInstance();
+        useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcAuthProvider.useConnectionProvider");
+
+        if (!useConnectionProvider) {
+            // Load the JDBC driver and connection string.
+            String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
+            try {
+               Class.forName(jdbcDriver).newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+                return;
+            }
+            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
         }
-        catch (Exception e) {
-            Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-            return;
-        }
-        connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
 
         // Load SQL statements.
         passwordSQL = JiveGlobals.getProperty("jdbcAuthProvider.passwordSQL");
@@ -223,6 +235,12 @@ public class JDBCAuthProvider implements AuthProvider {
         return (passwordSQL != null && passwordType == PasswordType.plain);
     }
 
+    private Connection getConnection() throws SQLException {
+        if (useConnectionProvider)
+            return DbConnectionManager.getConnection();
+        return DriverManager.getConnection(connectionString);
+    }
+
     /**
      * Returns the value of the password field. It will be in plain text or hashed
      * format, depending on the password type.
@@ -248,7 +266,7 @@ public class JDBCAuthProvider implements AuthProvider {
             }
         }
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = con.prepareStatement(passwordSQL);
             pstmt.setString(1, username);
 
@@ -287,7 +305,7 @@ public class JDBCAuthProvider implements AuthProvider {
             }
         }
         try {
-            con = DriverManager.getConnection(connectionString);
+            con = getConnection();
             pstmt = con.prepareStatement(setPasswordSQL);
             pstmt.setString(1, username);
             if (passwordType == PasswordType.md5) {

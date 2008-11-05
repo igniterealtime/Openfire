@@ -216,7 +216,7 @@
 					<tr valign="top">
 						<td width="1%" nowrap>
 							<input type="radio" name="storeStrategy" value="<%= STORE_AND_BOUNCE%>" id="rb06"
-							 onclick="this.form.strategy[2].checked=true;"
+							 onclick="this.form.strategy[0].checked=true;"
 							 <%= ((storeStrategy==STORE_AND_BOUNCE) ? "checked" : "") %>>
 						</td>
 						<td width="99%">
@@ -226,7 +226,7 @@
                     <tr valign="top">
 						<td width="1%" nowrap>
 							<input type="radio" name="storeStrategy" value="<%= ALWAYS_STORE %>" id="rb05"
-							 onclick="this.form.strategy[2].checked=true;"
+							 onclick="this.form.strategy[0].checked=true;"
 							 <%= ((storeStrategy==ALWAYS_STORE) ? "checked" : "") %>>
 						</td>
 						<td width="99%">
@@ -236,7 +236,7 @@
 					<tr valign="top">
 						<td width="1%" nowrap>
 							<input type="radio" name="storeStrategy" value="<%= STORE_AND_DROP %>" id="rb07"
-							 onclick="this.form.strategy[2].checked=true;"
+							 onclick="this.form.strategy[0].checked=true;"
 							 <%= ((storeStrategy==STORE_AND_DROP) ? "checked" : "") %>>
 						</td>
 						<td width="99%">
@@ -248,7 +248,7 @@
 							<fmt:message key="offline.messages.storage_limit" />
 							<input type="text" size="5" maxlength="12" name="quota"
 							 value="<%= (quota>0 ? ""+format.format(quota) : "") %>"
-							 onclick="this.form.strategy[2].checked=true;">
+							 onclick="this.form.strategy[0].checked=true;">
 							KB
 						</td>
 					</tr>

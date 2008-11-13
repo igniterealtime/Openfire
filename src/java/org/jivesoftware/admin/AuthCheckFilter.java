@@ -55,6 +55,53 @@ public class AuthCheckFilter implements Filter {
         excludes.remove(exclude);
     }
 
+    /**
+     * Returns true if a URL passes an exclude rule.
+     *
+     * @param url the URL to test.
+     * @param exclude the exclude rule.
+     * @return true if the URL passes the exclude test.
+     */
+    public static boolean testURLPassesExclude(String url, String exclude) {
+      //  login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-*,.gif,.png,error-serverdown.jsp,
+      //  setup/clearspace-integration-prelogin.jsp
+
+        // If the exclude rule includes a "?" character, the url must exactly match the exclude rule.
+        // If the exclude rule does not contain the "?" character, we chop off everything starting at the first "?"
+        // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"
+        // character then the URL is allowed if it exactly matches everything before the * and there are no ".."
+        // characters after the "*". All data in the URL before
+        // the "@" character is chopped.
+
+        if (url.contains("@")) {
+            url = url.substring(url.indexOf("@"));
+        }
+
+        if (exclude.endsWith("*")) {
+            if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
+                // Now make sure that there are no ".." characters in the rest of the URL.
+                if (!url.contains("..")) {
+                    return true;
+                }
+            }
+        }
+        else if (exclude.contains("?")) {
+            if (url.equals(exclude)) {
+                return true;
+            }
+        }
+        else {
+            int paramIndex = url.indexOf("?");
+            if (paramIndex != -1) {
+                url = url.substring(0, paramIndex);
+            }
+            if (url.equals(exclude)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void init(FilterConfig config) throws ServletException {
         context = config.getServletContext();
         defaultLoginPage = config.getInitParameter("defaultLoginPage");
@@ -79,13 +126,13 @@ public class AuthCheckFilter implements Filter {
             loginPage = request.getContextPath() + "/login.jsp";
         }
         // Get the page we're on:
-        String url = request.getRequestURL().toString();
+        String url = request.getRequestURI().substring(1);
         // See if it's contained in the exclude list. If so, skip filter execution
         boolean doExclude = false;
         for (String exclude : excludes) {
-            if (url.indexOf(exclude) > -1) {
+            if (testURLPassesExclude(url, exclude)) {
                 doExclude = true;
-                break;
+                break;   
             }
         }
         if (!doExclude) {

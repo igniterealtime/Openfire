@@ -63,9 +63,6 @@ public class AuthCheckFilter implements Filter {
      * @return true if the URL passes the exclude test.
      */
     public static boolean testURLPassesExclude(String url, String exclude) {
-      //  login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-*,.gif,.png,error-serverdown.jsp,
-      //  setup/clearspace-integration-prelogin.jsp
-
         // If the exclude rule includes a "?" character, the url must exactly match the exclude rule.
         // If the exclude rule does not contain the "?" character, we chop off everything starting at the first "?"
         // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"

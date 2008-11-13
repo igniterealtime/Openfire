@@ -50,12 +50,6 @@ public class AuthenticateUser extends AdHocCommand {
 
     public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
-        // Check if groups cannot be modified (backend is read-only)
-        if (UserManager.getUserProvider().isReadOnly()) {
-            note.addAttribute("type", "error");
-            note.setText("Users are read only. Changing password is not allowed.");
-            return;
-        }
         JID account;
         try {
             account = new JID(data.getData().get("accountjid").get(0));
@@ -120,7 +114,7 @@ public class AuthenticateUser extends AdHocCommand {
         field = form.addField();
         field.setType(FormField.Type.text_single);
         field.setLabel("The username for this account");
-        field.setVariable("username");
+        field.setVariable("accountjid");
         field.setRequired(true);
 
         field = form.addField();

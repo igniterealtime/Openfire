@@ -162,6 +162,33 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.6.1 -- <span style="font-weight: normal;">November 14, 2008</span></h2>
+
+<h3><font color="red"><b>!</b></font> Upgrade Information</h3>
+<ul>Existing installations MUST update to this version to solve security vulnerabilities.</ul>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1453'>JM-1453</a>] - Optimized level of concurrency on JID class.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1485'>JM-1485</a>] - JDBC providers can now use connections from the DB pool instead of opening new ones.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-73'>JM-73</a>] - Improved radio buttons on offline messages page. <b>(1 vote)</b></li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1489'>JM-1489</a>] - <font color="red"><b>!</b></font> Authentication could be bypass allowing arbitrary code execution. <b>(2 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1490'>JM-1490</a>] - AdHoc command AuthenticateUser now works even if UserProvider is readonly.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1462'>JM-1462</a>] - Fixed NPE on admin console login when username was not completed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1473'>JM-1473</a>] - Fixed incorrect count of users in chat rooms between cluster nodes.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1481'>JM-1481</a>] - Non-Sasl authentication no longer allows for spaces post- or prepending the provided form data.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1491'>JM-1491</a>] - AdHoc command AuthenticateUser required 'username' field, but was using 'accountjid'.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
 <h2>3.6.0a -- <span style="font-weight: normal;">August 28, 2008</span></h2>
 
 <h3>Openfire Bug Fixes</h3>

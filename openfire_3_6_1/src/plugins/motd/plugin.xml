@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+   <class>org.jivesoftware.openfire.plugin.MotDPlugin</class>
+   <name>MotD (Message of the Day)</name>
+   <description>Allows admins to have a message sent to users each time they log in.</description>
+   <author>Ryan Graham</author>
+   <version>1.0.4</version>
+   <date>4/7/2008</date>
+   <minServerVersion>3.5.0</minServerVersion>
+
+   <adminconsole>
+      <tab id="tab-users">
+         <sidebar id="sidebar-users">
+            <item id="motd-form" name="MotD Properties" url="motd-form.jsp" description="Settings for MotD" />
+         </sidebar>
+      </tab>
+   </adminconsole>
+</plugin>

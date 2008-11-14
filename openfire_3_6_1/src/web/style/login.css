@@ -1,0 +1,63 @@
+#jive-loginBox {
+    display: block;
+    position: relative;
+    width: 500px;
+    text-align: left;
+    top: 148px;
+}
+#jive-loginHeader {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #555555;
+    margin: 0;
+}
+#jive-loginTable {
+    display: block;
+    position: relative;
+    clear: both;
+    width: auto;
+    margin: 10px 0 0 0;
+    padding: 0;
+}
+#jive-loginTable table {
+    clear: both;
+    margin-top: 20px;
+}
+#jive-loginTable td.loginFormTable {
+    padding: 17px 17px 7px 55px;
+    background: #e0e0e0 url(../images/jive-login-form-bg-gray.gif) repeat-x top;
+    border: 1px solid #bbbbbb;
+    -moz-border-radius: 5px;
+}
+.loginFormTable TD {
+    text-align : left;
+}
+#jive-loginTable td.loginFormTable table {
+    margin-top: 0;
+}
+#jive-loginVersion {
+    color: #999999;
+    font-weight: normal;
+    font-size: 10px;
+    padding-top: 4px;
+}
+
+.jive-login-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #515151;
+    text-align : left;
+}
+
+#jive-login-header {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #555555;
+    margin: 0;
+}
+
+BODY {
+    background: #b6b6b6 url(../images/jive-login-bg.gif) repeat-x top;
+    padding: 0;
+    margin: 0;
+}

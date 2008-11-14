@@ -1,0 +1,418 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>User Import/Export Plugin Readme</title>
+<style type="text/css">
+   /* global font and body settings */
+body {
+   font-size : 100%;
+   background-color : #d3d6d9;
+   padding: 0px;
+   margin: 0px 0px 30px 0px;
+}
+body, td, th {
+   font-family : arial, helvetica, sans-serif;
+   font-size : 10pt;
+}
+pre, tt, code {
+   font-family : courier new, monospaced;
+   font-size : 9pt;
+}
+#pageContainer {
+   display: block;
+   position: relative;
+   clear: both;
+   background-color: #fff;
+   border: 1px solid #999;
+   padding: 40px;
+   margin: 30px;
+   -moz-border-radius: 6px;
+}
+#pageHeader {
+   display: block;
+   position: relative;
+   height: 80px;
+   background-color: #e7eaee;
+   border: 1px solid #cccccc;
+   border-bottom: none;
+   -moz-border-radius: 5px 5px 0px 0px;
+   margin: 10px 0px 0px 0px;
+}
+#pageBody {
+   margin: 0px 18px 0px 20px;
+}
+
+/* anchors */
+a:link {
+   color: #11568c;
+}
+a:visited {
+   color: #571c8d;
+}
+a:hover {
+   color: #7a1d42;
+   text-decoration : underline;
+}
+a:active {
+   color: #7a1d42;
+}
+
+/* page header elements (logo and navigation) */
+.navigation {
+   display: block;
+   position: relative;
+   height: 20px;
+   background-color: #335588;
+   border: 1px solid #cccccc;
+   border-top: none;
+   color: #ffffff;
+   font-size: 11px;
+   line-height: 18px;
+   padding: 0px 0px 0px 0px;
+   margin: 0px 0px 25px 0px;
+   overflow: hidden;
+}
+.navigation a {
+   margin: 0px 20px 0px 20px;
+}
+.navigation a:link { color: #ffffff; }
+.navigation a:visited { color: #ffffff; }
+.navigation a:hover { color: #ffffff; }
+.navigation a:active { color: #ffffff; }
+
+/* headings */
+h1 {
+   display: block;
+   position: relative;
+   font-size : 1.7em;
+   font-weight : bold;
+   color: #670e15;
+   padding: 0px;
+   margin: 30px 0px 0px 20px;
+}
+h2 {
+   font-size : 1.3em;
+   font-weight : bold;
+   margin: 40px 0px 6px 0px;
+   padding: 0px;
+   color: #335588;
+}
+h3 {
+   font-size : 1.0em;
+   font-weight : bold;
+   margin: 25px 0px 3px 0px;
+   padding: 0px;
+   color: #334466;
+}
+
+/* general elements */
+p {
+   margin: 0px 0px 15px 0px;
+}
+
+ul {
+   margin: 5px 0px 15px 35px;
+}
+li {
+   padding-bottom : 4px;
+}
+tt {
+   font-family : courier new;
+   font-weight : bold;
+   color : #060;
+}
+hr {
+   display: block;
+   height: 1px;
+   background-color: #999999;
+   border: none;
+   margin: 40px 0px 20px 0px;
+}
+
+.footer {
+   font-size : 8pt;
+   color : #666;
+   text-align : center;
+   margin-top : 2em;
+   padding-top : 0.5em;
+   border-top : 1px #CCC solid;
+}
+
+.datatable TH {
+   color : #fff;
+   background-color : #2A448C;
+   text-align : left;
+}
+
+.datatable TD {
+   background-color : #FAF6EF;
+}
+
+.datatable .name {
+   background-color : #DCE2F5;
+   text-align : center;
+}
+
+.xmltable TD {
+   background-color : #EFEFEF;
+}
+</style>
+</head>
+<body>
+
+<div id="pageContainer">
+
+   <div id="pageHeader">
+      <h1>User Import/Export Plugin Readme</h1>
+   </div>
+<div id="pageBody">
+
+<h2>Overview</h2>
+<p>The user import/export plugin provides a way to import and export Openfire user data via
+the Admin Console. The user data consists of username, password, name, email address, creation 
+and modified date, and roster list (aka "buddy list"). This plugin also can aid in the migration 
+of users from other Jabber/XMPP based systems to Openfire.</p>
+
+<h2>Installation</h2>
+<p>Copy the userImportExport.jar into the plugins directory of your Openfire installation.
+The plugin will then be automatically deployed. To upgrade to a new version, copy the new 
+userImportExport.jar file over the existing file.</p>
+
+<h2>Configuration</h2>
+<p>Presently, there is nothing that can be configured for the user import/export plugin.</p>
+
+<h2>Using the Plugin</h2>
+<p>The plugin is accessed via the "User Import & Export" sidebar item located under the 
+"Users/Groups" tab in the Admin Console. Note: if you are using a read-only user store such as LDAP
+or POP3 this plugin will still work with two caveats:
+<ol>
+<li>When exporting, the username will be placed in the password element.
+<li>When importing, no new users will be created but if the user exists in the user store thier roster will be loaded.
+</ol> 
+<li><strong>Importing</strong> - Select the "Import User Data" option from the user import/export selection 
+page. On the import page, use the "Browse" button to locate the file that contains the user 
+information you want to locate and then click on the "Import" button. If the plugin is successful 
+in importing all user data, you will be presented with the message: "All users added successfully".
+If the plugin was not successful in importing all user data you, will receive a message indicating 
+what might have gone wrong. If during the import process, the plugin detects that you are trying to 
+import a user that already exists in the system, it will not import that user or any roster 
+information, except in the case of using a read-only user store.</li>
+<br>
+<li><strong>Exporting</strong> - Select the "Export User Data" option from the user import/export selection 
+page. User data can be exported either to a file or directly to the screen. To export to a file, 
+select the "To File" radio button, enter the name you want your export file to be called in the 
+"Export File Name" and then click on the "Export" button. Note: the plugin will automatically append 
+an ".xml" extension to the file name if it is not already present. To export to the screen, select 
+the "To Screen" radio button and then click on the "Export" button. The user data will be placed in 
+the provided text area.</li>
+<br>
+<li><strong>Migration</strong> - To import user data from another instant messaging system using the plugin,
+the import file must conform to the openfire-user-schema.xsd.xml schema file (located in the classes
+directory of the userImportExport.jar). When importing a user data file the plugin will first validate 
+the file against the schema file. If the plugin cannot validate the import file the user data will 
+not be imported. During the import process the plugin gives you the ability to update user roster 
+entries domain names to server name of your Openfire installation. For example, say you have a user
+whose roster looks like:
+</li>
+
+<p>
+<div class="xmltable">
+<table>
+<tr>
+<td>
+&lt;User&gt;<br>
+&nbsp;&nbsp;&lt;Username&gt;mike&lt;/Username&gt;<br>
+&nbsp;&nbsp;&lt;Password&gt;iamcool&lt;/Password&gt;<br>
+&nbsp;&nbsp;&lt;Email&gt;mike@mike.com&lt;/Email&gt;<br>
+&nbsp;&nbsp;&lt;Name&gt;Mike Jones&lt;/Name&gt;<br>
+&nbsp;&nbsp;&lt;CreationDate&gt;1125442154664&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&lt;ModifiedDate&gt;1125442154664&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;jane@im.olddomain.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Jane&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&lt;/User&gt;<br>
+</td>
+</tr>
+</table>
+</div>
+</p>
+
+<p>
+Mike and Jane's accounts both reside on server whose domain name is "im.olddomain.net" and are being 
+imported to a Openfire installation whose server name is "im.newdomain.net". If on the import screen
+the "Optional Existing Domain" field is filled in with "im.olddomain.net" (without the quotes) any 
+roster item jid that contains "im.olddomain.net" will be replaced with "im.newdomain.net". So, in 
+effect, the import file would be transformed to look like:
+<br>
+</p>
+
+<p>
+<div class="xmltable">
+<table>
+<tr>
+<td>
+&lt;User&gt;<br>
+&nbsp;&nbsp;&lt;Username&gt;mike&lt;/Username&gt;<br>
+&nbsp;&nbsp;&lt;Password&gt;iamcool&lt;/Password&gt;<br>
+&nbsp;&nbsp;&lt;Email&gt;mike@mike.com&lt;/Email&gt;<br>
+&nbsp;&nbsp;&lt;Name&gt;Mike Jones&lt;/Name&gt;<br>
+&nbsp;&nbsp;&lt;CreationDate&gt;1125442154664&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&lt;ModifiedDate&gt;1125442154664&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;jane@im.newdomain.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Jane&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&lt;/User&gt;<br>
+</td>
+</tr>
+</table>
+</div>
+</p>
+
+<p>
+Below is a sample of an exported user list from Openfire than contains two users, Joe and Sally, who
+have added each other to their respective rosters.
+</p>
+
+<p>
+<div class="xmltable">
+<table>
+<tr>
+<td>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+<br>
+&lt;Openfire&gt;<br>
+&nbsp;&nbsp;&lt;User&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Username&gt;joe&lt;/Username&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Password&gt;joepwd&lt;/Password&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Email&gt;&lt;/Email&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;&lt;/Name&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;CreationDate&gt;1125601449177&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ModifiedDate&gt;1125601449177&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;sally@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Sally&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&nbsp;&nbsp;&lt;/User&gt;<br>
+&nbsp;&nbsp;&lt;User&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Username&gt;sally&lt;/Username&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Password&gt;sallypwd&lt;/Password&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Email&gt;&lt;/Email&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Name&gt;&lt;/Name&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;CreationDate&gt;1125601471848&lt;/CreationDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ModifiedDate&gt;1125601471848&lt;/ModifiedDate&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Roster&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;joe@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
+&nbsp;&nbsp;&lt;/User&gt;<br>
+&lt;/Openfire&gt;<br>
+</td>
+</tr>
+</table>
+</div>
+</p>
+
+<p>
+Below is a list of the different status types and what their associated numbers mean.
+</p>
+
+<div class="datatable">
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+   <thead>
+      <tr>
+         <th colspan="2">askstatus</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td class="name">-1</td>
+         <td>The roster item has no pending subscripton requests.</td>
+      </tr>
+      <tr>
+         <td class="name">0</td>
+         <td>The roster item has been asked for permission to subscribe to their presence but no 
+         response has been received.</td>
+      </tr>
+      <tr>
+         <td class="name">1</td>
+         <td>The roster owner has asked to the roster item to unsubscribe from it's presence but 
+         has not received confirmation.</td>
+      </tr>
+   </tbody>
+</table>
+
+<br>
+
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+   <thead>
+      <tr>
+         <th colspan="2">recvstatus</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td class="name">-1</td>
+         <td>There are no subscriptions that have been received but not presented to the user.</td>
+      </tr>
+      <tr>
+         <td class="name">1</td>
+         <td>The server has received a subscribe request, but has not forwarded it to the user.</td>
+      </tr>
+      <tr>
+         <td class="name">2</td>
+         <td>The server has received an unsubscribe request, but has not forwarded it to the user.</td>
+      </tr>
+   </tbody>
+</table>
+
+<br>
+
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+   <thead>
+      <tr>
+         <th colspan="2">substatus</th>
+      </tr>
+   </thead>
+   <tbody>
+      <tr>
+         <td class="name">-1</td>
+         <td>Indicates the roster item should be removed.</td>
+      </tr>
+      <tr>
+         <td class="name">0</td>
+         <td>No subscription is established.</td>
+      </tr>
+      <tr>
+         <td class="name">1</td>
+         <td>The roster owner has a subscription to the roster item's presence.</td>
+      </tr>
+      <tr>
+         <td class="name">2</td>
+         <td>The roster item has a subscription to the roster owner's presence.</td>
+      </tr>
+      <tr>
+         <td class="name">3</td>
+         <td>The roster item and owner have a mutual subscription.</td>
+      </tr>
+   </tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+</body>
+</html>

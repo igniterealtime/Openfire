@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Fastpath Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Fastpath Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The Fastpath plugin adds support for managed queued chat requests, such as
+a support team might use.  For example, a web based "Live Support" interface
+can point a potential customer at a workgroup representing the Sales team.
+Members of that workgroup will receive notification that a someone is
+waiting and when someone from that workgroup accepts, the customer and the
+team member will be connected to communicate with each other.
+</p>
+
+<h2>Installation</h2>
+
+<p>
+Copy fastpath.jar into the plugins directory of your Openfire installation. The
+plugin will then be automatically deployed. To upgrade to a new version, copy
+the new fastpath.jar file over the existing file.  <b>Make sure to follow the
+upgrading instructions under the Upgrading section, regardless of if
+you have the old Fastpath plugin or Enterprise installed currently or not.  
+The only time you can skip the Upgrading section is if you know for a fact
+that you have never run Fastpath or Enterprise.</b>
+</p>
+
+<p>
+Make sure that the enterprise plugin is removed before installing this plugin.
+Otherwise the enterprise plugin will rename the fastpath.jar to fastpath.jar.old
+thus removing thus plugin. If this happens just stop the server, remove the
+enterprise.jar plugin and rename fastpath.jar.old to fastpath.jar and start the
+server again.
+</p>
+
+<h2>Upgrading from Pre-Enterprise Fastpath and Enterprise</h2>
+
+<p>
+Due to the previous version of Fastpath existing before it was incorporated
+into Enterprise, and due to this replacing part of the Enterprise plugin,
+upgrading to this Fastpath plugin requires some manual steps.  Effectively,
+we need to clean up the old database a bit and change the names of a couple of
+things.  So the steps you will need to perform are as follows: 
+<ol>
+<li>Shut down your server.</li>
+<li>Remove <b>enterprise.jar</b> and the directory <b>enterprise</b>.</li>
+<li>Log into your database, you can use the embedded-db-viewer scripts in bin/extra to access the Embedded database.</li>
+<li>Execute the following SQL: <tt>DELETE FROM ofVersion WHERE name = 'fastpath'</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise instaled, that is ok): <tt>UPDATE fpWorkgroupProp SET propValue = REPLACE(propValue, 'com.jivesoftware.openfire.fastpath','org.jivesoftware.openfire.fastpath')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpAgentProp SET propValue = REPLACE(propValue, 'com.jivesoftware.openfire.fastpath','org.jivesoftware.openfire.fastpath')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpWorkgroupProp SET propValue = REPLACE(propValue, 'com.jivesoftware.xmpp.workgroup','org.jivesoftware.xmpp.workgroup')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpAgentProp SET propValue = REPLACE(propValue, 'com.jivesoftware.xmpp.workgroup','org.jivesoftware.xmpp.workgroup')</tt></li>
+<li>Execute the following SQL (this may fail if you never had enterprise installed, that is ok): <tt>UPDATE fpDispatcherProp SET propValue = REPLACE(propValue, 'com.jivesoftware.xmpp.workgroup','org.jivesoftware.xmpp.workgroup')</tt></li>
+<li>Start up your server.  If you had enterprise installed, you -will- see an SQL error show up, but it should only show up once and is ok.  (it is an attempt to recreate a table that already exists)  The error will look like: <tt>fastpath - Database update failed. Please manually upgrade your database.</tt></li>
+</ol>
+
+<b>You only need to do these steps once when moving to this Fastpath plugin.
+Do not repeat these steps on future Fastpath plugin updates.</b>
+</p>
+
+<h2>Configuration</h2>
+
+Configuration is performed under the <b>Fastpath</b> tab in the Openfire
+admin console.  The quick start guide can be found
+<a href="http://www.igniterealtime.org/community/docs/DOC-1513">here</a>.
+
+</body>
+</html>

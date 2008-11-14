@@ -77,7 +77,7 @@ public class AuthCheckFilter implements Filter {
         if (exclude.endsWith("*")) {
             if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
                 // Now make sure that there are no ".." characters in the rest of the URL.
-                if (!url.contains("..")) {
+                if (!url.contains("..") && !url.toLowerCase().contains("%2e")) {
                     return true;
                 }
             }

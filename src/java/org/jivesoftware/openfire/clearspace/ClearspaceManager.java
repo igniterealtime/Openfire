@@ -345,7 +345,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     /**
      * Tests the web services connection with Clearspace given the manager's current configuration.
      *
-     * @return The exception or unll if connection test was successful.
+     * @return The exception or null if connection test was successful.
      */
     public Throwable testConnection() {
         // Test invoking a simple method

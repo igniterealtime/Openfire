@@ -49,6 +49,17 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class PEPService implements PubSubService {
     /**
+     * Timer to save published items to the database or remove deleted or old
+     * items.
+     */
+    private static final Timer timer = new Timer("PEP service maintenance");
+
+    /**
+     * Date format to use for time stamps in delayed event notifications.
+     */
+    private static final FastDateFormat fastDateFormat;
+
+    /**
      * The bare JID that this service is identified by.
      */
     private String serviceOwnerJID;
@@ -125,17 +136,6 @@ public class PEPService implements PubSubService {
      * Task that saves or deletes published items from the database.
      */
     private PublishedItemTask publishedItemTask;
-
-    /**
-     * Timer to save published items to the database or remove deleted or old
-     * items.
-     */
-    private Timer timer = new Timer("PEP service maintenance");
-
-    /**
-     * Date format to use for time stamps in delayed event notifications.
-     */
-    private static final FastDateFormat fastDateFormat;
 
     static {
         fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));

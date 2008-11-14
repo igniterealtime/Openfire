@@ -7,6 +7,7 @@
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.text.DateFormat" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="org.jivesoftware.openfire.sip.calllog.CallFilter" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -164,7 +165,7 @@
     String startDate = request.getParameter("startDate");
     String endDate = request.getParameter("endDate");
 
-    String filter = null;
+    CallFilter filter = null;
     if (request.getParameter("submit") != null) {
 
         Date fromDate = null;

@@ -72,21 +72,21 @@ public class AdminManager {
 
         // Detect when a new admin provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
-            public void propertySet(String property, Map params) {
+            public void propertySet(String property, Map<String, Object> params) {
                 if ("provider.admin.className".equals(property)) {
                     initProvider();
                 }
             }
 
-            public void propertyDeleted(String property, Map params) {
+            public void propertyDeleted(String property, Map<String, Object> params) {
                 //Ignore
             }
 
-            public void xmlPropertySet(String property, Map params) {
+            public void xmlPropertySet(String property, Map<String, Object> params) {
                 //Ignore
             }
 
-            public void xmlPropertyDeleted(String property, Map params) {
+            public void xmlPropertyDeleted(String property, Map<String, Object> params) {
                 //Ignore
             }
         };
@@ -172,12 +172,13 @@ public class AdminManager {
         if (adminList == null) {
             loadAdminList();
         }
-        if (adminList.contains(jid)) {
+        JID bareJID = new JID(jid.toBareJID());
+        if (adminList.contains(bareJID)) {
             // Already have them.
             return;
         }
         // Add new admin to cache.
-        adminList.add(jid);
+        adminList.add(bareJID);
         // Store updated list of admins with provider.
         provider.setAdmins(adminList);
     }
@@ -211,11 +212,13 @@ public class AdminManager {
         if (adminList == null) {
             loadAdminList();
         }
-        if (!adminList.contains(jid)) {
+        
+        JID bareJID = new JID(jid.toBareJID());
+        if (!adminList.contains(bareJID)) {
             return;
         }
         // Remove user from admin list cache.
-        adminList.remove(jid);
+        adminList.remove(bareJID);
         // Store updated list of admins with provider.
         provider.setAdmins(adminList);
     }
@@ -252,7 +255,8 @@ public class AdminManager {
         if (allowAdminIfEmpty && adminList.isEmpty()) {
             return "admin".equals(jid.getNode());
         }
-        return adminList.contains(jid);
+        JID bareJID = new JID(jid.toBareJID());
+        return adminList.contains(bareJID);
     }
 
     /**
@@ -302,8 +306,13 @@ public class AdminManager {
         else {
             adminList.clear();
         }
-        adminList.addAll(jids);
-        provider.setAdmins(jids);
-    }
 
+        List<JID> admins = new ArrayList<JID>();
+        for (JID jid : jids)
+		{
+        	admins.add(new JID(jid.toBareJID()));
+		}
+        adminList.addAll(admins);
+        provider.setAdmins(admins);
+    }
 }

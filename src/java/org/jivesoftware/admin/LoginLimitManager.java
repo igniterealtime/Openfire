@@ -9,9 +9,9 @@
  */
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.TaskEngine;
 
 import java.util.Map;
 import java.util.TimerTask;
@@ -118,7 +118,7 @@ public class LoginLimitManager {
         }
         cnt++;
         attemptsPerUsername.put(username, cnt);
-        if (cnt > maxAttemptsPerIP) {
+        if (cnt > maxAttemptsPerUsername) {
             Log.warn("Login attempt limit breeched for username "+username);
         }
     }

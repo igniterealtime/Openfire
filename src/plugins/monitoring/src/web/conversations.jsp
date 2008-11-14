@@ -176,7 +176,7 @@ function updateConversations(data) {
                 <% } %>
             <% } else { %>
                 <fmt:message key="archive.group_conversation">
-                    <fmt:param value="<%= "<a href='../../muc-room-occupants.jsp?roomName=" + URLEncoder.encode(conversation.getRoom().getNode(), "UTF-8") + "'>" %>" />
+                    <fmt:param value="<%= "<a href='../../muc-room-occupants.jsp?roomJID=" + URLEncoder.encode(conversation.getRoom().toBareJID(), "UTF-8") + "'>" %>" />
                     <fmt:param value="<%= "</a>" %>" />
                 </fmt:message>
             <% } %>

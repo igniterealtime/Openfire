@@ -112,7 +112,7 @@ public class MUCPersistenceManager {
     private static final String DELETE_USER_MEMBER =
         "DELETE FROM ofMucMember WHERE jid=?";
     private static final String DELETE_USER_MUCAFFILIATION =
-        "DELETE FROM ofMucaffiliation WHERE jid=?";
+        "DELETE FROM ofMucAffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
         "INSERT INTO ofMucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
         "VALUES (?,?,?,?,?,?)";

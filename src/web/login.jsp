@@ -57,7 +57,7 @@
     String nonce = ParamUtils.getParameter(request, "nonce");
 
     // The user auth token:
-    AuthToken authToken;
+    AuthToken authToken = null;
 
     // Check the request/response for a login token
 
@@ -69,12 +69,6 @@
             loginUsername = JID.escapeNode(loginUsername);
         }
         try {
-            if (LoginLimitManager.getInstance().hasHitConnectionLimit(loginUsername, request.getRemoteAddr())) {
-                throw new UnauthorizedException("User '" + loginUsername +"' or address '" + request.getRemoteAddr() + "' has his login attempt limit.");
-            }
-            if (!AdminManager.getInstance().isUserAdmin(loginUsername, true)) {
-                throw new UnauthorizedException("User '" + loginUsername + "' not allowed to login.");
-            }
             if (secret != null && nodeID != null) {
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
                     authToken = new AuthToken(loginUsername);
@@ -93,12 +87,26 @@
                 }
             }
             else {
-                authToken = AuthFactory.authenticate(loginUsername, password);
+                // Check that a username was provided before trying to verify credentials
+                if (loginUsername != null) {
+                    if (LoginLimitManager.getInstance().hasHitConnectionLimit(loginUsername, request.getRemoteAddr())) {
+                        throw new UnauthorizedException("User '" + loginUsername +"' or address '" + request.getRemoteAddr() + "' has his login attempt limit.");
+                    }
+                    if (!AdminManager.getInstance().isUserAdmin(loginUsername, true)) {
+                        throw new UnauthorizedException("User '" + loginUsername + "' not allowed to login.");
+                    }
+                    authToken = AuthFactory.authenticate(loginUsername, password);
+                }
+                else {
+                    errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
+                }
             }
-            LoginLimitManager.getInstance().recordSuccessfulAttempt(loginUsername, request.getRemoteAddr());
-            session.setAttribute("jive.admin.authToken", authToken);
-            response.sendRedirect(go(url));
-            return;
+            if (errors.isEmpty()) {
+                LoginLimitManager.getInstance().recordSuccessfulAttempt(loginUsername, request.getRemoteAddr());
+                session.setAttribute("jive.admin.authToken", authToken);
+                response.sendRedirect(go(url));
+                return;
+            }
         }
         catch (ConnectionException ue) {
             Log.debug(ue);

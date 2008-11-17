@@ -82,6 +82,11 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)sessionCount/(double)range);
     int curPage = (start/range) + 1;
+    // Check that we are not out of bounds
+    if (curPage > numPages && numPages > 0){
+      curPage = numPages;
+      start = (numPages-1)*range;
+    }
 %>
 
 <html>

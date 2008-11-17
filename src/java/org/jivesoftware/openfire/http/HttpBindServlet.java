@@ -98,9 +98,9 @@ public class HttpBindServlet extends HttpServlet {
             sendLegacyError(response, BoshBindingError.badRequest);
             return;
         }
-        queryString = URLDecoder.decode(queryString, "utf-8");
+        queryString = URLDecoder.decode(queryString, "UTF-8");
 
-        parseDocument(request, response, new ByteArrayInputStream(queryString.getBytes()));
+        parseDocument(request, response, new ByteArrayInputStream(queryString.getBytes("UTF-8")));
     }
 
     private void sendLegacyError(HttpServletResponse response, BoshBindingError error)

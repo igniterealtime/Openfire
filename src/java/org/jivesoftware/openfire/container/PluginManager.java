@@ -556,11 +556,14 @@ public class PluginManager {
 
             // See if any child plugins are defined.
             if (parentPluginMap.containsKey(plugin)) {
-                for (String childPlugin : parentPluginMap.get(plugin)) {
-                    Log.debug("PluginManager: Unloading child plugin: " + childPlugin);
+                String[] childPlugins =
+                        parentPluginMap.get(plugin).toArray(new String[parentPluginMap.get(plugin).size()]);
+                parentPluginMap.remove(plugin);
+                for (String childPlugin : childPlugins) {
+                    Log.debug("Unloading child plugin: " + childPlugin);
+                    childPluginMap.remove(plugins.get(childPlugin));
                     unloadPlugin(childPlugin);
                 }
-                parentPluginMap.remove(plugin);
             }
 
             File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
@@ -624,9 +627,24 @@ public class PluginManager {
             // See if this is a child plugin. If it is, we should unload
             // the parent plugin as well.
             if (childPluginMap.containsKey(plugin)) {
-                unloadPlugin(childPluginMap.get(plugin));
+                String parentPluginName = childPluginMap.get(plugin);
+                Plugin parentPlugin = plugins.get(parentPluginName);
+                List<String> childrenPlugins = parentPluginMap.get(parentPlugin);
+
+                childrenPlugins.remove(pluginName);
+                childPluginMap.remove(plugin);
+
+                // When the parent plugin implements PluginListener, its pluginDestroyed() method
+                // isn't called if it dies first before its child. Athough the parent will die anyway,
+                // it's proper if the parent "gets informed first" about the dying child when the
+                // child is the one being killed first.
+                if (parentPlugin instanceof PluginListener) {
+                    PluginListener listener;
+                    listener = (PluginListener) parentPlugin;
+                    listener.pluginDestroyed(pluginName, plugin);
+                }
+                unloadPlugin(parentPluginName);
             }
-            childPluginMap.remove(plugin);
             firePluginDestroyedEvent(pluginName, plugin);
         }
         else if (plugin != null) {

@@ -66,7 +66,7 @@
 <html>
 <head>
 <title><fmt:message key="muc.room.occupants.title"/></title>
-<meta name="subPageID" content="muc-room-edit-form"/>
+<meta name="subPageID" content="muc-room-occupants"/>
 <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&create=false" %>"/>
 </head>
 <body>

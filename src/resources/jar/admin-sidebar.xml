@@ -284,6 +284,11 @@
                           url="muc-room-edit-form.jsp"
                           description="${sidebar.muc-room-edit-form.descr}"/>
 
+                    <!-- Room Occupants -->
+                    <item id="muc-room-occupants" name="${sidebar.muc-room-occupants}"
+                          url="muc-room-occupants.jsp"
+                          description="${sidebar.muc-room-occupants.descr}"/>
+
                     <!-- User Permissions -->
                     <item id="muc-room-affiliations" name="${sidebar.muc-room-affiliations}"
                           url="muc-room-affiliations.jsp"

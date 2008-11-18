@@ -100,6 +100,7 @@
     <property name="jar.starter.name" value="startup.jar"/>
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
+	<property name="pack200.enabled" value="true"/>
 
     <property name="overlay.dir"   value="${basedir}/custom"/>
     <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
@@ -1516,27 +1517,50 @@
             <property name="pack200.excludes"
                       value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar,tangosol.jar"/>
 
-            <for param="jar">
-                <path>
-                    <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar"
-                             excludes="${pack200.excludes}"/>
-                </path>
-                <sequential>
-                    <delete file="@{jar}.pack"/>
-                    <pack200 src="@{jar}"
-                             destfile="@{jar}.pack"
-                             gzipoutput="false"
-                            />
-                </sequential>
-            </for>
-
+			<if>
+				<equals arg1="${pack200.enabled}" arg2="true" />
+				<then>	
+					<for param="jar">
+						<path>
+							<fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar"
+									 excludes="${pack200.excludes}"/>
+						</path>
+						<sequential>
+							<delete file="@{jar}.pack"/>
+							<pack200 src="@{jar}"
+									 destfile="@{jar}.pack"
+									 gzipoutput="false"
+									/>
+						</sequential>
+					</for>
+					
+		            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
+		                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
+				            <include name="lib/*.pack"/>
+							<include name="web/WEB-INF/web.xml"/>
+		                    <include name="web/WEB-INF/web-custom.xml"/>
+				        </fileset>
+					</copy>
+					
+					<!-- Excluded pack files need to be copied over as well -->
+					<copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true">
+						<fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"
+								 includes="${pack200.excludes}"/>
+					</copy>					
+				</then>
+				<else>
+					<copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
+						<fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
+							<include name="lib/*.jar"/>
+							<include name="web/WEB-INF/web.xml"/>
+							<include name="web/WEB-INF/web-custom.xml"/>
+						</fileset>
+					</copy>
+				</else>				
+			</if>
+			
             <!-- Copy everything else to Openfire's plugin dir -->
             <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
-                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
-                    <include name="lib/*.pack"/>
-                    <include name="web/WEB-INF/web.xml"/>
-                    <include name="web/WEB-INF/web-custom.xml"/>
-                </fileset>
                 <fileset dir="@{pluginsrc}/@{plugin}">
                     <include name="classes/**/*.*"/>
                 </fileset>
@@ -1549,12 +1573,6 @@
                     <exclude name="web/**/*.jspf"/>
                     <exclude name="java/**/*.java"/>
                 </fileset>
-            </copy>
-
-            <!-- Excluded pack files need to be copied over as well -->
-            <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true">
-                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"
-                         includes="${pack200.excludes}"/>
             </copy>
 
             <!-- Jar the plugin -->

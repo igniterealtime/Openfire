@@ -279,7 +279,7 @@ public class IQRouter extends BasicModule {
                 return;
             }
         }
-        if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
+        if (packet.getID() != null && (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType())) {
             // The server got an answer to an IQ packet that was sent from the server
             IQResultListener iqResultListener = resultListeners.remove(packet.getID());
             if (iqResultListener != null) {

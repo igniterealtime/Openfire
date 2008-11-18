@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
@@ -271,6 +272,13 @@ public abstract class StanzaHandler {
                 }
                 reply.setError(PacketError.Condition.jid_malformed);
                 session.process(reply);
+                return;
+            }
+            if (packet.getID() == null && JiveGlobals.getBooleanProperty("xmpp.server.validation.enabled", false)) {
+                // IQ packets MUST have an 'id' attribute so close the connection
+                StreamError error = new StreamError(StreamError.Condition.invalid_xml);
+                session.deliverRawText(error.toXML());
+                session.close();
                 return;
             }
             processIQ(packet);

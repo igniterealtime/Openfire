@@ -58,7 +58,8 @@ public final class HttpBindManager {
 
     private int bindSecurePort;
 
-    private boolean sslEnabled = false;
+    private Connector httpConnector;
+    private Connector httpsConnector;
 
     private CertificateListener certificateListener;
 
@@ -121,18 +122,19 @@ public final class HttpBindManager {
         return JiveGlobals.getBooleanProperty(HTTP_BIND_ENABLED, HTTP_BIND_ENABLED_DEFAULT);
     }
 
-    private Connector createConnector(int port) {
+    private void createConnector(int port) {
+        httpConnector = null;
         if (port > 0) {
             SelectChannelConnector connector = new SelectChannelConnector();
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
             connector.setPort(port);
-            return connector;
+            httpConnector = connector;
         }
-        return null;
     }
 
-    private Connector createSSLConnector(int securePort) {
+    private void createSSLConnector(int securePort) {
+        httpsConnector = null;
         try {
             if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*")) {
                 if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
@@ -165,13 +167,12 @@ public final class HttpBindManager {
                 sslConnector.setKeyPassword(SSLConfig.getKeyPassword());
                 sslConnector.setKeystoreType(SSLConfig.getStoreType());
                 sslConnector.setKeystore(SSLConfig.getKeystoreLocation());
-                return sslConnector;
+                httpsConnector = sslConnector;
             }
         }
         catch (Exception e) {
             Log.error("Error creating SSL connector for Http bind", e);
         }
-        return null;
     }
 
     private String getBindInterface() {
@@ -192,6 +193,24 @@ public final class HttpBindManager {
      */
     public boolean isHttpBindEnabled() {
         return httpBindServer != null && httpBindServer.isRunning();
+    }
+
+    /**
+     * Returns true if a listener on the HTTP binding port is running.
+     *
+     * @return true if a listener on the HTTP binding port is running.
+     */
+    public boolean isHttpBindActive() {
+        return httpConnector != null && httpConnector.isRunning();
+    }
+
+    /**
+     * Returns true if a listener on the HTTPS binding port is running.
+     *
+     * @return true if a listener on the HTTPS binding port is running.
+     */
+    public boolean isHttpsBindActive() {
+        return httpsConnector != null && httpsConnector.isRunning();
     }
 
     public String getHttpBindUnsecureAddress() {
@@ -268,8 +287,8 @@ public final class HttpBindManager {
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
-        Connector httpConnector = createConnector(port);
-        Connector httpsConnector = createSSLConnector(securePort);
+        createConnector(port);
+        createSSLConnector(securePort);
         if (httpConnector == null && httpsConnector == null) {
             httpBindServer = null;
             return;
@@ -278,11 +297,7 @@ public final class HttpBindManager {
             httpBindServer.addConnector(httpConnector);
         }
         if (httpsConnector != null) {
-            sslEnabled = true;
             httpBindServer.addConnector(httpsConnector);
-        }
-        else {
-            sslEnabled = false;
         }
 
         createBoshHandler(contexts, "/http-bind");
@@ -363,9 +378,6 @@ public final class HttpBindManager {
      * @return the HTTP binding port which uses SSL.
      */
     public int getHttpBindSecurePort() {
-        if (!sslEnabled) {
-            return 0;
-        }
         return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, HTTP_BIND_SECURE_PORT_DEFAULT);
     }
 

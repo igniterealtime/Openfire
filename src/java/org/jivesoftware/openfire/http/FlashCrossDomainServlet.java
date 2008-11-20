@@ -78,8 +78,8 @@ public class FlashCrossDomainServlet extends HttpServlet {
                 builder.append(HttpBindManager.getInstance().getHttpBindUnsecurePort());
                 multiple = true;
             }
-            if(HttpBindManager.getInstance().getHttpBindSecurePort() > 0) {
-                if(multiple) {
+            if (HttpBindManager.getInstance().isHttpsBindActive()) {
+                if (multiple) {
                     builder.append(",");
                 }
                 builder.append(HttpBindManager.getInstance().getHttpBindSecurePort());

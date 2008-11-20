@@ -23,7 +23,6 @@ import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
-import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
@@ -31,9 +30,9 @@ import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PO
 import org.jivesoftware.openfire.component.*;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -49,11 +48,11 @@ import org.xmpp.packet.JID;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.*;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 
 
 /**
@@ -714,7 +713,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             int boshSslPort = HttpBindManager.getInstance().getHttpBindSecurePort();
             int boshPort = HttpBindManager.getInstance().getHttpBindUnsecurePort();
             try {
-                if (CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain()) && LocalClientSession.getTLSPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled && boshSslPort > 0) {
+                if (HttpBindManager.getInstance().isHttpsBindActive() && LocalClientSession.getTLSPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled) {
                     xmppBoshSslPort = String.valueOf(boshSslPort);
                 }
             }
@@ -722,7 +721,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
                 // Exception while working with certificate
                 Log.debug("Error while checking SSL certificate.  Instructing Clearspace not to use SSL port.");
             }
-            if (boshPort > 0) {
+            if (HttpBindManager.getInstance().isHttpBindActive() && boshPort > 0) {
                 xmppBoshPort = String.valueOf(boshPort);
             }
         }

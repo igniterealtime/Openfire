@@ -577,7 +577,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         // Create and schedule a confi task every minute
         configClearspaceTask = new ConfigClearspaceTask();
         // Wait some time to start the task until Openfire has binding address
-        TaskEngine.getInstance().schedule(configClearspaceTask, JiveConstants.SECOND * 10, JiveConstants.MINUTE);
+        TaskEngine.getInstance().schedule(configClearspaceTask, JiveConstants.SECOND * 30, JiveConstants.MINUTE);
         Log.debug("Starting configuration Clearspace task in 10 seconds.");
     }
 

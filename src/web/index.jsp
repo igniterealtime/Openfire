@@ -577,7 +577,7 @@
         </tr>
         <% } %>
         <%
-            if (httpBindManager.getHttpBindSecurePort() > 0) {
+            if (httpBindManager.isHttpsBindActive()) {
         %>
         <tr>
             <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>

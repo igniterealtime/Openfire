@@ -205,8 +205,9 @@ class XMLLightweightParser {
         boolean isHighSurrogate = false;
         for (int i = 0; i < readByte; i++) {
             ch = buf[i];
-            if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD) {
-                //Unicode characters in the range 0x0000-0x001F other than 9, A, and D are not allowed in XML
+            if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD && ch != 0x0) {
+                 //Unicode characters in the range 0x0000-0x001F other than 9, A, and D are not allowed in XML
+                 //We need to allow the NULL character, however, for Flash XMLSocket clients to work.
                 throw new Exception("Disallowed character");
             }
             if (isHighSurrogate) {

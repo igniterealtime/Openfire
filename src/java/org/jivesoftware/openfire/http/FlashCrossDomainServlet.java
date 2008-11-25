@@ -28,14 +28,14 @@ import java.io.IOException;
  */
 public class FlashCrossDomainServlet extends HttpServlet {
 
-    private static String CROSS_DOMAIN_TEXT = "<?xml version=\"1.0\"?>" +
+    public static String CROSS_DOMAIN_TEXT = "<?xml version=\"1.0\"?>" +
             "<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">" +
             "<cross-domain-policy>" +
             "<site-control permitted-cross-domain-policies=\"all\"/>" +
             "<allow-access-from domain=\"*\" to-ports=\"";
 
-    private static String CROSS_DOMAIN_MIDDLE_TEXT = "\" secure=\"";
-    private static String CROSS_DOMAIN_END_TEXT = "\"/></cross-domain-policy>";
+    public static String CROSS_DOMAIN_MIDDLE_TEXT = "\" secure=\"";
+    public static String CROSS_DOMAIN_END_TEXT = "\"/></cross-domain-policy>";
     
     private static String CROSS_DOMAIN_SECURE_ENABLED = "httpbind.crossdomain.secure";
     private static boolean CROSS_DOMAIN_SECURE_DEFAULT = true;

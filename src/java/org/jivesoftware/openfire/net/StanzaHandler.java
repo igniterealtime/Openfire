@@ -14,10 +14,10 @@ package org.jivesoftware.openfire.net;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.FlashCrossDomainHandler;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
@@ -95,9 +95,9 @@ public abstract class StanzaHandler {
             if (!initialStream) {
                 // Allow requests for flash socket policy files directly on the client listener port
                 if (stanza.startsWith("<policy-file-request/>")) {
-                    String crossDomainText = FlashCrossDomainHandler.CROSS_DOMAIN_TEXT +
+                    String crossDomainText = FlashCrossDomainServlet.CROSS_DOMAIN_TEXT +
                             XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +
-                            FlashCrossDomainHandler.CROSS_DOMAIN_END_TEXT + '\0';
+                            FlashCrossDomainServlet.CROSS_DOMAIN_END_TEXT + '\0';
                     connection.deliverRawText(crossDomainText);
                     return;
                 }

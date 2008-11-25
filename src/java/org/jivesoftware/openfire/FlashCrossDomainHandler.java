@@ -13,99 +13,117 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.ContextHandler;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.mortbay.jetty.handler.DefaultHandler;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.servlet.ServletHandler;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-
+/**
+ * Sets up the "legacy" flash cross domain servlet, served off port 5229.
+ * 
+ * @author Daniel Henninger
+ *
+ */
 public class FlashCrossDomainHandler extends BasicModule {
-    private ServerSocket serverSocket;
 
-    public static String CROSS_DOMAIN_TEXT = "<?xml version=\"1.0\"?>" +
-            "<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">" +
-            "<cross-domain-policy>" +
-            "<allow-access-from domain=\"*\" to-ports=\"";
-
-    public static String CROSS_DOMAIN_END_TEXT = "\" /></cross-domain-policy>";
+	private Server crossDomainServer;
+    private Connector crossDomainConnector;
+    private ContextHandlerCollection contexts;
+    private int servletPort = 5229;
 
     public FlashCrossDomainHandler() {
         super("Flash CrossDomain Handler");
+        
+        // Configure Jetty logging to a more reasonable default.
+        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
+        // JSP 2.0 uses commons-logging, so also override that implementation.
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
+        
+        contexts = new ContextHandlerCollection();
+    }
+    
+    public Integer getPort() {
+    	if (crossDomainConnector != null) {
+			return crossDomainConnector.getLocalPort();
+    	}
+    	else {
+    		return null;
+    	}
     }
 
     public void start() {
-        Thread thread = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    startServer();
-                }
-                catch (Exception e) {
-                    Log.error(e);
-                }
-            }
-        }, "Flash Cross Domain");
+        configureCrossDomainServer(servletPort);
 
-        thread.start();
+        try {
+            crossDomainServer.start();
+        }
+        catch (Exception e) {
+            Log.error("Error starting cross domain service", e);
+        }
     }
 
     public void stop() {
-        try {
-            if (serverSocket != null) {
-                serverSocket.close();
+        if (crossDomainServer != null) {
+            try {
+                crossDomainServer.stop();
+            }
+            catch (Exception e) {
+                Log.error("Error stoping cross domain service", e);
             }
         }
-        catch (IOException e) {
-            Log.error(e);
+    }
+    
+    private String getBindInterface() {
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        String bindInterface = null;
+        if (interfaceName != null) {
+            if (interfaceName.trim().length() > 0) {
+                bindInterface = interfaceName;
+            }
         }
+        return bindInterface;
     }
 
-    public int getPort() {
-        return serverSocket != null ? serverSocket.getLocalPort() : 0;
-    }
-
-    private void startServer() throws Exception {
-        try {
+    private void createConnector(int port) {
+        crossDomainConnector = null;
+        if (port > 0) {
+            SelectChannelConnector connector = new SelectChannelConnector();
             // Listen on a specific network interface if it has been set.
-            String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-            InetAddress bindInterface = null;
-            int port = 5229;
-            if (interfaceName != null) {
-                if (interfaceName.trim().length() > 0) {
-                    bindInterface = InetAddress.getByName(interfaceName);
-                }
-            }
-            serverSocket = new ServerSocket(port, -1, bindInterface);
-            Log.debug("Flash cross domain is listening on " + interfaceName + " on port " + port);
+            connector.setHost(getBindInterface());
+            connector.setPort(port);
+            crossDomainConnector = connector;
         }
-        catch (IOException e) {
-            Log.error("Could not listen on port: 5229.", e);
+    }
+    
+    private synchronized void configureCrossDomainServer(int port) {
+        crossDomainServer = new Server();
+        createConnector(port);
+        if (crossDomainConnector == null) {
+            crossDomainServer = null;
             return;
         }
-
-        while (true) {
-            Socket clientSocket;
-            try {
-                clientSocket = serverSocket.accept();
-
-                // Validate that we have a license
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-                out.println(CROSS_DOMAIN_TEXT +
-                        XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +
-                        CROSS_DOMAIN_END_TEXT);
-                out.println("\n");
-                out.flush();
-                out.close();
-            }
-            catch (IOException e) {
-                if (XMPPServer.getInstance().isShuttingDown()) {
-                    break;
-                }
-                Log.error(e);
-            }
+        else {
+            crossDomainServer.addConnector(crossDomainConnector);
         }
+
+        createCrossDomainHandler(contexts, "/");
+
+        crossDomainServer.setHandlers(new Handler[]{contexts, new DefaultHandler()});
     }
+
+    private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath) {
+        ServletHandler handler = new ServletHandler();
+        handler.addServletWithMapping(FlashCrossDomainServlet.class, "/crossdomain.xml");
+
+        ContextHandler crossContextHandler = new ContextHandler(contexts, crossPath);
+        crossContextHandler.setHandler(handler);
+    }
+
 }

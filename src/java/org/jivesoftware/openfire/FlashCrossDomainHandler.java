@@ -103,7 +103,6 @@ public class FlashCrossDomainHandler extends BasicModule {
                 String request = "";
             	request = read(in);
                 
-            	System.out.println("Request was "+request);
                 if (request.contains("<policy-file-request/>") || request.contains("GET /crossdomain.xml")) {
 	                out.write(CROSS_DOMAIN_TEXT +
 	                        XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +

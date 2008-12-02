@@ -16,8 +16,6 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
-import com.openbase.jdbc.i;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

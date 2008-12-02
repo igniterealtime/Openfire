@@ -211,7 +211,7 @@ public class CertificateManager {
                         encoded = ((DERSequence) encoded).getObjectAt(1);
                         encoded = ((DERTaggedObject) encoded).getObject();
                         encoded = ((DERTaggedObject) encoded).getObject();
-                        String identity = ((DERUTF8String) encoded).getString();
+                        String identity = ((DERString) encoded).getString();
                         if (!"".equals(identity)) {
                             // Add the decoded server name to the list of identities
                             identities.add(identity);

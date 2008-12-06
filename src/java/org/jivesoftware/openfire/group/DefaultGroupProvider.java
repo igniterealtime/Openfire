@@ -13,13 +13,16 @@
 package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.packet.JID;
 
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Database implementation of the GroupManager interface.
@@ -35,7 +38,7 @@ public class DefaultGroupProvider implements GroupProvider {
     private static final String SET_GROUP_NAME_1 =
         "UPDATE ofGroup SET groupName=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_2 =
-        "UPDATE oGroupProp SET groupName=? WHERE groupName=?";
+        "UPDATE ofGroupProp SET groupName=? WHERE groupName=?";
     private static final String SET_GROUP_NAME_3 =
         "UPDATE ofGroupUser SET groupName=? WHERE groupName=?";
     private static final String DELETE_GROUP_USERS =

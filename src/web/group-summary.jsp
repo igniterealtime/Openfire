@@ -46,6 +46,8 @@
             && !request.getParameter("search").trim().equals(""))
     {
         search = request.getParameter("search");
+        // Santize variables to prevent vulnerabilities
+        search = StringUtils.escapeHTMLTags(search);
         // Use the search terms to get the list of groups and group count.
         groups = webManager.getGroupManager().search(search, start, range);
         // Get the count as a search for *all* groups. That will let us do pagination even

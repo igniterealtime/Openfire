@@ -87,6 +87,9 @@
         numLinesParam = "50";
     }
 
+    // Santize variables to prevent vulnerabilities
+    log = StringUtils.escapeHTMLTags(log);
+
     // Other vars
     File logDir = new File(Log.getLogDirectory());
     String filename = log + ".log";

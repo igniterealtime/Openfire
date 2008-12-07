@@ -23,6 +23,7 @@
 <%@ page import="org.xmpp.packet.JID"%><%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -146,7 +147,7 @@
         <tr>
         <td class="jive-icon-label">
             <fmt:message key="error.specific_user_not_found">
-                <fmt:param value="<%= username%>" />
+                <fmt:param value="<%= StringUtils.escapeHTMLTags(username)%>" />
             </fmt:message>
         </td></tr>
     </tbody>

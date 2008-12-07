@@ -130,6 +130,11 @@
         return;
     }
 
+    // Santize variables to prevent vulnerabilities
+    if (log != null) {
+        log = StringUtils.escapeHTMLTags(log);
+    }
+
     debugEnabled = Log.isDebugEnabled();
     User pageUser = admin.getUser();
 

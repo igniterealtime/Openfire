@@ -75,7 +75,7 @@
 
     Map<String, String> errors = new HashMap<String, String>();
     if (save) {
-        if (propName == null || "".equals(propName.trim())) {
+        if (propName == null || "".equals(propName.trim()) || propName.startsWith("\"")) {
             errors.put("propName","");
         }
         if (propValue == null) {
@@ -268,12 +268,12 @@ function dodelete(propName) {
                 <% } %>
             </div>
         </td>
-        <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(n,"'","''") %>');"
+        <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');"
                 ><img src="images/edit-16x16.gif" width="16" height="16"
                       alt="<fmt:message key="server.properties.alt_edit" />" border="0"></a
                 >
         </td>
-        <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(n,"'","''") %>');"
+        <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');"
                 ><img src="images/delete-16x16.gif" width="16" height="16"
                       alt="<fmt:message key="server.properties.alt_delete" />" border="0"></a
                 >

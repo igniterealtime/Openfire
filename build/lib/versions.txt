@@ -1,54 +1,54 @@
-Name                                |  Version
-------------------------------------------------------------------------------------------------------
-ant.jar                             | Jetty 6.1.0 (1.6.5)
-ant-contrib.jar                     | 1.0b1
-ant-subdirtask.jar                  | Revision 1.4 (CVS)
-bouncycastle.jar                    | JDK 1.5, 139 (bcprov-jdk15-139.jar)
-cglib.jar                           | 2.1.3 (JMock 2.1.0)
-commons-lang.jar		            | 2.3
-commons-logging.jar                 | Jetty 5.1.10
-commons-el.jar                      | Jetty 6.0.1 (1.0)
-commons-httpclient.jar              | 3.1
-commons-codec.jar                   | 1.3
-dom4j.jar                           | 1.6.1
-dbutil.jar                          | Jive Code, no release version.
-hamcrest.jar                        | 1.0 (JMock 2.1.0)
-hamcrest-api.jar                    | 1.0 (JMock 2.1.0)
-hsqldb.jar                          | 1.8.0.5
-jetty.jar                           | Jetty 6.1.10
-jetty-sslengine.jar                 | Jetty 6.1.10
-jetty-util.jar                      | Jetty 6.1.10
-jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)
-jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)
-jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)
-jdic.jar                            | 0.9.1 (for windows only)
-jdom.jar                            | 1.0 (required by rome)
-jstl.jar                            | Jakarta standard taglib 1.1.2
-jmdns.jar                           | PRE 1.0, patched
-jmock.jar                           | 2.1.0
-jmock-junit4.jar                    | 2.1.0
-jmock-legacy.jar                    | 2.1.0
-jsp-api.jar                         | Jetty 6.0.1 (2.0)
-jtds.jar                            | 1.2.2
-junit.jar                           | 4.3.1
-jzlib.jar                           | 1.0.7
-mail.jar                            | 1.4.1 (JavaMail)
-mina-core.jar                       | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)
-mina-filter-compression.jar         | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)
-mina-filter-ssl.jar                 | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)
-mysql.jar                           | 5.0.8
-objenesis                           | 1.0 (JMock 2.1.0)
-pack200task.jar                     | August 5, 2004
-postgres.jar                        | 8.2-506.jdbc3
-proxool.jar                         | 0.9.0RC3+ (see note #1)
-rome.jar                            | 0.9
-rome-fetcher.jar                    | 0.9
-servlet.jar                         | Jetty 6.1.10 (2.5)
-shaj.jar                            | 0.5
-sitemesh.jar                        | 2.2.1
-standard.jar                        | Jakarta standard taglib 1.1.2
-xmltask.jar                         | 1.11
-xpp3.jar                            | XPP_3 1.1.4c
+Name                                |  Version                                                     License
+---------------------------------------------------------------------------------------------------------------------
+ant.jar                             | Jetty 6.1.0 (1.6.5)                                          | Apache 2.0
+ant-contrib.jar                     | 1.0b1                                                        |
+ant-subdirtask.jar                  | Revision 1.4 (CVS)                                           |
+bouncycastle.jar                    | JDK 1.5, 139 (bcprov-jdk15-139.jar)                          |
+cglib.jar                           | 2.1.3 (JMock 2.1.0)                                          |
+commons-lang.jar		            | 2.3                                                          | Apache 2.0
+commons-logging.jar                 | Jetty 5.1.10                                                 | Apache 2.0
+commons-el.jar                      | Jetty 6.0.1 (1.0)                                            | Apache 2.0
+commons-httpclient.jar              | 3.1                                                          | Apache 2.0
+commons-codec.jar                   | 1.3                                                          | Apache 2.0
+dom4j.jar                           | 1.6.1                                                        | BSD (http://www.dom4j.org/dom4j-1.6.1/license.html)
+dbutil.jar                          | Jive Code, no release version.                               |
+hamcrest.jar                        | 1.0 (JMock 2.1.0)                                            |
+hamcrest-api.jar                    | 1.0 (JMock 2.1.0)                                            |
+hsqldb.jar                          | 1.8.0.5                                                      | BSD (http://hsqldb.org/web/hsqlLicense.html)
+jetty.jar                           | Jetty 6.1.10                                                 |
+jetty-sslengine.jar                 | Jetty 6.1.10                                                 |
+jetty-util.jar                      | Jetty 6.1.10                                                 |
+jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)                                         |
+jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)                                         |
+jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                |
+jdic.jar                            | 0.9.1 (for windows only)                                     |
+jdom.jar                            | 1.0 (required by rome)                                       |
+jstl.jar                            | Jakarta standard taglib 1.1.2                                |
+jmdns.jar                           | PRE 1.0, patched                                             |
+jmock.jar                           | 2.1.0                                                        |
+jmock-junit4.jar                    | 2.1.0                                                        |
+jmock-legacy.jar                    | 2.1.0                                                        |
+jsp-api.jar                         | Jetty 6.0.1 (2.0)                                            |
+jtds.jar                            | 1.2.2                                                        |
+junit.jar                           | 4.3.1                                                        |
+jzlib.jar                           | 1.0.7                                                        | GPL
+mail.jar                            | 1.4.1 (JavaMail)                                             |
+mina-core.jar                       | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mina-filter-compression.jar         | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mina-filter-ssl.jar                 | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mysql.jar                           | 5.0.8                                                        | GPL
+objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
+pack200task.jar                     | August 5, 2004                                               | LGPL
+postgres.jar                        | 8.3-604-jdbc4                                                | BSD (http://jdbc.postgresql.org/license.html)
+proxool.jar                         | 0.9.0RC3+ (see note #1)                                      | Apache 1.0 (http://proxool.sourceforge.net/licence.html)
+rome.jar                            | 0.9                                                          | Apache 2.0
+rome-fetcher.jar                    | 0.9                                                          | Apache 2.0
+servlet.jar                         | Jetty 6.1.10 (2.5)                                           |
+shaj.jar                            | 0.5                                                          | Apache 2.0
+sitemesh.jar                        | 2.2.1                                                        |
+standard.jar                        | Jakarta standard taglib 1.1.2                                |
+xmltask.jar                         | 1.11                                                         |
+xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 
 
 Notes

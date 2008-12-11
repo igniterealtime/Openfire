@@ -76,6 +76,11 @@
     int numLines = ParamUtils.getIntParameter(request,"lines",50);
     String mode = ParamUtils.getParameter(request,"mode");
 
+    // Only allow requests for valid log file names.
+    if (!("debug".equals(log) || "warn".equals(log) || "info".equals(log) || "error".equals(log))) {
+        log = null;
+    }
+
     // Set defaults
     if (log == null) {
         log = "error";
@@ -86,9 +91,6 @@
     if (numLinesParam == null) {
         numLinesParam = "50";
     }
-
-    // Santize variables to prevent vulnerabilities
-    log = StringUtils.escapeHTMLTags(log);
 
     // Other vars
     File logDir = new File(Log.getLogDirectory());

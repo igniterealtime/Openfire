@@ -185,18 +185,18 @@
         <td width="45%" valign="middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
                  <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
-	                 <%=  room.getName() %>
+	                 <%=  StringUtils.escapeHTMLTags(room.getName()) %>
 	             </a>
             <% }
                else { %>
 	            <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
-                <%= room.getNaturalLanguageName() %> (<%=  room.getName() %>)
+                <%= StringUtils.escapeHTMLTags(room.getNaturalLanguageName()) %> (<%=  StringUtils.escapeHTMLTags(room.getName()) %>)
 	            </a>
             <% } %>
         </td>
         <td width="45%" valign="middle">
             <% if (!"".equals(room.getDescription())) { %>
-                <%= room.getDescription() %>
+                <%= StringUtils.escapeHTMLTags(room.getDescription()) %>
             <% }
                else { %>
                 &nbsp;

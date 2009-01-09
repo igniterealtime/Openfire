@@ -44,6 +44,8 @@ import java.util.regex.Pattern;
  */
 public class CertificateManager {
 
+    private static final String OTHERNAME_XMPP_OID = "1.3.6.1.5.5.7.8.5";
+
     private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
     private static Pattern valuesPattern = Pattern.compile("(?i)(=)([^,]*)");
 
@@ -206,13 +208,21 @@ public class CertificateManager {
                     // Type OtherName found so return the associated value
                     try {
                         // Value is encoded using ASN.1 so decode it to get the server's identity
-                        ASN1InputStream decoder = new ASN1InputStream((byte[]) item.toArray()[1]);
-                        DEREncodable encoded = decoder.readObject();
-                        encoded = ((DERSequence) encoded).getObjectAt(1);
-                        encoded = ((DERTaggedObject) encoded).getObject();
-                        encoded = ((DERTaggedObject) encoded).getObject();
-                        String identity = ((DERString) encoded).getString();
-                        if (!"".equals(identity)) {
+                        ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
+                        DERSequence otherNameSeq = (DERSequence) decoder.readObject();
+
+                        // Check the object identifier
+                        DERObjectIdentifier objectId = (DERObjectIdentifier) otherNameSeq.getObjectAt(0);
+                        if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
+                            // Not a XMPP otherName
+                            Log.debug("CertificateManager: Ignoring non-XMPP otherName, " + objectId.getId());
+                            continue;
+                        }
+
+                        // Get identity string
+                        DERUTF8String derStr = DERUTF8String.getInstance(otherNameSeq.getObjectAt(1));
+                        String identity = derStr.getString();
+                        if (identity != null && identity.length() > 0) {
                             // Add the decoded server name to the list of identities
                             identities.add(identity);
                         }
@@ -227,10 +237,7 @@ public class CertificateManager {
                         Log.error("CertificateManager: Error decoding subjectAltName", e);
                     }
                 }
-                // Other types are not good for XMPP so ignore them
-                else if (Log.isDebugEnabled()) {
-                    Log.debug("CertificateManager: SubjectAltName of invalid type found: " + certificate.getSubjectDN());
-                }
+                // Other types are not applicable for XMPP, so silently ignore them
             }
         }
         catch (CertificateParsingException e) {

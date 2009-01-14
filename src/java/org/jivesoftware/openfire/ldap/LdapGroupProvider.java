@@ -18,16 +18,23 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import javax.naming.directory.*;
-import javax.naming.ldap.*;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -174,7 +181,7 @@ public class LdapGroupProvider implements GroupProvider {
             }
             username = JID.unescapeNode(user.getNode());
             try {
-                username = manager.findUserDN(username) + "," + manager.getBaseDN();
+                username = manager.findUserDN(username) + "," + manager.getUsersBaseDN(username);
             }
             catch (Exception e) {
                 Log.error("Could not find user in LDAP " + username);

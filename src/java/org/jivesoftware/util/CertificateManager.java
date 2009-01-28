@@ -123,7 +123,7 @@ public class CertificateManager {
         // Generate public and private keys
         KeyPair keyPair = generateKeyPair("RSA", 1024);
         // Create X509 certificate with keys and specified domain
-        X509Certificate cert = createX509V3Certificate(keyPair, 60, issuerDN, subjectDN, domain, "MD5withRSA");
+        X509Certificate cert = createX509V3Certificate(keyPair, 60, issuerDN, subjectDN, domain, "SHA1WITHRSAENCRYPTION");
         // Store new certificate and private key in the keystore
         ksKeys.setKeyEntry(alias, keyPair.getPrivate(), keyPassword.toCharArray(), new X509Certificate[]{cert});
         // Notify listeners that a new certificate has been created
@@ -387,7 +387,7 @@ public class CertificateManager {
 
         PublicKey pubKey = cert.getPublicKey();
 
-        String signatureAlgorithm = "DSA".equals(pubKey.getAlgorithm()) ? "SHA1withDSA" : "MD5withRSA";
+        String signatureAlgorithm = "DSA".equals(pubKey.getAlgorithm()) ? "SHA1withDSA" : "SHA1WITHRSAENCRYPTION";
 
         PKCS10CertificationRequest csr =
                 new PKCS10CertificationRequest(signatureAlgorithm, xname, pubKey, null, privKey);

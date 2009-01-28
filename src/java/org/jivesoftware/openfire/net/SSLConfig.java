@@ -107,7 +107,7 @@ public class SSLConfig {
                     "  keyStoreLocation: [" + keyStoreLocation + "]\n" +
                     "  keypass: [" + keypass + "]\n" +
                     "  s2sTrustStoreLocation: [" + s2sTrustStoreLocation + "]\n" +
-                    "  s2sTrustpass: [" + s2sTrustpass + "]\n"); 
+                    "  s2sTrustpass: [" + s2sTrustpass + "]\n", e); 
             keyStore = null;
             s2sTrustStore = null;
             s2sFactory = null;

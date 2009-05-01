@@ -10,9 +10,9 @@
  */
 package org.jivesoftware.openfire.admin;
 
-import org.xmpp.packet.JID;
-import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.*;
+import org.xmpp.packet.JID;
 
 import java.util.*;
 
@@ -82,6 +82,11 @@ public class DefaultAdminProvider implements AdminProvider {
             catch (IllegalArgumentException e) {
                 Log.warn("Invalid JID found in admin.authorizedJIDs system property: " + jid, e);
             }
+        }
+
+        if (adminList.isEmpty()) {
+            // Add default admin account when none was specified
+            adminList.add(new JID("admin", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true));
         }
 
         return adminList;

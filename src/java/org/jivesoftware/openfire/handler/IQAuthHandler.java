@@ -33,9 +33,9 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.net.UnknownHostException;
 
 /**
  * Implements the TYPE_IQ jabber:iq:auth protocol (plain only). Clients
@@ -87,13 +87,14 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     }
 
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
-        LocalClientSession session = (LocalClientSession) sessionManager.getSession(packet.getFrom());
+        JID from = packet.getFrom();
+        LocalClientSession session = (LocalClientSession) sessionManager.getSession(from);
         // If no session was found then answer an error (if possible)
         if (session == null) {
             Log.error("Error during authentication. Session not found in " +
                     sessionManager.getPreAuthenticatedKeys() +
                     " for key " +
-                    packet.getFrom());
+                    from);
             // This error packet will probably won't make it through
             IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
@@ -140,7 +141,27 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     
                         // If we're already logged in, this is a password reset
                         if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
-                            response = passwordReset(password, packet, username, session);
+                            // Check that a new password has been specified
+                            if (password == null || password.trim().length() == 0) {
+                                response = IQ.createResultIQ(packet);
+                                response.setError(PacketError.Condition.not_allowed);
+                                response.setType(IQ.Type.error);
+                            }
+                            else {
+                                // Check if a user is trying to change his own password
+                                if (session.getUsername().equalsIgnoreCase(username)) {
+                                    response = passwordReset(password, packet, username, session);
+                                }
+                                // Check if an admin is trying to set the password for another user
+                                else if (XMPPServer.getInstance().getAdmins()
+                                        .contains(new JID(from.getNode(), from.getDomain(), null, true))) {
+                                    response = passwordReset(password, packet, username, session);
+                                }
+                                else {
+                                    // User not authorized to change the password of another user
+                                    throw new UnauthorizedException();
+                                }
+                            }
                         }
                         else {
                             // it is an auth attempt

@@ -338,6 +338,7 @@ public class XMPPServer {
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             // Set the new server domain assigned during the setup process
             name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
+            xmppServerInfo.setXMPPDomain(name);
 
             // Update certificates (if required)
             try {

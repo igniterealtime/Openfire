@@ -100,9 +100,9 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
             throws UserNotFoundException
     {
         User user = getUser(username);
-        user.setPassword(password);
-        user.setName(name);
-        user.setEmail(email);
+        if (password != null) user.setPassword(password);
+        if (name != null) user.setName(name);
+        if (email != null) user.setEmail(email);
 
         if (groupNames != null) {
             Collection<Group> newGroups = new ArrayList<Group>();

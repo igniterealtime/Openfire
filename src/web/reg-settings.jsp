@@ -207,7 +207,7 @@
              <%= ((anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label>
+                <label for="rb05"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label>
             </td>
         </tr>
         <tr>
@@ -216,7 +216,7 @@
              <%= ((!anonLogin) ? "checked" : "") %>>
             </td>
             <td width="99%">
-                <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label>
+                <label for="rb06"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label>
             </td>
         </tr>
     </tbody>

@@ -263,7 +263,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
-    public IQ query(Component component, IQ packet, int timeout) throws ComponentException {
+    public IQ query(Component component, IQ packet, long timeout) throws ComponentException {
         final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
         XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), new IQResultListener() {
             public void receivedAnswer(IQ packet) {

@@ -12,19 +12,27 @@
 
 package org.jivesoftware.openfire;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Router of packets with multiple recipients. Clients may send a single packet with multiple

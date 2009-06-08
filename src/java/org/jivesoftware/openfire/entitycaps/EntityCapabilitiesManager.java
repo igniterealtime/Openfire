@@ -12,8 +12,13 @@
 
 package org.jivesoftware.openfire.entitycaps;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.dom4j.Element;
-import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -21,11 +26,10 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
-
-import java.util.*;
 
 /**
  * Implements server side mechanics for XEP-0115: "Entity Capabilities"

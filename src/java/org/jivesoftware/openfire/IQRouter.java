@@ -12,6 +12,13 @@
 
 package org.jivesoftware.openfire;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -25,10 +32,12 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
-import org.xmpp.packet.*;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.xmpp.component.IQResultListener;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 
 /**
  * Routes iq packets throughout the server. Routing is based on the recipient

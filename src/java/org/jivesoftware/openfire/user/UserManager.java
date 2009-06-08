@@ -12,20 +12,29 @@
 
 package org.jivesoftware.openfire.user;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.dom4j.Element;
-import org.jivesoftware.openfire.IQResultListener;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-
-import java.util.*;
 
 /**
  * Manages users, including loading, creating and deleting.

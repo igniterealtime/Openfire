@@ -1,7 +1,7 @@
 package org.jivesoftware.openfire.plugin.component;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.IQResultListener;
+import org.xmpp.component.IQResultListener;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;

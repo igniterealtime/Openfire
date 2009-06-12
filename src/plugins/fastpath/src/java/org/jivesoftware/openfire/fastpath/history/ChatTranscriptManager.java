@@ -12,11 +12,22 @@
 
 package org.jivesoftware.openfire.fastpath.history;
 
-import org.jivesoftware.xmpp.workgroup.DbProperties;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.jivesoftware.xmpp.workgroup.request.Request;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -24,16 +35,14 @@ import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.xmpp.workgroup.DbProperties;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.jivesoftware.xmpp.workgroup.request.Request;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
 import org.xmpp.packet.JID;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Utility class to control the update and retrieval of Chat Transcripts within the
@@ -111,7 +120,7 @@ public class ChatTranscriptManager {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -144,7 +153,7 @@ public class ChatTranscriptManager {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -165,7 +174,7 @@ public class ChatTranscriptManager {
             element = DocumentHelper.parseText(transcript);
         }
         catch (DocumentException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
 
         StringBuilder buf = new StringBuilder();
@@ -216,7 +225,7 @@ public class ChatTranscriptManager {
                         }
                     }
                     catch (ParseException e) {
-                        ComponentManagerFactory.getComponentManager().getLog().error(e);
+                        Log.error(e);
                     }
                 }
             }
@@ -272,7 +281,7 @@ public class ChatTranscriptManager {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -304,7 +313,7 @@ public class ChatTranscriptManager {
             session.setMetadata(metadata);
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -343,7 +352,7 @@ public class ChatTranscriptManager {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -371,7 +380,7 @@ public class ChatTranscriptManager {
             element = DocumentHelper.parseText(transcript);
         }
         catch (DocumentException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
 
         StringBuilder buf = new StringBuilder();
@@ -431,7 +440,7 @@ public class ChatTranscriptManager {
                         }
                     }
                     catch (ParseException e) {
-                        ComponentManagerFactory.getComponentManager().getLog().error(e);
+                        Log.error(e);
                     }
                 }
             }

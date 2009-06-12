@@ -12,18 +12,42 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.disco.*;
-import org.jivesoftware.openfire.forms.DataForm;
-import org.jivesoftware.openfire.forms.FormField;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.muc.HistoryStrategy;
+import org.jivesoftware.openfire.muc.MUCEventDelegate;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MUCUser;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
@@ -35,15 +59,15 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
-import org.xmpp.packet.*;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
+import org.xmpp.forms.DataForm.Type;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -1217,42 +1241,42 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return features.iterator();
     }
 
-    public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
             MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room)) {
-                XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);
+                final DataForm dataForm = new DataForm(Type.result);
 
-                XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-                field.setType(FormField.TYPE_HIDDEN);
-                field.addValue("http://jabber.org/protocol/muc#roominfo");
-                dataForm.addField(field);
+                final FormField fieldType = dataForm.addField();
+                fieldType.setVariable("FORM_TYPE");
+                fieldType.setType(FormField.Type.hidden);
+                fieldType.addValue("http://jabber.org/protocol/muc#roominfo");
 
-                field = new XFormFieldImpl("muc#roominfo_description");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.desc"));
-                field.addValue(room.getDescription());
-                dataForm.addField(field);
+                final FormField fieldDescr = dataForm.addField();
+                fieldDescr.setVariable("muc#roominfo_description");
+                fieldDescr.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.desc"));
+                fieldDescr.addValue(room.getDescription());
 
-                field = new XFormFieldImpl("muc#roominfo_subject");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
-                field.addValue(room.getSubject());
-                dataForm.addField(field);
+                final FormField fieldSubj = dataForm.addField();
+                fieldSubj.setVariable("muc#roominfo_subject");
+                fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
+                fieldSubj.addValue(room.getSubject());
 
-                field = new XFormFieldImpl("muc#roominfo_occupants");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
-                field.addValue(Integer.toString(room.getOccupantsCount()));
-                dataForm.addField(field);
+                final FormField fieldOcc = dataForm.addField();
+                fieldSubj.setVariable("muc#roominfo_occupants");
+                fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
+                fieldSubj.addValue(Integer.toString(room.getOccupantsCount()));
 
                 /*field = new XFormFieldImpl("muc#roominfo_lang");
                 field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.language"));
                 field.addValue(room.getLanguage());
                 dataForm.addField(field);*/
 
-                field = new XFormFieldImpl("x-muc#roominfo_creationdate");
-                field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
-                field.addValue(dateFormatter.format(room.getCreationDate()));
-                dataForm.addField(field);
+                final FormField fieldDate = dataForm.addField();
+                fieldDate.setVariable("x-muc#roominfo_creationdate");
+                fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
+                fieldDate.addValue(dateFormatter.format(room.getCreationDate()));
 
                 return dataForm;
             }

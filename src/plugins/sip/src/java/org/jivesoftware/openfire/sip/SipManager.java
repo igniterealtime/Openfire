@@ -12,19 +12,20 @@
 
 package org.jivesoftware.openfire.sip;
 
+import java.io.File;
+import java.util.Map;
+
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.sip.log.LogComponent;
 import org.jivesoftware.openfire.sip.log.LogListenerImpl;
 import org.jivesoftware.openfire.sip.sipaccount.SipComponent;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-
-import java.util.Map;
-import java.io.File;
 
 /**
  * Remote management for users SIP account for Spark SIP Plugin
@@ -62,17 +63,17 @@ public class SipManager implements Plugin, PropertyEventListener {
             componentManager.addComponent(serviceName, sipComponent);
 
         } catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         try {
             componentManager.addComponent(LogComponent.NAME, logComponent);
 
         } catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
 
         PropertyEventDispatcher.addListener(this);
-        componentManager.getLog().debug("SIPARK STARTED");
+        Log.debug("SIPARK STARTED");
     }
 
     public void destroyPlugin() {
@@ -82,12 +83,12 @@ public class SipManager implements Plugin, PropertyEventListener {
             try {
                 componentManager.removeComponent(serviceName);
             } catch (Exception e) {
-                componentManager.getLog().error(e);
+                Log.error(e);
             }
             try {
                 componentManager.removeComponent(LogComponent.NAME);
             } catch (Exception e) {
-                componentManager.getLog().error(e);
+                Log.error(e);
             }
         }
         sipComponent = null;
@@ -130,12 +131,12 @@ public class SipManager implements Plugin, PropertyEventListener {
         try {
             componentManager.removeComponent(this.serviceName);
         } catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         try {
             componentManager.addComponent(serviceName, sipComponent);
         } catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         this.serviceName = serviceName;
     }

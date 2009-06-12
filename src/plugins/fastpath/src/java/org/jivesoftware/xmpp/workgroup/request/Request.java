@@ -12,23 +12,29 @@
 
 package org.jivesoftware.xmpp.workgroup.request;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.Offer;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.utils.FastpathConstants;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>Database compatible workgroup request information.</p>
@@ -78,7 +84,7 @@ public abstract class Request {
     public static Request getRequest(String requestID) throws NotFoundException {
         Request request = requests.get(requestID);
         if (request == null) {
-            ComponentManagerFactory.getComponentManager().getLog().debug("Request not found by ID: " + requestID);
+            Log.debug("Request not found by ID: " + requestID);
             throw new NotFoundException();
         }
         return request;

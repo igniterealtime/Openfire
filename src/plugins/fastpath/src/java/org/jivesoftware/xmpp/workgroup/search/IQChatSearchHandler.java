@@ -1,4 +1,5 @@
 /**
+
  * $RCSfile$
  * $Revision: 19360 $
  * $Date: 2005-07-21 10:04:49 -0700 (Thu, 21 Jul 2005) $
@@ -12,19 +13,6 @@
 
 package org.jivesoftware.xmpp.workgroup.search;
 
-import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.forms.DataForm;
-import org.xmpp.forms.FormField;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,6 +23,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * This class is responsible for handling all the packets sent to the workgroup service whose
@@ -90,7 +91,7 @@ public class IQChatSearchHandler {
                             startDate = DataForm.parseDate(field.getValues().get(0));
                         }
                         catch (ParseException e) {
-                            ComponentManagerFactory.getComponentManager().getLog().debug("Invalid startDate " +
+                            Log.debug("Invalid startDate " +
                                 field.getValues().get(0), e);
                         }
                     }
@@ -99,7 +100,7 @@ public class IQChatSearchHandler {
                             endDate = DataForm.parseDate(field.getValues().get(0));
                         }
                         catch (ParseException e) {
-                            ComponentManagerFactory.getComponentManager().getLog().debug("Invalid endDate " +
+                            Log.debug("Invalid endDate " +
                                 field.getValues().get(0), e);
                         }
                     }
@@ -113,7 +114,7 @@ public class IQChatSearchHandler {
                                             new JID(value)));
                                 }
                                 catch (UserNotFoundException e) {
-                                    ComponentManagerFactory.getComponentManager().getLog().debug("Invalid workgroup JID " +
+                                    Log.debug("Invalid workgroup JID " +
                                         value, e);
                                 }
                             }
@@ -233,7 +234,7 @@ public class IQChatSearchHandler {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

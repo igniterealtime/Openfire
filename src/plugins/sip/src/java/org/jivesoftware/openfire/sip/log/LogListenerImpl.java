@@ -12,15 +12,16 @@
 
 package org.jivesoftware.openfire.sip.log;
 
+import java.sql.SQLException;
+import java.util.Date;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.sip.calllog.CallLog;
 import org.jivesoftware.openfire.sip.calllog.CallLogDAO;
 import org.jivesoftware.openfire.sip.calllog.CallLogExtension;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;
-
-import java.sql.SQLException;
-import java.util.Date;
 
 /**
  * Implements a LogListener.
@@ -65,7 +66,7 @@ public class LogListenerImpl implements LogListener {
                 try {
                     CallLogDAO.insert(callLog);
                 } catch (SQLException e) {
-                    componentManager.getLog().error(e);
+                    Log.error(e);
                 }
             }
         }

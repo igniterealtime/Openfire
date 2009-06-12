@@ -115,7 +115,7 @@ public class WorkgroupUtils {
                 answer.add(algorithm);
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
 
@@ -135,7 +135,7 @@ public class WorkgroupUtils {
                 answer.add(algorithm);
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
         return answer;

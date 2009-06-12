@@ -12,16 +12,6 @@
 
 package org.jivesoftware.openfire.fastpath.providers;
 
-import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
-import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,6 +21,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.dom4j.Element;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
 /**
  * MetadataProvider is a generic data handler to retrieve name-value pairs
@@ -98,7 +98,7 @@ public class MetadataProvider implements WorkgroupProvider {
                     }
                 }
                 catch (IOException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
         }

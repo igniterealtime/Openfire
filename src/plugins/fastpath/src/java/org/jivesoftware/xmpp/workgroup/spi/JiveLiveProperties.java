@@ -119,7 +119,7 @@ public class JiveLiveProperties implements DbProperties {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

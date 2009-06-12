@@ -12,12 +12,16 @@
 
 package org.jivesoftware.xmpp.workgroup.utils;
 
-import org.xmpp.component.ComponentManagerFactory;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
+
+import org.jivesoftware.util.Log;
 
 /**
  * <code>URLFileSystem</code> class handles some of the most common
@@ -457,7 +461,7 @@ public class URLFileSystem {
             return seed;
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
             return null;
         }
     }

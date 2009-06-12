@@ -12,6 +12,14 @@
 
 package org.jivesoftware.openfire.plugin;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -21,16 +29,19 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.*;
-
-import java.io.File;
-import java.util.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * Broadcast service plugin. It accepts messages and broadcasts them out to
@@ -77,7 +88,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         PropertyEventDispatcher.addListener(this);
     }
@@ -90,7 +101,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 componentManager.removeComponent(serviceName);
             }
             catch (Exception e) {
-                componentManager.getLog().error(e);
+                Log.error(e);
             }
         }
         componentManager = null;
@@ -190,7 +201,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     componentManager.sendPacket(this, error);
                 }
                 catch (Exception e) {
-                    componentManager.getLog().error(e);
+                    Log.error(e);
                 }
                 return;
             }
@@ -214,7 +225,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     componentManager.sendPacket(this, error);
                 }
                 catch (Exception e) {
-                    componentManager.getLog().error(e);
+                    Log.error(e);
                 }
             }
             else if (canProceed) {
@@ -227,7 +238,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                         componentManager.sendPacket(this, newMessage);
                     }
                     catch (Exception e) {
-                        componentManager.getLog().error(e);
+                        Log.error(e);
                     }
                 }
             }
@@ -247,7 +258,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     componentManager.sendPacket(this, error);
                 }
                 catch (Exception e) {
-                    componentManager.getLog().error(e);
+                    Log.error(e);
                 }
             }
         }
@@ -293,7 +304,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             }
         }
         catch (ComponentException e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -379,7 +390,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             componentManager.sendPacket(this, reply);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -540,13 +551,13 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             componentManager.removeComponent(this.serviceName);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         try {
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         this.serviceName = serviceName;
     }

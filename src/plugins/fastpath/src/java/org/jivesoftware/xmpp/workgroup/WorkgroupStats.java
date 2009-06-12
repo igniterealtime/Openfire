@@ -132,7 +132,7 @@ public class WorkgroupStats {
                 }
             }
             catch (Exception ex) {
-                ComponentManagerFactory.getComponentManager().getLog().error(
+                Log.error(
                     "Error retrieving chat transcript(s)", ex);
             }
             finally {
@@ -142,7 +142,7 @@ public class WorkgroupStats {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
     }
 
@@ -183,7 +183,7 @@ public class WorkgroupStats {
             workgroup.send(reply);
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(
+            Log.error(
                     "There was an error retrieving the following transcript. SessionID = " +
                     sessionID + " Transcript=" + transcriptXML, ex);
 
@@ -220,7 +220,7 @@ public class WorkgroupStats {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

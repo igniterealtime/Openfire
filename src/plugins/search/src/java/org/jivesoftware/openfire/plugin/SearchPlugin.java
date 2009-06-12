@@ -139,7 +139,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             componentManager.addComponent(serviceName, this);
         }
         catch (ComponentException e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         PropertyEventDispatcher.addListener(this);
     }
@@ -175,7 +175,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
         catch (Exception e) {
             if (componentManager != null) {
-                componentManager.getLog().error(e);
+                Log.error(e);
             }
         }
         serviceName = null;
@@ -217,7 +217,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         try {
             componentManager.sendPacket(this, replyPacket);
         } catch (ComponentException e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
 
     }
@@ -936,14 +936,14 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             componentManager.removeComponent(this.serviceName);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         
         try {
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
         
         this.serviceName = serviceName;

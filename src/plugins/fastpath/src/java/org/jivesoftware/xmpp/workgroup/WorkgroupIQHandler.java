@@ -12,8 +12,12 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.fastpath.WorkgroupSettings;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.OfferInterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
@@ -23,10 +27,6 @@ import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.TransferRequest;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.NotFoundException;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -97,7 +97,7 @@ public class WorkgroupIQHandler {
             }
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
             IQ reply = IQ.createResultIQ(packet);
             if (packet.getChildElement() != null) {
                 reply.setChildElement(packet.getChildElement().createCopy());
@@ -161,7 +161,7 @@ public class WorkgroupIQHandler {
             catch (NotFoundException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                ComponentManagerFactory.getComponentManager().getLog().debug("Request not found" +
+                Log.debug("Request not found" +
                         " while departing queue:", e);
             }
         }
@@ -188,7 +188,7 @@ public class WorkgroupIQHandler {
                         if (agentSession == null) {
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                            ComponentManagerFactory.getComponentManager().getLog()
+                            Log
                                     .debug("Agent not found while accepting offer");
                         }
                         else {
@@ -214,13 +214,13 @@ public class WorkgroupIQHandler {
             catch (NotFoundException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                ComponentManagerFactory.getComponentManager().getLog().debug("Request not found " +
+                Log.debug("Request not found " +
                         "while accepting offer: ", e);
             }
             catch (AgentNotFoundException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                ComponentManagerFactory.getComponentManager().getLog().debug("Agent not found " +
+                Log.debug("Agent not found " +
                         "while accepting offer: ", e);
             }
         }
@@ -247,7 +247,7 @@ public class WorkgroupIQHandler {
                         if (agentSession == null) {
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                            ComponentManagerFactory.getComponentManager().getLog()
+                            Log
                                     .debug("Agent not found while accepting offer");
                         }
                         else {
@@ -269,13 +269,13 @@ public class WorkgroupIQHandler {
             catch (NotFoundException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                ComponentManagerFactory.getComponentManager().getLog().debug("Request not found " +
+                Log.debug("Request not found " +
                         "while rejecting offer: ", e);
             }
             catch (AgentNotFoundException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(new PacketError(PacketError.Condition.item_not_found));
-                ComponentManagerFactory.getComponentManager().getLog().debug("Agent not found " +
+                Log.debug("Agent not found " +
                         "while accepting offer: ", e);
             }
         }
@@ -576,7 +576,7 @@ public class WorkgroupIQHandler {
     }
 
     private void dropPacket(Packet packet) {
-        ComponentManagerFactory.getComponentManager().getLog().info("Dropped packet: " +
+        Log.info("Dropped packet: " +
                 packet.toString());
     }
 }

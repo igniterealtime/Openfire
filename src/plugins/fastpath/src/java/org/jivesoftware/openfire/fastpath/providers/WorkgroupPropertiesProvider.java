@@ -12,15 +12,15 @@
 
 package org.jivesoftware.openfire.fastpath.providers;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -65,7 +65,7 @@ public class WorkgroupPropertiesProvider implements WorkgroupProvider {
                 returnPacket.addElement("name").setText(fullName);
             }
             catch (UserNotFoundException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
         }

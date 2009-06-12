@@ -12,25 +12,37 @@
 
 package org.jivesoftware.openfire.handler;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimeZone;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.OfflineMessage;
+import org.jivesoftware.openfire.OfflineMessageStore;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.disco.*;
-import org.jivesoftware.openfire.forms.DataForm;
-import org.jivesoftware.openfire.forms.FormField;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Implements JEP-0013: Flexible Offline Message Retrieval. Allows users to request number of
@@ -137,20 +149,20 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return Arrays.asList(NAMESPACE).iterator();
     }
 
-    public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
 
-        XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);
+        final DataForm dataForm = new DataForm(DataForm.Type.result);
 
-        XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-        field.setType(FormField.TYPE_HIDDEN);
-        field.addValue(NAMESPACE);
-        dataForm.addField(field);
+        final FormField field1 = dataForm.addField();
+        field1.setVariable("FORM_TYPE");
+        field1.setType(FormField.Type.hidden);
+        field1.addValue(NAMESPACE);
 
-        field = new XFormFieldImpl("number_of_messages");
-        field.addValue(String.valueOf(messageStore.getMessages(senderJID.getNode(), false).size()));
-        dataForm.addField(field);
+        final FormField field2 = dataForm.addField();
+        field2.setVariable("number_of_messages");
+        field2.addValue(String.valueOf(messageStore.getMessages(senderJID.getNode(), false).size()));
 
         return dataForm;
     }

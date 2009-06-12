@@ -12,18 +12,18 @@
 
 package org.jivesoftware.openfire.fastpath.settings;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.openfire.fastpath.WorkgroupSettings;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.openfire.fastpath.WorkgroupSettings;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
 
 public class SettingsManager {
     private final Map<String, String> settings = new HashMap<String, String>();
@@ -51,7 +51,7 @@ public class SettingsManager {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);   
+            Log.error(ex);   
         }
     }
 
@@ -92,7 +92,7 @@ public class SettingsManager {
             workgroupSettings.add(workgroup.getJID().toBareJID(), element);
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
     }
 }

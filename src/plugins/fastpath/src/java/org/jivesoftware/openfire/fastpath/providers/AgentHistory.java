@@ -11,16 +11,6 @@
  */
 package org.jivesoftware.openfire.fastpath.providers;
 
-import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,6 +18,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
 /**
  * AgentHistory is responsible for retrieving the information for one agent.
@@ -113,14 +113,14 @@ public class AgentHistory implements WorkgroupProvider {
                         }
                     }
                     catch (NumberFormatException e) {
-                        ComponentManagerFactory.getComponentManager().getLog().error(e);
+                        Log.error(e);
                     }
                 }
             }
             result.close();
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -210,7 +210,7 @@ public class AgentHistory implements WorkgroupProvider {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

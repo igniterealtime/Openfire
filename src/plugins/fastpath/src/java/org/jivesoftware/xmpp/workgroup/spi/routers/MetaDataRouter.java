@@ -11,15 +11,15 @@
  */
 package org.jivesoftware.xmpp.workgroup.spi.routers;
 
+import java.util.List;
+import java.util.Map;
+
+import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.routing.RequestRouter;
-import org.xmpp.component.ComponentManagerFactory;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * <p>Routes requests to the queue with the most matching meta-data.</p>
@@ -132,7 +132,7 @@ public class MetaDataRouter extends RequestRouter {
             }
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         return currentMatch;
     }

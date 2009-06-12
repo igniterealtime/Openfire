@@ -12,20 +12,6 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
-import org.jivesoftware.openfire.fastpath.util.TaskEngine;
-import org.jivesoftware.xmpp.workgroup.interceptor.AgentInterceptorManager;
-import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
-import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.ConcurrentHashSet;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,6 +21,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.fastpath.util.TaskEngine;
+import org.jivesoftware.util.ConcurrentHashSet;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.interceptor.AgentInterceptorManager;
+import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
+import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>The Workgroup's presence handler processes all incoming
@@ -151,13 +151,13 @@ public class WorkgroupPresence {
                     errorMessage.append(packet.getFrom().toString());
                     errorMessage.append(" Workgroup: ");
                     errorMessage.append(workgroup.getJID().toString());
-                    ComponentManagerFactory.getComponentManager().getLog().debug(errorMessage.toString(), e);
+                    Log.debug(errorMessage.toString(), e);
                 }
             }
 
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
             Presence reply = new Presence();
             reply.setError(new PacketError(PacketError.Condition.internal_server_error));
             reply.setTo(packet.getFrom());
@@ -215,7 +215,7 @@ public class WorkgroupPresence {
                     }
                 }
                 catch (Exception e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(
+                    Log.error(
                             "Error broadcasting available presence", e);
                 }
             }
@@ -241,7 +241,7 @@ public class WorkgroupPresence {
                     deleteRosterItems();
                 }
                 catch (Exception e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(
+                    Log.error(
                             "Error broadcasting available presence", e);
                 }
             }
@@ -351,7 +351,7 @@ public class WorkgroupPresence {
             presenceSubscribers.addAll(jids);
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(
+            Log.error(
                     "Error loading workgroup roster items ", e);
         }
         finally {

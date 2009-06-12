@@ -12,7 +12,35 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.fastpath.util.TaskEngine;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.chatbot.Chatbot;
 import org.jivesoftware.xmpp.workgroup.dispatcher.BasicDispatcherInfo;
 import org.jivesoftware.xmpp.workgroup.dispatcher.DispatcherInfoProvider;
@@ -32,22 +60,18 @@ import org.jivesoftware.xmpp.workgroup.spi.dispatcher.DbDispatcherInfoProvider;
 import org.jivesoftware.xmpp.workgroup.utils.DbWorkgroup;
 import org.jivesoftware.xmpp.workgroup.utils.FastpathConstants;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.StringUtils;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.muc.*;
-import org.xmpp.packet.*;
-
-import java.net.URL;
-import java.sql.*;
-import java.sql.Date;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.xmpp.muc.DestroyRoom;
+import org.xmpp.muc.Invitation;
+import org.xmpp.muc.JoinRoom;
+import org.xmpp.muc.LeaveRoom;
+import org.xmpp.muc.RoomConfiguration;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>Database implementation of a workgroup agent.</p>
@@ -216,7 +240,7 @@ public class Workgroup {
                     }
                 }
                 catch (Exception e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error("Error broadcasting workgroup presence", e);
+                    Log.error("Error broadcasting workgroup presence", e);
                 }
             }
         });
@@ -235,7 +259,7 @@ public class Workgroup {
                     }
                 }
                 catch (Exception e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error("Error broadcasting status of queues", e);
+                    Log.error("Error broadcasting status of queues", e);
                 }
             }
         });
@@ -275,7 +299,7 @@ public class Workgroup {
                 queue = new RequestQueue(this, queueID);
             }
             catch (UserAlreadyExistsException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
         else {
@@ -304,7 +328,7 @@ public class Workgroup {
                 dispatcherInfoProvider.deleteDispatcherInfo(queue.getID());
             }
             catch (UnauthorizedException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
     }
@@ -408,7 +432,7 @@ public class Workgroup {
             interceptorManager.invokeInterceptors(getJID().toBareJID(), packet, false, true);
         }
         catch (PacketRejectedException e) {
-            ComponentManagerFactory.getComponentManager().getLog().warn("Packet was not sent " +
+            Log.warn("Packet was not sent " +
                 "due to interceptor REJECTION: " + packet.toXML(), e);
         }
     }
@@ -480,7 +504,7 @@ public class Workgroup {
             notification.setBody(e.getRejectionMessage());
             send(notification);
         }
-        ComponentManagerFactory.getComponentManager().getLog().warn("Packet was REJECTED " +
+        Log.warn("Packet was REJECTED " +
             "by interceptor: " + packet.toXML(), e);
     }
 
@@ -515,7 +539,7 @@ public class Workgroup {
                     // Log the error presence
                     String warnMessage = "Possible server misconfiguration. Received error " +
                         "presence:" + presence.toXML();
-                    ComponentManagerFactory.getComponentManager().getLog().warn(warnMessage);
+                    Log.warn(warnMessage);
                     return;
                 }
                 // Get the JID of the presence's user
@@ -832,7 +856,7 @@ public class Workgroup {
             request.invitationsSent(sessionID);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -1260,7 +1284,7 @@ public class Workgroup {
             }
         }
         catch (SQLException ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -1281,7 +1305,7 @@ public class Workgroup {
             }
         }
         catch (SQLException ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -1304,7 +1328,7 @@ public class Workgroup {
             return true;
         }
         catch (SQLException ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1328,7 +1352,7 @@ public class Workgroup {
             return true;
         }
         catch (SQLException ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1360,7 +1384,7 @@ public class Workgroup {
             return true;
         }
         catch (SQLException ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1550,7 +1574,7 @@ public class Workgroup {
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(new PacketError(PacketError.Condition.item_not_found));
             send(reply);
-            ComponentManagerFactory.getComponentManager().getLog().debug("Agent not found while accepting offer");
+            Log.debug("Agent not found while accepting offer");
             return;
         }
         // Answer that the invitation was received and that it is being processed
@@ -1573,7 +1597,7 @@ public class Workgroup {
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(new PacketError(PacketError.Condition.item_not_found));
             send(reply);
-            ComponentManagerFactory.getComponentManager().getLog().debug("Agent not found while accepting offer");
+            Log.debug("Agent not found while accepting offer");
             return;
         }
         // Answer that the transfer was received and that it is being processed
@@ -1731,7 +1755,7 @@ public class Workgroup {
             }
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         return true;
     }

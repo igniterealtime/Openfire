@@ -12,10 +12,13 @@
 
 package org.jivesoftware.openfire.sip.sipaccount;
 
+import java.sql.SQLException;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.event.SessionEventListener;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
@@ -23,8 +26,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.sql.SQLException;
 
 /**
  * Implements an openfire Component and SessionEventListener. Controls every
@@ -63,7 +64,7 @@ public class SipComponent implements Component, SessionEventListener {
     // Component Interface
 
     public void processPacket(Packet packet) {
-        componentManager.getLog().debug(packet.toXML());
+        Log.debug(packet.toXML());
         if (packet instanceof IQ) {
             // Handle disco packets
             IQ iq = (IQ)packet;
@@ -131,7 +132,7 @@ public class SipComponent implements Component, SessionEventListener {
                                 SipAccountDAO.update(sipAccount);
                             }
                             catch (SQLException e) {
-                                componentManager.getLog().error(e);
+                                Log.error(e);
                             }
                         }
                     }
@@ -147,9 +148,9 @@ public class SipComponent implements Component, SessionEventListener {
             componentManager.sendPacket(this, reply);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
-        componentManager.getLog().debug("PACKET SENT: " + reply.toXML());
+        Log.debug("PACKET SENT: " + reply.toXML());
     } // Other Methods
 
     public String getDescription() {
@@ -191,7 +192,7 @@ public class SipComponent implements Component, SessionEventListener {
                 SipAccountDAO.update(sipAccount);
             }
             catch (SQLException e) {
-                componentManager.getLog().error(e);
+                Log.error(e);
             }
         }
 

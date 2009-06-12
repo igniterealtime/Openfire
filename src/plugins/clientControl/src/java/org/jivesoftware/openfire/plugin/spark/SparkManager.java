@@ -81,7 +81,7 @@ public class SparkManager implements Component {
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
 
         // Add VersionManager. This component is cluster-safe.
@@ -89,7 +89,7 @@ public class SparkManager implements Component {
             componentManager.addComponent(SparkVersionManager.SERVICE_NAME, new SparkVersionManager());
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
 
         // Add SessionListener
@@ -245,7 +245,7 @@ public class SparkManager implements Component {
             componentManager.removeComponent(serviceName);
         }
         catch (ComponentException e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
 
         taskEngine = null;
@@ -307,7 +307,7 @@ public class SparkManager implements Component {
             componentManager.sendPacket(this, packet);
         }
         catch (ComponentException e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
     }
 

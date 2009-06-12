@@ -312,19 +312,19 @@ public class ChatSearch {
                     results.add(result);
                 }
                 catch (NumberFormatException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
 
             hits = null;
         }
         catch (ParseException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error("Search failure - " +
+            Log.error("Search failure - " +
                     "lucene error parsing query: " + queryString, e);
             results.clear();
         }
         catch(Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
             results.clear();
         }
         finally {

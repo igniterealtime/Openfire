@@ -11,29 +11,36 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
-import org.jivesoftware.xmpp.workgroup.dispatcher.Dispatcher;
-import org.jivesoftware.xmpp.workgroup.dispatcher.RoundRobinDispatcher;
-import org.jivesoftware.xmpp.workgroup.request.Request;
-import org.jivesoftware.xmpp.workgroup.request.UserRequest;
-import org.jivesoftware.xmpp.workgroup.spi.JiveLiveProperties;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.concurrent.CopyOnWriteArraySet;
+
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.xmpp.workgroup.dispatcher.Dispatcher;
+import org.jivesoftware.xmpp.workgroup.dispatcher.RoundRobinDispatcher;
+import org.jivesoftware.xmpp.workgroup.request.Request;
+import org.jivesoftware.xmpp.workgroup.request.UserRequest;
+import org.jivesoftware.xmpp.workgroup.spi.JiveLiveProperties;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Maintains a queue of requests waiting to be routed to agents. The workgroup
@@ -302,7 +309,7 @@ public class RequestQueue {
             workgroup.send(queueStatus);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -314,7 +321,7 @@ public class RequestQueue {
             workgroup.send(queueStatus);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -395,7 +402,7 @@ public class RequestQueue {
                 details.remove(user);
                 // Log an error if the request still belongs to this queue
                 if (this.equals(request.getRequestQueue())) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
         }
@@ -456,7 +463,7 @@ public class RequestQueue {
             try {
                 objects.add(groupManager.getGroup(group));
             } catch (GroupNotFoundException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error("Error retrieving group: " + group, e);
+                Log.error("Error retrieving group: " + group, e);
             }
         }
         return objects;
@@ -644,7 +651,7 @@ public class RequestQueue {
                 queue = workgroup.getRequestQueue(backupQueueID);
             }
             catch (NotFoundException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(
+                Log.error(
                         "Backup queue with ID " + backupQueueID + " not found", e);
                 queue = null;
             }
@@ -690,7 +697,7 @@ public class RequestQueue {
 
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -714,7 +721,7 @@ public class RequestQueue {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -739,7 +746,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -765,7 +772,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -785,7 +792,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -805,7 +812,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -829,7 +836,7 @@ public class RequestQueue {
             }
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -854,12 +861,12 @@ public class RequestQueue {
                     agents.add(agent);
                 }
                 catch (AgentNotFoundException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

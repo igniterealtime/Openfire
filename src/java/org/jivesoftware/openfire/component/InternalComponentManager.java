@@ -345,57 +345,6 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         return false;
     }
 
-    public org.xmpp.component.Log getLog() {
-        return new  org.xmpp.component.Log() {
-            public void error(String msg) {
-                Log.error(msg);
-            }
-
-            public void error(String msg, Throwable throwable) {
-                Log.error(msg, throwable);
-            }
-
-            public void error(Throwable throwable) {
-                Log.error(throwable);
-            }
-
-            public void warn(String msg) {
-                Log.warn(msg);
-            }
-
-            public void warn(String msg, Throwable throwable) {
-                Log.warn(msg, throwable);
-            }
-
-            public void warn(Throwable throwable) {
-                Log.warn(throwable);
-            }
-
-            public void info(String msg) {
-                Log.info(msg);
-            }
-
-            public void info(String msg, Throwable throwable) {
-                Log.info(msg, throwable);
-            }
-
-            public void info(Throwable throwable) {
-                Log.info(throwable);
-            }
-
-            public void debug(String msg) {
-                Log.debug("InternalComponentManager: "+msg);
-            }
-
-            public void debug(String msg, Throwable throwable) {
-                Log.debug(msg, throwable);
-            }
-
-            public void debug(Throwable throwable) {
-                Log.debug("InternalComponentManager: ",throwable);
-            }
-        };
-    }
 
     /**
      * Retrieves the <code>Component</code> which is mapped to the specified JID. The

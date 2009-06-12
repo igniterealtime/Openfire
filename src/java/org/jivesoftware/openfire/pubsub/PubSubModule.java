@@ -24,12 +24,10 @@ import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.*;
-import org.jivesoftware.openfire.forms.DataForm;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.*;
+import org.xmpp.forms.DataForm;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -654,26 +652,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return features.iterator();
     }
 
-    public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         if (name == null && node != null) {
             // Answer the extended info of a given node
             Node pubNode = getNode(node);
             if (canDiscoverNode(pubNode)) {
                 // Get the metadata data form
-                org.xmpp.forms.DataForm metadataForm = pubNode.getMetadataForm();
-
-                // Convert Whack data form into old data form format (will go away someday)
-                XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_RESULT);
-                for (org.xmpp.forms.FormField formField : metadataForm.getFields()) {
-                    XFormFieldImpl field = new XFormFieldImpl(formField.getVariable());
-                    field.setLabel(formField.getLabel());
-                    for (String value : formField.getValues()) {
-                        field.addValue(value);
-                    }
-                    dataForm.addField(field);
-                }
-
-                return dataForm;
+                return pubNode.getMetadataForm();
             }
         }
         return null;

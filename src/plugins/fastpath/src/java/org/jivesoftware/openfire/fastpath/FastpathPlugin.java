@@ -90,7 +90,7 @@ public class FastpathPlugin implements Plugin, ClusterEventListener {
         }
         catch (ComponentException e) {
             // Do nothing. Should never happen.
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         // Register the provider of workgroup names
         UserNameManager.addUserNameProvider(workgroupManager.getAddress().toString(),

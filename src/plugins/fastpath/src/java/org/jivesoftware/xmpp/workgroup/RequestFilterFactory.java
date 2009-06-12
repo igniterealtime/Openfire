@@ -12,9 +12,9 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.ClassUtils;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 
 /**
  * <p>Allows customers to customize the request filters being used by the workgroup.</p>
@@ -98,13 +98,13 @@ abstract public class RequestFilterFactory {
                             try {
                                 providers[i] = ClassUtils.forName(className);
                             } catch (Exception e){
-                                ComponentManagerFactory.getComponentManager().getLog().error(
+                                Log.error(
                                         "Exception loading class: " + className, e);
                             }
                         }
                         setProviders(providers);
                     } catch (Exception e) {
-                        ComponentManagerFactory.getComponentManager().getLog().error(
+                        Log.error(
                                 "Exception loading class: " + classNames, e);
                     }
                 }

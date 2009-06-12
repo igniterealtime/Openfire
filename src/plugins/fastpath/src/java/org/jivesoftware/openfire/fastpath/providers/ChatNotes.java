@@ -12,19 +12,19 @@
 
 package org.jivesoftware.openfire.fastpath.providers;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 /**
  * ChatNotes is responsible for the setting and retrieval off Chat Notes. Each chat note
@@ -53,14 +53,14 @@ public class ChatNotes implements WorkgroupProvider {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                ComponentManagerFactory.getComponentManager().getLog().error(ex);
+                Log.error(ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
     }
 
@@ -86,7 +86,7 @@ public class ChatNotes implements WorkgroupProvider {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

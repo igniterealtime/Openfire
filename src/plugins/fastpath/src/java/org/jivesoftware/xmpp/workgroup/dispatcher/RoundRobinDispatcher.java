@@ -12,19 +12,35 @@
 
 package org.jivesoftware.xmpp.workgroup.dispatcher;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
+
 import org.jivesoftware.openfire.fastpath.util.TaskEngine;
 import org.jivesoftware.openfire.fastpath.util.WorkgroupUtils;
-import org.jivesoftware.xmpp.workgroup.*;
+import org.jivesoftware.util.BeanUtils;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.ConcurrentHashSet;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.xmpp.workgroup.AgentSession;
+import org.jivesoftware.xmpp.workgroup.AgentSessionList;
+import org.jivesoftware.xmpp.workgroup.AgentSessionListener;
+import org.jivesoftware.xmpp.workgroup.Offer;
+import org.jivesoftware.xmpp.workgroup.RequestQueue;
+import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupResultFilter;
 import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.spi.JiveLiveProperties;
 import org.jivesoftware.xmpp.workgroup.spi.dispatcher.DbDispatcherInfoProvider;
-import org.jivesoftware.util.*;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.component.Log;
-
-import java.util.*;
-import java.util.LinkedList;
 
 /**
  * <p>Implements simple round robin dispatching of offers to agents.</p>
@@ -56,8 +72,6 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
      */
     private ConcurrentHashSet<Offer> offers = new ConcurrentHashSet<Offer>();
 
-    private Log logger = ComponentManagerFactory.getComponentManager().getLog();
-
     /**
      * Creates a new dispatcher for the queue. The dispatcher will have a Timer with a unique task
      * that will get the requests from the queue and will try to send an offer to the agents.
@@ -73,7 +87,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             info = infoProvider.getDispatcherInfo(queue.getWorkgroup(), queue.getID());
         }
         catch (NotFoundException e) {
-            logger.error("Queue ID " + queue.getID(), e);
+            Log.error("Queue ID " + queue.getID(), e);
         }
         // Recreate the agentSelector to use for selecting the best agent to receive the offer
         loadAgentSelector();
@@ -136,7 +150,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
         String initialAgent = map.get("agent") == null || map.get("agent").isEmpty() ? null : map.get("agent").get(0);
         String ignoreAgent = map.get("ignore") == null || map.get("ignore").isEmpty() ? null : map.get("ignore").get(0);
         // Log debug trace
-        logger.debug("RR - Dispatching request: " + request + " in queue: " + queue.getAddress());
+        Log.debug("RR - Dispatching request: " + request + " in queue: " + queue.getAddress());
 
         // Send the offer to the best agent. While the offer has not been accepted send it to the
         // next best agent. If there aren't any agent available then skip this section and proceed
@@ -169,13 +183,13 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                             // Make the offer and wait for a resolution to the offer
                             if (!request.sendOffer(session, queue)) {
                                 // Log debug trace
-                                logger.debug("RR - Offer for request: " + offer.getRequest() +
+                                Log.debug("RR - Offer for request: " + offer.getRequest() +
                                         " FAILED TO BE SENT to agent: " +
                                         session.getJID());
                                 continue;
                             }
                             // Log debug trace
-                            logger.debug("RR - Offer for request: " + offer.getRequest() + " SENT to agent: " +
+                            Log.debug("RR - Offer for request: " + offer.getRequest() + " SENT to agent: " +
                                     session.getJID());
 
                             offer.waitForResolution();
@@ -185,7 +199,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                                 // Get the first agent that accepted the offer
                                 AgentSession selectedAgent = offer.getAcceptedSessions().get(0);
                                 // Log debug trace
-                                logger.debug("RR - Agent: " + selectedAgent.getJID() +
+                                Log.debug("RR - Agent: " + selectedAgent.getJID() +
                                         " ACCEPTED request: " +
                                         request);
                                 // Create the room and send the invitations
@@ -204,13 +218,13 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                         }
                         else {
                             // Log debug trace
-                            logger.debug("RR - Selected agent: " + session.getJID() +
+                            Log.debug("RR - Selected agent: " + session.getJID() +
                                     " has reached max number of chats");
                         }
                     }
                 }
                 catch (Exception e) {
-                    logger.error(e);
+                    Log.error(e);
                 }
             }
         }
@@ -220,7 +234,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                     (info.getRequestTimeout() * (getOverflowTimes() + 1));
             if (limit - System.currentTimeMillis() <= 0 || !canBeInQueue) {
                 // Log debug trace
-                logger.debug("RR - Cancelling request that maxed out overflow limit or cannot be queued: " + request);
+                Log.debug("RR - Cancelling request that maxed out overflow limit or cannot be queued: " + request);
                 // Cancel the request if it has overflowed 'n' times
                 request.cancel(Request.CancelType.AGENT_NOT_FOUND);
             }
@@ -231,7 +245,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                 // If there is no other queue to overflow then cancel the request
                 if (!offer.isAccepted() && !offer.isCancelled()) {
                     // Log debug trace
-                    logger.debug("RR - Cancelling request that didn't overflow: " + request);
+                    Log.debug("RR - Cancelling request that didn't overflow: " + request);
                     request.cancel(Request.CancelType.AGENT_NOT_FOUND);
                 }
             }
@@ -269,7 +283,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             // queue
             queue.removeRequest(request);
             // Log debug trace
-            logger.debug("RR - Overflowing request: " + request + " to queue: " +
+            Log.debug("RR - Overflowing request: " + request + " to queue: " +
                     backup.getAddress());
             backup.addRequest(request);
         }
@@ -350,7 +364,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                         agentSession.getCurrentChats(workgroup) < agentSession.getMaxChats(workgroup) && match) {
                     bestSession = agentSession;
                     // Log debug trace
-                    logger.debug("RR - Initial agent: " + bestSession.getJID() +
+                    Log.debug("RR - Initial agent: " + bestSession.getJID() +
                             " will receive offer for request: " +
                             offer.getRequest());
                     return bestSession;
@@ -373,7 +387,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
         if (possibleSessions.size() > 0) {
             AgentSession s = agentSelector.bestAgentFrom(possibleSessions, offer);
             // Log debug trace
-            logger.debug("RR - Agent SELECTED: " + s.getJID() +
+            Log.debug("RR - Agent SELECTED: " + s.getJID() +
                     " for receiving offer for request: " +
                     offer.getRequest());
             return s;
@@ -397,13 +411,13 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
     private boolean validateAgent(AgentSession session, Offer offer) {
         if (agentSelector.validateAgent(session, offer)) {
             // Log debug trace
-            logger.debug("RR - Agent: " + session.getJID() +
+            Log.debug("RR - Agent: " + session.getJID() +
                     " MAY receive offer for request: " +
                     offer.getRequest());
             return true;
         }
         // Log debug trace
-        logger.debug("RR - Agent: " + session.getJID() +
+        Log.debug("RR - Agent: " + session.getJID() +
                 " MAY NOT receive offer for request: " +
                 offer.getRequest());
         return false;
@@ -464,10 +478,10 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             this.info = info;
         }
         catch (NotFoundException e) {
-            logger.error(e);
+            Log.error(e);
         }
         catch (UnsupportedOperationException e) {
-            logger.error(e);
+            Log.error(e);
         }
     }
 
@@ -514,7 +528,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             }
         }
         catch (Exception e) {
-           logger.error(e);
+           Log.error(e);
        }
         // Save the agentSelectoras a property of the dispatcher
         try {
@@ -524,7 +538,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             }
         }
         catch (Exception e) {
-           logger.error(e);
+           Log.error(e);
        }
     }
 
@@ -572,7 +586,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             BeanUtils.setProperties(agentSelector, agentSelectorProps);
         }
         catch (Exception e) {
-            logger.error(e);
+            Log.error(e);
         }
     }
 

@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.xmpp.forms.DataForm;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -103,7 +104,7 @@ public class AdHocCommandHandler extends IQHandler
         return Arrays.asList(NAMESPACE, "jabber:x:data").iterator();
     }
 
-    public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 

@@ -8,6 +8,7 @@
                  org.xmpp.packet.JID,
                  java.util.Iterator,
                  java.util.List,
+                 org.jivesoftware.util.Log,
                  org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.user.UserNotFoundException,
                  org.jivesoftware.xmpp.workgroup.UnauthorizedException,
@@ -51,7 +52,7 @@
         response.sendRedirect("workgroup-sound-settings.jsp?wgID=" + workgroup + "&updated=true");
     }
     catch (Exception ex) {
-        ComponentManagerFactory.getComponentManager().getLog().error(ex);
+        Log.error(ex);
     }
 %>
 
@@ -62,7 +63,7 @@
              return encodedFile;
          }
          catch (Exception ex) {
-             ComponentManagerFactory.getComponentManager().getLog().error(ex);
+             Log.error(ex);
          }
          return null;
      }
@@ -74,7 +75,7 @@
              workgroup = WorkgroupManager.getInstance().getWorkgroup(workgroupJID);
          }
          catch (UserNotFoundException e) {
-             ComponentManagerFactory.getComponentManager().getLog().error(e);
+             Log.error(e);
              return;
          }
 

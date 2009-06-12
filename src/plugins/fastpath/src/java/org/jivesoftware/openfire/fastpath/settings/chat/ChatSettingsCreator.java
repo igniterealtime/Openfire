@@ -12,19 +12,6 @@
 
 package org.jivesoftware.openfire.fastpath.settings.chat;
 
-import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import com.thoughtworks.xstream.XStream;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.container.Plugin;
-import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.JID;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,6 +19,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.xmpp.packet.JID;
+
+import com.thoughtworks.xstream.XStream;
 
 /**
  * Creates the default settings for the Web Chat UI. This includes the Web Chat UI
@@ -232,7 +233,7 @@ public class ChatSettingsCreator {
                 stream = new FileInputStream(image);
             }
             catch (FileNotFoundException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
             if (stream != null) {
@@ -250,7 +251,7 @@ public class ChatSettingsCreator {
                             ChatSettings.SettingType.image_settings, encodedFile);
                 }
                 catch (IOException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
         }
@@ -284,10 +285,10 @@ public class ChatSettingsCreator {
             }
         }
         catch (UserNotFoundException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         catch (UnauthorizedException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -394,7 +395,7 @@ public class ChatSettingsCreator {
                             encodedFile);
                 }
                 catch (IOException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
         }

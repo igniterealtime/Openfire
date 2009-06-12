@@ -14,6 +14,7 @@ package org.jivesoftware.openfire.plugin.spark.manager;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
@@ -222,7 +223,7 @@ public class SparkVersionManager implements Component {
             componentManager.sendPacket(this, packet);
         }
         catch (ComponentException e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
     }
 }

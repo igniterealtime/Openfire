@@ -12,13 +12,13 @@
 
 package org.jivesoftware.xmpp.workgroup.utils;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Date;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
 
 /**
  * Handles basic DB Operations.
@@ -56,7 +56,7 @@ public class DbWorkgroup {
             pstmt.executeUpdate();
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -93,7 +93,7 @@ public class DbWorkgroup {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
            DbConnectionManager.closeConnection(pstmt, con);

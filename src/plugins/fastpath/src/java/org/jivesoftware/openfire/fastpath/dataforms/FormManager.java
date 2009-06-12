@@ -12,20 +12,21 @@
 
 package org.jivesoftware.openfire.fastpath.dataforms;
 
-import org.jivesoftware.xmpp.workgroup.DbProperties;
-import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import com.thoughtworks.xstream.XStream;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.forms.DataForm;
-import org.xmpp.forms.FormField;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.DbProperties;
+import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
+
+import com.thoughtworks.xstream.XStream;
 
 
 public class FormManager {
@@ -76,7 +77,7 @@ public class FormManager {
                 props.setProperty(context, xmlToSave);
             }
             catch (UnauthorizedException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
 
@@ -171,7 +172,7 @@ public class FormManager {
             props.setProperty(context, xmlToSave);
         }
         catch (UnauthorizedException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
 
     }
@@ -189,7 +190,7 @@ public class FormManager {
                 return (DataForm) xstream.fromXML(form);
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
         return null;
@@ -214,7 +215,7 @@ public class FormManager {
                     }
                 }
                 catch (Exception e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
             else {

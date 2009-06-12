@@ -12,33 +12,6 @@
 
 package org.jivesoftware.xmpp.workgroup.search;
 
-import org.jivesoftware.xmpp.workgroup.AgentSession;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.event.WorkgroupEventDispatcher;
-import org.jivesoftware.xmpp.workgroup.event.WorkgroupEventListener;
-import org.jivesoftware.openfire.fastpath.providers.ChatNotes;
-import org.jivesoftware.openfire.fastpath.util.TaskEngine;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.DateTools;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Searcher;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.ClassUtils;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.component.Log;
-import org.xmpp.packet.JID;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -57,6 +30,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.DateTools;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Searcher;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.fastpath.providers.ChatNotes;
+import org.jivesoftware.openfire.fastpath.util.TaskEngine;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.xmpp.workgroup.AgentSession;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.event.WorkgroupEventDispatcher;
+import org.jivesoftware.xmpp.workgroup.event.WorkgroupEventListener;
+import org.xmpp.packet.JID;
 
 /**
  * Manages the transcript search feature by defining properties of the search indexer. Each
@@ -330,7 +329,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             analyzer = getAnalyzerInstance(analyzerClass, stopWords);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error("Error loading custom " +
+            Log.error("Error loading custom " +
                     "search analyzer: " + analyzerClass, e);
         }
         // If the analyzer is null, use the standard analyzer.
@@ -390,7 +389,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             try {
@@ -399,7 +398,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
             try {
@@ -408,7 +407,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (SQLException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
             try {
                 if (con != null) {
@@ -416,7 +415,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
     }
@@ -544,11 +543,11 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 else {
                     // Log warnings.
                     if (searchDirectory == null) {
-                        ComponentManagerFactory.getComponentManager().getLog().warn("Search " +
+                        Log.warn("Search " +
                                 "directory not set, you must rebuild the index.");
                     }
                     else if (!IndexReader.indexExists(searchDirectory)) {
-                        ComponentManagerFactory.getComponentManager().getLog().warn("Search " +
+                        Log.warn("Search " +
                                 "directory " + searchDirectory + " does not appear to " +
                                 "be a valid search index. You must rebuild the index.");
                     }
@@ -637,7 +636,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
 
             // Reset the answer if an error happened
             chats = new ArrayList<ChatInformation>();
@@ -649,7 +648,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
 
@@ -659,7 +658,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (SQLException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
             try {
@@ -668,7 +667,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
             try {
@@ -677,7 +676,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
         // Return the chats order by startTime
@@ -726,7 +725,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
             // Reset the lastDate if an error happened
             lastDate = null;
         }
@@ -737,7 +736,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (SQLException e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
 
             DbConnectionManager.closeConnection(pstmt, con);
@@ -773,7 +772,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             }
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             if (result != null) {
@@ -781,7 +780,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                     result.close();
                 }
                 catch (SQLException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
 
@@ -815,7 +814,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             try {
@@ -824,7 +823,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
             try {
                 if (con != null) {
@@ -832,7 +831,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
     }
@@ -850,7 +849,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             try {
@@ -859,7 +858,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
             try {
                 if (con != null) {
@@ -867,7 +866,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 }
             }
             catch (Exception e) {
-                ComponentManagerFactory.getComponentManager().getLog().error(e);
+                Log.error(e);
             }
         }
     }
@@ -1000,7 +999,7 @@ public class ChatSearchManager implements WorkgroupEventListener {
                         updateIndex(true);
                     }
                     catch (IOException e) {
-                        ComponentManagerFactory.getComponentManager().getLog().error(e);
+                        Log.error(e);
                     }
                 }
             });
@@ -1035,9 +1034,8 @@ public class ChatSearchManager implements WorkgroupEventListener {
                 this.transcript = DocumentHelper.parseText(transcriptXML).getRootElement();
             }
             catch (DocumentException e) {
-                Log log = ComponentManagerFactory.getComponentManager().getLog();
-                log.error("Error retrieving chat information of session: " + sessionID, e);
-                log.debug("Error retrieving chat information of session: " + sessionID +
+                Log.error("Error retrieving chat information of session: " + sessionID, e);
+                Log.debug("Error retrieving chat information of session: " + sessionID +
                         " and transcript: " + transcriptXML, e);
             }
             this.creationDate = new Date(Long.parseLong(startTime));

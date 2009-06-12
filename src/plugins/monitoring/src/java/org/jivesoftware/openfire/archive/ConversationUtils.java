@@ -85,7 +85,7 @@ public class ConversationUtils {
             info = toConversationInfo(conversation, formatParticipants);
         }
         catch (NotFoundException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
 
         return info;

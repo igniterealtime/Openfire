@@ -12,13 +12,6 @@
 
 package org.jivesoftware.openfire.fastpath;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.xmpp.packet.JID;
-import org.xmpp.component.ComponentManagerFactory;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-
 import java.io.IOException;
 
 import javax.servlet.ServletConfig;
@@ -26,6 +19,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.xmpp.packet.JID;
 
 /**
  * Servlet that writes out sound files.
@@ -53,7 +53,7 @@ public class SoundServlet extends HttpServlet {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (UserNotFoundException e) {
-           ComponentManagerFactory.getComponentManager().getLog().error(e);
+           Log.error(e);
         }
 
         try {
@@ -72,7 +72,7 @@ public class SoundServlet extends HttpServlet {
             }
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 }

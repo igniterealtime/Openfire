@@ -12,17 +12,17 @@
 
 package org.jivesoftware.openfire.fastpath.macros;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+
 import com.thoughtworks.xstream.XStream;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.xmpp.component.ComponentManagerFactory;
 
 public class WorkgroupMacros {
 
@@ -137,7 +137,7 @@ public class WorkgroupMacros {
             props.setProperty("jive.macro" + id, saveString);
         }
         catch (UnauthorizedException e) {
-           ComponentManagerFactory.getComponentManager().getLog().error(e);
+           Log.error(e);
         }
     }
 

@@ -13,6 +13,7 @@
 package org.jivesoftware.openfire.sip.log;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;
@@ -100,7 +101,7 @@ public class LogComponent implements Component{
 		try {
 			componentManager.sendPacket(this, reply);
 		} catch (Exception e) {
-			componentManager.getLog().error(e);
+			Log.error(e);
 		}
 
 	} // Other Methods

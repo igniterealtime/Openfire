@@ -12,6 +12,11 @@
 
 package org.jivesoftware.xmpp.workgroup.chatbot;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.openfire.fastpath.dataforms.FormElement;
 import org.jivesoftware.openfire.fastpath.dataforms.FormManager;
 import org.jivesoftware.openfire.fastpath.dataforms.WorkgroupForm;
@@ -19,6 +24,8 @@ import org.jivesoftware.openfire.fastpath.history.ChatTranscriptManager;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettings;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
 import org.jivesoftware.openfire.fastpath.settings.chat.KeyEnum;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.UserCommunicationMethod;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
@@ -28,15 +35,8 @@ import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
 import org.jivesoftware.xmpp.workgroup.interceptor.QueueInterceptorManager;
 import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
-import org.jivesoftware.util.NotFoundException;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A Chatbot holds a sequence of steps where each step represents an interaction with a
@@ -646,7 +646,7 @@ public class Chatbot implements UserCommunicationMethod {
                     true);
         }
         catch (PacketRejectedException e) {
-            ComponentManagerFactory.getComponentManager().getLog().warn("Packet was not sent " +
+            Log.warn("Packet was not sent " +
                     "due to interceptor REJECTION: " + packet.toXML(), e);
         }
     }
@@ -1013,7 +1013,7 @@ public class Chatbot implements UserCommunicationMethod {
         for (ChatbotSession session : sessions.values()) {
             // Do not clean up sessions whose users are having a chat with an agent.
             if (!session.isStartedSupport() && session.getLastActiveDate().getTime() < deadline)  {
-                ComponentManagerFactory.getComponentManager().getLog().debug("Removing idle chat " +
+                Log.debug("Removing idle chat " +
                         "session for: " +
                         session.getUserJID());
                 removeSession(session.getUserJID());
@@ -1032,7 +1032,7 @@ public class Chatbot implements UserCommunicationMethod {
                     String.valueOf(timeout));
         }
         catch (UnauthorizedException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error("Error setting timeout",
+            Log.error("Error setting timeout",
                     e);
         }
     }

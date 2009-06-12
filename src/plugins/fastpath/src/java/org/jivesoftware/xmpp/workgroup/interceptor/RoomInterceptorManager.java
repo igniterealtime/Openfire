@@ -12,11 +12,11 @@
 
 package org.jivesoftware.xmpp.workgroup.interceptor;
 
-import org.xmpp.packet.Packet;
-import org.xmpp.component.ComponentManagerFactory;
-
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.Packet;
 
 /**
  * Manages the packet interceptors that will be invoked when sending packets for creating and
@@ -47,7 +47,7 @@ public class RoomInterceptorManager extends InterceptorManager {
             super.invokeInterceptors(workgroup, packet, read, processed);
         }
         catch (PacketRejectedException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error("Cannot reject " +
+            Log.error("Cannot reject " +
                     "room packet",e);
         }
     }

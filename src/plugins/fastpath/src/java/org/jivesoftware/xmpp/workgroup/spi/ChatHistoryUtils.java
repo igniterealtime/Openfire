@@ -1,14 +1,5 @@
 package org.jivesoftware.xmpp.workgroup.spi;
 
-import org.jivesoftware.xmpp.workgroup.RequestQueue;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.JID;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,6 +8,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.xmpp.workgroup.RequestQueue;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.xmpp.packet.JID;
 
 
 /**
@@ -103,15 +103,15 @@ public final class ChatHistoryUtils {
                     }
                 }
                 catch (SQLException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
                 catch (NumberFormatException e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error(e);
+                    Log.error(e);
                 }
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -134,7 +134,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         if (workgroup == null) {
             return 0;
@@ -157,7 +157,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -179,7 +179,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
 
         int totalWorkgroupChatTime = 0;
@@ -206,7 +206,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -247,7 +247,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -270,7 +270,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         if (workgroup == null) {
             return 0;
@@ -295,7 +295,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -323,7 +323,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -345,7 +345,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         if (workgroup == null) {
             return 0;
@@ -370,7 +370,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -392,7 +392,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
 
         int count = 0;
@@ -457,7 +457,7 @@ public final class ChatHistoryUtils {
             count = rs.getInt(1);
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -483,7 +483,7 @@ public final class ChatHistoryUtils {
             count = rs.getInt(1);
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -509,7 +509,7 @@ public final class ChatHistoryUtils {
             totalWaitTime = rs.getInt(1);
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -531,7 +531,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         if (workgroup == null) {
             return 0;
@@ -555,7 +555,7 @@ public final class ChatHistoryUtils {
             waitTime = rs.getInt(1);
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -606,7 +606,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupJID));
         }
         catch (UserNotFoundException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error("Error retrieving Workgroup", e);
+            Log.error("Error retrieving Workgroup", e);
         }
         return workgroup;
     }

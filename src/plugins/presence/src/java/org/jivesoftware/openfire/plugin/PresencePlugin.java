@@ -12,7 +12,10 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import org.jivesoftware.util.JiveGlobals;
+import java.io.File;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
@@ -20,16 +23,14 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-
-import java.io.File;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Plugin that includes a servlet that provides information about users' and components'
@@ -75,7 +76,7 @@ public class PresencePlugin implements Plugin, Component {
             componentManager.addComponent(subdomain, this);
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -88,7 +89,7 @@ public class PresencePlugin implements Plugin, Component {
             componentManager = null;
         }
         catch (Exception e) {
-            componentManager.getLog().error(e);
+            Log.error(e);
         }
     }
 

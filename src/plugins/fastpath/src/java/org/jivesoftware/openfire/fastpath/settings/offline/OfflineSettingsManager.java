@@ -12,13 +12,13 @@
 
 package org.jivesoftware.openfire.fastpath.settings.offline;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.database.DbConnectionManager;
-import org.xmpp.component.ComponentManagerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
 
 /**
  * Retrieves and persists offline settings for a workgroup.
@@ -74,7 +74,7 @@ public class OfflineSettingsManager {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
             return null;
         }
         finally {
@@ -112,7 +112,7 @@ public class OfflineSettingsManager {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
             return null;
         }
         finally {
@@ -154,7 +154,7 @@ public class OfflineSettingsManager {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(ex);
+            Log.error(ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

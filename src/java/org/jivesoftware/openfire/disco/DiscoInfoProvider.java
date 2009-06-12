@@ -13,7 +13,7 @@
 package org.jivesoftware.openfire.disco;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.xmpp.forms.DataForm;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;
@@ -63,7 +63,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an XDataForm with the extended information about the entity or null if none.
      */
-    public abstract XDataFormImpl getExtendedInfo(String name, String node, JID senderJID);
+    public abstract DataForm getExtendedInfo(String name, String node, JID senderJID);
 
     /**
      * Returns true if we can provide information related to the requested name and node. For

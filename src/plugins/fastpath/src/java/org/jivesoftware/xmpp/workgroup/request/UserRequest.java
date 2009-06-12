@@ -12,29 +12,34 @@
 
 package org.jivesoftware.xmpp.workgroup.request;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.UserCommunicationMethod;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.chatbot.ChatbotSession;
 import org.jivesoftware.xmpp.workgroup.spi.WorkgroupCompatibleClient;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Requests made by users to get support by some agent.
@@ -101,7 +106,7 @@ public class UserRequest extends Request {
             }
         }
         if (request == null) {
-            ComponentManagerFactory.getComponentManager().getLog().debug("Request not found for " +
+            Log.debug("Request not found for " +
                     address.toString());
             throw new NotFoundException();
         }
@@ -194,7 +199,7 @@ public class UserRequest extends Request {
             communicationMethod.notifyQueueStatus(workgroup.getJID(), userJID, this, isPolling);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -374,7 +379,7 @@ public class UserRequest extends Request {
             communicationMethod.notifyQueueDepartued(sender, userJID, this, type);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -455,7 +460,7 @@ public class UserRequest extends Request {
             }
         }
         catch (Exception ex) {
-            ComponentManagerFactory.getComponentManager().getLog().error(
+            Log.error(
                     "There was an issue handling offer update using sessionID " + requestID, ex);
         }
         finally {
@@ -484,7 +489,7 @@ public class UserRequest extends Request {
             pstmt.close();
         }
         catch (SQLException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
         finally {
             DbConnectionManager.closeConnection(con);

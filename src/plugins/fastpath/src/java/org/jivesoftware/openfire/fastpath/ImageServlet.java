@@ -1,15 +1,5 @@
 package org.jivesoftware.openfire.fastpath;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
-import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettings;
-import org.jivesoftware.openfire.fastpath.settings.chat.ChatSetting;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.JID;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-
 import java.io.IOException;
 
 import javax.servlet.ServletConfig;
@@ -18,6 +8,16 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.jivesoftware.openfire.fastpath.settings.chat.ChatSetting;
+import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettings;
+import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.xmpp.packet.JID;
 
 /**
  * A servlet that displays images.
@@ -103,7 +103,7 @@ public class ImageServlet extends HttpServlet {
             workgroup = workgroupManager.getWorkgroup(workgroupJID);
         }
         catch (UserNotFoundException e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
             return null;
         }
 

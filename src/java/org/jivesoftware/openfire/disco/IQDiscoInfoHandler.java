@@ -21,13 +21,13 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.xmpp.forms.DataForm;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -161,9 +161,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 				}
                 
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
-                XDataFormImpl dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
+                DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
                 if (dataForm != null) {
-                    queryElement.add(dataForm.asXMLElement());
+                    queryElement.add(dataForm.getElement());
                 }
             }
             else {
@@ -479,7 +479,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
             }
 
-            public XDataFormImpl getExtendedInfo(String name, String node, JID senderJID) {
+            public DataForm getExtendedInfo(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getExtendedInfo(name, node, senderJID);

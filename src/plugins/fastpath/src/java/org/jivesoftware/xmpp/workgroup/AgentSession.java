@@ -12,23 +12,31 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.dom4j.Element;
 import org.jivesoftware.openfire.fastpath.util.TaskEngine;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.OfferInterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
-import org.dom4j.Element;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.LocaleUtils;
-import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * <p>A 'live' agent session.</p>
@@ -212,7 +220,7 @@ public class AgentSession {
                     sendStatusOfAllAgents(workgroup);
                 }
                 catch (Exception e) {
-                    ComponentManagerFactory.getComponentManager().getLog().error("Error sending status of all agents", e);
+                    Log.error("Error sending status of all agents", e);
                 }
             }
         });
@@ -344,14 +352,14 @@ public class AgentSession {
                     offerPacket, false, true);
             }
             catch (PacketRejectedException e) {
-                ComponentManagerFactory.getComponentManager().getLog().warn("Offer was not sent " +
+                Log.warn("Offer was not sent " +
                     "due to interceptor REJECTION: " + offerPacket.toXML(), e);
             }
             return true;
 
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             return false;
         }
     }
@@ -366,7 +374,7 @@ public class AgentSession {
             removeOffer(offer);
         }
         catch (Exception e) {
-            ComponentManagerFactory.getComponentManager().getLog().error(e);
+            Log.error(e);
         }
     }
 
@@ -554,7 +562,7 @@ public class AgentSession {
             this.offer = null;
         }
         else {
-            ComponentManagerFactory.getComponentManager().getLog().debug("Offer not removed. " +
+            Log.debug("Offer not removed. " +
                 "To remove: " +
                 offer +
                 " existing " +

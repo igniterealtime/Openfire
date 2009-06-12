@@ -14,8 +14,8 @@ package org.jivesoftware.openfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.resultsetmanager.Result;
 import org.xmpp.packet.JID;
+import org.xmpp.resultsetmanagement.Result;
 
 /**
  * An item is associated with an XMPP Entity, usually thought of a children of

@@ -23,8 +23,6 @@ import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.resultsetmanager.ResultSet;
-import org.jivesoftware.openfire.resultsetmanager.ResultSetImpl;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.User;
@@ -36,6 +34,8 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+import org.xmpp.resultsetmanagement.ResultSet;
+import org.xmpp.resultsetmanagement.ResultSetImpl;
 
 import java.io.Externalizable;
 import java.io.IOException;

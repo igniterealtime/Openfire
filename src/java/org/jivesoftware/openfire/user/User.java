@@ -16,13 +16,13 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
-import org.jivesoftware.openfire.resultsetmanager.Result;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.xmpp.resultsetmanagement.Result;
 
 import java.io.Externalizable;
 import java.io.IOException;

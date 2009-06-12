@@ -132,8 +132,8 @@ public class SipManager implements SipListener {
             Log.error("start", ex);
 
             throw new CommunicationsException(
-                    "Impossível conectar!\n"
-                            + "O proxy pode não está acessível.\nVerifique sua conexão."
+                    "Cannot connect!\n"
+                            + "Cannot reach proxy.\nCheck your connection."
                             + "(Syntax:<proxy_address:port/transport>)", ex);
         }
 

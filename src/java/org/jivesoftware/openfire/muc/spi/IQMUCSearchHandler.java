@@ -326,7 +326,7 @@ public class IQMUCSearchHandler
 			resultform.addReportedField("num_max_users", "Max number allowed of users", FormField.Type.text_single);
 			resultform.addReportedField("is_password_protected", "Is a password protected room.", FormField.Type.boolean_type);
 			resultform.addReportedField("is_member_only", "Is a member only room.", FormField.Type.boolean_type);
-			resultform.addReportedField("jid", "JID", FormField.Type.text_single);
+			resultform.addReportedField("jid", "JID", FormField.Type.jid_single);
 		}
 
 		if (applyRSM)

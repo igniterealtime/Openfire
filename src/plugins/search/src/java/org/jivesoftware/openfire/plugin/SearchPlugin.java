@@ -714,12 +714,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
 
         searchResults.addField("FORM_TYPE", null, FormField.Type.hidden);
 
-        searchResults.addReportedField("jid", "JID", null);
+        searchResults.addReportedField("jid", "JID", FormField.Type.jid_single);
 
         for (final String fieldName : getFilteredSearchFields()) {
             searchResults.addReportedField(fieldName, 
             		LocaleUtils.getLocalizedString("advance.user.search." + fieldName.toLowerCase(), "search"), 
-            		null);
+            		FormField.Type.text_single);
         }
 
         for (final User user : users) {

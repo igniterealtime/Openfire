@@ -15,10 +15,6 @@ package org.jivesoftware.openfire.muc.spi;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.forms.DataForm;
-import org.jivesoftware.openfire.forms.FormField;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRoom;
@@ -26,6 +22,8 @@ import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -55,52 +53,52 @@ class IQMUCRegisterHandler {
         if (probeResult == null) {
             // Create the registration form of the room which contains information
             // such as: first name, last name and  nickname.
-            XDataFormImpl registrationForm = new XDataFormImpl(DataForm.TYPE_FORM);
+            final DataForm registrationForm = new DataForm(DataForm.Type.form);
             registrationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.reg.title"));
             registrationForm.addInstruction(LocaleUtils
                     .getLocalizedString("muc.form.reg.instruction"));
 
-            XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-            field.setType(FormField.TYPE_HIDDEN);
-            field.addValue("http://jabber.org/protocol/muc#register");
-            registrationForm.addField(field);
+            final FormField fieldForm = registrationForm.addField();
+            fieldForm.setVariable("FORM_TYPE");
+            fieldForm.setType(FormField.Type.hidden);
+            fieldForm.addValue("http://jabber.org/protocol/muc#register");
 
-            field = new XFormFieldImpl("muc#register_first");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name"));
-            field.setRequired(true);
-            registrationForm.addField(field);
+            final FormField fieldReg = registrationForm.addField();
+            fieldReg.setVariable("muc#register_first");
+            fieldReg.setType(FormField.Type.text_single);
+            fieldReg.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name"));
+            fieldReg.setRequired(true);
 
-            field = new XFormFieldImpl("muc#register_last");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name"));
-            field.setRequired(true);
-            registrationForm.addField(field);
+            final FormField fieldLast = registrationForm.addField();
+            fieldLast.setVariable("muc#register_last");
+            fieldLast.setType(FormField.Type.text_single);
+            fieldLast.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name"));
+            fieldLast.setRequired(true);
 
-            field = new XFormFieldImpl("muc#register_roomnick");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname"));
-            field.setRequired(true);
-            registrationForm.addField(field);
+            final FormField fieldNick = registrationForm.addField();
+            fieldNick.setVariable("muc#register_roomnick");
+            fieldNick.setType(FormField.Type.text_single);
+            fieldNick.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname"));
+            fieldNick.setRequired(true);
 
-            field = new XFormFieldImpl("muc#register_url");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url"));
-            registrationForm.addField(field);
+            final FormField fieldUrl = registrationForm.addField();
+            fieldUrl.setVariable("muc#register_url");
+            fieldUrl.setType(FormField.Type.text_single);
+            fieldUrl.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url"));
 
-            field = new XFormFieldImpl("muc#register_email");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email"));
-            registrationForm.addField(field);
+            final FormField fieldMail = registrationForm.addField();
+            fieldMail.setVariable("muc#register_email");
+            fieldMail.setType(FormField.Type.text_single);
+            fieldMail.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email"));
 
-            field = new XFormFieldImpl("muc#register_faqentry");
-            field.setType(FormField.TYPE_TEXT_MULTI);
-            field.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
-            registrationForm.addField(field);
+            final FormField fieldFaq = registrationForm.addField();
+            fieldFaq.setVariable("muc#register_faqentry");
+            fieldFaq.setType(FormField.Type.text_single);
+            fieldFaq.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
 
             // Create the probeResult and add the registration form
             probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
-            probeResult.add(registrationForm.asXMLElement());
+            probeResult.add(registrationForm.getElement());
         }
     }
 
@@ -168,12 +166,11 @@ class IQMUCRegisterHandler {
                     // Check if a form was used to provide the registration info
                     if (formElement != null) {
                         // Get the sent form
-                        XDataFormImpl registrationForm = new XDataFormImpl();
-                        registrationForm.parse(formElement);
+                        final DataForm registrationForm = new DataForm(formElement);
                         // Get the desired nickname sent in the form
-                        Iterator<String> values = registrationForm.getField("muc#register_roomnick")
+                        List<String> values = registrationForm.getField("muc#register_roomnick")
                                 .getValues();
-                        String nickname = (values.hasNext() ? values.next() : null);
+                        String nickname = (!values.isEmpty() ? values.get(0) : null);
 
                         // TODO The rest of the fields of the form are ignored. If we have a
                         // requirement in the future where we need those fields we'll have to change

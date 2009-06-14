@@ -8,6 +8,21 @@
 
 package org.jivesoftware.openfire.plugin;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Map.Entry;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -16,30 +31,28 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
-import org.jivesoftware.openfire.forms.DataForm;
-import org.jivesoftware.openfire.forms.FormField;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.StringUtils;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.resultsetmanagement.ResultSet;
 import org.xmpp.resultsetmanagement.ResultSetImpl;
-
-import java.io.File;
-import java.util.*;
-import java.util.Map.Entry;
 
 /** 
  * Provides support for Jabber Search
@@ -350,12 +363,12 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         IQ replyPacket = IQ.createResultIQ(packet);
         Element reply = replyPacket.setChildElement("query",
                 NAMESPACE_JABBER_IQ_SEARCH);
-        XDataFormImpl unavailableForm = new XDataFormImpl(DataForm.TYPE_CANCEL);
+        final DataForm unavailableForm = new DataForm(DataForm.Type.cancel);
         unavailableForm.setTitle(LocaleUtils.getLocalizedString(
                 "advance.user.search.title", "search"));
         unavailableForm.addInstruction(LocaleUtils.getLocalizedString(
                 "search.service_unavailable", "search"));
-        reply.add(unavailableForm.asXMLElement());
+        reply.add(unavailableForm.getElement());
 
         return replyPacket;
     }
@@ -388,34 +401,31 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         queryResult.addElement("nick");
         queryResult.addElement("email");
 
-        XDataFormImpl searchForm = new XDataFormImpl(DataForm.TYPE_FORM);
+        DataForm searchForm = new DataForm(DataForm.Type.form);
         searchForm.setTitle(LocaleUtils.getLocalizedString(
                 "advance.user.search.title", "search"));
         searchForm.addInstruction(instructions);
 
-        XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-        field.setType(FormField.TYPE_HIDDEN);
-        field.addValue(NAMESPACE_JABBER_IQ_SEARCH);
-        searchForm.addField(field);
+        searchForm.addField("FORM_TYPE", null, FormField.Type.hidden)
+        		.addValue(NAMESPACE_JABBER_IQ_SEARCH);
 
-        field = new XFormFieldImpl("search");
-        field.setType(FormField.TYPE_TEXT_SINGLE);
-        field.setLabel(LocaleUtils.getLocalizedString(
-                "advance.user.search.search", "search"));
-        field.setRequired(true);
-        searchForm.addField(field);
+        searchForm.addField("search", 
+        		LocaleUtils.getLocalizedString("advance.user.search.search", "search"), 
+        		FormField.Type.text_single)
+        		.setRequired(true);
+        
 
         for (String searchField : getFilteredSearchFields()) {
-            field = new XFormFieldImpl(searchField);
-            field.setType(FormField.TYPE_BOOLEAN);
+        	final FormField field = searchForm.addField();
+            field.setVariable(searchField);
+            field.setType(FormField.Type.boolean_type);
             field.addValue("1");
             field.setLabel(LocaleUtils.getLocalizedString(
                 "advance.user.search." + searchField.toLowerCase(), "search"));
             field.setRequired(false);
-            searchForm.addField(field);
         }
 
-        queryResult.add(searchForm.asXMLElement());
+        queryResult.add(searchForm.getElement());
         replyPacket.setChildElement(queryResult);
 
         return replyPacket;
@@ -515,7 +525,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * @return ''true'' if the supplied IQ stanza is a spec compliant search
      *         request, ''false'' otherwise.
      */
-    public static boolean isValidSearchRequest(IQ iq) {
+    @SuppressWarnings("unchecked")
+	public static boolean isValidSearchRequest(IQ iq) {
 
         if (iq == null) {
             throw new IllegalArgumentException("Argument 'iq' cannot be null.");
@@ -620,7 +631,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      *            The form from which to extract the query
      * @return The search query for a particular user search request.
      */
-    private Hashtable<String, String> extractSearchQuery(Element incomingForm) {
+    @SuppressWarnings("unchecked")
+	private Hashtable<String, String> extractSearchQuery(Element incomingForm) {
         if (incomingForm.element(QName.get("x", "jabber:x:data")) != null) {
             // forward the request.
             return extractExtendedSearchQuery(incomingForm);
@@ -657,7 +669,8 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * @return The search query for a particular user search request.
      * @see #extractSearchQuery(Element)
      */
-    private Hashtable<String, String> extractExtendedSearchQuery(
+    @SuppressWarnings("unchecked")
+	private Hashtable<String, String> extractExtendedSearchQuery(
             Element incomingForm) {
         final Element dataform = incomingForm.element(QName.get("x",
                 "jabber:x:data"));
@@ -697,51 +710,41 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * @return the iq packet that contains the search results
      */
     private IQ replyDataFormResult(Collection<User> users, IQ packet) {
-        XDataFormImpl searchResults = new XDataFormImpl(DataForm.TYPE_RESULT);
+        final DataForm searchResults = new DataForm(DataForm.Type.result);
 
-        XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-        field.setType(FormField.TYPE_HIDDEN);
-        searchResults.addField(field);
+        searchResults.addField("FORM_TYPE", null, FormField.Type.hidden);
 
-        field = new XFormFieldImpl("jid");
-        field.setLabel("JID");
-        searchResults.addReportedField(field);
+        searchResults.addReportedField("jid", "JID", null);
 
-        for (String fieldName : getFilteredSearchFields()) {
-            field = new XFormFieldImpl(fieldName);
-            field.setLabel(LocaleUtils.getLocalizedString(
-                "advance.user.search." + fieldName.toLowerCase(), "search"));
-            searchResults.addReportedField(field);
+        for (final String fieldName : getFilteredSearchFields()) {
+            searchResults.addReportedField(fieldName, 
+            		LocaleUtils.getLocalizedString("advance.user.search." + fieldName.toLowerCase(), "search"), 
+            		null);
         }
 
-        for (User user : users) {
-            String username = JID.unescapeNode(user.getUsername());
+        for (final User user : users) {
+            final String username = JID.unescapeNode(user.getUsername());
 
-            ArrayList<XFormFieldImpl> items = new ArrayList<XFormFieldImpl>();
+            final Map<String, Object> item = new HashMap<String, Object>();
+            item.put("jid", 
+            		username + "@" + serverName);
+            
+            item.put(LocaleUtils.getLocalizedString("advance.user.search.username", "search"), 
+            		username);
+            
+            item.put(LocaleUtils.getLocalizedString("advance.user.search.name", "search"), 
+            		(user.isNameVisible() ? removeNull(user.getName()) : ""));
 
-            XFormFieldImpl fieldJID = new XFormFieldImpl("jid");
-            fieldJID.addValue(username + "@" + serverName);
-            items.add(fieldJID);
+            item.put(LocaleUtils.getLocalizedString("advance.user.search.email", "search"), 
+            		(user.isEmailVisible() ? removeNull(user.getEmail()) : ""));
 
-            XFormFieldImpl fieldUsername = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.username", "search"));
-            fieldUsername.addValue(username);
-            items.add(fieldUsername);
-
-            XFormFieldImpl fieldName = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.name", "search"));
-            fieldName.addValue((user.isNameVisible() ? removeNull(user.getName()) : ""));
-            items.add(fieldName);
-
-            XFormFieldImpl fieldEmail = new XFormFieldImpl(LocaleUtils.getLocalizedString("advance.user.search.email", "search"));
-            fieldEmail.addValue((user.isEmailVisible() ? removeNull(user.getEmail()) : ""));
-            items.add(fieldEmail);
-
-            searchResults.addItemFields(items);
+            searchResults.addItemFields(item);
         }
 
         IQ replyPacket = IQ.createResultIQ(packet);
         Element reply = replyPacket.setChildElement("query",
                 NAMESPACE_JABBER_IQ_SEARCH);
-        reply.add(searchResults.asXMLElement());
+        reply.add(searchResults.getElement());
 
         return replyPacket;
     }

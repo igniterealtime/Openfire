@@ -12,6 +12,10 @@
 
 package org.jivesoftware.openfire.handler;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -20,10 +24,6 @@ import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.forms.DataForm;
-import org.jivesoftware.openfire.forms.FormField;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
@@ -32,17 +32,16 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
-
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -105,45 +104,45 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             // Create the registration form to include in the probeResult. The form will include
             // the basic information plus name and visibility of name and email.
             // TODO Future versions could allow plugin modules to add new fields to the form 
-            XDataFormImpl registrationForm = new XDataFormImpl(DataForm.TYPE_FORM);
+            final DataForm registrationForm = new DataForm(DataForm.Type.form);
             registrationForm.setTitle("XMPP Client Registration");
             registrationForm.addInstruction("Please provide the following information");
 
-            XFormFieldImpl field = new XFormFieldImpl("FORM_TYPE");
-            field.setType(FormField.TYPE_HIDDEN);
-            field.addValue("jabber:iq:register");
-            registrationForm.addField(field);
+            final FormField fieldForm = registrationForm.addField();
+            fieldForm.setVariable("FORM_TYPE");
+            fieldForm.setType(FormField.Type.hidden);
+            fieldForm.addValue("jabber:iq:register");
 
-            field = new XFormFieldImpl("username");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel("Username");
-            field.setRequired(true);
-            registrationForm.addField(field);
+            final FormField fieldUser = registrationForm.addField();
+            fieldUser.setVariable("username");
+            fieldUser.setType(FormField.Type.text_single);
+            fieldUser.setLabel("Username");
+            fieldUser.setRequired(true);
 
-            field = new XFormFieldImpl("name");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel("Full name");
+            final FormField fieldName = registrationForm.addField(); 
+        	fieldName.setVariable("name");
+            fieldName.setType(FormField.Type.text_single);
+            fieldName.setLabel("Full name");
             if (UserManager.getUserProvider().isNameRequired()) {
-                field.setRequired(true);
+                fieldName.setRequired(true);
             }
-            registrationForm.addField(field);
 
-            field = new XFormFieldImpl("email");
-            field.setType(FormField.TYPE_TEXT_SINGLE);
-            field.setLabel("Email");
+            final FormField fieldMail = registrationForm.addField();
+            fieldMail.setVariable("email");
+            fieldMail.setType(FormField.Type.text_single);
+            fieldMail.setLabel("Email");
             if (UserManager.getUserProvider().isEmailRequired()) {
-                field.setRequired(true);
+                fieldMail.setRequired(true);
             }
-            registrationForm.addField(field);
 
-            field = new XFormFieldImpl("password");
-            field.setType(FormField.TYPE_TEXT_PRIVATE);
-            field.setLabel("Password");
-            field.setRequired(true);
-            registrationForm.addField(field);
+            final FormField fieldPwd = registrationForm.addField();
+            fieldPwd.setVariable("password");
+            fieldPwd.setType(FormField.Type.text_private);
+            fieldPwd.setLabel("Password");
+            fieldPwd.setRequired(true);
 
             // Add the registration form to the probe result.
-            probeResult.add(registrationForm.asXMLElement());
+            probeResult.add(registrationForm.getElement());
         }
         // See if in-band registration should be enabled (default is true).
         registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
@@ -263,35 +262,34 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     String email = null;
                     String name = null;
                     User newUser;
-                    XDataFormImpl registrationForm;
+                    DataForm registrationForm;
                     FormField field;
 
                     Element formElement = iqElement.element("x");
                     // Check if a form was used to provide the registration info
                     if (formElement != null) {
                         // Get the sent form
-                        registrationForm = new XDataFormImpl();
-                        registrationForm.parse(formElement);
+                        registrationForm = new DataForm(formElement);
                         // Get the username sent in the form
-                        Iterator<String> values = registrationForm.getField("username").getValues();
-                        username = (values.hasNext() ? values.next() : " ");
+                        List<String> values = registrationForm.getField("username").getValues();
+                        username = (!values.isEmpty() ? values.get(0) : " ");
                         // Get the password sent in the form
                         field = registrationForm.getField("password");
                         if (field != null) {
                             values = field.getValues();
-                            password = (values.hasNext() ? values.next() : " ");
+                            password = (!values.isEmpty() ? values.get(0) : " ");
                         }
                         // Get the email sent in the form
                         field = registrationForm.getField("email");
                         if (field != null) {
                             values = field.getValues();
-                            email = (values.hasNext() ? values.next() : " ");
+                            email = (!values.isEmpty() ? values.get(0) : " ");
                         }
                         // Get the name sent in the form
                         field = registrationForm.getField("name");
                         if (field != null) {
                             values = field.getValues();
-                            name = (values.hasNext() ? values.next() : " ");
+                            name = (!values.isEmpty() ? values.get(0) : " ");
                         }
                     }
                     else {

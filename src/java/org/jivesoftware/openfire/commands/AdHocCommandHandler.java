@@ -28,7 +28,6 @@ import org.jivesoftware.openfire.commands.clearspace.SystemAdminAdded;
 import org.jivesoftware.openfire.commands.clearspace.SystemAdminRemoved;
 import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.disco.*;
-import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.xmpp.forms.DataForm;
 import org.xmpp.packet.IQ;

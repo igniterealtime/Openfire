@@ -147,7 +147,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         // See if in-band registration should be enabled (default is true).
         registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
         // See if users can change their passwords (default is true).
-        canChangePassword = JiveGlobals.getBooleanProperty("register.password", true);
+        canChangePassword = JiveGlobals.getBooleanProperty("xmpp.auth.iqauth", true);
     }
 
     public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
@@ -446,7 +446,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     public void setCanChangePassword(boolean allowed) {
         canChangePassword = allowed;
-        JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
+        JiveGlobals.setProperty("xmpp.auth.iqauth", canChangePassword ? "true" : "false");
     }
 
     public IQHandlerInfo getInfo() {

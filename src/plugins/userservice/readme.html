@@ -93,7 +93,7 @@ The following parameters can be passed into the request:<p>
 </tr>
 <tr>
     <td class="name">type</td><td>Required</td><td>The admin service required. 
-    Possible values are add, delete, update</td>
+    Possible values are add, delete, update, enable, disable</td>
 </tr>
 <tr>
     <td class="name">secret</td><td>Required</td>
@@ -101,7 +101,7 @@ The following parameters can be passed into the request:<p>
 </tr>
 <tr>
     <td class="name">username</td><td>Required</td>
-    <td>The username of the user to add, update or delete. ie the part before the @ symbol.</td>
+    <td>The username of the user to add, update, delete, enable, or disable. ie the part before the @ symbol.</td>
 </tr>
 <tr>
     <td class="name">password</td><td>Required for add operation</td>
@@ -145,6 +145,27 @@ http://example.com:9090/plugins/userService/userservice?type=delete&secret=bigse
 </textarea>
 </form>
 </ul>
+
+The following example disables a user (lockout)
+
+<ul>
+<form>
+<textarea cols=65 rows=4 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=disable&secret=bigsecret&username=kafka
+</textarea>
+</form>
+</ul>
+
+The following example enables a user (removes lockout)
+
+<ul>
+<form>
+<textarea cols=65 rows=4 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=enable&secret=bigsecret&username=kafka
+</textarea>
+</form>
+</ul>
+
 
 This example updates a user
 

@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -94,6 +95,32 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
     public void deleteUser(String username) throws UserNotFoundException{
         User user = getUser(username);
         userManager.deleteUser(user);
+    }
+
+    /**
+     * Lock Out on a given username
+     *
+     * @param username the username of the local user to disable.
+     * @throws UserNotFoundException if the requested user
+     *         does not exist in the local server.
+     */
+    public void disableUser(String username) throws UserNotFoundException
+    {
+        User user = getUser(username);
+        LockOutManager.getInstance().disableAccount(username, null, null);
+    }
+
+    /**
+     * Remove the lockout on a given username
+     *
+     * @param username the username of the local user to enable.
+     * @throws UserNotFoundException if the requested user
+     *         does not exist in the local server.
+     */
+    public void enableUser(String username) throws UserNotFoundException
+    {
+        User user = getUser(username);
+        LockOutManager.getInstance().enableAccount(username);
     }
     
     public void updateUser(String username, String password, String name, String email, String groupNames)

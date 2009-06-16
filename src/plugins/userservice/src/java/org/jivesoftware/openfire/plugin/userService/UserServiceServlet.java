@@ -114,6 +114,14 @@ public class UserServiceServlet extends HttpServlet {
                 replyMessage("ok",response,out);
                 //xmlProvider.sendInfo(request, response, presence);
             }
+            else if ("enable".equals(type)) {
+                plugin.enableUser(username);
+                replyMessage("ok",response,out);
+            }
+            else if ("disable".equals(type)) {
+                plugin.disableUser(username);
+                replyMessage("ok",response,out);
+            }
             else if ("update".equals(type)) {
                 plugin.updateUser(username, password,name,email, groupNames);
                 replyMessage("ok",response,out);

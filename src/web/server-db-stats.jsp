@@ -49,12 +49,12 @@
     }
 
     // Enable/disable stats
-    if ("true".equals(enableStats)) {
+    if ("true".equals(enableStats) && ! DbConnectionManager.isProfilingEnabled()) {
         DbConnectionManager.setProfilingEnabled(true);
         // Log the event
         webManager.logEvent("enabled db profiling", null);
     }
-    else if ("false".equals(enableStats)) {
+    else if ("false".equals(enableStats) && DbConnectionManager.isProfilingEnabled()) {
         DbConnectionManager.setProfilingEnabled(false);
         // Log the event
         webManager.logEvent("disabled db profiling", null);

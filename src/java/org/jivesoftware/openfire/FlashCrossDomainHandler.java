@@ -69,11 +69,16 @@ public class FlashCrossDomainHandler extends BasicModule {
     }
 
     private void startServer() throws Exception {
+        if(!JiveGlobals.getBooleanProperty("flash.crossdomain.enabled",true)){
+            Log.debug("Flash cross domain listener is disabled");
+            return;
+        }
+        
+        int port = JiveGlobals.getIntProperty("flash.crossdomain.port",5229);
         try {
             // Listen on a specific network interface if it has been set.
             String interfaceName = JiveGlobals.getXMLProperty("network.interface");
             InetAddress bindInterface = null;
-            int port = 5229;
             if (interfaceName != null) {
                 if (interfaceName.trim().length() > 0) {
                     bindInterface = InetAddress.getByName(interfaceName);
@@ -83,7 +88,7 @@ public class FlashCrossDomainHandler extends BasicModule {
             Log.debug("Flash cross domain is listening on " + interfaceName + " on port " + port);
         }
         catch (IOException e) {
-            Log.error("Could not listen on port: 5229.", e);
+            Log.error("Could not listen on port: " + port, e);
             return;
         }
 

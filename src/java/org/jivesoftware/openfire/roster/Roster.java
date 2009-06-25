@@ -143,7 +143,7 @@ public class Roster implements Cacheable, Externalizable {
                 }
                 // Set subscription type to BOTH if the roster user belongs to a shared group
                 // that is mutually visible with a shared group of the new roster item
-                if (rosterManager.hasMutualVisibility(username, userGroups, jid, itemGroups)) {
+                if (rosterManager.hasMutualVisibility(username, sharedGroups, jid, itemGroups)) {
                     item.setSubStatus(RosterItem.SUB_BOTH);
                 }
                 else {

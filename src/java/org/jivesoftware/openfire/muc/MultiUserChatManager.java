@@ -126,9 +126,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      */
     public void registerMultiUserChatService(MultiUserChatService service) {
         Log.debug("MultiUserChatManager: Registering MUC service "+service.getServiceName());
-        mucServices.put(service.getServiceName(), service);
         try {
             ComponentManagerFactory.getComponentManager().addComponent(service.getServiceName(), service);
+            mucServices.put(service.getServiceName(), service);
         }
         catch (ComponentException e) {
             Log.error("MultiUserChatManager: Unable to add "+service.getServiceName()+" as component.", e);
@@ -186,8 +186,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      */
     public MultiUserChatServiceImpl createMultiUserChatService(String subdomain, String description, Boolean isHidden) throws AlreadyExistsException {
         if (getMultiUserChatServiceID(subdomain) != null) throw new AlreadyExistsException();
-        insertService(subdomain, description, isHidden);
         MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+        insertService(subdomain, description, isHidden);
         registerMultiUserChatService(muc);
         return muc;
     }

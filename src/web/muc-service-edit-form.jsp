@@ -10,6 +10,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.AlreadyExistsException,
                  java.util.*"
     errorPage="error.jsp"
 %>
@@ -66,11 +67,19 @@
                 return;
             }
             else {
-                webManager.getMultiUserChatManager().createMultiUserChatService(mucname, mucdesc, false);
-                // Log the event
-                webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
-                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                return;
+                try {
+                    webManager.getMultiUserChatManager().createMultiUserChatService(mucname, mucdesc, false);
+                    // Log the event
+                    webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                    response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
+                    return;
+                }
+                catch (IllegalArgumentException e) {
+                    errors.put("mucname","mucname");
+                }
+                catch (AlreadyExistsException e) {
+                    errors.put("already_exists","already_exists");
+                }
             }
         }
     }
@@ -115,6 +124,9 @@
         <td class="jive-icon-label">
             <% if (errors.get("mucname") != null) { %>
                 <fmt:message key="groupchat.service.properties.error_service_name" />
+            <% } %>
+            <% if (errors.get("already_exists") != null) { %>
+                <fmt:message key="groupchat.service.properties.error_already_exists" />
             <% } %>
         </td></tr>
     </tbody>

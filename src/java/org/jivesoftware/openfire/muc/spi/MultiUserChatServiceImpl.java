@@ -120,7 +120,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * the chat service's hostname (subdomain)
      */
-    private String chatServiceName = null;
+    private final String chatServiceName;
     /**
      * the chat service's description
      */
@@ -252,13 +252,22 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private List<Element> extraDiscoIdentities = new ArrayList<Element>();
 
     /**
-     * Create a new group chat server.
-     *
-     * @param subdomain Subdomain portion of the conference services (for example, conference for conference.example.org)
-     * @param description Short description of service for disco and such.
-     * @param isHidden True if this service should be hidden from services views.
-     */
+	 * Create a new group chat server.
+	 * 
+	 * @param subdomain
+	 *            Subdomain portion of the conference services (for example,
+	 *            conference for conference.example.org)
+	 * @param description
+	 *            Short description of service for disco and such. If
+	 *            <tt>null</tt> or empty, a default value will be used.
+	 * @param isHidden
+	 *            True if this service should be hidden from services views.
+	 * @throws IllegalArgumentException
+	 *             if the provided subdomain is an invalid, according to the JID
+	 *             domain definition.
+	 */
     public MultiUserChatServiceImpl(String subdomain, String description, Boolean isHidden) {
+        // Check subdomain and throw an IllegalArgumentException if its invalid        new JID(null,subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
         this.chatServiceName = subdomain;
         if (description != null && description.trim().length() > 0) {
             this.chatDescription = description;
@@ -268,7 +277,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         this.isHidden = isHidden;
         historyStrategy = new HistoryStrategy(null);
-        initialize(XMPPServer.getInstance());
     }
 
     public String getDescription() {
@@ -351,7 +359,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void initialize(JID jid, ComponentManager componentManager) {
-
+        initialize(XMPPServer.getInstance());
     }
 
     public void shutdown() {

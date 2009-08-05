@@ -12,10 +12,6 @@
 
 package org.jivesoftware.openfire.handler;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -42,6 +38,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -147,7 +147,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         // See if in-band registration should be enabled (default is true).
         registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
         // See if users can change their passwords (default is true).
-        canChangePassword = JiveGlobals.getBooleanProperty("xmpp.auth.iqauth", true);
+        canChangePassword = JiveGlobals.getBooleanProperty("register.password", true);
     }
 
     public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
@@ -446,7 +446,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     public void setCanChangePassword(boolean allowed) {
         canChangePassword = allowed;
-        JiveGlobals.setProperty("xmpp.auth.iqauth", canChangePassword ? "true" : "false");
+        JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
     }
 
     public IQHandlerInfo getInfo() {

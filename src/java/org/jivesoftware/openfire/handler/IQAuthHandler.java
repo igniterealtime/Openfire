@@ -66,6 +66,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
     private String serverName;
     private UserManager userManager;
     private RoutingTable routingTable;
+    private IQRegisterHandler registerHandler;
 
     /**
      * Clients are not authenticated when accessing this handler.
@@ -293,7 +294,8 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             throws UnauthorizedException
     {
         IQ response;
-        if (password == null || password.length() == 0) {
+        // Check if users can change their passwords and a password was specified
+        if (!registerHandler.canChangePassword() || password == null || password.length() == 0) {
             throw new UnauthorizedException();
         }
         else {
@@ -370,6 +372,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         super.initialize(server);
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
+        registerHandler = server.getIQRegisterHandler();
         serverName = server.getServerInfo().getXMPPDomain();
     }
 

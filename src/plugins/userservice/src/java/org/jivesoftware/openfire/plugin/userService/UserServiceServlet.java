@@ -18,7 +18,9 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.plugin.UserServicePlugin;
 import org.jivesoftware.admin.AuthCheckFilter;
+import org.jivesoftware.stringprep.Stringprep;
 
+import org.xmpp.packet.JID;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -102,8 +104,19 @@ public class UserServiceServlet extends HttpServlet {
             replyError("RequestNotAuthorised",response, out);
             return;
          }
+
+        // Some checking is required on the username
+        if (username == null){
+            replyError("IllegalArgumentException",response, out);
+            return;
+        }
+
+
         // Check the request type and process accordingly
         try {
+            username = username.trim().toLowerCase();
+            username = JID.escapeNode(username);
+            username = Stringprep.nodeprep(username);
             if ("add".equals(type)) {
                 plugin.createUser(username, password, name, email, groupNames);
                 replyMessage("ok",response, out);

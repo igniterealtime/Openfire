@@ -532,7 +532,6 @@ public class PubSubPersistenceManager {
                 loadItems(nodes, rs);
             }
             rs.close();
-            pstmt.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);

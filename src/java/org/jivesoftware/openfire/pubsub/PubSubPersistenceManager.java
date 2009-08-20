@@ -298,6 +298,7 @@ public class PubSubPersistenceManager {
             pstmt.setString(25, service.getServiceID());
             pstmt.setString(26, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
+            pstmt.close();
 
             // Remove existing JIDs associated with the the node
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
@@ -519,6 +520,7 @@ public class PubSubPersistenceManager {
                 loadSubscriptions(service, nodes, rs);
             }
             rs.close();
+            pstmt.close();
 
             // TODO We may need to optimize memory consumption and load items on-demand
             // Load published items of all nodes
@@ -530,6 +532,7 @@ public class PubSubPersistenceManager {
                 loadItems(nodes, rs);
             }
             rs.close();
+            pstmt.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);

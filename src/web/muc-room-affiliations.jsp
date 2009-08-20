@@ -231,9 +231,15 @@
                 ArrayList<String> owners = new ArrayList<String>(room.getOwners());
                 Collections.sort(owners);
                 for (String user : owners) {
-                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                    String rest = user.substring(user.indexOf('@'), user.length());
-                    String userDisplay = username + rest;
+                    String userDisplay;
+                    if (user.indexOf('@') > 0) {
+                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                        String rest = user.substring(user.indexOf('@'), user.length());
+                        userDisplay = username + rest;
+                    }
+                    else {
+                        userDisplay = user;
+                    }
 
         %>
             <tr>
@@ -265,9 +271,15 @@
                 ArrayList<String> admins = new ArrayList<String>(room.getAdmins());
                 Collections.sort(admins);
                 for (String user : admins) {
-                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                    String rest = user.substring(user.indexOf('@'), user.length());
-                    String userDisplay = username + rest;
+                    String userDisplay;
+                    if (user.indexOf('@') > 0) {
+                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                        String rest = user.substring(user.indexOf('@'), user.length());
+                        userDisplay = username + rest;
+                    }
+                    else {
+                        userDisplay = user;
+                    }
         %>
             <tr>
                 <td>&nbsp;</td>
@@ -298,9 +310,15 @@
                 ArrayList<String> members = new ArrayList<String>(room.getMembers());
                 Collections.sort(members);
                 for (String user : members) {
-                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                    String rest = user.substring(user.indexOf('@'), user.length());
-                    String userDisplay = username + rest;
+                    String userDisplay;
+                    if (user.indexOf('@') > 0) {
+                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                        String rest = user.substring(user.indexOf('@'), user.length());
+                        userDisplay = username + rest;
+                    }
+                    else {
+                        userDisplay = user;
+                    }
 
                     String nickname = room.getReservedNickname(user);
                     nickname = (nickname == null ? "" : " (" + nickname + ")");
@@ -334,9 +352,15 @@
                 ArrayList<String> outcasts = new ArrayList<String>(room.getOutcasts());
                 Collections.sort(outcasts);
                 for (String user : outcasts) {
-                    String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                    String rest = user.substring(user.indexOf('@'), user.length());
-                    String userDisplay = username + rest;
+                    String userDisplay;
+                    if (user.indexOf('@') > 0) {
+                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
+                        String rest = user.substring(user.indexOf('@'), user.length());
+                        userDisplay = username + rest;
+                    }
+                    else {
+                        userDisplay = user;
+                    }
         %>
             <tr>
                 <td>&nbsp;</td>

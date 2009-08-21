@@ -134,7 +134,6 @@
     if (log != null) {
         log = StringUtils.escapeHTMLTags(log);
     }
-
     debugEnabled = Log.isDebugEnabled();
     User pageUser = admin.getUser();
 
@@ -286,6 +285,7 @@ IFRAME {
     </tr>
 </tbody>
 </table>
+</div>
 
 <%  ByteFormat byteFormatter = new ByteFormat();
     Date lastMod = new Date(logFile.lastModified());
@@ -324,11 +324,11 @@ IFRAME {
                         <% for (String aLINES : LINES) {
                             String selected = (aLINES.equals(numLinesParam)) ? " selected" : "";
                         %>
-                        <option value="<%= aLINES %>"<%= selected %>><%= aLINES %>
+                        <option value="<%= aLINES %>"<%= selected %>><%= aLINES %></option>
 
                         <%  } %>
                             <option value="All"<%= (("All".equals(numLinesParam))?" selected":"") %>
-                             ><fmt:message key="logviewer.all" />
+                             ><fmt:message key="logviewer.all" /></option>
                     </select>
                 </td>
             </tr>

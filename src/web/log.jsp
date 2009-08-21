@@ -96,47 +96,53 @@
     File logDir = new File(Log.getLogDirectory());
     String filename = log + ".log";
     File logFile = new File(logDir, filename);
-
-    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
-    String line;
-    int totalNumLines = 0;
-    while ((line=in.readLine()) != null) {
-        totalNumLines++;
+    
+    String lines[] = new String[0];
+    int start = 0;
+    try {
+	    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
+	    String line;
+	    int totalNumLines = 0;
+	    while ((line=in.readLine()) != null) {
+	        totalNumLines++;
+	    }
+	    in.close();
+	    // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
+	    if ("All".equals(numLinesParam)) {
+	        numLines = totalNumLines;
+	    }
+	    lines = new String[numLines];
+	    in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
+	    // skip lines
+	    start = totalNumLines - numLines;
+	    if (start < 0) { start = 0; }
+	    for (int i=0; i<start; i++) {
+	        in.readLine();
+	    }
+	    int i = 0;
+	    if ("asc".equals(mode)) {
+	        while ((line=in.readLine()) != null && i<numLines) {
+	            line = StringUtils.escapeHTMLTags(line);
+	            line = parseDate(line);
+	            line = hilite(line);
+	            lines[i] = line;
+	            i++;
+	        }
+	    }
+	    else {
+	        int end = lines.length-1;
+	        while ((line=in.readLine()) != null && i<numLines) {
+	            line = StringUtils.escapeHTMLTags(line);
+	            line = parseDate(line);
+	            line = hilite(line);
+	            lines[end-i] = line;
+	            i++;
+	        }
+	    }
+	    numLines = start + i;
+    } catch (FileNotFoundException ex) {
+    	Log.info("Could not open (log)file.", ex);
     }
-    in.close();
-    // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
-    if ("All".equals(numLinesParam)) {
-        numLines = totalNumLines;
-    }
-    String[] lines = new String[numLines];
-    in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
-    // skip lines
-    int start = totalNumLines - numLines;
-    if (start < 0) { start = 0; }
-    for (int i=0; i<start; i++) {
-        in.readLine();
-    }
-    int i = 0;
-    if ("asc".equals(mode)) {
-        while ((line=in.readLine()) != null && i<numLines) {
-            line = StringUtils.escapeHTMLTags(line);
-            line = parseDate(line);
-            line = hilite(line);
-            lines[i] = line;
-            i++;
-        }
-    }
-    else {
-        int end = lines.length-1;
-        while ((line=in.readLine()) != null && i<numLines) {
-            line = StringUtils.escapeHTMLTags(line);
-            line = parseDate(line);
-            line = hilite(line);
-            lines[end-i] = line;
-            i++;
-        }
-    }
-    numLines = start + i;
 %>
 
 <html>

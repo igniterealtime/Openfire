@@ -313,7 +313,7 @@ public class SASLAuthentication {
                             }
                         }
                         else {
-                            Log.fatal("SaslServer is null, should be valid object instead.");
+                            Log.error("SaslServer is null, should be valid object instead.");
                             authenticationFailed(session);
                             status = Status.failed;
                         }

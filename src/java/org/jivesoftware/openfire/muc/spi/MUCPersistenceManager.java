@@ -48,7 +48,7 @@ public class MUCPersistenceManager {
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
-        "canChangeNick, canRegister FROM ofMucRoom WHERE name=?";
+        "canChangeNick, canRegister FROM ofMucRoom WHERE serviceID=? AND name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid, affiliation FROM ofMucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
@@ -163,9 +163,11 @@ public class MUCPersistenceManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
+            Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName());
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROOM);
-            pstmt.setString(1, room.getName());
+            pstmt.setLong(1, serviceID);
+            pstmt.setString(2, room.getName());
             ResultSet rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");

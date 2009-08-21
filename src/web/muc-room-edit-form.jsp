@@ -451,7 +451,7 @@
                         @<select name="mucName">
                         <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) { %>
                         <%      if (service.isHidden()) continue; %>
-                        <option value="<%= service.getServiceName() %>"<%= service.getServiceDomain().equals(mucName) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
+                        <option value="<%= service.getServiceDomain() %>"<%= service.getServiceDomain().equals(mucName) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
                         <% } %>
                         </select>
                         <% } else { %>

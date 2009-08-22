@@ -177,6 +177,17 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
         return 0;
     }
 
+    public void writeSerializableCollection(DataOutput out, Collection<? extends Serializable> value)
+	    throws IOException {
+    	// Do nothing
+	}
+	
+	public int readSerializableCollection(DataInput in, Collection<? extends Serializable> value,
+	                                    ClassLoader loader) throws IOException {
+		// Do nothing
+		return 0;
+	}
+	
     public void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException {
         // Do nothing
     }
@@ -187,6 +198,15 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
         return 0;
     }
 
+    public void writeSerializableMap(DataOutput out, Map<String, ? extends Serializable> map) throws IOException {
+        // Do nothing
+    }
+
+    public int readSerializableMap(DataInput in, Map<String, ? extends Serializable> map, ClassLoader loader)
+            throws IOException {
+        // Do nothing
+        return 0;
+    }
     public void writeStringsMap(DataOutput out, Map<String, Set<String>> map) throws IOException {
         // Do nothing
     }

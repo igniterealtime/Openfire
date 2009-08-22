@@ -131,10 +131,19 @@ public interface ExternalizableUtilStrategy {
     int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value, ClassLoader loader)
             throws IOException;
 
+    void writeSerializableCollection(DataOutput out, Collection<? extends Serializable> value) throws IOException;
+
+    int readSerializableCollection(DataInput in, Collection<? extends Serializable> value, ClassLoader loader)
+            throws IOException;
+    
     void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException;
 
     int readExternalizableMap(DataInput in, Map<String, ? extends Externalizable> map, ClassLoader loader) throws IOException;
 
+    void writeSerializableMap(DataOutput out, Map<String, ? extends Serializable> map) throws IOException;
+
+    int readSerializableMap(DataInput in, Map<String, ? extends Serializable> map, ClassLoader loader) throws IOException;
+    
     void writeStringsMap(DataOutput out, Map<String, Set<String>> map)  throws IOException;
 
     int readStringsMap(DataInput in, Map<String, Set<String>> map) throws IOException;

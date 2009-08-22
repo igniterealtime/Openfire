@@ -671,8 +671,8 @@ public class Group implements Cacheable, Externalizable {
         if (description != null) {
             ExternalizableUtil.getInstance().writeSafeUTF(out, description);
         }
-        ExternalizableUtil.getInstance().writeExternalizableCollection(out, members);
-        ExternalizableUtil.getInstance().writeExternalizableCollection(out, administrators);
+        ExternalizableUtil.getInstance().writeSerializableCollection(out, members);
+        ExternalizableUtil.getInstance().writeSerializableCollection(out, administrators);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -685,7 +685,7 @@ public class Group implements Cacheable, Externalizable {
         }
         members= new HashSet<JID>();
         administrators = new HashSet<JID>();
-        ExternalizableUtil.getInstance().readExternalizableCollection(in, members, getClass().getClassLoader());
-        ExternalizableUtil.getInstance().readExternalizableCollection(in, administrators, getClass().getClassLoader());
+        ExternalizableUtil.getInstance().readSerializableCollection(in, members, getClass().getClassLoader());
+        ExternalizableUtil.getInstance().readSerializableCollection(in, administrators, getClass().getClassLoader());
     }
 }

@@ -1113,7 +1113,7 @@
 
         <rpm specFile="openfire.spec"
              topDir="${target.rpm}"
-             command="-ba --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+             command="-ba --target i386 --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
              failOnError="true"
              />
              

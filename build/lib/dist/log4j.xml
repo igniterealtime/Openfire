@@ -3,9 +3,9 @@
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
 	<appender name="debug-out" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="../logs/debug.log" />
-	    <param name="MaxFileSize" value="1024KB"/>
-        <param name="MaxBackupIndex" value="5"/>
+		<param name="File" value="${openfireHome}/logs/debug.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %m%n" />
 		</layout>
@@ -16,9 +16,9 @@
 	</appender>
 
 	<appender name="info-out" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="../logs/info.log" />
-	    <param name="MaxFileSize" value="1024KB"/>
-        <param name="MaxBackupIndex" value="5"/>
+		<param name="File" value="${openfireHome}/logs/info.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %m%n" />
 		</layout>
@@ -30,9 +30,9 @@
 	</appender>
 
 	<appender name="warn-out" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="../logs/warn.log" />
-	    <param name="MaxFileSize" value="1024KB"/>
-        <param name="MaxBackupIndex" value="5"/>
+		<param name="File" value="${openfireHome}/logs/warn.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %m%n" />
 		</layout>
@@ -44,9 +44,9 @@
 	</appender>
 	
 	<appender name="error-out" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="../logs/error.log" />
-	    <param name="MaxFileSize" value="1024KB"/>
-        <param name="MaxBackupIndex" value="5"/>
+		<param name="File" value="${openfireHome}/logs/error.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %m%n" />
 		</layout>

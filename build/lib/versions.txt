@@ -47,6 +47,7 @@ servlet.jar                         | Jetty 6.1.10 (2.5)                        
 shaj.jar                            | 0.5                                                          | Apache 2.0
 sitemesh.jar                        | 2.2.1                                                        | Apache 1.1
 standard.jar                        | Jakarta standard taglib 1.1.2                                |
+tinder-with-dependencies.jar        | 1.1.0                                                        | GPL
 xmltask.jar                         | 1.11                                                         | Apache 1.1
 xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 

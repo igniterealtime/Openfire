@@ -15,12 +15,14 @@ package org.jivesoftware.openfire.net;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -115,21 +117,17 @@ public class DNSUtil {
         }
 
         // Attempt the SRV lookup.
-        try {
-            results = srvLookup("_xmpp-server._tcp." + domain);
-        }
-        catch (Exception e) {
-            // Attempt lookup with older "jabber" name.
-            try {
-                results = srvLookup("_jabber._tcp." + domain);
-            }
-            catch (Exception e2) {
-                // Do nothing
-            }
+        results = srvLookup("_xmpp-server._tcp." + domain);
+        if (results == null || results.isEmpty()) {
+            results = srvLookup("_jabber._tcp." + domain);
         }
 
         // Use domain and default port as fallback.
-        if (results == null || results.isEmpty()) {
+        if (results == null) {
+            results = new ArrayList<HostAddress>();
+            results.add(new HostAddress(domain, defaultPort));
+        }
+        else if (results.isEmpty()) {
             results.add(new HostAddress(domain, defaultPort));
         }
         return results;
@@ -186,18 +184,30 @@ public class DNSUtil {
         return answer;
     }
 
-    private static List<HostAddress> srvLookup(String lookup) throws NamingException {
-        Attributes dnsLookup =
-                context.getAttributes(lookup, new String[]{"SRV"});
-        Attribute srvRecords = dnsLookup.get("SRV");
-        HostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
-        for (int i = 0; i < srvRecords.size(); i++) {
-            hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));
+    private static List<HostAddress> srvLookup(String lookup) {
+        if (lookup == null) {
+            throw new NullPointerException("DNS lookup can't be null");
         }
-        if (srvRecords.size() > 1) {
-            Arrays.sort(hosts, new SrvRecordWeightedPriorityComparator());
+        try {
+            Attributes dnsLookup =
+                    context.getAttributes(lookup, new String[]{"SRV"});
+            Attribute srvRecords = dnsLookup.get("SRV");
+            HostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
+            for (int i = 0; i < srvRecords.size(); i++) {
+                hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));
+            }
+            if (srvRecords.size() > 1) {
+                Arrays.sort(hosts, new SrvRecordWeightedPriorityComparator());
+            }
+            return Arrays.asList(hosts);
         }
-        return Arrays.asList(hosts);
+        catch (NameNotFoundException e) {
+            Log.debug("No SRV record found for: " + lookup, e);
+        }
+        catch (NamingException e) {
+            Log.error("Can't process DNS lookup!", e);
+        }
+        return null;
     }
 
     /**
@@ -205,8 +215,8 @@ public class DNSUtil {
      */
     public static class HostAddress {
 
-        private String host;
-        private int port;
+        private final String host;
+        private final int port;
 
         private HostAddress(String host, int port) {
             // Host entries in DNS should end with a ".".
@@ -247,8 +257,8 @@ public class DNSUtil {
      */
     public static class WeightedHostAddress extends HostAddress {
 
-        private int priority;
-        private int weight;
+        private final int priority;
+        private final int weight;
 
         private WeightedHostAddress(String [] srvRecordEntries) {
             super(srvRecordEntries[srvRecordEntries.length-1], 
@@ -285,7 +295,9 @@ public class DNSUtil {
     /**
      * A comparator for sorting multiple weighted host addresses according to RFC 2782.
      */
-    public static class SrvRecordWeightedPriorityComparator implements Comparator<HostAddress> {
+    public static class SrvRecordWeightedPriorityComparator implements Comparator<HostAddress>, Serializable {
+        private static final long serialVersionUID = -9207293572898848260L;
+
         public int compare(HostAddress o1, HostAddress o2) {
             if (o1 instanceof WeightedHostAddress && o2 instanceof WeightedHostAddress) {
                 WeightedHostAddress srv1 = (WeightedHostAddress) o1;

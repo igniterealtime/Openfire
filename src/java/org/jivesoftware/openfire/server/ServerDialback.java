@@ -39,6 +39,8 @@ import org.xmpp.packet.StreamError;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -181,17 +183,27 @@ public class ServerDialback {
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
-            // Get the real hostname to connect to using DNS lookup of the specified hostname
-            DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
-            realHostname = address.getHost();
-            realPort = address.getPort();
-            Log.debug("ServerDialback: OS - Trying to connect to " + hostname + ":" + port +
-                        "(DNS lookup: " + realHostname + ":" + realPort + ")");
-            // Connect to the remote server
             Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(realHostname, realPort),
-                    RemoteServerManager.getSocketTimeout());
-            Log.debug("ServerDialback: OS - Connection to " + hostname + ":" + port + " successful");
+            // Get a list of real hostnames to connect to using DNS lookup of the specified hostname
+            List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname, port);
+            for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
+                try {
+                    DNSUtil.HostAddress address = it.next();
+                    realHostname = address.getHost();
+                    realPort = address.getPort();
+                    Log.debug("ServerDialback: OS - Trying to connect to " + hostname + ":" + port +
+                            "(DNS lookup: " + realHostname + ":" + realPort + ")");
+                    // Establish a TCP connection to the Receiving Server
+                    socket.connect(new InetSocketAddress(realHostname, realPort),
+                            RemoteServerManager.getSocketTimeout());
+                    Log.debug("ServerDialback: OS - Connection to " + hostname + ":" + port + " successful");
+                    break;
+                }
+                catch (Exception e) {
+                    Log.warn("Error trying to connect to remote server: " + hostname +
+                            "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                }
+            }
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
                             false);
@@ -487,12 +499,37 @@ public class ServerDialback {
             else {
                 String key = doc.getTextTrim();
 
-                DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname,
+                // Get a list of real hostnames and try to connect using DNS lookup of the specified domain
+                List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname,
                         RemoteServerManager.getPortForServer(hostname));
+                Socket socket = new Socket();
+                String realHostname = null;
+                int realPort;
+                for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
+                    try {
+                        DNSUtil.HostAddress address = it.next();
+                        realHostname = address.getHost();
+                        realPort = address.getPort();
+                        Log.debug("ServerDialback: RS - Trying to connect to Authoritative Server: " + hostname +
+                                "(DNS lookup: " + realHostname + ":" + realPort + ")");
+                        // Establish a TCP connection to the Receiving Server
+                        socket.connect(new InetSocketAddress(realHostname, realPort),
+                                RemoteServerManager.getSocketTimeout());
+                        Log.debug("ServerDialback: RS - Connection to AS: " + hostname + " successful");
+                        break;
+                    }
+                    catch (Exception e) {
+                        Log.warn("Error trying to connect to remote server: " + hostname +
+                                "(DNS lookup: " + realHostname + ")", e);
+                    }
+                }
+                if (!socket.isConnected()) {
+                    Log.warn("No server available for verifying key of remote server: " + hostname);
+                    return false;
+                }
 
                 try {
-                    boolean valid = verifyKey(key, streamID.toString(), recipient, hostname,
-                            address.getHost(), address.getPort());
+                    boolean valid = verifyKey(key, streamID.toString(), recipient, hostname, socket);
 
                     Log.debug("ServerDialback: RS - Sending key verification result to OS: " + hostname);
                     sb = new StringBuilder();
@@ -540,19 +577,12 @@ public class ServerDialback {
      * Verifies the key with the Authoritative Server.
      */
     private boolean verifyKey(String key, String streamID, String recipient, String hostname,
-            String host, int port) throws IOException, XmlPullParserException,
+            Socket socket) throws IOException, XmlPullParserException,
             RemoteConnectionFailedException {
         XMPPPacketReader reader;
         Writer writer = null;
-        // Establish a TCP connection back to the domain name asserted by the Originating Server
-        Log.debug("ServerDialback: RS - Trying to connect to Authoritative Server: " + hostname + ":" + port +
-                        "(DNS lookup: " + host + ":" + port + ")");
-        // Connect to the Authoritative server
-        Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(host, port), RemoteServerManager.getSocketTimeout());
         // Set a read timeout
         socket.setSoTimeout(RemoteServerManager.getSocketTimeout());
-        Log.debug("ServerDialback: RS - Connection to AS: " + hostname + ":" + port + " successful");
         try {
             reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);

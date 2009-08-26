@@ -15,11 +15,18 @@ package org.jivesoftware.openfire.net;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -70,47 +77,62 @@ public class DNSUtil {
      * @param defaultPort default port to return if the DNS look up fails.
      * @return a HostAddress, which encompasses the hostname and port that the XMPP
      *      server can be reached at for the specified domain.
+     * @deprecated replaced with support for multiple srv records, see 
+     *      {@link #resolveXMPPDomain(String, int)}
      */
+    @Deprecated
     public static HostAddress resolveXMPPServerDomain(String domain, int defaultPort) {
+        return resolveXMPPDomain(domain, defaultPort).get(0);
+    }
+
+    /**
+     * Returns a sorted list of host names and ports that the specified XMPP domain
+     * can be reached at for server-to-server communication. A DNS lookup for a SRV
+     * record in the form "_xmpp-server._tcp.example.com" is attempted, according
+     * to section 14.4 of RFC 3920. If that lookup fails, a lookup in the older form
+     * of "_jabber._tcp.example.com" is attempted since servers that implement an
+     * older version of the protocol may be listed using that notation. If that
+     * lookup fails as well, it's assumed that the XMPP server lives at the
+     * host resolved by a DNS lookup at the specified domain on the specified default port.<p>
+     *
+     * As an example, a lookup for "example.com" may return "im.example.com:5269".
+     *
+     * @param domain the domain.
+     * @param defaultPort default port to return if the DNS look up fails.
+     * @return a list of  HostAddresses, which encompasses the hostname and port that the XMPP
+     *      server can be reached at for the specified domain.
+     */
+    public static List<HostAddress> resolveXMPPDomain(String domain, int defaultPort) {
         // Check if there is an entry in the internal DNS for the specified domain
+        List<HostAddress> results = null;
         if (dnsOverride != null) {
             HostAddress hostAddress = dnsOverride.get(domain);
             if (hostAddress != null) {
-                return hostAddress;
+                results = new ArrayList<HostAddress>();
+                results.add(hostAddress);
+                return results;
             }
         }
-        if (context == null) {
-            return new HostAddress(domain, defaultPort);
-        }
-        String host = domain;
-        int port = defaultPort;
+
+        // Attempt the SRV lookup.
         try {
-            Attributes dnsLookup =
-                    context.getAttributes("_xmpp-server._tcp." + domain, new String[]{"SRV"});
-            String srvRecord = (String)dnsLookup.get("SRV").get();
-            String [] srvRecordEntries = srvRecord.split(" ");
-            port = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]);
-            host = srvRecordEntries[srvRecordEntries.length-1];
+            results = srvLookup("_xmpp-server._tcp." + domain);
         }
         catch (Exception e) {
             // Attempt lookup with older "jabber" name.
             try {
-                Attributes dnsLookup =
-                        context.getAttributes("_jabber._tcp." + domain, new String[]{"SRV"});
-                String srvRecord = (String)dnsLookup.get("SRV").get();
-                String [] srvRecordEntries = srvRecord.split(" ");
-                port = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]);
-                host = srvRecordEntries[srvRecordEntries.length-1];
+                results = srvLookup("_jabber._tcp." + domain);
             }
             catch (Exception e2) {
                 // Do nothing
             }
         }
-        // Host entries in DNS should end with a ".".
-        if (host.endsWith(".")) {
-            host = host.substring(0, host.length()-1);
+
+        // Use domain and default port as fallback.
+        if (results == null || results.isEmpty()) {
+            results.add(new HostAddress(domain, defaultPort));
         }
-        return new HostAddress(host, port);
+        return results;
     }
 
     /**
@@ -164,6 +186,20 @@ public class DNSUtil {
         return answer;
     }
 
+    private static List<HostAddress> srvLookup(String lookup) throws NamingException {
+        Attributes dnsLookup =
+                context.getAttributes(lookup, new String[]{"SRV"});
+        Attribute srvRecords = dnsLookup.get("SRV");
+        HostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
+        for (int i = 0; i < srvRecords.size(); i++) {
+            hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));
+        }
+        if (srvRecords.size() > 1) {
+            Arrays.sort(hosts, new SrvRecordWeightedPriorityComparator());
+        }
+        return Arrays.asList(hosts);
+    }
+
     /**
      * Encapsulates a hostname and port.
      */
@@ -173,7 +209,13 @@ public class DNSUtil {
         private int port;
 
         private HostAddress(String host, int port) {
-            this.host = host;
+            // Host entries in DNS should end with a ".".
+            if (host.endsWith(".")) {
+                this.host = host.substring(0, host.length()-1);
+            }
+            else {
+                this.host = host;
+            }
             this.port = port;
         }
 
@@ -197,6 +239,64 @@ public class DNSUtil {
 
         public String toString() {
             return host + ":" + port;
+        }
+    }
+
+    /**
+     * The representation of weighted address.
+     */
+    public static class WeightedHostAddress extends HostAddress {
+
+        private int priority;
+        private int weight;
+
+        private WeightedHostAddress(String [] srvRecordEntries) {
+            super(srvRecordEntries[srvRecordEntries.length-1], 
+                    Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]));
+            weight = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-3]);
+            priority = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-4]);
+        }
+
+        private WeightedHostAddress(String host, int port, int priority, int weight) {
+            super(host, port);
+            this.priority = priority;
+            this.weight = weight;
+        }
+
+        /**
+         * Returns the priority.
+         * 
+         * @return the priority.
+         */
+        public int getPriority() {
+            return priority;
+        }
+
+        /**
+         * Returns the weight.
+         * 
+         * @return the weight.
+         */
+        public int getWeight() {
+            return weight;
+        }
+    }
+
+    /**
+     * A comparator for sorting multiple weighted host addresses according to RFC 2782.
+     */
+    public static class SrvRecordWeightedPriorityComparator implements Comparator<HostAddress> {
+        public int compare(HostAddress o1, HostAddress o2) {
+            if (o1 instanceof WeightedHostAddress && o2 instanceof WeightedHostAddress) {
+                WeightedHostAddress srv1 = (WeightedHostAddress) o1;
+                WeightedHostAddress srv2 = (WeightedHostAddress) o2;
+                // 16 bit unsigned priority is more important as the 16 bit weight
+                return ((srv1.priority << 15) - (srv2.priority << 15)) + (srv2.weight - srv1.weight);
+            }
+            else {
+                // This shouldn't happen but if we don't have priorities we sort the addresses
+                return o1.toString().compareTo(o2.toString());
+            }
         }
     }
 }

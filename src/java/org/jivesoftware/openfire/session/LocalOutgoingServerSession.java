@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -242,21 +243,27 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         String realHostname = null;
         int realPort = port;
         Socket socket = new Socket();
-        try {
-            // Get the real hostname to connect to using DNS lookup of the specified hostname
-            DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
-            realHostname = address.getHost();
-            realPort = address.getPort();
-            Log.debug("LocalOutgoingServerSession: OS - Trying to connect to " + hostname + ":" + port +
-                    "(DNS lookup: " + realHostname + ":" + realPort + ")");
-            // Establish a TCP connection to the Receiving Server
-            socket.connect(new InetSocketAddress(realHostname, realPort),
-                    RemoteServerManager.getSocketTimeout());
-            Log.debug("LocalOutgoingServerSession: OS - Plain connection to " + hostname + ":" + port + " successful");
+        // Get a list of real hostnames to connect to using DNS lookup of the specified hostname
+        List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname, port);
+        for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
+            try {
+                DNSUtil.HostAddress address = it.next();
+                realHostname = address.getHost();
+                realPort = address.getPort();
+                Log.debug("LocalOutgoingServerSession: OS - Trying to connect to " + hostname + ":" + port +
+                        "(DNS lookup: " + realHostname + ":" + realPort + ")");
+                // Establish a TCP connection to the Receiving Server
+                socket.connect(new InetSocketAddress(realHostname, realPort),
+                        RemoteServerManager.getSocketTimeout());
+                Log.debug("LocalOutgoingServerSession: OS - Plain connection to " + hostname + ":" + port + " successful");
+                break;
+            }
+            catch (Exception e) {
+                Log.warn("Error trying to connect to remote server: " + hostname +
+                        "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+            }
         }
-        catch (Exception e) {
-            Log.error("Error trying to connect to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+        if (!socket.isConnected()) {
             return null;
         }
 

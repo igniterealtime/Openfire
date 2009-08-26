@@ -13,7 +13,8 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
@@ -41,6 +42,8 @@ public class DNSUtil {
 
     private static DirContext context;
 
+    private static Logger logger = LoggerFactory.getLogger(DNSUtil.class);
+
     /**
      * Internal DNS that allows to specify target IP addresses and ports to use for domains.
      * The internal DNS will be checked up before performing an actual DNS SRV lookup.
@@ -59,7 +62,7 @@ public class DNSUtil {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            logger.error("Can't initialize DNS context!", e);
         }
     }
 
@@ -123,11 +126,7 @@ public class DNSUtil {
         }
 
         // Use domain and default port as fallback.
-        if (results == null) {
-            results = new ArrayList<HostAddress>();
-            results.add(new HostAddress(domain, defaultPort));
-        }
-        else if (results.isEmpty()) {
+        if (results.isEmpty()) {
             results.add(new HostAddress(domain, defaultPort));
         }
         return results;
@@ -202,12 +201,12 @@ public class DNSUtil {
             return Arrays.asList(hosts);
         }
         catch (NameNotFoundException e) {
-            Log.debug("No SRV record found for: " + lookup, e);
+            logger.debug("No SRV record found for: " + lookup, e);
         }
         catch (NamingException e) {
-            Log.error("Can't process DNS lookup!", e);
+            logger.error("Can't process DNS lookup!", e);
         }
-        return null;
+        return new ArrayList<HostAddress>();
     }
 
     /**

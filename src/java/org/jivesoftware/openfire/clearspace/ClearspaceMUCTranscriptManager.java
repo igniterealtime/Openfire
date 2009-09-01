@@ -232,6 +232,9 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
         }
     }
 
+    public void privateMessageRecieved(JID fromJID, JID toJID, Message message) {
+    }
+    
     public void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
         if (isClearspaceRoom(roomJID) && !isRoomOwner(roomJID, user)) {
             addGroupChatEvent(ClearspaceMUCTranscriptEvent.roomSubjectChanged(roomJID, user, newSubject,

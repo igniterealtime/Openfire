@@ -68,6 +68,12 @@ public class MUCEventDispatcher {
         }
     }
 
+    public static void privateMessageRecieved(JID toJID, JID fromJID, Message message) {
+        for (MUCEventListener listener : listeners) {
+            listener.privateMessageRecieved(toJID, fromJID, message);
+        }
+    }
+
     public static void roomCreated(JID roomJID) {
         for (MUCEventListener listener : listeners) {
             listener.roomCreated(roomJID);

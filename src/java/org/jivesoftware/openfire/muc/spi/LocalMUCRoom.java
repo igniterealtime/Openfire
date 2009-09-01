@@ -928,6 +928,11 @@ public class LocalMUCRoom implements MUCRoom {
         if (occupant != null) {
             packet.setFrom(senderRole.getRoleAddress());
             occupant.send(packet);
+            if(packet instanceof Message) {
+               Message message = (Message) packet;
+                 MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(),
+                         message);
+            }
         }
         else {
             throw new NotFoundException();

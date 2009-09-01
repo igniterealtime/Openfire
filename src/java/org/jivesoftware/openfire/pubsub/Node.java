@@ -767,7 +767,7 @@ public abstract class Node {
         formField.addValue(getNodeID());
 
         formField = form.addField();
-        formField.setVariable("pusub#subscriber_jid");
+        formField.setVariable("pubsub#subscriber_jid");
         formField.setType(FormField.Type.jid_single);
         formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.subscriber"));
         formField.addValue(subscription.getJID().toString());

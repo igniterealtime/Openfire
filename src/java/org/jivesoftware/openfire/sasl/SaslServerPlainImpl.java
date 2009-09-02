@@ -138,10 +138,10 @@ public class SaslServerPlainImpl implements SaslServer {
             throw new SaslException("UTF8 not available on platform", e);
         } catch (UnsupportedCallbackException e) {
             aborted = true;
-            throw new SaslException("PLAIN authentication failed", e);
+            throw new SaslException("PLAIN authentication failed for: "+username, e);
         } catch (IOException e) {
             aborted = true;
-            throw new SaslException("PLAIN authentication failed", e);
+            throw new SaslException("PLAIN authentication failed for: "+username, e);
         }
         return null;
     }

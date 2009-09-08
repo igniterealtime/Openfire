@@ -261,10 +261,10 @@ integration (see above). Use the following settings to enable group integration.
   &lt;jdbcGroupProvider&gt;
        &lt;groupCountSQL&gt;SELECT count(*) FROM myGroups&lt;/groupCountSQL&gt;
        &lt;allGroupsSQL&gt;SELECT groupName FROM myGroups&lt;/allGroupsSQL&gt;
-       &lt;userGroupsSQL&gt;SELECT groupName FORM myGroupUsers WHERE username=?&lt;/userGroupsSQL&gt;
+       &lt;userGroupsSQL&gt;SELECT groupName FROM myGroupUsers WHERE username=?&lt;/userGroupsSQL&gt;
        &lt;descriptionSQL&gt;SELECT groupDescription FROM myGroups WHERE groupName=?&lt;/descriptionSQL&gt;
-       &lt;loadMembersSQL&gt;SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='N'&lt;/loadMembersSQL&gt;
-       &lt;loadAdminsSQL&gt;SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='Y'&lt;/loadAdminsSQL&gt;
+       &lt;loadMembersSQL&gt;SELECT username FROM myGroupUsers WHERE groupName=? AND isAdmin='N'&lt;/loadMembersSQL&gt;
+       &lt;loadAdminsSQL&gt;SELECT username FROM myGroupUsers WHERE groupName=? AND isAdmin='Y'&lt;/loadAdminsSQL&gt;
   &lt;/jdbcGroupProvider&gt;
   ...
 &lt;/jive&gt;

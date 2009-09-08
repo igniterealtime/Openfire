@@ -343,7 +343,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
         try {
 
             // Requests the user active avatar
-            String path = AVATAR_URL_PREFIX + "createAvatar";
+            String path = AVATAR_URL_PREFIX + "avatars";
             Element avatar = ClearspaceManager.getInstance().executeRequest(POST, path, avatarCreateParams.asXML());
 
             return Long.valueOf(avatar.element("return").element("WSAvatar").elementTextTrim("id"));

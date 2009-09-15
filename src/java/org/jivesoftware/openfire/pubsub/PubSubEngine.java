@@ -843,10 +843,21 @@ public class PubSubEngine {
     private void getSubscriptions(PubSubService service, IQ iq, Element childElement) {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
         JID owner = new JID(iq.getFrom().toBareJID());
-        // Collect subscriptions of owner for all nodes at the service
+        Element subscriptionsElement = childElement.element("subscriptions");
+        
+        String nodeID = subscriptionsElement.attributeValue("node");
         Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
-        for (Node node : service.getNodes()) {
-            subscriptions.addAll(node.getSubscriptions(owner));
+        
+        if (nodeID == null)
+        {
+            // Collect subscriptions of owner for all nodes at the service
+            for (Node node : service.getNodes()) {
+                subscriptions.addAll(node.getSubscriptions(owner));
+            }
+        }
+        else
+        {
+            subscriptions.addAll(service.getNode(nodeID).getSubscriptions(owner));
         }
         // Create reply to send
         IQ reply = IQ.createResultIQ(iq);
@@ -859,7 +870,8 @@ public class PubSubEngine {
             Node node = subscription.getNode();
             NodeAffiliate nodeAffiliate = subscription.getAffiliate();
             // Do not include the node id when node is the root collection node
-            if (!node.isRootCollectionNode()) {
+            // or the results are for a specific node
+            if (!node.isRootCollectionNode() && (nodeID == null)) {
                 subElement.addAttribute("node", node.getNodeID());
             }
             subElement.addAttribute("jid", subscription.getJID().toString());

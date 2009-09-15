@@ -43,6 +43,12 @@
     boolean isAnonymous = webManager.getXMPPServer().isLocal(address) &&
             !UserManager.getInstance().isRegisteredUser(address.getNode());
 
+    // No current session found
+    if (currentSess == null) {
+        response.sendRedirect("session-summary.jsp");
+        return;
+    }
+
     // Get a presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();
 

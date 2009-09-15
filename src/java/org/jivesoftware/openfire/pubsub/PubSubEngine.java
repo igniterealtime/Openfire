@@ -875,7 +875,6 @@ public class PubSubEngine {
                 subElement.addAttribute("node", node.getNodeID());
             }
             subElement.addAttribute("jid", subscription.getJID().toString());
-            subElement.addAttribute("affiliation", nodeAffiliate.getAffiliation().name());
             subElement.addAttribute("subscription", subscription.getState().name());
             if (node.isMultipleSubscriptionsEnabled()) {
                 subElement.addAttribute("subid", subscription.getID());

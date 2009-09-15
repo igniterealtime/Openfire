@@ -106,12 +106,9 @@ public class LeafNode extends Node {
         }
         synchronized (publishedItems) {
             // Remove stored published items based on the new max items
-            while (!publishedItems.isEmpty() && publishedItems.size() > maxPublishedItems) {
-                PublishedItem removedItem = publishedItems.remove(0);
-                itemsByID.remove(removedItem.getID());
-                // Add the removed item to the queue of items to delete from the database. The
-                // queue is going to be processed by another thread
-                service.queueItemToRemove(removedItem);
+            while (!publishedItems.isEmpty() && isMaxItemsReached())
+            {
+                removeItem(0);
             }
         }
     }
@@ -158,11 +155,7 @@ public class LeafNode extends Node {
         synchronized (publishedItems) {
             // Remove stored published items
             while (!publishedItems.isEmpty()) {
-                PublishedItem removedItem = publishedItems.remove(0);
-                itemsByID.remove(removedItem.getID());
-                // Add the removed item to the queue of items to delete from the database. The
-                // queue is going to be processed by another thread
-                service.queueItemToRemove(removedItem);
+                removeItem(0);
             }
         }
     }
@@ -236,12 +229,12 @@ public class LeafNode extends Node {
                 payload = entries.isEmpty() ? null : (Element) entries.get(0);
                 // Create a published item from the published data and add it to the node and the db
                 synchronized (publishedItems) {
-                    // Make sure that the published item has an ID and that it's unique in the node
+                    // Make sure that the published item has a unique ID if NOT assigned by publisher
                     if (itemID == null) {
-                        itemID = StringUtils.randomString(15);
-                    }
-                    while (itemsByID.get(itemID) != null) {
-                        itemID = StringUtils.randomString(15);
+                    	do {
+                    		itemID = StringUtils.randomString(15);
+                    	}
+                        while (itemsByID.containsKey(itemID));
                     }
 
                     // Create a new published item
@@ -250,16 +243,22 @@ public class LeafNode extends Node {
                     // Add the new item to the list of published items
                     newPublishedItems.add(newItem);
 
+                    // Check and remove any existing items that have the matching ID,
+                    // generated ID's won't match since we already checked.
+                    PublishedItem duplicate = itemsByID.get(newItem.getID());
+                    
+                    if (duplicate != null)
+                    {
+                    	removeItem(findIndexById(duplicate.getID()));
+                    }
+
                     // Add the published item to the list of items to persist (using another thread)
                     // but check that we don't exceed the limit. Remove oldest items if required.
-                    while (!publishedItems.isEmpty() && publishedItems.size() >= maxPublishedItems)
+                    while (!publishedItems.isEmpty() && isMaxItemsReached())
                     {
-                        PublishedItem removedItem = publishedItems.remove(0);
-                        itemsByID.remove(removedItem.getID());
-                        // Add the removed item to the queue of items to delete from the database. The
-                        // queue is going to be processed by another thread
-                        service.queueItemToRemove(removedItem);
+                        removeItem(0);
                     }
+                    
                     addPublishedItem(newItem);
                     // Add the new published item to the queue of items to add to the database. The
                     // queue is going to be processed by another thread
@@ -284,6 +283,31 @@ public class LeafNode extends Node {
             affiliate.sendPublishedNotifications(message, event, this, newPublishedItems);
         }
     }
+
+	/**
+     * Must be called from code synchronized on publishedItems
+     */
+    private int findIndexById(String id) {
+    	for (int i=0; i<publishedItems.size(); i++)
+    	{
+    		PublishedItem item = publishedItems.get(i);
+    		
+			if (item.getID().equals(id))
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+     * Must be called from code synchronized on publishedItems
+     */
+	private void removeItem(int index) {
+        PublishedItem removedItem = publishedItems.remove(index);
+		itemsByID.remove(removedItem.getID());
+		// Add the removed item to the queue of items to delete from the database. The
+		// queue is going to be processed by another thread
+		service.queueItemToRemove(removedItem);
+	}
 
     /**
      * Deletes the list of published items from the node. Event notifications may be sent to
@@ -459,5 +483,10 @@ public class LeafNode extends Node {
             // Send notification that the node configuration has changed
             broadcastNodeEvent(message, false);
         }
+    }
+    
+    private boolean isMaxItemsReached()
+    {
+    	return (maxPublishedItems > -1 ) && (publishedItems.size() >= maxPublishedItems);
     }
 }

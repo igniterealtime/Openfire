@@ -1738,7 +1738,7 @@ public abstract class Node {
      */
     public NodeSubscription getSubscription(JID subscriberJID) {
         // Check that node does not support multiple subscriptions
-        if (isMultipleSubscriptionsEnabled()) {
+        if (isMultipleSubscriptionsEnabled() && (getSubscriptions(subscriberJID).size() > 1)) {
             throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +
                     "should be retrieved using subID.");
         }

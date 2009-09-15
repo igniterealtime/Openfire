@@ -586,7 +586,18 @@ public class PubSubEngine {
     private void unsubscribeNode(PubSubService service, IQ iq, Element unsubscribeElement) {
         String nodeID = unsubscribeElement.attributeValue("node");
         String subID = unsubscribeElement.attributeValue("subid");
+        String jidAttribute = unsubscribeElement.attributeValue("jid");
+
+        // Check if the specified JID has a subscription with the node
+        if (jidAttribute == null) {
+            // No JID was specified so return an error indicating that jid is required
+            Element pubsubError = DocumentHelper.createElement(
+                    QName.get("jid-required", "http://jabber.org/protocol/pubsub#errors"));
+            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+            return;
+        }
         Node node;
+
         if (nodeID == null) {
             if (service.isCollectionNodesSupported()) {
                 // Entity unsubscribes from root collection node
@@ -610,7 +621,9 @@ public class PubSubEngine {
             }
         }
         NodeSubscription subscription;
-        if (node.isMultipleSubscriptionsEnabled()) {
+        JID owner = new JID(jidAttribute);
+        
+        if (node.isMultipleSubscriptionsEnabled() && node.getSubscriptions(owner).size() > 1) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
                 Element pubsubError = DocumentHelper.createElement(
@@ -630,15 +643,6 @@ public class PubSubEngine {
             }
         }
         else {
-            String jidAttribute = unsubscribeElement.attributeValue("jid");
-            // Check if the specified JID has a subscription with the node
-            if (jidAttribute == null) {
-                // No JID was specified so return an error indicating that jid is required
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("jid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
-            }
             JID subscriberJID = new JID(jidAttribute);
             subscription = node.getSubscription(subscriberJID);
             if (subscription == null) {
@@ -656,8 +660,6 @@ public class PubSubEngine {
             return;
         }
 
-        // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-        JID owner = new JID(from.toBareJID());
         // A subscription was found so check if the user is allowed to cancel the subscription
         if (!subscription.canModify(from) && !subscription.canModify(owner)) {
             // Requestor is prohibited from unsubscribing entity
@@ -955,9 +957,10 @@ public class PubSubEngine {
 
         // Get the user's subscription
         NodeSubscription subscription = null;
-        if (node.isMultipleSubscriptionsEnabled() && !node.getSubscriptions(owner).isEmpty()) {
+        if (node.isMultipleSubscriptionsEnabled() && (node.getSubscriptions(owner).size() > 1)) {
             if (subID == null) {
-                // No subid was specified and the node supports multiple subscriptions
+                // No subid was specified and the node supports multiple subscriptions and the user
+            	// has multiple subscriptions
                 Element pubsubError = DocumentHelper.createElement(
                         QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors"));
                 sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);

@@ -251,7 +251,9 @@ public class NodeAffiliate {
         for (PublishedItem publishedItem : subsByItem.keySet()) {
             affectedSubscriptions = itemsBySubs.get(subsByItem.get(publishedItem));
             if (affectedSubscriptions == null) {
-                itemsBySubs.put(subsByItem.get(publishedItem), Arrays.asList(publishedItem));
+            	List<PublishedItem> items = new ArrayList<PublishedItem>(publishedItems.size());
+            	items.add(publishedItem);
+                itemsBySubs.put(subsByItem.get(publishedItem), items);
             }
             else {
                 affectedSubscriptions.add(publishedItem);

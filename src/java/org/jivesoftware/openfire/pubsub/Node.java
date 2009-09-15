@@ -726,12 +726,11 @@ public abstract class Node {
         // Build packet to broadcast to subscribers
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-        Element items = event.addElement("items");
-        items.addAttribute("node", nodeID);
-        Element item = items.addElement("item");
-        item.addAttribute("id", "configuration");
+        Element config = event.addElement("configuration");
+        config.addAttribute("node", nodeID);
+
         if (deliverPayloads) {
-            item.add(getConfigurationChangeForm().getElement());
+            config.add(getConfigurationChangeForm().getElement());
         }
         // Send notification that the node configuration has changed
         broadcastNodeEvent(message, false);

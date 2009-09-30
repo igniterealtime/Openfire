@@ -1,20 +1,34 @@
 /*
-* HybridUserProvider.java
-*
-* Created on 16. April 2007, 21:48
-* by Marc Seeger
-* code works fine as far as my 10 User Test-Server goes
-* It basically checks different userproviders which are being set in the configuration xml file
-* I use it in combination with hybridauth providers to be able to get the usual users from ldap but still have some Bots in MySQL
-*
-* Changed on 14. Nov. 2007, 10:48
-* by Chris Neasbitt
-*  -changed getUsers(int startIndex, int numResults) method to return a subset of the total users from all providers
-*  -changed the getUsers() method to use a vector internally since addAll is an optional method of the collection
-*   interface we cannot assume that all classes that support the collection interface also support the addAll method
-*  -changed the getUserCount() method to iterate through an array of providers while calling a private helper method
-*   getUserCount(UserProvider provider) on each of them.
-*/
+ * Copyright (C) 2004-2009 Jive Software. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * HybridUserProvider.java
+ *
+ * Created on 16. April 2007, 21:48
+ * by Marc Seeger
+ * code works fine as far as my 10 User Test-Server goes
+ * It basically checks different userproviders which are being set in the configuration xml file
+ * I use it in combination with hybridauth providers to be able to get the usual users from ldap but still have some Bots in MySQL
+ *
+ * Changed on 14. Nov. 2007, 10:48
+ * by Chris Neasbitt
+ *  -changed getUsers(int startIndex, int numResults) method to return a subset of the total users from all providers
+ *  -changed the getUsers() method to use a vector internally since addAll is an optional method of the collection
+ *   interface we cannot assume that all classes that support the collection interface also support the addAll method
+ *  -changed the getUserCount() method to iterate through an array of providers while calling a private helper method
+ *   getUserCount(UserProvider provider) on each of them.
+ */
 
 package org.jivesoftware.openfire.user;
 

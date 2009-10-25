@@ -19,9 +19,11 @@
 
 package org.jivesoftware.database;
 
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.database.bugfix.OF33;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -55,7 +57,7 @@ public class SchemaManager {
     /**
      * Current Openfire database schema version.
      */
-    private static final int DATABASE_VERSION = 20;
+    private static final int DATABASE_VERSION = 21;
 
     /**
      * Creates a new Schema manager.
@@ -271,6 +273,16 @@ public class SchemaManager {
             // Run all upgrade scripts until we're up to the latest schema.
             for (int i = currentVersion + 1; i <= requiredVersion; i++) {
                 InputStream resource = getUpgradeResource(resourceLoader, i, schemaKey);
+                
+                // apply the 'database-patches-done-in-java'
+				try {
+					if (i == 21 && schemaKey.equals("openfire")) {
+						OF33.executeFix(con);
+					}
+				} catch (Exception e) {
+					Log.error(e);
+					return false;
+				}
                 if (resource == null) {
                     continue;
                 }

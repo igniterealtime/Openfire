@@ -727,7 +727,8 @@ public class LocalMUCRoom implements MUCRoom {
         }
 
         try {
-            Presence presence = leaveRole.getPresence().createCopy();
+            Presence originalPresence = leaveRole.getPresence();
+            Presence presence = originalPresence.createCopy();
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
             // Change (or add) presence information about roles and affiliations
@@ -740,10 +741,18 @@ public class LocalMUCRoom implements MUCRoom {
                 item = childElement.addElement("item");
             }
             item.addAttribute("role", "none");
-            // Inform the leaving user that he/she has left the room
-            leaveRole.send(presence);
-            // Inform the rest of the room occupants that the user has left the room
-            broadcastPresence(presence);
+
+            // Check to see if the user's original presence is one we should broadcast
+            // a leave packet for. Need to check the original presence because we just
+            // set the role to "none" above, which is always broadcast.
+            if(!shouldBroadcastPresence(originalPresence)){
+                // Inform the leaving user that he/she has left the room
+                leaveRole.send(presence);
+            }
+            else {
+                // Inform the rest of the room occupants that the user has left the room
+                broadcastPresence(presence);
+            }
         }
         catch (Exception e) {
             Log.error(e);
@@ -963,6 +972,26 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     /**
+     * Checks the role of the sender and returns true if the given presence should be broadcasted
+     * 
+     * @param presence The presence to check
+     * @return true if the presence should be broadcast to the rest of the room
+     */
+    private boolean shouldBroadcastPresence(Presence presence){
+        if (presence == null) {
+            return false;
+        }
+        if (hasToCheckRoleToBroadcastPresence()) {
+            Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+            // Check if we can broadcast the presence for this role
+            if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Broadcasts the specified presence to all room occupants. If the presence belongs to a
      * user whose role cannot be broadcast then the presence will only be sent to the presence's
      * user. On the other hand, the JID of the user that sent the presence won't be included if the
@@ -974,20 +1003,16 @@ public class LocalMUCRoom implements MUCRoom {
         if (presence == null) {
             return;
         }
-        if (hasToCheckRoleToBroadcastPresence()) {
-            Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-            // Check if we can broadcast the presence for this role
-            if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
-                // Just send the presence to the sender of the presence
-                try {
-                    MUCRole occupant = getOccupant(presence.getFrom().getResource());
-                    occupant.send(presence);
-                }
-                catch (UserNotFoundException e) {
-                    // Do nothing
-                }
-                return;
+        if (!shouldBroadcastPresence(presence)) {
+            // Just send the presence to the sender of the presence
+            try {
+                MUCRole occupant = getOccupant(presence.getFrom().getResource());
+                occupant.send(presence);
             }
+            catch (UserNotFoundException e) {
+                // Do nothing
+            }
+            return;
         }
 
         // Broadcast presence to occupants hosted by other cluster nodes

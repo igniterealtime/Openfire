@@ -195,4 +195,14 @@ public final class MUCRoomHistory {
     public boolean hasChangedSubject() {
         return historyStrategy.hasChangedSubject();
     }
+
+    /**
+     * Returns the message within the history of the room that has changed the
+     * room's subject.
+     * 
+     * @return the latest room subject change or null if none exists yet.
+     */
+    public Message getChangedSubject() {
+        return historyStrategy.getChangedSubject();
+    }
 }

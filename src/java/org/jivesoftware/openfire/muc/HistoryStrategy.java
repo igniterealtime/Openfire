@@ -305,6 +305,16 @@ public class HistoryStrategy {
         return roomSubject != null;
     }
 
+    /**
+     * Returns the message within the history of the room that has changed the
+     * room's subject.
+     * 
+     * @return the latest room subject change or null if none exists yet.
+     */
+    public Message getChangedSubject() {
+        return roomSubject;
+    }
+
     private static class MessageComparator implements Comparator<Message> {
         public int compare(Message o1, Message o2) {
             String stamp1 = o1.getChildElement("x", "jabber:x:delay").attributeValue("stamp");

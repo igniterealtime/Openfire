@@ -148,8 +148,13 @@ public class HistoryRequest {
             }
         }
         else {
+            Message changedSubject = roomHistory.getChangedSubject();
+            boolean addChangedSubject = (changedSubject != null) ? true : false;
             if (getMaxChars() == 0) {
                 // The user requested to receive no history
+                if (addChangedSubject) {
+                    joinRole.send(changedSubject);
+                }
                 return;
             }
             Message message;
@@ -206,7 +211,18 @@ public class HistoryRequest {
 
                 }
 
+                // Don't add the latest subject change if it's already in the history.
+                if (addChangedSubject) {
+                    if (changedSubject != null && changedSubject.equals(message)) {
+                        addChangedSubject = false;
+                    }
+                }
+
                 historyToSend.addFirst(message);
+            }
+            // Check if we should add the latest subject change.
+            if (addChangedSubject) {
+                historyToSend.addFirst(changedSubject);
             }
             // Send the smallest amount of traffic to the user
             for (Object aHistoryToSend : historyToSend) {

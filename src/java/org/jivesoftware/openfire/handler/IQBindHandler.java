@@ -20,6 +20,8 @@
 
 package org.jivesoftware.openfire.handler;
 
+import gnu.inet.encoding.StringprepException;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.RoutingTable;
@@ -30,7 +32,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;

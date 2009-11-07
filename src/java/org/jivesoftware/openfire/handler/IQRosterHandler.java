@@ -20,10 +20,16 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.stringprep.IDNAException;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.*;
+import gnu.inet.encoding.IDNAException;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.SharedGroupException;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.roster.Roster;
@@ -32,13 +38,12 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Implements the TYPE_IQ jabber:iq:roster protocol. Clients

@@ -52,16 +52,17 @@ public class DefaultVCardProvider implements VCardProvider {
     private static final String INSERT_PROPERTY =
         "INSERT INTO ofVCard (username, vcard) VALUES (?, ?)";
 
+    private static final int POOL_SIZE = 10;
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
 
 
     public DefaultVCardProvider() {
         super();
         // Initialize the pool of sax readers
-        for (int i=0; i<10; i++) {
+        for (int i=0; i<POOL_SIZE; i++) {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);

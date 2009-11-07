@@ -64,7 +64,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
      */
-    private BlockingQueue<InterceptedPacket> packetQueue = new LinkedBlockingQueue<InterceptedPacket>();
+    private BlockingQueue<InterceptedPacket> packetQueue = new LinkedBlockingQueue<InterceptedPacket>(10000);
 
     /**
      * Returns unique instance of this class.

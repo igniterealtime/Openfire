@@ -56,7 +56,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     /**
      * Queue that holds the packets pending to be sent to remote servers.
      */
-    private BlockingQueue<Packet> packets = new LinkedBlockingQueue<Packet>();
+    private BlockingQueue<Packet> packets = new LinkedBlockingQueue<Packet>(10000);
 
     /**
      * Pool of threads that will create outgoing sessions to remote servers and send

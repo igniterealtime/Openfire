@@ -44,7 +44,7 @@ import java.util.concurrent.locks.Lock;
  *
  * This class will queue packets and process them in another thread. The processing thread will
  * use a pool of thread that will actually do the hard work. The threads in the pool will try
- * to connect to remote servers and deliver the packets. If an error occured while establishing
+ * to connect to remote servers and deliver the packets. If an error occurred while establishing
  * the connection or sending the packet an error will be returned to the sender of the packet.
  *
  * @author Gaston Dombiak

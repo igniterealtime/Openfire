@@ -1,5 +1,17 @@
 package org.jivesoftware.openfire.plugin;
 
+import gnu.inet.encoding.Stringprep;
+import gnu.inet.encoding.StringprepException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.commons.fileupload.FileItem;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -19,19 +31,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
-import org.jivesoftware.stringprep.Stringprep;
-import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * The user import/export plugin provides a way to import and export Openfire

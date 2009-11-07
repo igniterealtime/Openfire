@@ -20,23 +20,24 @@
 
 package org.jivesoftware.openfire.plugin.userService;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.plugin.UserServicePlugin;
-import org.jivesoftware.admin.AuthCheckFilter;
-import org.jivesoftware.stringprep.Stringprep;
+import gnu.inet.encoding.Stringprep;
 
-import org.xmpp.packet.JID;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
+
+import org.jivesoftware.admin.AuthCheckFilter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.plugin.UserServicePlugin;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.JID;
 
 
 /**

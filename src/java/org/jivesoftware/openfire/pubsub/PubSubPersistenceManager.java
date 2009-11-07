@@ -158,14 +158,16 @@ public class PubSubPersistenceManager {
             "accessModel, language, replyPolicy, associationPolicy, maxLeafNodes) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
+    private static final int POOL_SIZE = 50; 
+    
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private static BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
+    private static BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
 
     static {
         // Initialize the pool of sax readers
-        for (int i=0; i<50; i++) {
+        for (int i=0; i<POOL_SIZE; i++) {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);

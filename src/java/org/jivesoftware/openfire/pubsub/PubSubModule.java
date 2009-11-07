@@ -80,11 +80,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     /**
      * Queue that holds the items that need to be added to the database.
      */
-    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>();
+    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>(10000);
     /**
      * Queue that holds the items that need to be deleted from the database.
      */
-    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>();
+    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>(10000);
     
     /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.

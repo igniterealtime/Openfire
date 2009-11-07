@@ -58,6 +58,8 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
     private static final String DELETE_PRIVATES =
         "DELETE FROM ofPrivate WHERE username=?";
 
+    private static final int POOL_SIZE = 10;
+    
     // Currently no delete supported, we can detect an add of an empty element and
     // use that to signal a delete but that optimization doesn't seem necessary.
     // private static final String DELETE_PRIVATE =
@@ -68,7 +70,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
 
     /**
      * Constructs a new PrivateStore instance.
@@ -230,7 +232,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
     public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
-        for (int i=0; i<10; i++) {
+        for (int i=0; i<POOL_SIZE; i++) {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);

@@ -73,6 +73,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     private static final String DELETE_OFFLINE_MESSAGE =
         "DELETE FROM ofOffline WHERE username=? AND creationDate=?";
 
+    private static final int POOL_SIZE = 10;
+    
     private Cache<String, Integer> sizeCache;
     private FastDateFormat dateFormat;
     /**
@@ -93,7 +95,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
 
     /**
      * Constructs a new offline message store.
@@ -421,7 +423,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
-        for (int i=0; i<10; i++) {
+        for (int i=0; i<POOL_SIZE; i++) {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);

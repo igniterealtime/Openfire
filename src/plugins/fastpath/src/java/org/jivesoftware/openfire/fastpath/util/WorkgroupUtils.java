@@ -20,23 +20,35 @@
 
 package org.jivesoftware.openfire.fastpath.util;
 
+import gnu.inet.encoding.Stringprep;
+import gnu.inet.encoding.StringprepException;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 import org.jivesoftware.openfire.fastpath.dataforms.FormManager;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsCreator;
-import org.jivesoftware.xmpp.workgroup.*;
-import org.jivesoftware.xmpp.workgroup.dispatcher.AgentSelector;
-import org.jivesoftware.xmpp.workgroup.spi.dispatcher.BasicAgentSelector;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import org.jivesoftware.stringprep.Stringprep;
-import org.jivesoftware.stringprep.StringprepException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.xmpp.workgroup.Agent;
+import org.jivesoftware.xmpp.workgroup.AgentManager;
+import org.jivesoftware.xmpp.workgroup.RequestQueue;
+import org.jivesoftware.xmpp.workgroup.UserAlreadyExistsException;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.jivesoftware.xmpp.workgroup.dispatcher.AgentSelector;
+import org.jivesoftware.xmpp.workgroup.spi.dispatcher.BasicAgentSelector;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
-
-import java.util.*;
 
 /**
  * A Utility class to allow for creation and modification of workgroups and queues.

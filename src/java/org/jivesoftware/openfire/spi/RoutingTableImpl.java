@@ -216,7 +216,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * (non-Javadoc)
      * @see org.jivesoftware.openfire.RoutingTable#routePacket(org.xmpp.packet.JID, org.xmpp.packet.Packet, boolean)
      * 
-     * @param jid the receipient of the packet to route.
+     * @param jid the recipient of the packet to route.
      * @param packet the packet to route.
      * @param fromServer true if the packet was created by the server. This packets should
      *        always be delivered

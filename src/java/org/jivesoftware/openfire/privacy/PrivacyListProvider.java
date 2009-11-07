@@ -61,10 +61,11 @@ public class PrivacyListProvider {
     private static final String INSERT_PRIVACY_LIST =
             "INSERT INTO ofPrivacyList (username, name, isDefault, list) VALUES (?, ?, ?, ?)";
 
+    private static final int POOL_SIZE = 50;
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>();
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
 
     /**
      * Stores the total number of privacy lists.
@@ -74,7 +75,7 @@ public class PrivacyListProvider {
     public PrivacyListProvider() {
         super();
         // Initialize the pool of sax readers
-        for (int i=0; i<50; i++) {
+        for (int i=0; i<POOL_SIZE; i++) {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);

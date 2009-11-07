@@ -108,7 +108,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * Queue that will store the JID of the local users that came online. This queue
      * will be consumed by another thread to improve performance of the server.
      */
-    private static BlockingQueue<JID> availableSessions = new LinkedBlockingQueue<JID>();
+    private static BlockingQueue<JID> availableSessions = new LinkedBlockingQueue<JID>(10000);
 
     /**
      * A map of all known full JIDs that have sent presences from a remote server.

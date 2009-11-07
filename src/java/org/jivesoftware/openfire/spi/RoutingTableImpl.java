@@ -212,120 +212,30 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.jivesoftware.openfire.RoutingTable#routePacket(org.xmpp.packet.JID, org.xmpp.packet.Packet, boolean)
+     * 
+     * @param jid the receipient of the packet to route.
+     * @param packet the packet to route.
+     * @param fromServer true if the packet was created by the server. This packets should
+     *        always be delivered
+     * @throws PacketException thrown if the packet is malformed (results in the sender's
+     *      session being shutdown).
+     */
     public void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
         boolean routed = false;
         if (serverName.equals(jid.getDomain())) {
-            if (jid.getResource() == null) {
-                // Packet sent to a bare JID of a user
-                if (packet instanceof Message) {
-                    // Find best route of local user
-                    routed = routeToBareJID(jid, (Message) packet);
-                }
-                else {
-                    throw new PacketException("Cannot route packet of type IQ or Presence to bare JID: " + packet);
-                }
-            }
-            else {
-                // Packet sent to local user (full JID)
-                ClientRoute clientRoute = usersCache.get(jid.toString());
-                if (clientRoute == null) {
-                    clientRoute = anonymousUsersCache.get(jid.toString());
-                }
-                if (clientRoute != null) {
-                    if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
-                            !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
-                        // Packet should only be sent to available sessions and the route is not available
-                        routed = false;
-                    }
-                    else {
-                        if (server.getNodeID().equals(clientRoute.getNodeID())) {
-                            // This is a route to a local user hosted in this node
-                            try {
-                                localRoutingTable.getRoute(jid.toString()).process(packet);
-                                routed = true;
-                            } catch (UnauthorizedException e) {
-                                Log.error(e);
-                            }
-                        }
-                        else {
-                            // This is a route to a local user hosted in other node
-                            if (remotePacketRouter != null) {
-                                routed = remotePacketRouter
-                                        .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
-                            }
-                        }
-                    }
-                }
-            }
+        	// Packet sent to our domain.
+            routed = routeToLocalDomain(jid, packet, fromServer);
         }
-        else if (jid.getDomain().contains(serverName) &&
-                (hasComponentRoute(jid) || ExternalComponentManager.hasConfiguration(jid.getDomain()))) {
+        else if (jid.getDomain().contains(serverName)) {
             // Packet sent to component hosted in this server
-            // First check if the component is being hosted in this JVM
-            RoutableChannelHandler route = localRoutingTable.getRoute(jid.getDomain());
-            if (route != null) {
-                try {
-                    route.process(packet);
-                    routed = true;
-                } catch (UnauthorizedException e) {
-                    Log.error(e);
-                }
-            }
-            else {
-                // Check if other cluster nodes are hosting this component
-                Set<NodeID> nodes = componentsCache.get(jid.getDomain());
-                if (nodes != null) {
-                    for (NodeID nodeID : nodes) {
-                        if (server.getNodeID().equals(nodeID)) {
-                            // This is a route to a local component hosted in this node (route
-                            // could have been added after our previous check)
-                            try {
-                                localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                                routed = true;
-                                break;
-                            } catch (UnauthorizedException e) {
-                                Log.error(e);
-                            }
-                        }
-                        else {
-                            // This is a route to a local component hosted in other node
-                            if (remotePacketRouter != null) {
-                                routed = remotePacketRouter.routePacket(nodeID.toByteArray(), jid, packet);
-                                if (routed) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            routed = routeToComponent(jid, packet, routed);
         }
         else {
             // Packet sent to remote server
-            byte[] nodeID = serversCache.get(jid.getDomain());
-            if (nodeID != null) {
-                if (server.getNodeID().equals(nodeID)) {
-                    // This is a route to a remote server connected from this node
-                    try {
-                        localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                        routed = true;
-                    } catch (UnauthorizedException e) {
-                        Log.error(e);
-                    }
-                }
-                else {
-                    // This is a route to a remote server connected from other node
-                    if (remotePacketRouter != null) {
-                        routed = remotePacketRouter.routePacket(nodeID, jid, packet);
-                    }
-                }
-            }
-            else {
-                // Return a promise of a remote session. This object will queue packets pending
-                // to be sent to remote servers
-                OutgoingSessionPromise.getInstance().process(packet);
-                routed = true;
-            }
+            routed = routeToRemoteDomain(jid, packet, routed);
         }
 
         if (!routed) {
@@ -344,6 +254,181 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+	/**
+	 * Routes packets that are sent to the XMPP domain itself (excluding subdomains).
+	 * 
+	 * @param jid
+	 *            the recipient of the packet to route.
+	 * @param packet
+	 *            the packet to route.
+	 * @param fromServer
+	 *            true if the packet was created by the server. This packets
+	 *            should always be delivered
+	 * @throws PacketException
+	 *             thrown if the packet is malformed (results in the sender's
+	 *             session being shutdown).
+	 * @return <tt>true</tt> if the packet was routed successfully,
+	 *         <tt>false</tt> otherwise.
+	 */
+	private boolean routeToLocalDomain(JID jid, Packet packet,
+			boolean fromServer) {
+		boolean routed = false;
+		if (jid.getResource() == null) {
+		    // Packet sent to a bare JID of a user
+		    if (packet instanceof Message) {
+		        // Find best route of local user
+		        routed = routeToBareJID(jid, (Message) packet);
+		    }
+		    else {
+		        throw new PacketException("Cannot route packet of type IQ or Presence to bare JID: " + packet);
+		    }
+		}
+		else {
+		    // Packet sent to local user (full JID)
+		    ClientRoute clientRoute = usersCache.get(jid.toString());
+		    if (clientRoute == null) {
+		        clientRoute = anonymousUsersCache.get(jid.toString());
+		    }
+		    if (clientRoute != null) {
+		        if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
+		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
+		            // Packet should only be sent to available sessions and the route is not available
+		            routed = false;
+		        }
+		        else {
+		            if (server.getNodeID().equals(clientRoute.getNodeID())) {
+		                // This is a route to a local user hosted in this node
+		                try {
+		                    localRoutingTable.getRoute(jid.toString()).process(packet);
+		                    routed = true;
+		                } catch (UnauthorizedException e) {
+		                    Log.error(e);
+		                }
+		            }
+		            else {
+		                // This is a route to a local user hosted in other node
+		                if (remotePacketRouter != null) {
+		                    routed = remotePacketRouter
+		                            .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
+		                }
+		            }
+		        }
+		    }
+		}
+		return routed;
+	}
+
+	/**
+	 * Routes packets that are sent to components of the XMPP domain (which are
+	 * subdomains of the XMPP domain)
+	 * 
+	 * @param jid
+	 *            the recipient of the packet to route.
+	 * @param packet
+	 *            the packet to route.
+	 * @param fromServer
+	 *            true if the packet was created by the server. This packets
+	 *            should always be delivered
+	 * @throws PacketException
+	 *             thrown if the packet is malformed (results in the sender's
+	 *             session being shutdown).
+	 * @return <tt>true</tt> if the packet was routed successfully,
+	 *         <tt>false</tt> otherwise.
+	 */
+	private boolean routeToComponent(JID jid, Packet packet,
+			boolean routed) {
+		if (!hasComponentRoute(jid) 
+				&& !ExternalComponentManager.hasConfiguration(jid.getDomain())) {
+			return false;
+		}
+		
+		// First check if the component is being hosted in this JVM
+		RoutableChannelHandler route = localRoutingTable.getRoute(jid.getDomain());
+		if (route != null) {
+		    try {
+		        route.process(packet);
+		        routed = true;
+		    } catch (UnauthorizedException e) {
+		        Log.error(e);
+		    }
+		}
+		else {
+		    // Check if other cluster nodes are hosting this component
+		    Set<NodeID> nodes = componentsCache.get(jid.getDomain());
+		    if (nodes != null) {
+		        for (NodeID nodeID : nodes) {
+		            if (server.getNodeID().equals(nodeID)) {
+		                // This is a route to a local component hosted in this node (route
+		                // could have been added after our previous check)
+		                try {
+		                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
+		                    routed = true;
+		                    break;
+		                } catch (UnauthorizedException e) {
+		                    Log.error(e);
+		                }
+		            }
+		            else {
+		                // This is a route to a local component hosted in other node
+		                if (remotePacketRouter != null) {
+		                    routed = remotePacketRouter.routePacket(nodeID.toByteArray(), jid, packet);
+		                    if (routed) {
+		                        break;
+		                    }
+		                }
+		            }
+		        }
+		    }
+		}
+		return routed;
+	}
+
+	/**
+	 * Routes packets that are sent to other XMPP domains than the local XMPP
+	 * domain.
+	 * 
+	 * @param jid
+	 *            the recipient of the packet to route.
+	 * @param packet
+	 *            the packet to route.
+	 * @param fromServer
+	 *            true if the packet was created by the server. This packets
+	 *            should always be delivered
+	 * @throws PacketException
+	 *             thrown if the packet is malformed (results in the sender's
+	 *             session being shutdown).
+	 * @return <tt>true</tt> if the packet was routed successfully,
+	 *         <tt>false</tt> otherwise.
+	 */
+	private boolean routeToRemoteDomain(JID jid, Packet packet,
+			boolean routed) {
+		byte[] nodeID = serversCache.get(jid.getDomain());
+		if (nodeID != null) {
+		    if (server.getNodeID().equals(nodeID)) {
+		        // This is a route to a remote server connected from this node
+		        try {
+		            localRoutingTable.getRoute(jid.getDomain()).process(packet);
+		            routed = true;
+		        } catch (UnauthorizedException e) {
+		            Log.error(e);
+		        }
+		    }
+		    else {
+		        // This is a route to a remote server connected from other node
+		        if (remotePacketRouter != null) {
+		            routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+		        }
+		    }
+		}
+		else {
+		    // Return a promise of a remote session. This object will queue packets pending
+		    // to be sent to remote servers
+		    OutgoingSessionPromise.getInstance().process(packet);
+		    routed = true;
+		}
+		return routed;
+	}
+	
     /**
      * Returns true if the specified packet must only be route to available client sessions.
      *

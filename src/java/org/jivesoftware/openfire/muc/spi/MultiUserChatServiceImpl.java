@@ -205,7 +205,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
      */
-    private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<ConversationLogEntry>();
+    private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<ConversationLogEntry>(100000);
 
     /**
      * Max number of hours that a persistent room may be empty before the service removes the

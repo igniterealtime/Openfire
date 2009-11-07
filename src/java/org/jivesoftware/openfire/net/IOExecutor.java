@@ -55,7 +55,7 @@ class IOExecutor {
         // Read poolsize parameter...
         int poolSize = JiveGlobals.getIntProperty("tiscali.pool.size", 15);
         // Create queue for executor
-        executeQueue = new LinkedBlockingQueue<Runnable>();
+        executeQueue = new LinkedBlockingQueue<Runnable>(10000);
         // Create executor
         executeMsgPool =
                 new ThreadPoolExecutor(poolSize, poolSize, 60, TimeUnit.SECONDS, executeQueue);

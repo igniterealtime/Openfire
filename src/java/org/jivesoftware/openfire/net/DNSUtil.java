@@ -199,6 +199,10 @@ public class DNSUtil {
             Attributes dnsLookup =
                     context.getAttributes(lookup, new String[]{"SRV"});
             Attribute srvRecords = dnsLookup.get("SRV");
+            if (srvRecords == null) {
+            	logger.debug("No SRV record found for domain: " + lookup);
+            	return new ArrayList<HostAddress>();
+            }
             HostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
             for (int i = 0; i < srvRecords.size(); i++) {
                 hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));

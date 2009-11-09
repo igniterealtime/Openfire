@@ -19,8 +19,7 @@
 
 package org.jivesoftware.util;
 
-import javax.servlet.http.HttpServletRequest;
-import java.awt.*;
+import java.awt.Color;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -28,13 +27,24 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A utility class that provides methods that are useful for dealing with
  * Java Beans.
  */
 public class BeanUtils {
+
+	private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
 
     /**
      * The date format recognized for parsing/formattig dates.
@@ -86,7 +96,7 @@ public class BeanUtils {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -129,10 +139,10 @@ public class BeanUtils {
                 // support null properties.
             }
             catch (IllegalAccessException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -166,7 +176,7 @@ public class BeanUtils {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return properties;
     }

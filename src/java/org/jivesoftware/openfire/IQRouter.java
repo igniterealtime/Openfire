@@ -38,8 +38,9 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -57,7 +58,9 @@ import org.xmpp.packet.PacketError;
  */
 public class IQRouter extends BasicModule {
 
-    private RoutingTable routingTable;
+	private static final Logger Log = LoggerFactory.getLogger(IQRouter.class);
+
+	private RoutingTable routingTable;
     private MulticastRouter multicastRouter;
     private String serverName;
     private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
@@ -106,7 +109,7 @@ public class IQRouter extends BasicModule {
                 reply.setError(PacketError.Condition.bad_request);
                 session.process(reply);
                 Log.warn("User tried to authenticate with this server using an unknown receipient: " +
-                        packet);
+                        packet.toXML());
             }
             else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
                     isLocalServer(to) && (
@@ -330,7 +333,7 @@ public class IQRouter extends BasicModule {
                 if (namespace == null) {
                     if (packet.getType() != IQ.Type.result && packet.getType() != IQ.Type.error) {
                         // Do nothing. We can't handle queries outside of a valid namespace
-                        Log.warn("Unknown packet " + packet);
+                        Log.warn("Unknown packet " + packet.toXML());
                     }
                 }
                 else {
@@ -388,7 +391,7 @@ public class IQRouter extends BasicModule {
 
     private void sendErrorPacket(IQ originalPacket, PacketError.Condition condition) {
         if (IQ.Type.error == originalPacket.getType()) {
-            Log.error("Cannot reply an IQ error to another IQ error: " + originalPacket);
+            Log.error("Cannot reply an IQ error to another IQ error: " + originalPacket.toXML());
             return;
         }
         IQ reply = IQ.createResultIQ(originalPacket);
@@ -430,11 +433,11 @@ public class IQRouter extends BasicModule {
         // If a route to the target address was not found then try to answer a
         // service_unavailable error code to the sender of the IQ packet
         if (IQ.Type.result != iq.getType() && IQ.Type.error != iq.getType()) {
-            Log.info("Packet sent to unreachable address " + packet);
+            Log.info("Packet sent to unreachable address " + packet.toXML());
             sendErrorPacket(iq, PacketError.Condition.service_unavailable);
         }
         else {
-            Log.warn("Error or result packet could not be delivered " + packet);
+            Log.warn("Error or result packet could not be delivered " + packet.toXML());
         }
     }
     

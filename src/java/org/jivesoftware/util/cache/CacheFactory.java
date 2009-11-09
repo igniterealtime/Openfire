@@ -19,6 +19,14 @@
  */
 package org.jivesoftware.util.cache;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -30,11 +38,8 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates Cache objects. The returned caches will either be local or clustered
@@ -46,6 +51,8 @@ import java.util.concurrent.locks.Lock;
  *
  */
 public class CacheFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(CacheFactory.class);
 
     public static String LOCAL_CACHE_PROPERTY_NAME = "cache.clustering.local.class";
     public static String CLUSTERED_CACHE_PROPERTY_NAME = "cache.clustering.clustered.class";
@@ -620,7 +627,7 @@ public class CacheFactory {
                                 cacheFactoryStrategy.updateCacheStats(caches);
                             }
                             catch (Exception e) {
-                                Log.error(e);
+                                Log.error(e.getMessage(), e);
                             }
                             try {
                                 // Sleep 10 seconds.

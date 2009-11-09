@@ -37,8 +37,9 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.forms.FormField.Type;
@@ -55,6 +56,9 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public class IQOwnerHandler {
+	
+	private static final Logger Log = LoggerFactory.getLogger(IQOwnerHandler.class);
+
     private LocalMUCRoom room;
 
     private PacketRouter router;

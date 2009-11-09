@@ -20,18 +20,24 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.cluster.MUCServicePropertyClusterEventTask;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.*;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.cluster.MUCServicePropertyClusterEventTask;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Retrieves and stores MUC service properties. Properties are stored in the database.
@@ -39,6 +45,8 @@ import java.util.*;
  * @author Daniel Henninger
  */
 public class MUCServiceProperties implements Map<String, String> {
+
+	private static final Logger Log = LoggerFactory.getLogger(MUCServiceProperties.class);
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofMucServiceProp WHERE serviceID=?";
     private static final String INSERT_PROPERTY = "INSERT INTO ofMucServiceProp(serviceID, name, propValue) VALUES(?,?,?)";
@@ -268,13 +276,13 @@ public class MUCServiceProperties implements Map<String, String> {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -290,13 +298,13 @@ public class MUCServiceProperties implements Map<String, String> {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -311,13 +319,13 @@ public class MUCServiceProperties implements Map<String, String> {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -337,13 +345,13 @@ public class MUCServiceProperties implements Map<String, String> {
             rs.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 }

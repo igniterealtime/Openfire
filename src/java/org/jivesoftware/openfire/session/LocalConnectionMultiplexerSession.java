@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.session;
 
+import java.util.Collection;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -28,15 +30,14 @@ import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
-
-import java.util.Collection;
 
 /**
  * Represents a session between the server and a connection manager.<p>
@@ -55,6 +56,8 @@ import java.util.Collection;
  * @author Gaston Dombiak
  */
 public class LocalConnectionMultiplexerSession extends LocalSession implements ConnectionMultiplexerSession {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocalConnectionMultiplexerSession.class);
 
     private static Connection.TLSPolicy tlsPolicy;
     private static Connection.CompressionPolicy compressionPolicy;

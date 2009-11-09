@@ -20,15 +20,24 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.database.DbConnectionManager;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -45,6 +54,8 @@ import java.util.*;
  * be seperated by ".". The value can be any valid String, including strings with line breaks.
  */
 public class JiveGlobals {
+
+	private static final Logger Log = LoggerFactory.getLogger(JiveGlobals.class);
 
     private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "openfire.xml";
 
@@ -840,7 +851,7 @@ public class JiveGlobals {
                     xmlProperties = new XMLProperties(home + File.separator + getConfigName());
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe);
+                    Log.error(ioe.getMessage(), ioe);
                     failedLoading = true;
                 }
             }

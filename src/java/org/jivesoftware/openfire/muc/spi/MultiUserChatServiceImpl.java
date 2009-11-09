@@ -63,8 +63,9 @@ import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
@@ -95,6 +96,8 @@ import org.xmpp.resultsetmanagement.ResultSet;
  */
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
 
     private static final FastDateFormat dateFormatter = FastDateFormat
             .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
@@ -675,7 +678,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     role.getChatRoom().leaveRoom(role);
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

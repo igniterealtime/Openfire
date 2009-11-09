@@ -20,17 +20,18 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.StringTokenizer;
+
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.StringTokenizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages the AuthorizationProvider objects.
@@ -54,6 +55,8 @@ import java.util.StringTokenizer;
  * @author Jay Kline
  */
 public class AuthorizationManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
 
     private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<AuthorizationPolicy>();
     private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<AuthorizationMapping>();

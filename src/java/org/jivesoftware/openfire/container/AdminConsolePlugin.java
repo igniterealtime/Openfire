@@ -19,9 +19,20 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.File;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
+
+import javax.net.ssl.SSLContext;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -31,12 +42,8 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.webapp.WebAppContext;
-
-import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The admin console plugin. It starts a Jetty instance on the configured
@@ -45,6 +52,8 @@ import java.util.List;
  * @author Matt Tucker
  */
 public class AdminConsolePlugin implements Plugin {
+
+	private static final Logger Log = LoggerFactory.getLogger(AdminConsolePlugin.class);
 
     /**
      * Random secret used by JVM to allow SSO. Only other cluster nodes can use this secret
@@ -130,7 +139,7 @@ public class AdminConsolePlugin implements Plugin {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         // Make sure that at least one connector was registered.
@@ -261,7 +270,7 @@ public class AdminConsolePlugin implements Plugin {
             adminServer.start();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

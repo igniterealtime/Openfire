@@ -19,15 +19,18 @@
  */
 package org.jivesoftware.util.log.util;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.LogConfigurationException;
-import org.jivesoftware.util.Log;
+import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A LogFactory implementation to override the default commons-logging behavior. All log
  * statements are written to the Openfire logs. Info level logging is sent to debug.
  */
 public class CommonsLogFactory extends LogFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(CommonsLogFactory.class);
 
     private org.apache.commons.logging.Log log;
 

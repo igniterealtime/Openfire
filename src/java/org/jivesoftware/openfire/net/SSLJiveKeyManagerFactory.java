@@ -31,7 +31,8 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A custom KeyManagerFactory that creates a key manager list using the
@@ -46,6 +47,8 @@ import org.jivesoftware.util.Log;
  * @author Iain Shigeoka
  */
 public class SSLJiveKeyManagerFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(SSLJiveKeyManagerFactory.class);
 
     /**
      * Creates a KeyManager list which is null if the storeType is null, or

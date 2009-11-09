@@ -20,20 +20,26 @@
 
 package org.jivesoftware.openfire.roster;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
 
 /**
  * Defines the provider methods required for creating, reading, updating and deleting roster
@@ -48,6 +54,8 @@ import java.util.*;
  * @author Iain Shigeoka
  */
 public class RosterItemProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(RosterItemProvider.class);
 
     private static final String CREATE_ROSTER_ITEM =
             "INSERT INTO ofRoster (username, rosterID, jid, sub, ask, recv, nick) " +
@@ -349,7 +357,7 @@ public class RosterItemProvider {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

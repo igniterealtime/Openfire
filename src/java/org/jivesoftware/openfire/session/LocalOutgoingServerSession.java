@@ -20,29 +20,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZInputStream;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.DNSUtil;
-import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.openfire.net.SocketConnection;
-import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
-import org.jivesoftware.openfire.server.RemoteServerConfiguration;
-import org.jivesoftware.openfire.server.RemoteServerManager;
-import org.jivesoftware.openfire.server.ServerDialback;
-import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.*;
-
-import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
@@ -53,6 +30,41 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.SSLHandshakeException;
+
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.DNSUtil;
+import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
+import org.jivesoftware.openfire.server.RemoteServerConfiguration;
+import org.jivesoftware.openfire.server.RemoteServerManager;
+import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
+
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZInputStream;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -76,6 +88,8 @@ import java.util.regex.Pattern;
  * @author Gaston Dombiak
  */
 public class LocalOutgoingServerSession extends LocalSession implements OutgoingServerSession {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
 
     /**
      * Regular expression to ensure that the hostname contains letters.

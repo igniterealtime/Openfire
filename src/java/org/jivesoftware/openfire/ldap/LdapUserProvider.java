@@ -20,17 +20,33 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.*;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
-
-import javax.naming.directory.*;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
+
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserCollection;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserProvider;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -39,6 +55,8 @@ import java.util.*;
  * @author Matt Tucker
  */
 public class LdapUserProvider implements UserProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(LdapUserProvider.class);
 
     // LDAP date format parser.
     private static SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -312,7 +330,7 @@ public class LdapUserProvider implements UserProvider {
             date = ldapDateFormat.parse(dateText);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return date;
     }

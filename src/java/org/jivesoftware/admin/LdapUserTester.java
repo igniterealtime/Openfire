@@ -101,7 +101,7 @@ public class LdapUserTester {
                         new SortControl(new String[]{manager.getUsernameField()}, Control.NONCRITICAL)
                 };
             } catch (IOException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 return Collections.emptyList();
             }
             ctx.setRequestControls(searchControl);
@@ -188,7 +188,7 @@ public class LdapUserTester {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             // TODO something else?
         }
         finally {

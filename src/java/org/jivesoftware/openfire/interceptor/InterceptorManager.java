@@ -20,17 +20,18 @@
 
 package org.jivesoftware.openfire.interceptor;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Packet;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Packet;
 
 /**
  * An InterceptorManager manages the list of global interceptors and per-user
@@ -48,6 +49,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 public class InterceptorManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(InterceptorManager.class);
 
     private static InterceptorManager instance = new InterceptorManager();
 

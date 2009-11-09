@@ -115,7 +115,7 @@ public class LdapGroupTester {
             answer.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {

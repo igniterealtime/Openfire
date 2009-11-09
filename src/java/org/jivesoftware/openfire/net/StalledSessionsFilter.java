@@ -20,13 +20,14 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.IOException;
+import java.util.Date;
+
 import org.apache.mina.common.IoFilterAdapter;
 import org.apache.mina.common.IoSession;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
-import java.io.IOException;
-import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * MINA filter that will close sessions that are failing to read outgoing traffic
@@ -37,6 +38,9 @@ import java.util.Date;
  * @author Gaston Dombiak
  */
 public class StalledSessionsFilter extends IoFilterAdapter {
+	
+	private static final Logger Log = LoggerFactory.getLogger(StalledSessionsFilter.class);
+
     private static final int bytesCap = JiveGlobals.getIntProperty("session.stalled.cap", 5242880);
 
     public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)

@@ -19,6 +19,23 @@
 
 package org.jivesoftware.openfire.http;
 
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -36,22 +53,14 @@ import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
-
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * A session represents a serious of interactions with an XMPP client sending packets using the HTTP
@@ -62,6 +71,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author Alexander Wenckus
  */
 public class HttpSession extends LocalClientSession {
+	
+	private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
+
     private static XmlPullParserFactory factory = null;
     private static ThreadLocal<XMPPPacketReader> localParser = null;
     static {

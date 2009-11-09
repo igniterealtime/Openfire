@@ -20,13 +20,18 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.openfire.XMPPServer;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 
-import java.sql.*;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default AuthProvider implementation. It authenticates against the <tt>ofUser</tt>
@@ -38,6 +43,8 @@ import java.sql.*;
  * @author Matt Tucker
  */
 public class DefaultAuthProvider implements AuthProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthProvider.class);
 
     private static final String LOAD_PASSWORD =
             "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
@@ -158,9 +165,9 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -216,9 +223,9 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 

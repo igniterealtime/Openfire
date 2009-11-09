@@ -20,16 +20,21 @@
 
 package org.jivesoftware.openfire.muc;
 
-import org.dom4j.Element;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Message;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.TimeZone;
+
+import org.dom4j.Element;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
+import org.jivesoftware.util.JiveConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Message;
 
 /**
  * Represents the amount of history requested by an occupant while joining a room. There are 
@@ -44,6 +49,8 @@ import java.util.*;
  * @author Gaston Dombiak
  */
 public class HistoryRequest {
+
+	private static final Logger Log = LoggerFactory.getLogger(HistoryRequest.class);
 
     private static final DateFormat formatter = new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
     private static final DateFormat delayedFormatter = new SimpleDateFormat(

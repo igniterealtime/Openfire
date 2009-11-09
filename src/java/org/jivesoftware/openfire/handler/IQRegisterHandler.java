@@ -44,7 +44,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -78,6 +79,8 @@ import org.xmpp.packet.StreamError;
  * @author Iain Shigeoka
  */
 public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQRegisterHandler.class);
 
     private static boolean registrationEnabled;
     private static boolean canChangePassword;
@@ -417,7 +420,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.not_acceptable);
-                Log.warn(e);
+                Log.warn(e.getMessage(), e);
             }
             catch (UnsupportedOperationException e) {
                 // The User provider is read-only so this operation is not allowed
@@ -430,7 +433,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.internal_server_error);
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         if (reply != null) {

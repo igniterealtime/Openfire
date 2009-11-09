@@ -19,11 +19,12 @@
 
 package org.jivesoftware.openfire.mediaproxy;
 
-import org.jivesoftware.util.Log;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Media Proxy relays UDP traffic between two IPs to provide connectivity between
@@ -39,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Thiago Camargo
  */
 public class MediaProxy implements SessionListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(MediaProxy.class);
 
     final private Map<String, MediaProxySession> sessions = new ConcurrentHashMap<String, MediaProxySession>();
 

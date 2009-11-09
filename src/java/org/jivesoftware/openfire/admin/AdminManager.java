@@ -18,13 +18,18 @@
  */
 package org.jivesoftware.openfire.admin;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.*;
-import org.xmpp.packet.JID;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The AdminManager manages the AdminProvider configured for this server, caches knowledge of
@@ -40,6 +45,8 @@ import java.util.Map;
  * @author Daniel Henninger
  */
 public class AdminManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(AdminManager.class);
 
     // Wrap this guy up so we can mock out the AdminManager class.
     private static class AdminManagerContainer {

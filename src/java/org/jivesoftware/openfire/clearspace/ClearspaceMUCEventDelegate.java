@@ -16,21 +16,22 @@
 
 package org.jivesoftware.openfire.clearspace;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Handles checking with Clearspace regarding whether a user can join a particular MUC room (based
@@ -42,6 +43,8 @@ import java.util.Map;
  * @author Armando Jagucki
  */
 public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceMUCEventDelegate.class);
 
     private String csMucDomain;
     private String csComponentAddress;

@@ -37,7 +37,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 import javax.security.auth.x500.X500Principal;
+
 import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.bouncycastle.ocsp.CertificateID;
 import org.bouncycastle.ocsp.CertificateStatus;
@@ -46,7 +48,8 @@ import org.bouncycastle.ocsp.OCSPReqGenerator;
 import org.bouncycastle.ocsp.OCSPResp;
 import org.bouncycastle.ocsp.SingleResp;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>PKIXCertPathChecker</code> that uses 
@@ -57,6 +60,8 @@ import org.jivesoftware.util.Log;
  * @author Jay Kline
  */
 public class OCSPChecker extends PKIXCertPathChecker {
+
+	private static final Logger Log = LoggerFactory.getLogger(OCSPChecker.class);
 
     private static String ocspServerUrl = JiveGlobals.getProperty("ocsp.responderURL");
     private static String ocspServerSubject = JiveGlobals.getProperty("ocsp.responderCertSubjectName");

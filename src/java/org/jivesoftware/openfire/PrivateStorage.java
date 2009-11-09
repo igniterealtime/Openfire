@@ -20,18 +20,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.event.UserEventDispatcher;
-import org.jivesoftware.openfire.event.UserEventListener;
-import org.jivesoftware.openfire.user.User;
-
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.sql.Connection;
@@ -41,6 +29,19 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
  * for saving client settings on the server.
@@ -48,6 +49,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Iain Shigeoka
  */
 public class PrivateStorage extends BasicModule implements UserEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(PrivateStorage.class);
 
     private static final String LOAD_PRIVATE =
         "SELECT privateData FROM ofPrivate WHERE username=? AND namespace=?";
@@ -141,9 +144,9 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
             }
             finally {
                 try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
                 try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
             }
         }
     }
@@ -192,9 +195,9 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                     xmlReaders.add(xmlReader);
                 }
                 try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
                 try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
             }
         }
         return data;
@@ -219,9 +222,9 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 

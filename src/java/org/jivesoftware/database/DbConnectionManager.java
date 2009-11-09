@@ -20,12 +20,20 @@
 
 package org.jivesoftware.database;
 
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
-import java.io.*;
-import java.sql.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Central manager of database connections. All methods are static so that they
@@ -39,6 +47,8 @@ import java.sql.*;
  * @see ConnectionProvider
  */
 public class DbConnectionManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(DbConnectionManager.class);
 
     private static ConnectionProvider connectionProvider;
     private static final Object providerLock = new Object();
@@ -176,7 +186,7 @@ public class DbConnectionManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         closeTransactionConnection(con, abortTransaction);
     }
@@ -205,7 +215,7 @@ public class DbConnectionManager {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         try {
@@ -215,14 +225,14 @@ public class DbConnectionManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         try {
             // Close the db connection.
             con.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -240,7 +250,7 @@ public class DbConnectionManager {
      *          ....
      *      }
      *      catch (SQLException sqle) {
-     *          Log.error(sqle);
+     *          Log.error(sqle.getMessage(), sqle);
      *      }
      *      finally {
      *          ConnectionManager.closeResultSet(rs);
@@ -257,7 +267,7 @@ public class DbConnectionManager {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -273,7 +283,7 @@ public class DbConnectionManager {
      *          ....
      *      }
      *      catch (SQLException sqle) {
-     *          Log.error(sqle);
+     *          Log.error(sqle.getMessage(), sqle);
      *      }
      *      finally {
      *          ConnectionManager.closePreparedStatement(pstmt);
@@ -289,7 +299,7 @@ public class DbConnectionManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -309,7 +319,7 @@ public class DbConnectionManager {
      *     ....
      * }
      * catch (SQLException sqle) {
-     *     Log.error(sqle);
+     *     Log.error(sqle.getMessage(), sqle);
      * }
      * finally {
      *     ConnectionManager.closeConnection(rs, pstmt, con);
@@ -339,7 +349,7 @@ public class DbConnectionManager {
      *     ....
      * }
      * catch (SQLException sqle) {
-     *     Log.error(sqle);
+     *     Log.error(sqle.getMessage(), sqle);
      * }
      * finally {
      *     DbConnectionManager.closeConnection(pstmt, con);
@@ -355,7 +365,7 @@ public class DbConnectionManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         closeConnection(con);
     }
@@ -373,7 +383,7 @@ public class DbConnectionManager {
      *     ....
      * }
      * catch (SQLException sqle) {
-     *     Log.error(sqle);
+     *     Log.error(sqle.getMessage(), sqle);
      * }
      * finally {
      *     DbConnectionManager.closeConnection(con);
@@ -388,7 +398,7 @@ public class DbConnectionManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -506,7 +516,7 @@ public class DbConnectionManager {
                 schemaManager.checkOpenfireSchema(con);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             finally {
                 try {
@@ -515,7 +525,7 @@ public class DbConnectionManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -568,7 +578,7 @@ public class DbConnectionManager {
                 out.close();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 throw new SQLException("Failed to load text field");
             }
             finally {
@@ -608,7 +618,7 @@ public class DbConnectionManager {
                 pstmt.setCharacterStream(parameterIndex, bodyReader, value.length());
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 throw new SQLException("Failed to set text field.");
             }
             // Leave bodyReader open so that the db can read from it. It *should*

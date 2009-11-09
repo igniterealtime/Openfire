@@ -19,6 +19,19 @@
  */
 package org.jivesoftware.openfire.filetransfer.proxy;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferRejectedException;
@@ -27,19 +40,11 @@ import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.stats.i18nStatistic;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Manages the connections to the proxy server. The connections go through two stages before
@@ -50,6 +55,8 @@ import java.util.concurrent.Future;
  * @author Alexander Wenckus
  */
 public class ProxyConnectionManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(ProxyConnectionManager.class);
 
     private static final String proxyTransferRate = "proxyTransferRate";
 

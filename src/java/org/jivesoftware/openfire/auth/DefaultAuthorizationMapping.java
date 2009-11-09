@@ -20,10 +20,12 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.Vector;
 import java.util.StringTokenizer;
+import java.util.Vector;
+
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the interface the used to provide default default authorization
@@ -34,6 +36,8 @@ import org.jivesoftware.util.Log;
  * @author Jay Kline
  */
 public class DefaultAuthorizationMapping implements AuthorizationMapping {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationMapping.class);
 
     private Vector<String> approvedRealms;
 

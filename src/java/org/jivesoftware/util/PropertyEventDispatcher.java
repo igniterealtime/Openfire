@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dispatches property events. Each event has a {@link EventType type}
  * and optional parameters, as follows:<p>
@@ -41,6 +44,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author Matt Tucker
  */
 public class PropertyEventDispatcher {
+
+	private static final Logger Log = LoggerFactory.getLogger(PropertyEventDispatcher.class);
 
     private static Set<PropertyEventListener> listeners =
             new CopyOnWriteArraySet<PropertyEventListener>();
@@ -102,7 +107,7 @@ public class PropertyEventDispatcher {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

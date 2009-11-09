@@ -20,11 +20,27 @@
 
 package org.jivesoftware.openfire.spi;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PresenceManager;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -41,18 +57,14 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-
-import java.sql.Connection;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Simple in memory implementation of the PresenceManager interface.
@@ -60,6 +72,8 @@ import java.util.concurrent.locks.Lock;
  * @author Iain Shigeoka
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager, UserEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(PresenceManagerImpl.class);
 
     private static final String LOAD_OFFLINE_PRESENCE =
             "SELECT offlinePresence, offlineDate FROM ofPresence WHERE username=?";
@@ -215,7 +229,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             pstmt.execute();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -555,7 +569,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

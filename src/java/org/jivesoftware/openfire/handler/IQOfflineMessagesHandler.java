@@ -46,7 +46,8 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -61,6 +62,8 @@ import org.xmpp.packet.JID;
  */
 public class IQOfflineMessagesHandler extends IQHandler implements ServerFeaturesProvider,
         DiscoInfoProvider, DiscoItemsProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQOfflineMessagesHandler.class);
 
     private static final String NAMESPACE = "http://jabber.org/protocol/offline";
 

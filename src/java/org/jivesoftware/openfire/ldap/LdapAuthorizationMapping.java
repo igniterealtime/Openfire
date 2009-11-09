@@ -20,17 +20,17 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.openfire.ldap.LdapManager;
-import org.jivesoftware.openfire.auth.AuthorizationMapping;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-
+import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-import javax.naming.NamingEnumeration;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+
+import org.jivesoftware.openfire.auth.AuthorizationMapping;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -60,6 +60,8 @@ import javax.naming.directory.SearchResult;
  * @author Jay Kline
  */
 public class LdapAuthorizationMapping implements AuthorizationMapping {
+
+	private static final Logger Log = LoggerFactory.getLogger(LdapAuthorizationMapping.class);
 
     private LdapManager manager;
     private String usernameField;

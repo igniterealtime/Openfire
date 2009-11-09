@@ -20,6 +20,12 @@
 
 package org.jivesoftware.openfire.session;
 
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -36,8 +42,9 @@ import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
@@ -45,18 +52,14 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 /**
  * Represents a session between the server and a client.
  *
  * @author Gaston Dombiak
  */
 public class LocalClientSession extends LocalSession implements ClientSession {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
@@ -220,7 +223,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                     minorVersion = version[1];
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -251,7 +254,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 hasCertificates = SSLConfig.getKeyStore().size() > 0;
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             Connection.TLSPolicy tlsPolicy = getTLSPolicy();
             if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
@@ -478,7 +481,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             try {
                 return PrivacyListManager.getInstance().getPrivacyList(getUsername(), activeList);
             } catch (UserNotFoundException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return null;
@@ -510,7 +513,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             try {
                 return PrivacyListManager.getInstance().getPrivacyList(getUsername(), defaultList);
             } catch (UserNotFoundException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return null;

@@ -20,17 +20,18 @@
 
 package org.jivesoftware.openfire.cluster;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveProperties;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.CacheFactory;
-
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A cluster manager is responsible for triggering events related to clustering.
@@ -39,6 +40,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Gaston Dombiak
  */
 public class ClusterManager {
+	
+	private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
+
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
     private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>(10000);
@@ -86,15 +90,15 @@ public class ClusterManager {
                                 }
                             }
                             catch (Exception e) {
-                                Log.error(e);
+                                Log.error(e.getMessage(), e);
                             }
                         }
                         // Mark event as processed
                         event.setProcessed(true);
                     } catch (InterruptedException e) {
-                        Log.warn(e);
+                        Log.warn(e.getMessage(), e);
                     } catch (Exception e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
             }
@@ -149,7 +153,7 @@ public class ClusterManager {
             }
         } catch (InterruptedException e) {
             // Should never happen
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -173,7 +177,7 @@ public class ClusterManager {
             }
         } catch (InterruptedException e) {
             // Should never happen
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -196,7 +200,7 @@ public class ClusterManager {
                 listener.leftCluster();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -214,7 +218,7 @@ public class ClusterManager {
             events.put(event);
         } catch (InterruptedException e) {
             // Should never happen
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

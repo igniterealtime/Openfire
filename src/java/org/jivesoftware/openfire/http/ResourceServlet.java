@@ -119,7 +119,7 @@ public class ResourceServlet extends HttpServlet {
             out.flush();
         }
         catch (IOException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (in != null) { in.close(); } } catch (Exception ignored) { /* ignored */ }

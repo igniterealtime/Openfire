@@ -20,20 +20,26 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+
 import org.dom4j.Element;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * A subscription to a node. Entities may subscribe to a node to be notified when new events
@@ -57,6 +63,8 @@ import java.util.*;
  * @author Matt Tucker
  */
 public class NodeSubscription {
+
+	private static final Logger Log = LoggerFactory.getLogger(NodeSubscription.class);
 
     private static final SimpleDateFormat dateFormat;
     private static final FastDateFormat fastDateFormat;

@@ -18,23 +18,25 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
 import static org.jivesoftware.openfire.clearspace.ClearspaceVCardTranslator.Action.DELETE;
 import static org.jivesoftware.openfire.clearspace.ClearspaceVCardTranslator.Action.NO_ACTION;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
+
+import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardProvider;
 import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
-
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The ClearspaceLockOutProvider uses the UserService web service inside of Clearspace
@@ -45,6 +47,7 @@ import java.util.List;
  */
 public class ClearspaceVCardProvider implements VCardProvider {
 
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceVCardProvider.class);
 
     protected static final String PROFILE_URL_PREFIX = "profileService/";
     protected static final String PROFILE_FIELDS_URL_PREFIX = "profileFieldService/";

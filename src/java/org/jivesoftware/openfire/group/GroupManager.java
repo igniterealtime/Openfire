@@ -20,6 +20,10 @@
 
 package org.jivesoftware.openfire.group;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -29,14 +33,16 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Manages groups.
@@ -45,6 +51,8 @@ import java.util.Map;
  * @author Matt Tucker
  */
 public class GroupManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(GroupManager.class);
 
     private static final class GroupManagerContainer {
         private static final GroupManager instance = new GroupManager();

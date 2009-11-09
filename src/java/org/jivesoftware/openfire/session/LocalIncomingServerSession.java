@@ -19,6 +19,14 @@
  */
 package org.jivesoftware.openfire.session;
 
+import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -31,19 +39,12 @@ import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-
-import java.io.IOException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -67,6 +68,9 @@ import java.util.Set;
  * @author Gaston Dombiak
  */
 public class LocalIncomingServerSession extends LocalSession implements IncomingServerSession {
+	
+	private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
+
     /**
      * List of domains, subdomains and virtual hostnames of the remote server that were
      * validated with this server. The remote server is allowed to send packets to this
@@ -169,7 +173,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
             hasCertificates = SSLConfig.getKeyStore().size() > 0;
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
             Log.error("Server session rejected. TLS is required but no certificates " +

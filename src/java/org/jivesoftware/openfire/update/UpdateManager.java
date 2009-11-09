@@ -20,6 +20,22 @@
 
 package org.jivesoftware.openfire.update;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.NameValuePair;
@@ -35,12 +51,14 @@ import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.Plugin;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.XMLWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
@@ -53,6 +71,8 @@ import java.util.*;
  * @author Gaston Dombiak
  */
 public class UpdateManager extends BasicModule {
+
+	private static final Logger Log = LoggerFactory.getLogger(UpdateManager.class);
 
     protected static DocumentFactory docFactory = DocumentFactory.getInstance();
 
@@ -140,7 +160,7 @@ public class UpdateManager extends BasicModule {
                     }
                 }
                 catch (InterruptedException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 finally {
                     // Clean up reference to this thread
@@ -644,7 +664,7 @@ public class UpdateManager extends BasicModule {
             xmlWriter.write(xmlResponse);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             if (writer != null) {
@@ -652,7 +672,7 @@ public class UpdateManager extends BasicModule {
                     writer.close();
                 }
                 catch (IOException e1) {
-                    Log.error(e1);
+                    Log.error(e1.getMessage(), e1);
                 }
             }
         }
@@ -700,7 +720,7 @@ public class UpdateManager extends BasicModule {
             xmlWriter.write(xml);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             if (writer != null) {
@@ -708,7 +728,7 @@ public class UpdateManager extends BasicModule {
                     writer.close();
                 }
                 catch (IOException e1) {
-                    Log.error(e1);
+                    Log.error(e1.getMessage(), e1);
                 }
             }
         }

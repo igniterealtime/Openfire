@@ -39,7 +39,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -77,6 +78,8 @@ import org.xmpp.packet.PacketError;
  * @author Iain Shigeoka
  */
 public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQRosterHandler.class);
 
     private IQHandlerInfo info;
 

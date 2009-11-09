@@ -20,16 +20,24 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.CacheFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple registry of cache configuration data for plugins.
  */
 public class PluginCacheRegistry {
+	
+	private static final Logger Log = LoggerFactory.getLogger(PluginCacheRegistry.class);
+
     private static final PluginCacheRegistry instance = new PluginCacheRegistry();
 
     private Map<String, CacheInfo> extraCacheMappings = new HashMap<String, CacheInfo>();
@@ -89,7 +97,7 @@ public class PluginCacheRegistry {
                     CacheFactory.destroyCache(info.getCacheName());
                 }
                 catch (Exception e) {
-                    Log.warn(e);
+                    Log.warn(e.getMessage(), e);
                 }
             }
         }

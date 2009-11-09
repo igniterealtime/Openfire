@@ -27,16 +27,17 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.HttpClientError;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.util.Log;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of SecureProtocolSocketFactory that will use a custom trust manager for
@@ -45,6 +46,8 @@ import javax.net.ssl.TrustManager;
  * @author Gaston Dombiak
  */
 public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(SSLProtocolSocketFactory.class);
 
     private SSLContext sslcontext = null;
     private ClearspaceManager manager;

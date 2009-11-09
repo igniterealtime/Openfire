@@ -20,16 +20,25 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.util.*;
 
 /**
  * A type of node that contains published items only. It is NOT a container for
@@ -38,6 +47,8 @@ import java.util.*;
  * @author Matt Tucker
  */
 public class LeafNode extends Node {
+
+	private static final Logger Log = LoggerFactory.getLogger(LeafNode.class);
 
     /**
      * Flag that indicates whether to persist items to storage. Note that when the

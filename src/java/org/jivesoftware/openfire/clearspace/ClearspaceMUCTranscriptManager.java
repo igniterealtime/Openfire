@@ -16,19 +16,29 @@
 
 package org.jivesoftware.openfire.clearspace;
 
-import org.jivesoftware.openfire.muc.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TimerTask;
+
+import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCEventListener;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.xmpp.packet.IQ;
-import org.dom4j.Element;
-
-import java.util.*;
 
 /**
  * Stores MUC events that are intended to be recorded as a transcript for a group chat room in Clearspace.
@@ -82,6 +92,8 @@ import java.util.*;
  * @author Armando Jagucki
  */
 public class ClearspaceMUCTranscriptManager implements MUCEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceMUCTranscriptManager.class);
 
     /**
      * Group chat events that are pending to be sent to Clearspace.

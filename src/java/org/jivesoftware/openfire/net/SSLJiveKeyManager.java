@@ -20,11 +20,15 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.sun.net.ssl.X509KeyManager;
 import java.net.Socket;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sun.net.ssl.X509KeyManager;
 
 /**
  * A skeleton placeholder for developers wishing to implement their own custom
@@ -38,6 +42,9 @@ import java.security.cert.X509Certificate;
  * @author Iain Shigeoka
  */
 public class SSLJiveKeyManager implements X509KeyManager {
+	
+	private static final Logger Log = LoggerFactory.getLogger(SSLJiveKeyManager.class);
+
     public String[] getClientAliases(String s, Principal[] principals) {
         return new String[0];
     }

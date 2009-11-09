@@ -20,6 +20,9 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.IOException;
+import java.net.Socket;
+
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -29,15 +32,19 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmpp.packet.*;
-
-import java.io.IOException;
-import java.net.Socket;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.Roster;
+import org.xmpp.packet.StreamError;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -46,6 +53,8 @@ import java.net.Socket;
  * @author Gaston Dombiak
  */
 public abstract class SocketReader implements Runnable {
+
+	private static final Logger Log = LoggerFactory.getLogger(SocketReader.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

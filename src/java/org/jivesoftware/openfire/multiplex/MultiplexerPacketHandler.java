@@ -20,6 +20,8 @@
 
 package org.jivesoftware.openfire.multiplex;
 
+import java.util.List;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -28,13 +30,12 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.util.List;
 
 /**
  * IQ packets sent from Connection Managers themselves to the server will be handled by
@@ -46,6 +47,8 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 public class MultiplexerPacketHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketHandler.class);
 
     private String connectionManagerDomain;
     private final ConnectionMultiplexerManager multiplexerManager;

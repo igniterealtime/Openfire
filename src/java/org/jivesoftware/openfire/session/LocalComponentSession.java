@@ -19,6 +19,12 @@
  */
 package org.jivesoftware.openfire.session;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.SessionManager;
@@ -27,7 +33,8 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.ComponentException;
@@ -37,14 +44,14 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
-import java.util.*;
-
 /**
  * Represents a session between the server and a component.
  *
  * @author Gaston Dombiak
  */
 public class LocalComponentSession extends LocalSession implements ComponentSession {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocalComponentSession.class);
 
     private LocalExternalComponent component;
     /**

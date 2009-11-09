@@ -48,7 +48,8 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -74,6 +75,8 @@ import org.xmpp.packet.StreamError;
  * @author Iain Shigeoka
  */
 public class IQAuthHandler extends IQHandler implements IQAuthInfo {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQAuthHandler.class);
 
     private boolean anonymousAllowed;
 

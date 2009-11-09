@@ -20,17 +20,18 @@
 
 package org.jivesoftware.database;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
+
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.logicalcobwebs.proxool.admin.SnapshotIF;
-import org.logicalcobwebs.proxool.ProxoolFacade;
 import org.logicalcobwebs.proxool.ConnectionPoolDefinitionIF;
 import org.logicalcobwebs.proxool.ProxoolException;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.DriverManager;
-import java.util.Properties;
+import org.logicalcobwebs.proxool.ProxoolFacade;
+import org.logicalcobwebs.proxool.admin.SnapshotIF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default Jive connection provider, which uses an internal connection pool.<p>
@@ -38,6 +39,8 @@ import java.util.Properties;
  * @author Jive Software
  */
 public class DefaultConnectionProvider implements ConnectionProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultConnectionProvider.class);
 
     private Properties settings;
     private String driver;

@@ -20,22 +20,32 @@
 
 package org.jivesoftware.openfire.server;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.xmpp.packet.*;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
@@ -50,6 +60,8 @@ import java.util.concurrent.locks.Lock;
  * @author Gaston Dombiak
  */
 public class OutgoingSessionPromise implements RoutableChannelHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
 
     private static OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
@@ -137,7 +149,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         // Do nothing
                     }
                     catch (Exception e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
             }

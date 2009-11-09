@@ -20,13 +20,6 @@
 
 package org.jivesoftware.openfire.vcard;
 
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
-
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,6 +28,14 @@ import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Default implementation of the VCardProvider interface, which reads and writes data
  * from the <tt>ofVCard</tt> database table.
@@ -42,6 +43,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Gaston Dombiak
  */
 public class DefaultVCardProvider implements VCardProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultVCardProvider.class);
 
     private static final String LOAD_PROPERTIES =
         "SELECT vcard FROM ofVCard WHERE username=?";
@@ -96,9 +99,9 @@ public class DefaultVCardProvider implements VCardProvider {
                     xmlReaders.add(xmlReader);
                 }
                 try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
                 try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
             }
             return vCardElement;
         }
@@ -124,9 +127,9 @@ public class DefaultVCardProvider implements VCardProvider {
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return vCardElement;
     }
@@ -150,9 +153,9 @@ public class DefaultVCardProvider implements VCardProvider {
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return vCardElement;
     }
@@ -171,9 +174,9 @@ public class DefaultVCardProvider implements VCardProvider {
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 

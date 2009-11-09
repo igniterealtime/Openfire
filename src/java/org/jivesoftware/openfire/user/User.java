@@ -20,18 +20,6 @@
 
 package org.jivesoftware.openfire.user;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.openfire.event.UserEventDispatcher;
-import org.jivesoftware.openfire.roster.Roster;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.xmpp.resultsetmanagement.Result;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -40,8 +28,27 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.resultsetmanagement.Result;
 
 /**
  * Encapsulates information about a user. New users are created using
@@ -54,6 +61,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Tucker
  */
 public class User implements Cacheable, Externalizable, Result {
+
+	private static final Logger Log = LoggerFactory.getLogger(User.class);
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM ofUserProp WHERE username=?";
@@ -103,13 +112,13 @@ public class User implements Cacheable, Externalizable, Result {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return propertyValue;
     }
@@ -183,7 +192,7 @@ public class User implements Cacheable, Externalizable, Result {
                     params);
         }
         catch (UserNotFoundException unfe) {
-            Log.error(unfe);
+            Log.error(unfe.getMessage(), unfe);
         }
     }
 
@@ -217,7 +226,7 @@ public class User implements Cacheable, Externalizable, Result {
                     params);
         }
         catch (UserNotFoundException unfe) {
-            Log.error(unfe);
+            Log.error(unfe.getMessage(), unfe);
         }
     }
 
@@ -273,7 +282,7 @@ public class User implements Cacheable, Externalizable, Result {
                     params);
         }
         catch (UserNotFoundException unfe) {
-            Log.error(unfe);
+            Log.error(unfe.getMessage(), unfe);
         }
     }
 
@@ -317,7 +326,7 @@ public class User implements Cacheable, Externalizable, Result {
                     params);
         }
         catch (UserNotFoundException unfe) {
-            Log.error(unfe);
+            Log.error(unfe.getMessage(), unfe);
         }
     }
 
@@ -343,7 +352,7 @@ public class User implements Cacheable, Externalizable, Result {
                     params);
         }
         catch (UserNotFoundException unfe) {
-            Log.error(unfe);
+            Log.error(unfe.getMessage(), unfe);
         }
     }
 
@@ -376,7 +385,7 @@ public class User implements Cacheable, Externalizable, Result {
             return XMPPServer.getInstance().getRosterManager().getRoster(username);
         }
         catch (UserNotFoundException unfe) {
-            Log.error(unfe);
+            Log.error(unfe.getMessage(), unfe);
             return null;
         }
     }
@@ -509,13 +518,13 @@ public class User implements Cacheable, Externalizable, Result {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -531,13 +540,13 @@ public class User implements Cacheable, Externalizable, Result {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -553,13 +562,13 @@ public class User implements Cacheable, Externalizable, Result {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -574,13 +583,13 @@ public class User implements Cacheable, Externalizable, Result {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 

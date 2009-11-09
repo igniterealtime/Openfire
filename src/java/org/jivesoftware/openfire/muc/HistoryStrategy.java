@@ -20,14 +20,19 @@
 
 package org.jivesoftware.openfire.muc;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * <p>Multi-User Chat rooms may cache history of the conversations in the room in order to
@@ -40,6 +45,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Derek DeMoro
  */
 public class HistoryStrategy {
+
+	private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
 
     /**
      * The type of strategy being used.

@@ -20,16 +20,17 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Node;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.util.Log;
-
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Node;
+import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A helper class to read cache configuration data for a plugin and register the defined caches with
@@ -61,6 +62,8 @@ import java.util.Map;
  */
 public class PluginCacheConfigurator {
 
+	private static final Logger Log = LoggerFactory.getLogger(PluginCacheConfigurator.class);
+
     private InputStream configDataStream;
 
     public void setInputStream(InputStream configDataStream) {
@@ -78,7 +81,7 @@ public class PluginCacheConfigurator {
             }
         }
         catch (DocumentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

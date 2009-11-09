@@ -19,13 +19,14 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
+
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The hybrid auth provider allows up to three AuthProvider implementations to
@@ -75,6 +76,8 @@ import java.util.HashSet;
  * @author Matt Tucker
  */
 public class HybridAuthProvider implements AuthProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
 
     private AuthProvider primaryProvider;
     private AuthProvider secondaryProvider;

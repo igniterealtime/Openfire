@@ -19,20 +19,21 @@
 
 package org.jivesoftware.openfire.commands.admin.group;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Command that allows to add members or admins to a given group.
@@ -42,6 +43,9 @@ import java.util.List;
  * TODO Use i18n
  */
 public class AddGroupUsers extends AdHocCommand {
+	
+	private static final Logger Log = LoggerFactory.getLogger(AddGroupUsers.class);
+
     protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Add members or admins to a group");

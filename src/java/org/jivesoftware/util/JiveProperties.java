@@ -20,15 +20,22 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.cache.CacheFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Retrieves and stores Jive properties. Properties are stored in the database.
@@ -36,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Tucker
  */
 public class JiveProperties implements Map<String, String> {
+
+	private static final Logger Log = LoggerFactory.getLogger(JiveProperties.class);
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofProperty";
     private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue) VALUES(?,?)";
@@ -285,13 +294,13 @@ public class JiveProperties implements Map<String, String> {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -306,13 +315,13 @@ public class JiveProperties implements Map<String, String> {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -326,13 +335,13 @@ public class JiveProperties implements Map<String, String> {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -351,13 +360,13 @@ public class JiveProperties implements Map<String, String> {
             rs.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 }

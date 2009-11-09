@@ -18,18 +18,33 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.DELETE;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.*;
-import org.jivesoftware.openfire.user.*;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserCollection;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.util.*;
 
 /**
  * The ClearspaceUserProvider uses the UserService and ProfileSearchService web service inside of Clearspace
@@ -38,6 +53,8 @@ import java.util.*;
  * @author Gabriel Guardincerri
  */
 public class ClearspaceUserProvider implements UserProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceUserProvider.class);
 
     // The UserService webservice url prefix
     protected static final String USER_URL_PREFIX = "userService/";
@@ -149,7 +166,7 @@ public class ClearspaceUserProvider implements UserProvider {
         } catch (UserNotFoundException gnfe) {
             // it is OK, the user doesn't exist "anymore"
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -164,7 +181,7 @@ public class ClearspaceUserProvider implements UserProvider {
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
             return Integer.valueOf(WSUtils.getReturn(element));
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return 0;
     }
@@ -191,7 +208,7 @@ public class ClearspaceUserProvider implements UserProvider {
 
             return WSUtils.parseUsernameArray(element);
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return new ArrayList<String>();
     }
@@ -429,7 +446,7 @@ public class ClearspaceUserProvider implements UserProvider {
                 usernames.add(username);
             }
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
@@ -479,7 +496,7 @@ public class ClearspaceUserProvider implements UserProvider {
             }
 
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }

@@ -20,7 +20,22 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.openfire.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
+
+import org.jivesoftware.openfire.ChannelHandler;
+import org.jivesoftware.openfire.OfflineMessage;
+import org.jivesoftware.openfire.OfflineMessageStore;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PresenceManager;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -34,17 +49,15 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.xmpp.packet.*;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.Lock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -85,6 +98,8 @@ import java.util.concurrent.locks.Lock;
  * @author Iain Shigeoka
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler, ClusterEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(PresenceUpdateHandler.class);
 
     public static final String PRESENCE_CACHE_NAME = "Directed Presences";
 

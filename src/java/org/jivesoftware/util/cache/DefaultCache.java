@@ -19,13 +19,21 @@
  */
 package org.jivesoftware.util.cache;
 
-import org.jivesoftware.util.LinkedListNode;
-import org.jivesoftware.util.Log;
-
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import org.jivesoftware.util.LinkedListNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default, non-distributed implementation of the Cache interface.
@@ -53,6 +61,8 @@ import java.util.*;
  * @author Matt Tucker
  */
 public class DefaultCache<K, V> implements Cache<K, V> {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
 
     /**
      * The map the keys and values are stored in.
@@ -574,7 +584,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
                 size = out.size();
             }
             catch (IOException ioe) {
-                Log.error(ioe);
+                Log.error(ioe.getMessage(), ioe);
             }
             return size;
         }

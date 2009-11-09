@@ -20,18 +20,30 @@
 
 package org.jivesoftware.openfire.user;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.sql.*;
-import java.util.*;
-import java.util.Date;
 
 /**
  * Default implementation of the UserProvider interface, which reads and writes data
@@ -47,6 +59,8 @@ import java.util.Date;
  * @author Matt Tucker
  */
 public class DefaultUserProvider implements UserProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
 
     private static final String LOAD_USER =
             "SELECT name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
@@ -199,7 +213,7 @@ public class DefaultUserProvider implements UserProvider {
             pstmt.execute();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             abortTransaction = true;
         }
         finally {
@@ -221,7 +235,7 @@ public class DefaultUserProvider implements UserProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -251,7 +265,7 @@ public class DefaultUserProvider implements UserProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -277,7 +291,7 @@ public class DefaultUserProvider implements UserProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -441,7 +455,7 @@ public class DefaultUserProvider implements UserProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, stmt, con);
@@ -507,7 +521,7 @@ public class DefaultUserProvider implements UserProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, stmt, con);

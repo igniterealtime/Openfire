@@ -18,6 +18,18 @@
  */
 package org.jivesoftware.openfire.muc;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -26,7 +38,12 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
-import org.jivesoftware.openfire.muc.cluster.*;
+import org.jivesoftware.openfire.muc.cluster.GetNewMemberRoomsRequest;
+import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
+import org.jivesoftware.openfire.muc.cluster.RoomInfo;
+import org.jivesoftware.openfire.muc.cluster.SeniorMemberServicesRequest;
+import org.jivesoftware.openfire.muc.cluster.ServiceInfo;
+import org.jivesoftware.openfire.muc.cluster.ServiceUpdatedEvent;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventListener;
@@ -34,15 +51,16 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
-
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides centralized management of all configured Multi User Chat (MUC) services.
@@ -51,6 +69,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MultiUserChatManager extends BasicModule implements ClusterEventListener, MUCServicePropertyEventListener,
         UserEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(MultiUserChatManager.class);
 
     private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM ofMucService";
     private static final String CREATE_SERVICE = "INSERT INTO ofMucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
@@ -401,13 +421,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             rs.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -438,9 +458,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return id;
     }
@@ -472,9 +492,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return subdomain;
     }
@@ -504,13 +524,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -537,13 +557,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -561,13 +581,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 

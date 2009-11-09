@@ -20,13 +20,21 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.lockout.LockOutManager;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+
+import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Blowfish;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Pluggable authentication service. Users of Openfire that wish to change the AuthProvider
@@ -39,6 +47,8 @@ import java.util.Map;
  * @author Matt Tucker
  */
 public class AuthFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(AuthFactory.class);
 
     private static AuthProvider authProvider = null;
     private static MessageDigest digest;
@@ -277,7 +287,7 @@ public class AuthFactory {
             cipher = new Blowfish(keyString);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return cipher;
     }

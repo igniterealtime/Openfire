@@ -27,7 +27,8 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalComponentSession;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.component.ComponentException;
@@ -47,6 +48,8 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public class ComponentStanzaHandler extends StanzaHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(ComponentStanzaHandler.class);
 
     public ComponentStanzaHandler(PacketRouter router, String serverName, Connection connection) {
         super(router, serverName, connection);

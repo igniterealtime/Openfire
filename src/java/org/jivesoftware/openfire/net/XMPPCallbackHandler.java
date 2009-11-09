@@ -19,18 +19,23 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.IOException;
+
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.RealmCallback;
+
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.sasl.VerifyPasswordCallback;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
-
-import javax.security.auth.callback.*;
-import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.RealmCallback;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Callback handler that may be used when doing SASL authentication. A CallbackHandler
@@ -45,6 +50,8 @@ import java.io.IOException;
  * @author Hao Chen
  */
 public class XMPPCallbackHandler implements CallbackHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(XMPPCallbackHandler.class);
 
     public XMPPCallbackHandler() {
     }

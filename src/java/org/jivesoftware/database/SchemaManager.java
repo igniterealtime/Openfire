@@ -19,18 +19,28 @@
 
 package org.jivesoftware.database;
 
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+
 import org.jivesoftware.database.bugfix.OF33;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
-
-import java.io.*;
-import java.sql.*;
-import java.util.Arrays;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages database schemas for Openfire and Openfire plugins. The manager uses the
@@ -46,6 +56,8 @@ import java.util.Arrays;
  * @author Matt Tucker
  */
 public class SchemaManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(SchemaManager.class);
 
     private static final String CHECK_VERSION_OLD =
             "SELECT minorVersion FROM jiveVersion";
@@ -235,7 +247,7 @@ public class SchemaManager {
                 executeSQLScript(con, resource, !schemaKey.equals("openfire") && !schemaKey.equals("wildfire"));
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 return false;
             }
             finally {
@@ -280,7 +292,7 @@ public class SchemaManager {
 						OF33.executeFix(con);
 					}
 				} catch (Exception e) {
-					Log.error(e);
+					Log.error(e.getMessage(), e);
 					return false;
 				}
                 if (resource == null) {
@@ -290,7 +302,7 @@ public class SchemaManager {
                     executeSQLScript(con, resource, !schemaKey.equals("openfire") && !schemaKey.equals("wildfire"));
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                     return false;
                 }
                 finally {
@@ -412,7 +424,7 @@ public class SchemaManager {
                     in.close();
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

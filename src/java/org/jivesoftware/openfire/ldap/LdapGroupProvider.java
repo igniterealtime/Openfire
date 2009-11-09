@@ -20,15 +20,13 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.group.GroupProvider;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
+import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -38,13 +36,17 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
-import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.group.GroupProvider;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
@@ -53,6 +55,8 @@ import java.util.regex.Pattern;
  * @author Matt Tucker, Greg Ferguson and Cameron Moore
  */
 public class LdapGroupProvider implements GroupProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(LdapGroupProvider.class);
 
     private LdapManager manager;
     private UserManager userManager;
@@ -103,7 +107,7 @@ public class LdapGroupProvider implements GroupProvider {
             return processGroup(ctx, attrs);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             throw new GroupNotFoundException("Group with name " + groupName + " not found.", e);
         }
         finally {
@@ -370,7 +374,7 @@ public class LdapGroupProvider implements GroupProvider {
                     }
                     catch (Exception e) {
                         // TODO: A NPE is occuring here
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
                 // A search filter may have been defined in the LdapUserProvider.

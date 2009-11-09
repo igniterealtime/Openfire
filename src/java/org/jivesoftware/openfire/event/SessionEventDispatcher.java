@@ -16,11 +16,12 @@
 
 package org.jivesoftware.openfire.event;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.session.Session;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.jivesoftware.openfire.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dispatches session events. Each event has a {@link EventType type}
@@ -28,6 +29,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Tucker
  */
 public class SessionEventDispatcher {
+
+	private static final Logger Log = LoggerFactory.getLogger(SessionEventDispatcher.class);
 
     private static List<SessionEventListener> listeners =
             new CopyOnWriteArrayList<SessionEventListener>();
@@ -92,7 +95,7 @@ public class SessionEventDispatcher {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

@@ -18,18 +18,20 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
-import org.jivesoftware.openfire.security.EventNotFoundException;
-import org.jivesoftware.openfire.security.SecurityAuditEvent;
-import org.jivesoftware.openfire.security.SecurityAuditProvider;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
 
 import java.util.Date;
 import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.jivesoftware.openfire.security.EventNotFoundException;
+import org.jivesoftware.openfire.security.SecurityAuditEvent;
+import org.jivesoftware.openfire.security.SecurityAuditProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The ClearspaceSecurityAuditProvider uses the AuditService web service inside of Clearspace
@@ -39,6 +41,8 @@ import java.util.List;
  * @author Daniel Henninger
  */
 public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceSecurityAuditProvider.class);
 
     protected static final String AUDIT_URL_PREFIX = "auditService/";
 

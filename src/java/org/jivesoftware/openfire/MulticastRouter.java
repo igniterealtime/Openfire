@@ -34,9 +34,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -62,6 +63,8 @@ import org.xmpp.packet.Packet;
  * @author Matt Tucker
  */
 public class MulticastRouter extends BasicModule implements ServerFeaturesProvider, IQResultListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(MulticastRouter.class);
 
     private static final String NAMESPACE = "http://jabber.org/protocol/address";
 

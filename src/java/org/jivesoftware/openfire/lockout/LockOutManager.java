@@ -18,12 +18,17 @@
  */
 package org.jivesoftware.openfire.lockout;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-
 import java.util.Date;
 import java.util.Map;
+
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The LockOutManager manages the LockOutProvider configured for this server, caches knowledge of
@@ -39,6 +44,8 @@ import java.util.Map;
  * @author Daniel Henninger
  */
 public class LockOutManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(LockOutManager.class);
 
     // Wrap this guy up so we can mock out the LockOutManager class.
     private static class LockOutManagerContainer {

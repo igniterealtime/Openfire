@@ -103,11 +103,11 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             stmt.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         // Blank out the settings
         settings = null;

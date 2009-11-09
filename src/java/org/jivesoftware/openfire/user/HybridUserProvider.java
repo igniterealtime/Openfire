@@ -33,14 +33,15 @@
 package org.jivesoftware.openfire.user;
 
 import java.util.Collection;
-import java.util.Vector;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Vector;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Marc Seeger
@@ -48,6 +49,8 @@ import org.jivesoftware.util.Log;
  */
 
 public class HybridUserProvider implements UserProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(HybridUserProvider.class);
 
     private UserProvider primaryProvider = null;
     private UserProvider secondaryProvider = null;

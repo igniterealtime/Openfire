@@ -19,20 +19,33 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
-import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.Base64;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import java.util.*;
-import java.util.regex.Matcher;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
@@ -100,6 +113,8 @@ import java.util.regex.Matcher;
  * @author rkelly
  */
 public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(LdapVCardProvider.class);
 
     private LdapManager manager;
     private VCardTemplate template;
@@ -188,7 +203,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             return map;
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return Collections.emptyMap();
         }
         finally {

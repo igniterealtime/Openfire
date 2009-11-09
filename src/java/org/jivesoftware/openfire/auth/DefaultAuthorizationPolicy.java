@@ -20,11 +20,12 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
 import java.util.StringTokenizer;
 import java.util.Vector;
+
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Different clients perform authentication differently, so this policy 
@@ -57,6 +58,8 @@ import java.util.Vector;
  * @author Jay Kline
  */
 public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationPolicy.class);
 
     private Vector<String> approvedRealms;
 

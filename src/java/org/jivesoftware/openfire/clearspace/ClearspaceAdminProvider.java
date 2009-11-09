@@ -18,17 +18,19 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.jivesoftware.openfire.admin.AdminProvider;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.WSUtils.parseStringArray;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
-import org.dom4j.Element;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.admin.AdminProvider;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Handles retrieving list of admins from Clearspace.
@@ -36,6 +38,8 @@ import java.util.ArrayList;
  * @author Daniel Henninger
  */
 public class ClearspaceAdminProvider implements AdminProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceAdminProvider.class);
 
     // The UserService webservice url prefix
     protected static final String PERMISSION_URL_PREFIX = "permissionService/";
@@ -72,7 +76,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
             return admins;
         }
         catch (ConnectionException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return new ArrayList<JID>();
         }
         catch (Exception e) {

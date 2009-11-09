@@ -22,11 +22,28 @@ package org.jivesoftware.util;
 
 import java.security.Security;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Properties;
 
 import javax.mail.Address;
-import javax.mail.*;
-import javax.mail.internet.*;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Part;
+import javax.mail.SendFailedException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.URLName;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimeUtility;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A service to send email.<p>
@@ -69,6 +86,8 @@ import javax.mail.internet.*;
  * </ul>
  */
 public class EmailService {
+
+	private static final Logger Log = LoggerFactory.getLogger(EmailService.class);
 
     private static final String SSL_FACTORY = "org.jivesoftware.util.SimpleSSLSocketFactory";
 
@@ -252,7 +271,7 @@ public class EmailService {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -465,7 +484,7 @@ public class EmailService {
                 sendMessages();
             }
             catch (MessagingException me) {
-                Log.error(me);
+                Log.error(me.getMessage(), me);
             }
         }
 
@@ -486,10 +505,10 @@ public class EmailService {
                             message.getRecipients(MimeMessage.RecipientType.TO));
                     }
                     catch (AddressException ae) {
-                        Log.error(ae);
+                        Log.error(ae.getMessage(), ae);
                     }
                     catch (SendFailedException sfe) {
-                        Log.error(sfe);
+                        Log.error(sfe.getMessage(), sfe);
                     }
                 }
             }

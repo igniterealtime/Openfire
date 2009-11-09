@@ -20,14 +20,15 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.Log;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
@@ -41,6 +42,8 @@ import java.net.URLClassLoader;
  * @author Derek DeMoro
  */
 public class PluginClassLoader extends URLClassLoader {
+
+	private static final Logger Log = LoggerFactory.getLogger(PluginClassLoader.class);
 
     public PluginClassLoader() {
         super(new URL[] {}, findParentClassLoader());
@@ -104,7 +107,7 @@ public class PluginClassLoader extends URLClassLoader {
             }
         }
         catch (MalformedURLException mue) {
-            Log.error(mue);
+            Log.error(mue.getMessage(), mue);
         }
     }
 

@@ -18,12 +18,17 @@
  */
 package org.jivesoftware.openfire.lockout;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Date;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The DefaultLockOutProvider works with the ofUserFlag table to maintain a list of disabled/locked out
@@ -32,6 +37,8 @@ import java.util.Date;
  * @author Daniel Henninger
  */
 public class DefaultLockOutProvider implements LockOutProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultLockOutProvider.class);
 
     private static final String FLAG_ID = "lockout";
     private static final String DELETE_FLAG =

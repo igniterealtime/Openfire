@@ -20,17 +20,21 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.CannotBeInvitedException;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#admin. This kind of 
@@ -41,7 +45,8 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 public class IQAdminHandler {
-    private LocalMUCRoom room;
+	
+	private LocalMUCRoom room;
 
     private PacketRouter router;
 

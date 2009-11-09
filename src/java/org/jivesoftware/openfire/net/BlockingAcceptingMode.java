@@ -20,15 +20,16 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.ServerPort;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.ServerPort;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Accepts new socket connections and uses a thread for each new connection.
@@ -36,6 +37,8 @@ import java.net.Socket;
  * @author Gaston Dombiak
  */
 class BlockingAcceptingMode extends SocketAcceptingMode {
+
+	private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
 
     protected BlockingAcceptingMode(ConnectionManager connManager, ServerPort serverPort,
             InetAddress bindInterface) throws IOException {

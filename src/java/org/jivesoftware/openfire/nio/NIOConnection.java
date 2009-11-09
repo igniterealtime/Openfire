@@ -19,6 +19,19 @@
 
 package org.jivesoftware.openfire.nio;
 
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+
 import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.common.IoFilterChain;
 import org.apache.mina.common.IoSession;
@@ -29,21 +42,18 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.*;
+import org.jivesoftware.openfire.net.ClientTrustManager;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
+import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
+import org.jivesoftware.openfire.net.ServerTrustManager;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
-
-import javax.net.ssl.*;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
 
 /**
  * Implementation of {@link Connection} inteface specific for NIO connections when using
@@ -54,6 +64,8 @@ import java.security.cert.Certificate;
  * @author Gaston Dombiak
  */
 public class NIOConnection implements Connection {
+
+	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
 
     /**
      * The utf-8 charset for decoding and encoding XMPP packet streams.

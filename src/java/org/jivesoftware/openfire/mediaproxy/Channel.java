@@ -19,12 +19,17 @@
 
 package org.jivesoftware.openfire.mediaproxy;
 
-import org.jivesoftware.util.Log;
-
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Listen packets from defined dataSocket and send packets to the defined host.
@@ -32,6 +37,9 @@ import java.util.List;
  * @author Thiago Camargo
  */
 abstract class Channel implements Runnable {
+	
+	private static final Logger Log = LoggerFactory.getLogger(Channel.class);
+
     protected byte[] buf = new byte[5000];
     protected DatagramSocket dataSocket;
     protected DatagramPacket packet;
@@ -170,7 +178,7 @@ abstract class Channel implements Runnable {
             dataSocket.send(echo);
         }
         catch (IOException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

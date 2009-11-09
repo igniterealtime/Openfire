@@ -19,19 +19,33 @@
 
 package org.jivesoftware.util;
 
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.AddressException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.BreakIterator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to peform common String manipulation algorithms.
  */
 public class StringUtils {
+
+	private static final Logger Log = LoggerFactory.getLogger(StringUtils.class);
 
     // Constants used by escapeHTMLTags
     private static final char[] QUOTE_ENCODE = "&quot;".toCharArray();
@@ -357,7 +371,7 @@ public class StringUtils {
             return hash(data.getBytes("utf-8"), algorithm);
         }
         catch (UnsupportedEncodingException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return data;
     }
@@ -510,7 +524,7 @@ public class StringUtils {
             bytes = data.getBytes("UTF-8");
         }
         catch (UnsupportedEncodingException uee) {
-            Log.error(uee);
+            Log.error(uee.getMessage(), uee);
         }
         return encodeBase64(bytes);
     }

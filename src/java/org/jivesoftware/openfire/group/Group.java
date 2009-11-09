@@ -20,15 +20,6 @@
 
 package org.jivesoftware.openfire.group;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.xmpp.packet.JID;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -37,8 +28,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Groups organize users into a single entity for easier management.<p>
@@ -52,6 +61,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Tucker
  */
 public class Group implements Cacheable, Externalizable {
+
+	private static final Logger Log = LoggerFactory.getLogger(Group.class);
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
@@ -93,7 +104,7 @@ public class Group implements Cacheable, Externalizable {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -220,7 +231,7 @@ public class Group implements Cacheable, Externalizable {
                     params);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -260,7 +271,7 @@ public class Group implements Cacheable, Externalizable {
                     GroupEventDispatcher.EventType.group_modified, params);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -610,7 +621,7 @@ public class Group implements Cacheable, Externalizable {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -629,7 +640,7 @@ public class Group implements Cacheable, Externalizable {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -648,7 +659,7 @@ public class Group implements Cacheable, Externalizable {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -666,7 +677,7 @@ public class Group implements Cacheable, Externalizable {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

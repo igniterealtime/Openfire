@@ -20,14 +20,24 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.session.*;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.TaskEngine;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalComponentSession;
+import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A LocalSessionManager keeps track of sessions that are connected to this JVM and for
@@ -51,6 +61,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 class LocalSessionManager {
+	
+	private static final Logger Log = LoggerFactory.getLogger(LocalSessionManager.class);
+
     /**
      * Map that holds sessions that has been created but haven't been authenticated yet. The Map
      * will hold client sessions.

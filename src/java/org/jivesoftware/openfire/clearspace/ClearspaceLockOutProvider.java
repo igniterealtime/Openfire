@@ -18,20 +18,22 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
+import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
+
+import java.util.List;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
-import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
 import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.util.List;
 
 /**
  * The ClearspaceLockOutProvider uses the UserService web service inside of Clearspace
@@ -42,6 +44,8 @@ import java.util.List;
  * @author Daniel Henninger
  */
 public class ClearspaceLockOutProvider implements LockOutProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceLockOutProvider.class);
 
     protected static final String USER_URL_PREFIX = "userService/";
 
@@ -62,7 +66,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
         }
         catch (UserNotFoundException e) {
             // Not a valid user?  We will leave it up to the user provider to handle rejecting this user.
-            Log.warn(e);
+            Log.warn(e.getMessage(), e);
             return null;
         }
     }

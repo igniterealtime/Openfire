@@ -20,31 +20,6 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.common.ByteBuffer;
-import org.apache.mina.common.ExecutorThreadModel;
-import org.apache.mina.common.SimpleByteBufferAllocator;
-import org.apache.mina.common.ThreadModel;
-import org.apache.mina.filter.SSLFilter;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.executor.ExecutorFilter;
-import org.apache.mina.transport.socket.nio.SocketAcceptor;
-import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
-import org.apache.mina.transport.socket.nio.SocketSessionConfig;
-import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.container.PluginManagerListener;
-import org.jivesoftware.openfire.http.HttpBindManager;
-import org.jivesoftware.openfire.net.*;
-import org.jivesoftware.openfire.nio.ClientConnectionHandler;
-import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
-import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
-import org.jivesoftware.openfire.nio.XMPPCodecFactory;
-import org.jivesoftware.util.*;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -56,10 +31,59 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.ExecutorThreadModel;
+import org.apache.mina.common.SimpleByteBufferAllocator;
+import org.apache.mina.common.ThreadModel;
+import org.apache.mina.filter.SSLFilter;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.executor.ExecutorFilter;
+import org.apache.mina.transport.socket.nio.SocketAcceptor;
+import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
+import org.apache.mina.transport.socket.nio.SocketSessionConfig;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.ServerPort;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginManagerListener;
+import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.net.ServerSocketReader;
+import org.jivesoftware.openfire.net.SocketAcceptThread;
+import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.SocketReader;
+import org.jivesoftware.openfire.net.SocketSendingTracker;
+import org.jivesoftware.openfire.net.StalledSessionsFilter;
+import org.jivesoftware.openfire.nio.ClientConnectionHandler;
+import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
+import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
+import org.jivesoftware.openfire.nio.XMPPCodecFactory;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(ConnectionManagerImpl.class);
 
     private SocketAcceptor socketAcceptor;
     private SocketAcceptor sslSocketAcceptor;

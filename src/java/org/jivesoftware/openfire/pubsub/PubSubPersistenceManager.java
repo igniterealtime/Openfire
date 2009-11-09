@@ -20,22 +20,28 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.pubsub.models.AccessModel;
-import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.packet.JID;
-
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * A manager responsible for ensuring node persistence.
@@ -43,6 +49,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Matt Tucker
  */
 public class PubSubPersistenceManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(PubSubPersistenceManager.class);
 
     private static final String LOAD_NON_LEAF_NODES =
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
@@ -240,12 +248,12 @@ public class PubSubPersistenceManager {
             saveAssociatedElements(con, node, service);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             abortTransaction = true;
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -329,12 +337,12 @@ public class PubSubPersistenceManager {
             saveAssociatedElements(con, node, service);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             abortTransaction = true;
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -444,12 +452,12 @@ public class PubSubPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             abortTransaction = true;
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
         return !abortTransaction;
@@ -544,13 +552,13 @@ public class PubSubPersistenceManager {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
 
         for (Node node : nodes.values()) {
@@ -626,7 +634,7 @@ public class PubSubPersistenceManager {
             loadedNodes.put(node.getNodeID(), node);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
     }
 
@@ -654,7 +662,7 @@ public class PubSubPersistenceManager {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
     }
 
@@ -669,7 +677,7 @@ public class PubSubPersistenceManager {
             node.addAllowedRosterGroup(rs.getString(2));
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
     }
 
@@ -686,7 +694,7 @@ public class PubSubPersistenceManager {
             node.addAffiliate(affiliate);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
     }
 
@@ -726,7 +734,7 @@ public class PubSubPersistenceManager {
             node.addSubscription(subscription);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
     }
 
@@ -756,7 +764,7 @@ public class PubSubPersistenceManager {
             node.addPublishedItem(item);
         }
         catch (Exception sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             // Return the sax reader to the pool
@@ -800,13 +808,13 @@ public class PubSubPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
     }
 
@@ -831,13 +839,13 @@ public class PubSubPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
     }
 
@@ -920,13 +928,13 @@ public class PubSubPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
     }
 
@@ -951,13 +959,13 @@ public class PubSubPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
     }
 
@@ -998,7 +1006,7 @@ public class PubSubPersistenceManager {
             rs.close();
         }
         catch (Exception sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             // Return the sax reader to the pool
@@ -1006,9 +1014,9 @@ public class PubSubPersistenceManager {
                 xmlReaders.add(xmlReader);
             }
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -1038,13 +1046,13 @@ public class PubSubPersistenceManager {
             success = true;
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
         return success;
     }
@@ -1072,13 +1080,13 @@ public class PubSubPersistenceManager {
             success = true;
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
         return success;
     }
@@ -1130,13 +1138,13 @@ public class PubSubPersistenceManager {
             rs.close();
         }
         catch (Exception sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return config;
     }
@@ -1180,13 +1188,13 @@ public class PubSubPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
     }
 
@@ -1229,13 +1237,13 @@ public class PubSubPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
             try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e);}
+            catch (Exception e) {Log.error(e.getMessage(), e);}
         }
     }
 
@@ -1247,11 +1255,11 @@ public class PubSubPersistenceManager {
             node = loadNode(service, nodeID, con);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return node;
     }
@@ -1360,13 +1368,13 @@ public class PubSubPersistenceManager {
             service.addChildNode(node);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return node;
     }*/

@@ -20,20 +20,24 @@
 
 package org.jivesoftware.util;
 
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.net.SocketFactory;
-import java.security.NoSuchAlgorithmException;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
-import java.net.Socket;
-import java.net.InetAddress;
-import java.io.IOException;
+import java.security.cert.X509Certificate;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SSLSocketFactory that accepts any certificate chain and also accepts expired
@@ -42,6 +46,8 @@ import java.io.IOException;
  * @author Matt Tucker
  */
 public class SimpleSSLSocketFactory extends SSLSocketFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(SimpleSSLSocketFactory.class);
 
     private SSLSocketFactory factory;
 
@@ -55,10 +61,10 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
             factory = sslcontent.getSocketFactory();
         }
         catch (NoSuchAlgorithmException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         catch (KeyManagementException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

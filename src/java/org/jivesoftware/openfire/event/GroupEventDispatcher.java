@@ -20,12 +20,13 @@
 
 package org.jivesoftware.openfire.event;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.group.Group;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.jivesoftware.openfire.group.Group;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dispatches group events. Each event has a {@link EventType type}
@@ -75,6 +76,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Tucker
  */
 public class GroupEventDispatcher {
+
+	private static final Logger Log = LoggerFactory.getLogger(GroupEventDispatcher.class);
 
     private static List<GroupEventListener> listeners =
             new CopyOnWriteArrayList<GroupEventListener>();
@@ -148,7 +151,7 @@ public class GroupEventDispatcher {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

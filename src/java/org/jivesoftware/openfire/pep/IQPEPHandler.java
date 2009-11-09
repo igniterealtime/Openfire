@@ -20,6 +20,19 @@
 
 package org.jivesoftware.openfire.pep;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -34,31 +47,33 @@ import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.pubsub.*;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.PubSubEngine;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterEventDispatcher;
 import org.jivesoftware.openfire.roster.RosterEventListener;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.user.*;
+import org.jivesoftware.openfire.user.PresenceEventDispatcher;
+import org.jivesoftware.openfire.user.PresenceEventListener;
+import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
+import org.jivesoftware.openfire.user.RemotePresenceEventListener;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * <p>
@@ -92,6 +107,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
         RosterEventListener, UserEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);
 
     final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM ofPubsubNode WHERE serviceID=?";
 
@@ -151,7 +168,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                         }
                     }
                     catch (Exception e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
             }
@@ -222,7 +239,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             pstmt.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try {
@@ -230,14 +247,14 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                     pstmt.close();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             try {
                 if (con != null)
                     con.close();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 

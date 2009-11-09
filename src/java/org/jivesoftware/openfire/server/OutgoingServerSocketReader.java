@@ -20,15 +20,16 @@
 
 package org.jivesoftware.openfire.server;
 
-import org.dom4j.Element;
-import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.util.Log;
-
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.dom4j.Element;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An OutgoingServerSocketReader is responsible for reading and queueing the DOM Element sent by
@@ -42,6 +43,8 @@ import java.util.concurrent.TimeUnit;
  * @author Gaston Dombiak
  */
 public class OutgoingServerSocketReader {
+
+	private static final Logger Log = LoggerFactory.getLogger(OutgoingServerSocketReader.class);
 
     private OutgoingServerSession session;
     private boolean open = true;

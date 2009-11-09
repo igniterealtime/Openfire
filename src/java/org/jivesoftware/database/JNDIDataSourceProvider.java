@@ -19,15 +19,17 @@
 
 package org.jivesoftware.database;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
+
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of ConnectionProvider that utilizes a JDBC 2.0 DataSource
@@ -43,6 +45,8 @@ import java.util.*;
  * @see ConnectionProvider
  */
 public class JNDIDataSourceProvider implements ConnectionProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(JNDIDataSourceProvider.class);
 
     private String dataSourceName;
     private DataSource dataSource;
@@ -81,7 +85,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
 
     public void start() {
         if (dataSourceName == null || dataSourceName.equals("")) {
-            Log.error("No name specified for DataSource. JNDI lookup will fail", null);
+            Log.error("No name specified for DataSource. JNDI lookup will fail", new Throwable());
             return;
         }
         try {

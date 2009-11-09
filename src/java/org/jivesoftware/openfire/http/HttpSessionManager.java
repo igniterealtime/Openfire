@@ -19,6 +19,16 @@
 
 package org.jivesoftware.openfire.http;
 
+import java.net.InetAddress;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -28,20 +38,18 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
-
-import java.net.InetAddress;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocal,
  * <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  */
 public class HttpSessionManager {
+	
+	private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
+
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
     private TimerTask inactivityTask;

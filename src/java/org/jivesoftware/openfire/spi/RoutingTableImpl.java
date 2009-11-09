@@ -32,9 +32,10 @@ import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import java.util.*;
@@ -58,6 +59,8 @@ import java.util.concurrent.locks.Lock;
  */
 public class RoutingTableImpl extends BasicModule implements RoutingTable, ClusterEventListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(RoutingTableImpl.class);
+	
     public static final String C2S_CACHE_NAME = "Routing Users Cache";
     public static final String ANONYMOUS_C2S_CACHE_NAME = "Routing AnonymousUsers Cache";
     public static final String S2S_CACHE_NAME = "Routing Servers Cache";
@@ -240,7 +243,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         if (!routed) {
             if (Log.isDebugEnabled()) {
-                Log.debug("RoutingTableImpl: Failed to route packet to JID: " + jid + " packet: " + packet);
+                Log.debug("RoutingTableImpl: Failed to route packet to JID: {} packet: {}", jid, packet.toXML());
             }
             if (packet instanceof IQ) {
                 iqRouter.routingFailed(jid, packet);
@@ -280,7 +283,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		        routed = routeToBareJID(jid, (Message) packet);
 		    }
 		    else {
-		        throw new PacketException("Cannot route packet of type IQ or Presence to bare JID: " + packet);
+		        throw new PacketException("Cannot route packet of type IQ or Presence to bare JID: " + packet.toXML());
 		    }
 		}
 		else {
@@ -292,7 +295,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		    if (clientRoute != null) {
 		        if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
 		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
-		            // Packet should only be sent to available sessions and the route is not available
+		        	Log.debug("Unable to route packet. Packet should only be sent to available sessions and the route is not available. {} ", packet.toXML());
 		            routed = false;
 		        }
 		        else {
@@ -302,7 +305,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		                    localRoutingTable.getRoute(jid.toString()).process(packet);
 		                    routed = true;
 		                } catch (UnauthorizedException e) {
-		                    Log.error(e);
+		                    Log.error("Unable to route packet " + packet.toXML(), e);
 		                }
 		            }
 		            else {
@@ -349,7 +352,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		        route.process(packet);
 		        routed = true;
 		    } catch (UnauthorizedException e) {
-		        Log.error(e);
+		        Log.error("Unable to route packet " + packet.toXML(), e);
 		    }
 		}
 		else {
@@ -365,7 +368,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		                    routed = true;
 		                    break;
 		                } catch (UnauthorizedException e) {
-		                    Log.error(e);
+		                    Log.error("Unable to route packet " + packet.toXML(), e);
 		                }
 		            }
 		            else {
@@ -410,7 +413,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		            localRoutingTable.getRoute(jid.getDomain()).process(packet);
 		            routed = true;
 		        } catch (UnauthorizedException e) {
-		            Log.error(e);
+		            Log.error("Unable to route packet " + packet.toXML(), e);
 		        }
 		    }
 		    else {
@@ -488,6 +491,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         sessions = getHighestPrioritySessions(sessions);
         if (sessions.isEmpty()) {
             // No session is available so store offline
+        	Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
             return false;
         }
         else if (sessions.size() == 1) {

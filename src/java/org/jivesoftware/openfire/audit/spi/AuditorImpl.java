@@ -20,23 +20,46 @@
 
 package org.jivesoftware.openfire.audit.spi;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.Auditor;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 public class AuditorImpl implements Auditor {
+
+	private static final Logger Log = LoggerFactory.getLogger(AuditorImpl.class);
 
     private AuditManager auditManager;
     private File currentAuditFile;
@@ -371,7 +394,7 @@ public class AuditorImpl implements Auditor {
             }
         }
         catch (IOException ioe) {
-            Log.error(ioe);
+            Log.error(ioe.getMessage(), ioe);
         }
     }
 

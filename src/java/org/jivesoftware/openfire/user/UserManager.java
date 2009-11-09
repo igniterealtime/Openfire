@@ -35,12 +35,13 @@ import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -52,6 +53,8 @@ import org.xmpp.packet.JID;
  * @see User
  */
 public class UserManager implements IQResultListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
 
     // Wrap this guy up so we can mock out the UserManager class.
     private static class UserManagerContainer {

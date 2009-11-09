@@ -20,17 +20,23 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.util.*;
+import java.io.IOException;
+import java.util.Map;
+import java.util.TimerTask;
+
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceInfo;
+
 import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.container.BasicModule;
-
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceInfo;
-import java.io.IOException;
-import java.util.Map;
-import java.util.TimerTask;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Publishes Openfire information as a service using the Multicast DNS (marketed by Apple
@@ -45,6 +51,8 @@ import java.util.TimerTask;
  * @author Matt Tucker
  */
 public class MulticastDNSService extends BasicModule {
+
+	private static final Logger Log = LoggerFactory.getLogger(MulticastDNSService.class);
 
     private JmDNS jmdns;
 
@@ -121,7 +129,7 @@ public class MulticastDNSService extends BasicModule {
                     }
                 }
                  catch (IOException ioe) {
-                    Log.error(ioe);
+                    Log.error(ioe.getMessage(), ioe);
                 }
             }
         };

@@ -23,12 +23,13 @@ package org.jivesoftware.openfire.pubsub.models;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
@@ -38,6 +39,8 @@ import org.xmpp.packet.PacketError;
  * @author Matt Tucker
  */
 public class PresenceAccess extends AccessModel {
+
+	private static final Logger Log = LoggerFactory.getLogger(PresenceAccess.class);
 
     PresenceAccess() {
     }

@@ -20,17 +20,18 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Task related to a room to be executed in a cluster node. This is a base
@@ -40,6 +41,9 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public abstract class MUCRoomTask implements ClusterTask {
+	
+	private static final Logger Log = LoggerFactory.getLogger(MUCRoomTask.class);
+
     private boolean originator;
     private String roomName;
     private String subdomain;
@@ -88,7 +92,7 @@ public abstract class MUCRoomTask implements ClusterTask {
             }
             else {
                 // Task failed since room was not found
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

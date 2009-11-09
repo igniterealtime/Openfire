@@ -20,10 +20,18 @@
 
 package org.jivesoftware.util;
 
-import java.beans.*;
+import java.beans.BeanDescriptor;
+import java.beans.BeanInfo;
+import java.beans.EventSetDescriptor;
+import java.beans.IntrospectionException;
+import java.beans.MethodDescriptor;
+import java.beans.PropertyDescriptor;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.ResourceBundle;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An abstract BeanInfo implementation that automatically constructs
@@ -33,6 +41,8 @@ import java.util.ResourceBundle;
  * @see java.beans.BeanInfo
  */
 public abstract class JiveBeanInfo implements BeanInfo {
+
+	private static final Logger Log = LoggerFactory.getLogger(JiveBeanInfo.class);
 
     private ResourceBundle bundle;
 
@@ -123,7 +133,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
             return descriptors;
         }
         catch (IntrospectionException ie) {
-            Log.error(ie);
+            Log.error(ie.getMessage(), ie);
             throw new Error(ie.toString());
         }
     }

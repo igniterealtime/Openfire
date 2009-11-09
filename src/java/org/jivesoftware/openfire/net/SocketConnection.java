@@ -20,22 +20,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZOutputStream;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ConnectionCloseListener;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Packet;
-
-import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -51,6 +35,25 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionCloseListener;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Packet;
+
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZOutputStream;
+
 /**
  * An object to track the state of a XMPP client-server session.
  * Currently this class contains the socket channel connecting the
@@ -59,6 +62,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Iain Shigeoka
  */
 public class SocketConnection implements Connection {
+
+	private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 
     /**
      * The utf-8 charset for decoding and encoding XMPP packet streams.

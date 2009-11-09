@@ -19,6 +19,17 @@
 
 package org.jivesoftware.openfire.interceptor;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
@@ -28,13 +39,13 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.*;
-
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * Packet interceptor that notifies of packets activity to components that previously
@@ -46,6 +57,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Gaston Dombiak
  */
 public class PacketCopier implements PacketInterceptor, ComponentEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(PacketCopier.class);
 
     private final static PacketCopier instance = new PacketCopier();
     private final static FastDateFormat dateFormat = FastDateFormat

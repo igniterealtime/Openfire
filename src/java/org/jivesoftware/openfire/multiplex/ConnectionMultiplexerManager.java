@@ -20,6 +20,14 @@
 
 package org.jivesoftware.openfire.multiplex;
 
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -31,12 +39,9 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
-
-import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A ConnectionMultiplexerManager is responsible for keeping track of the connected
@@ -47,6 +52,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Gaston Dombiak
  */
 public class ConnectionMultiplexerManager implements SessionEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(ConnectionMultiplexerManager.class);
 
     private static final ConnectionMultiplexerManager instance = new ConnectionMultiplexerManager();
 
@@ -118,7 +125,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
                     }
                 }
                 catch(Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         };

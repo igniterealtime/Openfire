@@ -20,7 +20,17 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.openfire.*;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+
+import org.jivesoftware.openfire.ChannelHandler;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PresenceManager;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SharedGroupException;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
@@ -30,15 +40,12 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
@@ -85,6 +92,8 @@ import java.util.Map;
  * @author Iain Shigeoka
  */
 public class PresenceSubscribeHandler extends BasicModule implements ChannelHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(PresenceSubscribeHandler.class);
 
     private RoutingTable routingTable;
     private XMPPServer localServer;

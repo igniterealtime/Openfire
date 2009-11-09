@@ -20,9 +20,10 @@
 
 package org.jivesoftware.openfire.update;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service that allow for aysynchrous calling of system managers.
@@ -30,6 +31,8 @@ import org.jivesoftware.openfire.XMPPServer;
  * @author Derek DeMoro
  */
 public class PluginDownloadManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(PluginDownloadManager.class);
 
     /**
      * Starts the download process of a given plugin with it's URL.
@@ -92,7 +95,7 @@ public class PluginDownloadManager {
             return true;
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         return false;

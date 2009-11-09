@@ -20,45 +20,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.dom4j.Document;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.audit.AuditManager;
-import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
-import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.commands.AdHocCommandHandler;
-import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.container.AdminConsolePlugin;
-import org.jivesoftware.openfire.container.Module;
-import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.disco.*;
-import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
-import org.jivesoftware.openfire.filetransfer.FileTransferManager;
-import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
-import org.jivesoftware.openfire.handler.*;
-import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
-import org.jivesoftware.openfire.muc.MultiUserChatManager;
-import org.jivesoftware.openfire.net.MulticastDNSService;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.net.ServerTrafficCounter;
-import org.jivesoftware.openfire.pep.IQPEPHandler;
-import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
-import org.jivesoftware.openfire.pubsub.PubSubModule;
-import org.jivesoftware.openfire.roster.RosterManager;
-import org.jivesoftware.openfire.session.RemoteSessionLocator;
-import org.jivesoftware.openfire.spi.*;
-import org.jivesoftware.openfire.stun.STUNService;
-import org.jivesoftware.openfire.transport.TransportHandler;
-import org.jivesoftware.openfire.update.UpdateManager;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.vcard.VCardManager;
-import org.jivesoftware.openfire.admin.AdminManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.xmpp.packet.JID;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -70,8 +31,87 @@ import java.security.KeyStore;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.dom4j.Document;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.audit.AuditManager;
+import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.clearspace.ClearspaceManager;
+import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.commands.AdHocCommandHandler;
+import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.container.AdminConsolePlugin;
+import org.jivesoftware.openfire.container.Module;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
+import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
+import org.jivesoftware.openfire.filetransfer.FileTransferManager;
+import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
+import org.jivesoftware.openfire.handler.IQAuthHandler;
+import org.jivesoftware.openfire.handler.IQBindHandler;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQLastActivityHandler;
+import org.jivesoftware.openfire.handler.IQOfflineMessagesHandler;
+import org.jivesoftware.openfire.handler.IQPingHandler;
+import org.jivesoftware.openfire.handler.IQPrivacyHandler;
+import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.openfire.handler.IQRegisterHandler;
+import org.jivesoftware.openfire.handler.IQRosterHandler;
+import org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler;
+import org.jivesoftware.openfire.handler.IQSharedGroupHandler;
+import org.jivesoftware.openfire.handler.IQTimeHandler;
+import org.jivesoftware.openfire.handler.IQVersionHandler;
+import org.jivesoftware.openfire.handler.IQvCardHandler;
+import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
+import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.net.MulticastDNSService;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.net.ServerTrafficCounter;
+import org.jivesoftware.openfire.pep.IQPEPHandler;
+import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
+import org.jivesoftware.openfire.pubsub.PubSubModule;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.PacketDelivererImpl;
+import org.jivesoftware.openfire.spi.PacketRouterImpl;
+import org.jivesoftware.openfire.spi.PacketTransporterImpl;
+import org.jivesoftware.openfire.spi.PresenceManagerImpl;
+import org.jivesoftware.openfire.spi.RoutingTableImpl;
+import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
+import org.jivesoftware.openfire.stun.STUNService;
+import org.jivesoftware.openfire.transport.TransportHandler;
+import org.jivesoftware.openfire.update.UpdateManager;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.InitializationException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.Version;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -103,6 +143,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 public class XMPPServer {
+
+	private static final Logger Log = LoggerFactory.getLogger(XMPPServer.class);
 
     private static XMPPServer instance;
 
@@ -327,7 +369,7 @@ public class XMPPServer {
             CacheFactory.initialize();
         } catch (InitializationException e) {
             e.printStackTrace();
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         initialized = true;
@@ -403,7 +445,7 @@ public class XMPPServer {
                     }
                     catch (Exception e) {
                         e.printStackTrace();
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                         shutdownServer();
                     }
                 }
@@ -463,7 +505,7 @@ public class XMPPServer {
         }
         catch (Exception e) {
             e.printStackTrace();
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             System.out.println(LocaleUtils.getLocalizedString("startup.error"));
             shutdownServer();
         }
@@ -724,7 +766,7 @@ public class XMPPServer {
                     conn.close();
                 }
                 catch (SQLException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

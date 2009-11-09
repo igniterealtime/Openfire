@@ -20,9 +20,21 @@
 
 package org.jivesoftware.openfire.http;
 
+import java.io.File;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Map;
+
+import javax.net.ssl.SSLContext;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -33,18 +45,15 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.security.SslSelectChannelConnector;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.webapp.WebAppContext;
-
-import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public final class HttpBindManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
 
     public static final String HTTP_BIND_ENABLED = "httpbind.enabled";
 

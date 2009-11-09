@@ -20,20 +20,25 @@
 
 package org.jivesoftware.admin;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentFactory;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
-import org.jivesoftware.util.*;
-
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentFactory;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.clearspace.ClearspaceManager;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A model for admin tab and sidebar info. This class loads in XML definitions of the
@@ -46,6 +51,8 @@ import java.util.Map;
  * <tt>admin-sidebar.xml</tt> file for documentation of its format.
  */
 public class AdminConsole {
+
+	private static final Logger Log = LoggerFactory.getLogger(AdminConsole.class);
 
     private static Element coreModel;
     private static Map<String,Element> overrideModels;

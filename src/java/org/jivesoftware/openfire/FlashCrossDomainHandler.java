@@ -20,10 +20,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,7 +28,15 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FlashCrossDomainHandler extends BasicModule {
+	
+	private static final Logger Log = LoggerFactory.getLogger(FlashCrossDomainHandler.class);
+
     private ServerSocket serverSocket;
 
     public static String CROSS_DOMAIN_TEXT = "<?xml version=\"1.0\"?>" +
@@ -53,7 +57,7 @@ public class FlashCrossDomainHandler extends BasicModule {
                     startServer();
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }, "Flash Cross Domain");
@@ -68,7 +72,7 @@ public class FlashCrossDomainHandler extends BasicModule {
             }
         }
         catch (IOException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -124,7 +128,7 @@ public class FlashCrossDomainHandler extends BasicModule {
                 if (XMPPServer.getInstance().isShuttingDown()) {
                     break;
                 }
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             finally {
             	if (out != null) {

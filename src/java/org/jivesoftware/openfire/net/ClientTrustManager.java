@@ -16,19 +16,46 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
-import javax.net.ssl.X509TrustManager;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.*;
-import java.security.cert.*;
-import java.util.*;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PublicKey;
+import java.security.cert.CRLException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertPathBuilderException;
+import java.security.cert.CertPathBuilderResult;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertStore;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathValidatorResult;
+import java.security.cert.X509CRL;
+import java.security.cert.X509CertSelector;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+
+import javax.net.ssl.X509TrustManager;
+
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ClientTrustManager is a Trust Manager that is only used for c2s connections. This TrustManager
@@ -41,6 +68,8 @@ import java.util.*;
  * @author Jay Kline
  */
 public class ClientTrustManager implements X509TrustManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(ClientTrustManager.class);
 
     /**
      * KeyStore that holds the trusted CA
@@ -229,7 +258,7 @@ public class ClientTrustManager implements X509TrustManager {
                     }
                 }
                 catch (KeyStoreException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 if (!trusted) {
                     //Log.debug("certificate not trusted of "+peerIdentities);
@@ -355,7 +384,7 @@ public class ClientTrustManager implements X509TrustManager {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 X509Certs = null;
             }
             return X509Certs;

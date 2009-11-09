@@ -20,17 +20,22 @@
 
 package org.jivesoftware.openfire.group;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.packet.JID;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Database implementation of the GroupManager interface.
@@ -38,6 +43,8 @@ import java.util.List;
  * @author Matt Tucker
  */
 public class DefaultGroupProvider implements GroupProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultGroupProvider.class);
 
     private static final String INSERT_GROUP =
         "INSERT INTO ofGroup (groupName, description) VALUES (?, ?)";
@@ -85,19 +92,19 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
@@ -121,19 +128,19 @@ public class DefaultGroupProvider implements GroupProvider {
             description = rs.getString(1);
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
@@ -153,7 +160,7 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             throw new GroupNotFoundException();
         }
         finally {
@@ -161,12 +168,12 @@ public class DefaultGroupProvider implements GroupProvider {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -194,7 +201,7 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             abortTransaction = true;
         }
         finally {
@@ -202,7 +209,7 @@ public class DefaultGroupProvider implements GroupProvider {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -229,7 +236,7 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             abortTransaction = true;
         }
         finally {
@@ -237,7 +244,7 @@ public class DefaultGroupProvider implements GroupProvider {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -256,19 +263,19 @@ public class DefaultGroupProvider implements GroupProvider {
             rs.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return count;
     }
@@ -292,19 +299,19 @@ public class DefaultGroupProvider implements GroupProvider {
             rs.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return groupNames;
     }
@@ -326,19 +333,19 @@ public class DefaultGroupProvider implements GroupProvider {
             rs.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return groupNames;
     }
@@ -358,7 +365,7 @@ public class DefaultGroupProvider implements GroupProvider {
             rs.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
@@ -366,13 +373,13 @@ public class DefaultGroupProvider implements GroupProvider {
                     pstmt.close();
                 }
             }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 }
             }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return groupNames;
     }
@@ -389,19 +396,19 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -417,19 +424,19 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -444,19 +451,19 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -493,7 +500,7 @@ public class DefaultGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, stmt, con);
@@ -534,7 +541,7 @@ public class DefaultGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, stmt, con);
@@ -577,19 +584,19 @@ public class DefaultGroupProvider implements GroupProvider {
             rs.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try {
                 if (con != null) {
                     con.close();
                 } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return members;
     }

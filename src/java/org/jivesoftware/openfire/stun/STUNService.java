@@ -16,20 +16,6 @@
 
 package org.jivesoftware.openfire.stun;
 
-import de.javawi.jstun.test.demo.StunServer;
-import org.dom4j.Element;
-import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
-
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -39,6 +25,22 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
+import org.dom4j.Element;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
+
+import de.javawi.jstun.test.demo.StunServer;
+
 /**
  * STUN server and service module. It provides address discovery for p2p sessions to be
  * used for media transmission and receiving of UDP packets. It's especially useful for
@@ -47,6 +49,8 @@ import java.util.Map;
  * @author Thiago Camargo
  */
 public class STUNService extends BasicModule {
+
+	private static final Logger Log = LoggerFactory.getLogger(STUNService.class);
 
     private static final String ELEMENT_NAME = "stun";
     private static final String NAMESPACE = "google:jingleinfo";
@@ -418,7 +422,7 @@ public class STUNService extends BasicModule {
                         }
                     }
                     catch (UnknownHostException e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
 
@@ -431,7 +435,7 @@ public class STUNService extends BasicModule {
                 Log.debug("STUNService: RETURNED:" + reply.toXML());
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             return reply;
         }

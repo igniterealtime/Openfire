@@ -45,9 +45,10 @@ import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -64,6 +65,9 @@ import org.xmpp.packet.PacketError;
 public class FileTransferProxy extends BasicModule
         implements ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider,
         RoutableChannelHandler {
+	
+	private static final Logger Log = LoggerFactory.getLogger(FileTransferProxy.class);
+
     /**
      * The JiveProperty relating to whether or not the file treansfer proxy is enabled.
      */

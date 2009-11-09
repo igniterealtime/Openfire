@@ -20,9 +20,10 @@
 
 package org.jivesoftware.openfire.handler;
 
+import java.util.Iterator;
+
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
@@ -31,11 +32,11 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
-
-import java.util.Iterator;
 
 /**
  * Implements the TYPE_IQ vcard-temp protocol. Clients
@@ -71,6 +72,8 @@ import java.util.Iterator;
  */
 public class IQvCardHandler extends IQHandler {
 
+	private static final Logger Log = LoggerFactory.getLogger(IQvCardHandler.class);
+
     private IQHandlerInfo info;
     private XMPPServer server;
     private UserManager userManager;
@@ -97,7 +100,7 @@ public class IQvCardHandler extends IQHandler {
                 result.setError(PacketError.Condition.item_not_found);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 result.setError(PacketError.Condition.internal_server_error);
             }
         }

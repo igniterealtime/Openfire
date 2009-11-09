@@ -18,17 +18,21 @@
  */
 package org.jivesoftware.openfire.security;
 
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.XMPPServer;
-
-import java.util.List;
-import java.util.Date;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.sql.*;
+import java.util.Date;
+import java.util.List;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The default security audit provider stores the logs in a ofSecurityAuditLog table.
@@ -36,6 +40,8 @@ import java.sql.*;
  * @author Daniel Henninger
  */
 public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultSecurityAuditProvider.class);
 
     private static final String LOG_ENTRY =
             "INSERT INTO ofSecurityAuditLog(msgID,username,entryStamp,summary,node,details) VALUES(?,?,?,?,?,?)";
@@ -151,7 +157,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

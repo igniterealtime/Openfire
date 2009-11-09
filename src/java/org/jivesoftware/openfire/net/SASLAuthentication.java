@@ -20,6 +20,23 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
+
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -30,21 +47,17 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-import java.io.UnsupportedEncodingException;
-import java.net.UnknownHostException;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -63,6 +76,8 @@ import java.util.*;
  * @author Gaston Dombiak
  */
 public class SASLAuthentication {
+
+	private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

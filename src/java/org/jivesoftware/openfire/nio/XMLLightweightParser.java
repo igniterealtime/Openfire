@@ -19,17 +19,18 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.common.ByteBuffer;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.mina.common.ByteBuffer;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a Light-Weight XML Parser.
@@ -43,6 +44,9 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 class XMLLightweightParser {
+	
+	private static final Logger Log = LoggerFactory.getLogger(XMLLightweightParser.class);
+
     private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
     private static int maxBufferSize;
     // Chars that rappresent CDATA section start

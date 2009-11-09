@@ -32,7 +32,8 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -51,6 +52,8 @@ import org.xmpp.packet.StreamError;
  * @author Gaston Dombiak
  */
 public class IQBindHandler extends IQHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQBindHandler.class);
 
     private IQHandlerInfo info;
     private String serverName;

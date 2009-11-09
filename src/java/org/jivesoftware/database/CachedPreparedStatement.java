@@ -20,13 +20,14 @@
 
 package org.jivesoftware.database;
 
-import org.jivesoftware.util.Log;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.sql.Types;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Allows PreparedStatement information to be cached. A prepared statement consists of
@@ -39,6 +40,8 @@ import java.sql.SQLException;
  * @author Matt Tucker
  */
 public class CachedPreparedStatement  {
+
+	private static final Logger Log = LoggerFactory.getLogger(CachedPreparedStatement.class);
 
     private String sql;
     private List<Object> params;
@@ -211,7 +214,7 @@ public class CachedPreparedStatement  {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         return "CachedPreparedStatement{ sql=" + toStringSql + '}';

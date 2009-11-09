@@ -20,32 +20,67 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.dom4j.Element;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.muc.*;
-import org.jivesoftware.openfire.muc.cluster.*;
+import org.jivesoftware.openfire.muc.CannotBeInvitedException;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.HistoryRequest;
+import org.jivesoftware.openfire.muc.HistoryStrategy;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoomHistory;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAcceptableException;
+import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.RegistrationRequiredException;
+import org.jivesoftware.openfire.muc.RoomLockedException;
+import org.jivesoftware.openfire.muc.ServiceUnavailableException;
+import org.jivesoftware.openfire.muc.cluster.AddMember;
+import org.jivesoftware.openfire.muc.cluster.BroadcastMessageRequest;
+import org.jivesoftware.openfire.muc.cluster.BroadcastPresenceRequest;
+import org.jivesoftware.openfire.muc.cluster.ChangeNickname;
+import org.jivesoftware.openfire.muc.cluster.DestroyRoomRequest;
+import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
+import org.jivesoftware.openfire.muc.cluster.OccupantLeftEvent;
+import org.jivesoftware.openfire.muc.cluster.UpdateOccupant;
+import org.jivesoftware.openfire.muc.cluster.UpdateOccupantRequest;
+import org.jivesoftware.openfire.muc.cluster.UpdatePresence;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.xmpp.packet.*;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * Implementation of a chatroom that is being hosted by this JVM. A LocalMUCRoom could represent
@@ -60,6 +95,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Gaston Dombiak
  */
 public class LocalMUCRoom implements MUCRoom {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocalMUCRoom.class);
 
     /**
      * The service hosting the room.
@@ -755,7 +792,7 @@ public class LocalMUCRoom implements MUCRoom {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         // Remove occupant from room and destroy room if empty and not persistent
@@ -894,7 +931,7 @@ public class LocalMUCRoom implements MUCRoom {
                 removedRole.send(presence);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         if (destroyRequest.isOriginator()) {
@@ -2013,7 +2050,7 @@ public class LocalMUCRoom implements MUCRoom {
                                 LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
                     }
                     catch (NotAllowedException e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
             }

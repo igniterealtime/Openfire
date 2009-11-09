@@ -20,23 +20,33 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.ConcurrentHashSet;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.WebManager;
-
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.jivesoftware.util.ConcurrentHashSet;
+import org.jivesoftware.util.WebManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple filter which checks for the auth token in the user's session. If it's not there
  * the filter will redirect to the login page.
  */
 public class AuthCheckFilter implements Filter {
+
+	private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
 
     private static Set<String> excludes = new ConcurrentHashSet<String>();
 
@@ -169,14 +179,14 @@ public class AuthCheckFilter implements Filter {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         try {
             return loginPage + "?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
                     + (optionalParams != null ? "&"+optionalParams : "");
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return null;
         }
     }

@@ -20,17 +20,25 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.util.Log;
-
-import javax.net.ssl.*;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+
+import org.jivesoftware.openfire.Connection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates and initializes the SSLContext instance to use to secure the plain connection. This
@@ -41,6 +49,8 @@ import java.security.NoSuchAlgorithmException;
  * @author Hao Chen
  */
 public class TLSWrapper {
+
+	private static final Logger Log = LoggerFactory.getLogger(TLSWrapper.class);
 
     /*
      * Enables logging of the SSLEngine operations.

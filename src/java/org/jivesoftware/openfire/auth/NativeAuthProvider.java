@@ -20,16 +20,22 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.*;
-import com.cenqua.shaj.Shaj;
-
-import java.net.URL;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.net.URL;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.NativeUserProvider;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserProvider;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.cenqua.shaj.Shaj;
 
 /**
  * Authenticates using the native operating system authentication method. On Windows,
@@ -66,6 +72,8 @@ import java.lang.reflect.Field;
  */
 public class NativeAuthProvider implements AuthProvider {
 
+	private static final Logger Log = LoggerFactory.getLogger(NativeAuthProvider.class);
+
     private String domain;
 
     public NativeAuthProvider() {
@@ -92,7 +100,7 @@ public class NativeAuthProvider implements AuthProvider {
             fieldSysPath.set(System.class.getClassLoader(), null);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         // Configure Shaj to log output to the Openfire logger.

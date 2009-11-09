@@ -20,11 +20,12 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-
 import java.util.Queue;
 import java.util.TimerTask;
+
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A timed maintenance task that updates the database by adding and/or
@@ -33,6 +34,9 @@ import java.util.TimerTask;
  * @author Matt Tucker
  */
 public class PublishedItemTask extends TimerTask {
+	
+	private static final Logger Log = LoggerFactory.getLogger(PublishedItemTask.class);
+
     /**
      * Queue that holds the items that need to be added to the database.
      */

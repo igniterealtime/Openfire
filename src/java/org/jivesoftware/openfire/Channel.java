@@ -20,14 +20,15 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Packet;
-
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Packet;
 
 /**
  * A channel provides a mechanism to queue work units for processing. Each work unit is
@@ -49,6 +50,8 @@ import java.util.concurrent.TimeUnit;
  * @author Matt Tucker
  */
 public class Channel<T extends Packet> {
+
+	private static final Logger Log = LoggerFactory.getLogger(Channel.class);
 
     private String name;
     private ChannelHandler channelHandler;
@@ -98,7 +101,7 @@ public class Channel<T extends Packet> {
                             session.close();
                         }
                         catch (Exception e1) {
-                           Log.error(e1);
+                           Log.error(e1.getMessage(), e1);
                         }
                 }
             }

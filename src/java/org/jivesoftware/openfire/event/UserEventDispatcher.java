@@ -20,12 +20,13 @@
 
 package org.jivesoftware.openfire.event;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.user.User;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.jivesoftware.openfire.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dispatches user events. Each event has a {@link EventType type}
@@ -85,6 +86,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class UserEventDispatcher {
 
+	private static final Logger Log = LoggerFactory.getLogger(UserEventDispatcher.class);
+
     private static List<UserEventListener> listeners =
             new CopyOnWriteArrayList<UserEventListener>();
 
@@ -141,7 +144,7 @@ public class UserEventDispatcher {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

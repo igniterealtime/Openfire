@@ -20,18 +20,22 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
+import java.util.Properties;
 
 import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
-import java.util.Properties;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An AuthProvider that authenticates using a POP3 server. It will automatically create
@@ -68,6 +72,8 @@ import java.util.Properties;
  * @author Sean Meiners
  */
 public class POP3AuthProvider implements AuthProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
 
     private Cache authCache = null;
     private String host = null;
@@ -158,7 +164,7 @@ public class POP3AuthProvider implements AuthProvider {
             store = session.getStore(useSSL ? "pop3s" : "pop3");
         }
         catch(NoSuchProviderException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             throw new UnauthorizedException(e);
         }
 
@@ -171,7 +177,7 @@ public class POP3AuthProvider implements AuthProvider {
             }
         }
         catch(Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             throw new UnauthorizedException(e);
         }
 

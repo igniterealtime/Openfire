@@ -44,7 +44,8 @@ import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -60,6 +61,8 @@ import org.xmpp.packet.PacketError;
  */
 public class MediaProxyService extends BasicModule
         implements ServerItemsProvider, RoutableChannelHandler, DiscoInfoProvider, DiscoItemsProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(MediaProxyService.class);
 
     private String serviceName;
     private RoutingTable routingTable;
@@ -211,7 +214,7 @@ public class MediaProxyService extends BasicModule
                                 }
                             }
                             catch (Exception e) {
-                                Log.error(e);
+                                Log.error(e.getMessage(), e);
                             }
 
                         } else {
@@ -230,7 +233,7 @@ public class MediaProxyService extends BasicModule
                                 publicIp.addAttribute("ip", ip);
                             }
                         } catch (UnknownHostException e) {
-                            Log.error(e);
+                            Log.error(e.getMessage(), e);
                         }
 
                     } else {
@@ -252,7 +255,7 @@ public class MediaProxyService extends BasicModule
             router.route(reply);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

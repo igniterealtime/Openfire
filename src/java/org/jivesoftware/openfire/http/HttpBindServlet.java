@@ -19,22 +19,6 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.dom4j.*;
-import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.mortbay.util.ajax.ContinuationSupport;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +26,28 @@ import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.util.JiveGlobals;
+import org.mortbay.util.ajax.ContinuationSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently
@@ -52,6 +58,9 @@ import java.util.Date;
  * @author Alexander Wenckus
  */
 public class HttpBindServlet extends HttpServlet {
+	
+	private static final Logger Log = LoggerFactory.getLogger(HttpBindServlet.class);
+
     private HttpSessionManager sessionManager;
     private HttpBindManager boshManager;
 

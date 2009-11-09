@@ -20,15 +20,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.util.CertificateEventListener;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,12 +30,25 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Configuration of Openfire's SSL settings.
  *
  * @author Iain Shigeoka
  */
 public class SSLConfig {
+
+	private static final Logger Log = LoggerFactory.getLogger(SSLConfig.class);
 
     private static SSLServerSocketFactory s2sFactory;
     private static SSLServerSocketFactory c2sFactory;

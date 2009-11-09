@@ -28,7 +28,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -48,6 +49,8 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public class MultiplexerPacketDeliverer implements PacketDeliverer {
+
+	private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketDeliverer.class);
 
     private OfflineMessageStrategy messageStrategy;
     private String connectionManagerDomain;

@@ -20,18 +20,19 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import javax.naming.CommunicationException;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import javax.naming.CommunicationException;
 
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
@@ -53,6 +54,8 @@ import javax.naming.CommunicationException;
  * @author Matt Tucker
  */
 public class LdapAuthProvider implements AuthProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(LdapAuthProvider.class);
 
     private LdapManager manager;
     private Cache<String, String> authCache = null;

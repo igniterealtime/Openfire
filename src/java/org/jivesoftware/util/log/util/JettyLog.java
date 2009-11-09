@@ -19,15 +19,17 @@
  */
 package org.jivesoftware.util.log.util;
 
-import org.mortbay.log.Logger;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.mortbay.log.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Logger implementation to override the default Jetty logging behavior. All log statements
  * are written to the Openfire logs. Info level logging is sent to debug.
  */
-public class JettyLog implements Logger {
+public class JettyLog implements org.mortbay.log.Logger {
+
+	private static final org.slf4j.Logger Log = LoggerFactory.getLogger(JettyLog.class);
 
     /**
      * Only enable Jetty debug logging if it's specifically enabled. Otherwise, Jetty debug logs

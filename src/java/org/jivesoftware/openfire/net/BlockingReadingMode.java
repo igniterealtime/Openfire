@@ -20,20 +20,22 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZInputStream;
-import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
+
+import org.dom4j.Element;
+import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZInputStream;
 
 /**
  * Process incoming packets using a blocking model. Once a session has been created
@@ -43,6 +45,8 @@ import java.nio.channels.AsynchronousCloseException;
  * @author Gaston Dombiak
  */
 class BlockingReadingMode extends SocketReadingMode {
+
+	private static final Logger Log = LoggerFactory.getLogger(BlockingReadingMode.class);
 
     public BlockingReadingMode(Socket socket, SocketReader socketReader) {
         super(socket, socketReader);

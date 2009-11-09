@@ -19,19 +19,22 @@
  */
 package org.jivesoftware.openfire.filetransfer.proxy;
 
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.Log;
-
-import java.util.concurrent.Future;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.Future;
+
+import org.jivesoftware.util.cache.CacheSizes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tracks the different connections related to a file transfer. There are two connections, the
  * initiator and the target and when both connections are completed the transfer can begin.
  */
 public class DefaultProxyTransfer implements ProxyTransfer {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultProxyTransfer.class);
 
     private String initiator;
 
@@ -149,7 +152,7 @@ public class DefaultProxyTransfer implements ProxyTransfer {
                     in.close();
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             if (out != null) {
@@ -157,7 +160,7 @@ public class DefaultProxyTransfer implements ProxyTransfer {
                     out.close();
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

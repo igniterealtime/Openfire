@@ -20,11 +20,6 @@
 
 package org.jivesoftware.openfire.privacy;
 
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,6 +31,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Provider for the privacy lists system. Privacy lists are read and written
  * from the <tt>ofPrivacyList</tt> database table.
@@ -43,6 +44,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Gaston Dombiak
  */
 public class PrivacyListProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(PrivacyListProvider.class);
 
     private static final String PRIVACY_LIST_COUNT =
             "SELECT count(*) from ofPrivacyList";
@@ -178,7 +181,7 @@ public class PrivacyListProvider {
             privacyList = new PrivacyList(username, listName, isDefault, listElement);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             // Return the sax reader to the pool
@@ -240,7 +243,7 @@ public class PrivacyListProvider {
             privacyList = new PrivacyList(username, listName, true, listElement);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             // Return the sax reader to the pool
@@ -384,7 +387,7 @@ public class PrivacyListProvider {
             privacyListCount.set(rs.getInt(1));
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

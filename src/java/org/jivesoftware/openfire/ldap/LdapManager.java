@@ -20,10 +20,18 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.group.GroupNotFoundException;
+import java.net.URLEncoder;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -32,12 +40,18 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import javax.naming.ldap.*;
-import java.net.URLEncoder;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.text.MessageFormat;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
+import javax.naming.ldap.SortControl;
+
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -76,6 +90,8 @@ import java.text.MessageFormat;
  * @author Matt Tucker
  */
 public class LdapManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
 
     private static LdapManager instance;
     static {
@@ -238,7 +254,7 @@ public class LdapManager {
                 this.port = Integer.parseInt(portStr);
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe);
+                Log.error(nfe.getMessage(), nfe);
             }
         }
         String timeout = properties.get("ldap.readTimeout");
@@ -247,7 +263,7 @@ public class LdapManager {
                 this.readTimeout = Integer.parseInt(timeout);
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe);
+                Log.error(nfe.getMessage(), nfe);
             }
         }
 
@@ -555,7 +571,7 @@ public class LdapManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 try {
                     // See if the user authenticates.
@@ -610,7 +626,7 @@ public class LdapManager {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return true;
@@ -1212,7 +1228,7 @@ public class LdapManager {
                 }
             }
             catch (Exception ex) {
-                Log.debug(ex);
+                Log.debug(ex.getMessage(), ex);
             }
         }
         return null;
@@ -1238,7 +1254,7 @@ public class LdapManager {
                 }
             }
             catch (Exception ex) {
-                Log.debug(ex);
+                Log.debug(ex.getMessage(), ex);
             }
         }
         return null;
@@ -1714,7 +1730,7 @@ public class LdapManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {
@@ -1852,7 +1868,7 @@ public class LdapManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try {

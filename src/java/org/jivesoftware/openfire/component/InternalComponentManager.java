@@ -39,8 +39,9 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -64,6 +65,8 @@ import org.xmpp.packet.Presence;
  * @author Derek DeMoro
  */
 public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(InternalComponentManager.class);
 
     final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<String, RoutableComponents>();
     private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();

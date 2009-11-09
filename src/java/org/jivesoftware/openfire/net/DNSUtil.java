@@ -50,7 +50,7 @@ public class DNSUtil {
 
     private static DirContext context;
 
-    private static Logger logger = LoggerFactory.getLogger(DNSUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(DNSUtil.class);
 
     /**
      * Internal DNS that allows to specify target IP addresses and ports to use for domains.

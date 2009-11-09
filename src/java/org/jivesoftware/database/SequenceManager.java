@@ -20,15 +20,16 @@
 
 package org.jivesoftware.database;
 
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.util.JiveConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages sequences of unique ID's that get stored in the database. Database support for sequences
@@ -53,6 +54,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Bruce Ritchie
  */
 public class SequenceManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(SequenceManager.class);
 
     private static final String CREATE_ID =
             "INSERT INTO ofID (id, idType) VALUES (1, ?)";
@@ -229,7 +232,7 @@ public class SequenceManager {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             abortTransaction = true;
         }
         finally {
@@ -239,7 +242,7 @@ public class SequenceManager {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }

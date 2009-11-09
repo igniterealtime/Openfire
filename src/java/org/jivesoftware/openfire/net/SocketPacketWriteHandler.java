@@ -20,10 +20,15 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.ChannelHandler;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
@@ -35,6 +40,8 @@ import org.xmpp.packet.Presence;
  * @see PacketRouter
  */
 public class SocketPacketWriteHandler implements ChannelHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(SocketPacketWriteHandler.class);
 
     private XMPPServer server;
     private RoutingTable routingTable;

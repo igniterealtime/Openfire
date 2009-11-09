@@ -20,16 +20,17 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.IOException;
+import java.net.Socket;
+
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.StreamError;
-
-import java.io.IOException;
-import java.net.Socket;
 
 /**
  * Abstract class for {@link BlockingReadingMode}.
@@ -37,6 +38,8 @@ import java.net.Socket;
  * @author Gaston Dombiak
  */
 abstract class SocketReadingMode {
+
+	private static final Logger Log = LoggerFactory.getLogger(SocketReadingMode.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

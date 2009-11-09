@@ -30,7 +30,8 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A custom TrustManagerFactory that creates a trust manager list using the
@@ -47,6 +48,8 @@ import org.jivesoftware.util.Log;
  * @author Iain Shigeoka
  */
 public class SSLJiveTrustManagerFactory {
+
+	private static final Logger Log = LoggerFactory.getLogger(SSLJiveTrustManagerFactory.class);
 
     /**
      * Creates a TrustManager list which is null if the storeType is null, or

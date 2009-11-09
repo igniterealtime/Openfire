@@ -16,15 +16,18 @@
 
 package org.jivesoftware.openfire.clearspace;
 
-import org.dom4j.Element;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.packet.JID;
+
+import java.util.StringTokenizer;
 
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-import java.util.StringTokenizer;
+
+import org.dom4j.Element;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Implements the CLEARSPACE server-side SASL mechanism.
@@ -32,6 +35,9 @@ import java.util.StringTokenizer;
  * @author Armando Jagucki
  */
 public class ClearspaceSaslServer implements SaslServer {
+	
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceSaslServer.class);
+
     private boolean completed;
     private String jid;
 

@@ -20,17 +20,22 @@
 
 package org.jivesoftware.openfire.transport;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.openfire.Channel;
+import org.jivesoftware.openfire.ChannelHandler;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Routes packets to the appropriate transport gateway or drops the packet.
@@ -38,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Iain Shigeoka
  */
 public class TransportHandler extends BasicModule implements ChannelHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(TransportHandler.class);
 
     private Map<String, Channel> transports = new ConcurrentHashMap<String, Channel>();
 

@@ -92,7 +92,6 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.HTTPConnectionException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.ModificationNotAllowedException;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -101,6 +100,8 @@ import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.DefaultCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.component.IQResultListener;
@@ -120,6 +121,9 @@ import org.xmpp.packet.JID;
  * @author Daniel Henninger
  */
 public class ClearspaceManager extends BasicModule implements ExternalComponentManagerListener, ComponentEventListener, PropertyEventListener, CertificateEventListener {
+	
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceManager.class);
+
     /**
      * This is the username of the user that Openfires uses to connect
      * to Clearspace. It is fixed a well known by Openfire and Clearspace.

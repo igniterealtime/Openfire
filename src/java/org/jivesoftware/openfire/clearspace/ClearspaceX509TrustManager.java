@@ -122,7 +122,7 @@ public class ClearspaceX509TrustManager implements X509TrustManager {
                     }
                 }
                 catch (KeyStoreException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 if (!trusted) {
                     throw new CertificateException("root certificate not trusted of " + peerIdentities);
@@ -201,7 +201,7 @@ public class ClearspaceX509TrustManager implements X509TrustManager {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 X509Certs = null;
             }
             return X509Certs;

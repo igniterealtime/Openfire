@@ -20,6 +20,10 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -29,16 +33,13 @@ import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * This class is responsible for handling packets with namespace jabber:iq:register that were
@@ -48,6 +49,8 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 class IQMUCRegisterHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
 
     private static Element probeResult;
     private MultiUserChatService mucService;
@@ -211,7 +214,7 @@ class IQMUCRegisterHandler {
                 reply.setError(PacketError.Condition.conflict);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return reply;

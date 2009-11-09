@@ -19,16 +19,21 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-
-import java.sql.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The JDBC auth provider allows you to authenticate users against any database
@@ -69,6 +74,8 @@ import java.sql.*;
  * @author David Snopek
  */
 public class JDBCAuthProvider implements AuthProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(JDBCAuthProvider.class);
 
     private String connectionString;
 
@@ -117,7 +124,7 @@ public class JDBCAuthProvider implements AuthProvider {
                     JiveGlobals.getProperty("jdbcAuthProvider.passwordType", "plain"));
         }
         catch (IllegalArgumentException iae) {
-            Log.error(iae);
+            Log.error(iae.getMessage(), iae);
         }
     }
 

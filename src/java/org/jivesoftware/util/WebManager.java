@@ -20,28 +20,40 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.security.SecurityAuditManager;
-import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.auth.AuthToken;
-import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.muc.MultiUserChatManager;
-import org.jivesoftware.openfire.roster.RosterManager;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.StringTokenizer;
 
+import org.jivesoftware.openfire.PresenceManager;
+import org.jivesoftware.openfire.PrivateStorage;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A utility bean for Openfire admin console pages.
  */
 public class WebManager extends WebBean {
+
+	private static final Logger Log = LoggerFactory.getLogger(WebManager.class);
 
     private int start = 0;
     private int range = 15;
@@ -161,7 +173,7 @@ public class WebManager extends WebBean {
             getXMPPServer().restart();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         sleep();
     }
@@ -174,7 +186,7 @@ public class WebManager extends WebBean {
             getXMPPServer().stop();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         sleep();
     }

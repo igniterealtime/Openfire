@@ -20,17 +20,18 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.security.cert.Certificate;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-
-import java.security.cert.Certificate;
-import java.util.HashMap;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract implementation of the Connection interface that models abstract connections. Abstract
@@ -43,6 +44,8 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 public abstract class VirtualConnection implements Connection {
+
+	private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
 
     protected LocalSession session;
 

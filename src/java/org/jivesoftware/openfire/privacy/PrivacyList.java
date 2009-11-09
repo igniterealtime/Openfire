@@ -20,6 +20,15 @@
 
 package org.jivesoftware.openfire.privacy;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -27,19 +36,15 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A privacy list contains a set of rules that define if communication with the list owner
@@ -54,6 +59,8 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 public class PrivacyList implements Cacheable, Externalizable {
+
+	private static final Logger Log = LoggerFactory.getLogger(PrivacyList.class);
 
     /**
      * Reuse the same factory for all the connections.

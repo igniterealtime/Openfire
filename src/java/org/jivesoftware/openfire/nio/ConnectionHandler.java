@@ -19,6 +19,10 @@
 
 package org.jivesoftware.openfire.nio;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.mina.common.IdleStatus;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
@@ -28,13 +32,10 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -43,6 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Gaston Dombiak
  */
 public abstract class ConnectionHandler extends IoHandlerAdapter {
+
+	private static final Logger Log = LoggerFactory.getLogger(ConnectionHandler.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -115,7 +118,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             session.close();
         }
         else {
-            Log.error(cause);
+            Log.error(cause.getMessage(), cause);
         }
     }
 

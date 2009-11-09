@@ -19,15 +19,16 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.apache.jasper.JasperException;
-import org.apache.jasper.JspC;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.xml.sax.SAXException;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletConfig;
@@ -36,12 +37,17 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.jasper.JasperException;
+import org.apache.jasper.JspC;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -65,6 +71,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Tucker
  */
 public class PluginServlet extends HttpServlet {
+
+	private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
 
     private static Map<String, GenericServlet> servlets;
     private static PluginManager pluginManager;
@@ -104,7 +112,7 @@ public class PluginServlet extends HttpServlet {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -173,7 +181,7 @@ public class PluginServlet extends HttpServlet {
             }
         }
         catch (Throwable e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -212,7 +220,7 @@ public class PluginServlet extends HttpServlet {
             }
         }
         catch (Throwable e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -442,7 +450,7 @@ public class PluginServlet extends HttpServlet {
                 jspc.setJspFiles(jspFile.getCanonicalPath());
             }
             catch (IOException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             jspc.setOutputDir(compilationDir.getAbsolutePath());
             jspc.setClassName(filename);
@@ -461,12 +469,12 @@ public class PluginServlet extends HttpServlet {
                     return true;
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
 
             }
             catch (JasperException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return false;

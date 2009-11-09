@@ -16,13 +16,14 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.TaskEngine;
-
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles recording admin console login attempts and handling temporary lockouts where necessary.
@@ -30,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Daniel Henninger
  */
 public class LoginLimitManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(LoginLimitManager.class);
 
     // Wrap this guy up so we can mock out the LoginLimitManager class.
     private static class LoginLimitManagerContainer {

@@ -16,6 +16,11 @@
 
 package org.jivesoftware.openfire.session;
 
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -23,14 +28,10 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -43,6 +44,8 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 public abstract class LocalSession implements Session {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocalSession.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

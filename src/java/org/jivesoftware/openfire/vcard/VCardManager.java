@@ -20,6 +20,11 @@
 
 package org.jivesoftware.openfire.vcard;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -27,14 +32,16 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.event.UserEventAdapter;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages VCard information for users.
@@ -42,6 +49,8 @@ import java.util.StringTokenizer;
  * @author Matt Tucker
  */
 public class VCardManager extends BasicModule implements ServerFeaturesProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(VCardManager.class);
 
     private VCardProvider provider;
     private static VCardManager instance;

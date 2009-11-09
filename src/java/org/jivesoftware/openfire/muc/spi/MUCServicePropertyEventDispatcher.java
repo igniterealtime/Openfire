@@ -20,11 +20,12 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import org.jivesoftware.util.Log;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dispatches property events. Each event has a {@link EventType type}
@@ -40,6 +41,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author Daniel Henninger
  */
 public class MUCServicePropertyEventDispatcher {
+
+	private static final Logger Log = LoggerFactory.getLogger(MUCServicePropertyEventDispatcher.class);
 
     private static Set<MUCServicePropertyEventListener> listeners =
             new CopyOnWriteArraySet<MUCServicePropertyEventListener>();
@@ -94,7 +97,7 @@ public class MUCServicePropertyEventDispatcher {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

@@ -20,6 +20,39 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
+import java.util.zip.ZipFile;
+
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -28,17 +61,9 @@ import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Version;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Pack200;
-import java.util.zip.ZipFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
@@ -53,6 +78,8 @@ import java.util.zip.ZipFile;
  * @see org.jivesoftware.openfire.XMPPServer#getPluginManager()
  */
 public class PluginManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(PluginManager.class);
 
     private File pluginDirectory;
     private Map<String, Plugin> plugins;
@@ -119,7 +146,7 @@ public class PluginManager {
                 plugin.destroyPlugin();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         plugins.clear();
@@ -525,7 +552,7 @@ public class PluginManager {
                 configurator.configure(pluginName);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -595,7 +622,7 @@ public class PluginManager {
                 plugin.destroyPlugin();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 
@@ -625,7 +652,7 @@ public class PluginManager {
                 System.gc();
             }
         } catch (InterruptedException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         if (plugin != null && !dir.exists()) {
@@ -788,7 +815,7 @@ public class PluginManager {
                 return Integer.parseInt(versionString.trim());
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe);
+                Log.error(nfe.getMessage(), nfe);
             }
         }
         return -1;
@@ -813,7 +840,7 @@ public class PluginManager {
                 return License.valueOf(licenseString.toLowerCase().trim());
             }
             catch (IllegalArgumentException iae) {
-                Log.error(iae);
+                Log.error(iae.getMessage(), iae);
             }
         }
         return License.other;
@@ -855,7 +882,7 @@ public class PluginManager {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -1050,7 +1077,7 @@ public class PluginManager {
                 firePluginsMonitored();
             }
             catch (Throwable e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             // Finished running task.
             synchronized (this) {
@@ -1107,7 +1134,7 @@ public class PluginManager {
                 unpackArchives(new File(dir, "lib"));
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 
@@ -1155,7 +1182,7 @@ public class PluginManager {
                     packedFile.delete();
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

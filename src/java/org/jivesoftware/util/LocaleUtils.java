@@ -20,13 +20,27 @@
 
 package org.jivesoftware.util;
 
+import java.text.DateFormat;
+import java.text.Format;
+import java.text.MessageFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
-
-import java.text.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A set of methods for retrieving and converting locale specific strings and numbers.
@@ -34,6 +48,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Jive Software
  */
 public class LocaleUtils {
+
+	private static final Logger Log = LoggerFactory.getLogger(LocaleUtils.class);
 
     private static final Map<Locale, String[][]> timeZoneLists =
             new ConcurrentHashMap<Locale, String[][]>();
@@ -480,7 +496,7 @@ public class LocaleUtils {
             	return getLocalizedString(key, pluginName, arguments, jivesLocale, false);
         	}
         	
-            Log.error(mre);
+            Log.error(mre.getMessage(), mre);
             return key;
         }
     }
@@ -564,7 +580,7 @@ public class LocaleUtils {
                                             arguments.set(i, val);
                                         }
                                         catch (ParseException e) {
-                                            Log.error(e);
+                                            Log.error(e.getMessage(), e);
                                         }
                                     }
                                 }
@@ -579,7 +595,7 @@ public class LocaleUtils {
                                             arguments.set(i, val);
                                         }
                                         catch (ParseException e) {
-                                            Log.error(e);
+                                            Log.error(e.getMessage(), e);
                                         }
                                     }
                                 }

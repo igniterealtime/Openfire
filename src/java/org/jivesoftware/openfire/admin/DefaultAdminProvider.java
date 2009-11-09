@@ -18,11 +18,20 @@
  */
 package org.jivesoftware.openfire.admin;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.*;
-import org.xmpp.packet.JID;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
-import java.util.*;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Handles default management of admin users, which stores the list if accounts as a system property.
@@ -30,6 +39,8 @@ import java.util.*;
  * @author Daniel Henninger
  */
 public class DefaultAdminProvider implements AdminProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(DefaultAdminProvider.class);
 
     /**
      * Constructs a new DefaultAdminProvider

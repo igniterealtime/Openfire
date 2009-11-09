@@ -20,8 +20,26 @@
 
 package org.jivesoftware.openfire.roster;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.database.JiveID;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PresenceManager;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.SharedGroupException;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.privacy.PrivacyList;
@@ -31,20 +49,14 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>A roster is a list of users that the user wishes to know if they are online.</p>
@@ -59,6 +71,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @JiveID(JiveConstants.ROSTER)
 public class Roster implements Cacheable, Externalizable {
+
+	private static final Logger Log = LoggerFactory.getLogger(Roster.class);
 
     /**
      * Roster item cache - table: key jabberid string; value roster item.
@@ -599,7 +613,7 @@ public class Roster implements Cacheable, Externalizable {
                     }
                     catch (Exception e) {
                         // Theoretically only happens if session has been closed.
-                        Log.debug(e);
+                        Log.debug(e.getMessage(), e);
                     }
                 }
             }
@@ -624,7 +638,7 @@ public class Roster implements Cacheable, Externalizable {
                 }
                 catch (Exception e) {
                     // Theoretically only happens if session has been closed.
-                    Log.debug(e);
+                    Log.debug(e.getMessage(), e);
                 }
             }
         }

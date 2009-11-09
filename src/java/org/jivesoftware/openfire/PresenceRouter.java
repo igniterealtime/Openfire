@@ -30,8 +30,13 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -43,6 +48,8 @@ import org.xmpp.packet.*;
  * @author Iain Shigeoka
  */
 public class PresenceRouter extends BasicModule {
+
+	private static final Logger Log = LoggerFactory.getLogger(PresenceRouter.class);
 
     private RoutingTable routingTable;
     private PresenceUpdateHandler updateHandler;

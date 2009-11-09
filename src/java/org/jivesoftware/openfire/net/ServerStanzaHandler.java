@@ -25,10 +25,15 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.StreamError;
 
 /**
  * Handler of XML stanzas sent by remote servers. Remote servers that send stanzas
@@ -46,6 +51,8 @@ import org.xmpp.packet.*;
  * @author Gaston Dombiak
  */
 public class ServerStanzaHandler extends StanzaHandler {
+
+	private static final Logger Log = LoggerFactory.getLogger(ServerStanzaHandler.class);
 
     public ServerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
         super(router, serverName, connection);

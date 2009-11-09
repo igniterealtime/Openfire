@@ -20,18 +20,19 @@
 
 package org.jivesoftware.openfire;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
-
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Controls what is done with offline messages.
@@ -39,6 +40,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Iain Shigeoka
  */
 public class OfflineMessageStrategy extends BasicModule {
+
+	private static final Logger Log = LoggerFactory.getLogger(OfflineMessageStrategy.class);
 
     private static int quota = 100*1024; // Default to 100 K.
     private static Type type = Type.store_and_bounce;
@@ -175,7 +178,7 @@ public class OfflineMessageStrategy extends BasicModule {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

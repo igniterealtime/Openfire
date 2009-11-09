@@ -20,17 +20,18 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
-import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
-import org.jivesoftware.util.cache.ClusterTask;
-import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.jivesoftware.util.Log;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
+import org.jivesoftware.util.cache.ClusterTask;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Task that will update a service configuring in the cluster node. When a service is update
@@ -40,6 +41,9 @@ import java.io.ObjectOutput;
  * @author Daniel Henninger
  */
 public class ServiceUpdatedEvent implements ClusterTask {
+	
+	private static final Logger Log = LoggerFactory.getLogger(ServiceUpdatedEvent.class);
+
     private String subdomain;
 
     public ServiceUpdatedEvent() {

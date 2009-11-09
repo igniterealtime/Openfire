@@ -19,6 +19,14 @@
 
 package org.jivesoftware.openfire.component;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
@@ -27,16 +35,9 @@ import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permis
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.ModificationNotAllowedException;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages the connection permissions for external components. When an external component is
@@ -47,6 +48,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 public class ExternalComponentManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(ExternalComponentManager.class);
 
     private static final String ADD_CONFIGURATION =
         "INSERT INTO ofExtComponentConf (subdomain,wildcard,secret,permission) VALUES (?,?,?,?)";
@@ -254,13 +257,13 @@ public class ExternalComponentManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -283,13 +286,13 @@ public class ExternalComponentManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -320,13 +323,13 @@ public class ExternalComponentManager {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
 
         if (configuration == null && useWildcard) {
@@ -345,13 +348,13 @@ public class ExternalComponentManager {
                 rs.close();
             }
             catch (SQLException sqle) {
-                Log.error(sqle);
+                Log.error(sqle.getMessage(), sqle);
             }
             finally {
                 try { if (pstmt != null) pstmt.close(); }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
                 try { if (con != null) con.close(); }
-                catch (Exception e) { Log.error(e); }
+                catch (Exception e) { Log.error(e.getMessage(), e); }
             }
         }
         return configuration;
@@ -381,13 +384,13 @@ public class ExternalComponentManager {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return answer;
     }
@@ -460,7 +463,7 @@ public class ExternalComponentManager {
                     PermissionPolicy.blacklist.toString()));
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return PermissionPolicy.blacklist;
         }
     }

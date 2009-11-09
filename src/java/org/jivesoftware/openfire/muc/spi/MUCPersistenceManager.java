@@ -20,22 +20,28 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A manager responsible for ensuring room persistence. There are different ways to make a room 
@@ -49,6 +55,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Gaston Dombiak
  */
 public class MUCPersistenceManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(MUCPersistenceManager.class);
 
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
@@ -151,13 +159,13 @@ public class MUCPersistenceManager {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return answer;
     }
@@ -274,7 +282,7 @@ public class MUCPersistenceManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             rs.close();
@@ -288,7 +296,7 @@ public class MUCPersistenceManager {
                     room.addMember(rs.getString(1), rs.getString(2), room.getRole());
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             rs.close();
@@ -304,13 +312,13 @@ public class MUCPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -380,13 +388,13 @@ public class MUCPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -422,12 +430,12 @@ public class MUCPersistenceManager {
             room.setSavedToDB(false);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             abortTransaction = true;
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -525,7 +533,7 @@ public class MUCPersistenceManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             rs.close();
@@ -572,7 +580,7 @@ public class MUCPersistenceManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             rs.close();
@@ -591,19 +599,19 @@ public class MUCPersistenceManager {
                     room.addMember(rs.getString(2), rs.getString(3), room.getRole());
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         // Set now that the room's configuration is updated in the database. Note: We need to
         // set this now since otherwise the room's affiliations will be saved to the database
@@ -641,13 +649,13 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -671,13 +679,13 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -707,13 +715,13 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -747,13 +755,13 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                 }
             }
             else {
@@ -769,13 +777,13 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                 }
             }
         }
@@ -795,13 +803,13 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                 }
             }
             else if (MUCRole.Affiliation.member == newAffiliation) {
@@ -825,12 +833,12 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                     abortTransaction = true;
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     DbConnectionManager.closeTransactionConnection(con, abortTransaction);
                 }
             }
@@ -853,12 +861,12 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                     abortTransaction = true;
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     DbConnectionManager.closeTransactionConnection(con, abortTransaction);
                 }
             }
@@ -875,13 +883,13 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                 }
             }
         }
@@ -910,13 +918,13 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                 }
             }
             else {
@@ -931,13 +939,13 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                     try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e); }
+                    catch (Exception e) { Log.error(e.getMessage(), e); }
                 }
             }
         }
@@ -966,13 +974,13 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 
@@ -1003,9 +1011,9 @@ public class MUCPersistenceManager {
         }
         finally {
             try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
     }
 

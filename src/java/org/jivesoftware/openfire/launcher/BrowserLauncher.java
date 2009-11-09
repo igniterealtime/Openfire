@@ -27,6 +27,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * BrowserLauncher is a class that provides one static method, openURL, which opens the default
  * web browser for the current user of the system to the given URL.  It may support other

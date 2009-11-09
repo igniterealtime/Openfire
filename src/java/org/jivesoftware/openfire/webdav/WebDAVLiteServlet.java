@@ -16,20 +16,26 @@
 
 package org.jivesoftware.openfire.webdav;
 
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Base64;
-import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.openfire.XMPPServer;
-import org.xmpp.packet.JID;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletException;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletInputStream;
-import java.io.*;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.util.Base64;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * This is a work in progress and is checked in for future use.
@@ -50,6 +56,8 @@ import java.io.*;
  * @author Daniel Henninger
  */
 public class WebDAVLiteServlet extends HttpServlet {
+
+	private static final Logger Log = LoggerFactory.getLogger(WebDAVLiteServlet.class);
 
     // Storage directory under the Openfire install root
     private static String WEBDAV_SUBDIR = "mucFiles";

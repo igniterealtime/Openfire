@@ -19,17 +19,22 @@
 
 package org.jivesoftware.openfire.group;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.JID;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The JDBC group provider allows you to use an external database to define the make up of groups.
@@ -65,6 +70,8 @@ import java.util.List;
  * @author David Snopek
  */
 public class JDBCGroupProvider implements GroupProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
 
     private String connectionString;
 
@@ -160,7 +167,7 @@ public class JDBCGroupProvider implements GroupProvider {
             description = rs.getString(1);
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -205,7 +212,7 @@ public class JDBCGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -250,7 +257,7 @@ public class JDBCGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -277,7 +284,7 @@ public class JDBCGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -302,7 +309,7 @@ public class JDBCGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -325,7 +332,7 @@ public class JDBCGroupProvider implements GroupProvider {
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

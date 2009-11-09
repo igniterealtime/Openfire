@@ -20,16 +20,37 @@
 
 package org.jivesoftware.util;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.CDATA;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.apache.commons.lang.StringEscapeUtils;
-
-import java.io.*;
-import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -50,6 +71,8 @@ import java.util.*;
  * @author Iain Shigeoka
  */
 public class XMLProperties {
+
+	private static final Logger Log = LoggerFactory.getLogger(XMLProperties.class);
 
     private File file;
     private Document document;
@@ -506,7 +529,7 @@ public class XMLProperties {
             xmlWriter.write(document);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             // There were errors so abort replacing the old property file.
             error = true;
         }
@@ -516,7 +539,7 @@ public class XMLProperties {
                     writer.close();
                 }
                 catch (IOException e1) {
-                    Log.error(e1);
+                    Log.error(e1.getMessage(), e1);
                     error = true;
                 }
             }
@@ -534,7 +557,7 @@ public class XMLProperties {
                 copy(tempFile, file);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 // There were errors so abort replacing the old property file.
                 error = true;
             }

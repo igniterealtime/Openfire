@@ -1,0 +1,888 @@
+<?xml version="1.0"?>
+
+<!--
+For detailed information on each of the elements that can be used in this
+descriptor please see the Coherence Cache Configuration deployment descriptor
+guide included in the Coherence distribution or on the web at:
+
+http://www.tangosol.com/UserGuide-Reference-CacheConfig.jsp
+-->
+
+<!DOCTYPE cache-config SYSTEM "cache-config.dtd">
+
+<cache-config>
+
+    <caching-schemes>
+
+        <!-- scheme for partitioned cache -->
+        <distributed-scheme>
+            <scheme-name>distributed</scheme-name>
+            <service-name>DistributedCache</service-name>
+
+            <backing-map-scheme>
+                <local-scheme>
+                    <scheme-ref>default-backing-map</scheme-ref>
+                </local-scheme>
+            </backing-map-scheme>
+            <!--<autostart>true</autostart>-->
+        </distributed-scheme>
+
+        <!-- Default Replicated caching scheme -->
+        <replicated-scheme>
+            <scheme-name>replicated</scheme-name>
+            <service-name>ReplicatedCache</service-name>
+            <backing-map-scheme>
+                <local-scheme>
+                    <scheme-ref>default-backing-map</scheme-ref>
+                </local-scheme>
+            </backing-map-scheme>
+        </replicated-scheme>
+
+        <!-- scheme for partitioned cache fronted by near cache -->
+        <near-scheme>
+            <scheme-name>near-distributed</scheme-name>
+
+            <front-scheme>
+                <local-scheme>
+                    <eviction-policy>LRU</eviction-policy>
+                    <high-units>{near-size-high 1000}</high-units>
+                    <low-units>{near-size-low 900}</low-units>
+                    <expiry-delay>{near-expiry 5s}</expiry-delay>
+                    <flush-delay>{near-flush 0}</flush-delay>
+                </local-scheme>
+            </front-scheme>
+
+            <back-scheme>
+                <distributed-scheme>
+                    <scheme-ref>{distributed-scheme-name distributed}</scheme-ref>
+                </distributed-scheme>
+            </back-scheme>
+
+            <invalidation-strategy>{near-invalidation-strategy none}</invalidation-strategy>
+            <!--<autostart>true</autostart>-->
+        </near-scheme>
+
+        <!-- Optimistic caching scheme. -->
+        <optimistic-scheme>
+            <scheme-name>optimistic</scheme-name>
+            <service-name>OptimisticCache</service-name>
+
+            <backing-map-scheme>
+                <local-scheme>
+                    <scheme-ref>default-backing-map</scheme-ref>
+                </local-scheme>
+            </backing-map-scheme>
+
+            <!--<autostart>true</autostart>-->
+        </optimistic-scheme>
+
+        <local-scheme>
+            <scheme-name>default-backing-map</scheme-name>
+            <class-name>{backing-map-class com.jivesoftware.util.cache.CoherenceCache}</class-name>
+            <eviction-policy>LRU</eviction-policy>
+            <high-units>{back-size-high 1000}</high-units>
+            <low-units>{back-size-low 900}</low-units>
+            <expiry-delay>{back-expiry 0}</expiry-delay>
+            <flush-delay>{back-flush 1m}</flush-delay>
+        </local-scheme>
+
+
+        <!-- scheme for service allowing cluster wide tasks -->
+        <invocation-scheme>
+            <scheme-name>OpenFire Cluster Service</scheme-name>
+            <service-name>OpenFire Cluster Service</service-name>
+
+            <autostart>true</autostart>
+        </invocation-scheme>
+
+    </caching-schemes>
+
+    <caching-scheme-mapping>
+
+        <!-- local caches -->
+
+        <cache-mapping>
+            <cache-name>POP3 Authentication</cache-name>
+            <scheme-name>default-backing-map</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>1h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>LDAP Authentication</cache-name>
+            <scheme-name>default-backing-map</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>2h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>File Transfer</cache-name>
+            <scheme-name>default-backing-map</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>10m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>File Transfer Cache</cache-name>
+            <scheme-name>default-backing-map</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>10m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <!-- optimistic caches -->
+
+        <!-- replicated caches -->
+
+        <cache-mapping>
+            <cache-name>opt-$cacheStats</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Clearspace SSO Nonce</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>2m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Client Session Info Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Javascript Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>262144</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>10d</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>235930</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Components Sessions</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Connection Managers Sessions</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Secret Keys Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Validated Domains</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Disco Server Features</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Disco Server Items</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Incoming Server Sessions</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Sessions by Hostname</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Entity Capabilities</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>48h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Routing Servers Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Routing Components Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Routing Users Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Routing AnonymousUsers Cache</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Directed Presences</cache-name>
+            <scheme-name>replicated</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <!-- partitioned caches -->
+
+        <cache-mapping>
+            <cache-name>Group Metadata Cache</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>5242880</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>15m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Routing User Sessions</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>VCard</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>10485760</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>near-invalidation-strategy</param-name>
+                    <param-value>present</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>near-expiry</param-name>
+                    <param-value>30m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>near-size-high</param-name>
+                    <param-value>10000</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>near-size-low</param-name>
+                    <param-value>9000</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Favicon Hits</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>262144</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>235930</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Favicon Misses</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>262144</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>235930</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Group</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>1048576</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>15m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>943718</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Locked Out Accounts</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>1048576</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>15m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>943718</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Last Activity Cache</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Multicast Service</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>24h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Offline Message Size</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>262144</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>12h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>235930</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Offline Presence Cache</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>1048576</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>943718</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Privacy Lists</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>1048576</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>943718</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Roster</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>10485760</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>6h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>943718</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>User</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>10485760</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>30m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>943718</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Remote Users Existence</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>10m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Remote Server Configurations</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>524288</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>30m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>471859</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Entity Capabilities Users</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>48h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+        <cache-mapping>
+            <cache-name>Entity Capabilities Pending Hashes</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>48h</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>0</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
+    </caching-scheme-mapping>
+
+</cache-config>

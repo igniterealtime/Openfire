@@ -6,7 +6,7 @@
     <description>${plugin.description}</description>
     <author>Jive Software</author>
     <version>1.2.0</version>
-    <date>11/2/2009</date>
+    <date>11/10/2009</date>
     <minServerVersion>3.5.2</minServerVersion>
 	
 </plugin>

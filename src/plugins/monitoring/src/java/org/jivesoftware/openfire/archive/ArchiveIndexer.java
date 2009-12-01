@@ -19,7 +19,29 @@
 
 package org.jivesoftware.openfire.archive;
 
-import org.jivesoftware.openfire.reporting.util.TaskEngine;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.Writer;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
@@ -34,25 +56,14 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.reporting.util.TaskEngine;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLProperties;
 import org.picocontainer.Startable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.io.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Indexes archived conversations. If conversation archiving is not enabled,
@@ -66,6 +77,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Matt Tucker
  */
 public class ArchiveIndexer implements Startable {
+
+	private static final Logger Log = LoggerFactory.getLogger(ArchiveIndexer.class);
 
     private static final String ALL_CONVERSATIONS =
             "SELECT conversationID, isExternal FROM ofConversation";
@@ -124,7 +137,7 @@ public class ArchiveIndexer implements Startable {
             }
         }
         catch (IOException ioe) {
-            Log.error(ioe);
+            Log.error(ioe.getMessage(), ioe);
         }
         writerLock = new ReentrantLock(true);
 
@@ -138,7 +151,7 @@ public class ArchiveIndexer implements Startable {
             }
         }
         catch (IOException ioe) {
-            Log.error(ioe);
+            Log.error(ioe.getMessage(), ioe);
         }
 
         String modified = indexProperties.getProperty("lastModified");
@@ -177,7 +190,7 @@ public class ArchiveIndexer implements Startable {
                 searcher.close();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             searcher = null;
         }
@@ -185,7 +198,7 @@ public class ArchiveIndexer implements Startable {
             directory.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         directory = null;
         indexProperties = null;
@@ -251,7 +264,7 @@ public class ArchiveIndexer implements Startable {
                 }
             }
             catch (SQLException sqle) {
-                Log.error(sqle);
+                Log.error(sqle.getMessage(), sqle);
             }
             finally {
                 DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -276,7 +289,7 @@ public class ArchiveIndexer implements Startable {
                     }
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -295,7 +308,7 @@ public class ArchiveIndexer implements Startable {
             }
         }
         catch (IOException ioe) {
-            Log.error(ioe);
+            Log.error(ioe.getMessage(), ioe);
         }
         finally {
             if (writer != null) {
@@ -303,7 +316,7 @@ public class ArchiveIndexer implements Startable {
                     writer.close();
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             writerLock.unlock();
@@ -358,7 +371,7 @@ public class ArchiveIndexer implements Startable {
                     }
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -381,7 +394,7 @@ public class ArchiveIndexer implements Startable {
                         }
                     }
                     catch (IOException ioe) {
-                        Log.error(ioe);
+                        Log.error(ioe.getMessage(), ioe);
                     }
                     finally {
                         if (writer != null) {
@@ -389,7 +402,7 @@ public class ArchiveIndexer implements Startable {
                                 writer.close();
                             }
                             catch (Exception e) {
-                                Log.error(e);
+                                Log.error(e.getMessage(), e);
                             }
                         }
                         writerLock.unlock();
@@ -518,7 +531,7 @@ public class ArchiveIndexer implements Startable {
                 }
             }
             catch (SQLException sqle) {
-                Log.error(sqle);
+                Log.error(sqle.getMessage(), sqle);
             }
             finally {
                 DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -598,7 +611,7 @@ public class ArchiveIndexer implements Startable {
                 outputter.flush();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             finally {
                 try {
@@ -617,7 +630,7 @@ public class ArchiveIndexer implements Startable {
     /**
      * A Future class to track the status of index rebuilding.
      */
-    private class RebuildFuture implements Future {
+    private class RebuildFuture implements Future<Integer> {
 
         private int percentageDone = 0;
 

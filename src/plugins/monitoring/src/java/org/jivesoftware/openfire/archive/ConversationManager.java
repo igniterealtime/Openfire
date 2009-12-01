@@ -35,6 +35,8 @@ import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.picocontainer.Startable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -57,15 +59,17 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * can be enabled by setting "conversation.messageArchiving" to <tt>true</tt>.<p>
  *
  * When running in a cluster only the senior cluster member will keep track of the active
- * conversations. Other cluster nodes will forward conversation events that occured in the
+ * conversations. Other cluster nodes will forward conversation events that occurred in the
  * local node to the senior cluster member. If the senior cluster member goes down then
  * current conversations will be terminated and if users keep sending messages between them
- * then new converstions will be created. 
+ * then new conversations will be created. 
  *
  * @author Matt Tucker
  */
 public class ConversationManager implements Startable, ComponentEventListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(ConversationManager.class);
+	
     private static final String UPDATE_CONVERSATION =
             "UPDATE ofConversation SET lastActivity=?, messageCount=? WHERE conversationID=?";
     private static final String UPDATE_PARTICIPANT =
@@ -499,7 +503,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -526,7 +530,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -821,8 +825,8 @@ public class ConversationManager implements Startable, ComponentEventListener {
         //Check if the component is a gateway
         boolean gatewayFound = false;
         Element childElement = iq.getChildElement();
-        for (Iterator it = childElement.elementIterator("identity"); it.hasNext();) {
-            Element identity = (Element)it.next();
+        for (Iterator<Element> it = childElement.elementIterator("identity"); it.hasNext();) {
+            Element identity = it.next();
             if ("gateway".equals(identity.attributeValue("category"))) {
                 gatewayFound = true;
             }
@@ -943,7 +947,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -960,7 +964,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
      */
     private class ConversationPropertyListener implements PropertyEventListener {
 
-        public void propertySet(String property, Map params) {
+        public void propertySet(String property, Map<String, Object> params) {
             if (property.equals("conversation.metadataArchiving")) {
                 String value = (String)params.get("value");
                 metadataArchivingEnabled = Boolean.valueOf(value);
@@ -991,7 +995,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
                     idleTime = Integer.parseInt(value) * JiveConstants.MINUTE;
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                     idleTime = DEFAULT_IDLE_TIME * JiveConstants.MINUTE;
                 }
             }
@@ -1001,13 +1005,13 @@ public class ConversationManager implements Startable, ComponentEventListener {
                     maxTime = Integer.parseInt(value) * JiveConstants.MINUTE;
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                     maxTime = DEFAULT_MAX_TIME * JiveConstants.MINUTE;
                 }
             }
         }
 
-        public void propertyDeleted(String property, Map params) {
+        public void propertyDeleted(String property, Map<String, Object> params) {
             if (property.equals("conversation.metadataArchiving")) {
                 metadataArchivingEnabled = true;
             }
@@ -1028,11 +1032,11 @@ public class ConversationManager implements Startable, ComponentEventListener {
             }
         }
 
-        public void xmlPropertySet(String property, Map params) {
+        public void xmlPropertySet(String property, Map<String, Object> params) {
             // Ignore.
         }
 
-        public void xmlPropertyDeleted(String property, Map params) {
+        public void xmlPropertyDeleted(String property, Map<String, Object> params) {
             // Ignore.
         }
     }

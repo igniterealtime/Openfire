@@ -22,12 +22,14 @@ package org.jivesoftware.openfire.reporting.stats;
 
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.stats.Statistic;
-import org.jivesoftware.util.Log;
 import org.jrobin.core.RrdDb;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultStatsViewer implements StatsViewer {
 
+	private static final Logger Log = LoggerFactory.getLogger(DefaultStatsViewer.class);
+	
     private StatsEngine engine;
 
     /**

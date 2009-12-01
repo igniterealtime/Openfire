@@ -19,28 +19,39 @@
 
 package org.jivesoftware.openfire.archive;
 
-import com.lowagie.text.*;
-import com.lowagie.text.Font;
-import com.lowagie.text.Image;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfPageEventHelper;
-import com.lowagie.text.pdf.PdfWriter;
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.plugin.MonitoringPlugin;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
-import org.xmpp.component.ComponentManagerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
-import java.awt.*;
-import java.io.ByteArrayOutputStream;
-import java.net.URL;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.Future;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfWriter;
 
 /**
  * Utility class for asynchronous web calls for archiving tasks.
@@ -49,6 +60,8 @@ import java.util.concurrent.Future;
  */
 public class ConversationUtils {
 
+	private static final Logger Log = LoggerFactory.getLogger(ConversationUtils.class);
+			
     /**
      * Returns the status of the rebuilding of the messaging/metadata archives. This is done
      * asynchronously.
@@ -69,7 +82,7 @@ public class ConversationUtils {
                 return future.get();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 
@@ -93,7 +106,7 @@ public class ConversationUtils {
             info = toConversationInfo(conversation, formatParticipants);
         }
         catch (NotFoundException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         return info;

@@ -19,10 +19,6 @@
  */
 package org.jivesoftware.openfire.reporting.stats;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jrobin.core.RrdBackend;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,7 +26,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.jivesoftware.database.DbConnectionManager;
+import org.jrobin.core.RrdBackend;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RrdSqlBackend extends RrdBackend {
+	
+	private static final Logger Log = LoggerFactory.getLogger(RrdSqlBackend.class);
+	
     // SQL prepared statements
     static final String JDBC_SELECT = "SELECT bytes from ofRRDs where id = ?";
     static final String JDBC_INSERT = "INSERT INTO ofRRDs (id, updatedDate, bytes) VALUES (?, ?, ?)";

@@ -21,25 +21,30 @@
 
 package org.jivesoftware.openfire.archive.commands;
 
-import org.dom4j.Element;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.archive.*;
-import org.jivesoftware.openfire.commands.AdHocCommand;
-import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.plugin.MonitoringPlugin;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.forms.DataForm;
-import org.xmpp.forms.FormField;
-import org.xmpp.packet.JID;
-
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.archive.ArchiveSearch;
+import org.jivesoftware.openfire.archive.ArchiveSearcher;
+import org.jivesoftware.openfire.archive.Conversation;
+import org.jivesoftware.openfire.archive.ConversationManager;
+import org.jivesoftware.openfire.archive.ConversationUtils;
+import org.jivesoftware.openfire.commands.AdHocCommand;
+import org.jivesoftware.openfire.commands.SessionData;
+import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.plugin.MonitoringPlugin;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
+import org.xmpp.packet.JID;
 
 /**
  * Command that allows to retrieve PDF content of group chat transcripts.
@@ -50,6 +55,8 @@ import java.util.List;
  */
 public class GetGroupConversationTranscript extends AdHocCommand {
 
+	private static final Logger Log = LoggerFactory.getLogger(GetGroupConversationTranscript.class);
+	
     protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting PDF of conversation transcript");

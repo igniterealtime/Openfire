@@ -19,27 +19,33 @@
  */
 package org.jivesoftware.openfire.reporting;
 
-import org.jivesoftware.util.Log;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import uk.ltd.getahead.dwr.Configuration;
-import uk.ltd.getahead.dwr.DWRServlet;
-import uk.ltd.getahead.dwr.impl.DefaultInterfaceProcessor;
+import java.io.IOException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import uk.ltd.getahead.dwr.Configuration;
+import uk.ltd.getahead.dwr.DWRServlet;
+import uk.ltd.getahead.dwr.impl.DefaultInterfaceProcessor;
 
 /**
  * Use the EnterpriseDWR servlet to register your own DWR mappings to Enteprise.
  */
 public class MonitoringDWR extends DWRServlet {
+	
+	private static final Logger Log = LoggerFactory.getLogger(MonitoringDWR.class);
+	
     private Document document;
 
     public void configure(ServletConfig servletConfig, Configuration configuration) throws ServletException {

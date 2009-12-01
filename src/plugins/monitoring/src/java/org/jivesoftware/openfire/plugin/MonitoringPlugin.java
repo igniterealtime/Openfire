@@ -83,7 +83,7 @@ public class MonitoringPlugin implements Plugin {
      * @param clazz the module class.
      * @return the instance of the module.
      */
-    public Object getModule(Class clazz) {
+    public Object getModule(Class<?> clazz) {
         return picoContainer.getComponentInstanceOfType(clazz);
     }
 

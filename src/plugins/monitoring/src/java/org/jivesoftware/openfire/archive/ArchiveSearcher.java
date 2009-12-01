@@ -19,24 +19,40 @@
 
 package org.jivesoftware.openfire.archive;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.DateTools;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.*;
-import org.jivesoftware.database.CachedPreparedStatement;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.picocontainer.Startable;
-import org.xmpp.packet.JID;
-
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.DateTools;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Hit;
+import org.apache.lucene.search.Hits;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.RangeFilter;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.TermQuery;
+import org.jivesoftware.database.CachedPreparedStatement;
+import org.jivesoftware.database.DbConnectionManager;
+import org.picocontainer.Startable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Searches archived conversations. If conversation archiving is not enabled,
@@ -49,6 +65,8 @@ import java.util.*;
  * @author Matt Tucker
  */
 public class ArchiveSearcher implements Startable {
+
+	private static final Logger Log = LoggerFactory.getLogger(ArchiveSearch.class);
 
     private ConversationManager conversationManager;
     private ArchiveIndexer archiveIndexer;
@@ -196,11 +214,11 @@ public class ArchiveSearcher implements Startable {
             }
         }
         catch (ParseException pe) {
-            Log.error(pe);
+            Log.error(pe.getMessage(), pe);
             return Collections.emptySet();
         }
         catch (IOException ioe) {
-            Log.error(ioe);
+            Log.error(ioe.getMessage(), ioe);
             return Collections.emptySet();
         }
     }
@@ -382,7 +400,7 @@ public class ArchiveSearcher implements Startable {
             rs.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -394,7 +412,7 @@ public class ArchiveSearcher implements Startable {
      * Returns Hits from a database search against archived conversations as a Collection
      * of Conversation objects.
      */
-    private class DatabaseQueryResults extends AbstractCollection {
+    private class DatabaseQueryResults extends AbstractCollection<Conversation> {
 
         private List<Long> conversationIDs;
 
@@ -407,11 +425,11 @@ public class ArchiveSearcher implements Startable {
             this.conversationIDs = conversationIDs;
         }
 
-        public Iterator iterator() {
+        public Iterator<Conversation> iterator() {
             final Iterator<Long> convIterator = conversationIDs.iterator();
-            return new Iterator() {
+            return new Iterator<Conversation>() {
 
-                private Object nextElement = null;
+                private Conversation nextElement = null;
 
                 public boolean hasNext() {
                     if (nextElement == null) {
@@ -423,8 +441,8 @@ public class ArchiveSearcher implements Startable {
                     return true;
                 }
 
-                public Object next() {
-                    Object element;
+                public Conversation next() {
+                	Conversation element;
                     if (nextElement != null) {
                         element = nextElement;
                         nextElement = null;
@@ -442,7 +460,7 @@ public class ArchiveSearcher implements Startable {
                     throw new UnsupportedOperationException();
                 }
 
-                private Object getNextElement() {
+                private Conversation getNextElement() {
                     if (!convIterator.hasNext()) {
                         return null;
                     }
@@ -452,7 +470,7 @@ public class ArchiveSearcher implements Startable {
                             return new Conversation(conversationManager, conversationID);
                         }
                         catch (Exception e) {
-                            Log.error(e);
+                            Log.error(e.getMessage(), e);
                         }
                     }
                     return null;
@@ -469,7 +487,7 @@ public class ArchiveSearcher implements Startable {
      * Returns Hits from a Lucene search against archived conversations as a Collection
      * of Conversation objects.
      */
-    private class LuceneQueryResults extends AbstractCollection {
+    private class LuceneQueryResults extends AbstractCollection<Conversation> {
 
         private Hits hits;
         private int index;
@@ -488,15 +506,15 @@ public class ArchiveSearcher implements Startable {
             this.endIndex = endIndex;
         }
 
-        public Iterator iterator() {
-            final Iterator hitsIterator = hits.iterator();
+        public Iterator<Conversation> iterator() {
+            final Iterator<Hit> hitsIterator = hits.iterator();
             // Advance the iterator until we hit the index.
             for (int i=0; i<index; i++) {
                 hitsIterator.next();
             }
-            return new Iterator() {
+            return new Iterator<Conversation>() {
 
-                private Object nextElement = null;
+                private Conversation nextElement = null;
 
                 public boolean hasNext() {
                     if (nextElement == null) {
@@ -508,8 +526,8 @@ public class ArchiveSearcher implements Startable {
                     return true;
                 }
 
-                public Object next() {
-                    Object element;
+                public Conversation next() {
+                	Conversation element;
                     if (nextElement != null) {
                         element = nextElement;
                         nextElement = null;
@@ -527,7 +545,7 @@ public class ArchiveSearcher implements Startable {
                     throw new UnsupportedOperationException();
                 }
 
-                private Object getNextElement() {
+                private Conversation getNextElement() {
                     if (!hitsIterator.hasNext()) {
                         return null;
                     }
@@ -537,7 +555,7 @@ public class ArchiveSearcher implements Startable {
                     }
                     while (hitsIterator.hasNext()) {
                         try {
-                            Hit hit = (Hit)hitsIterator.next();
+                            Hit hit = hitsIterator.next();
                             // Advance the index.
                             index++;
 
@@ -545,7 +563,7 @@ public class ArchiveSearcher implements Startable {
                             return new Conversation(conversationManager, conversationID);
                         }
                         catch (Exception e) {
-                            Log.error(e);
+                            Log.error(e.getMessage(), e);
                         }
                     }
                     return null;

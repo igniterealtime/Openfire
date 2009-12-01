@@ -47,7 +47,6 @@ import java.util.*;
  */
 public class StatsAction {
 
-
     /**
      * Retrieves a map containing the high / low and current count statistics
      * for the 'sessions', 'conversations' and 'packet_count' statistics.
@@ -98,9 +97,9 @@ public class StatsAction {
      * @param mostRecentConversationID the last conversationID that has been retrieved.
      * @return a List of Map objects.
      */
-    public List getNLatestConversations(int count, long mostRecentConversationID) {
+    public List<Map<String, Long>> getNLatestConversations(int count, long mostRecentConversationID) {
         // TODO Fix plugin name 2 lines below and missing classes
-        List<Map> cons = new ArrayList<Map>();
+        List<Map<String, Long>> cons = new ArrayList<Map<String, Long>>();
         MonitoringPlugin plugin = (MonitoringPlugin)XMPPServer.getInstance().getPluginManager().getPlugin("monitoring");
         ConversationManager conversationManager = (ConversationManager)plugin.getModule(ConversationManager.class);
         Collection<Conversation> conversations = conversationManager.getConversations();
@@ -138,7 +137,7 @@ public class StatsAction {
                                 URLEncoder.encode(con.getRoom().getNode(), "UTF-8") + "'>" + con.getRoom().getNode() +
                                 "</a></i>)";
                     } catch (UnsupportedEncodingException e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
                 mCon.put("users", users);

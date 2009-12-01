@@ -18,16 +18,17 @@
  */
 package org.jivesoftware.openfire.reporting.stats;
 
-import org.jivesoftware.openfire.stats.Statistic;
-import org.jivesoftware.openfire.stats.StatisticsManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.ClusterTask;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.jivesoftware.openfire.stats.Statistic;
+import org.jivesoftware.openfire.stats.StatisticsManager;
+import org.jivesoftware.util.cache.ClusterTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Command that will be executed in each cluster node (except the invoker) to
@@ -38,6 +39,9 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 public class GetStatistics implements ClusterTask {
+	
+	private static final Logger Log = LoggerFactory.getLogger(GetStatistics.class);
+	
     private Map<String, Double> samples;
 
     public Object getResult() {

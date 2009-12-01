@@ -19,21 +19,6 @@
 
 package org.jivesoftware.openfire.archive;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.JiveID;
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.user.UserNameManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.xmpp.packet.JID;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -42,10 +27,33 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.JiveID;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.plugin.MonitoringPlugin;
+import org.jivesoftware.openfire.user.UserNameManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Represents an IM conversation between two people. A conversation encompasses a
@@ -73,6 +81,8 @@ import org.jivesoftware.openfire.plugin.MonitoringPlugin;
 @JiveID(50)
 public class Conversation implements Externalizable {
 
+	private static final Logger Log = LoggerFactory.getLogger(Conversation.class);
+	
     private static final String INSERT_CONVERSATION =
             "INSERT INTO ofConversation(conversationID, room, isExternal, startDate, " +
                     "lastActivity, messageCount) VALUES (?,?,?,?,?,0)";
@@ -139,7 +149,7 @@ public class Conversation implements Externalizable {
                 insertIntoDb();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -174,7 +184,7 @@ public class Conversation implements Externalizable {
                 insertIntoDb();
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -315,7 +325,7 @@ public class Conversation implements Externalizable {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -432,7 +442,7 @@ public class Conversation implements Externalizable {
                 }
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -574,7 +584,7 @@ public class Conversation implements Externalizable {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

@@ -18,19 +18,35 @@
  */
 package org.jivesoftware.openfire.reporting.stats;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.reporting.util.TaskEngine;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jrobin.core.*;
+import org.jrobin.core.ConsolFuns;
+import org.jrobin.core.DsTypes;
+import org.jrobin.core.FetchData;
+import org.jrobin.core.RrdBackendFactory;
+import org.jrobin.core.RrdDb;
+import org.jrobin.core.RrdDef;
+import org.jrobin.core.RrdException;
+import org.jrobin.core.Sample;
 import org.picocontainer.Startable;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The stats workhorse. Handles the job of sampling the different statistics existing in
@@ -41,6 +57,8 @@ import java.util.*;
  */
 public class StatsEngine implements Startable {
 
+	private static final Logger Log = LoggerFactory.getLogger(StatsEngine.class);
+	
     private static final int STAT_RESOULUTION = 60;
 
     private final TaskEngine taskEngine;

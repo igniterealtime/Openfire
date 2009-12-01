@@ -18,25 +18,26 @@
  */
 package org.jivesoftware.openfire.archive;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.plugin.MonitoringPlugin;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.ParamUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
-/**
- *
- */
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.plugin.MonitoringPlugin;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.ParamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ConversationPDFServlet extends HttpServlet {
 
+	private static final Logger Log = LoggerFactory.getLogger(ConversationPDFServlet.class);
+	
     public void init() throws ServletException {
 
     }
@@ -63,7 +64,7 @@ public class ConversationPDFServlet extends HttpServlet {
                 response.setHeader("Pragma", "public");
                 // setting the content type
                 response.setContentType("application/pdf");
-                // the contentlength is needed for MSIE!!!
+                // the content length is needed for MSIE!!!
                 response.setContentLength(stream.size());
                 // write ByteArrayOutputStream to the ServletOutputStream
                 ServletOutputStream out = response.getOutputStream();
@@ -71,7 +72,7 @@ public class ConversationPDFServlet extends HttpServlet {
                 out.flush();
             }
             catch (NotFoundException nfe) {
-                Log.error(nfe);
+                Log.error(nfe.getMessage(), nfe);
             }
         }
 

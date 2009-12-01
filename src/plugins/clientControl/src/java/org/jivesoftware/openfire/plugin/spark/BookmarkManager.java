@@ -16,10 +16,6 @@
 
 package org.jivesoftware.openfire.plugin.spark;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,6 +23,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages global bookmarks. Bookmarks are defined by
@@ -38,6 +39,8 @@ import java.util.List;
  * @author Derek DeMoro
  */
 public class BookmarkManager {
+
+	private static final Logger Log = LoggerFactory.getLogger(BookmarkManager.class);
 
     private static final String DELETE_BOOKMARK = "DELETE FROM ofBookmark where bookmarkID=?";
     private static final String SELECT_BOOKMARKS = "SELECT bookmarkID from ofBookmark";
@@ -77,12 +80,12 @@ public class BookmarkManager {
                     bookmarks.add(bookmark);
                 }
                 catch (NotFoundException nfe) {
-                    Log.error(nfe);
+                    Log.error(nfe.getMessage(), nfe);
                 }
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -107,7 +110,7 @@ public class BookmarkManager {
             pstmt.execute();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

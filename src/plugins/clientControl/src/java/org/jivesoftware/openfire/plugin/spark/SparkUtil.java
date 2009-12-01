@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.plugin.spark;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -247,22 +246,22 @@ public final class SparkUtil {
     public static String getTimeFromLong(long diff) {
         final String HOURS = "h";
         final String MINUTES = "min";
-        final String SECONDS = "sec";
+        //final String SECONDS = "sec";
 
         final long MS_IN_A_DAY = 1000 * 60 * 60 * 24;
         final long MS_IN_AN_HOUR = 1000 * 60 * 60;
         final long MS_IN_A_MINUTE = 1000 * 60;
         final long MS_IN_A_SECOND = 1000;
-        Date currentTime = new Date();
-        long numDays = diff / MS_IN_A_DAY;
+        //Date currentTime = new Date();
+        //long numDays = diff / MS_IN_A_DAY;
         diff = diff % MS_IN_A_DAY;
         long numHours = diff / MS_IN_AN_HOUR;
         diff = diff % MS_IN_AN_HOUR;
         long numMinutes = diff / MS_IN_A_MINUTE;
         diff = diff % MS_IN_A_MINUTE;
-        long numSeconds = diff / MS_IN_A_SECOND;
+        //long numSeconds = diff / MS_IN_A_SECOND;
         diff = diff % MS_IN_A_SECOND;
-        long numMilliseconds = diff;
+        //long numMilliseconds = diff;
 
         StringBuffer buf = new StringBuffer();
         if (numHours > 0) {
@@ -288,8 +287,8 @@ public final class SparkUtil {
     /**
      * Build a List of all elements in an Iterator.
      */
-    public static List iteratorAsList(Iterator i) {
-        ArrayList list = new ArrayList(10);
+    public static <E> List<E> iteratorAsList(Iterator<E> i) {
+        ArrayList<E> list = new ArrayList<E>(10);
         while (i.hasNext()) {
             list.add(i.next());
         }
@@ -299,18 +298,18 @@ public final class SparkUtil {
     /**
      * Creates an Iterator that is the reverse of a ListIterator.
      */
-    public static Iterator reverseListIterator(ListIterator i) {
-        return new ReverseListIterator(i);
+    public static <E> Iterator<E> reverseListIterator(ListIterator<E> i) {
+        return new ReverseListIterator<E>(i);
     }
 }
 
 /**
  * An Iterator that is the reverse of a ListIterator.
  */
-class ReverseListIterator implements Iterator {
-    private ListIterator listIterator;
+class ReverseListIterator<E> implements Iterator<E> {
+    private ListIterator<E> listIterator;
 
-    ReverseListIterator(ListIterator i) {
+    ReverseListIterator(ListIterator<E> i) {
         listIterator = i;
         while (listIterator.hasNext()) listIterator.next();
     }
@@ -319,7 +318,7 @@ class ReverseListIterator implements Iterator {
         return listIterator.hasPrevious();
     }
 
-    public Object next() {
+    public E next() {
         return listIterator.previous();
     }
 

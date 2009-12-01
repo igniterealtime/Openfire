@@ -16,8 +16,10 @@
 
 package org.jivesoftware.openfire.plugin.spark;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -27,12 +29,11 @@ import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * Intercepts Bookmark Storage requests and appends all server based Bookmarks to
@@ -41,6 +42,8 @@ import java.util.Iterator;
  * @author Derek DeMoro
  */
 public class BookmarkInterceptor implements PacketInterceptor {
+
+	private static final Logger Log = LoggerFactory.getLogger(BookmarkInterceptor.class);
 
     /**
      * Initializes the BookmarkInterceptor and needed Server instances.
@@ -138,7 +141,7 @@ public class BookmarkInterceptor implements PacketInterceptor {
                     }
                 }
                 catch (GroupNotFoundException e) {
-                    Log.debug(e);
+                    Log.debug(e.getMessage(), e);
                 }
             }
         }
@@ -200,7 +203,7 @@ public class BookmarkInterceptor implements PacketInterceptor {
 
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -224,9 +227,9 @@ public class BookmarkInterceptor implements PacketInterceptor {
     private static Element urlExists(Element element, String url) {
         // Iterate through current elements to see if this url already exists.
         // If one does not exist, then add the bookmark.
-        final Iterator urlBookmarks = element.elementIterator("url");
+        final Iterator<Element> urlBookmarks = element.elementIterator("url");
         while (urlBookmarks.hasNext()) {
-            Element urlElement = (Element)urlBookmarks.next();
+            Element urlElement = urlBookmarks.next();
             String urlValue = urlElement.attributeValue("url");
             if (urlValue.equalsIgnoreCase(url)) {
                 return urlElement;
@@ -246,9 +249,9 @@ public class BookmarkInterceptor implements PacketInterceptor {
     private Element conferenceExists(Element element, String roomJID) {
         // Iterate through current elements to see if the conference bookmark
         // already exists.
-        final Iterator conferences = element.elementIterator("conference");
+        final Iterator<Element> conferences = element.elementIterator("conference");
         while (conferences.hasNext()) {
-            final Element conferenceElement = (Element)conferences.next();
+            final Element conferenceElement = conferences.next();
             String jidValue = conferenceElement.attributeValue("jid");
 
             if (jidValue != null && roomJID != null && jidValue.equalsIgnoreCase(roomJID)) {

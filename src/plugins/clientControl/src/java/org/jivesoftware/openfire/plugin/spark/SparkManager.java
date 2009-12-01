@@ -16,27 +16,33 @@
 
 package org.jivesoftware.openfire.plugin.spark;
 
-import org.jivesoftware.openfire.plugin.spark.manager.SparkVersionManager;
-import org.dom4j.Element;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.event.SessionEventDispatcher;
-import org.jivesoftware.openfire.event.SessionEventListener;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.openfire.stats.StatisticsManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.xmpp.component.Component;
-import org.xmpp.component.ComponentException;
-import org.xmpp.component.ComponentManager;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
+import org.jivesoftware.openfire.event.SessionEventListener;
+import org.jivesoftware.openfire.plugin.spark.manager.SparkVersionManager;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.stats.StatisticsManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.component.Component;
+import org.xmpp.component.ComponentException;
+import org.xmpp.component.ComponentManager;
+import org.xmpp.component.ComponentManagerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.StreamError;
 
 /**
  * Handles querying and notifications of enabled client features within the server, as well
@@ -46,6 +52,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SparkManager implements Component {
 
+	private static final Logger Log = LoggerFactory.getLogger(SparkManager.class);
+	
     private static final String INVALID_DISCONNECTS_KEY = "disconnects";
     private static final String SPARK_CLIENTS_KEY = "spark";
 
@@ -89,7 +97,7 @@ public class SparkManager implements Component {
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         // Add VersionManager. This component is cluster-safe.
@@ -97,7 +105,7 @@ public class SparkManager implements Component {
             componentManager.addComponent(SparkVersionManager.SERVICE_NAME, new SparkVersionManager());
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         // Add SessionListener
@@ -253,7 +261,7 @@ public class SparkManager implements Component {
             componentManager.removeComponent(serviceName);
         }
         catch (ComponentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         taskEngine = null;
@@ -315,7 +323,7 @@ public class SparkManager implements Component {
             componentManager.sendPacket(this, packet);
         }
         catch (ComponentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

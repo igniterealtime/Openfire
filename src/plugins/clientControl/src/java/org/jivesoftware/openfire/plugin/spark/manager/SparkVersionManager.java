@@ -20,10 +20,13 @@
 
 package org.jivesoftware.openfire.plugin.spark.manager;
 
+import java.io.File;
+
 import org.dom4j.Element;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -32,8 +35,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.io.File;
 
 /**
  * Provides support for server administrators to control the global updating of the Jive Spark IM client.
@@ -48,6 +49,8 @@ import java.io.File;
  */
 public class SparkVersionManager implements Component {
     
+	private static final Logger Log = LoggerFactory.getLogger(SparkVersionManager.class);
+	
     private ComponentManager componentManager;
     public static String SERVICE_NAME = "updater";
 
@@ -231,7 +234,7 @@ public class SparkVersionManager implements Component {
             componentManager.sendPacket(this, packet);
         }
         catch (ComponentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 }

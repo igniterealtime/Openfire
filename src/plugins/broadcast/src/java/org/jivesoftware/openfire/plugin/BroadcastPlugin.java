@@ -37,9 +37,10 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -61,6 +62,8 @@ import org.xmpp.packet.Presence;
  * @author Matt Tucker
  */
 public class BroadcastPlugin implements Plugin, Component, PropertyEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(BroadcastPlugin.class);
 
     private String serviceName;
     private SessionManager sessionManager;
@@ -96,7 +99,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         PropertyEventDispatcher.addListener(this);
     }
@@ -109,7 +112,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 componentManager.removeComponent(serviceName);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         componentManager = null;
@@ -209,7 +212,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     componentManager.sendPacket(this, error);
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 return;
             }
@@ -233,7 +236,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     componentManager.sendPacket(this, error);
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             else if (canProceed) {
@@ -246,7 +249,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                         componentManager.sendPacket(this, newMessage);
                     }
                     catch (Exception e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
             }
@@ -266,7 +269,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                     componentManager.sendPacket(this, error);
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -312,7 +315,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             }
         }
         catch (ComponentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -398,7 +401,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             componentManager.sendPacket(this, reply);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -503,7 +506,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
 
     // PropertyEventListener Methods
 
-    public void propertySet(String property, Map params) {
+    public void propertySet(String property, Map<String, Object> params) {
         if (property.equals("plugin.broadcast.groupMembersAllowed")) {
             this.groupMembersAllowed = Boolean.parseBoolean((String)params.get("value"));
         }
@@ -518,7 +521,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         }
     }
 
-    public void propertyDeleted(String property, Map params) {
+    public void propertyDeleted(String property, Map<String, Object> params) {
         if (property.equals("plugin.broadcast.groupMembersAllowed")) {
             this.groupMembersAllowed = true;
         }
@@ -533,11 +536,11 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         }
     }
 
-    public void xmlPropertySet(String property, Map params) {
+    public void xmlPropertySet(String property, Map<String, Object> params) {
         // Ignore.
     }
 
-    public void xmlPropertyDeleted(String property, Map params) {
+    public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Ignore.
     }
 
@@ -559,13 +562,13 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             componentManager.removeComponent(this.serviceName);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         try {
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         this.serviceName = serviceName;
     }

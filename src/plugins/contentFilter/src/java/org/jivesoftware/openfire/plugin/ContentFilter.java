@@ -141,9 +141,9 @@ public class ContentFilter {
         {
             //only check children if no match has yet been found            
             //or all content must be masked
-            Iterator iter = element.elementIterator();
+            Iterator<Element> iter = element.elementIterator();
             while (iter.hasNext()) {
-                matched |= process((Element)iter.next());
+                matched |= process(iter.next());
             }
         }
         
@@ -175,43 +175,5 @@ public class ContentFilter {
         }
         
         return match;
-    }
-    
-    /**
-     * Applies mask to the given <code>content</code>
-     * 
-     * @param content
-     * @return masked content
-     */
-    private String mask(String content) {
-        
-        for (Pattern pattern : compiledPatterns) {
-            Matcher m = pattern.matcher(content);
-            content = m.replaceAll(mask);
-        }
-        
-        return content;
-    }
-
-    /**
-     * Applies patterns against the given <code>content</code>. Terminates on
-     * first match.
-     *
-     * @param content the content to search against
-     * @return true if a match is found, false otherwise
-     */
-    private boolean hasMatch(String content) {
-        
-        boolean hasMatch = false;
-
-        for (Pattern pattern : compiledPatterns) {
-            Matcher matcher = pattern.matcher(content);
-            if (matcher.find()) {
-                hasMatch = true;
-                break;
-            }
-        }
-
-        return hasMatch;
     }
 }

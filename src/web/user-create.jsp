@@ -12,8 +12,8 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.openfire.user.*,
                  java.net.URLEncoder,
-                 org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.stringprep.StringprepException"
+                 gnu.inet.encoding.Stringprep,
+                 gnu.inet.encoding.StringprepException"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Map"%>

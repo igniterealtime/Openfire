@@ -17,7 +17,7 @@
                  org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.openfire.user.UserNotFoundException"
 %>
-<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
+<%@ page import="gnu.inet.encoding.Stringprep"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>

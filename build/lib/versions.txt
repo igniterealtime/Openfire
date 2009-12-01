@@ -32,6 +32,7 @@ jsp-api.jar                         | Jetty 6.0.1 (2.0)                         
 jtds.jar                            | 1.2.2                                                        | LGPL
 junit.jar                           | 4.3.1                                                        |
 jzlib.jar                           | 1.0.7                                                        | GPL
+libidn.jar                          | 1.15                                                         | GNU Lesser General Public License version 2.1 or later (http://www.gnu.org/licenses/licenses.html)
 log4j.jar                           | 1.2.15                                                       | Apache 2.0 (http://logging.apache.org/log4j/1.2/license.html)
 mail.jar                            | 1.4.1 (JavaMail)                                             |
 mina-core.jar                       | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
@@ -50,7 +51,7 @@ sitemesh.jar                        | 2.2.1                                     
 slf4j-api                           | 1.5.8                                                        | http://www.slf4j.org/license.html
 slf4j-log4j12                       | 1.5.8                                                        | http://www.slf4j.org/license.html
 standard.jar                        | Jakarta standard taglib 1.1.2                                |
-tinder-with-dependencies.jar        | 1.2.0-SNAPSHOT                                               | Apache 2.0
+tinder.jar                          | 1.2.0-SNAPSHOT                                               | Apache 2.0
 xmltask.jar                         | 1.11                                                         | Apache 1.1
 xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 

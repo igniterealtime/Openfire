@@ -19,8 +19,8 @@
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
                  org.xmpp.packet.JID,
-                 org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.stringprep.StringprepException,
+                 gnu.inet.encoding.Stringprep,
+                 gnu.inet.encoding.StringprepException,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>

@@ -35,10 +35,11 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -55,6 +56,8 @@ import org.xmpp.packet.PacketError;
  */
 public class IQChatSearchHandler {
 
+	private static final Logger Log = LoggerFactory.getLogger(IQChatSearchHandler.class);
+	
     private static final String LOAD_META_DATA =
             "SELECT metadataName, metadataValue FROM fpSessionMetadata WHERE sessionID=?";
 
@@ -155,7 +158,7 @@ public class IQChatSearchHandler {
                         fields.put("relevance", result.getRelevance());
 
                         // Add Metadata
-                        Map metadata = getMetadataMap(result.getSessionID());
+                        Map<String, String> metadata = getMetadataMap(result.getSessionID());
                         if (metadata.containsKey("question")) {
                             fields.put("question", metadata.get("question"));
                         }
@@ -242,7 +245,7 @@ public class IQChatSearchHandler {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

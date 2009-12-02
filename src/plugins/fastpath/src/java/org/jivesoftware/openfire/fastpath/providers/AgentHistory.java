@@ -29,11 +29,12 @@ import java.util.List;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -41,6 +42,8 @@ import org.xmpp.packet.PacketError;
  * AgentHistory is responsible for retrieving the information for one agent.
  */
 public class AgentHistory implements WorkgroupProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(AgentHistory.class);
 
     private static final String GET_AGENT_SESSIONS =
             "SELECT sessionID, joinTime, leftTime FROM fpAgentSession WHERE agentJID=?";
@@ -121,14 +124,14 @@ public class AgentHistory implements WorkgroupProvider {
                         }
                     }
                     catch (NumberFormatException e) {
-                        Log.error(e);
+                        Log.error(e.getMessage(), e);
                     }
                 }
             }
             result.close();
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -218,7 +221,7 @@ public class AgentHistory implements WorkgroupProvider {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

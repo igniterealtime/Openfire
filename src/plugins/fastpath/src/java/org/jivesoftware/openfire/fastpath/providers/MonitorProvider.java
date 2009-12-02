@@ -101,7 +101,7 @@ public class MonitorProvider implements WorkgroupProvider {
                 String sessionID = iq.element("makeOwner").attributeValue("sessionID");
                 final String serviceName = workgroupManager.getMUCServiceName();
                 final String roomName = sessionID + "@" + serviceName;
-                final String roomJID = roomName + "/" + workgroup.getJID().getNode();
+                // final String roomJID = roomName + "/" + workgroup.getJID().getNode();
 
                 IQ iqPacket = new IQ(IQ.Type.set);
                 iqPacket.setTo(roomName);

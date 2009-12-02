@@ -22,7 +22,8 @@ package org.jivesoftware.xmpp.workgroup;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>Allows customers to customize the request filters being used by the workgroup.</p>
@@ -39,6 +40,8 @@ import org.jivesoftware.util.Log;
  */
 abstract public class RequestFilterFactory {
 
+	private static final Logger Log = LoggerFactory.getLogger(RequestFilterFactory.class);
+	
     /** <p>The factory to be used.</p> */
     private static RequestFilterFactory factory;
 

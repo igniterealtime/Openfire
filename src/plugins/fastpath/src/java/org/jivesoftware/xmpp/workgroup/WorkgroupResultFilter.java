@@ -127,13 +127,13 @@ public class WorkgroupResultFilter {
      * @param rawResults Iterator over all support group members
      * @return Iterator over group members fitting the current filter settings
      */
-    public synchronized Iterator filter(Iterator rawResults) {
-        Iterator result = null;
+    public synchronized <E> Iterator<E> filter(Iterator<E> rawResults) {
+        Iterator<E> result = null;
         if (startIndex == 0 && numResults == NO_RESULT_LIMIT) {
             result = rawResults;
         }
         else {
-            LinkedList list = new LinkedList();
+            LinkedList<E> list = new LinkedList<E>();
             while (rawResults.hasNext() && startIndex-- > 0) {
                 rawResults.next(); // skip over first x entries
             }

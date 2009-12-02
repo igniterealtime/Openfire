@@ -11,11 +11,12 @@ import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 
@@ -26,6 +27,8 @@ import org.xmpp.packet.JID;
  * @author Derek DeMoro
  */
 public final class ChatHistoryUtils {
+
+	private static final Logger Log = LoggerFactory.getLogger(ChatHistoryUtils.class);
 
     private static final String ALL_SESSION_TIMES =
             "SELECT startTime, endTime FROM fpSession";
@@ -103,15 +106,15 @@ public final class ChatHistoryUtils {
                     }
                 }
                 catch (SQLException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
                 catch (NumberFormatException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -134,7 +137,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         if (workgroup == null) {
             return 0;
@@ -157,7 +160,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -179,7 +182,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
 
         int totalWorkgroupChatTime = 0;
@@ -206,7 +209,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -247,7 +250,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -270,7 +273,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         if (workgroup == null) {
             return 0;
@@ -295,7 +298,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -323,7 +326,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -345,7 +348,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         if (workgroup == null) {
             return 0;
@@ -370,7 +373,7 @@ public final class ChatHistoryUtils {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -392,7 +395,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
 
         int count = 0;
@@ -457,7 +460,7 @@ public final class ChatHistoryUtils {
             count = rs.getInt(1);
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -483,7 +486,7 @@ public final class ChatHistoryUtils {
             count = rs.getInt(1);
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -509,7 +512,7 @@ public final class ChatHistoryUtils {
             totalWaitTime = rs.getInt(1);
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -531,7 +534,7 @@ public final class ChatHistoryUtils {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         if (workgroup == null) {
             return 0;
@@ -555,7 +558,7 @@ public final class ChatHistoryUtils {
             waitTime = rs.getInt(1);
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

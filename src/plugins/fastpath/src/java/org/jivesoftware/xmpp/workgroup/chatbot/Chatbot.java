@@ -32,7 +32,6 @@ import org.jivesoftware.openfire.fastpath.history.ChatTranscriptManager;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettings;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
 import org.jivesoftware.openfire.fastpath.settings.chat.KeyEnum;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.UserCommunicationMethod;
@@ -43,6 +42,8 @@ import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
 import org.jivesoftware.xmpp.workgroup.interceptor.QueueInterceptorManager;
 import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -111,6 +112,8 @@ import org.xmpp.packet.Message;
  */
 public class Chatbot implements UserCommunicationMethod {
 
+	private static final Logger Log = LoggerFactory.getLogger(Chatbot.class);
+	
     /**
      * Holds the workgroup where the chatbot is working. This is a one-to-one relation so this
      * chatbot is the only chatbot that will be answering Messages sent to the workgroup.

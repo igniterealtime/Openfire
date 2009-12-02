@@ -27,6 +27,7 @@ import java.util.*;
  * classes.
  */
 public final class ModelUtil {
+	
     private ModelUtil() {
         //  Prevents instantiation.
     }
@@ -244,8 +245,8 @@ public final class ModelUtil {
         final long MS_IN_AN_HOUR = 1000 * 60 * 60;
         final long MS_IN_A_MINUTE = 1000 * 60;
         final long MS_IN_A_SECOND = 1000;
-        Date currentTime = new Date();
-        long numDays = diff / MS_IN_A_DAY;
+        //Date currentTime = new Date();
+        //long numDays = diff / MS_IN_A_DAY;
         diff = diff % MS_IN_A_DAY;
         long numHours = diff / MS_IN_AN_HOUR;
         diff = diff % MS_IN_AN_HOUR;
@@ -253,7 +254,7 @@ public final class ModelUtil {
         diff = diff % MS_IN_A_MINUTE;
         long numSeconds = diff / MS_IN_A_SECOND;
         diff = diff % MS_IN_A_SECOND;
-        long numMilliseconds = diff;
+        //long numMilliseconds = diff;
 
         StringBuilder buf = new StringBuilder();
         if (numHours > 0) {
@@ -274,8 +275,8 @@ public final class ModelUtil {
     /**
      * Build a List of all elements in an Iterator.
      */
-    public static List iteratorAsList(Iterator i) {
-        ArrayList list = new ArrayList(10);
+    public static <E> List<E> iteratorAsList(Iterator<E> i) {
+        ArrayList<E> list = new ArrayList<E>(10);
         while (i.hasNext()) {
             list.add(i.next());
         }
@@ -285,18 +286,18 @@ public final class ModelUtil {
     /**
      * Creates an Iterator that is the reverse of a ListIterator.
      */
-    public static Iterator reverseListIterator(ListIterator i) {
-        return new ReverseListIterator(i);
+    public static <E> Iterator<E> reverseListIterator(ListIterator<E> i) {
+        return new ReverseListIterator<E>(i);
     }
 }
 
 /**
  * An Iterator that is the reverse of a ListIterator.
  */
-class ReverseListIterator implements Iterator {
-    private ListIterator _i;
+class ReverseListIterator<E> implements Iterator<E> {
+    private ListIterator<E> _i;
 
-    ReverseListIterator(ListIterator i) {
+    ReverseListIterator(ListIterator<E> i) {
         _i = i;
         while (_i.hasNext())
             _i.next();
@@ -306,7 +307,7 @@ class ReverseListIterator implements Iterator {
         return _i.hasPrevious();
     }
 
-    public Object next() {
+    public E next() {
         return _i.previous();
     }
 

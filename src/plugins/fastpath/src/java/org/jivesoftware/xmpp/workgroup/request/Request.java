@@ -33,7 +33,6 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
@@ -41,6 +40,8 @@ import org.jivesoftware.xmpp.workgroup.Offer;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.utils.FastpathConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -51,6 +52,8 @@ import org.xmpp.packet.JID;
  */
 public abstract class Request {
 
+	private static final Logger Log = LoggerFactory.getLogger(Request.class);
+	
     private static final Map<String, Request> requests = new ConcurrentHashMap<String, Request>();
 
     protected final String requestID;

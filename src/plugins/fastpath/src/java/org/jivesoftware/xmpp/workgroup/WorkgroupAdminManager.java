@@ -78,7 +78,7 @@ public class WorkgroupAdminManager extends WebManager {
     }
 
     // TODO: should allow pretty printed version of agent names aka name <address>, or name, or address
-    public Collection getAgentsInWorkgroup(Workgroup workgroup) {
+    public Collection<Agent> getAgentsInWorkgroup(Workgroup workgroup) {
         TreeSet<Agent> agents = new TreeSet<Agent>(new AgentAddressComparator());
         for (RequestQueue requestQueue : workgroup.getRequestQueues()) {
             for (Agent member : requestQueue.getMembers()) {

@@ -59,7 +59,7 @@ public class SettingsManager {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);   
+            Log.error(ex.getMessage(), ex);   
         }
     }
 
@@ -100,7 +100,7 @@ public class SettingsManager {
             workgroupSettings.add(workgroup.getJID().toBareJID(), element);
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
     }
 }

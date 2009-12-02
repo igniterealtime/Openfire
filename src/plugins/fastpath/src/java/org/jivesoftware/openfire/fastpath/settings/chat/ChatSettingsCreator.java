@@ -32,12 +32,13 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import com.thoughtworks.xstream.XStream;
@@ -47,6 +48,8 @@ import com.thoughtworks.xstream.XStream;
  * images and text settings.
  */
 public class ChatSettingsCreator {
+
+	private static final Logger Log = LoggerFactory.getLogger(ChatSettingsCreator.class);
 
     private static final ChatSettingsCreator instance = new ChatSettingsCreator();
 
@@ -241,7 +244,7 @@ public class ChatSettingsCreator {
                 stream = new FileInputStream(image);
             }
             catch (FileNotFoundException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
 
             if (stream != null) {
@@ -259,7 +262,7 @@ public class ChatSettingsCreator {
                             ChatSettings.SettingType.image_settings, encodedFile);
                 }
                 catch (IOException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -293,10 +296,10 @@ public class ChatSettingsCreator {
             }
         }
         catch (UserNotFoundException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         catch (UnauthorizedException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -403,7 +406,7 @@ public class ChatSettingsCreator {
                             encodedFile);
                 }
                 catch (IOException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

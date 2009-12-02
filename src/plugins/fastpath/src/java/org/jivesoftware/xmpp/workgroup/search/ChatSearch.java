@@ -20,18 +20,15 @@
 
 package org.jivesoftware.xmpp.workgroup.search;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.apache.lucene.document.DateField;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.xmpp.packet.JID;
-
-import java.util.*;
 
 /**
  * Encapsulates a search for transcripts in a workgroup. Use the public constructor
@@ -72,7 +69,7 @@ import java.util.*;
  */
 public class ChatSearch {
 
-    private static final int MAX_RESULTS_SIZE;
+    // private static final int MAX_RESULTS_SIZE;
     /**
      * Indicates whether wildcards should be enabled or ignored in searches.
      */
@@ -89,19 +86,19 @@ public class ChatSearch {
     private transient List<QueryResult> results = new ArrayList<QueryResult>();
 
     static {
-        // Load a custom max results size value from the Jive property file or
-        // default to 500.
-        int maxSize = 500;
-        String maxResultsSize = JiveGlobals.getProperty("workgroup.search.maxResultsSize");
-        if (maxResultsSize != null) {
-            try {
-                maxSize = Integer.parseInt(maxResultsSize);
-            }
-            catch (NumberFormatException nfe) {
-                // Ignore.
-            }
-        }
-        MAX_RESULTS_SIZE = maxSize;
+//        // Load a custom max results size value from the Jive property file or
+//        // default to 500.
+//        int maxSize = 500;
+//        String maxResultsSize = JiveGlobals.getProperty("workgroup.search.maxResultsSize");
+//        if (maxResultsSize != null) {
+//            try {
+//                maxSize = Integer.parseInt(maxResultsSize);
+//            }
+//            catch (NumberFormatException nfe) {
+//                // Ignore.
+//            }
+//        }
+//        MAX_RESULTS_SIZE = maxSize;
         // Determine if wildcards should be ignored
         wildcardIgnored = JiveGlobals.getBooleanProperty("workgroup.search.wildcardIgnored");
     }
@@ -320,7 +317,7 @@ public class ChatSearch {
                     results.add(result);
                 }
                 catch (NumberFormatException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
 
@@ -332,7 +329,7 @@ public class ChatSearch {
             results.clear();
         }
         catch(Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             results.clear();
         }
         finally {
@@ -351,9 +348,9 @@ public class ChatSearch {
         return string.indexOf('?') != -1 || string.indexOf('*') != -1 || string.indexOf('~') != -1;
     }
 
-    private String escapeBadCharacters(String queryString) {
-        return StringUtils.replace(queryString, ":", "\\:");
-    }
+//    private String escapeBadCharacters(String queryString) {
+//        return StringUtils.replace(queryString, ":", "\\:");
+//    }
 
     private String lowerCaseQueryString(String queryString) {
         char[] chars = queryString.toCharArray();

@@ -29,7 +29,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
 
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>URLFileSystem</code> class handles some of the most common
@@ -39,6 +40,9 @@ import org.jivesoftware.util.Log;
  */
 
 public class URLFileSystem {
+	
+	private static final Logger Log = LoggerFactory.getLogger(URLFileSystem.class);
+	
     public static void main(String args[]) {
     }
 
@@ -469,7 +473,7 @@ public class URLFileSystem {
             return seed;
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return null;
         }
     }

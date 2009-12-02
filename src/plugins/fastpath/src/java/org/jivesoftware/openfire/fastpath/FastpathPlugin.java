@@ -19,24 +19,25 @@
 
 package org.jivesoftware.openfire.fastpath;
 
+import java.io.File;
+import java.io.FileFilter;
+
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.fastpath.util.TaskEngine;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNameProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.cluster.ClusterEventListener;
-import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.fastpath.util.TaskEngine;
-import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
-import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.xmpp.component.ComponentManagerFactory;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentException;
+import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
-
-import java.io.File;
-import java.io.FileFilter;
 
 /**
  * Openfire Fastpath plugin.
@@ -45,6 +46,8 @@ import java.io.FileFilter;
  */
 public class FastpathPlugin implements Plugin, ClusterEventListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(FastpathPlugin.class);
+	
     /**
      * Keep a reference to Fastpath only when the service is up and running in this JVM.
      */
@@ -98,7 +101,7 @@ public class FastpathPlugin implements Plugin, ClusterEventListener {
         }
         catch (ComponentException e) {
             // Do nothing. Should never happen.
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         // Register the provider of workgroup names
         UserNameManager.addUserNameProvider(workgroupManager.getAddress().toString(),

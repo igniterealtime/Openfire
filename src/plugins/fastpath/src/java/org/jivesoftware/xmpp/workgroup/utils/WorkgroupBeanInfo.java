@@ -19,9 +19,6 @@
  */
 package org.jivesoftware.xmpp.workgroup.utils;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-
 import java.beans.BeanDescriptor;
 import java.beans.BeanInfo;
 import java.beans.EventSetDescriptor;
@@ -35,12 +32,18 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class WorkgroupBeanInfo implements BeanInfo {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupBeanInfo.class);
+	
     private ResourceBundle bundle;
 
     public WorkgroupBeanInfo() {
-        List bundleNames = new ArrayList();
+        List<String> bundleNames = new ArrayList<String>();
         String prefix = "bean_";
         // fully qualified class name: bean_com.foo.MyClass.properties
         bundleNames.add(prefix + getClass().toString());
@@ -49,7 +52,7 @@ public abstract class WorkgroupBeanInfo implements BeanInfo {
         //Get the locale that should be used, then load the resource bundle.
         Locale currentLocale = JiveGlobals.getLocale();
         for (int i = 0, n = bundleNames.size(); i < n; i++) {
-            String name = (String)bundleNames.get(i);
+            String name = bundleNames.get(i);
             try {
                 // TODO - possibly use other class loaders?
                 bundle = ResourceBundle.getBundle(name, currentLocale);
@@ -127,9 +130,9 @@ public abstract class WorkgroupBeanInfo implements BeanInfo {
             catch (MissingResourceException ignored) {
             }
             // Add any other properties that are specified.
-            Enumeration e = bundle.getKeys();
+            Enumeration<String> e = bundle.getKeys();
             while (e.hasMoreElements()) {
-                String key = (String)e.nextElement();
+                String key = e.nextElement();
                 try {
                     String value = bundle.getString(key);
                     if (value != null) {
@@ -186,7 +189,7 @@ public abstract class WorkgroupBeanInfo implements BeanInfo {
             return descriptors;
         }
         catch (IntrospectionException ie) {
-            Log.error(ie);
+            Log.error(ie.getMessage(), ie);
             throw new Error(ie.toString());
         }
     }

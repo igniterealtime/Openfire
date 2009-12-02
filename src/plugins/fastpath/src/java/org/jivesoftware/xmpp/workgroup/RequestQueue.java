@@ -39,7 +39,6 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.dispatcher.Dispatcher;
 import org.jivesoftware.xmpp.workgroup.dispatcher.RoundRobinDispatcher;
@@ -47,6 +46,8 @@ import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.spi.JiveLiveProperties;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -59,6 +60,8 @@ import org.xmpp.packet.Presence;
  */
 public class RequestQueue {
 
+	private static final Logger Log = LoggerFactory.getLogger(RequestQueue.class);
+	
     private static final String LOAD_QUEUE =
             "SELECT name, description, priority, maxchats, minchats, overflow, backupQueue FROM " +
             "fpQueue WHERE queueID=?";
@@ -317,7 +320,7 @@ public class RequestQueue {
             workgroup.send(queueStatus);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -329,7 +332,7 @@ public class RequestQueue {
             workgroup.send(queueStatus);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -410,7 +413,7 @@ public class RequestQueue {
                 details.remove(user);
                 // Log an error if the request still belongs to this queue
                 if (this.equals(request.getRequestQueue())) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -705,7 +708,7 @@ public class RequestQueue {
 
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -729,7 +732,7 @@ public class RequestQueue {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -754,7 +757,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -780,7 +783,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -800,7 +803,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -820,7 +823,7 @@ public class RequestQueue {
             return true;
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -844,7 +847,7 @@ public class RequestQueue {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -869,12 +872,12 @@ public class RequestQueue {
                     agents.add(agent);
                 }
                 catch (AgentNotFoundException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

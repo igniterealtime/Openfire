@@ -26,11 +26,12 @@ import java.sql.ResultSet;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -39,6 +40,8 @@ import org.xmpp.packet.PacketError;
  * is tied directly to a chat session within Live Assistant.
  */
 public class ChatNotes implements WorkgroupProvider {
+
+	private static final Logger Log = LoggerFactory.getLogger(ChatNotes.class);
 
     private static final String GET_NOTES = "SELECT notes FROM fpSession WHERE sessionID=?";
     private static final String SET_NOTES = "UPDATE fpSession SET notes=? WHERE sessionID=?";
@@ -61,14 +64,14 @@ public class ChatNotes implements WorkgroupProvider {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                Log.error(ex);
+                Log.error(ex.getMessage(), ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
     }
 
@@ -94,7 +97,7 @@ public class ChatNotes implements WorkgroupProvider {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

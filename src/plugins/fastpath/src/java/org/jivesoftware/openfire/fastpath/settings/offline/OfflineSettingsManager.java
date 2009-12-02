@@ -25,8 +25,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Retrieves and persists offline settings for a workgroup.
@@ -35,6 +36,8 @@ import org.jivesoftware.xmpp.workgroup.Workgroup;
  */
 public class OfflineSettingsManager {
 
+	private static final Logger Log = LoggerFactory.getLogger(OfflineSettingsManager.class);
+	
     private static final String GET_OFFLINE_SETTTINGS =
             "SELECT redirectPage, emailAddress, subject, offlineText FROM " +
             "fpOfflineSetting WHERE workgroupID=?";
@@ -82,7 +85,7 @@ public class OfflineSettingsManager {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
             return null;
         }
         finally {
@@ -120,7 +123,7 @@ public class OfflineSettingsManager {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
             return null;
         }
         finally {
@@ -162,7 +165,7 @@ public class OfflineSettingsManager {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

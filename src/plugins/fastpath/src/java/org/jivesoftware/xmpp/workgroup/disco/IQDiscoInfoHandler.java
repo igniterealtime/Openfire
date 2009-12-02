@@ -75,10 +75,9 @@ public class IQDiscoInfoHandler {
 
     public IQ handleIQ(IQ packet) {
         if (packet.getType() == IQ.Type.result) {
-            List features = packet.getChildElement().elements("feature");
+            List<Element> features = packet.getChildElement().elements("feature");
             // Detect if this item is the MUC service
-            for (Iterator it=features.iterator(); it.hasNext(); ) {
-                Element feature = (Element) it.next();
+            for (Element feature : features) {
                 String variable = feature.attributeValue("var");
 
                 if ("http://jabber.org/protocol/muc".equals(variable)) {

@@ -25,14 +25,17 @@ import java.sql.PreparedStatement;
 import java.util.Date;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles basic DB Operations.
  */
 public class DbWorkgroup {
 
+	private static final Logger Log = LoggerFactory.getLogger(DbWorkgroup.class);
+	
     private static final String UPDATE_TRANSCRIPT =
             "UPDATE fpSession SET transcript=?, endTime=? WHERE sessionID=?";
     private static final String INSERT_AGENT_SESSION =
@@ -64,7 +67,7 @@ public class DbWorkgroup {
             pstmt.executeUpdate();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -101,7 +104,7 @@ public class DbWorkgroup {
             pstmt.executeUpdate();
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
            DbConnectionManager.closeConnection(pstmt, con);

@@ -68,7 +68,7 @@ public class CreateWorkgroup extends AdHocCommand {
             return;
         }
 
-        Map errors = WorkgroupUtils.createWorkgroup(wgName, description, agents);
+        Map<String, String> errors = WorkgroupUtils.createWorkgroup(wgName, description, agents);
 
         if (!errors.isEmpty()) {
             note.addAttribute("type", "error");

@@ -22,12 +22,13 @@ package org.jivesoftware.xmpp.workgroup.spi.routers;
 import java.util.List;
 import java.util.Map;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.routing.RequestRouter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>Routes requests to the queue with the most matching meta-data.</p>
@@ -36,6 +37,8 @@ import org.jivesoftware.xmpp.workgroup.routing.RequestRouter;
  */
 public class MetaDataRouter extends RequestRouter {
 
+	private static final Logger Log = LoggerFactory.getLogger(MetaDataRouter.class);
+	
     public MetaDataRouter() {
     }
 
@@ -140,7 +143,7 @@ public class MetaDataRouter extends RequestRouter {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return currentMatch;
     }

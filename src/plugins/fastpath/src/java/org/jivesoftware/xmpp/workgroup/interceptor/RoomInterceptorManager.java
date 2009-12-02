@@ -23,7 +23,8 @@ package org.jivesoftware.xmpp.workgroup.interceptor;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
 
 /**
@@ -35,6 +36,8 @@ import org.xmpp.packet.Packet;
  */
 public class RoomInterceptorManager extends InterceptorManager {
 
+	private static final Logger Log = LoggerFactory.getLogger(RoomInterceptorManager.class);
+	
     private static RoomInterceptorManager instance = new RoomInterceptorManager();
 
     /**

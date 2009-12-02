@@ -53,11 +53,11 @@ public class ChatSession {
         agentList.add(chatSession);
     }
 
-    public Iterator getAgents() {
+    public Iterator<AgentChatSession> getAgents() {
         return agentList.iterator();
     }
 
-    public List getAgentList() {
+    public List<AgentChatSession> getAgentList() {
         return agentList;
     }
 
@@ -157,9 +157,9 @@ public class ChatSession {
         long startTime = -1;
         AgentChatSession returnSession = null;
 
-        Iterator iter = getAgents();
+        Iterator<AgentChatSession> iter = getAgents();
         while (iter.hasNext()) {
-            AgentChatSession agent = (AgentChatSession)iter.next();
+            AgentChatSession agent = iter.next();
             if (agent.getStartTime() <= startTime || startTime == -1) {
                 startTime = agent.getStartTime();
                 returnSession = agent;

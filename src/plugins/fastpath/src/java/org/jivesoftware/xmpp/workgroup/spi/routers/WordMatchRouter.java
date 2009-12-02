@@ -20,24 +20,33 @@
 
 package org.jivesoftware.xmpp.workgroup.spi.routers;
 
-import org.jivesoftware.xmpp.workgroup.Workgroup;
-import org.jivesoftware.xmpp.workgroup.request.Request;
-import org.jivesoftware.xmpp.workgroup.request.UserRequest;
-import org.jivesoftware.xmpp.workgroup.routing.RequestRouter;
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import org.apache.lucene.analysis.*;
+import java.io.Reader;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseTokenizer;
+import org.apache.lucene.analysis.PorterStemFilter;
+import org.apache.lucene.analysis.StopFilter;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Hits;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.store.RAMDirectory;
-import org.jivesoftware.util.Log;
-
-import java.io.Reader;
-import java.util.List;
-import java.util.Map;
+import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.jivesoftware.xmpp.workgroup.request.Request;
+import org.jivesoftware.xmpp.workgroup.request.UserRequest;
+import org.jivesoftware.xmpp.workgroup.routing.RequestRouter;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The WordMatcheRouter using Lucense index to search individual metadata as specified
@@ -45,6 +54,8 @@ import java.util.Map;
  */
 public class WordMatchRouter extends RequestRouter {
 
+	private static final Logger Log = LoggerFactory.getLogger(WordMatchRouter.class);
+	
     private boolean stemmingEnabled;
     private Analyzer analyzer;
 
@@ -163,7 +174,7 @@ public class WordMatchRouter extends RequestRouter {
             searcher.close();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         return foundMatch;

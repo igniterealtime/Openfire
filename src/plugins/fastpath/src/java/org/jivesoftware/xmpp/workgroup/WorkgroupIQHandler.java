@@ -24,7 +24,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.fastpath.WorkgroupSettings;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.OfferInterceptorManager;
@@ -35,6 +34,8 @@ import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.TransferRequest;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -64,6 +65,8 @@ import org.xmpp.packet.PacketError;
  */
 public class WorkgroupIQHandler {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupIQHandler.class);
+	
     private Workgroup workgroup;
     private WorkgroupSettings workgroupSettings = null;
 
@@ -105,7 +108,7 @@ public class WorkgroupIQHandler {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             IQ reply = IQ.createResultIQ(packet);
             if (packet.getChildElement() != null) {
                 reply.setChildElement(packet.getChildElement().createCopy());

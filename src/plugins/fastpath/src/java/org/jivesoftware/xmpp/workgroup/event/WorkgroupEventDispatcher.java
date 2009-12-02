@@ -23,9 +23,10 @@ package org.jivesoftware.xmpp.workgroup.event;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dispatches workgroup events. Since the dispatching is done on the "main" thread
@@ -36,6 +37,8 @@ import org.jivesoftware.xmpp.workgroup.Workgroup;
  */
 public class WorkgroupEventDispatcher {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupEventDispatcher.class);
+	
     private static List<WorkgroupEventListener> listeners =
             new CopyOnWriteArrayList<WorkgroupEventListener>();
 
@@ -75,7 +78,7 @@ public class WorkgroupEventDispatcher {
                 listener.workgroupCreated(workgroup);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -91,7 +94,7 @@ public class WorkgroupEventDispatcher {
                 listener.workgroupDeleting(workgroup);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -107,7 +110,7 @@ public class WorkgroupEventDispatcher {
                 listener.workgroupDeleted(workgroup);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -124,7 +127,7 @@ public class WorkgroupEventDispatcher {
                 listener.workgroupOpened(workgroup);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -141,7 +144,7 @@ public class WorkgroupEventDispatcher {
                 listener.workgroupClosed(workgroup);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -158,7 +161,7 @@ public class WorkgroupEventDispatcher {
                 listener.agentJoined(workgroup, agentSession);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -175,7 +178,7 @@ public class WorkgroupEventDispatcher {
                 listener.agentDeparted(workgroup, agentSession);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -192,7 +195,7 @@ public class WorkgroupEventDispatcher {
                 listener.chatSupportStarted(workgroup, sessionID);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -209,7 +212,7 @@ public class WorkgroupEventDispatcher {
                 listener.chatSupportFinished(workgroup, sessionID);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -231,7 +234,7 @@ public class WorkgroupEventDispatcher {
                 listener.agentJoinedChatSupport(workgroup, sessionID, agentSession);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -250,7 +253,7 @@ public class WorkgroupEventDispatcher {
                 listener.agentLeftChatSupport(workgroup, sessionID, agentSession);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

@@ -232,7 +232,6 @@ public class SiteTracker implements WorkgroupProvider {
     }
 
     private void handleInvitation(IQ packet, Workgroup workgroup) {
-        IQ reply = null;
         Element iq = packet.getChildElement();
 
         // Define default values
@@ -242,6 +241,8 @@ public class SiteTracker implements WorkgroupProvider {
         elem.addAttribute("sessionID", sessionID);
 
         SiteUser siteUser = siteUsers.get(sessionID);
+        
+        IQ reply = IQ.createResultIQ(packet);
         if (siteUser == null) {
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(new PacketError(PacketError.Condition.item_not_found));
@@ -250,7 +251,6 @@ public class SiteTracker implements WorkgroupProvider {
         }
         else {
             // Send back reply
-            reply = IQ.createResultIQ(packet);
             workgroup.send(reply);
         }
 

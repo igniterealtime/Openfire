@@ -26,6 +26,8 @@ import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.sql.Connection;
@@ -39,6 +41,8 @@ import java.sql.ResultSet;
  */
 public class WorkgroupSettings {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupSettings.class);
+	
     private static final String LOAD_SETTINGS =
             "SELECT value FROM fpSetting WHERE workgroupName=? AND namespace=?";
     private static final String INSERT_SETTINGS =

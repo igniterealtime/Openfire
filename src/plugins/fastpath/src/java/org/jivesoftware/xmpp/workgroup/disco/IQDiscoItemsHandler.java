@@ -51,10 +51,9 @@ public class IQDiscoItemsHandler {
 
     public IQ handleIQ(IQ packet) {
         if (packet.getType() == IQ.Type.result) {
-            List items = packet.getChildElement().elements("item");
+            List<Element> items = packet.getChildElement().elements("item");
             // Send a disco#info to each discovered item
-            for (Iterator it=items.iterator(); it.hasNext(); ) {
-                Element item = (Element) it.next();
+            for (Element item : items) {
                 String jid = item.attributeValue("jid");
 
                 IQ disco = new IQ(IQ.Type.get);

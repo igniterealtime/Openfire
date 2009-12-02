@@ -20,16 +20,21 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
-import java.util.*;
 import java.text.DateFormatSymbols;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 public class Schedule {
 
     private long id;
     private boolean[] week = new boolean[7];
     private final String[] dayNames = new DateFormatSymbols().getShortWeekdays();
-    private final List dayNamesList = Arrays.asList(dayNames);
-    private TreeSet events = new TreeSet();
+    private final List<String> dayNamesList = Arrays.asList(dayNames);
+    private TreeSet<Schedule.Event> events = new TreeSet<Schedule.Event>();
     private final String[] weekdays = new DateFormatSymbols().getShortWeekdays();
 
     public Schedule(long id) {
@@ -43,7 +48,7 @@ public class Schedule {
     }
 
     public void clear() {
-        events = new TreeSet();
+        events = new TreeSet<Schedule.Event>();
         Arrays.fill(week, false);
     }
 
@@ -55,7 +60,7 @@ public class Schedule {
         return week;
     }
 
-    public SortedSet getEvents() {
+    public SortedSet<Schedule.Event> getEvents() {
         return events;
     }
 
@@ -122,9 +127,7 @@ public class Schedule {
         }
         schedule.append('#');
         needsComma = false;
-        Iterator eventIter = events.iterator();
-        while (eventIter.hasNext()) {
-            Event event = (Schedule.Event)eventIter.next();
+        for(Schedule.Event event : events) {
             if (needsComma) {
                 schedule.append(',');
             }
@@ -156,7 +159,7 @@ public class Schedule {
         * <li>minute - any minute between 0 and 59.</li>
         * </ul>
         */
-      public static class Event implements Comparable{
+      public static class Event implements Comparable<Event>{
            private int hour;
            private int minute;
            private boolean on;
@@ -234,8 +237,7 @@ public class Schedule {
             * @param o The object to compare with this one
             * @return negative, zero, or positive int if the object is less than, equal to, or greater than the specified object
             */
-           public int compareTo(Object o) {
-               Event event = (Event)o;
+           public int compareTo(Event event) {
                int val = hour - event.hour;
                if (val == 0){
                    val = minute - event.minute;

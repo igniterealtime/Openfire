@@ -28,11 +28,12 @@ import java.util.Map;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.event.WorkgroupEventDispatcher;
 import org.jivesoftware.xmpp.workgroup.event.WorkgroupEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -41,6 +42,8 @@ import org.xmpp.packet.PacketError;
  * You would use this class to retrieve, update or insert new settings.
  */
 public class ChatSettingsManager implements WorkgroupEventListener {
+
+	private static final Logger Log = LoggerFactory.getLogger(ChatSettingsManager.class);
 
     private static final String GET_SETTINGS =
             "SELECT * FROM fpChatSetting WHERE workgroupNode=?";
@@ -103,7 +106,7 @@ public class ChatSettingsManager implements WorkgroupEventListener {
             ResultSet result = pstmt.executeQuery();
             if (result.next()) {
                 do {
-                    String wg = result.getString("workgroupNode");
+                    //String wg = result.getString("workgroupNode");
                     int type = result.getInt("type");
                     String label = result.getString("label");
                     String description = result.getString("description");
@@ -131,7 +134,7 @@ public class ChatSettingsManager implements WorkgroupEventListener {
         }
         catch (Exception ex) {
             cachedSettings.remove(workgroup.getJID().getNode());
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -182,14 +185,14 @@ public class ChatSettingsManager implements WorkgroupEventListener {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                Log.error(ex);
+                Log.error(ex.getMessage(), ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
 
         // Add to cache
@@ -217,14 +220,14 @@ public class ChatSettingsManager implements WorkgroupEventListener {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                Log.error(ex);
+                Log.error(ex.getMessage(), ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
 
         // Add to cache
@@ -251,14 +254,14 @@ public class ChatSettingsManager implements WorkgroupEventListener {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                Log.error(ex);
+                Log.error(ex.getMessage(), ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
 
         // Add to cache
@@ -287,14 +290,14 @@ public class ChatSettingsManager implements WorkgroupEventListener {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                Log.error(ex);
+                Log.error(ex.getMessage(), ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
 
         // Add to cache
@@ -352,7 +355,7 @@ public class ChatSettingsManager implements WorkgroupEventListener {
                 root.addElement("type").setText(Integer.toString(setting.getType().getType()));
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 
@@ -447,14 +450,14 @@ public class ChatSettingsManager implements WorkgroupEventListener {
                 pstmt.executeUpdate();
             }
             catch (Exception ex) {
-                Log.error(ex);
+                Log.error(ex.getMessage(), ex);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
     }
 

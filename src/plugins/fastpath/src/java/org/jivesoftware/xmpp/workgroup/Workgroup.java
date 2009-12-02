@@ -46,7 +46,6 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.fastpath.util.TaskEngine;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.chatbot.Chatbot;
@@ -68,6 +67,8 @@ import org.jivesoftware.xmpp.workgroup.spi.dispatcher.DbDispatcherInfoProvider;
 import org.jivesoftware.xmpp.workgroup.utils.DbWorkgroup;
 import org.jivesoftware.xmpp.workgroup.utils.FastpathConstants;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.muc.DestroyRoom;
 import org.xmpp.muc.Invitation;
@@ -89,6 +90,8 @@ import org.xmpp.packet.Presence;
  */
 public class Workgroup {
 
+	private static final Logger Log = LoggerFactory.getLogger(Workgroup.class);
+	
     private static final String LOAD_WORKGROUP =
             "SELECT jid, displayName, description, status, modes, creationDate, " +
             "modificationDate, maxchats, minchats, offerTimeout, requestTimeout, " +
@@ -307,7 +310,7 @@ public class Workgroup {
                 queue = new RequestQueue(this, queueID);
             }
             catch (UserAlreadyExistsException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         else {
@@ -336,7 +339,7 @@ public class Workgroup {
                 dispatcherInfoProvider.deleteDispatcherInfo(queue.getID());
             }
             catch (UnauthorizedException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }
@@ -864,7 +867,7 @@ public class Workgroup {
             request.invitationsSent(sessionID);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -1292,7 +1295,7 @@ public class Workgroup {
             }
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -1313,7 +1316,7 @@ public class Workgroup {
             }
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -1336,7 +1339,7 @@ public class Workgroup {
             return true;
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1360,7 +1363,7 @@ public class Workgroup {
             return true;
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1392,7 +1395,7 @@ public class Workgroup {
             return true;
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1733,15 +1736,15 @@ public class Workgroup {
 
             // If there are valid domains specified, then validate
             if (ModelUtil.hasLength(validDomains)) {
-                Map metadata = request.getMetaData();
+                Map<String, List<String>> metadata = request.getMetaData();
 
-                List list = (List)metadata.get("referer");
+                List<String> list = metadata.get("referer");
                 if (metadata.containsKey("referer")) {
                     metadata.remove("referer");
                 }
 
                 if (list != null && list.size() > 0) {
-                    String referer = (String)list.get(0);
+                    String referer = list.get(0);
                     URL refererURL = new URL(referer);
 
                     String domain = refererURL.getHost().toLowerCase();
@@ -1763,7 +1766,7 @@ public class Workgroup {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return true;
     }

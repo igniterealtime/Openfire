@@ -36,10 +36,11 @@ import org.jivesoftware.openfire.fastpath.util.TaskEngine;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.interceptor.AgentInterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -61,6 +62,8 @@ import org.xmpp.packet.Presence;
  */
 public class WorkgroupPresence {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupPresence.class);
+	
     private static final FastDateFormat UTC_FORMAT = FastDateFormat
             .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 
@@ -165,7 +168,7 @@ public class WorkgroupPresence {
 
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             Presence reply = new Presence();
             reply.setError(new PacketError(PacketError.Condition.internal_server_error));
             reply.setTo(packet.getFrom());
@@ -419,12 +422,12 @@ public class WorkgroupPresence {
         }
     }
 
-    private int getNumberOfAgentsOnline() {
-        int onlineAgents = 0;
-        WorkgroupManager workgroupManager = WorkgroupManager.getInstance();
-        for (Workgroup workgroup : workgroupManager.getWorkgroups()) {
-            onlineAgents += workgroup.getAgentSessions().size();
-        }
-        return onlineAgents;
-    }
+//    private int getNumberOfAgentsOnline() {
+//        int onlineAgents = 0;
+//        WorkgroupManager workgroupManager = WorkgroupManager.getInstance();
+//        for (Workgroup workgroup : workgroupManager.getWorkgroups()) {
+//            onlineAgents += workgroup.getAgentSessions().size();
+//        }
+//        return onlineAgents;
+//    }
 }

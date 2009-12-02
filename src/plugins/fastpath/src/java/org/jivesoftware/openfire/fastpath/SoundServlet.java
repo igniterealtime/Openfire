@@ -29,10 +29,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -40,6 +41,8 @@ import org.xmpp.packet.JID;
  */
 public class SoundServlet extends HttpServlet {
 
+	private static final Logger Log = LoggerFactory.getLogger(SoundServlet.class);
+	
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
     }
@@ -61,7 +64,7 @@ public class SoundServlet extends HttpServlet {
             workgroup = WorkgroupManager.getInstance().getWorkgroup(new JID(workgroupName));
         }
         catch (UserNotFoundException e) {
-           Log.error(e);
+           Log.error(e.getMessage(), e);
         }
 
         try {
@@ -80,7 +83,7 @@ public class SoundServlet extends HttpServlet {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 }

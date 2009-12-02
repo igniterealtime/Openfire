@@ -23,17 +23,20 @@ package org.jivesoftware.openfire.fastpath.macros;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.thoughtworks.xstream.XStream;
 
 public class WorkgroupMacros {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupMacros.class);
+	
     private Map<Workgroup, MacroGroup> rootGroups = new HashMap<Workgroup, MacroGroup>();
 
     private static WorkgroupMacros singleton;
@@ -145,7 +148,7 @@ public class WorkgroupMacros {
             props.setProperty("jive.macro" + id, saveString);
         }
         catch (UnauthorizedException e) {
-           Log.error(e);
+           Log.error(e.getMessage(), e);
         }
     }
 

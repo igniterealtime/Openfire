@@ -21,6 +21,7 @@
 package org.jivesoftware.xmpp.workgroup.dispatcher;
 
 import org.jivesoftware.xmpp.workgroup.DbProperties;
+import org.jivesoftware.xmpp.workgroup.Offer;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.WorkgroupResultFilter;
@@ -69,7 +70,7 @@ public interface Dispatcher extends DbProperties {
      *
      * @return An iterator over Offers currently being made
      */
-    Iterator getOffers();
+    Iterator<Offer> getOffers();
 
     /**
      * <p>Obtain an iterator over the offers currently outstanding with results filtered by given filter.</p>
@@ -77,7 +78,7 @@ public interface Dispatcher extends DbProperties {
      * @param filter The filter to apply to the search results
      * @return An iterator over Offers currently being made
      */
-    Iterator getOffers(WorkgroupResultFilter filter);
+    Iterator<Offer> getOffers(WorkgroupResultFilter filter);
 
     /**
      * Returns the algorithm that selects the best agent of the queue for receiving an offer.

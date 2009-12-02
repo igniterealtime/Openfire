@@ -20,7 +20,11 @@
 
 package org.jivesoftware.xmpp.workgroup.utils;
 
-import org.jivesoftware.util.Log;
+import java.rmi.server.UID;
+import java.util.Date;
+import java.util.Properties;
+import java.util.StringTokenizer;
+
 import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
@@ -32,12 +36,13 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
-import java.rmi.server.UID;
-import java.util.Date;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SendMail {
+	
+	private static final Logger Log = LoggerFactory.getLogger(SendMail.class);
+	
     private String toField;
     private String subjectField;
     private String messageText;

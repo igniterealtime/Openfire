@@ -21,16 +21,16 @@
 package org.jivesoftware.openfire.fastpath.dataforms;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
@@ -38,6 +38,9 @@ import com.thoughtworks.xstream.XStream;
 
 
 public class FormManager {
+	
+	private static final Logger Log = LoggerFactory.getLogger(FormManager.class);
+	
     private static FormManager singleton = new FormManager();
 
     private Map<Workgroup, WorkgroupForm> forms = new ConcurrentHashMap<Workgroup, WorkgroupForm>();
@@ -85,7 +88,7 @@ public class FormManager {
                 props.setProperty(context, xmlToSave);
             }
             catch (UnauthorizedException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 
@@ -153,17 +156,13 @@ public class FormManager {
             }
 
             if (elem.getAnswers().size() > 0 && elem.getAnswerType() != WorkgroupForm.FormEnum.hidden) {
-                Iterator iter = elem.getAnswers().iterator();
-                while (iter.hasNext()) {
-                    String item = (String)iter.next();
+                for(String item : elem.getAnswers()) {
                     field.addOption(item, item);
                 }
             }
             else if (elem.getAnswers().size() > 0) {
                 // Add hidden element values.
-                Iterator iter = elem.getAnswers().iterator();
-                while (iter.hasNext()) {
-                    String item = (String)iter.next();
+                for(String item : elem.getAnswers()) {
                     field.addValue(item);
                 }
             }
@@ -180,7 +179,7 @@ public class FormManager {
             props.setProperty(context, xmlToSave);
         }
         catch (UnauthorizedException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
     }
@@ -198,7 +197,7 @@ public class FormManager {
                 return (DataForm) xstream.fromXML(form);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return null;
@@ -223,7 +222,7 @@ public class FormManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
             else {

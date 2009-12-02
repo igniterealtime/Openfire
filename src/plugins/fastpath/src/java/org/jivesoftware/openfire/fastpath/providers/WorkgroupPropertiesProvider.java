@@ -25,15 +25,18 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 public class WorkgroupPropertiesProvider implements WorkgroupProvider {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupPropertiesProvider.class);
+	
     public boolean handleGet(IQ packet) {
         Element iq = packet.getChildElement();
         String name = iq.getName();
@@ -73,7 +76,7 @@ public class WorkgroupPropertiesProvider implements WorkgroupProvider {
                 returnPacket.addElement("name").setText(fullName);
             }
             catch (UserNotFoundException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
 
         }

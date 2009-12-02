@@ -35,7 +35,6 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
@@ -44,6 +43,8 @@ import org.jivesoftware.xmpp.workgroup.UserCommunicationMethod;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.chatbot.ChatbotSession;
 import org.jivesoftware.xmpp.workgroup.spi.WorkgroupCompatibleClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -56,6 +57,8 @@ import org.xmpp.packet.JID;
  */
 public class UserRequest extends Request {
 
+	private static final Logger Log = LoggerFactory.getLogger(UserRequest.class);
+	
     private static final String INSERT_SESSION =
             "INSERT INTO fpSession(sessionID, userID, workgroupID, state, queueWaitTime, " +
             "startTime, endTime) values(?,?,?,?,?,?,?)";
@@ -131,9 +134,9 @@ public class UserRequest extends Request {
         // compatible client
         this.communicationMethod = WorkgroupCompatibleClient.getInstance();
 
-        Iterator elementIter = packet.getChildElement().elementIterator();
+        Iterator<Element> elementIter = packet.getChildElement().elementIterator();
         while (elementIter.hasNext()) {
-            Element element = (Element)elementIter.next();
+            Element element = elementIter.next();
             if ("queue-notifications".equals(element.getName())) {
                 setNotify(true);
             }
@@ -145,8 +148,8 @@ public class UserRequest extends Request {
                 }
             }
             else if ("metadata".equals(element.getName())) {
-                for (Iterator i = element.elementIterator(); i.hasNext();) {
-                    Element item = (Element)i.next();
+                for (Iterator<Element> i = element.elementIterator(); i.hasNext();) {
+                    Element item = i.next();
                     if ("value".equals(item.getName())) {
                         String name = item.attributeValue("name");
                         if (name != null) {
@@ -207,7 +210,7 @@ public class UserRequest extends Request {
             communicationMethod.notifyQueueStatus(workgroup.getJID(), userJID, this, isPolling);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -387,7 +390,7 @@ public class UserRequest extends Request {
             communicationMethod.notifyQueueDepartued(sender, userJID, this, type);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -497,7 +500,7 @@ public class UserRequest extends Request {
             pstmt.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(con);

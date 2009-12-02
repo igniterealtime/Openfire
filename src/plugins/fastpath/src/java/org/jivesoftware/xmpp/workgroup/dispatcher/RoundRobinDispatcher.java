@@ -35,7 +35,6 @@ import org.jivesoftware.util.BeanUtils;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
 import org.jivesoftware.xmpp.workgroup.AgentSessionList;
@@ -49,6 +48,8 @@ import org.jivesoftware.xmpp.workgroup.request.Request;
 import org.jivesoftware.xmpp.workgroup.request.UserRequest;
 import org.jivesoftware.xmpp.workgroup.spi.JiveLiveProperties;
 import org.jivesoftware.xmpp.workgroup.spi.dispatcher.DbDispatcherInfoProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>Implements simple round robin dispatching of offers to agents.</p>
@@ -59,6 +60,9 @@ import org.jivesoftware.xmpp.workgroup.spi.dispatcher.DbDispatcherInfoProvider;
  * @author Iain Shigeoka
  */
 public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
+	
+	private static final Logger Log = LoggerFactory.getLogger(RoundRobinDispatcher.class);
+			
     /**
      * <p>The circular list of agents in the pool.</p>
      */
@@ -232,7 +236,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -486,10 +490,10 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             this.info = info;
         }
         catch (NotFoundException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         catch (UnsupportedOperationException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -497,11 +501,11 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
         return offers.size();
     }
 
-    public Iterator getOffers() {
+    public Iterator<Offer> getOffers() {
         return offers.iterator();
     }
 
-    public Iterator getOffers(WorkgroupResultFilter filter) {
+    public Iterator<Offer> getOffers(WorkgroupResultFilter filter) {
         return filter.filter(offers.iterator());
     }
 
@@ -536,7 +540,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             }
         }
         catch (Exception e) {
-           Log.error(e);
+           Log.error(e.getMessage(), e);
        }
         // Save the agentSelectoras a property of the dispatcher
         try {
@@ -546,7 +550,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             }
         }
         catch (Exception e) {
-           Log.error(e);
+           Log.error(e.getMessage(), e);
        }
     }
 
@@ -594,7 +598,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
             BeanUtils.setProperties(agentSelector, agentSelectorProps);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

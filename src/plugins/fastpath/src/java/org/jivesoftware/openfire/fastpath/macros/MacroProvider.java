@@ -21,7 +21,6 @@
 package org.jivesoftware.openfire.fastpath.macros;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.Agent;
 import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
@@ -29,6 +28,8 @@ import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -36,6 +37,8 @@ import com.thoughtworks.xstream.XStream;
 
 public class MacroProvider implements WorkgroupProvider {
 
+	private static final Logger Log = LoggerFactory.getLogger(MacroProvider.class);
+	
     public boolean handleGet(IQ packet) {
         Element iq = packet.getChildElement();
         String name = iq.getName();
@@ -130,7 +133,7 @@ public class MacroProvider implements WorkgroupProvider {
                 props.setProperty("personal.macro", saveString);
             }
             catch (UnauthorizedException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
 
             reply = IQ.createResultIQ(packet);

@@ -25,18 +25,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.AgentNotFoundException;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
 import org.jivesoftware.xmpp.workgroup.WorkgroupProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -48,6 +48,8 @@ import org.xmpp.packet.PacketError;
  */
 public class MetadataProvider implements WorkgroupProvider {
 
+	private static final Logger Log = LoggerFactory.getLogger(MetadataProvider.class);
+	
     /**
      * Returns true if the IQ packet name equals "generic-metadata".
      *
@@ -98,7 +100,7 @@ public class MetadataProvider implements WorkgroupProvider {
                 Properties props = new Properties();
                 try {
                     props.load(new FileInputStream(file));
-                    Enumeration properties = props.propertyNames();
+                    Enumeration<?> properties = props.propertyNames();
                     while (properties.hasMoreElements()) {
                         String key = (String)properties.nextElement();
                         String value = props.getProperty(key);
@@ -106,7 +108,7 @@ public class MetadataProvider implements WorkgroupProvider {
                     }
                 }
                 catch (IOException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -115,10 +117,10 @@ public class MetadataProvider implements WorkgroupProvider {
         //  it would never be mapped correctly.
         final Element genericSetting = reply.setChildElement("generic-metadata",
                 "http://jivesoftware.com/protocol/workgroup");
-        final Iterator mappings = map.keySet().iterator();
-        while (mappings.hasNext()) {
-            String key = (String)mappings.next();
-            String value = map.get(key);
+
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
 
             // Create a name-value element
             Element element = genericSetting.addElement("entry");

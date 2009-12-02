@@ -19,18 +19,19 @@
  */
 package org.jivesoftware.xmpp.workgroup.spi;
 
-import org.jivesoftware.xmpp.workgroup.DbProperties;
-import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-import org.xmpp.component.ComponentManagerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.xmpp.workgroup.DbProperties;
+import org.jivesoftware.xmpp.workgroup.UnauthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generic implementation of entity property manager will work against any standard
@@ -41,6 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JiveLiveProperties implements DbProperties {
 
+	private static final Logger Log = LoggerFactory.getLogger(JiveLiveProperties.class);
+	
     private long id;
     private Map<String, String> properties = new ConcurrentHashMap<String, String>();
     private String tableName;
@@ -82,7 +85,7 @@ public class JiveLiveProperties implements DbProperties {
             properties.remove(name);
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -108,7 +111,7 @@ public class JiveLiveProperties implements DbProperties {
             }
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -127,7 +130,7 @@ public class JiveLiveProperties implements DbProperties {
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -146,7 +149,7 @@ public class JiveLiveProperties implements DbProperties {
             pstmt.executeUpdate();
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

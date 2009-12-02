@@ -20,7 +20,6 @@
 
 package org.jivesoftware.openfire.fastpath.dataforms;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class FormUtils {
@@ -39,7 +38,7 @@ public class FormUtils {
     }
 
 
-    public static String createAnswers(String name, WorkgroupForm.FormEnum answerType, List items) {
+    public static String createAnswers(String name, WorkgroupForm.FormEnum answerType, List<String> items) {
         final StringBuilder builder = new StringBuilder();
         if (WorkgroupForm.FormEnum.textfield == answerType) {
             builder.append("<input type=\"text\" size=\"30\" name=\"").append(name).append("\">");
@@ -51,9 +50,7 @@ public class FormUtils {
         else if (WorkgroupForm.FormEnum.dropdown_box == answerType) {
             builder.append("<select name=\"").append(name).append("\">");
             if (items != null) {
-                Iterator iterator = items.iterator();
-                while (iterator.hasNext()) {
-                    String item = (String)iterator.next();
+            	for(String item : items) {
                     builder.append("<option value=\"").append(item).append("\">").append(item)
                             .append("</option>");
                 }
@@ -65,10 +62,8 @@ public class FormUtils {
                 return null;
             }
 
-            Iterator iter = items.iterator();
             int counter = 0;
-            while(iter.hasNext()){
-                String value = (String)iter.next();
+            for(String value : items) {
                 builder.append("<input type=\"checkbox\" value=\"").append(value)
                         .append("\" name=\"").append(name).append(counter).append("\">");
                 builder.append("&nbsp;");
@@ -82,9 +77,7 @@ public class FormUtils {
                 return null;
             }
 
-            Iterator iter = items.iterator();
-            while(iter.hasNext()){
-                String value = (String)iter.next();
+              for(String value : items) {
                 builder.append("<input type=\"radio\" value=\"").append(value).append("\" name=\"")
                         .append(name).append("\">");
                 builder.append("&nbsp;");

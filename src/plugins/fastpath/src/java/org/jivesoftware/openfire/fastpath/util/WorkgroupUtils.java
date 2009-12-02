@@ -37,7 +37,6 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.xmpp.workgroup.Agent;
 import org.jivesoftware.xmpp.workgroup.AgentManager;
 import org.jivesoftware.xmpp.workgroup.RequestQueue;
@@ -47,6 +46,8 @@ import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
 import org.jivesoftware.xmpp.workgroup.dispatcher.AgentSelector;
 import org.jivesoftware.xmpp.workgroup.spi.dispatcher.BasicAgentSelector;
 import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
 
@@ -57,6 +58,8 @@ import org.xmpp.packet.JID;
  */
 public class WorkgroupUtils {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupUtils.class);
+	
     public static String updateWorkgroup(String workgroupName, String displayName,
             String description, int maxSize, int minSize, long requestTimeout, long offerTimeout) 
     {
@@ -135,7 +138,7 @@ public class WorkgroupUtils {
                 answer.add(algorithm);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 
@@ -145,7 +148,7 @@ public class WorkgroupUtils {
             install_algorithm:
             try {
                 Class algorithmClass = loadClass(className);
-                // Make sure that the interceptor isn't already installed.
+                // Make sure that the intercepter isn't already installed.
                 for (AgentSelector agentSelector : answer) {
                     if (algorithmClass.equals(agentSelector.getClass())) {
                         break install_algorithm;
@@ -155,7 +158,7 @@ public class WorkgroupUtils {
                 answer.add(algorithm);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return answer;
@@ -213,7 +216,7 @@ public class WorkgroupUtils {
      * @param agents the agents, in a comma delimited string.
      * @return a map of errors (if any)
      */
-    public static Map createWorkgroup(String workgroupName, String description, String agents) {
+    public static Map<String, String> createWorkgroup(String workgroupName, String description, String agents) {
         Map<String, String> errors = new HashMap<String, String>();
 
         // Get a workgroup manager
@@ -261,7 +264,7 @@ public class WorkgroupUtils {
                 errors.put("exists", "");
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
                 errors.put("general", "");
             }
         }
@@ -305,7 +308,7 @@ public class WorkgroupUtils {
                 queue.addMember(agent);
             }
             catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

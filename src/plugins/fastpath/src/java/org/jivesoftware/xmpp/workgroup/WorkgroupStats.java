@@ -20,17 +20,6 @@
 
 package org.jivesoftware.xmpp.workgroup;
 
-import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.Log;
-import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,8 +31,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.xmpp.workgroup.utils.ModelUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
+
 public class WorkgroupStats {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupStats.class);
+	
     private static final String GET_SESSIONS_WITH_TRANSCRIPTS =
             "SELECT sessionID, startTime, endTime FROM fpSession WHERE workgroupID=? AND " +
             "userID=? AND transcript IS NOT NULL";
@@ -55,8 +57,8 @@ public class WorkgroupStats {
     private static final FastDateFormat UTC_FORMAT = FastDateFormat
         .getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
 
-    private List chatList = new ArrayList();
-    private List transferList = new ArrayList();
+    private List<Object[]> chatList = new ArrayList<Object[]>();
+    private List<Object[]> transferList = new ArrayList<Object[]>();
     private Workgroup workgroup;
 
     // Defined Variables used in Stats
@@ -75,30 +77,30 @@ public class WorkgroupStats {
         this.workgroup = workgroup;
     }
 
-    public void processStatistics(Map map) {
-        final String action = (String)map.get(ACTION);
+    public void processStatistics(Map<String, String> map) {
+        final String action = map.get(ACTION);
         if (END_OF_CHAT.equals(action)) {
-            String agent = (String)map.get(AGENT_JID);
-            Long startTime = new Long((String)map.get(START_TIME));
-            Long endTime = new Long((String)map.get(END_TIME));
+            String agent = map.get(AGENT_JID);
+            Long startTime = new Long(map.get(START_TIME));
+            Long endTime = new Long(map.get(END_TIME));
             // String chatRoom = (String)map.get(CHAT_ROOM);
             // String workgroupName = (String)map.get(WORKGROUP_NAME);
             chatList.add(new Object[]{agent, startTime, endTime});
         }
         else if (AGENT_TRANSFER.equals(action)) {
-            final String agent = (String)map.get(AGENT_JID);
-            final Long startTime = new Long((String)map.get(START_TIME));
-            final Long transferTime = new Long((String)map.get(END_TIME));
-            final String agentTransferedTo = (String)map.get(OTHER_AGENT_JID);
+            final String agent = map.get(AGENT_JID);
+            final Long startTime = new Long(map.get(START_TIME));
+            final Long transferTime = new Long(map.get(END_TIME));
+            final String agentTransferedTo = map.get(OTHER_AGENT_JID);
             transferList.add(new Object[]{agent, startTime, transferTime, agentTransferedTo});
         }
     }
 
-    public Iterator getCompletedChats() {
+    public Iterator<Object[]> getCompletedChats() {
         return chatList.iterator();
     }
 
-    public Iterator getChatsTransfered() {
+    public Iterator<Object[]> getChatsTransfered() {
         return transferList.iterator();
     }
 
@@ -150,7 +152,7 @@ public class WorkgroupStats {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
     }
 
@@ -175,7 +177,7 @@ public class WorkgroupStats {
                 }
             }
             catch (SQLException sqle) {
-                Log.error(sqle);
+                Log.error(sqle.getMessage(), sqle);
             }
             finally {
                 DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -183,8 +185,8 @@ public class WorkgroupStats {
             if (transcriptXML != null) {
                 Document element = DocumentHelper.parseText(transcriptXML);
                 // Add the Messages and Presences contained in the retrieved transcript element
-                for (Iterator it = element.getRootElement().elementIterator(); it.hasNext();) {
-                    Element packet = (Element)it.next();
+                for (Iterator<Element> it = element.getRootElement().elementIterator(); it.hasNext();) {
+                    Element packet = it.next();
                     transcript.add(packet.createCopy());
                 }
             }
@@ -228,7 +230,7 @@ public class WorkgroupStats {
             }
         }
         catch (Exception ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

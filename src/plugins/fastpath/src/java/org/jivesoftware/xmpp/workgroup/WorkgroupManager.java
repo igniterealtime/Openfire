@@ -58,7 +58,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.xmpp.workgroup.disco.IQDiscoInfoHandler;
 import org.jivesoftware.xmpp.workgroup.disco.IQDiscoItemsHandler;
@@ -67,6 +66,8 @@ import org.jivesoftware.xmpp.workgroup.routing.RoutingManager;
 import org.jivesoftware.xmpp.workgroup.search.ChatSearchManager;
 import org.jivesoftware.xmpp.workgroup.search.IQChatSearchHandler;
 import org.jivesoftware.xmpp.workgroup.utils.FastpathConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -86,6 +87,8 @@ import org.xmpp.packet.Presence;
  */
 public class WorkgroupManager implements Component {
 
+	private static final Logger Log = LoggerFactory.getLogger(WorkgroupManager.class);
+	
     private static final String LOAD_WORKGROUPS =
         "SELECT workgroupID FROM fpWorkgroup";
     private static final String ADD_WORKGROUP =
@@ -340,7 +343,7 @@ public class WorkgroupManager implements Component {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             if (id != -1) {
                 try {
                     if (workgroup != null) {
@@ -350,7 +353,7 @@ public class WorkgroupManager implements Component {
                     }
                 }
                 catch (Exception e1) {
-                    Log.error(e1);
+                    Log.error(e1.getMessage(), e1);
                 }
             }
             if (e instanceof UserAlreadyExistsException) {
@@ -453,11 +456,11 @@ public class WorkgroupManager implements Component {
         return Collections.unmodifiableCollection(copy);
     }
 
-    public Iterator getWorkgroups(WorkgroupResultFilter filter) {
+    public Iterator<Workgroup> getWorkgroups(WorkgroupResultFilter filter) {
         final List<Workgroup> wgroups = new ArrayList<Workgroup>(workgroups.values());
         Collections.sort(wgroups, workgroupComparator);
 
-        Iterator groups = filter.filter(wgroups.iterator());
+        Iterator<Workgroup> groups = filter.filter(wgroups.iterator());
         if (groups == null) {
             groups = Collections.EMPTY_LIST.iterator();
         }
@@ -556,7 +559,7 @@ public class WorkgroupManager implements Component {
                             ChatSearchManager.getInstanceFor(group).updateIndex(false);
                         }
                         catch (IOException e) {
-                            Log.error(e);
+                            Log.error(e.getMessage(), e);
                         }
                     }
                 }
@@ -607,7 +610,7 @@ public class WorkgroupManager implements Component {
             return true;
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -625,7 +628,7 @@ public class WorkgroupManager implements Component {
             pstmt.executeUpdate();
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -650,7 +653,7 @@ public class WorkgroupManager implements Component {
             }
         }
         catch (SQLException ex) {
-            Log.error(ex);
+            Log.error(ex.getMessage(), ex);
         }
         finally {
             workgroupLock.writeLock().unlock();
@@ -719,7 +722,7 @@ public class WorkgroupManager implements Component {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -855,7 +858,7 @@ public class WorkgroupManager implements Component {
         }
         catch (ComponentException e) {
             // Do nothing. This error should never happen
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -933,7 +936,7 @@ public class WorkgroupManager implements Component {
             return true;
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         return false;
     }
@@ -951,7 +954,7 @@ public class WorkgroupManager implements Component {
             }
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return false;
         }
         return true;

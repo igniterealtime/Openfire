@@ -3,8 +3,6 @@ package org.jivesoftware.openfire.plugin.rules;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.xmpp.packet.Packet;
 
-import java.util.List;
-
 
 public abstract class AbstractRule implements Rule {
 

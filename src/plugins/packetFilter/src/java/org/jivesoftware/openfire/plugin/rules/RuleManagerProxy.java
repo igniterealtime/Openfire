@@ -6,7 +6,7 @@ import java.util.List;
 public class RuleManagerProxy implements RuleManager {
 
     private DbRuleManager dbRuleManager = DbRuleManager.getInstance();
-    private List<Rule> rules = null;
+    //private List<Rule> rules = null;
 
     public RuleManagerProxy() {
        // rules = dbRuleManager.getRules();

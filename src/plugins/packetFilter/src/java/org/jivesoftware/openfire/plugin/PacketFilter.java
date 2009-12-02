@@ -5,7 +5,6 @@ import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.plugin.rules.Rule;
 import org.jivesoftware.openfire.plugin.rules.RuleManager;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.*;
 
 public class PacketFilter {

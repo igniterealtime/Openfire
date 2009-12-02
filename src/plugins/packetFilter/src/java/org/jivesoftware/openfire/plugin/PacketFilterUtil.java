@@ -1,13 +1,5 @@
 package org.jivesoftware.openfire.plugin;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.user.UserManager;
-import org.xmpp.packet.JID;
-
-import java.util.Collection;
 /*
    Static util methods.
 */

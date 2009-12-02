@@ -7,9 +7,9 @@
     <name>Packet Filter</name>
     <description>Rules to enforce ethical communication</description>
     <author>Nate Putnam</author>
-    <version>2.0.2</version>
-    <date>12/8/2007</date>
-    <minServerVersion>3.6.0</minServerVersion>
+    <version>3.0.0</version>
+    <date>12/2/2009</date>
+    <minServerVersion>3.6.5</minServerVersion>
     <databaseKey>packetfilter</databaseKey>
     <databaseVersion>2</databaseVersion>
 

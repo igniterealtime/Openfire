@@ -1,22 +1,24 @@
 package org.jivesoftware.openfire.plugin.component;
 
-import org.dom4j.Element;
-import org.xmpp.component.IQResultListener;
-import org.jivesoftware.openfire.IQRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.dom4j.Element;
+import org.jivesoftware.openfire.IQRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.component.IQResultListener;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 public class ComponentList implements IQResultListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(ComponentList.class);
+	
     private static ComponentList instance = new ComponentList();
     private XMPPServer server = XMPPServer.getInstance();
     private RoutingTable routingTable = server.getRoutingTable();
@@ -48,8 +50,8 @@ public class ComponentList implements IQResultListener {
 
             Element child = packet.getChildElement();
             if (child != null) {
-                for (Iterator it = child.elementIterator("identity"); it.hasNext();) {
-                    Element identity = (Element) it.next();
+                for (Iterator<Element> it = child.elementIterator("identity"); it.hasNext();) {
+                    Element identity = it.next();
                     String name = identity.attributeValue("name");
                     componentMap.put(packet.getFrom().toString(), name);
                 }

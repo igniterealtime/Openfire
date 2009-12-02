@@ -1,21 +1,24 @@
 package org.jivesoftware.openfire.plugin.rules;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.plugin.cluster.RulesUpdatedEvent;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.cache.CacheFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.plugin.cluster.RulesUpdatedEvent;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DbRuleManager {
-    //SQL Statments
+	
+	private static final Logger Log = LoggerFactory.getLogger(DbRuleManager.class);
+	
+    //SQL Statements
 
     private static final String UPDATE_RULE =
             "UPDATE ofPfRules" +
@@ -33,8 +36,8 @@ public class DbRuleManager {
     private static final String GET_RULES =
             "SELECT rulef,id,type,tojid,fromjid,disabled,log,description,ruleorder,sourcetype,desttype from ofPfRules order by ruleorder";
 
-    private static final String RULE_OPTIONS =
-            "SELECT optionKey, optionValue, optionRequired, classType from ofPfRulesOptions where ruleId = ?";
+    /*private static final String RULE_OPTIONS =
+            "SELECT optionKey, optionValue, optionRequired, classType from ofPfRulesOptions where ruleId = ?";*/
 
     /*private static final String GET_RULE_BY_ID =
             "SELECT rule,id,type,tojid,fromjid,disabled,log,description,ruleorder from ofPfRules where id=?";*/
@@ -100,7 +103,7 @@ public class DbRuleManager {
 
 
                     } catch (SQLException sqle) {
-                        Log.error(sqle);
+                        Log.error(sqle.getMessage(), sqle);
                     }
                     finally {
                         DbConnectionManager.closeConnection(pstmt, con);
@@ -112,46 +115,46 @@ public class DbRuleManager {
         return rules;
     }
 
-    private void getSavedOptions() {
-        if (rules != null) {
-            Connection con = null;
-            PreparedStatement pstmt = null;
-            ResultSet rs = null;
-            try {
-                for (Rule rule : rules) {
-                    Log.info("getting options for rule " + rule.getRuleId());
-                    con = DbConnectionManager.getConnection();
-                    pstmt = con.prepareStatement(RULE_OPTIONS);
-                    pstmt.setInt(1, Integer.parseInt(rule.getRuleId()));
-
-                    rs = pstmt.executeQuery();
-                    List<RuleOption> savedOptions = new ArrayList<RuleOption>();
-                    while (rs.next()) {
-                        RuleOption option = new RuleOption();
-                        option.setName(rs.getString(1));
-                        Log.info("Name " + option.getName());
-                        option.setValue(rs.getString(2));
-                        option.setRequired(rs.getBoolean(3));
-                        option.setType(rs.getString(4));
-                        savedOptions.add(option);
-                    }
-                    //rule.setSavedOptions(savedOptions);
-                    pstmt.close();
-                    rs.close();
-
-
-                }
-
-
-            } catch (SQLException sqle) {
-                Log.error(sqle);
-            }
-            finally {
-                DbConnectionManager.closeConnection(pstmt, con);
-            }
-
-        }
-    }
+//    private void getSavedOptions() {
+//        if (rules != null) {
+//            Connection con = null;
+//            PreparedStatement pstmt = null;
+//            ResultSet rs = null;
+//            try {
+//                for (Rule rule : rules) {
+//                    Log.info("getting options for rule " + rule.getRuleId());
+//                    con = DbConnectionManager.getConnection();
+//                    pstmt = con.prepareStatement(RULE_OPTIONS);
+//                    pstmt.setInt(1, Integer.parseInt(rule.getRuleId()));
+//
+//                    rs = pstmt.executeQuery();
+//                    List<RuleOption> savedOptions = new ArrayList<RuleOption>();
+//                    while (rs.next()) {
+//                        RuleOption option = new RuleOption();
+//                        option.setName(rs.getString(1));
+//                        Log.info("Name " + option.getName());
+//                        option.setValue(rs.getString(2));
+//                        option.setRequired(rs.getBoolean(3));
+//                        option.setType(rs.getString(4));
+//                        savedOptions.add(option);
+//                    }
+//                    //rule.setSavedOptions(savedOptions);
+//                    pstmt.close();
+//                    rs.close();
+//
+//
+//                }
+//
+//
+//            } catch (SQLException sqle) {
+//                Log.error(sqle.getMessage(), sqle);
+//            }
+//            finally {
+//                DbConnectionManager.closeConnection(pstmt, con);
+//            }
+//
+//        }
+//    }
 
     public int getLastOrderId() {
         Connection con = null;
@@ -170,7 +173,7 @@ public class DbRuleManager {
                 count = 0;
             }
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             // Result set probably empty
             return 0;
         }
@@ -194,7 +197,7 @@ public class DbRuleManager {
             count = rs.getInt(1);
 
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -246,7 +249,7 @@ public class DbRuleManager {
             rules.clear();
 
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             return false;
         }
         finally {
@@ -271,7 +274,7 @@ public class DbRuleManager {
             rules.remove(getRuleById(new Integer(ruleId)));
 
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             return false;
         }
         finally {
@@ -341,7 +344,7 @@ public class DbRuleManager {
 
 
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -398,7 +401,7 @@ public class DbRuleManager {
             rules.clear();
 
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error(sqle.getMessage(), sqle);
             return false;
         }
         finally {

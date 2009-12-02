@@ -31,7 +31,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -44,6 +45,9 @@ import org.xmpp.packet.JID;
  * @author <a href="mailto:ryan@version2software.com">Ryan Graham</a>
  */
 public class ImportExportPlugin implements Plugin {
+	
+	private static final Logger Log = LoggerFactory.getLogger(ImportExportPlugin.class);
+	
     private UserManager userManager;
     private UserProvider provider;
     private String serverName;
@@ -102,7 +106,7 @@ public class ImportExportPlugin implements Plugin {
            writer = new XMLWriter(stringWriter, OutputFormat.createPrettyPrint());
            writer.write(exportUsers());
         } catch (IOException ioe) {
-            Log.error(ioe);
+            Log.error(ioe.getMessage(), ioe);
             throw ioe;
         } finally {
             if (writer != null) {
@@ -144,7 +148,7 @@ public class ImportExportPlugin implements Plugin {
             return new UserSchemaValidator(file, "wildfire-user-schema.xsd.xml").validate();
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return false;
         }
     }
@@ -209,9 +213,9 @@ public class ImportExportPlugin implements Plugin {
         
         Element users = document.getRootElement();
         
-        Iterator usersIter = users.elementIterator("User");
+        Iterator<Element> usersIter = users.elementIterator("User");
         while (usersIter.hasNext()) {
-            Element user = (Element) usersIter.next();
+            Element user = usersIter.next();
             
             String userName = null;
             String password = null;
@@ -219,9 +223,9 @@ public class ImportExportPlugin implements Plugin {
             String name = null;
             List<RosterItem> rosterItems = new ArrayList<RosterItem>();
             
-            Iterator userElements = user.elementIterator();
+            Iterator<Element> userElements = user.elementIterator();
             while (userElements.hasNext()) {
-                Element userElement = (Element) userElements.next();
+                Element userElement = userElements.next();
                 
                 String nameElement = userElement.getName();
                 if ("Username".equals(nameElement)) {
@@ -237,10 +241,10 @@ public class ImportExportPlugin implements Plugin {
                     email = userElement.getText();
                 }
                 else if ("Roster".equals(nameElement)) {
-                    Iterator rosterIter = userElement.elementIterator("Item");
+                    Iterator<Element> rosterIter = userElement.elementIterator("Item");
                     
                     while (rosterIter.hasNext()) {
-                        Element rosterElement = (Element) rosterIter.next();
+                        Element rosterElement = rosterIter.next();
                         
                         String jid = rosterElement.attributeValue("jid");
                         String askstatus = rosterElement.attributeValue("askstatus");
@@ -249,9 +253,9 @@ public class ImportExportPlugin implements Plugin {
                         String nickname = rosterElement.attributeValue("name");
                         
                         List<String> groups = new ArrayList<String>();
-                        Iterator groupIter = rosterElement.elementIterator("Group");
+                        Iterator<Element> groupIter = rosterElement.elementIterator("Group");
                         while (groupIter.hasNext()) {
-                            Element group = (Element) groupIter.next();
+                            Element group = groupIter.next();
                             groups.add(group.getText());
                         }
                         

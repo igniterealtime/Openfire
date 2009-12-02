@@ -1,27 +1,31 @@
 package org.jivesoftware.openfire.plugin;
 
-import com.sun.msv.reader.util.GrammarLoader;
-import com.sun.msv.reader.util.IgnoreController;
-import com.sun.msv.verifier.DocumentDeclaration;
-import com.sun.msv.verifier.Verifier;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.fileupload.FileItem;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.SAXWriter;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;
 
-import java.io.IOException;
-import java.net.URL;
-
-import javax.xml.parsers.SAXParserFactory;
+import com.sun.msv.reader.util.GrammarLoader;
+import com.sun.msv.reader.util.IgnoreController;
+import com.sun.msv.verifier.DocumentDeclaration;
+import com.sun.msv.verifier.Verifier;
 
 public class UserSchemaValidator {
+	
+	private static final Logger Log = LoggerFactory.getLogger(UserSchemaValidator.class);
+	
     private Document doc;
     private String schema;
     
@@ -63,7 +67,7 @@ public class UserSchemaValidator {
                 return false;
             }
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
             return false;
         }
     }

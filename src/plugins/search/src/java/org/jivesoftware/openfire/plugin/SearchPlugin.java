@@ -43,10 +43,11 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
@@ -76,6 +77,9 @@ import org.xmpp.resultsetmanagement.ResultSetImpl;
  * @author <a href="mailto:ryan@version2software.com">Ryan Graham</a>
  */
 public class SearchPlugin implements Component, Plugin, PropertyEventListener {
+	
+	private static final Logger Log = LoggerFactory.getLogger(SearchPlugin.class);
+	
 	public static final String NAMESPACE_JABBER_IQ_SEARCH = "jabber:iq:search";
     public static final String SERVICENAME = "plugin.search.serviceName";
     public static final String SERVICEENABLED = "plugin.search.serviceEnabled";
@@ -160,7 +164,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             componentManager.addComponent(serviceName, this);
         }
         catch (ComponentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         PropertyEventDispatcher.addListener(this);
     }
@@ -196,7 +200,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         }
         catch (Exception e) {
             if (componentManager != null) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         serviceName = null;
@@ -238,7 +242,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
         try {
             componentManager.sendPacket(this, replyPacket);
         } catch (ComponentException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
     }
@@ -947,14 +951,14 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
             componentManager.removeComponent(this.serviceName);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         
         try {
             componentManager.addComponent(serviceName, this);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         
         this.serviceName = serviceName;

@@ -5,9 +5,9 @@
     <name>Presence Service</name>
     <description>Exposes presence information through HTTP.</description>
     <author>Jive Software</author>
-    <version>1.4.1</version>
-    <date>4/12/2007</date>
-    <minServerVersion>3.5.0</minServerVersion>
+    <version>1.5.0</version>
+    <date>12/2/2009</date>
+    <minServerVersion>3.6.5</minServerVersion>
 	
     <adminconsole>		
         <tab id="tab-server">

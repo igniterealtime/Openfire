@@ -32,7 +32,8 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
@@ -60,6 +61,8 @@ import org.xmpp.packet.Presence;
  */
 public class PresencePlugin implements Plugin, Component {
 
+	private static final Logger Log = LoggerFactory.getLogger(PresencePlugin.class);
+	
     private static final String subdomain = "presence";
 
     private UserManager userManager;
@@ -84,7 +87,7 @@ public class PresencePlugin implements Plugin, Component {
             componentManager.addComponent(subdomain, this);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -97,7 +100,7 @@ public class PresencePlugin implements Plugin, Component {
             componentManager = null;
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

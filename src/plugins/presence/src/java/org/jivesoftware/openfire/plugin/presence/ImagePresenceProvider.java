@@ -20,12 +20,6 @@
 
 package org.jivesoftware.openfire.plugin.presence;
 
-import org.jivesoftware.util.Log;
-import org.xmpp.packet.Presence;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +27,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Presence;
 
 /**
  * The ImagePresenceProvider provides information about the users presence by returning
@@ -59,6 +61,8 @@ import java.util.Map;
  */
 class ImagePresenceProvider extends PresenceInfoProvider {
 
+	private static final Logger Log = LoggerFactory.getLogger(ImagePresenceProvider.class);
+	
     private PresenceStatusServlet servlet;
     private Map<String, byte[]> imageCache = new HashMap<String, byte[]>();
     private Map<String, String> imageTypeCache = new HashMap<String, String>();
@@ -136,7 +140,7 @@ class ImagePresenceProvider extends PresenceInfoProvider {
                 }
             }
             catch (IOException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         response.setContentType(contentType);

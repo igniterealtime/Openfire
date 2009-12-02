@@ -20,12 +20,9 @@
 
 package org.jivesoftware.openfire.plugin.presence;
 
-import org.jivesoftware.admin.AuthCheckFilter;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.plugin.PresencePlugin;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.xmpp.packet.Presence;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -33,9 +30,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+
+import org.jivesoftware.admin.AuthCheckFilter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.plugin.PresencePlugin;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Presence;
 
 /**
  * Servlet that provides information about the presence status of the users in the system.
@@ -51,6 +53,8 @@ import java.io.InputStream;
  */
 public class PresenceStatusServlet extends HttpServlet {
 
+	private static final Logger Log = LoggerFactory.getLogger(PresenceStatusServlet.class);
+	
     private PresencePlugin plugin;
     private XMLPresenceProvider xmlProvider;
     private ImagePresenceProvider imageProvider;

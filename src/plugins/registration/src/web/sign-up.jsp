@@ -9,8 +9,8 @@
 <%@ page import="org.jivesoftware.openfire.user.*,
                  org.jivesoftware.openfire.plugin.RegistrationPlugin,
                  org.jivesoftware.util.*,
-                 org.jivesoftware.stringprep.Stringprep,
-                 org.jivesoftware.stringprep.StringprepException,
+                 gnu.inet.encoding.Stringprep,
+                 gnu.inet.encoding.StringprepException,
                  org.xmpp.packet.JID"
 %>
 

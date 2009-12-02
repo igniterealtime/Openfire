@@ -16,6 +16,16 @@
 
 package org.jivesoftware.openfire.plugin;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
@@ -26,21 +36,12 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Registration plugin.
@@ -48,6 +49,9 @@ import java.util.Map;
  * @author Ryan Graham.
  */
 public class RegistrationPlugin implements Plugin {
+	
+	private static final Logger Log = LoggerFactory.getLogger(RegistrationPlugin.class);
+	
     private static final String URL = "registration/sign-up.jsp";
    
     /**
@@ -267,7 +271,7 @@ public class RegistrationPlugin implements Plugin {
     }
     
     private class RegistrationUserEventListener implements UserEventListener {
-        public void userCreated(User user, Map params) {
+        public void userCreated(User user, Map<String, Object> params) {
             if (imNotificationEnabled()) {
                 sendIMNotificatonMessage(user);
             }
@@ -285,10 +289,10 @@ public class RegistrationPlugin implements Plugin {
             }
         }
 
-        public void userDeleting(User user, Map params) {           
+        public void userDeleting(User user, Map<String, Object> params) {           
         }
 
-        public void userModified(User user, Map params) {
+        public void userModified(User user, Map<String, Object> params) {
         }
         
         private void sendIMNotificatonMessage(User user) {
@@ -311,7 +315,7 @@ public class RegistrationPlugin implements Plugin {
                            subject, body, null);
                }
                catch (Exception e) {
-                   Log.error(e);
+                   Log.error(e.getMessage(), e);
                }
            }
         }
@@ -339,7 +343,7 @@ public class RegistrationPlugin implements Plugin {
                 group.getMembers().add(XMPPServer.getInstance().createJID(user.getUsername(), null));
             }
             catch (GroupNotFoundException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
     }

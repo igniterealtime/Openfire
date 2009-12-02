@@ -20,9 +20,6 @@
 
 package org.jivesoftware.openfire.sip.calllog;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,12 +29,18 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Database persistence for CallLog class and database methods for call log store
  *
  * @author Thiago Rocha Camargo
  */
 public class CallLogDAO {
+
+	private static final Logger Log = LoggerFactory.getLogger(CallLogDAO.class);
 
     final static CallFilter emptyFilter = new CallFilter("", new ArrayList<String>());
 
@@ -82,21 +85,21 @@ public class CallLogDAO {
             }
             rs.close();
         } catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         } finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 }
             } catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             try {
                 if (con != null) {
                     con.close();
                 }
             } catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return calls;
@@ -226,21 +229,21 @@ public class CallLogDAO {
             }
             rs.close();
         } catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         } finally {
             try {
                 if (pstmt != null) {
                     pstmt.close();
                 }
             } catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             try {
                 if (con != null) {
                     con.close();
                 }
             } catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         return count;

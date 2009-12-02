@@ -77,7 +77,7 @@ public class SipManager implements SipListener {
     protected int registrarPort = -1;
     protected int registrationsExpiration = -1;
     protected String registrarTransport = null;
-    private int registerRetries = 0;
+    //private int registerRetries = 0;
     protected String stackAddress = null;
     protected String stackName = "JiveSIP";
     protected FromHeader fromHeader = null;
@@ -102,7 +102,7 @@ public class SipManager implements SipListener {
         this.localAddress = localAddress;
         registerProcessing = new RegisterProcessing(this);
         sipSecurityManager = new SipSecurityManager();
-        registerRetries = 0;
+        //registerRetries = 0;
     }
 
     /**
@@ -258,8 +258,8 @@ public class SipManager implements SipListener {
 
         if (sipStack != null) {
 
-            for (Iterator it = sipStack.getSipProviders(); it.hasNext();) {
-                SipProvider element = (SipProvider) it.next();
+            for (Iterator<SipProvider> it = sipStack.getSipProviders(); it.hasNext();) {
+                SipProvider element = it.next();
                 try {
                     sipStack.deleteSipProvider(element);
                 }
@@ -580,7 +580,7 @@ public class SipManager implements SipListener {
      * @throws CommunicationsException if a ParseException is to occur while initializing the array
      *                                 list.
      */
-    public ArrayList getLocalViaHeaders() throws CommunicationsException {
+    public ArrayList<ViaHeader> getLocalViaHeaders() throws CommunicationsException {
         if (viaHeaders != null) {
             return viaHeaders;
         }
@@ -739,7 +739,7 @@ public class SipManager implements SipListener {
 
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

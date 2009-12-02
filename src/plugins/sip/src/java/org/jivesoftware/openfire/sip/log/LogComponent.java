@@ -21,7 +21,8 @@
 package org.jivesoftware.openfire.sip.log;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;
@@ -36,6 +37,8 @@ import org.xmpp.packet.Packet;
  */
 public class LogComponent implements Component{
 
+	private static final Logger Log = LoggerFactory.getLogger(LogComponent.class);
+	
 	ComponentManager componentManager = null;
 	private LogListener logListener = null;
 
@@ -109,7 +112,7 @@ public class LogComponent implements Component{
 		try {
 			componentManager.sendPacket(this, reply);
 		} catch (Exception e) {
-			Log.error(e);
+			Log.error(e.getMessage(), e);
 		}
 
 	} // Other Methods

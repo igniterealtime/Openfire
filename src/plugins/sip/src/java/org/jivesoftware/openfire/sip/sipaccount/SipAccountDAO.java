@@ -20,9 +20,6 @@
 
 package org.jivesoftware.openfire.sip.sipaccount;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.Log;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,6 +27,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -39,6 +40,8 @@ import java.util.List;
  */
 public class SipAccountDAO {
 
+	private static final Logger Log = LoggerFactory.getLogger(SipAccountDAO.class);
+	
 	public static SipAccount getAccountByUser(String username) {
 
 		String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, " +
@@ -229,21 +232,21 @@ public class SipAccountDAO {
 			}
 			rs.close();
 		} catch (SQLException e) {
-			Log.error(e);
+			Log.error(e.getMessage(), e);
 		} finally {
 			try {
 				if (pstmt != null) {
 					pstmt.close();
 				}
 			} catch (Exception e) {
-				Log.error(e);
+				Log.error(e.getMessage(), e);
 			}
 			try {
 				if (con != null) {
 					con.close();
 				}
 			} catch (Exception e) {
-				Log.error(e);
+				Log.error(e.getMessage(), e);
 			}
 		}
 		return sipAccounts;
@@ -266,13 +269,13 @@ public class SipAccountDAO {
             rs.close();
         }
         catch (SQLException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         finally {
             try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
             try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return count;
     }

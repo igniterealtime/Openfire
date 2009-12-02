@@ -82,13 +82,13 @@ public class SipCommRouter implements Router {
      *
      * @param sipRequest is the sip request to route.
      */
-    public ListIterator getNextHops(Request sipRequest) {
+    public ListIterator<Hop> getNextHops(Request sipRequest) {
 
         URI requestURI = sipRequest.getRequestURI();
         if (requestURI == null) {
             throw new IllegalArgumentException("Bad message: Null requestURI");
         }
-        LinkedList hops = new LinkedList();
+        LinkedList<Hop> hops = new LinkedList<Hop>();
         if (outboundProxy != null) {
             hops.add(outboundProxy);
         }

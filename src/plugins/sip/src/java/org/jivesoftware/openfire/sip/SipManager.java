@@ -32,6 +32,8 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 
@@ -42,6 +44,8 @@ import org.xmpp.component.ComponentManagerFactory;
  */
 public class SipManager implements Plugin, PropertyEventListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(SipManager.class);
+	
     private String serviceName;
 
     private ComponentManager componentManager;
@@ -71,13 +75,13 @@ public class SipManager implements Plugin, PropertyEventListener {
             componentManager.addComponent(serviceName, sipComponent);
 
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         try {
             componentManager.addComponent(LogComponent.NAME, logComponent);
 
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
 
         PropertyEventDispatcher.addListener(this);
@@ -91,12 +95,12 @@ public class SipManager implements Plugin, PropertyEventListener {
             try {
                 componentManager.removeComponent(serviceName);
             } catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
             try {
                 componentManager.removeComponent(LogComponent.NAME);
             } catch (Exception e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
         sipComponent = null;
@@ -139,12 +143,12 @@ public class SipManager implements Plugin, PropertyEventListener {
         try {
             componentManager.removeComponent(this.serviceName);
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         try {
             componentManager.addComponent(serviceName, sipComponent);
         } catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         this.serviceName = serviceName;
     }

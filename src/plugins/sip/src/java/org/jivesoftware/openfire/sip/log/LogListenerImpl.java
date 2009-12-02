@@ -28,6 +28,8 @@ import org.jivesoftware.openfire.sip.calllog.CallLog;
 import org.jivesoftware.openfire.sip.calllog.CallLogDAO;
 import org.jivesoftware.openfire.sip.calllog.CallLogExtension;
 import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;
 
@@ -39,6 +41,8 @@ import org.xmpp.packet.IQ;
  */
 public class LogListenerImpl implements LogListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(LogListenerImpl.class);
+	
     ComponentManager componentManager = null;
 
     public LogListenerImpl(ComponentManager componentmanager) {
@@ -74,7 +78,7 @@ public class LogListenerImpl implements LogListener {
                 try {
                     CallLogDAO.insert(callLog);
                 } catch (SQLException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }

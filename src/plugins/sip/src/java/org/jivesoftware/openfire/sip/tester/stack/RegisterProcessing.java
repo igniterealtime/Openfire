@@ -53,7 +53,7 @@ class RegisterProcessing {
 
     private Timer reRegisterTimer = null;
 
-    private int keepAlivePort = 0;
+    //private int keepAlivePort = 0;
 
     private Timer keepAliveTimer = null;
 
@@ -242,7 +242,7 @@ class RegisterProcessing {
             }
             // User Agent Header
             UserAgentHeader uaHeader = null;
-            ArrayList userAgentList = new ArrayList();
+            ArrayList<String> userAgentList = new ArrayList<String>();
             userAgentList.add(SIPConfig.getStackName());
 
             try {

@@ -39,7 +39,7 @@ import java.util.List;
 public class SIPTest implements CommunicationsListener {
 
     private SipAccount sipAccount;
-    private InetAddress localAddress;
+    //private InetAddress localAddress;
     private Result result = null;
     private SipManager sipManager = null;
     private List<TestListener> listeners = new ArrayList<TestListener>();
@@ -52,7 +52,7 @@ public class SIPTest implements CommunicationsListener {
 
     public SIPTest(InetAddress localAddress, SipAccount sipAccount) {
         this.sipAccount = sipAccount;
-        this.localAddress = localAddress;
+        //this.localAddress = localAddress;
         sipManager = new SipManager(localAddress);
     }
 
@@ -93,25 +93,25 @@ public class SIPTest implements CommunicationsListener {
                     sipManager.startRegisterProcess(sipAccount.getSipUsername(), sipAccount.getAuthUsername(), sipAccount.getPassword());
                 } catch (CommunicationsException e) {
                     setResult(Result.NetworkError);
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
 
                 try {
                     Thread.sleep(timeout);
                 } catch (InterruptedException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
 
                 if (getResult().equals(Result.Trying)) setResult(Result.Timeout);
 
             } catch (CommunicationsException e) {
                 setResult(Result.NetworkError);
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             } finally {
                 try {
                     sipManager.stop();
                 } catch (CommunicationsException e) {
-                    Log.error(e);
+                    Log.error(e.getMessage(), e);
                 }
             }
         }
@@ -135,7 +135,7 @@ public class SIPTest implements CommunicationsListener {
         try {
             sipManager.unregister();
         } catch (CommunicationsException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -161,7 +161,7 @@ public class SIPTest implements CommunicationsListener {
             sipManager.stop();
             Log.debug("Stopped");
         } catch (CommunicationsException e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
     }
 

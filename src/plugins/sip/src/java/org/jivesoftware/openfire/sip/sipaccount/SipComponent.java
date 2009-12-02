@@ -26,7 +26,8 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.event.SessionEventListener;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
@@ -43,6 +44,8 @@ import org.xmpp.packet.PacketError;
  */
 public class SipComponent implements Component, SessionEventListener {
 
+	private static final Logger Log = LoggerFactory.getLogger(SipComponent.class);
+	
     ComponentManager componentManager = null;
 
     /**
@@ -140,7 +143,7 @@ public class SipComponent implements Component, SessionEventListener {
                                 SipAccountDAO.update(sipAccount);
                             }
                             catch (SQLException e) {
-                                Log.error(e);
+                                Log.error(e.getMessage(), e);
                             }
                         }
                     }
@@ -156,7 +159,7 @@ public class SipComponent implements Component, SessionEventListener {
             componentManager.sendPacket(this, reply);
         }
         catch (Exception e) {
-            Log.error(e);
+            Log.error(e.getMessage(), e);
         }
         Log.debug("PACKET SENT: " + reply.toXML());
     } // Other Methods
@@ -200,7 +203,7 @@ public class SipComponent implements Component, SessionEventListener {
                 SipAccountDAO.update(sipAccount);
             }
             catch (SQLException e) {
-                Log.error(e);
+                Log.error(e.getMessage(), e);
             }
         }
 

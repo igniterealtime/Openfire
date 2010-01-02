@@ -43,7 +43,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
@@ -91,7 +90,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Iain Shigeoka
  */
-public class PresenceSubscribeHandler extends BasicModule implements ChannelHandler {
+public class PresenceSubscribeHandler extends BasicModule implements ChannelHandler<Presence> {
 
 	private static final Logger Log = LoggerFactory.getLogger(PresenceSubscribeHandler.class);
 
@@ -107,8 +106,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         super("Presence subscription handler");
     }
 
-    public void process(Packet xmppPacket) throws PacketException {
-        Presence presence = (Presence) xmppPacket;
+    public void process(Presence presence) throws PacketException {
         try {
             JID senderJID = presence.getFrom();
             JID recipientJID = presence.getTo();
@@ -142,25 +140,23 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 if (!(type == Presence.Type.subscribed && recipientRoster != null && !recipientSubChanged)) {
 
                     // If the user is already subscribed to the *local* user's presence then do not 
-                    // forward the subscription request and instead send an auto-reply on behalf
-                    // of the user
+                    // forward the subscription request. Also, do not send an auto-reply on behalf
+                    // of the user. This presence stanza is the user's server know that it MUST no 
+                	// longer send notification of the subscription state change to the user. 
+                	// See http://tools.ietf.org/html/rfc3921#section-7 and/or OF-38 
                     if (type == Presence.Type.subscribe && recipientRoster != null && !recipientSubChanged) {
                         try {
                             RosterItem.SubType subType = recipientRoster.getRosterItem(senderJID)
                                     .getSubStatus();
                             if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
-                                // auto-reply by sending a presence stanza of type "subscribed"
-                                // to the contact on behalf of the user
-                                Presence reply = new Presence();
-                                reply.setTo(senderJID);
-                                reply.setFrom(recipientJID);
-                                reply.setType(Presence.Type.subscribed);
-                                deliverer.deliver(reply);
                                 return;
                             }
                         }
                         catch (UserNotFoundException e) {
                             // Weird case: Roster item does not exist. Should never happen
+                        	Log.error("User does not exist while trying to update roster item. " +
+                        			"This should never happen (this indicates a programming " +
+                        			"logic error). Processing stanza: " + presence.toString(), e);
                         }
                     }
 
@@ -234,14 +230,15 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     }
 
     /**
-     * Manage the subscription request. This method retrieves a user's roster
-     * and updates it's state, storing any changes made, and updating the roster
-     * owner if changes occured.
+     * Manage the subscription request. This method updates a user's roster
+     * state, storing any changes made, and updating the roster owner if changes
+     * occured.
      *
      * @param target    The roster target's jid (the item's jid to be changed)
      * @param isSending True if the request is being sent by the owner
      * @param type      The subscription change type (subscribe, unsubscribe, etc.)
-     * @return true if the subscription state has changed.
+     * @param roster    The Roster that is updated.
+     * @return <tt>true</tt> if the subscription state has changed.
      */
     private boolean manageSub(JID target, boolean isSending, Presence.Type type, Roster roster)
             throws UserAlreadyExistsException, SharedGroupException

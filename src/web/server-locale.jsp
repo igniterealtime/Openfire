@@ -179,23 +179,32 @@
             </tr>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="sk" <%= ("sk".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="ru_RU" <%= ("ru_RU".equals(locale.toString()) ? "checked" : "") %>
                      id="loc09" />
                 </td>
                 <td colspan="2">
-                    <label for="loc09">Sloven&#269;ina (sk)</label>
+                    <label for="loc09">&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439; (ru_RU)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="sk" <%= ("sk".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc10" />
+                </td>
+                <td colspan="2">
+                    <label for="loc10">Sloven&#269;ina (sk)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc10" />
+                     id="loc11" />
                 </td>
                 <td>
                     <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" alt="" /></a>
                 </td>
                 <td>
-                    <label for="loc10">Simplified Chinese (zh_CN)</label>
+                    <label for="loc11">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

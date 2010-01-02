@@ -107,8 +107,16 @@ start() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_LOGDIR
 
-        # Start daemons.
-        echo -n "Starting openfire: "
+    # Check if the server is already running. We look only for the pid file
+    pid=`cat $OPENFIRE_PIDFILE 2>&1`                                       
+    if [ "$?" = "0" ]; then                                                
+        echo "Openfire is already running"                                 
+        RETVAL=1                                                           
+        return                                                             
+    fi                                                                     
+                                                                           
+    # Start daemons.                                                       
+    echo -n "Starting openfire: "                                          
 
 	rm -f nohup.out
 	su -s /bin/sh -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &" $OPENFIRE_USER

@@ -110,7 +110,7 @@ start() {
     # Check if the server is already running. We look only for the pid file
     pid=`cat $OPENFIRE_PIDFILE 2>&1`                                       
     if [ "$?" = "0" ]; then                                                
-        echo "Openfire is already running"                                 
+        echo "Openfire is already running. Remove $OPENFIRE_PIDFILE if you know this to be untrue."                                 
         RETVAL=1                                                           
         return                                                             
     fi                                                                     

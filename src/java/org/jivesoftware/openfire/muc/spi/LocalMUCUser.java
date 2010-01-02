@@ -315,15 +315,16 @@ public class LocalMUCUser implements MUCUser {
                                     // Send invitations to invitees
                                     for (Iterator it=userInfo.elementIterator("invite");it.hasNext();) {
                                         Element info = (Element) it.next();
+                                        JID jid = new JID(info.attributeValue("to"));
 
                                         // Add the user as a member of the room if the room is
                                         // members only
                                         if (room.isMembersOnly()) {
-                                            room.addMember(info.attributeValue("to"), null, role);
+                                            room.addMember(jid, null, role);
                                         }
 
                                         // Send the invitation to the invitee
-                                        room.sendInvitation(new JID(info.attributeValue("to")),
+                                        room.sendInvitation(jid,
                                                 info.elementTextTrim("reason"), role, extensions);
                                     }
                                 }

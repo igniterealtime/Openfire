@@ -219,21 +219,21 @@ public class IQOwnerHandler {
         }
         else {
             // The client is modifying the list of owners or admins
-            Map<String,String> jids = new HashMap<String,String>();
+            Map<JID,String> jids = new HashMap<JID,String>();
             String nick;
             // Collect the new affiliations for the specified jids
             for (final Element item : itemsList) {
                 try {
                     String affiliation = item.attributeValue("affiliation");
-                    String bareJID;
+                    JID jid;
                     if (hasJID) {
-                        bareJID = new JID(item.attributeValue("jid")).toBareJID();
+                        jid = new JID(item.attributeValue("jid"));
                     } else {
                         // Get the bare JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        bareJID = room.getOccupant(nick).getUserAddress().toBareJID();
+                        jid = room.getOccupant(nick).getUserAddress();
                     }
-                    jids.put(bareJID, affiliation);
+                    jids.put(jid, affiliation);
                 }
                 catch (UserNotFoundException e) {
                     // Do nothing
@@ -255,26 +255,26 @@ public class IQOwnerHandler {
 
                 room.lock.readLock().unlock();
                 try {
-                    for (String bareJID : jids.keySet()) {
-                        String targetAffiliation = jids.get(bareJID);
+                    for (JID jid : jids.keySet()) {
+                        String targetAffiliation = jids.get(jid);
                         if ("owner".equals(targetAffiliation)) {
                             // Add the new user as an owner of the room
-                            presences.addAll(room.addOwner(bareJID, senderRole));
+                            presences.addAll(room.addOwner(jid, senderRole));
                         } else if ("admin".equals(targetAffiliation)) {
                             // Add the new user as an admin of the room
-                            presences.addAll(room.addAdmin(bareJID, senderRole));
+                            presences.addAll(room.addAdmin(jid, senderRole));
                         } else if ("member".equals(targetAffiliation)) {
                             // Add the new user as a member of the room
-                            boolean hadAffiliation = room.getAffiliation(bareJID) != MUCRole.Affiliation.none;
-                            presences.addAll(room.addMember(bareJID, null, senderRole));
+                            boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.Affiliation.none;
+                            presences.addAll(room.addMember(jid, null, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only
                             if (!hadAffiliation && room.isMembersOnly()) {
-                                room.sendInvitation(new JID(bareJID), null, senderRole, null);
+                                room.sendInvitation(jid, null, senderRole, null);
                             }
                         } else if ("none".equals(targetAffiliation)) {
                             // Set that this jid has a NONE affiliation
-                            presences.addAll(room.addNone(bareJID, senderRole));
+                            presences.addAll(room.addNone(jid, senderRole));
                         }
                     }
                 }
@@ -524,7 +524,7 @@ public class IQOwnerHandler {
             ownersToRemove.removeAll(admins);
             ownersToRemove.removeAll(owners);
             for (String jid : ownersToRemove) {
-                presences.addAll(room.addMember(jid, null, senderRole));
+                presences.addAll(room.addMember(new JID(jid), null, senderRole));
             }
         }
 
@@ -535,7 +535,7 @@ public class IQOwnerHandler {
             adminsToRemove.removeAll(admins);
             adminsToRemove.removeAll(owners);
             for (String jid : adminsToRemove) {
-                presences.addAll(room.addMember(jid, null, senderRole));
+                presences.addAll(room.addMember(new JID(jid), null, senderRole));
             }
         }
 

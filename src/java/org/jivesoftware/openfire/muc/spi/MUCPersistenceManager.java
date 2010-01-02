@@ -263,7 +263,7 @@ public class MUCPersistenceManager {
             pstmt.setLong(1, room.getID());
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                String jid = rs.getString(1);
+                JID jid = new JID(rs.getString(1));
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(2));
                 try {
                     switch (affiliation) {
@@ -278,7 +278,7 @@ public class MUCPersistenceManager {
                             break;
                         default:
                             Log.error("Unkown affiliation value " + affiliation + " for user "
-                                    + jid + " in persistent room " + room.getID());
+                                    + jid.toBareJID() + " in persistent room " + room.getID());
                     }
                 }
                 catch (Exception e) {
@@ -293,7 +293,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 try {
-                    room.addMember(rs.getString(1), rs.getString(2), room.getRole());
+                    room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);
@@ -556,7 +556,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 long roomID = rs.getLong(1);
-                String jid = rs.getString(2);
+                JID jid = new JID(rs.getString(2));
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
                 LocalMUCRoom room = rooms.get(roomID);
                 // Skip to the next position if the room does not exist
@@ -596,7 +596,7 @@ public class MUCPersistenceManager {
                     continue;
                 }
                 try {
-                    room.addMember(rs.getString(2), rs.getString(3), room.getRole());
+                    room.addMember(new JID(rs.getString(2)), rs.getString(3), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);

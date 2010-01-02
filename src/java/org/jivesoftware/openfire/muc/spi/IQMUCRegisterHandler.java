@@ -169,7 +169,7 @@ class IQMUCRegisterHandler {
 
                 if (ElementUtil.includesProperty(iq, "query.remove")) {
                     // The user is deleting his registration
-                    presences.addAll(room.addNone(packet.getFrom().toBareJID(), room.getRole()));
+                    presences.addAll(room.addNone(packet.getFrom(), room.getRole()));
                 }
                 else {
                     // The user is trying to register with a room
@@ -188,7 +188,7 @@ class IQMUCRegisterHandler {
                         // MUCRoom.addMember in order to receive a RegistrationInfo (new class)
 
                         // Add the new member to the members list
-                        presences.addAll(room.addMember(packet.getFrom().toBareJID(),
+                        presences.addAll(room.addMember(packet.getFrom(),
                                 nickname,
                                 room.getRole()));
                     }

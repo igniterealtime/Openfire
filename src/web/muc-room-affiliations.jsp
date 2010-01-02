@@ -57,16 +57,20 @@
         if (userJID == null) {
             errors.put("userJID","userJID");
         }
-        else if (userJID.indexOf('@') == -1) {
-            userJID = webManager.getXMPPServer().createJID(userJID, null).toBareJID();
-        }
 
         if (errors.size() == 0) {
             try {
                 // Escape username
-                String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
-                String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
-                userJID = username + rest;
+                if (userJID.indexOf('@') == -1) {
+                    String username = JID.escapeNode(userJID);
+                    String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
+                    userJID = username + '@' + domain;
+                }
+                else {
+                    String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
+                    String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                    userJID = username + rest;
+                }
                 IQ iq = new IQ(IQ.Type.set);
                 if ("owner".equals(affiliation) || "admin".equals(affiliation)) {
                     Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");

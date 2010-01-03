@@ -32,6 +32,11 @@
     boolean groupEnabled = ParamUtils.getBooleanParameter(request, "groupenabled", false);
     boolean webEnabled = ParamUtils.getBooleanParameter(request, "webenabled", false);
 
+    boolean reCaptchaEnabled = ParamUtils.getBooleanParameter(request, "recaptcha", false);
+    boolean reCaptchaNoScript = ParamUtils.getBooleanParameter(request, "recaptchanoscript", false);
+    String reCaptchaPublicKey = ParamUtils.getParameter(request, "recaptchapublickey");
+    String reCaptchaPrivateKey = ParamUtils.getParameter(request, "recaptchaprivatekey");
+
     String contactIM = ParamUtils.getParameter(request, "contactIM");
     boolean addIM = ParamUtils.getBooleanParameter(request, "addIM");
     boolean deleteIM = ParamUtils.getBooleanParameter(request, "deleteIM");
@@ -108,6 +113,10 @@
         plugin.setEmailNotificationEnabled(emailEnabled);
         plugin.setWelcomeEnabled(welcomeEnabled);
         plugin.setWebEnabled(webEnabled);
+        plugin.setReCaptchaEnabled(reCaptchaEnabled);
+        plugin.setReCaptchaNoScript(reCaptchaNoScript);
+        plugin.setReCaptchaPublicKey(reCaptchaPublicKey);
+        plugin.setReCaptchaPrivateKey(reCaptchaPrivateKey);
         
         if (groupEnabled) {
             group = plugin.getGroup();
@@ -184,6 +193,10 @@
     welcomeMessage = plugin.getWelcomeMessage();
     group = plugin.getGroup();
     header = plugin.getHeader();
+    reCaptchaEnabled = plugin.reCaptchaEnabled();
+    reCaptchaNoScript = plugin.reCaptchaNoScript();
+    reCaptchaPublicKey = plugin.getReCaptchaPublicKey();
+    reCaptchaPrivateKey = plugin.getReCaptchaPrivateKey();
 %>
 
 <html>
@@ -249,23 +262,41 @@ function addEmailContact() {
     <tbody>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="imenabled" <%=(imEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_im_notification" /></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_im_notification" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="emailenabled" <%=(emailEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_email_notification" /></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_email_notification" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="welcomeenabled" <%=(welcomeEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_welcome_msg" /></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_welcome_msg" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="groupenabled" <%=(groupEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="webenabled" <%=(webEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left"><fmt:message key="registration.props.form.enable_web_registration" /> <%=plugin.webRegistrationAddress() %></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_web_registration" /> <%=plugin.webRegistrationAddress() %></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="checkbox" name="recaptcha" <%=(reCaptchaEnabled) ? "checked" : "" %>></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_recaptcha" /> <%=plugin.webRegistrationAddress() %></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="checkbox" name="recaptchanoscript" <%=(reCaptchaNoScript) ? "checked" : "" %>></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.recaptcha_noscript" /></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap>&nbsp;</td>
+            <td width="24%" align="left"><fmt:message key="registration.props.form.recaptcha_public_key" /></td>
+            <td width="75%" align="left"><input type="text" name="recaptchapublickey" size="40" maxlength="100" value="<%= (reCaptchaPublicKey != null ? reCaptchaPublicKey : "") %>"/></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap>&nbsp;</td>
+            <td width="24%" align="left"><fmt:message key="registration.props.form.recaptcha_private_key" /></td>
+            <td width="75%" align="left"><input type="text" name="recaptchaprivatekey" size="40" maxlength="100" value="<%= (reCaptchaPrivateKey != null ? reCaptchaPrivateKey : "") %>"/></td>
         </tr>
     </tbody>
     </table>

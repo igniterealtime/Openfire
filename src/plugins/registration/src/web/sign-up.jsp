@@ -11,7 +11,8 @@
                  org.jivesoftware.util.*,
                  gnu.inet.encoding.Stringprep,
                  gnu.inet.encoding.StringprepException,
-                 org.xmpp.packet.JID"
+                 org.xmpp.packet.JID,
+                 net.tanesha.recaptcha.*"
 %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -31,17 +32,28 @@
     </style>
     <meta name="decorator" content="none"/>
 </head>
-    
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <jsp:useBean id="errors" class="java.util.HashMap" />
 <%  webManager.init(request, response, session, application, out);
- 
+
     boolean create = request.getParameter("create") != null;
     String username = ParamUtils.getParameter(request,"username");
     String name = ParamUtils.getParameter(request,"name");
     String email = ParamUtils.getParameter(request,"email");
     String password = ParamUtils.getParameter(request,"password");
     String passwordConfirm = ParamUtils.getParameter(request,"passwordConfirm");
+    String reCaptchaChallenge = ParamUtils.getParameter(request,"recaptcha_challenge_field");
+    String reCaptchaResponse = ParamUtils.getParameter(request,"recaptcha_response_field");
+
+    RegistrationPlugin plugin = (RegistrationPlugin) webManager.getXMPPServer().getPluginManager().getPlugin("registration");
+    ReCaptcha reCaptcha = null;
+    if (plugin.reCaptchaEnabled()) {
+        reCaptcha = ReCaptchaFactory.newReCaptcha(
+                plugin.getReCaptchaPublicKey(),
+                plugin.getReCaptchaPrivateKey(),
+                plugin.reCaptchaNoScript());
+    }
 
     // Handle a request to create a user:
     if (create) {
@@ -68,6 +80,20 @@
         if (password != null && passwordConfirm != null && !password.equals(passwordConfirm)) {
             errors.put("passwordMatch","");
         }
+        if (plugin.reCaptchaEnabled()) {
+            ReCaptchaResponse captchaResponse = null;
+            try {
+                captchaResponse = reCaptcha.checkAnswer(
+                        request.getRemoteAddr(),
+                        reCaptchaChallenge,
+                        reCaptchaResponse);
+            }
+            catch (Exception e) {
+            }
+            if (captchaResponse == null || !captchaResponse.isValid()) {
+                errors.put("reCaptchaFail","");
+            }
+        }
 
         // do a create if there were no errors
         if (errors.size() == 0) {
@@ -86,8 +112,6 @@
             }
         }
     }
-    
-    RegistrationPlugin plugin = (RegistrationPlugin) webManager.getXMPPServer().getPluginManager().getPlugin("registration");
 %>
 
 <body>
@@ -138,6 +162,8 @@
                 <fmt:message key="registration.sign.up.invalid_match_password" />
             <% } else if (errors.get("passwordConfirm") != null) { %>
                 <fmt:message key="registration.sign.up.invalid_password_confirm" />
+            <% } else if (errors.get("reCaptchaFail") != null) { %>
+                <fmt:message key="registration.sign.up.recaptcha_fail" />
             <% } %>
             </td>
         </tr>
@@ -219,7 +245,11 @@
     </div>
 </div>
 
+<%  if (reCaptcha != null) { %>
+<%= reCaptcha.createRecaptchaHtml(null, null, 0) %>
+<%  } %>
 <input type="submit" name="create" value="<fmt:message key="registration.sign.up.create_account" />">
+
 </form>
 
 <script language="JavaScript" type="text/javascript">

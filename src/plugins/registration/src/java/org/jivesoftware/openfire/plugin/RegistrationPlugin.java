@@ -49,9 +49,9 @@ import org.xmpp.packet.Message;
  * @author Ryan Graham.
  */
 public class RegistrationPlugin implements Plugin {
-	
-	private static final Logger Log = LoggerFactory.getLogger(RegistrationPlugin.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(RegistrationPlugin.class);
+    
     private static final String URL = "registration/sign-up.jsp";
    
     /**
@@ -83,6 +83,27 @@ public class RegistrationPlugin implements Plugin {
      * url http://[SERVER_NAME}:9090/plugins/registration/sign-up.jsp
      */
     private static final String WEB_ENABLED = "registration.web.enabled";
+    
+    /**
+      * The expected value is a boolean, if true any users will be need to verify its a human at the
+     * following url http://[SERVER_NAME}:9090/plugins/registration/sign-up.jsp
+     */
+    private static final String RECAPTCHA_ENABLED = "registration.recaptcha.enabled";
+    
+    /**
+     * The expected value is a boolean, if true recaptcha uses the noscript tag.
+     */
+    private static final String RECAPTCHA_NOSCRIPT = "registration.recaptcha.noscript";
+    
+    /**
+     * The expected value is a String that contains the public key for the recaptcha login.
+     */
+    private static final String RECAPTCHA_PUBLIC_KEY = "registration.recaptcha.key.public";
+    
+    /**
+     * The expected value is a String that contains the private key for the recaptcha login.
+     */
+    private static final String RECAPTCHA_PRIVATE_KEY = "registration.recaptcha.key.private";
     
     /**
      * The expected value is a comma separated String of usernames who will receive a instant
@@ -254,6 +275,38 @@ public class RegistrationPlugin implements Plugin {
             + JiveGlobals.getXMLProperty("adminConsole.port") + "/plugins/" + URL;
     }
     
+    public void setReCaptchaEnabled(boolean enable) {
+        JiveGlobals.setProperty(RECAPTCHA_ENABLED, enable ? "true" : "false");
+    }
+    
+    public boolean reCaptchaEnabled() {
+        return JiveGlobals.getBooleanProperty(RECAPTCHA_ENABLED, false);
+    }
+    
+    public void setReCaptchaNoScript(boolean enable) {
+        JiveGlobals.setProperty(RECAPTCHA_NOSCRIPT, enable ? "true" : "false");
+    }
+    
+    public boolean reCaptchaNoScript() {
+        return JiveGlobals.getBooleanProperty(RECAPTCHA_NOSCRIPT, true);
+    }
+    
+    public void setReCaptchaPublicKey(String publicKey) {
+        JiveGlobals.setProperty(RECAPTCHA_PUBLIC_KEY, publicKey);
+    }
+    
+    public String getReCaptchaPublicKey() {
+        return JiveGlobals.getProperty(RECAPTCHA_PUBLIC_KEY);
+    }
+    
+    public void setReCaptchaPrivateKey(String privateKey) {
+        JiveGlobals.setProperty(RECAPTCHA_PRIVATE_KEY, privateKey);
+    }
+    
+    public String getReCaptchaPrivateKey() {
+        return JiveGlobals.getProperty(RECAPTCHA_PRIVATE_KEY);
+    }
+    
     public void setGroup(String group) {
         JiveGlobals.setProperty(REGISTRAION_GROUP, group);
     }
@@ -289,7 +342,7 @@ public class RegistrationPlugin implements Plugin {
             }
         }
 
-        public void userDeleting(User user, Map<String, Object> params) {           
+        public void userDeleting(User user, Map<String, Object> params) {
         }
 
         public void userModified(User user, Map<String, Object> params) {

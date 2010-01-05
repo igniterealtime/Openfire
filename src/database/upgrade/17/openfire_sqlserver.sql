@@ -28,12 +28,16 @@ INSERT INTO mucService (serviceID, subdomain) VALUES (1, 'conference');
 INSERT INTO jiveID (idType, id) VALUES (26, 1);
 
 /* update conference name/desc if there is a custom one set */
-UPDATE mucService SET mucService.subdomain = ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = 'xmpp.muc.service' )
-  WHERE EXISTS ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = 'xmpp.muc.service' );
+UPDATE mucService SET mucService.subdomain =
+    ( SELECT CONVERT(NVARCHAR(255),jiveProperty.propValue) FROM jiveProperty WHERE jiveProperty.name = 'xmpp.muc.service' )
+  WHERE EXISTS
+    ( SELECT CONVERT(NVARCHAR(255),jiveProperty.propValue) FROM jiveProperty WHERE jiveProperty.name = 'xmpp.muc.service' );
 DELETE FROM jiveProperty WHERE name = 'xmpp.muc.service';
 
-UPDATE mucService SET mucService.description = ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = 'muc.service-name' )
-  WHERE EXISTS ( SELECT jiveProperty.propValue FROM jiveProperty WHERE jiveProperty.name = 'muc.service-name' );
+UPDATE mucService SET mucService.description =
+    ( SELECT CONVERT(NVARCHAR(255),jiveProperty.propValue) FROM jiveProperty WHERE jiveProperty.name = 'muc.service-name' )
+  WHERE EXISTS
+    ( SELECT CONVERT(NVARCHAR(255),jiveProperty.propValue) FROM jiveProperty WHERE jiveProperty.name = 'muc.service-name' );
 DELETE FROM jiveProperty WHERE name = 'muc.service-name';
 
 /* transfer all system properties to muc specific properties */

@@ -315,8 +315,11 @@ public class SSLConfig {
             keyStore = KeyStore.getInstance(storeType);
             keyStore.load(null, keypass.toCharArray());
 
-            s2sTrustStore = KeyStore.getInstance(storeType);
-            s2sTrustStore.load(null, s2sTrustpass.toCharArray());
+            // Also generate the trustStore if necessary
+            if (s2sTrustStore == null) {
+                s2sTrustStore = KeyStore.getInstance(storeType);
+                s2sTrustStore.load(null, s2sTrustpass.toCharArray());
+            }
         }
         catch (Exception e) {
             Log.error("Unable to initialize keystore: ", e);

@@ -12,6 +12,7 @@
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.LinkedHashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
@@ -325,7 +326,7 @@
 
   <%  int i = 0;
       boolean offerUpdateIssuer = false;
-      Map<String, String> signingRequests = new HashMap<String, String>();
+      Map<String, String> signingRequests = new LinkedHashMap<String, String>();
       if (keyStore != null) {
           for (Enumeration aliases = keyStore.aliases(); aliases.hasMoreElements();) {
               i++;

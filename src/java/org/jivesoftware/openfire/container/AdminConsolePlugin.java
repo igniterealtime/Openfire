@@ -300,6 +300,9 @@ public class AdminConsolePlugin implements Plugin {
     private void logAdminConsolePorts() {
         // Log what ports the admin console is running on.
         String listening = LocaleUtils.getLocalizedString("admin.console.listening");
+        String hostname = getBindInterface() == null ?
+                XMPPServer.getInstance().getServerInfo().getXMPPDomain() :
+                getBindInterface();
         boolean isPlainStarted = false;
         boolean isSecureStarted = false;
         for (Connector connector : adminServer.getConnectors()) {
@@ -313,18 +316,16 @@ public class AdminConsolePlugin implements Plugin {
 
         if (isPlainStarted && isSecureStarted) {
             log(listening + ":" + System.getProperty("line.separator") +
-                    "  http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
+                    "  http://" + hostname + ":" +
                     adminPort + System.getProperty("line.separator") +
-                    "  https://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
+                    "  https://" + hostname + ":" +
                     adminSecurePort);
         }
         else if (isSecureStarted) {
-            log(listening + " https://" +
-                    XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + adminSecurePort);
+            log(listening + " https://" + hostname + ":" + adminSecurePort);
         }
         else if (isPlainStarted) {
-            log(listening + " http://" +
-                    XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + adminPort);
+            log(listening + " http://" + hostname + ":" + adminPort);
         }
     }
 

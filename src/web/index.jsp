@@ -534,7 +534,7 @@
     </tr>
     <% } %>
     <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= adminConsolePlugin.getBindInterface() == null ? LocaleUtils.getLocalizedString("ports.all_ports") : adminConsolePlugin.getBindInterface() %></td>
         <td><%= adminConsolePlugin.getAdminUnsecurePort() %></td>
         <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.admin_console" /></td>
@@ -544,7 +544,7 @@
         if (adminConsolePlugin.getAdminSecurePort() > 0) {
     %>
     <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= adminConsolePlugin.getBindInterface() == null ? LocaleUtils.getLocalizedString("ports.all_ports") : adminConsolePlugin.getBindInterface() %></td>
         <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
         <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
         <td><fmt:message key="ports.admin_console" /></td>

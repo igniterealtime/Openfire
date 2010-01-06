@@ -23,6 +23,7 @@ package org.jivesoftware.openfire.pubsub;
 import java.util.Queue;
 import java.util.TimerTask;
 
+import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,4 +92,8 @@ public class PublishedItemTask extends TimerTask {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
     }
+    
+	protected PubSubService getService() {
+		return service;
+	}
 }

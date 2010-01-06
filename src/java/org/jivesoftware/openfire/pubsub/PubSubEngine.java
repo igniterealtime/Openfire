@@ -1731,7 +1731,7 @@ public class PubSubEngine {
 
     public void shutdown(PubSubService service) {
         // Stop the maintenance processes
-        service.getTimer().cancel();
+    	service.getPublishedItemTask().cancel();
         // Delete from the database items contained in the itemsToDelete queue
         PublishedItem entry;
         while (!service.getItemsToDelete().isEmpty()) {
@@ -1749,6 +1749,10 @@ public class PubSubEngine {
         }
         // Stop executing ad-hoc commands
         service.getManager().stop();
+        
+        // clear all nodes for this service, to remove circular references back to the service instance.
+		service.getNodes().clear(); // FIXME: this is an ugly hack. getNodes() is documented to return an unmodifiable collection (but does not).
+
     }
 
     /*******************************************************************************

@@ -20,6 +20,16 @@
 
 package org.jivesoftware.openfire.pep;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -29,7 +39,17 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
-import org.jivesoftware.openfire.pubsub.*;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.PendingSubscriptionsCommand;
+import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
+import org.jivesoftware.openfire.pubsub.PubSubService;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
+import org.jivesoftware.openfire.pubsub.PublishedItemTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.openfire.roster.Roster;
@@ -43,10 +63,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
@@ -165,7 +181,9 @@ public class PEPService implements PubSubService {
 
         // Save or delete published items from the database every 2 minutes
         // starting in 2 minutes (default values)
-        publishedItemTask = new PublishedItemTask(this);
+        publishedItemTask = new PublishedItemTask(this) {
+        	
+        };
         timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
 
         // Load default configuration for leaf nodes
@@ -530,12 +548,10 @@ public class PEPService implements PubSubService {
 
     public void queueItemToAdd(PublishedItem newItem) {
         PubSubEngine.queueItemToAdd(this, newItem);
-
     }
 
     public void queueItemToRemove(PublishedItem removedItem) {
         PubSubEngine.queueItemToRemove(this, removedItem);
-
     }
 
     public Map<String, Map<String, String>> getBarePresences() {

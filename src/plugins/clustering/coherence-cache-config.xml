@@ -883,6 +883,25 @@ http://www.tangosol.com/UserGuide-Reference-CacheConfig.jsp
             </init-params>
         </cache-mapping>
 
+        <cache-mapping>
+            <cache-name>PEPServiceManager</cache-name>
+            <scheme-name>near-distributed</scheme-name>
+            <init-params>
+                <init-param>
+                    <param-name>back-size-high</param-name>
+                    <param-value>4000</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-expiry</param-name>
+                    <param-value>30m</param-value>
+                </init-param>
+                <init-param>
+                    <param-name>back-size-low</param-name>
+                    <param-value>3000</param-value>
+                </init-param>
+            </init-params>
+        </cache-mapping>
+
     </caching-scheme-mapping>
 
 </cache-config>

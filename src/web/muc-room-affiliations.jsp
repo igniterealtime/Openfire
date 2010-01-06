@@ -69,7 +69,7 @@
                 else {
                     String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
                     String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
-                    userJID = username + rest;
+                    userJID = username + rest.trim();
                 }
                 IQ iq = new IQ(IQ.Type.set);
                 if ("owner".equals(affiliation) || "admin".equals(affiliation)) {

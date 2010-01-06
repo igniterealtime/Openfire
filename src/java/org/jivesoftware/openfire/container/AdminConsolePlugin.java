@@ -213,13 +213,15 @@ public class AdminConsolePlugin implements Plugin {
      * will be available in all interfaces.
      */
     public String getBindInterface() {
-        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        String adminInterfaceName = JiveGlobals.getXMLProperty("adminConsole.interface");
+        String globalInterfaceName = JiveGlobals.getXMLProperty("network.interface");
         String bindInterface = null;
-        if (interfaceName != null) {
-            if (interfaceName.trim().length() > 0) {
-                bindInterface = interfaceName;
-            }
+        if (adminInterfaceName != null && adminInterfaceName.trim().length() > 0) {
+            bindInterface = adminInterfaceName;
         }
+        else if (globalInterfaceName != null && globalInterfaceName.trim().length() > 0) {
+            bindInterface = globalInterfaceName;
+         }
         return bindInterface;
     }
 

@@ -35,8 +35,10 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.StringUtils;
@@ -1083,7 +1085,7 @@ public class PubSubEngine {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(from) || !UserManager.getInstance().isRegisteredUser(from)) {
+        if (!service.canCreateNode(from) || (!UserManager.getInstance().isRegisteredUser(from) && !isComponent(from)) ) {
             // The user is not allowed to create nodes so return an error
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
@@ -1912,4 +1914,18 @@ public class PubSubEngine {
         }
     }
 
+    /**
+	 * Checks to see if the jid given is a component by looking at the routing
+	 * table. Similar to {@link InternalComponentManager#hasComponent(JID)}.
+	 * 
+	 * @param jid
+	 * @return <tt>true</tt> if the JID is a component, <tt>false<.tt> if not.
+	 */
+	private boolean isComponent(JID jid) {
+		final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+		if (routingTable != null) {
+			return routingTable.hasComponentRoute(jid);
+		}
+		return false;
+	}
 }

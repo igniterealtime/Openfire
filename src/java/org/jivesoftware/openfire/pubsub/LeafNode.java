@@ -387,9 +387,10 @@ public class LeafNode extends Node {
     void sendPublishedItems(IQ originalRequest, List<PublishedItem> publishedItems,
             boolean forceToIncludePayload) {
         IQ result = IQ.createResultIQ(originalRequest);
-        Element childElement = originalRequest.getChildElement().createCopy();
-        result.setChildElement(childElement);
-        Element items = childElement.element("items");
+        Element pubsubElem = result.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+        Element items = pubsubElem.addElement("items");
+        items.addAttribute("node", getNodeID());
+        
         for (PublishedItem publishedItem : publishedItems) {
             Element item = items.addElement("item");
             if (isItemRequired()) {

@@ -337,6 +337,11 @@
                           url="muc-create-permission.jsp"
                           description="${sidebar.muc-perms.descr}"/>
 
+                    <!-- Service Room Default Settings -->
+                    <item id="muc-defaultsettings" name="${sidebar.muc-defaultsettings}"
+                          url="muc-default-settings.jsp"
+                          description="${sidebar.muc-defaultsettings.descr}"/>
+
                     <!-- Service Other Settings -->
                     <item id="muc-tasks" name="${sidebar.muc-tasks}"
                           url="muc-tasks.jsp"

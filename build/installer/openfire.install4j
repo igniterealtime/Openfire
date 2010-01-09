@@ -22,8 +22,8 @@
     </searchSequence>
     <variables>
       <variable name="VERSION_MAJOR" value="3" />
-      <variable name="VERSION_MINOR" value="3" />
-      <variable name="VERSION_REVISION" value="0" />
+      <variable name="VERSION_MINOR" value="6" />
+      <variable name="VERSION_REVISION" value="5" />
       <variable name="APP_NAME" value="Openfire" />
       <variable name="APP_SHORT_NAME" value="openfire" />
       <variable name="PRODUCT_NAME" value="openfire" />
@@ -462,7 +462,7 @@
     </uninstallerStartup>
   </installerGui>
   <mediaSets>
-    <win32 name="Windows" id="3" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" includedJRE="windows-x86-1.6.0_03_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="false">
+    <win32 name="Windows" id="3" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" requires64bit="false" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" includedJRE="windows-x86-1.6.0_17_server" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="false">
       <excludedLaunchers>
         <launcher id="22" />
       </excludedLaunchers>

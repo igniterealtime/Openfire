@@ -1103,4 +1103,26 @@ public class StringUtils {
             return false;
         }
     }
+    
+    /**
+	 * Removes characters likely to enable Cross Site Scripting attacks from the
+	 * provided input string. The characters that are removed from the input
+	 * string, if present, are:
+	 * 
+	 * <pre>
+	 * &lt; &gt; &quot; ' % ; ) ( &amp; + -
+	 * </pre>
+	 * 
+	 * @param string
+	 *            input
+	 * @return Input without certain characters;
+	 */
+	public static String removeXSSCharacters(String input) {
+		final String[] xss = { "<", ">", "\"", "'", "%", ";", ")", "(", "&",
+				"+", "-" };
+		for (int i = 0; i < xss.length; i++) {
+			input = input.replace(xss[i], "");
+		}
+		return input;
+	}
 }

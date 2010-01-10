@@ -240,7 +240,7 @@
                             </tr>
                         <%  } %>
                         <tr>
-                            <td><input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? username : "") %>"></td>
+                            <td><input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? StringUtils.removeXSSCharacters(username) : "") %>"></td>
                             <td><input type="password" name="password" size="15" maxlength="50" id="p01"></td>
                             <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;"></td>
                         </tr>

@@ -307,7 +307,6 @@ public class JDBCAuthProvider implements AuthProvider {
     private void setPasswordValue(String username, String password) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
-        ResultSet rs = null;
         if (username.contains("@")) {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
@@ -322,24 +321,22 @@ public class JDBCAuthProvider implements AuthProvider {
         try {
             con = getConnection();
             pstmt = con.prepareStatement(setPasswordSQL);
-            pstmt.setString(1, username);
+            pstmt.setString(2, username);
             if (passwordType == PasswordType.md5) {
                 password = StringUtils.hash(password, "MD5");
             }
             else if (passwordType == PasswordType.sha1) {
                 password = StringUtils.hash(password, "SHA-1");
             }
-            pstmt.setString(2, password);
-
-            rs = pstmt.executeQuery();
-
+            pstmt.setString(1, password);
+            pstmt.executeQuery();
         }
         catch (SQLException e) {
             Log.error("Exception in JDBCAuthProvider", e);
             throw new UserNotFoundException();
         }
         finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         
     }

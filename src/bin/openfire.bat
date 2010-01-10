@@ -19,11 +19,11 @@ goto end
 
 :run
 if "%1" == "-debug" goto debug
-start "Openfire" "%JAVA_HOME%\bin\java" -server -DopenfireHome=%OPENFIRE_HOME% -jar ..\lib\startup.jar
+start "Openfire" "%JAVA_HOME%\bin\java" -server -DopenfireHome="%OPENFIRE_HOME%" -jar ..\lib\startup.jar
 goto end
 
 :debug
-start "Openfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -server -DopenfireHome=%OPENFIRE_HOME% -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -jar ..\lib\startup.jar
+start "Openfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -server -DopenfireHome="%OPENFIRE_HOME%" -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -jar ..\lib\startup.jar
 goto end
 :end
 

@@ -261,7 +261,9 @@ function dodelete(propName) {
         </td>
         <td>
             <div class="hidebox" style="width:300px;">
-                <% if (n.indexOf("passwd") > -1 || n.indexOf("password") > -1 || n.indexOf("cookieKey") > -1) { %>
+                <% if (n.toLowerCase().indexOf("passwd") > -1 || 
+                	   n.toLowerCase().indexOf("password") > -1 ||
+                	   n.toLowerCase().indexOf("cookieKey") > -1) { %>
                 <span style="color:#999;"><i>hidden</i></span>
                 <% } else { %>
                 <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>

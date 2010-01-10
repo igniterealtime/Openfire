@@ -20,12 +20,11 @@
 
 package org.jivesoftware.openfire.starter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.util.jar.Pack200;
 import java.util.jar.JarOutputStream;
+
+import org.jivesoftware.util.Log;
 
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
@@ -49,8 +48,6 @@ import java.util.jar.JarOutputStream;
  * @author Iain Shigeoka
  */
 public class ServerStarter {
-
-    private static final Logger Log = LoggerFactory.getLogger(ServerStarter.class);
 
     /**
      * Default to this location if one has not been specified
@@ -117,7 +114,7 @@ public class ServerStarter {
             containerClass.newInstance();
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 

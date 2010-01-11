@@ -31,7 +31,7 @@ public class STUNServerTest extends TestCase {
 
         StunServerAddress addr0 = new StunServerAddress("apollo", "10000");
         StunServerAddress addr1 = new StunServerAddress("apollo", "10000");
-        StunServerAddress addr2 = new StunServerAddress("63.246.20.124", "10002");
+        StunServerAddress addr2 = new StunServerAddress("70.98.39.225", "10002");
         StunServerAddress addr3 = new StunServerAddress("jivesoftware.com", "10002");
         StunServerAddress addr4 = new StunServerAddress("jivesoftware.com", "10003");
 

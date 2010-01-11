@@ -28,7 +28,7 @@ public class AdminConsoleTest extends TestCase {
      */
     public void tearDown() throws Exception {
         Class c = AdminConsole.class;
-        Method init = c.getDeclaredMethod("init", (Class[])null);
+        Method init = c.getDeclaredMethod("load", (Class[])null);
         init.setAccessible(true);
         init.invoke((Object)null, (Object[])null);
     }

@@ -181,6 +181,7 @@
         <path refid="compile.dependencies"/>
         <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
         <fileset dir="${lib.build.dir}" includes="junit.jar"/>
+        <fileset dir="${lib.dist.dir}" includes="slf4j-log4j12.jar"/>
         <!-- <fileset dir="${ant.home}/lib" includes="clover.jar" /> -->
     </path>
 
@@ -610,11 +611,14 @@
 
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}"/>
+        <echo message="openfireHome=${target.openfireHome}"/>
         <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}">
+	    <sysproperty key="openfireHome" value="${target.openfireHome}"/>
 
             <!-- We must add our own classes to the classpath for testing -->
             <classpath>
                 <path refid="test.dependencies"/>
+                <pathelement path="${test.dest.dir}/resources"/>
                 <pathelement path="${test.classes.dest.dir}"/>
             </classpath>
 

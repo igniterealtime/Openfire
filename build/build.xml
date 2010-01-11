@@ -611,7 +611,6 @@
 
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}"/>
-        <echo message="openfireHome=${target.openfireHome}"/>
         <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}">
 	    <sysproperty key="openfireHome" value="${target.openfireHome}"/>
 

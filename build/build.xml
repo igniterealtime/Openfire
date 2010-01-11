@@ -1230,7 +1230,15 @@
         <!-- For each plugin in the main src dir, call the 'buildplugin' macro -->
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
-                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
+                <if>
+                    <equals arg1="@{plugin}" arg2="clustering"/>
+                    <then>
+                        <echo message="bypassing clustering plugin, build via single plugin target if needed"/>
+                    </then>
+                    <else>
+                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
+                    </else>
+                </if>
             </sequential>
         </for>
 
@@ -1248,7 +1256,15 @@
         <!-- For each list of plugins in the dev dir call the 'buildplugin' macro -->
         <for list="${dirlist2}" param="plugin" trim="true">
             <sequential>
-                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}"/>
+                <if>
+                    <equals arg1="@{plugin}" arg2="clustering"/>
+                    <then>
+                        <echo message="bypassing clustering plugin, build via single plugin target if needed"/>
+                    </then>
+                    <else>
+                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}"/>
+                    </else>
+                </if>
             </sequential>
         </for>
 

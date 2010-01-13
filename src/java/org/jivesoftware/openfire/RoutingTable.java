@@ -132,12 +132,12 @@ public interface RoutingTable {
      * When routing a packet to a remote server then a new outgoing connection
      * will be created to the remote server if none was found and the packet
      * will be delivered. If an existing outgoing connection already exists then
-     * it will be used for delivering the packet. Moreover, when runing inside of a cluster
+     * it will be used for delivering the packet. Moreover, when running inside of a cluster
      * the node that has the actual outgoing connection will be requested to deliver
      * the requested packet.<p>
      *
      * Packets routed to components will only be sent if the internal or external
-     * component is connected to the server. Moreover, when runing inside of a cluster
+     * component is connected to the server. Moreover, when running inside of a cluster
      * the node that is hosting the component will be requested to deliver the requested
      * packet. It will be first checked if the component is available in this JVM and if not
      * then the first cluster node found hosting the component will be used.<p>
@@ -147,10 +147,10 @@ public interface RoutingTable {
      * be considered. For instance, {@link org.xmpp.packet.Message Messages} and
      * {@link org.xmpp.packet.Presence Presences} are only sent to available client sessions whilst
      * {@link org.xmpp.packet.IQ IQs} originated to the server can be sent to available or unavailable
-     * sessions. When runing inside of a cluster the node that is hosting the user session will be
+     * sessions. When running inside of a cluster the node that is hosting the user session will be
      * requested to deliver the requested packet.<p>
      *
-     * @param jid the receipient of the packet to route.
+     * @param jid the recipient of the packet to route.
      * @param packet the packet to route.
      * @param fromServer true if the packet was created by the server. This packets should
      *        always be delivered

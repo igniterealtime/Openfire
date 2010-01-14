@@ -68,7 +68,7 @@
     String reservedNick = ParamUtils.getParameter(request, "roomconfig_reservednick");
     String canChangeNick = ParamUtils.getParameter(request, "roomconfig_canchangenick");
     String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
-    String roomSubject = ParamUtils.getParameter(request, "room_topic");
+    String roomSubject = ParamUtils.getParameter(request, "room_topic", true);
 
     if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() < 1) {
         // No services exist, so redirect to where one can configure the services

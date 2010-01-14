@@ -219,7 +219,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 			// keep the amount of workers low! See comment that goes with the
 			// field named 'executor'.
 			Log.debug("Starting executor service...");
-			Executors.newScheduledThreadPool(2);
+			executor = Executors.newScheduledThreadPool(2);
 		}
 	}
     

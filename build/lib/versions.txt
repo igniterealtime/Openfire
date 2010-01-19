@@ -15,9 +15,15 @@ dbutil.jar                          | Jive Code, no release version.            
 hamcrest.jar                        | 1.0 (JMock 2.1.0)                                            | New BSD License
 hamcrest-api.jar                    | 1.0 (JMock 2.1.0)                                            | New BSD License
 hsqldb.jar                          | 1.8.0.5                                                      | BSD (http://hsqldb.org/web/hsqlLicense.html)
-jetty.jar                           | Jetty 6.1.10                                                 | Apache 2.0
-jetty-sslengine.jar                 | Jetty 6.1.10                                                 | Apache 2.0
-jetty-util.jar                      | Jetty 6.1.10                                                 | Apache 2.0
+jetty-continuation.jar              | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-http.jar                      | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-io.jar                        | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-security.jar                  | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-server.jar                    | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-servlet.jar                   | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-util.jar                      | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-webapp.jar                    | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-xml.jar                       | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
 jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)                                         |
 jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)                                         |
 jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                | Apache 1.1

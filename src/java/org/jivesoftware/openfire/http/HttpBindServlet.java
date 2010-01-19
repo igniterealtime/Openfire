@@ -43,7 +43,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.util.JiveGlobals;
-import org.mortbay.util.ajax.ContinuationSupport;
+import org.eclipse.jetty.continuation.ContinuationSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -278,7 +278,7 @@ public class HttpBindServlet extends HttpServlet {
             }
             else {
                 session.resetInactivityTimeout();
-                connection.setContinuation(ContinuationSupport.getContinuation(request, connection));
+                connection.setContinuation(ContinuationSupport.getContinuation(request));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
                 try {

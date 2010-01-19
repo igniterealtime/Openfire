@@ -20,14 +20,15 @@
 package org.jivesoftware.util.log.util;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.mortbay.log.Logger;
+
+import org.eclipse.jetty.util.log.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * A Logger implementation to override the default Jetty logging behavior. All log statements
  * are written to the Openfire logs. Info level logging is sent to debug.
  */
-public class JettyLog implements org.mortbay.log.Logger {
+public class JettyLog implements org.eclipse.jetty.util.log.Logger {
 
 	private static final org.slf4j.Logger Log = LoggerFactory.getLogger(JettyLog.class);
 
@@ -41,13 +42,25 @@ public class JettyLog implements org.mortbay.log.Logger {
         return debugEnabled && Log.isDebugEnabled();
     }
 
+    public String getName() {
+        return "JettyLog";
+    }
+
     public void setDebugEnabled(boolean b) {
         // Do nothing.
+    }
+
+    public void info(String string) {
+        Log.info("JettyLog: " + string);
     }
 
     public void info(String string, Object object, Object object1) {
         // Send info log messages to debug because they are generally not useful.
         Log.debug("JettyLog: "+format(string,object,object1));
+    }
+
+    public void debug(String string) {
+        Log.debug("JettyLog: " + string);
     }
 
     public void debug(String string, Throwable throwable) {
@@ -56,6 +69,10 @@ public class JettyLog implements org.mortbay.log.Logger {
 
     public void debug(String string, Object object, Object object1) {
         Log.debug("JettyLog: "+format(string,object,object1));
+    }
+
+    public void warn(String string) {
+        Log.warn("JettyLog: " + string);
     }
 
     public void warn(String string, Object object, Object object1) {
@@ -82,4 +99,5 @@ public class JettyLog implements org.mortbay.log.Logger {
 
         return msg;
     }
+
 }

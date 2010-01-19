@@ -35,16 +35,19 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.ContextHandler;
-import org.mortbay.jetty.handler.ContextHandlerCollection;
-import org.mortbay.jetty.handler.DefaultHandler;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.security.SslSelectChannelConnector;
-import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.webapp.WebAppContext;
+
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.webapp.WebAppContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +93,7 @@ public final class HttpBindManager {
 
     private HttpBindManager() {
         // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
+        System.setProperty("org.eclipse.jetty.util.log.class", "org.jivesoftware.util.log.util.JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
 
@@ -321,13 +324,16 @@ public final class HttpBindManager {
         createCrossDomainHandler(contexts, "/");
         loadStaticDirectory(contexts);
 
-        httpBindServer.setHandlers(new Handler[]{contexts, new DefaultHandler()});
+        HandlerCollection collection = new HandlerCollection();
+        httpBindServer.setHandler(collection);
+        collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
     }
 
     private void createBoshHandler(ContextHandlerCollection contexts, String boshPath) {
         ServletHandler handler = new ServletHandler();
         handler.addServletWithMapping(HttpBindServlet.class, "/");
 
+        handler.addFilterWithMapping(org.eclipse.jetty.continuation.ContinuationFilter.class,"/*",0);
         ContextHandler boshContextHandler = new ContextHandler(contexts, boshPath);
         boshContextHandler.setHandler(handler);
     }

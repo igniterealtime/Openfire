@@ -33,15 +33,18 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.ContextHandlerCollection;
-import org.mortbay.jetty.handler.DefaultHandler;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.security.SslSelectChannelConnector;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.webapp.WebAppContext;
+
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.webapp.WebAppContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AdminConsolePlugin implements Plugin {
 
-	private static final Logger Log = LoggerFactory.getLogger(AdminConsolePlugin.class);
+    private static final Logger Log = LoggerFactory.getLogger(AdminConsolePlugin.class);
 
     /**
      * Random secret used by JVM to allow SSO. Only other cluster nodes can use this secret
@@ -78,7 +81,7 @@ public class AdminConsolePlugin implements Plugin {
         contexts = new ContextHandlerCollection();
         
         // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.mortbay.log.class", "org.jivesoftware.util.log.util.JettyLog");
+        System.setProperty("org.eclipse.jetty.util.log.class", "org.jivesoftware.util.log.util.JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
@@ -150,7 +153,9 @@ public class AdminConsolePlugin implements Plugin {
             return;
         }
 
-        adminServer.setHandlers(new Handler[] { contexts, new DefaultHandler() });
+        HandlerCollection collection = new HandlerCollection();
+        adminServer.setHandler(collection);
+        collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
 
         try {
             adminServer.start();
@@ -277,7 +282,7 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     private void createWebAppContext() {
-        Context context;
+        ServletContextHandler context;
         // Add web-app. Check to see if we're in development mode. If so, we don't
         // add the normal web-app location, but the web-app in the project directory.
         if (Boolean.getBoolean("developmentMode")) {

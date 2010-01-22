@@ -68,7 +68,7 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
 	#make it fully qualified
 	OPENFIRE_HOME=`cd "$OPENFIRE_HOME" && pwd`
 fi
-OPENFIRE_OPTS="${OPENFIRE_OPTS} -DopenfireHome=${OPENFIRE_HOME}"
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -DopenfireHome=\"${OPENFIRE_HOME}\""
 
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
@@ -81,7 +81,7 @@ fi
 
 #set the OPENFIRE_LIB location
 OPENFIRE_LIB="${OPENFIRE_HOME}/lib"
-OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dopenfire.lib.dir=${OPENFIRE_LIB}"
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dopenfire.lib.dir=\"${OPENFIRE_LIB}\""
 
 # Override with bundled jre if it exists.
 if [ -f "$OPENFIRE_HOME/jre/bin/java" ]; then

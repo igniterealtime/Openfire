@@ -734,11 +734,19 @@ public class Roster implements Cacheable, Externalizable {
 
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
-        // of each field.
+        // of the content of each field, if that content is likely to be eligable for
+    	// garbage collection if the Roster instance is dereferenced.
         int size = 0;
         size += CacheSizes.sizeOfObject();                           // overhead of object
         size += CacheSizes.sizeOfCollection(rosterItems.values());   // roster item cache
         size += CacheSizes.sizeOfString(username);                   // username
+        
+        // implicitFrom
+        for(Map.Entry<String, Set<String>> entry : implicitFrom.entrySet()) {
+        	size += CacheSizes.sizeOfString(entry.getKey());
+        	size += CacheSizes.sizeOfCollection(entry.getValue());
+        }
+        
         return size;
     }
 

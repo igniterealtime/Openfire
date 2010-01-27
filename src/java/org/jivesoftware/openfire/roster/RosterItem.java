@@ -535,12 +535,20 @@ public class RosterItem implements Cacheable, Externalizable {
         setNickname(item.getName());
     }
 
+    /*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
+	 */
     public int getCachedSize() {
         int size = jid.toBareJID().length();
         size += CacheSizes.sizeOfString(nickname);
         size += CacheSizes.sizeOfCollection(groups);
+        size += CacheSizes.sizeOfCollection(invisibleSharedGroups);
+        size += CacheSizes.sizeOfCollection(sharedGroups);
         size += CacheSizes.sizeOfInt(); // subStatus
         size += CacheSizes.sizeOfInt(); // askStatus
+        size += CacheSizes.sizeOfInt(); // recvStatus
         size += CacheSizes.sizeOfLong(); // id
         return size;
     }

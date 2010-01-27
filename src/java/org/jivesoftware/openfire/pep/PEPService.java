@@ -59,6 +59,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cacheable;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -68,10 +69,13 @@ import org.xmpp.packet.PacketExtension;
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
  * Pubsub" Version 1.0
  * 
- * @author Armando Jagucki
+ * Note: Although this class implements {@link Cacheable}, instances should only be 
+ * cached in caches that have time-based (as opposed to size-based) eviction policies.
  * 
+ * @author Armando Jagucki 
  */
-public class PEPService implements PubSubService {
+public class PEPService implements PubSubService, Cacheable {
+	
     /**
      * Timer to save published items to the database or remove deleted or old
      * items.
@@ -589,5 +593,10 @@ public class PEPService implements PubSubService {
     public void setItemsTaskTimeout(int timeout) {
         items_task_timeout = timeout;
     }
+
+	public int getCachedSize() {
+		// Rather arbitrary. Don't use this for size-based eviction policies!
+		return 600;
+	}
 
 }

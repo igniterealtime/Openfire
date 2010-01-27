@@ -54,7 +54,7 @@ public class CacheSizes {
         if (string == null) {
             return 0;
         }
-        return 4 + string.length() * 2;
+        return 4 + string.getBytes().length;
     }
 
     /**
@@ -118,21 +118,17 @@ public class CacheSizes {
      * @param map the Map object to determine the size of.
      * @return the size of the Map object.
      */
-    public static int sizeOfMap(Map map) {
+    public static int sizeOfMap(Map<String, String> map) {
         if (map == null) {
             return 0;
         }
         // Base map object -- should be something around this size.
         int size = 36;
+        
         // Add in size of each value
-        Object[] values = map.values().toArray();
-        for (int i = 0; i < values.length; i++) {
-            size += sizeOfString((String)values[i]);
-        }
-        Object[] keys = map.keySet().toArray();
-        // Add in each key
-        for (int i = 0; i < keys.length; i++) {
-            size += sizeOfString((String)keys[i]);
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+			size += sizeOfString(entry.getKey());
+            size += sizeOfString(entry.getValue());
         }
         return size;
     }

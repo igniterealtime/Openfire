@@ -20,7 +20,9 @@
 
 package org.jivesoftware.openfire.server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -297,12 +299,23 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     routingTable.routePacket(reply.getTo(), reply, true);
                 }
                 else if (packet instanceof Presence) {
-                    Presence reply = new Presence();
-                    reply.setID(packet.getID());
-                    reply.setTo(from);
-                    reply.setFrom(to);
-                    reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply, true);
+                	// workaround for OF-23. "undo" the 'setFrom' to a bare JID 
+                	// by sending the error to all available resources.
+                	final List<JID> routes = new ArrayList<JID>(); 
+                	if (to.getResource() == null) {
+                    	routes.addAll(routingTable.getRoutes(to, null));
+                    } else {
+                    	routes.add(to);
+                    }
+                	
+                	for (JID route : routes) {
+	                    Presence reply = new Presence();
+	                    reply.setID(packet.getID());
+	                    reply.setTo(from);
+	                    reply.setFrom(route);
+	                    reply.setError(PacketError.Condition.remote_server_not_found);
+	                    routingTable.routePacket(reply.getTo(), reply, true);
+                	}
                 }
                 else if (packet instanceof Message) {
                     Message reply = new Message();

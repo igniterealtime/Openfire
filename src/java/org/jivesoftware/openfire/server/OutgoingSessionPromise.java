@@ -302,17 +302,17 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 	// workaround for OF-23. "undo" the 'setFrom' to a bare JID 
                 	// by sending the error to all available resources.
                 	final List<JID> routes = new ArrayList<JID>(); 
-                	if (to.getResource() == null) {
-                    	routes.addAll(routingTable.getRoutes(to, null));
+                	if (from.getResource() == null || from.getResource().trim().length() == 0) {
+                    	routes.addAll(routingTable.getRoutes(from, null));
                     } else {
-                    	routes.add(to);
+                    	routes.add(from);
                     }
                 	
                 	for (JID route : routes) {
 	                    Presence reply = new Presence();
 	                    reply.setID(packet.getID());
-	                    reply.setTo(from);
-	                    reply.setFrom(route);
+	                    reply.setTo(route);
+	                    reply.setFrom(to);
 	                    reply.setError(PacketError.Condition.remote_server_not_found);
 	                    routingTable.routePacket(reply.getTo(), reply, true);
                 	}

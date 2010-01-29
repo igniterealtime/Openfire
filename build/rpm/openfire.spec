@@ -8,7 +8,7 @@ Source1: jre-dist.tar.gz
 Group: Applications/Communications
 Vendor: Jive Software
 Packager: Jive Software
-License: GPL
+License: Apache license v2.0
 AutoReqProv: no
 URL: http://www.igniterealtime.org/
 

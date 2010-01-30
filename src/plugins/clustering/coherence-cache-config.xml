@@ -865,25 +865,6 @@ http://www.tangosol.com/UserGuide-Reference-CacheConfig.jsp
         </cache-mapping>
 
         <cache-mapping>
-            <cache-name>Entity Capabilities Pending Hashes</cache-name>
-            <scheme-name>near-distributed</scheme-name>
-            <init-params>
-                <init-param>
-                    <param-name>back-size-high</param-name>
-                    <param-value>0</param-value>
-                </init-param>
-                <init-param>
-                    <param-name>back-expiry</param-name>
-                    <param-value>48h</param-value>
-                </init-param>
-                <init-param>
-                    <param-name>back-size-low</param-name>
-                    <param-value>0</param-value>
-                </init-param>
-            </init-params>
-        </cache-mapping>
-
-        <cache-mapping>
             <cache-name>PEPServiceManager</cache-name>
             <scheme-name>near-distributed</scheme-name>
             <init-params>

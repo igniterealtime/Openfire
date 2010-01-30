@@ -38,6 +38,7 @@ import java.util.Set;
  * @author Armando Jagucki
  *
  */
+// TODO: Instances of this class should not be cached in distributed caches. The overhead of distributing data is a lot higher than recalculating the hash on every cluster node. We should remove the Externalizable interface, and turn this class into an immutable class.
 public class EntityCapabilities implements Cacheable, Externalizable {
 
     /**
@@ -57,6 +58,11 @@ public class EntityCapabilities implements Cacheable, Externalizable {
      */
     private String verAttribute;
 
+    /**
+     * The hash algorithm that was used to create the hash string.
+     */
+    private String hashAttribute;
+    
     /**
      * Adds an identity to the entity capabilities.
      * 
@@ -102,13 +108,22 @@ public class EntityCapabilities implements Cacheable, Externalizable {
         return features.contains(feature);
     }
 
-    /**
-     * @param verAttribute the verAttribute to set
-     */
     void setVerAttribute(String verAttribute) {
         this.verAttribute = verAttribute;
     }
+    
+    String getVerAttribute() {
+    	return this.verAttribute;
+    }
 
+    void setHashAttribute(String hashAttribute) {
+    	this.hashAttribute = hashAttribute;
+    }
+
+    String getHashAttribute() {
+    	return this.hashAttribute;
+    }
+    
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         ExternalizableUtil.getInstance().readStrings(in, identities);
         ExternalizableUtil.getInstance().readStrings(in, features);

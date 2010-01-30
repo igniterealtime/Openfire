@@ -126,7 +126,6 @@ public class CacheFactory {
         cacheNames.put("Remote Server Configurations", "serversConfigurations");
         cacheNames.put("Entity Capabilities", "entityCapabilities");
         cacheNames.put("Entity Capabilities Users", "entityCapabilitiesUsers");
-        cacheNames.put("Entity Capabilities Pending Hashes", "entityCapabilitiesPendingHashes");
         cacheNames.put("Clearspace SSO Nonce", "clearspaceSSONonce");
         cacheNames.put("PEPServiceManager", "pepServiceManager");
 
@@ -194,8 +193,6 @@ public class CacheFactory {
         cacheProps.put("cache.entityCapabilities.maxLifetime", JiveConstants.DAY * 2);
         cacheProps.put("cache.entityCapabilitiesUsers.size", -1l);
         cacheProps.put("cache.entityCapabilitiesUsers.maxLifetime", JiveConstants.DAY * 2);
-        cacheProps.put("cache.entityCapabilitiesPendingHashes.size", -1l);
-        cacheProps.put("cache.entityCapabilitiesPendingHashes.maxLifetime", JiveConstants.DAY * 2);
         cacheProps.put("cache.pluginCacheInfo.size", -1l);
         cacheProps.put("cache.pluginCacheInfo.maxLifetime", -1l);
         cacheProps.put("cache.clearspaceSSONonce.size", -1l);

@@ -192,9 +192,11 @@
     </div>
     <div class="jive-contentBoxHeader">Cross-domain policy</div>
     <div class="jive-contentbox">
-    	<p>By default, Openfire will generate a <tt>crossdomain.xml</tt> file, hosted at the root of the webservice that offers BOSH functionality. This generated file will allow all access on all relevant ports.</p>
-    	<p>This default behavior can be overridden with a custom file. If such a file is made accessible at <tt>&lt;openfireHome&gt;<%=File.separator%>conf<%=File.separator%>crossdomain.xml</tt>, its content will be used, instead of the generated content.</p> 
-    	<p>This is current <tt>crossdomain.xml</tt> content, as it is presented to your users:</p>
+    	<p><fmt:message key="httpbind.settings.crossdomain.info.general" /></p>
+    	<p><fmt:message key="httpbind.settings.crossdomain.info.override">
+            <fmt:param value="<tt>&lt;openfireHome&gt;/conf/crossdomain.xml</tt>" />
+        </fmt:message></p>
+    	<p><fmt:message key="httpbind.settings.crossdomain.info.policy" /></p>
     	<textarea id="crossdomain" cols="120" rows="10" wrap="virtual" readonly="readonly"><%= (isHttpBindEnabled ? StringUtils.escapeForXML(FlashCrossDomainServlet.getCrossDomainContent()) : "") %></textarea>
     </div>
     

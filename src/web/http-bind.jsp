@@ -9,9 +9,12 @@
   - agreement with Jive.
 --%>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="java.io.File" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="org.jivesoftware.util.Log" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.openfire.http.FlashCrossDomainServlet" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -61,7 +64,8 @@
     int securePort = serverManager.getHttpBindSecurePort();
     boolean isScriptSyntaxEnabled = serverManager.isScriptSyntaxEnabled();
 %>
-<html>
+
+<%@page import="org.jivesoftware.openfire.http.FlashCrossDomainServlet"%><html>
 <head>
     <title>
         <fmt:message key="httpbind.settings.title"/>
@@ -70,10 +74,11 @@
     <script type="text/javascript">
         var enabled = <%=isHttpBindEnabled%>;
         var setEnabled = function() {
-            $("port").disabled = !enabled
+            $("port").disabled = !enabled;
             $("securePort").disabled = !enabled;
-            $("rb03").disabled = !enabled
-            $("rb04").disabled = !enabled
+            $("rb03").disabled = !enabled;
+            $("rb04").disabled = !enabled;
+            $("crossdomain").disabled = !enabled;
         }
         window.onload = setTimeout("setEnabled()", 500);
     </script>
@@ -185,6 +190,14 @@
 		</tbody>
 		</table>
     </div>
+    <div class="jive-contentBoxHeader">Cross-domain policy</div>
+    <div class="jive-contentbox">
+    	<p>By default, Openfire will generate a <tt>crossdomain.xml</tt> file, hosted at the root of the webservice that offers BOSH functionality. This generated file will allow all access on all relevant ports.</p>
+    	<p>This default behavior can be overridden with a custom file. If such a file is made accessible at <tt>&lt;openfireHome&gt;<%=File.separator%>conf<%=File.separator%>crossdomain.xml</tt>, its content will be used, instead of the generated content.</p> 
+    	<p>This is current <tt>crossdomain.xml</tt> content, as it is presented to your users:</p>
+    	<textarea id="crossdomain" cols="120" rows="10" wrap="virtual" readonly="readonly"><%= (isHttpBindEnabled ? StringUtils.escapeForXML(FlashCrossDomainServlet.getCrossDomainContent()) : "") %></textarea>
+    </div>
+    
     <input type="submit" id="settingsUpdate" name="update"
                value="<fmt:message key="global.save_settings" />">
 </form>

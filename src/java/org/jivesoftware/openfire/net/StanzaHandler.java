@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -667,6 +668,26 @@ public abstract class StanzaHandler {
         return true;
     }
 
+    /**
+	 * Obtain the address of the XMPP entity for which this StanzaHandler
+	 * handles stanzas.
+	 * 
+	 * Note that the value that is returned for this method can
+	 * change over time. For example, if no session has been established yet,
+	 * this method will return </tt>null</tt>, or, if resource binding occurs,
+	 * the returned value might change. Values obtained from this method are
+	 * therefore best <em>not</em> cached.
+	 * 
+	 * @return The address of the XMPP entity for.
+	 */
+    public JID getAddress() {
+    	if (session == null) {
+    		return null;
+    	}
+    	
+    	return session.getAddress();
+    }
+    
     /**
      * Returns the stream namespace. (E.g. jabber:client, jabber:server, etc.).
      *

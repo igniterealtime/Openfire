@@ -52,8 +52,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
      */
     static final String CHARSET = "UTF-8";
     static final String XML_PARSER = "XML-PARSER";
-    private static final String HANDLER = "HANDLER";
-    private static final String CONNECTION = "CONNECTION";
+    protected static final String HANDLER = "HANDLER";
+    protected static final String CONNECTION = "CONNECTION";
 
     protected String serverName;
     private static Map<Integer, XMPPPacketReader> parsers = new ConcurrentHashMap<Integer, XMPPPacketReader>();
@@ -78,14 +78,17 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 
     public void sessionOpened(IoSession session) throws Exception {
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
-        XMLLightweightParser parser = new XMLLightweightParser(CHARSET);
+        final XMLLightweightParser parser = new XMLLightweightParser(CHARSET);
         session.setAttribute(XML_PARSER, parser);
         // Create a new NIOConnection for the new session
-        NIOConnection connection = createNIOConnection(session);
+        final NIOConnection connection = createNIOConnection(session);
         session.setAttribute(CONNECTION, connection);
         session.setAttribute(HANDLER, createStanzaHandler(connection));
-        // Set the max time a connection can be idle before closing it
-        int idleTime = getMaxIdleTime();
+        // Set the max time a connection can be idle before closing it. This amount of seconds
+        // is divided in two, as Openfire will ping idle clients first (at 50% of the max idle time)
+        // before disconnecting them (at 100% of the max idle time). This prevents Openfire from
+        // removing connections without warning.
+        final int idleTime = getMaxIdleTime() / 2;
         if (idleTime > 0) {
             session.setIdleTime(IdleStatus.READER_IDLE, idleTime);
         }
@@ -98,14 +101,31 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         connection.close();
     }
 
+    /**
+	 * Invoked when a MINA session has been idle for half of the allowed XMPP
+	 * session idle time as specified by {@link #getMaxIdleTime()}. This method
+	 * will be invoked each time that such a period passes (even if no IO has
+	 * occurred in between).
+	 * 
+	 * Openfire will disconnect a session the second time this method is
+	 * invoked, if no IO has occurred between the first and second invocation.
+	 * This allows extensions of this class to use the first invocation to check
+	 * for livelyness of the MINA session (e.g by polling the remote entity, as
+	 * {@link ClientConnectionHandler} does).
+	 * 
+	 * @see org.apache.mina.common.IoHandlerAdapter#sessionIdle(org.apache.mina.common.IoSession,
+	 *      org.apache.mina.common.IdleStatus)
+	 */
     public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
-        // Get the connection for this session
-        Connection connection = (Connection) session.getAttribute(CONNECTION);
-        // Close idle connection
-        if (Log.isDebugEnabled()) {
-            Log.debug("ConnectionHandler: Closing connection that has been idle: " + connection);
+        if (session.getIdleCount(status) > 1) {
+            // Get the connection for this session
+            final Connection connection = (Connection) session.getAttribute(CONNECTION);
+	        // Close idle connection
+	        if (Log.isDebugEnabled()) {
+	            Log.debug("ConnectionHandler: Closing connection that has been idle: " + connection);
+	        }
+	        connection.close();
         }
-        connection.close();
     }
 
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {

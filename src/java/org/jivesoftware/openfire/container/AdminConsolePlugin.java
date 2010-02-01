@@ -43,6 +43,7 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import org.slf4j.Logger;
@@ -99,6 +100,10 @@ public class AdminConsolePlugin implements Plugin {
         adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
         adminServer = new Server();
+        final QueuedThreadPool tp = new QueuedThreadPool(254);
+        tp.setName("Jetty-QTP-AdminConsole");
+        adminServer.setThreadPool(tp);
+        
         // Do not send Jetty info in HTTP headers
         adminServer.setSendServerVersion(false);
 

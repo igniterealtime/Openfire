@@ -46,6 +46,8 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import org.slf4j.Logger;
@@ -307,6 +309,10 @@ public final class HttpBindManager {
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
+        final QueuedThreadPool tp = new QueuedThreadPool(254);
+        tp.setName("Jetty-QTP-BOSH");
+        httpBindServer.setThreadPool(tp);
+        
         createConnector(port);
         createSSLConnector(securePort);
         if (httpConnector == null && httpsConnector == null) {

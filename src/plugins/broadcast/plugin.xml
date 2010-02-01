@@ -11,5 +11,5 @@
     <version>1.8.0</version>
     <date>12/1/2009</date>
     <url>http://www.igniterealtime.org</url>
-    <minServerVersion>3.6.5</minServerVersion>
+    <minServerVersion>3.7.0</minServerVersion>
 </plugin>

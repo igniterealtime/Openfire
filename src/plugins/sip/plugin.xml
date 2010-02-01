@@ -9,7 +9,7 @@
     <date>12/2/2009</date>
     <databaseKey>sip</databaseKey>
     <databaseVersion>2</databaseVersion>
-    <minServerVersion>3.6.5</minServerVersion>
+    <minServerVersion>3.7.0</minServerVersion>
     
     <adminconsole>
         <tab id="tab-server">

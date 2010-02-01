@@ -5,8 +5,8 @@
    <name>Subscription</name>
    <description>Automatically accepts or rejects subsription requests</description>
    <author>Ryan Graham</author>
-   <version>1.2.1</version>
-   <date>4/12/2007</date>
+   <version>1.2.2</version>
+   <date>2/1/2010</date>
    <url>http://www.igniterealtime.org</url>
    <minServerVersion>3.5.0</minServerVersion>
 

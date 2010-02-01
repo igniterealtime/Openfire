@@ -7,7 +7,7 @@
     <author>Ryan Graham</author>
     <version>1.5.1</version>
     <date>1/2/2010</date>
-    <minServerVersion>3.6.5</minServerVersion>
+    <minServerVersion>3.7.0</minServerVersion>
     
     <adminconsole>
         <tab id="tab-server">

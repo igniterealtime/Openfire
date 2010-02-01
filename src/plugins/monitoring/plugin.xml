@@ -7,7 +7,7 @@
     <author>Jive Software</author>
     <version>1.2.0</version>
     <date>12/1/2009</date>
-    <minServerVersion>3.6.5</minServerVersion>
+    <minServerVersion>3.7.0</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>0</databaseVersion>
 	

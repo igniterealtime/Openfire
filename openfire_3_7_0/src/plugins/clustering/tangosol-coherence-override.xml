@@ -1,0 +1,75 @@
+<?xml version='1.0'?>
+
+<!--
+Copyright 2001-2005 by Tangosol, Inc.  All rights reserved.
+
+This software is the confidential and proprietary information of
+Tangosol, Inc.  You shall not disclose such confidential and pro-
+prietary information and shall use it only in accordance with the
+terms of the license agreement you entered into with Tangosol, Inc.
+
+Tangosol, Inc. makes no representations or warranties about the suit-
+ability of the software, either express or implied, including but not
+limited to the implied warranties of merchantability, fitness for a
+particular purpose, or non-infringement.  Tangosol, Inc. shall not be
+liable for any damages suffered by licensee as a result of using,
+modifying or distributing this software or its derivatives.
+
+Tangosol, Inc. is located at http://www.tangosol.com and can be
+contacted by e-mail at info@tangosol.com.
+
+This notice may not be removed or altered.
+-->
+
+<!--
+To override default values defined in this file you will need to add the required
+system property as a Java system property.
+
+For instance, if you want to change the default port used for clustering then the
+system property to override is tangosol.coherence.clusterport.
+Adding -Dtangosol.coherence.clusterport=32390 to your command line when starting
+up the server will change the port to use for clustering to be 32390. Depending on
+the way you deployed the server you might need to add the property to the
+openfired.vmoptions file or /etc/sysconfig/openfire if you are using the RPM install.
+-->
+
+<!DOCTYPE coherence PUBLIC
+        "-//Tangosol, Inc.//DTD Tangosol Coherence 3.0//EN"
+        "http://www.tangosol.com/dtd/coherence_3_0.dtd">
+
+<coherence>
+
+    <cluster-config>
+        <multicast-listener>
+          <port system-property="tangosol.coherence.clusterport">32386</port>
+          <join-timeout-milliseconds>20000</join-timeout-milliseconds>
+        </multicast-listener>
+
+        <shutdown-listener>
+          <enabled system-property="tangosol.coherence.shutdownhook">false</enabled>
+        </shutdown-listener>
+
+        <services>
+            <service id="3">
+                <init-params>
+                    <init-param id="6">
+                        <param-name>backup-count</param-name>
+                        <param-value system-property="tangosol.coherence.distributed.backupcount">1</param-value>
+                    </init-param>
+                </init-params>
+            </service>
+        </services>
+
+    </cluster-config>
+
+    <configurable-cache-factory-config>
+      <class-name>com.jivesoftware.util.cache.JiveConfigurableCacheFactory</class-name>
+      <init-params>
+        <init-param>
+          <param-type>java.lang.String</param-type>
+          <param-value system-property="tangosol.coherence.cacheconfig">coherence-cache-config.xml</param-value>
+        </init-param>
+      </init-params>
+    </configurable-cache-factory-config>
+
+</coherence>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.MonitoringPlugin</class>
+    <name>Monitoring Service</name>
+    <description>Monitors conversations and statistics of the server.</description>
+    <author>Jive Software</author>
+    <version>1.2.0</version>
+    <date>12/1/2009</date>
+    <minServerVersion>3.7.0</minServerVersion>
+    <databaseKey>monitoring</databaseKey>
+    <databaseVersion>0</databaseVersion>
+	
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="stats-dashboard" name="${admin.sidebar.statistics.name}" description="${admin.item.stats-dashboard.description}">
+                <item id="statistics" name="${admin.sidebar.statistics.name}"
+                      url="stats-dashboard.jsp"
+                      description="${admin.sidebar.statistics.description}"/>
+                <item id="stats-reporter" name="${admin.item.stats-reporter.name}"
+                      url="stats-reporter.jsp"
+                      description="${admin.item.stats-reporter.description}"/>
+            </sidebar>
+
+            <sidebar id="archiving" name="${admin.sidebar.archiving.name}" description="${admin.sidebar.archiving.description}">
+                <item id="archive-search" name="${admin.item.archive-search.name}"
+                      url="archive-search.jsp"
+                      description="${admin.item.archive-search.description}"/>
+                <item id="archiving-settings" name="${admin.item.archive-settings.name}"
+                      url="archiving-settings.jsp"
+                      description="${admin.item.archive-settings.description}"/>
+                <item id="active-conversations" name="${admin.item.active-conversations.name}"
+                      url="conversations.jsp"
+                      description="${admin.item.active-conversations.description}"/>
+            </sidebar>
+
+        </tab>
+    </adminconsole>
+</plugin>

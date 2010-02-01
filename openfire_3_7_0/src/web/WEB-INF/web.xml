@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<web-app
+        xmlns="http://java.sun.com/xml/ns/j2ee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+        version="2.4">
+
+    <display-name>Openfire</display-name>
+
+    <context-param>
+        <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
+        <param-value>openfire_i18n</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>javax.servlet.jsp.jstl.fmt.locale</param-name>
+        <param-value>zh_CN</param-value>
+    </context-param>
+
+    <filter>
+        <filter-name>AuthCheck</filter-name>
+        <filter-class>org.jivesoftware.admin.AuthCheckFilter</filter-class>
+        <init-param>
+            <param-name>excludes</param-name>
+            <param-value>
+                login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-*,.gif,.png,error-serverdown.jsp,setup/clearspace-integration-prelogin.jsp
+            </param-value>
+        </init-param>
+    </filter>
+
+    <filter>
+        <filter-name>PluginFilter</filter-name>
+        <filter-class>org.jivesoftware.admin.PluginFilter</filter-class>
+    </filter>
+
+    <filter>
+        <filter-name>Set Character Encoding</filter-name>
+        <filter-class>org.jivesoftware.util.SetCharacterEncodingFilter</filter-class>
+    </filter>
+
+    <filter>
+        <filter-name>LocaleFilter</filter-name>
+        <filter-class>org.jivesoftware.util.LocaleFilter</filter-class>
+    </filter>
+
+    <filter>
+        <filter-name>sitemesh</filter-name>
+        <filter-class>com.opensymphony.module.sitemesh.filter.PageFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>PluginFilter</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>Set Character Encoding</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>LocaleFilter</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <servlet-name>PluginServlet</servlet-name>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>PluginFilter</filter-name>
+        <servlet-name>PluginServlet</servlet-name>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>sitemesh</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <servlet-name>dwr-invoker</servlet-name>
+    </filter-mapping>
+
+
+    <listener>
+        <listener-class>org.jivesoftware.openfire.XMPPContextListener</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>PluginServlet</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.container.PluginServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>FaviconServlet</servlet-name>
+        <servlet-class>org.jivesoftware.util.FaviconServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>dwr-invoker</servlet-name>
+        <servlet-class>uk.ltd.getahead.dwr.DWRServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>PluginIconServlet</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
+    </servlet>
+
+    <!--<servlet>
+        <servlet-name>WebDAVLiteServlet</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.webdav.WebDAVLiteServlet</servlet-class>
+    </servlet>-->
+
+
+    <!--@@JSPC-SERVLETS@@-->
+
+    <servlet-mapping>
+        <servlet-name>PluginServlet</servlet-name>
+        <url-pattern>/plugins/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>FaviconServlet</servlet-name>
+        <url-pattern>/getFavicon</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>PluginIconServlet</servlet-name>
+        <url-pattern>/geticon</url-pattern>
+    </servlet-mapping>
+
+    <!--<servlet-mapping>
+        <servlet-name>WebDAVLiteServlet</servlet-name>
+        <url-pattern>/webdav/*</url-pattern>
+    </servlet-mapping>-->
+
+    <servlet-mapping>
+        <servlet-name>dwr-invoker</servlet-name>
+        <url-pattern>/dwr/*</url-pattern>
+    </servlet-mapping>
+
+    <jsp-config>
+        <taglib>
+            <taglib-uri>admin</taglib-uri>
+            <taglib-location>/WEB-INF/admin.tld</taglib-location>
+        </taglib>
+    </jsp-config>
+
+</web-app>
+
+

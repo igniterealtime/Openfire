@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+    <!-- Main plugin class -->
+    <class>org.jivesoftware.openfire.plugin.ContentFilterPlugin</class>
+    
+    <!-- Plugin meta-data -->
+    <name>Content Filter</name>
+    <description>Scans message packets for defined patterns</description>
+    <author>Conor Hayes</author>
+    <version>1.6.1</version>
+    <date>12/1/2009</date>
+    <minServerVersion>3.7.0</minServerVersion>
+    
+    <!-- UI extension -->
+    <adminconsole>		
+		<tab id="tab-server">
+			<sidebar id="sidebar-server-settings">
+				<item id="contentfilter-props-edit-form" name="Content Filter"
+					url="contentfilter-props-edit-form.jsp"
+					description="Click to configure content filter" />
+			</sidebar>
+        </tab>
+    </adminconsole>
+    
+</plugin>

@@ -1,0 +1,5 @@
+Name                                | Version
+-------------------------------------------------------------------------
+commons-fileupload.jar              | 1.2
+commons-io.jar                      | 1.3.2
+dwr.jar                             | 1.1.4

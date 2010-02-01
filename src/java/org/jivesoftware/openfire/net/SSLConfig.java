@@ -102,24 +102,29 @@ public class SSLConfig {
         s2sTrustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
         s2sTrustpass = s2sTrustpass.trim();
 
-	    // Load s2s keystore and trusstore
+        // Load s2s keystore
         try {
             keyStore = KeyStore.getInstance(storeType);
             keyStore.load(new FileInputStream(keyStoreLocation), keypass.toCharArray());
-
-            s2sTrustStore = KeyStore.getInstance(storeType);
-            s2sTrustStore.load(new FileInputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
-
-
         }
         catch (Exception e) {
             Log.error("SSLConfig startup problem.\n" +
                     "  storeType: [" + storeType + "]\n" +
                     "  keyStoreLocation: [" + keyStoreLocation + "]\n" +
-                    "  keypass: [" + keypass + "]\n" +
+                    "  keypass: [" + keypass + "]\n", e);
+            keyStore = null;
+            s2sFactory = null;
+        }
+        // Load s2s trusstore
+        try {
+            s2sTrustStore = KeyStore.getInstance(storeType);
+            s2sTrustStore.load(new FileInputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
+        }
+        catch (Exception e) {
+            Log.error("SSLConfig startup problem.\n" +
+                    "  storeType: [" + storeType + "]\n" +
                     "  s2sTrustStoreLocation: [" + s2sTrustStoreLocation + "]\n" +
                     "  s2sTrustpass: [" + s2sTrustpass + "]\n", e); 
-            keyStore = null;
             s2sTrustStore = null;
             s2sFactory = null;
         }
@@ -314,12 +319,6 @@ public class SSLConfig {
         try {
             keyStore = KeyStore.getInstance(storeType);
             keyStore.load(null, keypass.toCharArray());
-
-            // Also generate the trustStore if necessary
-            if (s2sTrustStore == null) {
-                s2sTrustStore = KeyStore.getInstance(storeType);
-                s2sTrustStore.load(null, s2sTrustpass.toCharArray());
-            }
         }
         catch (Exception e) {
             Log.error("Unable to initialize keystore: ", e);
@@ -337,12 +336,14 @@ public class SSLConfig {
                 keyStoreDirectory.mkdirs();
             keyStore.store(new FileOutputStream(keyStoreLocation), keypass.toCharArray());
 
-            File s2sTrustStoreDirectory = new File(s2sTrustStoreLocation).getParentFile();
-            if (!s2sTrustStoreDirectory.exists())
-                s2sTrustStoreDirectory.mkdirs();
-            s2sTrustStore.store(new FileOutputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
+            if (s2sTrustStore != null) {
+                File s2sTrustStoreDirectory = new File(s2sTrustStoreLocation).getParentFile();
+                if (!s2sTrustStoreDirectory.exists())
+                    s2sTrustStoreDirectory.mkdirs();
+                s2sTrustStore.store(new FileOutputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
+            }
 
-            if (c2sTrustStore != s2sTrustStore) {
+            if (c2sTrustStore != null && c2sTrustStore != s2sTrustStore) {
                 File c2sTrustStoreDirectory = new File(c2sTrustStoreLocation).getParentFile();
                 if (!c2sTrustStoreDirectory.exists())
                     c2sTrustStoreDirectory.mkdirs();

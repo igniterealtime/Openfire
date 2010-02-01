@@ -19,8 +19,10 @@ REM  SET PLUGIN_WEBROOT=foo.webRoot=c:\plugins\foo\src\web
 REM  SET PLUGIN_CLASSES=foo.classes=c:\plugins\foo\target\classes
 
 
+
 if "%JAVA_HOME%" == "" goto javaerror
 if not exist "%JAVA_HOME%\bin\java.exe" goto javaerror
+set OPENFIRE_HOME=%CD%\..
 goto run
 
 :javaerror
@@ -31,12 +33,11 @@ goto end
 
 :run
 if "%1" == "-debug" goto debug
-start "Openfire" "%JAVA_HOME%\bin\java" -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\..\build\lib\ant.jar;..\..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..\lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\openfire.jar" org.jivesoftware.openfire.starter.ServerStarter
+start "Openfire" "%JAVA_HOME%\bin\java" -DopenfireHome="%OPENFIRE_HOME%" -DdevelopmentMode="true" -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\..\build\lib\ant.jar;..\..\..\build\lib\ant-contrib.jar;..\lib\slf4j-log4j12.jar;..\lib\activation.jar;..\lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\openfire.jar" org.jivesoftware.openfire.starter.ServerStarter
 goto end
 
 :debug
-start "Openfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\..\build\lib\ant.jar;..\..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..\lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\openfire.jar" org.jivesoftware.openfire.starter.ServerStarter
+start "Openfire" "%JAVA_HOME%\bin\java" -DopenfireHome="%OPENFIRE_HOME%" -Xdebug -Xint -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -DdevelopmentMode="true" -D%PLUGIN_WEBROOT% -D%PLUGIN_CLASSES% -server -cp "%JAVA_HOME%\lib\tools.jar;..\..\..\build\lib\ant.jar;..\..\..\build\lib\ant-contrib.jar;..\lib\activation.jar;..\lib\bouncycastle.jar;..\lib\commons-el.jar;..\lib\hsqldb.jar;..\lib\jasper-compiler.jar;..\lib\jasper-runtime.jar;..\lib\jtds.jar;..\lib\mail.jar;..\lib\mysql.jar;..\lib\postgres.jar;..\lib\servlet.jar;..\lib\startup.jar;..\lib\openfire.jar" org.jivesoftware.openfire.starter.ServerStarter
 goto end
 :end
-
 

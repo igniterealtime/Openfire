@@ -7,8 +7,6 @@
         <create creator="new" javascript="JDate">
             <param name="class" value="java.util.Date"/>
         </create>
-    </allow>
-    <allow>
         <create creator="new" javascript="downloader">
             <param name="class" value="org.jivesoftware.openfire.update.PluginDownloadManager"/>
         </create>

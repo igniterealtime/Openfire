@@ -83,7 +83,8 @@ public class ClientConnectionHandler extends ConnectionHandler {
     public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
     	super.sessionIdle(session, status);
     	
-        if (session.getIdleCount(status) == 1) {
+    	final boolean doPing = JiveGlobals.getBooleanProperty("xmpp.client.idle.ping", true);
+        if (doPing && session.getIdleCount(status) == 1) {
             final ClientStanzaHandler handler = (ClientStanzaHandler) session.getAttribute(HANDLER);
             final JID entity = handler.getAddress();
             

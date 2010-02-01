@@ -67,6 +67,11 @@
                   url="profile-settings.jsp"
                   description="${sidebar.profile-settings.descr}"/>
 
+            <!-- Client connections settings-->
+            <item id="client-connections-settings" name="${sidebar.client-connections-settings}"
+                  url="client-connections-settings.jsp"
+                  description="${sidebar.client-connections-settings.descr}"/>
+                  
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
                   url="server2server-settings.jsp"
@@ -77,7 +82,7 @@
                   url="external-components-settings.jsp"
                   description="${sidebar.external-components-settings.descr}"/>
 
-            <!-- External components -->
+            <!-- Connection Managers -->
             <item id="connection-managers-settings" name="${sidebar.connection-managers-settings}"
                   url="connection-managers-settings.jsp"
                   description="${sidebar.connection-managers-settings.descr}"/>

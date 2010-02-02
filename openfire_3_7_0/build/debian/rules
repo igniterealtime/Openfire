@@ -19,6 +19,7 @@ DEB_ANT_CLEAN_TARGET := clean
 	
 install/openfire::
 	cp $(TARGET)/lib/*.jar $(OPENFIRE)/lib/
+	cp $(TARGET)/lib/*.xml $(OPENFIRE)/lib/
 	cp -r $(TARGET)/resources/database $(OPENFIRE)/resources/database
 	cp $(TARGET)/conf/openfire.xml $(ETCDIR)
 	cp -r $(TARGET)/resources/security $(ETCDIR)/security

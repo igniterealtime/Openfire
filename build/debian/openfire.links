@@ -1,4 +1,5 @@
 /etc/openfire /usr/share/openfire/conf
+/etc/openfire/log4j.xml /usr/share/openfire/lib/log4j.xml
 /etc/openfire/security /usr/share/openfire/resources/security
 /var/lib/openfire/embedded-db /usr/share/openfire/embedded-db
 /var/lib/openfire/plugins /usr/share/openfire/plugins

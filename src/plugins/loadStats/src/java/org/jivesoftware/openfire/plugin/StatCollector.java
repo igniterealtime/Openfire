@@ -68,7 +68,8 @@ public class StatCollector extends TimerTask {
         statCollector = new MINAStatCollector(socketAcceptor, frequency - 1000);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         try {
             // Collect content
             StringBuilder sb = new StringBuilder();

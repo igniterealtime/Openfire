@@ -530,7 +530,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         rosterManager = server.getRosterManager();

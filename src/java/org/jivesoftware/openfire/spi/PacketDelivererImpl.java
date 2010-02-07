@@ -56,12 +56,14 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         deliverHandler.process(packet);
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         deliverHandler = new SocketPacketWriteHandler(XMPPServer.getInstance().getRoutingTable());
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         deliverHandler = null;
     }

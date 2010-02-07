@@ -42,7 +42,8 @@ import java.util.List;
  */
 public class GetUsersPresence extends AdHocCommand {
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting Presence of Active Users");
         form.addInstruction("Fill out this form to request the active users presence of this service.");
@@ -68,7 +69,8 @@ public class GetUsersPresence extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && "none".equals(max_items)) {
@@ -105,23 +107,28 @@ public class GetUsersPresence extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#get-active-presences";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Get Presence of Active Users";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
@@ -132,7 +139,8 @@ public class GetUsersPresence extends AdHocCommand {
      * @param requester the JID of the entity requesting to execute this command.
      * @return true if the requester can access this command.
      */
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         return super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

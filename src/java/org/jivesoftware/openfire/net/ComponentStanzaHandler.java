@@ -55,7 +55,8 @@ public class ComponentStanzaHandler extends StanzaHandler {
         super(router, serverName, connection);
     }
 
-    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    @Override
+	boolean processUnknowPacket(Element doc) throws UnauthorizedException {
         String tag = doc.getName();
         if ("handshake".equals(tag)) {
             // External component is trying to authenticate
@@ -128,7 +129,8 @@ public class ComponentStanzaHandler extends StanzaHandler {
         return false;
     }
 
-    protected void processIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	protected void processIQ(IQ packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             IQ reply = new IQ();
@@ -152,7 +154,8 @@ public class ComponentStanzaHandler extends StanzaHandler {
         super.processIQ(packet);
     }
 
-    protected void processPresence(Presence packet) throws UnauthorizedException {
+    @Override
+	protected void processPresence(Presence packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             Presence reply = new Presence();
@@ -166,7 +169,8 @@ public class ComponentStanzaHandler extends StanzaHandler {
         super.processPresence(packet);
     }
 
-    protected void processMessage(Message packet) throws UnauthorizedException {
+    @Override
+	protected void processMessage(Message packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             Message reply = new Message();
@@ -180,24 +184,29 @@ public class ComponentStanzaHandler extends StanzaHandler {
         super.processMessage(packet);
     }
 
-    void startTLS() throws Exception {
+    @Override
+	void startTLS() throws Exception {
         // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
         connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
     }
 
-    String getNamespace() {
+    @Override
+	String getNamespace() {
         return "jabber:component:accept";
     }
 
-    boolean validateHost() {
+    @Override
+	boolean validateHost() {
         return false;
     }
 
-    boolean validateJIDs() {
+    @Override
+	boolean validateJIDs() {
         return false;
     }
 
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    @Override
+	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {
             // The connected client is a connection manager so create a ConnectionMultiplexerSession

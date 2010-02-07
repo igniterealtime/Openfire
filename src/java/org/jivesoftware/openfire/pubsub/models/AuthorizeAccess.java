@@ -39,11 +39,13 @@ public class AuthorizeAccess extends AccessModel {
     AuthorizeAccess() {
     }
 
-    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         return true;
     }
 
-    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always get node items
         if (node.isAdmin(owner)) {
             return true;
@@ -64,20 +66,24 @@ public class AuthorizeAccess extends AccessModel {
         return false;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "authorize";
     }
 
-    public PacketError.Condition getSubsriptionError() {
+    @Override
+	public PacketError.Condition getSubsriptionError() {
         return PacketError.Condition.not_authorized;
     }
 
-    public Element getSubsriptionErrorDetail() {
+    @Override
+	public Element getSubsriptionErrorDetail() {
         return DocumentHelper.createElement(QName.get("not-subscribed",
                 "http://jabber.org/protocol/pubsub#errors"));
     }
 
-    public boolean isAuthorizationRequired() {
+    @Override
+	public boolean isAuthorizationRequired() {
         return true;
     }
 }

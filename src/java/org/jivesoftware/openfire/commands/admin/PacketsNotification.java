@@ -41,7 +41,8 @@ import java.util.List;
  */
 public class PacketsNotification extends AdHocCommand {
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Receiving notification of packets activity");
         form.addInstruction("Fill out this form to configure packets to receive.");
@@ -80,7 +81,8 @@ public class PacketsNotification extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         boolean presenceEnabled = false;
         boolean messageEnabled = false;
         boolean iqEnabled = false;
@@ -110,23 +112,28 @@ public class PacketsNotification extends AdHocCommand {
         note.setText("Operation finished successfully");
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#packets_notification";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Get notifications of packet activity";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
@@ -137,7 +144,8 @@ public class PacketsNotification extends AdHocCommand {
      * @param requester the JID of the user requesting to execute this command.
      * @return true if the requester can access this command.
      */
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         return InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

@@ -45,7 +45,8 @@ public class DeleteGroupUsers extends AdHocCommand {
 	
 	private static final Logger Log = LoggerFactory.getLogger(DeleteGroupUsers.class);
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Delete members or admins from a group");
         form.addInstruction("Fill out this form to delete members or admins from a group.");
@@ -71,7 +72,8 @@ public class DeleteGroupUsers extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
@@ -105,23 +107,28 @@ public class DeleteGroupUsers extends AdHocCommand {
         note.setText("Operation finished" + (withErrors ? " with errors" : " successfully"));
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#delete-group-members";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Delete members or admins from a group";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 }

@@ -232,7 +232,8 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
         //Do nothing
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<POOL_SIZE; i++) {
@@ -245,7 +246,8 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
         UserEventDispatcher.addListener(this);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();

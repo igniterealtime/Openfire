@@ -154,7 +154,8 @@ public class ClientSessionConnection extends VirtualConnection {
      * to send to the Connection Manager a packet letting him know that the Client Session needs
      * to be terminated.
      */
-    public void closeVirtualConnection() {
+    @Override
+	public void closeVirtualConnection() {
         // Figure out who requested the connection to be closed
         String streamID = session.getStreamID().getID();
         if (multiplexerManager.getClientSession(connectionManagerName, streamID) == null) {

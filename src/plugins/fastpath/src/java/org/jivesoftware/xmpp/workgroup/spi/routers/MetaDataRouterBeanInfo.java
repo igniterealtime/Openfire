@@ -31,15 +31,18 @@ public class MetaDataRouterBeanInfo extends WorkgroupBeanInfo {
         super();
     }
 
-    public Class getBeanClass() {
+    @Override
+	public Class getBeanClass() {
         return org.jivesoftware.xmpp.workgroup.spi.routers.MetaDataRouter.class;
     }
 
-    public String[] getPropertyNames() {
+    @Override
+	public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "MetaDataRouter";
     }
 }

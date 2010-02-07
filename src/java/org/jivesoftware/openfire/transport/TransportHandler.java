@@ -82,7 +82,8 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         deliverer = server.getPacketDeliverer();
     }

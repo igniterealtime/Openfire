@@ -41,7 +41,8 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
      */
     private long lastHeartbeat = 0;
 
-    protected int nextImpl()
+    @Override
+	protected int nextImpl()
         throws XmlPullParserException, IOException
     {
         text = null;

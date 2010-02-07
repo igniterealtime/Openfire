@@ -72,7 +72,8 @@ public class SocketSendingTracker {
     public void start() {
         shutdown = false;
         checkingThread = new Thread("SocketSendingTracker") {
-            public void run() {
+            @Override
+			public void run() {
                 while (!shutdown) {
                     checkHealth();
                     synchronized (this) {

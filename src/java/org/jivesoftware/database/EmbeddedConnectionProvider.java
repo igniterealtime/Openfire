@@ -113,7 +113,8 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         settings = null;
     }
 
-    public void finalize() throws Throwable {
+    @Override
+	public void finalize() throws Throwable {
         super.finalize();
         destroy();
     }

@@ -214,7 +214,8 @@ public class UserRequest extends Request {
         }
     }
 
-    public void checkRequest(String roomID) {
+    @Override
+	public void checkRequest(String roomID) {
         if (getInvitationSentTime() != null && !hasJoinedRoom()) {
             checkInvitation(roomID);
         }
@@ -276,7 +277,8 @@ public class UserRequest extends Request {
         return timeStatus;
     }
 
-    public JID getUserJID() {
+    @Override
+	public JID getUserJID() {
         return userJID;
     }
 
@@ -348,7 +350,8 @@ public class UserRequest extends Request {
         communicationMethod.supportEnded(this);
     }
 
-    public void userJoinedRoom(JID roomJID, JID user) {
+    @Override
+	public void userJoinedRoom(JID roomJID, JID user) {
         // Notify related requests that new a occupant has joined the room
         for (Request request : relatedRequests) {
             request.userJoinedRoom(roomJID, user);
@@ -377,7 +380,8 @@ public class UserRequest extends Request {
         relatedRequests.remove(request);
     }
 
-    public void cancel(Request.CancelType type) {
+    @Override
+	public void cancel(Request.CancelType type) {
         super.cancel(type);
 
         JID sender = workgroup.getJID();
@@ -394,7 +398,8 @@ public class UserRequest extends Request {
         }
     }
 
-    void addOfferContent(Element offerElement) {
+    @Override
+	void addOfferContent(Element offerElement) {
         // Flag the offer as a user request
         offerElement.addElement("user-request");
         // Add custom extension that includes the userID if the session belongs to an
@@ -405,7 +410,8 @@ public class UserRequest extends Request {
         }
     }
 
-    void addRevokeContent(Element revoke) {
+    @Override
+	void addRevokeContent(Element revoke) {
         // Add custom extension that includes the userID if the session belongs to an
         // anonymous user
         if (isAnonymousUser()) {
@@ -414,7 +420,8 @@ public class UserRequest extends Request {
         }
     }
 
-    public Element getSessionElement() {
+    @Override
+	public Element getSessionElement() {
         QName qName = DocumentHelper.createQName("session", DocumentHelper.createNamespace("", "http://jivesoftware.com/protocol/workgroup"));
         Element sessionElement = DocumentHelper.createElement(qName);
         sessionElement.addAttribute("id", requestID);
@@ -428,7 +435,8 @@ public class UserRequest extends Request {
      *
      * @param agentSession the agent that previously accepted the offer.
      */
-    public void offerAccepted(AgentSession agentSession) {
+    @Override
+	public void offerAccepted(AgentSession agentSession) {
         super.offerAccepted(agentSession);
         // Ask the workgroup to send invitations to the agent and to the user that made the
         // request. The Workgroup will create a MUC room and send invitations to the agent and
@@ -436,7 +444,8 @@ public class UserRequest extends Request {
         getWorkgroup().sendInvitation(agentSession, this);
     }
 
-    public void updateSession(int state, long offerTime) {
+    @Override
+	public void updateSession(int state, long offerTime) {
         boolean inserted = false;
         long queueWaitTime = new Date().getTime() - offerTime;
         String tempDate = StringUtils.dateToMillis(new Date());

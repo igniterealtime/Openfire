@@ -72,12 +72,14 @@ public class OccupantLeftEvent extends MUCRoomTask {
         });
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
+    @Override
+	public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
     }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    @Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

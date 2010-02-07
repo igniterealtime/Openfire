@@ -44,7 +44,8 @@ public class CallLogExtension extends PacketExtension {
 		super(e);
 	}
 
-    public CallLogExtension createCopy() {
+    @Override
+	public CallLogExtension createCopy() {
         return new CallLogExtension(this.getElement().createCopy());
     }
 

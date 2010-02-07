@@ -86,7 +86,8 @@ public class HttpSession extends LocalClientSession {
         }
         // Create xmpp parser to keep in each thread
         localParser = new ThreadLocal<XMPPPacketReader>() {
-            protected XMPPPacketReader initialValue() {
+            @Override
+			protected XMPPPacketReader initialValue() {
                 XMPPPacketReader parser = new XMPPPacketReader();
                 factory.setNamespaceAware(true);
                 parser.setXPPFactory(factory);
@@ -174,7 +175,8 @@ public class HttpSession extends LocalClientSession {
         return elements;
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder(200);
         for (Element element : getAvailableStreamFeaturesElements()) {
             sb.append(element.asXML());
@@ -186,7 +188,8 @@ public class HttpSession extends LocalClientSession {
      * Closes the session. After a session has been closed it will no longer accept new connections
      * on the session ID.
      */
-    public void close() {
+    @Override
+	public void close() {
         if (isClosed) {
             return;
         }
@@ -198,7 +201,8 @@ public class HttpSession extends LocalClientSession {
      *
      * @return true if this session has been closed and no longer activley accepting connections.
      */
-    public synchronized boolean isClosed() {
+    @Override
+	public synchronized boolean isClosed() {
         return isClosed;
     }
 
@@ -340,7 +344,8 @@ public class HttpSession extends LocalClientSession {
      * @return true if all connections on this session should be secured, and false if they should
      *         not.
      */
-    public boolean isSecure() {
+    @Override
+	public boolean isSecure() {
         return isSecure;
     }
 
@@ -982,7 +987,8 @@ public class HttpSession extends LocalClientSession {
             this.address = address;
         }
 
-        public void closeVirtualConnection() {
+        @Override
+		public void closeVirtualConnection() {
             ((HttpSession) session).closeConnection();
         }
 
@@ -1010,7 +1016,8 @@ public class HttpSession extends LocalClientSession {
             ((HttpSession) session).deliver(text);
         }
 
-        public Certificate[] getPeerCertificates() {
+        @Override
+		public Certificate[] getPeerCertificates() {
             return ((HttpSession) session).getPeerCertificates();
         }
     }

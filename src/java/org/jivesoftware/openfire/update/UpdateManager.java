@@ -112,7 +112,8 @@ public class UpdateManager extends BasicModule {
         super("Update manager");
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         startService();
     }
@@ -123,7 +124,8 @@ public class UpdateManager extends BasicModule {
     private void startService() {
         // Thread that performs the periodic checks for updates
         thread = new Thread("Update Manager") {
-            public void run() {
+            @Override
+			public void run() {
                 try {
                     // Sleep for 5 seconds before starting to work. This is required because
                     // this module has a dependency on the PluginManager, which is loaded
@@ -191,7 +193,8 @@ public class UpdateManager extends BasicModule {
         thread.start();
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         router = server.getMessageRouter();
         serverName = server.getServerInfo().getXMPPDomain();

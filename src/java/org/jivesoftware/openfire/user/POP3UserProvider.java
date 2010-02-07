@@ -44,7 +44,8 @@ package org.jivesoftware.openfire.user;
  */
 public class POP3UserProvider extends DefaultUserProvider {
 
-    public void setEmail(String username, String email) throws UserNotFoundException {
+    @Override
+	public void setEmail(String username, String email) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 }

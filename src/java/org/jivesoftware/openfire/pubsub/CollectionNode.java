@@ -69,7 +69,8 @@ public class CollectionNode extends Node {
     }
 
 
-    void configure(FormField field) {
+    @Override
+	void configure(FormField field) {
         List<String> values;
         if ("pubsub#leaf_node_association_policy".equals(field.getVariable())) {
             values = field.getValues();
@@ -95,11 +96,13 @@ public class CollectionNode extends Node {
         }
     }
 
-    void postConfigure(DataForm completedForm) {
+    @Override
+	void postConfigure(DataForm completedForm) {
         //Do nothing.
     }
 
-    protected void addFormFields(DataForm form, boolean isEditing) {
+    @Override
+	protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
         FormField formField = form.addField();
@@ -191,7 +194,8 @@ public class CollectionNode extends Node {
         broadcastCollectionNodeEvent(child, message);
     }
 
-    protected void deletingNode() {
+    @Override
+	protected void deletingNode() {
         // Update child nodes to use the parent node of this node as the new parent node
         for (Node node : getNodes()) {
             node.changeParent(parent);
@@ -229,7 +233,8 @@ public class CollectionNode extends Node {
         return subscriptions;
     }
 
-    public boolean isCollectionNode() {
+    @Override
+	public boolean isCollectionNode() {
         return true;
     }
 
@@ -241,7 +246,8 @@ public class CollectionNode extends Node {
      * @return true if the specified node is a first-level children of this collection
      *         node.
      */
-    public boolean isChildNode(Node child) {
+    @Override
+	public boolean isChildNode(Node child) {
         return nodes.containsKey(child.getNodeID());
     }
 
@@ -253,7 +259,8 @@ public class CollectionNode extends Node {
      * @return true if the specified node is a direct child node of this collection node or
      *         a descendant of the children nodes.
      */
-    public boolean isDescendantNode(Node child) {
+    @Override
+	public boolean isDescendantNode(Node child) {
         if (isChildNode(child)) {
             return true;
         }
@@ -265,7 +272,8 @@ public class CollectionNode extends Node {
         return false;
     }
 
-    public Collection<Node> getNodes() {
+    @Override
+	public Collection<Node> getNodes() {
         return nodes.values();
     }
 

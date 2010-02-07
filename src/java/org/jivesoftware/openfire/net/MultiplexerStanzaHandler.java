@@ -50,7 +50,8 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         super(router, serverName, connection);
     }
 
-    protected void processIQ(final IQ packet) {
+    @Override
+	protected void processIQ(final IQ packet) {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             IQ reply = new IQ();
@@ -66,12 +67,14 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         packetHandler.handle(packet);
     }
 
-    protected void processMessage(final Message packet) throws UnauthorizedException {
+    @Override
+	protected void processMessage(final Message packet) throws UnauthorizedException {
         throw new UnauthorizedException("Message packets are not supported. Original packets " +
                 "should be wrapped by route packets.");
     }
 
-    protected void processPresence(final Presence packet) throws UnauthorizedException {
+    @Override
+	protected void processPresence(final Presence packet) throws UnauthorizedException {
         throw new UnauthorizedException("Message packets are not supported. Original packets " +
                 "should be wrapped by route packets.");
     }
@@ -98,7 +101,8 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         packetHandler.route(packet);
     }
 
-    boolean processUnknowPacket(Element doc) {
+    @Override
+	boolean processUnknowPacket(Element doc) {
         String tag = doc.getName();
         if ("route".equals(tag)) {
             // Process stanza wrapped by the route packet
@@ -116,19 +120,23 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         return false;
     }
 
-    String getNamespace() {
+    @Override
+	String getNamespace() {
         return "jabber:connectionmanager";
     }
 
-    boolean validateHost() {
+    @Override
+	boolean validateHost() {
         return false;
     }
 
-    boolean validateJIDs() {
+    @Override
+	boolean validateJIDs() {
         return false;
     }
 
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    @Override
+	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {
             // The connected client is a connection manager so create a ConnectionMultiplexerSession
@@ -141,7 +149,8 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         return false;
     }
 
-    void startTLS() throws Exception {
+    @Override
+	void startTLS() throws Exception {
         // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
         connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
     }

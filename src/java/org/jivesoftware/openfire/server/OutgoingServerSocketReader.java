@@ -97,7 +97,8 @@ public class OutgoingServerSocketReader {
     private void init() {
         // Create a thread that will read and store DOM Elements.
         Thread thread = new Thread("Outgoing Server Reader") {
-            public void run() {
+            @Override
+			public void run() {
                 while (open) {
                     Element doc;
                     try {

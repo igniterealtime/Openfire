@@ -124,7 +124,8 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
 
         // Schedule a task for this new transcript event queue.
         transcriptUpdateTask = new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 if (roomEvents.isEmpty()) {
                     return;
                 }

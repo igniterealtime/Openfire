@@ -434,13 +434,15 @@ public class NIOConnection implements Connection {
         this.tlsPolicy = tlsPolicy;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " MINA Session: " + ioSession;
     }
 
     private static class ThreadLocalEncoder extends ThreadLocal {
 
-        protected Object initialValue() {
+        @Override
+		protected Object initialValue() {
             return Charset.forName(CHARSET).newEncoder();
         }
     }

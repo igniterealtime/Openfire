@@ -52,7 +52,8 @@ public class GraphServlet extends HttpServlet {
     private GraphEngine graphEngine;
     private StatsViewer statsViewer;
 
-    public void init() throws ServletException {
+    @Override
+	public void init() throws ServletException {
         // load dependencies
         MonitoringPlugin plugin =
                 (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("monitoring");
@@ -60,7 +61,8 @@ public class GraphServlet extends HttpServlet {
         this.statsViewer = (StatsViewer)plugin.getModule(StatsViewer.class);
     }
 
-    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // retrieve parameters
         String statisticKey = request.getParameter("stat");
         String timePeriod = request.getParameter("timeperiod");
@@ -210,7 +212,8 @@ public class GraphServlet extends HttpServlet {
         public PDFEventListener(HttpServletRequest request) {
             this.request = request;
         }
-        public void onEndPage(PdfWriter writer, Document document) {
+        @Override
+		public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
 
             try {

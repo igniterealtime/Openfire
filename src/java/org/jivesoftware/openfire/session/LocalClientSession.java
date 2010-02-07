@@ -771,7 +771,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already secured
         if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
@@ -821,7 +822,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param packet the packet to analyze if it must be blocked.
      * @return true if the specified packet must be blocked.
      */
-    public boolean canProcess(Packet packet) {
+    @Override
+	public boolean canProcess(Packet packet) {
         PrivacyList list = getActiveList();
         if (list != null) {
             // If a privacy list is active then make sure that the packet is not blocked
@@ -835,13 +837,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    void deliver(Packet packet) throws UnauthorizedException {
+    @Override
+	void deliver(Packet packet) throws UnauthorizedException {
         if (conn != null && !conn.isClosed()) {
             conn.deliver(packet);
         }
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " presence: " + presence;
     }
 }

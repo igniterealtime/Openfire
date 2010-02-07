@@ -97,12 +97,14 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         return instance;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         routingTable = server.getRoutingTable();
     }
 
-    public void start() {
+    @Override
+	public void start() {
         // Set this ComponentManager as the current component manager
         ComponentManagerFactory.setComponentManager(instance);
 
@@ -116,7 +118,8 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         if (getAddress() != null) {
             // Remove the route to this service

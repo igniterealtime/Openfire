@@ -83,7 +83,8 @@ public class IQvCardHandler extends IQHandler {
         info = new IQHandlerInfo("vCard", "vcard-temp");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = IQ.createResultIQ(packet);
         IQ.Type type = packet.getType();
         if (type.equals(IQ.Type.set)) {
@@ -151,13 +152,15 @@ public class IQvCardHandler extends IQHandler {
         return result;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         userManager = server.getUserManager();
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 }

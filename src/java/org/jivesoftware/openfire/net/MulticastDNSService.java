@@ -89,17 +89,20 @@ public class MulticastDNSService extends BasicModule {
         });
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
        
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         // If the service isn't enabled, return.
         if (!JiveGlobals.getBooleanProperty("multicastDNS.enabled", false) ) {
             return;     
         }
         TimerTask startService = new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 XMPPServerInfo info = XMPPServer.getInstance().getServerInfo();
                 int clientPortNum = -1;
                 int componentPortNum = -1;
@@ -138,7 +141,8 @@ public class MulticastDNSService extends BasicModule {
     }
 
 
-    public void stop() {
+    @Override
+	public void stop() {
         if (jmdns != null) {
             try {
                 jmdns.close();
@@ -149,7 +153,8 @@ public class MulticastDNSService extends BasicModule {
         }
     }
 
-    public void destroy() {
+    @Override
+	public void destroy() {
         if (jmdns != null) {
             jmdns = null;
         }

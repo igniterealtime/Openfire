@@ -39,7 +39,8 @@ import java.util.List;
  * TODO Use i18n
  */
 public class DeleteWorkgroup extends AdHocCommand {
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Delete workgroup");
         form.addInstruction("Fill out this form to delete a workgroup.");
@@ -59,7 +60,8 @@ public class DeleteWorkgroup extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Get requested group
         WorkgroupManager workgroupManager = WorkgroupManager.getInstance();
@@ -84,23 +86,28 @@ public class DeleteWorkgroup extends AdHocCommand {
         note.setText("Operation finished successfully");
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#delete-workgroup";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Delete workgroup";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 }

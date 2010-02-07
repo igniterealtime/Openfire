@@ -56,11 +56,13 @@ public class BasicStreamIDFactory implements StreamIDFactory {
             return id;
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return id;
         }
 
-        public int hashCode() {
+        @Override
+		public int hashCode() {
             return id.hashCode();
         }
     }

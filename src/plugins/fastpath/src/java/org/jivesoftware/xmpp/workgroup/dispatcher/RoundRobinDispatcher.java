@@ -110,7 +110,8 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
         fillAgentsList();
 
         TaskEngine.getInstance().scheduleAtFixedRate(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 checkForNewRequests();
             }
         }, 2000, 2000);
@@ -134,7 +135,8 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
         offers.add(offer);
         // Process this offer in another thread
         Thread offerThread = new Thread("Dispatch offer - queue: " + queue.getName()) {
-            public void run() {
+            @Override
+			public void run() {
                 dispatch(offer);
                 // Remove this offer from the list of active offers
                 offers.remove(offer);

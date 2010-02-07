@@ -41,11 +41,13 @@ import java.io.OutputStream;
  */
 public class PluginIconServlet extends HttpServlet {
 
-    public void init(ServletConfig config) throws ServletException {
+    @Override
+	public void init(ServletConfig config) throws ServletException {
         super.init(config);
     }
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+    @Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         String pluginName = ParamUtils.getParameter(request, "plugin");
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         Plugin plugin = pluginManager.getPlugin(pluginName);

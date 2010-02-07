@@ -57,7 +57,8 @@ public class UserServiceServlet extends HttpServlet {
     private UserServicePlugin plugin;
 
 
-    public void init(ServletConfig servletConfig) throws ServletException {
+    @Override
+	public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         plugin = (UserServicePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userservice");
  
@@ -65,7 +66,8 @@ public class UserServiceServlet extends HttpServlet {
         AuthCheckFilter.addExclude("userService/userservice");
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         // Printwriter for writing out responses to browser
@@ -181,12 +183,14 @@ public class UserServiceServlet extends HttpServlet {
         out.flush();
     }
     
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         doGet(request, response);
     }
 
-    public void destroy() {
+    @Override
+	public void destroy() {
         super.destroy();
         // Release the excluded URL
         AuthCheckFilter.removeExclude("userService/userservice");

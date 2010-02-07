@@ -201,7 +201,8 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
     /**
      * Thread override method
      */
-    public void run() {
+    @Override
+	public void run() {
         // Create channels for parties
         createChannels();
 
@@ -439,7 +440,8 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
         idleTimer.scheduleAtFixedRate(new TimerTask() {
             long lastTimeStamp = getTimestamp();
 
-            public void run() {
+            @Override
+			public void run() {
                 if (lastTimeStamp == getTimestamp()) {
                     stopAgent();
                     return;
@@ -461,7 +463,8 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
         if (lifeTimer != null) return;
         lifeTimer = new Timer();
         lifeTimer.scheduleAtFixedRate(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 stopAgent();
             }
         }, lifetime, lifetime);

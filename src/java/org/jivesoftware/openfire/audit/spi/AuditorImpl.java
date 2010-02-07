@@ -355,7 +355,8 @@ public class AuditorImpl implements Auditor {
      * Saves the queued entries to an XML file and checks that very old files are deleted.
      */
     private class SaveQueuedPacketsTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             try {
                 // Ensure that saved audit logs are not too old
                 ensureMaxDays();

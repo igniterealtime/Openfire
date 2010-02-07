@@ -487,7 +487,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         serverName = server.getServerInfo().getXMPPDomain();

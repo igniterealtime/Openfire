@@ -36,15 +36,18 @@ public class ComponentConnectionHandler extends ConnectionHandler {
         super(serverName);
     }
 
-    NIOConnection createNIOConnection(IoSession session) {
+    @Override
+	NIOConnection createNIOConnection(IoSession session) {
         return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer());
     }
 
-    StanzaHandler createStanzaHandler(NIOConnection connection) {
+    @Override
+	StanzaHandler createStanzaHandler(NIOConnection connection) {
         return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
     }
 
-    int getMaxIdleTime() {
+    @Override
+	int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.component.idle", 6 * 60 * 1000) / 1000;
     }
 }

@@ -9,11 +9,13 @@ public class Pass extends AbstractRule implements Rule {
 
 	private static final Logger Log = LoggerFactory.getLogger(Pass.class);
 	
-    public String getDisplayName() {
+    @Override
+	public String getDisplayName() {
         return "Pass";
     }
 
-    public Packet doAction(Packet packet) throws PacketRejectedException {
+    @Override
+	public Packet doAction(Packet packet) throws PacketRejectedException {
         if (doLog()) {
             Log.info("Passing from "+packet.getFrom()+" to "+packet.getTo());
         }

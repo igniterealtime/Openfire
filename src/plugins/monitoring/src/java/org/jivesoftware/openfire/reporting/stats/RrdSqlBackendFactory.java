@@ -30,19 +30,22 @@ public class RrdSqlBackendFactory extends RrdBackendFactory {
     // creates bew RrdSqlBackend object for the given id (path)
     // the second parameter is ignored
     // for the reason of simplicity
-    protected RrdBackend open(String path, boolean readOnly)
+    @Override
+	protected RrdBackend open(String path, boolean readOnly)
     throws IOException {
         return new RrdSqlBackend(path, readOnly);
     }
 
     // checks if the RRD with the given id (path) already exists
     // in the database
-    protected boolean exists(String path) throws IOException {
+    @Override
+	protected boolean exists(String path) throws IOException {
         return RrdSqlBackend.exists(path);
     }
 
     // returns factory name
-    public String getFactoryName() {
+    @Override
+	public String getFactoryName() {
         return NAME;
     }
 }

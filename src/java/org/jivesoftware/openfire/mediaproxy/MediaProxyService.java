@@ -83,7 +83,8 @@ public class MediaProxyService extends BasicModule
         super("Media Proxy Service");
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
 
         sessionManager = server.getSessionManager();
@@ -105,7 +106,8 @@ public class MediaProxyService extends BasicModule
         initMediaProxy();
     }
 
-    public void start() {
+    @Override
+	public void start() {
         if (isEnabled()) {
 
             try {
@@ -126,7 +128,8 @@ public class MediaProxyService extends BasicModule
         }
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         mediaProxy.stopProxy();
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
@@ -136,7 +139,8 @@ public class MediaProxyService extends BasicModule
 
     // Component Interface
 
-    public String getName() {
+    @Override
+	public String getName() {
         // Get the name from the plugin.xml file.
         return serviceName;
     }

@@ -343,7 +343,8 @@ public abstract class LocalSession implements Session {
         return conn.getHostName();
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
     }
 

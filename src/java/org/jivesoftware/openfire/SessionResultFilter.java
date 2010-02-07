@@ -311,7 +311,8 @@ public class SessionResultFilter {
         return date - (date % (1000 * seconds));
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (this == object) {
             return true;
         }

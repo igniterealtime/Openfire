@@ -504,7 +504,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
     // Module management
     // #####################################################################
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
 
@@ -519,7 +520,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         routingTable = server.getRoutingTable();
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         // Use component manager for Presence Updates.
         componentManager = InternalComponentManager.getInstance();
@@ -528,7 +530,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
 
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         // Clear the caches when stopping the module.
         offlinePresenceCache.clear();
         lastActivityCache.clear();

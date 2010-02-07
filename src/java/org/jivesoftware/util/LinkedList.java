@@ -131,7 +131,8 @@ public class LinkedList {
      *
      * @return a String representation of the LinkedList.
      */
-    public String toString() {
+    @Override
+	public String toString() {
         LinkedListNode node = head.next;
         StringBuilder buf = new StringBuilder();
         while (node != head) {

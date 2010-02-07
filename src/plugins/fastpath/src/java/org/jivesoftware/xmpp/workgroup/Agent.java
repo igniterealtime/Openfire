@@ -88,7 +88,8 @@ public class Agent {
         loadAgent(agentID);
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "AI-" + Integer.toHexString(hashCode()) + " JID " + agentJID.toString() + " MAX " +
                 Integer.toString(maxChats);
     }

@@ -155,7 +155,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
         // Create xmpp parser to keep in each thread
         localParser = new ThreadLocal<XMPPPacketReader>() {
-            protected XMPPPacketReader initialValue() {
+            @Override
+			protected XMPPPacketReader initialValue() {
                 XMPPPacketReader parser = new XMPPPacketReader();
                 factory.setNamespaceAware(true);
                 parser.setXPPFactory(factory);
@@ -529,7 +530,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         return AuthFactory.getAuthProvider() instanceof ClearspaceAuthProvider;
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         if (isEnabled()) {
             // Before starting up service make sure there is a default secret
@@ -587,7 +589,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
 
         // Stops the Clearspace MUC transcript manager
@@ -1331,7 +1334,8 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     private class ConfigClearspaceTask extends TimerTask {
 
-        public void run() {
+        @Override
+		public void run() {
             try {
                 Log.debug("Trying to configure Clearspace.");
                 doConfigClearspace();

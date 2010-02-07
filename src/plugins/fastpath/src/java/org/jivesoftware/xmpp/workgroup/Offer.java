@@ -262,11 +262,13 @@ public class Offer {
         return !cancelled && !invitationSent;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return request.hashCode();
     }
 
-    public boolean equals(Object obj) {
+    @Override
+	public boolean equals(Object obj) {
         boolean eq = false;
         if (obj instanceof Offer){
             Offer otherOffer = (Offer)obj;

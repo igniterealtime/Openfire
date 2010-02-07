@@ -596,7 +596,8 @@ public class CacheFactory {
                 statsThread = new Thread("Cache Stats") {
                     private volatile boolean destroyed = false;
 
-                    public void run() {
+                    @Override
+					public void run() {
                         XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                             public void serverStarted() {}
 

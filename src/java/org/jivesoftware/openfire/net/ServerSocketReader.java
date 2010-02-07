@@ -85,7 +85,8 @@ public class ServerSocketReader extends SocketReader {
      *
      * @param packet the received packet.
      */
-    protected void processIQ(final IQ packet) throws UnauthorizedException {
+    @Override
+	protected void processIQ(final IQ packet) throws UnauthorizedException {
         try {
             packetReceived(packet);
             // Process the packet in another thread
@@ -110,7 +111,8 @@ public class ServerSocketReader extends SocketReader {
      *
      * @param packet the received packet.
      */
-    protected void processPresence(final Presence packet) throws UnauthorizedException {
+    @Override
+	protected void processPresence(final Presence packet) throws UnauthorizedException {
         try {
             packetReceived(packet);
             // Process the packet in another thread
@@ -135,7 +137,8 @@ public class ServerSocketReader extends SocketReader {
      *
      * @param packet the received packet.
      */
-    protected void processMessage(final Message packet) throws UnauthorizedException {
+    @Override
+	protected void processMessage(final Message packet) throws UnauthorizedException {
         try {
             packetReceived(packet);
             // Process the packet in another thread
@@ -162,7 +165,8 @@ public class ServerSocketReader extends SocketReader {
      * @param doc the unknown DOM element that was received
      * @return true if the packet is a db:result packet otherwise false.
      */
-    protected boolean processUnknowPacket(Element doc) {
+    @Override
+	protected boolean processUnknowPacket(Element doc) {
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
@@ -213,14 +217,16 @@ public class ServerSocketReader extends SocketReader {
         }
     }
 
-    protected void shutdown() {
+    @Override
+	protected void shutdown() {
         super.shutdown();
         // Shutdown the pool of threads that are processing packets sent by
         // the remote server
         threadPool.shutdown();
     }
 
-    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
+    @Override
+	boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
             IOException {
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
@@ -230,19 +236,23 @@ public class ServerSocketReader extends SocketReader {
         return false;
     }
 
-    String getNamespace() {
+    @Override
+	String getNamespace() {
         return "jabber:server";
     }
 
-    public String getExtraNamespaces() {
+    @Override
+	public String getExtraNamespaces() {
         return "xmlns:db=\"jabber:server:dialback\"";
     }
 
-    String getName() {
+    @Override
+	String getName() {
         return "Server SR - " + hashCode();
     }
 
-    boolean validateHost() {
+    @Override
+	boolean validateHost() {
         return true;
     }
 }

@@ -82,12 +82,14 @@ public class PluginServlet extends HttpServlet {
         servlets = new ConcurrentHashMap<String, GenericServlet>();
     }
 
-    public void init(ServletConfig config) throws ServletException {
+    @Override
+	public void init(ServletConfig config) throws ServletException {
         super.init(config);
         servletConfig = config;
     }
 
-    public void service(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	public void service(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {

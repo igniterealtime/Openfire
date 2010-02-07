@@ -84,7 +84,8 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
         presenceRouter.route(packet);
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         iqRouter = server.getIQRouter();
         messageRouter = server.getMessageRouter();

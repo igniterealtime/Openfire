@@ -43,7 +43,8 @@ public class StalledSessionsFilter extends IoFilterAdapter {
 
     private static final int bytesCap = JiveGlobals.getIntProperty("session.stalled.cap", 5242880);
 
-    public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)
+    @Override
+	public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)
             throws Exception {
         // Get number of pending requests
         int pendingBytes = session.getScheduledWriteBytes();

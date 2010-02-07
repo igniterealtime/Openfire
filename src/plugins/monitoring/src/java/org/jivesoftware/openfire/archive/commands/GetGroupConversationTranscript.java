@@ -57,7 +57,8 @@ public class GetGroupConversationTranscript extends AdHocCommand {
 
 	private static final Logger Log = LoggerFactory.getLogger(GetGroupConversationTranscript.class);
 	
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting PDF of conversation transcript");
         form.addInstruction("Fill out this form to request the conversation transcript in PDF format.");
@@ -95,7 +96,8 @@ public class GetGroupConversationTranscript extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Get handle on the Monitoring plugin
         MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager()
@@ -175,23 +177,28 @@ public class GetGroupConversationTranscript extends AdHocCommand {
         }
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jivesoftware.com/protocol/workgroup#get-group-conv-transcript";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Get Group Conversation Transcript";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
@@ -202,7 +209,8 @@ public class GetGroupConversationTranscript extends AdHocCommand {
      * @param requester the JID of the entity requesting to execute this command.
      * @return true if the requester can access this command.
      */
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         InternalComponentManager componentManager =
                 (InternalComponentManager) ComponentManagerFactory.getComponentManager();
         return super.hasPermission(requester) || componentManager.hasComponent(requester);

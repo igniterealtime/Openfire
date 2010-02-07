@@ -92,7 +92,8 @@ public class SchemaManager {
         try {
             return checkSchema(con, "openfire", DATABASE_VERSION,
                     new ResourceLoader() {
-                        public InputStream loadResource(String resourceName) {
+                        @Override
+						public InputStream loadResource(String resourceName) {
                             File file = new File(JiveGlobals.getHomeDirectory() + File.separator +
                                     "resources" + File.separator + "database", resourceName);
                             try {
@@ -134,7 +135,8 @@ public class SchemaManager {
         try {
             con = DbConnectionManager.getConnection();
             return checkSchema(con, schemaKey, schemaVersion, new ResourceLoader() {
-                public InputStream loadResource(String resourceName) {
+                @Override
+				public InputStream loadResource(String resourceName) {
                     File file = new File(pluginManager.getPluginDirectory(plugin) +
                             File.separator + "database", resourceName);
                     try {

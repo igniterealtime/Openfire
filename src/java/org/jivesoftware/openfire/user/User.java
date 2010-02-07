@@ -404,15 +404,18 @@ public class User implements Cacheable, Externalizable, Result {
         return size;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return username;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return username.hashCode();
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -429,7 +432,8 @@ public class User implements Cacheable, Externalizable, Result {
      */
     private class PropertiesMap extends AbstractMap {
 
-        public Object put(Object key, Object value) {
+        @Override
+		public Object put(Object key, Object value) {
             Map<String,Object> eventParams = new HashMap<String,Object>();
             Object answer;
             String keyString = (String) key;
@@ -457,7 +461,8 @@ public class User implements Cacheable, Externalizable, Result {
             return answer;
         }
 
-        public Set<Entry> entrySet() {
+        @Override
+		public Set<Entry> entrySet() {
             return new PropertiesEntrySet();
         }
     }
@@ -467,11 +472,13 @@ public class User implements Cacheable, Externalizable, Result {
      */
     private class PropertiesEntrySet extends AbstractSet {
 
-        public int size() {
+        @Override
+		public int size() {
             return properties.entrySet().size();
         }
 
-        public Iterator iterator() {
+        @Override
+		public Iterator iterator() {
             return new Iterator() {
 
                 Iterator iter = properties.entrySet().iterator();

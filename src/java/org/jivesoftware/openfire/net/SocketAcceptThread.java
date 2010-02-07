@@ -94,7 +94,8 @@ public class SocketAcceptThread extends Thread {
      * About as simple as it gets.  The thread spins around an accept
      * call getting sockets and handing them to the SocketManager.
      */
-    public void run() {
+    @Override
+	public void run() {
         acceptingMode.run();
         // We stopped accepting new connections so close the listener
         shutdown();

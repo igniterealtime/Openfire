@@ -155,7 +155,8 @@ public class SendMail {
             smtpPassword = password;
         }
 
-        protected PasswordAuthentication getPasswordAuthentication() {
+        @Override
+		protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(smtpUsername, smtpPassword);
         }
     }

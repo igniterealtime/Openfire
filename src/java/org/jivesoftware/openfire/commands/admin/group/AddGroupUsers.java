@@ -46,7 +46,8 @@ public class AddGroupUsers extends AdHocCommand {
 	
 	private static final Logger Log = LoggerFactory.getLogger(AddGroupUsers.class);
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Add members or admins to a group");
         form.addInstruction("Fill out this form to add new members or admins to a group.");
@@ -79,7 +80,8 @@ public class AddGroupUsers extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
@@ -116,23 +118,28 @@ public class AddGroupUsers extends AdHocCommand {
         note.setText("Operation finished" + (withErrors ? " with errors" : " successfully"));
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#add-group-members";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Add members or admins to a group";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 }

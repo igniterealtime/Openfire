@@ -54,21 +54,24 @@ public class RegistrationRequiredException extends Exception {
         this.nestedThrowable = nestedThrowable;
     }
 
-    public void printStackTrace() {
+    @Override
+	public void printStackTrace() {
         super.printStackTrace();
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace();
         }
     }
 
-    public void printStackTrace(PrintStream ps) {
+    @Override
+	public void printStackTrace(PrintStream ps) {
         super.printStackTrace(ps);
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace(ps);
         }
     }
 
-    public void printStackTrace(PrintWriter pw) {
+    @Override
+	public void printStackTrace(PrintWriter pw) {
         super.printStackTrace(pw);
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace(pw);

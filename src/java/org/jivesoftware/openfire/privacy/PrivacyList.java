@@ -78,7 +78,8 @@ public class PrivacyList implements Cacheable, Externalizable {
         }
         // Create xmpp parser to keep in each thread
         localParser = new ThreadLocal<XMPPPacketReader>() {
-            protected XMPPPacketReader initialValue() {
+            @Override
+			protected XMPPPacketReader initialValue() {
                 XMPPPacketReader parser = new XMPPPacketReader();
                 factory.setNamespaceAware(true);
                 parser.setXPPFactory(factory);
@@ -258,11 +259,13 @@ public class PrivacyList implements Cacheable, Externalizable {
         return size;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return name.hashCode();
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (this == object) {
             return true;
         }

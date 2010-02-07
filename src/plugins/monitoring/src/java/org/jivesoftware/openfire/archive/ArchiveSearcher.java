@@ -425,7 +425,8 @@ public class ArchiveSearcher implements Startable {
             this.conversationIDs = conversationIDs;
         }
 
-        public Iterator<Conversation> iterator() {
+        @Override
+		public Iterator<Conversation> iterator() {
             final Iterator<Long> convIterator = conversationIDs.iterator();
             return new Iterator<Conversation>() {
 
@@ -478,7 +479,8 @@ public class ArchiveSearcher implements Startable {
             };
         }
 
-        public int size() {
+        @Override
+		public int size() {
             return conversationIDs.size();
         }
     }
@@ -506,7 +508,8 @@ public class ArchiveSearcher implements Startable {
             this.endIndex = endIndex;
         }
 
-        public Iterator<Conversation> iterator() {
+        @Override
+		public Iterator<Conversation> iterator() {
             final Iterator<Hit> hitsIterator = hits.iterator();
             // Advance the iterator until we hit the index.
             for (int i=0; i<index; i++) {
@@ -571,7 +574,8 @@ public class ArchiveSearcher implements Startable {
             };
         }
 
-        public int size() {
+        @Override
+		public int size() {
             return hits.length();
         }
     }

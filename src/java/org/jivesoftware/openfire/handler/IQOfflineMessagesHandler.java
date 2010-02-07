@@ -83,7 +83,8 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ reply = IQ.createResultIQ(packet);
         Element offlineRequest = packet.getChildElement();
 
@@ -137,7 +138,8 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         routingTable.routePacket(receipient, offlineMessage, true);
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 
@@ -195,7 +197,8 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return answer.iterator();
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         infoHandler = server.getIQDiscoInfoHandler();
         itemsHandler = server.getIQDiscoItemsHandler();
@@ -204,13 +207,15 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         routingTable = server.getRoutingTable();
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         infoHandler.setServerNodeInfoProvider(NAMESPACE, this);
         itemsHandler.setServerNodeInfoProvider(NAMESPACE, this);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         infoHandler.removeServerNodeInfoProvider(NAMESPACE);
         itemsHandler.removeServerNodeInfoProvider(NAMESPACE);

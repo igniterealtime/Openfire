@@ -113,6 +113,7 @@ public class TLSStreamWriter {
 	 */
 	private OutputStream createOutputStream() {
 		return new OutputStream() {
+			@Override
 			public synchronized void write(int b) throws IOException {
 				outAppData.put((byte) b);
 				outAppData.flip();
@@ -120,6 +121,7 @@ public class TLSStreamWriter {
 				outAppData.clear();
 			}
 
+			@Override
 			public synchronized void write(byte[] bytes, int off, int len) throws IOException {
                 outAppData = resizeApplicationBuffer(bytes.length);
                 outAppData.put(bytes, off, len);

@@ -31,14 +31,16 @@ import org.xmpp.packet.JID;
  */
 public class OnlyPublishers extends PublisherModel {
 
-    public boolean canPublish(Node node, JID entity) {
+    @Override
+	public boolean canPublish(Node node, JID entity) {
         NodeAffiliate nodeAffiliate = node.getAffiliate(entity);
         return nodeAffiliate != null && (
                 nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.publisher ||
                         nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.owner);
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "publishers";
     }
 }

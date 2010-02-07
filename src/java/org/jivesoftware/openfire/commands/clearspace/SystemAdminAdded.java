@@ -35,19 +35,23 @@ import java.util.Arrays;
  * @author Armando Jagucki
  */
 public class SystemAdminAdded extends AdHocCommand {
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/event#sys-admin-added";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "System administrator added";
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
-    public void execute(SessionData sessionData, Element command) {
+    @Override
+	public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -71,7 +75,8 @@ public class SystemAdminAdded extends AdHocCommand {
         note.setText("Operation finished successfully");
     }
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Dispatching a system admin added event.");
         form.addInstruction("Fill out this form to dispatch a system admin added event.");
@@ -91,11 +96,13 @@ public class SystemAdminAdded extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 

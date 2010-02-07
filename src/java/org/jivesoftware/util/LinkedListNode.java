@@ -85,7 +85,8 @@ public class LinkedListNode {
      *
      * @return a String representation of the LinkedListNode.
      */
-    public String toString() {
+    @Override
+	public String toString() {
         return object == null ? "null" : object.toString();
     }
 }

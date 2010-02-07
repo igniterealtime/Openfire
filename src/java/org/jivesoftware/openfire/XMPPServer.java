@@ -419,7 +419,8 @@ public class XMPPServer {
             AdminManager.getInstance().getAdminAccounts();
 
             Thread finishSetup = new Thread() {
-                public void run() {
+                @Override
+				public void run() {
                     try {
                         if (isStandAlone()) {
                             // Always restart the HTTP server manager. This covers the case
@@ -654,7 +655,8 @@ public class XMPPServer {
      */
     public void restartHTTPServer() {
         Thread restartThread = new Thread() {
-            public void run() {
+            @Override
+			public void run() {
                 if (isStandAlone()) {
                     // Restart the HTTP server manager. This covers the case
                     // of changing the ports, as well as generating self-signed certificates.
@@ -897,7 +899,8 @@ public class XMPPServer {
         /**
          * <p>Logs the server shutdown.</p>
          */
-        public void run() {
+        @Override
+		public void run() {
             shutdownServer();
             Log.info("Server halted");
             System.err.println("Server halted");
@@ -916,7 +919,8 @@ public class XMPPServer {
         /**
          * <p>Shuts down the JVM after a 5 second delay.</p>
          */
-        public void run() {
+        @Override
+		public void run() {
             try {
                 Thread.sleep(5000);
                 // No matter what, we make sure it's dead

@@ -38,7 +38,8 @@ import java.util.*;
  * TODO Use i18n
  */
 public class UpdateGroup extends AdHocCommand {
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         if (data.getStage() == 0) {
             form.setTitle("Update group configuration");
@@ -146,7 +147,8 @@ public class UpdateGroup extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Get requested group
         Group group;
@@ -198,15 +200,18 @@ public class UpdateGroup extends AdHocCommand {
         note.setText("Operation finished successfully");
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#update-group";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Update group configuration";
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         if (data.getStage() == 0) {
             return Arrays.asList(AdHocCommand.Action.next);
         }
@@ -216,14 +221,16 @@ public class UpdateGroup extends AdHocCommand {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         if (data.getStage() == 0) {
             return AdHocCommand.Action.next;
         }
         return AdHocCommand.Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 2;
     }
 }

@@ -101,6 +101,7 @@ public class SubnavTag extends BodyTagSupport {
     /**
      * Does nothing, returns {@link #EVAL_BODY_BUFFERED} always.
      */
+    @Override
     public int doStartTag() throws JspException {
         return EVAL_BODY_BUFFERED;
     }
@@ -114,6 +115,7 @@ public class SubnavTag extends BodyTagSupport {
      * @return {@link #EVAL_PAGE} after rendering the tabs.
      * @throws JspException if an exception occurs while rendering the sidebar items.
      */
+    @Override
     public int doEndTag() throws JspException {
         // Start by getting the request from the page context
         HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();

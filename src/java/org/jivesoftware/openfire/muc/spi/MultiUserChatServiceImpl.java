@@ -395,7 +395,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         /**
          * Remove any user that has been idle for longer than the user timeout time.
          */
-        public void run() {
+        @Override
+		public void run() {
             checkForTimedOutUsers();
         }
     }
@@ -442,7 +443,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Logs the conversation of the rooms that have this feature enabled.
      */
     private class LogConversationTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             try {
                 logConversation();
             }
@@ -485,7 +487,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * considered without activity when no occupants are present in the room for a while.
      */
     private class CleanupTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             if (ClusterManager.isClusteringStarted() && !ClusterManager.isSeniorClusterMember()) {
                 // Do nothing if we are in a cluster and this JVM is not the senior cluster member
                 return;

@@ -109,7 +109,8 @@ public class WordMatchRouter extends RequestRouter {
         }
     }
 
-    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    @Override
+	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         return false;
     }
 
@@ -184,7 +185,8 @@ public class WordMatchRouter extends RequestRouter {
      * A Lucene Analyzer that does stemming.
      */
     private class StemmingAnalyzer extends Analyzer {
-        public final TokenStream tokenStream(String fieldName, Reader reader) {
+        @Override
+		public final TokenStream tokenStream(String fieldName, Reader reader) {
             // Apply stop words and porter stemmer using a lower-case tokenizer.
             TokenStream stream = new StopFilter(new LowerCaseTokenizer(reader),
                 StandardAnalyzer.STOP_WORDS);

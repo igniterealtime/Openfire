@@ -591,7 +591,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         socketReader.setSession(this);
     }
 
-    boolean canProcess(Packet packet) {
+    @Override
+	boolean canProcess(Packet packet) {
         String senderDomain = packet.getFrom().getDomain();
         if (!getAuthenticatedDomains().contains(senderDomain)) {
             synchronized (senderDomain.intern()) {
@@ -606,7 +607,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         return true;
     }
 
-    void deliver(Packet packet) throws UnauthorizedException {
+    @Override
+	void deliver(Packet packet) throws UnauthorizedException {
         if (conn != null && !conn.isClosed()) {
             conn.deliver(packet);
         }
@@ -692,7 +694,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, hostname, null, true), this);
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
     }

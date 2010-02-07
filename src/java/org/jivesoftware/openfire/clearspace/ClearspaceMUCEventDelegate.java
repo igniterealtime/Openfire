@@ -56,7 +56,8 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         csComponentAddress = ClearspaceManager.CLEARSPACE_COMPONENT + "." + xmppDomain;
     }
 
-    public InvitationResult sendingInvitation(MUCRoom room, JID invitee, JID inviter, String reason)
+    @Override
+	public InvitationResult sendingInvitation(MUCRoom room, JID invitee, JID inviter, String reason)
     {
         // Packet should look like:
         // <iq to="clearspace.example.org" from="clearspace-conference.example.org">
@@ -103,7 +104,8 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
      * @param userjid  the JID of the user attempting to join the room.
      * @return true if the user is allowed to join the room.
      */
-    public boolean joiningRoom(MUCRoom room, JID userjid) {
+    @Override
+	public boolean joiningRoom(MUCRoom room, JID userjid) {
         // Always allow an owner to join the room (especially since they need to join to configure the
         // room on initial creation).
         Collection<String> owners = room.getOwners();
@@ -145,11 +147,13 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         return false;
     }
 
-    public boolean shouldRecreate(String roomName, JID userjid) {
+    @Override
+	public boolean shouldRecreate(String roomName, JID userjid) {
         return !(roomName + "@" + csComponentAddress).equals(userjid.toBareJID());
     }
 
-    public Map<String, String> getRoomConfig(String roomName) {
+    @Override
+	public Map<String, String> getRoomConfig(String roomName) {
         Map<String, String> roomConfig = new HashMap<String, String>();
 
         IQ iq = new IQ(IQ.Type.get);
@@ -209,7 +213,8 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
      * @param userjid  the JID of the user attempting to destroy the room.
      * @return true if the user is allowed to destroy the room.
      */
-    public boolean destroyingRoom(String roomName, JID userjid) {
+    @Override
+	public boolean destroyingRoom(String roomName, JID userjid) {
         // We never allow destroying a room as a user, but clearspace components are permitted.
         return ClearspaceManager.getInstance().isFromClearspace(userjid);
     }

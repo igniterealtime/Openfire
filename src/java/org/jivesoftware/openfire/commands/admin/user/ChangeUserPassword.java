@@ -41,19 +41,23 @@ import java.util.List;
  * TODO Use i18n
  */
 public class ChangeUserPassword extends AdHocCommand {
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#change-user-password";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Change User Password";
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (UserManager.getUserProvider().isReadOnly()) {
@@ -85,7 +89,8 @@ public class ChangeUserPassword extends AdHocCommand {
         note.setText("Operation finished successfully");
     }
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Changing a User Password");
         form.addInstruction("Fill out this form to change a user\u2019s password.");
@@ -111,16 +116,19 @@ public class ChangeUserPassword extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
 
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         return super.hasPermission(requester) && !UserManager.getUserProvider().isReadOnly();
     }
 }

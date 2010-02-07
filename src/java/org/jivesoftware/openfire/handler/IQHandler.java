@@ -114,7 +114,8 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
      */
     public abstract IQHandlerInfo getInfo();
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();

@@ -218,12 +218,14 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         super(serverName, connection, streamID);
     }
 
-    boolean canProcess(Packet packet) {
+    @Override
+	boolean canProcess(Packet packet) {
         return true;
     }
 
 
-    void deliver(Packet packet) throws UnauthorizedException {
+    @Override
+	void deliver(Packet packet) throws UnauthorizedException {
         // Do nothing
     }
 
@@ -348,7 +350,8 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         ServerDialback.verifyReceivedKey(doc, getConnection());
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder();
         // Include Stream Compression Mechanism
         if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&

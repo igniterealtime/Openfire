@@ -43,7 +43,8 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
         this.service = service;
     }
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.title"));
         form.addInstruction(
@@ -63,7 +64,8 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         List<String> nodeIDs = data.getData().get("pubsub#node");
         if (nodeIDs.isEmpty()) {
@@ -106,27 +108,33 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
         }
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/pubsub#get-pending";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.label");
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         // User has permission if he is an owner of at least one node or is a sysadmin
         for (Node node : service.getNodes()) {
             if (!node.isCollectionNode() && node.isAdmin(requester)) {

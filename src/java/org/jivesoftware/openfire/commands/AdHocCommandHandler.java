@@ -84,11 +84,13 @@ public class AdHocCommandHandler extends IQHandler
         manager = new AdHocCommandManager();
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         return manager.process(packet);
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 
@@ -144,14 +146,16 @@ public class AdHocCommandHandler extends IQHandler
         return answer.iterator();
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         infoHandler = server.getIQDiscoInfoHandler();
         itemsHandler = server.getIQDiscoItemsHandler();
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         infoHandler.setServerNodeInfoProvider(NAMESPACE, this);
         itemsHandler.setServerNodeInfoProvider(NAMESPACE, this);
@@ -159,7 +163,8 @@ public class AdHocCommandHandler extends IQHandler
         addDefaultCommands();
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         infoHandler.removeServerNodeInfoProvider(NAMESPACE);
         itemsHandler.removeServerNodeInfoProvider(NAMESPACE);

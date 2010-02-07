@@ -49,7 +49,8 @@ public class ClusterManager {
 
     static {
         Thread thread = new Thread("ClusterManager events dispatcher") {
-            public void run() {
+            @Override
+			public void run() {
                 for (; ;) {
                     try {
                         Event event = events.take();
@@ -453,7 +454,8 @@ public class ClusterManager {
             this.processed = processed;
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return super.toString() + " type: " + type;
         }
     }

@@ -270,7 +270,8 @@ public class NodeAffiliate {
         return itemsBySubs;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " - JID: " + getJID() + " - Affiliation: " +
                 getAffiliation().name();
     }

@@ -76,7 +76,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         this.serverName = serverName;
     }
 
-    public void sessionOpened(IoSession session) throws Exception {
+    @Override
+	public void sessionOpened(IoSession session) throws Exception {
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
         final XMLLightweightParser parser = new XMLLightweightParser(CHARSET);
         session.setAttribute(XML_PARSER, parser);
@@ -94,7 +95,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
     }
 
-    public void sessionClosed(IoSession session) throws Exception {
+    @Override
+	public void sessionClosed(IoSession session) throws Exception {
         // Get the connection for this session
         Connection connection = (Connection) session.getAttribute(CONNECTION);
         // Inform the connection that it was closed
@@ -116,7 +118,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 	 * @see org.apache.mina.common.IoHandlerAdapter#sessionIdle(org.apache.mina.common.IoSession,
 	 *      org.apache.mina.common.IdleStatus)
 	 */
-    public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
+    @Override
+	public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
         if (session.getIdleCount(status) > 1) {
             // Get the connection for this session
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
@@ -128,7 +131,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
     }
 
-    public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+    @Override
+	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
         if (cause instanceof IOException) {
             // TODO Verify if there were packets pending to be sent and decide what to do with them
             Log.debug("ConnectionHandler: ",cause);
@@ -142,7 +146,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
     }
 
-    public void messageReceived(IoSession session, Object message) throws Exception {
+    @Override
+	public void messageReceived(IoSession session, Object message) throws Exception {
         // Get the stanza handler for this session
         StanzaHandler handler = (StanzaHandler) session.getAttribute(HANDLER);
         // Get the parser to use to process stanza. For optimization there is going
@@ -169,7 +174,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
     }
 
-    public void messageSent(IoSession session, Object message) throws Exception {
+    @Override
+	public void messageSent(IoSession session, Object message) throws Exception {
         super.messageSent(session, message);
         // Update counter of written btyes
         updateWrittenBytesCounter(session);

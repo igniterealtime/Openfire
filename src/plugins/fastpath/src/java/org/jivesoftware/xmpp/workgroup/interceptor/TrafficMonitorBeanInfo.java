@@ -7,15 +7,18 @@ public class TrafficMonitorBeanInfo extends WorkgroupBeanInfo {
     public static final String[] PROPERTY_NAMES =
             new String[]{"readEnabled", "sentEnabled", "onlyNotProcessedEnabled"};
 
-    public String[] getPropertyNames() {
+    @Override
+	public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
-    public Class getBeanClass() {
+    @Override
+	public Class getBeanClass() {
         return TrafficMonitor.class;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "TrafficMonitor";
     }
 }

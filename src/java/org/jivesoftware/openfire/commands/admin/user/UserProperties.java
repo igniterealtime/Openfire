@@ -37,19 +37,23 @@ import java.util.Arrays;
  * @author Alexander Wenckus
  */
 public class UserProperties extends AdHocCommand {
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#get-user-properties";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Get User Properties";
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -93,7 +97,8 @@ public class UserProperties extends AdHocCommand {
         }
     }
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Retrieve Users' Information");
         form.addInstruction("Fill out this form to retrieve users' information.");
@@ -113,11 +118,13 @@ public class UserProperties extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 }

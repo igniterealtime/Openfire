@@ -199,7 +199,8 @@ public class WorkgroupManager implements Component {
         iqDiscoItemsHandler = new IQDiscoItemsHandler(this, commandManager);
 
         presenceCheckTask = new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 handleOutdatePresence();
             }
         };
@@ -492,7 +493,8 @@ public class WorkgroupManager implements Component {
     private void startTimer() {
         TaskEngine taskEngine = TaskEngine.getInstance();
         taskEngine.schedule(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {
@@ -521,7 +523,8 @@ public class WorkgroupManager implements Component {
         // Every 5 minutes let the workgroups clean up dead requests or dead rooms. This may occur
         // if the connections were lost or the invitations were lost or whatever
         taskEngine.schedule(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {
@@ -536,7 +539,8 @@ public class WorkgroupManager implements Component {
 
         // Every 15 seconds check for not answered room invitations
         taskEngine.schedule(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {
@@ -551,7 +555,8 @@ public class WorkgroupManager implements Component {
 
         // Every 30 seconds check if the search index of the workgroups should be updated
         taskEngine.schedule(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {

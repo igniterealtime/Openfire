@@ -108,7 +108,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param packet The update packet
      * @return The reply or null if no reply
      */
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             IQ returnPacket = null;
             org.xmpp.packet.Roster roster = (org.xmpp.packet.Roster)packet;
@@ -307,14 +308,16 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         return response;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         userManager = server.getUserManager();
         router = server.getPacketRouter();
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 

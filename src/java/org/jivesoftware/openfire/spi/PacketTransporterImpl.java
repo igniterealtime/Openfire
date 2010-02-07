@@ -101,7 +101,8 @@ public class PacketTransporterImpl extends BasicModule  {
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         xmppServer = server;
         deliverer = server.getPacketDeliverer();

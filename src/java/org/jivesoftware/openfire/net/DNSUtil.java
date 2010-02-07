@@ -258,7 +258,8 @@ public class DNSUtil {
             return port;
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return host + ":" + port;
         }
     }

@@ -38,15 +38,18 @@ public class MultiplexerConnectionHandler extends ConnectionHandler {
         super(serverName);
     }
 
-    NIOConnection createNIOConnection(IoSession session) {
+    @Override
+	NIOConnection createNIOConnection(IoSession session) {
         return new NIOConnection(session, new MultiplexerPacketDeliverer());
     }
 
-    StanzaHandler createStanzaHandler(NIOConnection connection) {
+    @Override
+	StanzaHandler createStanzaHandler(NIOConnection connection) {
         return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
     }
 
-    int getMaxIdleTime() {
+    @Override
+	int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.multiplex.idle", 5 * 60 * 1000) / 1000;
     }
 }

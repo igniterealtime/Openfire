@@ -859,7 +859,8 @@ public class NodeSubscription {
         return node.getAffiliate(getOwner());
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " - JID: " + getJID() + " - State: " + getState().name();
     }
 

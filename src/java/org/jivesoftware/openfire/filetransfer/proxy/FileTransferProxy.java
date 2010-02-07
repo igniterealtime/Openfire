@@ -169,7 +169,8 @@ public class FileTransferProxy extends BasicModule
         return info;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
 
         proxyServiceName = JiveGlobals.getProperty("xmpp.proxy.service", "proxy");
@@ -206,7 +207,8 @@ public class FileTransferProxy extends BasicModule
         return server.getFileTransferManager();
     }
 
-    public void start() {
+    @Override
+	public void start() {
         super.start();
 
         if (isEnabled()) {
@@ -225,7 +227,8 @@ public class FileTransferProxy extends BasicModule
         server.getIQDiscoItemsHandler().addServerItemsProvider(this);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
 
         XMPPServer.getInstance().getIQDiscoItemsHandler()
@@ -234,7 +237,8 @@ public class FileTransferProxy extends BasicModule
         connectionManager.disable();
     }
 
-    public void destroy() {
+    @Override
+	public void destroy() {
         super.destroy();
 
         connectionManager.shutdown();

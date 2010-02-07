@@ -715,15 +715,18 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
         int size = 0;
 
-        public void write(int b) throws IOException {
+        @Override
+		public void write(int b) throws IOException {
             size++;
         }
 
-        public void write(byte[] b) throws IOException {
+        @Override
+		public void write(byte[] b) throws IOException {
             size += b.length;
         }
 
-        public void write(byte[] b, int off, int len) {
+        @Override
+		public void write(byte[] b, int off, int len) {
             size += len;
         }
 

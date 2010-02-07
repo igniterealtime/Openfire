@@ -156,7 +156,8 @@ public class CachedPreparedStatement  {
         }
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (object == null) {
             return false;
         }
@@ -171,7 +172,8 @@ public class CachedPreparedStatement  {
                 && types.equals(otherStmt.types) && params.equals(otherStmt.params);
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         int hashCode = 1;
         if (sql != null) {
             hashCode += sql.hashCode();
@@ -181,7 +183,8 @@ public class CachedPreparedStatement  {
         return hashCode;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         String toStringSql = sql;
         try {
             int index = toStringSql.indexOf('?');

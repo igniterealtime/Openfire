@@ -380,7 +380,8 @@ public class DefaultConnectionProvider implements ConnectionProvider {
                 Double.toString(connectionTimeout));
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         try {
             ConnectionPoolDefinitionIF poolDef = ProxoolFacade.getConnectionPoolDefinition("openfire");
             SnapshotIF poolStats = ProxoolFacade.getSnapshot("openfire", true);

@@ -174,17 +174,20 @@ public class InvitationRequest extends Request {
         }
     }
 
-    public void updateSession(int state, long offerTime) {
+    @Override
+	public void updateSession(int state, long offerTime) {
         // Ignore
     }
 
-    public void offerAccepted(AgentSession agentSession) {
+    @Override
+	public void offerAccepted(AgentSession agentSession) {
         super.offerAccepted(agentSession);
         // Keep track when the offer was accepted by the agent
         offerAccpeted = System.currentTimeMillis();
     }
 
-    void addOfferContent(Element offerElement) {
+    @Override
+	void addOfferContent(Element offerElement) {
         Element inviteElement = offerElement.addElement("invite", "http://jabber.org/protocol/workgroup");
 
         inviteElement.addAttribute("type", type.toString());
@@ -199,10 +202,12 @@ public class InvitationRequest extends Request {
         inviteElement.addElement("reason").setText(reason);
     }
 
-    void addRevokeContent(Element revoke) {
+    @Override
+	void addRevokeContent(Element revoke) {
     }
 
-    public Element getSessionElement() {
+    @Override
+	public Element getSessionElement() {
         // Add the workgroup of the original user request
         QName qName = DocumentHelper.createQName("session", DocumentHelper.createNamespace("", "http://jivesoftware.com/protocol/workgroup"));
         Element sessionElement = DocumentHelper.createElement(qName);
@@ -211,11 +216,13 @@ public class InvitationRequest extends Request {
         return sessionElement;
     }
 
-    JID getUserJID() {
+    @Override
+	JID getUserJID() {
         return userRequest.getUserJID();
     }
 
-    public void userJoinedRoom(JID roomJID, JID user) {
+    @Override
+	public void userJoinedRoom(JID roomJID, JID user) {
         if (invitee.toBareJID().equals(user.toBareJID())) {
             joinedRoom = System.currentTimeMillis();
             // This request has been completed so remove it from the list of related
@@ -224,7 +231,8 @@ public class InvitationRequest extends Request {
         }
     }
 
-    public void checkRequest(String roomID) {
+    @Override
+	public void checkRequest(String roomID) {
         // Monitor that the agent/user joined the room and if not send back an error to the inviter
         if (offerAccpeted > 0 && !hasJoinedRoom() && System.currentTimeMillis() - offerAccpeted > JOIN_TIMEOUT) {
             // Send error message to inviter

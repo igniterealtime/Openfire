@@ -101,7 +101,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     /**
      * Called when manager starts up, to initialize things.
      */
-    public void start() {
+    @Override
+	public void start() {
         super.start();
 
         loadServices();
@@ -124,7 +125,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     /**
      * Called when manager is stopped, to clean things up.
      */
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
 
         ClusterManager.removeListener(this);

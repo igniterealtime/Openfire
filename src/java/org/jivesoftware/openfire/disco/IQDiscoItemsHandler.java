@@ -91,11 +91,13 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         info = new IQHandlerInfo("query", NAMESPACE_DISCO_ITEMS);
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 
-    public IQ handleIQ(IQ packet) {
+    @Override
+	public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested items to the reply if any otherwise add 
         // a not found error
@@ -389,7 +391,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         localServerItems.remove(jid);
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         serverItems = CacheFactory.createCache("Disco Server Items");
         // Track the implementors of ServerItemsProvider so that we can collect the items
@@ -400,7 +403,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         ClusterManager.addListener(this);
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         for (ServerItemsProvider provider : XMPPServer.getInstance().getServerItemsProviders()) {
             addServerItemsProvider(provider);

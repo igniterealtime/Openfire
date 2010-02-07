@@ -69,7 +69,8 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         info = new IQHandlerInfo("query", "jabber:iq:private");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ replyPacket;
         Element child = packet.getChildElement();
         Element dataElement = (Element) child.elementIterator().next();
@@ -97,12 +98,14 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         return replyPacket;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         privateStorage = server.getPrivateStorage();
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 

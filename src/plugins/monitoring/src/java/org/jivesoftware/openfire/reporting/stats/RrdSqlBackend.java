@@ -138,7 +138,8 @@ public class RrdSqlBackend extends RrdBackend {
 
     // this method writes bytes supplied from the JRobin frontend
     // to our memory buffer
-    protected void write(long offset, byte[] b) {
+    @Override
+	protected void write(long offset, byte[] b) {
         int pos = (int) offset;
         for(int i = 0; i < b.length; i++) {
             buffer[pos++] = b[i];
@@ -147,7 +148,8 @@ public class RrdSqlBackend extends RrdBackend {
 
     // this method reads bytes requested from the JRobin frontend
     // and stores them in the supplied byte[] array
-    protected void read(long offset, byte[] b) {
+    @Override
+	protected void read(long offset, byte[] b) {
         int pos = (int) offset;
         for(int i = 0; i < b.length; i++) {
             b[i] = buffer[pos++];
@@ -156,17 +158,20 @@ public class RrdSqlBackend extends RrdBackend {
 
     // returns the RRD size (since all RRD bytes are
     // in the buffer, it is equal to the buffer length
-    public long getLength() throws IOException {
+    @Override
+	public long getLength() throws IOException {
         return buffer.length;
     }
 
     // provides enough space in memory for the RRD
-    protected void setLength(long length) {
+    @Override
+	protected void setLength(long length) {
         buffer = new byte[(int) length];
     }
 
 
-    public void close() throws IOException {
+    @Override
+	public void close() throws IOException {
         super.close();
         // Save data to the SQL DB only if not read-only
         if (!readOnly) {

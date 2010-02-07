@@ -99,7 +99,8 @@ public class Launcher {
         configFile = new File(new File(binDir.getParent(), "conf"), "openfire.xml");
 
         frame = new DroppableFrame() {
-            public void fileDropped(File file) {
+            @Override
+			public void fileDropped(File file) {
                 String fileName = file.getName();
                 if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
                     installPlugin(file);
@@ -206,7 +207,8 @@ public class Launcher {
 
                     // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
-                        public void run() {
+                        @Override
+						public void run() {
                             try {
                                 sleep(8000);
                             }
@@ -285,12 +287,14 @@ public class Launcher {
         }
 
         frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Override
+			public void windowClosing(WindowEvent e) {
                 stopApplication();
                 System.exit(0);
             }
 
-            public void windowIconified(WindowEvent e) {
+            @Override
+			public void windowIconified(WindowEvent e) {
                 // Make the window disappear when minimized
                 frame.setVisible(false);
                 showMenuItem.setText("Show");
@@ -311,7 +315,8 @@ public class Launcher {
         // Setup command area
         final ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("splash2.gif"));
         pane = new DroppableTextPane() {
-            public void paintComponent(Graphics g) {
+            @Override
+			public void paintComponent(Graphics g) {
                 final Dimension size = pane.getSize();
 
                 int x = (size.width - icon.getIconWidth()) / 2;
@@ -326,7 +331,8 @@ public class Launcher {
                 super.paintComponent(g);
             }
 
-            public void fileDropped(File file) {
+            @Override
+			public void fileDropped(File file) {
                 String fileName = file.getName();
                 if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
                     installPlugin(file);
@@ -387,7 +393,8 @@ public class Launcher {
 
             final SimpleAttributeSet styles = new SimpleAttributeSet();
             SwingWorker inputWorker = new SwingWorker() {
-                public Object construct() {
+                @Override
+				public Object construct() {
                     if (openfired != null) {
                         try {
                             // Get the input stream and read from it
@@ -416,7 +423,8 @@ public class Launcher {
 
 
             SwingWorker errorWorker = new SwingWorker() {
-                public Object construct() {
+                @Override
+				public Object construct() {
                     if (openfired != null) {
                         try {
                             // Get the input stream and read from it
@@ -520,7 +528,8 @@ public class Launcher {
         dialog.setSize(225, 55);
 
         final SwingWorker installerThread = new SwingWorker() {
-            public Object construct() {
+            @Override
+			public Object construct() {
                 File pluginsDir = new File(binDir.getParentFile(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
@@ -543,7 +552,8 @@ public class Launcher {
                 return realPluginsFile;
             }
 
-            public void finished() {
+            @Override
+			public void finished() {
                 dialog.setVisible(false);
             }
         };

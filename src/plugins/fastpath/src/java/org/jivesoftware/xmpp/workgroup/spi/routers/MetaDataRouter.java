@@ -50,11 +50,13 @@ public class MetaDataRouter extends RequestRouter {
         return "Used for routing to the best possible queue based on it's metadata name-value pairs in the queue.";
     }
 
-    public boolean isConfigurable(){
+    @Override
+	public boolean isConfigurable(){
         return false;
     }
 
-    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    @Override
+	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         boolean success = false;
         Map<String,List<String>> metaData = request.getMetaData();
         if (metaData != null) {

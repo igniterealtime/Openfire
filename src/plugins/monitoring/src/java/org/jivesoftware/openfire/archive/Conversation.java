@@ -381,7 +381,8 @@ public class Conversation implements Externalizable {
         return messages;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("Conversation [").append(conversationID).append("]");
         if (room != null) {

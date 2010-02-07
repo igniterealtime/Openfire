@@ -52,7 +52,8 @@ public class StunServerAddress {
         return port;
     }
 
-    public boolean equals(Object obj) {
+    @Override
+	public boolean equals(Object obj) {
 
         if (this == obj) return true;
 

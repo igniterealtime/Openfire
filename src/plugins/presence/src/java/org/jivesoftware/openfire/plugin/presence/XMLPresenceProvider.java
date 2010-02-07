@@ -42,7 +42,8 @@ import java.io.PrintWriter;
  */
 class XMLPresenceProvider extends PresenceInfoProvider {
 
-    public void sendInfo(HttpServletRequest request, HttpServletResponse response,
+    @Override
+	public void sendInfo(HttpServletRequest request, HttpServletResponse response,
             Presence presence) throws IOException {
         response.setContentType("text/xml");
         PrintWriter out = response.getWriter();
@@ -69,7 +70,8 @@ class XMLPresenceProvider extends PresenceInfoProvider {
         out.flush();
     }
 
-    public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         response.setContentType("text/xml");
         PrintWriter out = response.getWriter();

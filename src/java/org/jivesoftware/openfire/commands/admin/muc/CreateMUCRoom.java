@@ -41,19 +41,23 @@ import java.util.Map;
  * @author Alexander Wenckus
  */
 public class CreateMUCRoom extends AdHocCommand {
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#create-muc-room";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Create a Multi-user Chat";
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
-    public void execute(SessionData sessionData, Element command) {
+    @Override
+	public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
         Collection<JID> admins = XMPPServer.getInstance().getAdmins();
         if (admins.size() <= 0) {
@@ -114,7 +118,8 @@ public class CreateMUCRoom extends AdHocCommand {
         }
     }
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Create a multi-user chat room");
         form.addInstruction("Fill out this form to create a multi-user chat room.");
@@ -160,11 +165,13 @@ public class CreateMUCRoom extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 

@@ -79,12 +79,14 @@ public class STUNService extends BasicModule {
         super("STUN Service");
     }
 
-    public void destroy() {
+    @Override
+	public void destroy() {
         super.destroy();
         stunServer = null;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
 
         this.enabled = JiveGlobals.getBooleanProperty("stun.enabled", true);
@@ -148,7 +150,8 @@ public class STUNService extends BasicModule {
         });
     }
 
-    public void start() {
+    @Override
+	public void start() {
         if (isEnabled()) {
             startSTUNService();
             if (isLocalEnabled()) {
@@ -197,7 +200,8 @@ public class STUNService extends BasicModule {
         }
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         this.enabled = false;
         stopSTUNService();
@@ -211,7 +215,8 @@ public class STUNService extends BasicModule {
         stunServer = null;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "stun";
     }
 
@@ -388,7 +393,8 @@ public class STUNService extends BasicModule {
             super("stun");
         }
 
-        public IQ handleIQ(IQ iq) throws UnauthorizedException {
+        @Override
+		public IQ handleIQ(IQ iq) throws UnauthorizedException {
             IQ reply = IQ.createResultIQ(iq);
             Element childElement = iq.getChildElement();
             String namespace = childElement.getNamespaceURI();
@@ -440,7 +446,8 @@ public class STUNService extends BasicModule {
             return reply;
         }
 
-        public IQHandlerInfo getInfo() {
+        @Override
+		public IQHandlerInfo getInfo() {
             return new IQHandlerInfo(ELEMENT_NAME, NAMESPACE);
         }
     }

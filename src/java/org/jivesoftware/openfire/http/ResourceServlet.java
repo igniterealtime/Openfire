@@ -44,14 +44,16 @@ public class ResourceServlet extends HttpServlet {
     private boolean disableCompression = false;
     private static Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
 
-    public void init(ServletConfig config) throws ServletException {
+    @Override
+	public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
         debug = Boolean.valueOf(config.getInitParameter("debug"));
         disableCompression = Boolean.valueOf(config.getInitParameter("disableCompression"));
     }
 
-    public void service(HttpServletRequest request, HttpServletResponse response) {
+    @Override
+	public void service(HttpServletRequest request, HttpServletResponse response) {
         boolean compress = false;
 
         boolean javascript = request.getRequestURI().endsWith("scripts/");

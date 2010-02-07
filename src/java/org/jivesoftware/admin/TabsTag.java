@@ -125,6 +125,7 @@ public class TabsTag extends BodyTagSupport {
     /**
      * Does nothing, returns {@link #EVAL_BODY_BUFFERED} always.
      */
+    @Override
     public int doStartTag() throws JspException {
         return EVAL_BODY_BUFFERED;
     }
@@ -137,6 +138,7 @@ public class TabsTag extends BodyTagSupport {
      * @return {@link #EVAL_PAGE} after rendering the tabs.
      * @throws JspException if an exception occurs while rendering the tabs.
      */
+    @Override
     public int doEndTag() throws JspException {
         HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
         // Get the page data bean from the request:

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!--
-  Plugin configuration file for the admin console. This file must 
-  live in the root of the plugin's directory.
--->
-<plugin>
-    <class>org.jivesoftware.openfire.container.AdminConsolePlugin</class>
-</plugin>

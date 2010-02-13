@@ -1036,11 +1036,6 @@ public class HttpSession extends LocalClientSession {
             this.text = null;
             this.packets = new ArrayList<String>();
             for (Packet packet : elements) {
-                if (packet instanceof Presence ||
-                        packet instanceof Message ||
-                        packet instanceof IQ) {
-                    packet.getElement().addNamespace("", "jabber:client");
-                }
                 this.packets.add(packet.toXML());
             }
         }

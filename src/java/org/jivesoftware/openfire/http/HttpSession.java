@@ -1036,7 +1036,28 @@ public class HttpSession extends LocalClientSession {
             this.text = null;
             this.packets = new ArrayList<String>();
             for (Packet packet : elements) {
-                this.packets.add(packet.toXML());
+                // Rewrite packet namespace according XEP-0206
+                if (packet instanceof Presence) {
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("<presence xmlns=\"jabber:client\"");
+                    sb.append(packet.toXML().substring(9));
+                    this.packets.add(sb.toString());
+                }
+                else if (packet instanceof IQ) {
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("<iq xmlns=\"jabber:client\"");
+                    sb.append(packet.toXML().substring(3));
+                    this.packets.add(sb.toString());
+                }
+                else if (packet instanceof Message) {
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("<message xmlns=\"jabber:client\"");
+                    sb.append(packet.toXML().substring(8));
+                    this.packets.add(sb.toString());
+                }
+                else {
+                    this.packets.add(packet.toXML());
+                }
             }
         }
 

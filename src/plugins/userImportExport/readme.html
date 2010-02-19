@@ -230,10 +230,9 @@ whose roster looks like:
 &nbsp;&nbsp;&lt;ModifiedDate&gt;1125442154664&lt;/ModifiedDate&gt;<br>
 &nbsp;&nbsp;&lt;Roster&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;jane@im.olddomain.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Jane&quot;&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;Friends&lt;/Group&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
 &nbsp;&nbsp;&lt;/Roster&gt;<br>
 &lt;/User&gt;<br>
@@ -266,11 +265,9 @@ effect, the import file would be transformed to look like:
 &nbsp;&nbsp;&lt;ModifiedDate&gt;1125442154664&lt;/ModifiedDate&gt;<br>
 &nbsp;&nbsp;&lt;Roster&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;jane@im.newdomain.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Jane&quot;&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;Friends&lt;/Group&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;&lt;/Group&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;paul@xyz.net&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Paul&quot;/&gt;<br>
 &nbsp;&nbsp;&lt;/Roster&gt;<br>
 &lt;/User&gt;<br>
 </td>
@@ -301,7 +298,7 @@ have added each other to their respective rosters.
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;ModifiedDate&gt;1125601449177&lt;/ModifiedDate&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Roster&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;sally@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot; name=&quot;Sally&quot;&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group&gt;Friends&lt;/Group&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
 &nbsp;&nbsp;&lt;/User&gt;<br>
@@ -313,9 +310,7 @@ have added each other to their respective rosters.
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;CreationDate&gt;1125601471848&lt;/CreationDate&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;ModifiedDate&gt;1125601471848&lt;/ModifiedDate&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;Roster&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;joe@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot;&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Group/&gt;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Item&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Item jid=&quot;joe@localhost&quot; askstatus=&quot;-1&quot; recvstatus=&quot;-1&quot; substatus=&quot;3&quot;/&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Roster&gt;<br>
 &nbsp;&nbsp;&lt;/User&gt;<br>
 &lt;/Openfire&gt;<br>

@@ -197,7 +197,9 @@ public class ImportExportPlugin implements Plugin {
                 Element groupElement = itemElement.addElement("Group");
                 List<String> groups = ri.getGroups();
                 for (String group : groups) {
-                    groupElement.addText(group);
+                    if (group != null && group.trim().length() > 0) {
+                        groupElement.addText(group);
+                    }
                 }
             }
         }
@@ -256,7 +258,10 @@ public class ImportExportPlugin implements Plugin {
                         Iterator<Element> groupIter = rosterElement.elementIterator("Group");
                         while (groupIter.hasNext()) {
                             Element group = groupIter.next();
-                            groups.add(group.getText());
+                            String groupName = group.getText();
+                            if (groupName != null && groupName.trim().length() > 0) {
+                                groups.add(groupName);
+                            }
                         }
                         
                         //used for migration

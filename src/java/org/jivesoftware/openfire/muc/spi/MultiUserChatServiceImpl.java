@@ -62,6 +62,7 @@ import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -903,7 +904,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void initializeSettings() {
-        serviceEnabled = MUCPersistenceManager.getBooleanProperty(chatServiceName, "enabled", true);
+        serviceEnabled = JiveProperties.getInstance().getBooleanProperty("xmpp.muc.enabled", true);
+        serviceEnabled = MUCPersistenceManager.getBooleanProperty(chatServiceName, "enabled", serviceEnabled);
         // Trigger the strategy to load itself from the context
         historyStrategy.setContext(chatServiceName, "history");
         // Load the list of JIDs that are sysadmins of the MUC service

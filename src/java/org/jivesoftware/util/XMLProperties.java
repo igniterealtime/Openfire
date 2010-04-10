@@ -101,7 +101,7 @@ public class XMLProperties {
      * @throws IOException if an exception occurs when reading the stream.
      */
     public XMLProperties(InputStream in) throws IOException {
-        Reader reader = new BufferedReader(new InputStreamReader(in));
+        Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
         buildDoc(reader);
     }
 

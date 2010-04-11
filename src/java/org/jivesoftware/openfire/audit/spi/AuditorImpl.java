@@ -74,12 +74,12 @@ public class AuditorImpl implements Auditor {
      * Max size in bytes that all audit log files may have. When the limit is reached
      * oldest audit log files will be removed until total size is under the limit.
      */
-    private int maxTotalSize;
+    private long maxTotalSize;
     /**
      * Max size in bytes that each audit log file may have. Once the limit has been
      * reached a new audit file will be created.
      */
-    private int maxFileSize;
+    private long maxFileSize;
     /**
      * Max number of days to keep audit information. Once the limit has been reached
      * audit files that contain information that exceed the limit will be deleted.
@@ -118,8 +118,8 @@ public class AuditorImpl implements Auditor {
     }
 
     protected void setMaxValues(int totalSize, int fileSize, int days) {
-        maxTotalSize = totalSize * 1024*1024;
-        maxFileSize = fileSize * 1024*1024;
+        maxTotalSize = (long) totalSize * 1024l * 1024l;
+        maxFileSize = (long) fileSize * 1024l * 1024l;
         maxDays = days;
     }
 

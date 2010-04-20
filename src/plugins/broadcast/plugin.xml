@@ -8,8 +8,8 @@
     <name>Broadcast</name>
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
-    <version>1.8.1</version>
-    <date>4/1/2010</date>
+    <version>1.8.2</version>
+    <date>4/19/2010</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>3.7.0</minServerVersion>
 </plugin>

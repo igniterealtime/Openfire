@@ -62,23 +62,26 @@ The broadcast plugin is configured via Openfire system properties. These can
 be configured under Server/Server Manager/System Properties:
 
 <ul>
-    <li><tt>plugin.broadcast.serviceName</tt> -- the name of the broadcast service. If no value
-    is set, the default is "broadcast".</li>
-    <li><tt>plugin.broadcast.disableGroupPermissions</tt> -- true to allow any user to
-    broadcast a message to a group. When false, only group members or administrators can
-    broadcast messages to a group. The default value is false.</li>
-    <li><tt>plugin.broadcast.groupMembersAllowed</tt> -- true to also allow group members
-    to send broadcast messages to groups they belong to. When false, only administrators can
-    send broadcast messages to a group. The default value is true. Note that the property value
-    of <tt>plugin.broadcast.disableGroupPermissions</tt> can effectively override this value
-    by letting anyone send broadcast messages to groups.</li>
-    <li><tt>plugin.broadcast.allowedUsers</tt> -- the comma-delimitted list of users allowed
-    to broadcast messages to all connected users at once. When this property isn't set,
-    anyone is allowed to broadcast messages to all users. Users should be specified by their
-    bare JID (e.g. john@myserver.com)</li>
-	 <li><tt>plugin.broadcast.all2offline</tt> -- true to deliver broadcast messages sent
-	 to all@[serviceName].[serverName] to online and offline users. When false or not
-	 set only online users get the messages as described below.</li>
+	<li><tt>plugin.broadcast.serviceName</tt> -- the name of the broadcast service. If no value
+	is set, the default is "broadcast".</li>
+	<li><tt>plugin.broadcast.disableGroupPermissions</tt> -- true to allow any user to
+	broadcast a message to a group. When false, only group members or administrators can
+	broadcast messages to a group. The default value is false.</li>
+	<li><tt>plugin.broadcast.groupMembersAllowed</tt> -- true to also allow group members
+	to send broadcast messages to groups they belong to. When false, only administrators can
+	send broadcast messages to a group. The default value is true. Note that the property value
+	of <tt>plugin.broadcast.disableGroupPermissions</tt> can effectively override this value
+	by letting anyone send broadcast messages to groups.</li>
+	<li><tt>plugin.broadcast.allowedUsers</tt> -- the comma-delimitted list of users allowed
+	to broadcast messages to all connected users at once. When this property isn't set,
+	anyone is allowed to broadcast messages to all users. Users should be specified by their
+	bare JID (e.g. john@myserver.com)</li>
+	<li><tt>plugin.broadcast.all2offline</tt> -- true to deliver broadcast messages sent
+	to all@[serviceName].[serverName] to online and offline users. When false or not
+	set only online users get the messages as described below.</li>
+	<li><tt>plugin.broadcast.messagePrefix</tt> -- Add a prefix for all broadcast
+	messages. Set this to "(broadcast)" to prepend "(broadcast)&nbsp;".
+	</li>
 </ul>
 
 <h2>Using the Plugin</h2>

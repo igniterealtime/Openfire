@@ -74,6 +74,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
     private boolean groupMembersAllowed;
     private boolean disableGroupPermissions;
     private boolean all2ofline;
+    private String messagePrefix;
     private ComponentManager componentManager;
     private PluginManager pluginManager;
     private UserManager userManager;
@@ -88,8 +89,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
                 "plugin.broadcast.groupMembersAllowed", true);
         allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
-        all2ofline = JiveGlobals.getBooleanProperty(
-              "plugin.broadcast.all2offline", false);
+        all2ofline = JiveGlobals.getBooleanProperty("plugin.broadcast.all2offline", false);
+        messagePrefix = JiveGlobals.getProperty("plugin.broadcast.messagePrefix", null);
     }
 
     // Plugin Interface
@@ -224,7 +225,11 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 }
                 return;
             }
-            
+
+            if ( ( messagePrefix != null ) && ( message.getBody() != null ) ) {
+         		message.setBody(messagePrefix + " " + message.getBody());
+         	}
+           
             if (all2ofline==false) {
             	// send to online users
             	sessionManager.broadcast(message);
@@ -268,6 +273,9 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             else if (canProceed) {
                 // Broadcast message to group users. Users that are offline will get
                 // the message when they come back online
+               if ( ( messagePrefix != null ) && ( message.getBody() != null ) ) {
+            		message.setBody(messagePrefix + " " + message.getBody());
+            	}
                 for (JID userJID : group.getMembers()) {
                     Message newMessage = message.createCopy();
                     newMessage.setTo(userJID);

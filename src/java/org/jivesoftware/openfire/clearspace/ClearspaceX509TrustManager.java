@@ -32,7 +32,8 @@ import javax.net.ssl.X509TrustManager;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Trust manager that validates Clearspace certificates. Using system properties
@@ -43,6 +44,7 @@ import org.jivesoftware.util.Log;
  */
 public class ClearspaceX509TrustManager implements X509TrustManager {
 
+	private static final Logger Log = LoggerFactory.getLogger(ClearspaceX509TrustManager.class);
     /**
      * KeyStore that holds the trusted CA
      */

@@ -107,7 +107,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             maxThreads = 10;
         }
         threadPool =
-                new ThreadPoolExecutor(Math.round(maxThreads/4), maxThreads, 60, TimeUnit.SECONDS,
+                new ThreadPoolExecutor(maxThreads/4, maxThreads, 60, TimeUnit.SECONDS,
                         new LinkedBlockingQueue<Runnable>(queueSize),
                         new ThreadPoolExecutor.CallerRunsPolicy());
 

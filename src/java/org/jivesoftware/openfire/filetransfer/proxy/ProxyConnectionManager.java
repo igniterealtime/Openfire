@@ -374,7 +374,7 @@ public class ProxyConnectionManager {
         }
 
         public double sample() {
-            return (ProxyOutputStream.amountTransfered.getAndSet(0) / 1000);
+            return (ProxyOutputStream.amountTransfered.getAndSet(0) / 1000d);
         }
 
         public boolean isPartialSample() {

@@ -551,7 +551,7 @@ public class Base64
 
         // Isolate options
         int gzip           = (options & GZIP);
-        int dontBreakLines = (options & DONT_BREAK_LINES);
+        //int dontBreakLines = (options & DONT_BREAK_LINES);
 
         try
         {

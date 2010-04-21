@@ -93,7 +93,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
         try {
             Log.debug("LdapAuthorizationMapping: Starting LDAP search...");
             String usernameField = manager.getUsernameField();
-            String baseDN = manager.getBaseDN();
+            //String baseDN = manager.getBaseDN();
             boolean subTreeSearch = manager.isSubTreeSearch();
             ctx = manager.getContext();
             SearchControls constraints = new SearchControls();

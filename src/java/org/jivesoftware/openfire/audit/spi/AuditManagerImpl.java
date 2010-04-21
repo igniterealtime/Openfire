@@ -200,9 +200,9 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     }
 
     private void saveXPath() {
-        String[] filters = new String[xpath.size()];
-        filters = (String[]) xpath.toArray(filters);
         // TODO: save XPath values!
+        //String[] filters = new String[xpath.size()];
+        //filters = (String[]) xpath.toArray(filters); 
     }
 
     public Iterator getXPathFilters() {

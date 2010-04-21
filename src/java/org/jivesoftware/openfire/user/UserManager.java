@@ -198,7 +198,7 @@ public class UserManager implements IQResultListener {
         String username = user.getUsername();
         // Make sure that the username is valid.
         try {
-            username = Stringprep.nodeprep(username);
+            /*username =*/ Stringprep.nodeprep(username);
         }
         catch (StringprepException se) {
             throw new IllegalArgumentException("Invalid username: " + username,  se);

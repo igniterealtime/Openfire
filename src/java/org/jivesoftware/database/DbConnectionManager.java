@@ -180,14 +180,7 @@ public class DbConnectionManager {
     public static void closeTransactionConnection(PreparedStatement pstmt, Connection con,
             boolean abortTransaction)
     {
-        try {
-            if (pstmt != null) {
-                pstmt.close();
-            }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
+        closeStatement(pstmt);
         closeTransactionConnection(con, abortTransaction);
     }
 
@@ -199,11 +192,6 @@ public class DbConnectionManager {
      * @param abortTransaction true if the transaction should be rolled back.
      */
     public static void closeTransactionConnection(Connection con, boolean abortTransaction) {
-        // test to see if the connection passed in is null
-        if (con == null) {
-            return;
-        }
-
         // Rollback or commit the transaction
         if (isTransactionsSupported()) {
             try {
@@ -217,23 +205,15 @@ public class DbConnectionManager {
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
-        }
-        try {
             // Reset the connection to auto-commit mode.
-            if (isTransactionsSupported()) {
-                con.setAutoCommit(true);
+            try {
+                con.setAutoCommit(true);              
+            }
+            catch (Exception e) {
+                Log.error(e.getMessage(), e);
             }
         }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
-        try {
-            // Close the db connection.
-            con.close();
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
+        closeConnection(con);
     }
 
     /**
@@ -261,13 +241,13 @@ public class DbConnectionManager {
      * @param rs the result set to close.
      */
     public static void closeResultSet(ResultSet rs) {
-        try {
-            if (rs != null) {
-                rs.close();
+        if (rs != null) {
+            try {
+                    rs.close();
+                }
+            catch (SQLException e) {
+                Log.error(e.getMessage(), e);
             }
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
         }
     }
 
@@ -293,13 +273,13 @@ public class DbConnectionManager {
      * @param stmt the statement.
      */
     public static void closeStatement(Statement stmt) {
-        try {
-            if (stmt != null) {
+        if (stmt != null) {
+            try {
                 stmt.close();
+            }       
+            catch (Exception e) {
+                Log.error(e.getMessage(), e);
             }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
         }
     }
 
@@ -359,14 +339,7 @@ public class DbConnectionManager {
      * @param con the connection.
      */
     public static void closeConnection(Statement stmt, Connection con) {
-        try {
-            if (stmt != null) {
-                stmt.close();
-            }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
+        closeStatement(stmt);
         closeConnection(con);
     }
 
@@ -392,13 +365,13 @@ public class DbConnectionManager {
      * @param con the connection.
      */
     public static void closeConnection(Connection con) {
-        try {
-            if (con != null) {
-                con.close();
+        if (con != null) {
+            try {
+               con.close();
             }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            catch (Exception e) {
+                Log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -519,14 +492,7 @@ public class DbConnectionManager {
                 Log.error(e.getMessage(), e);
             }
             finally {
-                try {
-                    if (con != null) {
-                        con.close();
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
+                closeConnection(con);
             }
         }
         // Remember what connection provider we want to use for restarts.

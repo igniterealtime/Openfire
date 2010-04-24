@@ -124,6 +124,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = DbConnectionManager.createScrollablePreparedStatement(con, sql);
+            rs = pstmt.executeQuery();
             if (skipEvents != null) {
                 DbConnectionManager.scrollResultSet(rs, skipEvents);
             }
@@ -142,7 +143,6 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
             if (endTime != null) {
                 pstmt.setLong(i, endTime.getTime());
             }
-            rs = pstmt.executeQuery();
             int count = 0;
             while (rs.next() && count < numEvents) {
                 SecurityAuditEvent event = new SecurityAuditEvent();

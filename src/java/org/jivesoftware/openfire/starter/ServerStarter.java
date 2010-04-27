@@ -24,9 +24,7 @@ import java.io.*;
 import java.util.jar.Pack200;
 import java.util.jar.JarOutputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import  org.jivesoftware.util.Log;
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.
@@ -50,7 +48,6 @@ import org.slf4j.LoggerFactory;
  */
 public class ServerStarter {
 
-	private static final Logger Log = LoggerFactory.getLogger(ServerStarter.class);
     /**
      * Default to this location if one has not been specified
      */

@@ -19,6 +19,7 @@
 
 package org.jivesoftware.openfire.component;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -247,7 +248,7 @@ public class ExternalComponentManager {
             return;
         }
         // Remove the permission for the entity from the database
-        java.sql.Connection con = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -260,10 +261,7 @@ public class ExternalComponentManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -274,7 +272,7 @@ public class ExternalComponentManager {
      */
     private static void addConfiguration(ExternalComponentConfiguration configuration) {
         // Remove the permission for the entity from the database
-        java.sql.Connection con = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -289,10 +287,7 @@ public class ExternalComponentManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -307,29 +302,26 @@ public class ExternalComponentManager {
      */
     private static ExternalComponentConfiguration getConfiguration(String subdomain, boolean useWildcard) {
         ExternalComponentConfiguration configuration = null;
-        java.sql.Connection con = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             // Check if there is a configuration for the subdomain
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_CONFIGURATION);
             pstmt.setString(1, subdomain);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 configuration = new ExternalComponentConfiguration(subdomain, false, Permission.valueOf(rs.getString(2)),
                         rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
         if (configuration == null && useWildcard) {
@@ -339,23 +331,19 @@ public class ExternalComponentManager {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_WILDCARD_CONFIGURATION);
                 pstmt.setString(1, subdomain);
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
 
                 while (rs.next()) {
                     configuration = new ExternalComponentConfiguration(subdomain, true, Permission.valueOf(rs.getString(2)),
                             rs.getString(1));
                 }
-                rs.close();
             }
             catch (SQLException sqle) {
                 Log.error(sqle.getMessage(), sqle);
             }
             finally {
-                try { if (pstmt != null) pstmt.close(); }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
-                try { if (con != null) con.close(); }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
-            }
+                DbConnectionManager.closeConnection(rs, pstmt, con);
+           }
         }
         return configuration;
     }
@@ -364,13 +352,14 @@ public class ExternalComponentManager {
             Permission permission) {
         Collection<ExternalComponentConfiguration> answer =
                 new ArrayList<ExternalComponentConfiguration>();
-        java.sql.Connection con = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_CONFIGURATIONS);
             pstmt.setString(1, permission.toString());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             ExternalComponentConfiguration configuration;
             while (rs.next()) {
                 String subdomain = rs.getString(1);
@@ -381,16 +370,12 @@ public class ExternalComponentManager {
                         rs.getString(3));
                 answer.add(configuration);
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return answer;
     }

@@ -110,8 +110,9 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
      */
     public void add(String username, Element data) {
         if (enabled) {
-            java.sql.Connection con = null;
+            Connection con = null;
             PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
                 StringWriter writer = new StringWriter();
                 data.write(writer);
@@ -119,14 +120,12 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
                 pstmt.setString(1, username);
                 pstmt.setString(2, data.getNamespaceURI());
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
                 boolean update = false;
                 if (rs.next()) {
                     update = true;
                 }
-                rs.close();
-                pstmt.close();
-
+                DbConnectionManager.fastcloseStmt(rs, pstmt);
                 if (update) {
                     pstmt = con.prepareStatement(UPDATE_PRIVATE);
                 }
@@ -143,10 +142,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
+                DbConnectionManager.closeConnection(rs, pstmt, con);
             }
         }
     }
@@ -169,6 +165,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
         if (enabled) {
             Connection con = null;
             PreparedStatement pstmt = null;
+            ResultSet rs = null;
             SAXReader xmlReader = null;
             try {
                 // Get a sax reader from the pool
@@ -177,27 +174,23 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
                 pstmt.setString(1, username);
                 pstmt.setString(2, data.getNamespaceURI());
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
                 if (rs.next()) {
                     data.clearContent();
                     String result = rs.getString(1).trim();
                     Document doc = xmlReader.read(new StringReader(result));
                     data = doc.getRootElement();
                 }
-                rs.close();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
                 // Return the sax reader to the pool
                 if (xmlReader != null) {
                     xmlReaders.add(xmlReader);
                 }
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
             }
         }
         return data;
@@ -209,7 +202,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
 
     public void userDeleting(User user, Map params) {
         // Delete all private properties of the user
-        java.sql.Connection con = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -221,10 +214,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

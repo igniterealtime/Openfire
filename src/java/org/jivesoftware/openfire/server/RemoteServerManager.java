@@ -187,10 +187,7 @@ public class RemoteServerManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -217,10 +214,7 @@ public class RemoteServerManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -239,27 +233,23 @@ public class RemoteServerManager {
         if (configuration == null) {
             java.sql.Connection con = null;
             PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_CONFIGURATION);
                 pstmt.setString(1, domain);
-                ResultSet rs = pstmt.executeQuery();
-
+                rs = pstmt.executeQuery();
                 while (rs.next()) {
                     configuration = new RemoteServerConfiguration(domain);
                     configuration.setRemotePort(rs.getInt(1));
                     configuration.setPermission(Permission.valueOf(rs.getString(2)));
                 }
-                rs.close();
             }
             catch (SQLException sqle) {
                 Log.error(sqle.getMessage(), sqle);
             }
             finally {
-                try { if (pstmt != null) pstmt.close(); }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
-                try { if (con != null) con.close(); }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
+                DbConnectionManager.closeConnection(rs, pstmt, con);
             }
             if (configuration != null) {
                 configurationsCache.put(domain, configuration);
@@ -277,11 +267,12 @@ public class RemoteServerManager {
                 new ArrayList<RemoteServerConfiguration>();
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_CONFIGURATIONS);
             pstmt.setString(1, permission.toString());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             RemoteServerConfiguration configuration;
             while (rs.next()) {
                 configuration = new RemoteServerConfiguration(rs.getString(1));
@@ -289,16 +280,12 @@ public class RemoteServerManager {
                 configuration.setPermission(permission);
                 answer.add(configuration);
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return answer;
     }

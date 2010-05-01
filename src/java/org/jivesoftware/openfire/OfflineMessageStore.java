@@ -189,16 +189,17 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      */
     public Collection<OfflineMessage> getMessages(String username, boolean delete) {
         List<OfflineMessage> messages = new ArrayList<OfflineMessage>();
+        SAXReader xmlReader = null;
         Connection con = null;
         PreparedStatement pstmt = null;
-        SAXReader xmlReader = null;
+        ResultSet rs = null;
         try {
             // Get a sax reader from the pool
             xmlReader = xmlReaders.take();
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
@@ -221,28 +222,33 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
                 messages.add(message);
             }
-            rs.close();
             // Check if the offline messages loaded should be deleted, and that there are
             // messages to delete.
             if (delete && !messages.isEmpty()) {
-                pstmt.close();
-
-                pstmt = con.prepareStatement(DELETE_OFFLINE);
-                pstmt.setString(1, username);
-                pstmt.executeUpdate();
-                
-                removeUsernameFromSizeCache(username);
+                PreparedStatement pstmt2 = null;
+                try {
+                    pstmt2 = con.prepareStatement(DELETE_OFFLINE);
+                    pstmt2.setString(1, username);
+                    pstmt2.executeUpdate();
+                    removeUsernameFromSizeCache(username);
+                }
+                catch (Exception e) {
+                    Log.error("Error deleting offline messages of username: " + username, e);
+                }
+                finally {
+                    DbConnectionManager.closeStatement(pstmt2);
+                } 
             }
         }
         catch (Exception e) {
             Log.error("Error retrieving offline messages of username: " + username, e);
         }
         finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
             // Return the sax reader to the pool
             if (xmlReader != null) {
                 xmlReaders.add(xmlReader);
             }
-            DbConnectionManager.closeConnection(pstmt, con);
         }
         return messages;
     }

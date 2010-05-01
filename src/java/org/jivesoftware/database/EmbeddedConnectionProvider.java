@@ -26,6 +26,7 @@ import org.jivesoftware.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.DriverManager;
@@ -96,18 +97,17 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
     public void destroy() {
         // Shutdown the database.
         Connection con = null;
+        PreparedStatement pstmt = null;
         try {
             con = getConnection();
-            Statement stmt = con.createStatement();
-            stmt.execute("SHUTDOWN");
-            stmt.close();
+            pstmt = con.prepareStatement("SHUTDOWN");
+            pstmt.execute();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         // Blank out the settings
         settings = null;

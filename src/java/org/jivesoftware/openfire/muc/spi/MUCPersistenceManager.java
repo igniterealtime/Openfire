@@ -146,26 +146,23 @@ public class MUCPersistenceManager {
     public static String getReservedNickname(MUCRoom room, String bareJID) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         String answer = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(GET_RESERVED_NAME);
             pstmt.setLong(1, room.getID());
             pstmt.setString(2, bareJID);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 answer = rs.getString(1);
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return answer;
     }
@@ -178,13 +175,14 @@ public class MUCPersistenceManager {
     public static void loadFromDB(LocalMUCRoom room) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName());
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROOM);
             pstmt.setLong(1, serviceID);
             pstmt.setString(2, room.getName());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");
             }
@@ -226,8 +224,7 @@ public class MUCPersistenceManager {
             room.setChangeNickname(rs.getInt(20) == 1);
             room.setRegistrationEnabled(rs.getInt(21) == 1);
             room.setPersistent(true);
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             pstmt = con.prepareStatement(LOAD_HISTORY);
             // Recreate the history until two days ago
@@ -248,8 +245,7 @@ public class MUCPersistenceManager {
                             body);
                 }
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // If the room does not include the last subject in the history then recreate one if
             // possible
@@ -285,9 +281,8 @@ public class MUCPersistenceManager {
                     Log.error(e.getMessage(), e);
                 }
             }
-            rs.close();
-            pstmt.close();
-
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
+            
             pstmt = con.prepareStatement(LOAD_MEMBERS);
             pstmt.setLong(1, room.getID());
             rs = pstmt.executeQuery();
@@ -299,7 +294,6 @@ public class MUCPersistenceManager {
                     Log.error(e.getMessage(), e);
                 }
             }
-            rs.close();
             // Set now that the room's configuration is updated in the database. Note: We need to
             // set this now since otherwise the room's affiliations will be saved to the database
             // "again" while adding them to the room!
@@ -315,10 +309,7 @@ public class MUCPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -391,10 +382,7 @@ public class MUCPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -415,12 +403,12 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             pstmt = con.prepareStatement(DELETE_MEMBERS);
             pstmt.setLong(1, room.getID());
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             pstmt = con.prepareStatement(DELETE_ROOM);
             pstmt.setLong(1, room.getID());
@@ -434,8 +422,7 @@ public class MUCPersistenceManager {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -453,6 +440,7 @@ public class MUCPersistenceManager {
             Date emptyDate, PacketRouter packetRouter) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         Map<Long, LocalMUCRoom> rooms = new HashMap<Long, LocalMUCRoom>();
         try {
             Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
@@ -460,7 +448,7 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(LOAD_ALL_ROOMS);
             pstmt.setLong(1, serviceID);
             pstmt.setString(2, StringUtils.dateToMillis(emptyDate));
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 LocalMUCRoom room = new LocalMUCRoom(chatserver, rs.getString(4), packetRouter);
                 room.setID(rs.getLong(1));
@@ -503,8 +491,7 @@ public class MUCPersistenceManager {
                 room.setPersistent(true);
                 rooms.put(room.getID(), room);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             pstmt = con.prepareStatement(LOAD_ALL_HISTORY);
             // Recreate the history until two days ago
@@ -536,8 +523,7 @@ public class MUCPersistenceManager {
                     Log.error(e.getMessage(), e);
                 }
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Add the last known room subject to the room history only for those rooms that still
             // don't have in their histories the last room subject
@@ -583,8 +569,7 @@ public class MUCPersistenceManager {
                     Log.error(e.getMessage(), e);
                 }
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             pstmt = con.prepareStatement(LOAD_ALL_MEMBERS);
             pstmt.setLong(1, serviceID);
@@ -602,16 +587,12 @@ public class MUCPersistenceManager {
                     Log.error(e.getMessage(), e);
                 }
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         // Set now that the room's configuration is updated in the database. Note: We need to
         // set this now since otherwise the room's affiliations will be saved to the database
@@ -652,10 +633,7 @@ public class MUCPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -682,10 +660,7 @@ public class MUCPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -718,10 +693,7 @@ public class MUCPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -758,10 +730,7 @@ public class MUCPersistenceManager {
                     Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
-                    try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
             else {
@@ -780,10 +749,7 @@ public class MUCPersistenceManager {
                     Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
-                    try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
         }
@@ -806,10 +772,7 @@ public class MUCPersistenceManager {
                     Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
-                    try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
             else if (MUCRole.Affiliation.member == newAffiliation) {
@@ -823,7 +786,7 @@ public class MUCPersistenceManager {
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
                     pstmt.executeUpdate();
-                    pstmt.close();
+                    DbConnectionManager.fastcloseStmt(pstmt);
 
                     // Add them as a member.
                     pstmt = con.prepareStatement(ADD_MEMBER);
@@ -837,8 +800,7 @@ public class MUCPersistenceManager {
                     abortTransaction = true;
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeStatement(pstmt);
                     DbConnectionManager.closeTransactionConnection(con, abortTransaction);
                 }
             }
@@ -852,7 +814,7 @@ public class MUCPersistenceManager {
                     pstmt.setLong(1, room.getID());
                     pstmt.setString(2, bareJID);
                     pstmt.executeUpdate();
-                    pstmt.close();
+                    DbConnectionManager.fastcloseStmt(pstmt);
 
                     pstmt = con.prepareStatement(ADD_AFFILIATION);
                     pstmt.setLong(1, room.getID());
@@ -865,8 +827,7 @@ public class MUCPersistenceManager {
                     abortTransaction = true;
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeStatement(pstmt);
                     DbConnectionManager.closeTransactionConnection(con, abortTransaction);
                 }
             }
@@ -886,10 +847,7 @@ public class MUCPersistenceManager {
                     Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
-                    try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
         }
@@ -921,10 +879,7 @@ public class MUCPersistenceManager {
                     Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
-                    try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
             else {
@@ -942,10 +897,7 @@ public class MUCPersistenceManager {
                     Log.error(sqle.getMessage(), sqle);
                 }
                 finally {
-                    try { if (pstmt != null) pstmt.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
-                    try { if (con != null) con.close(); }
-                    catch (Exception e) { Log.error(e.getMessage(), e); }
+                    DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
         }
@@ -966,8 +918,8 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(DELETE_USER_MEMBER);
             pstmt.setString(1, bareJID.toBareJID());
             pstmt.executeUpdate();
-            pstmt.close();
-                                       
+            DbConnectionManager.fastcloseStmt(pstmt);
+
             // Remove the user from the generic affiliations table
             pstmt = con.prepareStatement(DELETE_USER_MUCAFFILIATION);
             pstmt.setString(1, bareJID.toBareJID());
@@ -977,10 +929,7 @@ public class MUCPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1010,10 +959,7 @@ public class MUCPersistenceManager {
             return false;
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

@@ -117,41 +117,37 @@ public class DbConnectionManager {
         Connection con = null;
         SQLException lastException = null;
         do {
-            retryCnt++;
             try {
             	con = connectionProvider.getConnection();
+                if (con != null) {
+                    // Got one, lets hand it off.
+                    // Usually profiling is not enabled. So we return a normal 
+                    // connection unless profiling is enabled. If yes, wrap the
+                    // connection with a profiled connection.
+                    if (!profilingEnabled) {
+                        return con;
+                    }
+                    else {
+                        return new ProfiledConnection(con); 
+                    }
+                }
             } catch (SQLException e) {
             	// TODO distinguish recoverable from non-recoverable exceptions.
             	lastException = e;
             	Log.info("Unable to get a connection from the database pool " +
             			"(attempt "+retryCnt+" out of "+retryMax+").", e);
 			}
-            if (con != null) {
-                // Got one, lets hand it off.
-                break;
-            }
             try {
                 Thread.sleep(retryWait);
             }
             catch (Exception e) {
                 // Ignored
             }
+            retryCnt++;
         } while (retryCnt <= retryMax);
-
-        if (con == null) {
-            throw new SQLException("ConnectionManager.getConnection() " +
-                    "failed to obtain a connection after " + retryCnt +" retries. " +
-                    "The exception from the last attempt is as follows: "+lastException);
-        }
-
-        // See if profiling is enabled. If yes, wrap the connection with a
-        // profiled connection.
-        if (profilingEnabled) {
-            return new ProfiledConnection(con);
-        }
-        else {
-            return con;
-        }
+        throw new SQLException("ConnectionManager.getConnection() " +
+                "failed to obtain a connection after " + retryCnt +" retries. " +
+                "The exception from the last attempt is as follows: "+lastException);
     }
 
     /**
@@ -266,7 +262,7 @@ public class DbConnectionManager {
      *          Log.error(sqle.getMessage(), sqle);
      *      }
      *      finally {
-     *          ConnectionManager.closePreparedStatement(pstmt);
+     *          ConnectionManager.closeStatement(pstmt);
      *      }
      * } </pre>
      *
@@ -281,6 +277,90 @@ public class DbConnectionManager {
                 Log.error(e.getMessage(), e);
             }
         }
+    }
+    
+    /**
+     * Closes a statement and a result set. This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      PreparedStatement pstmt = null;
+     *      ResultSet rs = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          rs = ...
+     *          ....
+     *      }
+     *      catch (SQLException sqle) {
+     *          Log.error(sqle.getMessage(), sqle);
+     *      }
+     *      finally {
+     *          ConnectionManager.closeStatement(rs, pstmt);
+     *      }
+     * } </pre>
+     *
+     * @param stmt the statement.
+     */
+    public static void closeStatement(ResultSet rs, Statement stmt) {
+        closeResultSet(rs);
+        closeStatement(stmt);
+    }
+    /**
+     * Closes a statement. This method should be called within the try section of
+     * your database logic when you reuse a statement. It may throws an exception,
+     * so don't place it in the finally section.<br>
+     * Example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      PreparedStatement pstmt = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from dual");
+     *          pstmt.executeUpdate();
+     *          ...
+     *          <b>ConnectionManager.fastcloseStmt(pstmt);</b>
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          ...
+     *      }
+     *      ...
+     * } </pre>
+     *
+     * @param rs the result set to close.
+     * @param stmt the statement to close.
+     */
+    public static void fastcloseStmt(PreparedStatement pstmt) throws SQLException
+    {
+        pstmt.close();
+    }
+        
+    /**
+     * Closes a statement and a result set. This method should be called within the try section of
+     * your database logic when you reuse a statement. It may throw an exception,
+     * so don't place it in the finally section.<br>
+     * Example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      PreparedStatement pstmt = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          rs = pstmt.executeQuery();
+     *          ...
+     *          ConnectionManager.fastcloseStmt(rs, pstmt);
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          ...
+     *      }
+     *      ...
+     * } </pre>
+     *
+     * @param rs the result set to close.
+     * @param stmt the statement to close.
+     */
+    public static void fastcloseStmt(ResultSet rs, PreparedStatement pstmt) throws SQLException
+    {
+        rs.close();
+        pstmt.close();
     }
 
     /**
@@ -383,6 +463,7 @@ public class DbConnectionManager {
      * @return a Statement
      * @throws SQLException if an error occurs.
      */
+    @Deprecated
     public static Statement createScrollableStatement(Connection con) throws SQLException {
         if (isScrollResultsSupported()) {
             return con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -426,16 +507,19 @@ public class DbConnectionManager {
         // If the driver supports scrollable result sets, use that feature.
         if (isScrollResultsSupported()) {
             if (rowNumber > 0) {
-                rs.setFetchDirection(ResultSet.FETCH_FORWARD);
-
                 // We will attempt to do a relative fetch. This may fail in SQL Server if
                 // <resultset-navigation-strategy> is set to absolute. It would need to be
                 // set to looping to work correctly.
                 // If so, manually scroll to the correct row.
                 try {
+                    rs.setFetchDirection(ResultSet.FETCH_FORWARD);
                     rs.relative(rowNumber);
                 }
                 catch (SQLException e) {
+                    // TODO change "Error ..." to "Disabling ..."
+                    Log.error("Error in JDBC method rs.relative(rowNumber).", e);
+                    //Log.error("Disabling JDBC method rs.relative(rowNumber).", e);
+                    //scrollResultsSupported = false;
                     for (int i = 0; i < rowNumber; i++) {
                         rs.next();
                     }
@@ -614,6 +698,7 @@ public class DbConnectionManager {
                 // However, it is a good idea to update the meta-data so that
                 // we don't have to incur the cost of catching an exception
                 // each time.
+                Log.error("Disabling JDBC method stmt.setMaxRows(maxRows).", t);
                 maxRowsSupported = false;
             }
         }
@@ -638,6 +723,7 @@ public class DbConnectionManager {
                 // However, it is a good idea to update the meta-data so that
                 // we don't have to incur the cost of catching an exception
                 // each time.
+                Log.error("Disabling JDBC method rs.setFetchSize(fetchSize).", t);
                 fetchSizeSupported = false;
             }
         }
@@ -692,7 +778,7 @@ public class DbConnectionManager {
         if (dbName.indexOf("oracle") != -1) {
             databaseType = DatabaseType.oracle;
             streamTextRequired = true;
-            scrollResultsSupported = false;
+            scrollResultsSupported = false; /* TODO comment and test this, it should be supported since 10g */
             // The i-net AUGURO JDBC driver
             if (driverName.indexOf("auguro") != -1) {
                 streamTextRequired = false;
@@ -725,12 +811,12 @@ public class DbConnectionManager {
         // MySQL properties
         else if (dbName.indexOf("mysql") != -1) {
             databaseType = DatabaseType.mysql;
-            transactionsSupported = false;
+            transactionsSupported = false; /* TODO comment and test this, it should be supported since 5.0 */
         }
         // HSQL properties
         else if (dbName.indexOf("hsql") != -1) {
             databaseType = DatabaseType.hsqldb;
-            scrollResultsSupported = false;
+            // scrollResultsSupported = false; /* comment and test this, it should be supported since 1.7.2 */
         }
         // DB2 properties.
         else if (dbName.indexOf("db2") != 1) {

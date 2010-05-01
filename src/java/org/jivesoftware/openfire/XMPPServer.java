@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -746,14 +747,14 @@ public class XMPPServer {
      * Verify that the database is accessible.
      */
     private void verifyDataSource() {
-        java.sql.Connection conn = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DbConnectionManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM ofID");
-            ResultSet rs = stmt.executeQuery();
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement("SELECT count(*) FROM ofID");
+            rs = pstmt.executeQuery();
             rs.next();
-            rs.close();
-            stmt.close();
         }
         catch (Exception e) {
             System.err.println("Database setup or configuration error: " +
@@ -763,14 +764,7 @@ public class XMPPServer {
             throw new IllegalArgumentException(e);
         }
         finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                }
-                catch (SQLException e) {
-                    Log.error(e.getMessage(), e);
-                }
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 

@@ -155,7 +155,7 @@ public class RosterItemProvider {
             pstmt.setLong(5, rosterID);
             pstmt.executeUpdate();
             // Close now the statement (do not wait to be GC'ed)
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Delete old group list
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
@@ -193,7 +193,7 @@ public class RosterItemProvider {
             pstmt.setLong(1, rosterItemID);
             pstmt.executeUpdate();
             // Close now the statement (do not wait to be GC'ed)
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM);
@@ -282,7 +282,7 @@ public class RosterItemProvider {
         Map<Long, RosterItem> itemsByID = new HashMap<Long, RosterItem>();
         Connection con = null;
         PreparedStatement pstmt = null;
-        ResultSet rs;
+        ResultSet rs = null;
         try {
             // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
@@ -303,10 +303,11 @@ public class RosterItemProvider {
                 itemsByID.put(item.getID(), item);
             }
             // Close the statement and result set
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
             // Set null to pstmt to be sure that it's not closed twice. It seems that
             // Sybase driver is raising an error when trying to close an already closed statement.
+            // it2000 comment: TODO interesting, that's the only place with the sybase fix
+            // it2000 comment: one should move this in closeStatement()
             pstmt = null;
 
             // Load the groups for the loaded contact
@@ -323,14 +324,13 @@ public class RosterItemProvider {
                 while (rs.next()) {
                     itemsByID.get(rs.getLong(1)).getGroups().add(rs.getString(2));
                 }
-                rs.close();
             }
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return itemList.iterator();
     }

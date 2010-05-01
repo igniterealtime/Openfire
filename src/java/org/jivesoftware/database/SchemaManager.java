@@ -30,7 +30,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 
 import org.jivesoftware.database.bugfix.OF33;
@@ -186,8 +185,7 @@ public class SchemaManager {
         catch (SQLException sqle) {
             // The database schema must not be installed.
             Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable.", sqle);
-            DbConnectionManager.closeResultSet(rs);
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeStatement(rs, pstmt);
             if (schemaKey.equals("openfire")) {
                 try {
                     // Releases of Openfire before 3.6.0 stored the version in a jiveVersion table.
@@ -201,15 +199,13 @@ public class SchemaManager {
                 catch (SQLException sqlea) {
                     // The database schema must not be installed.
                     Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable.", sqlea);
-                    DbConnectionManager.closeResultSet(rs);
-                    DbConnectionManager.closeStatement(pstmt);
+                    DbConnectionManager.closeStatement(rs, pstmt);
+
                     // Releases of Openfire before 2.6.0 stored a major and minor version
                     // number so the normal check for version can fail. Check for the
                     // version using the old format in that case.
                     try {
-                        if (pstmt != null) {
-                            pstmt.close();
-                        }
+
                         pstmt = con.prepareStatement(CHECK_VERSION_OLD);
                         rs = pstmt.executeQuery();
                         if (rs.next()) {
@@ -224,8 +220,7 @@ public class SchemaManager {
             }
         }
         finally {
-            DbConnectionManager.closeResultSet(rs);
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeStatement(rs, pstmt);
         }
         // If already up to date, return.
         if (currentVersion >= requiredVersion) {
@@ -403,19 +398,22 @@ public class SchemaManager {
                             DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.db2) {
                         command.deleteCharAt(command.length() - 1);
                     }
+                    PreparedStatement pstmt = null;
                     try {
                         String cmdString = command.toString();
                         if (autoreplace)  {
                             cmdString = cmdString.replaceAll("jiveVersion", "ofVersion");
                         }
-                        Statement stmt = con.createStatement();
-                        stmt.execute(cmdString);
-                        stmt.close();
+                        pstmt = con.prepareStatement(cmdString);
+                        pstmt.execute();
                     }
                     catch (SQLException e) {
                         // Lets show what failed
                         Log.error("SchemaManager: Failed to execute SQL:\n"+command.toString());
                         throw e;
+                    }
+                    finally {
+                        DbConnectionManager.closeStatement(pstmt);
                     }
                 }
             }

@@ -279,10 +279,7 @@ public class MUCServiceProperties implements Map<String, String> {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -301,10 +298,7 @@ public class MUCServiceProperties implements Map<String, String> {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -322,36 +316,30 @@ public class MUCServiceProperties implements Map<String, String> {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
     private void loadProperties() {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTIES);
             pstmt.setLong(1, serviceID);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String name = rs.getString(1);
                 String value = rs.getString(2);
                 properties.put(name, value);
             }
-            rs.close();
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 }
